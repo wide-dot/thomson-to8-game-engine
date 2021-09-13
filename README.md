@@ -9,7 +9,7 @@ The Java project uses **Java** and **Maven**. You need it to be installed first.
 
 **You need JAVA 11+ and Maven 3.6.x+.**
 
-Check you installation first.
+Check your installation first.
 
 On Linux :
 
@@ -33,7 +33,7 @@ OS name: "linux", version: "5.4.0-81-generic", arch: "amd64", family: "unix"
 
 
 
-### Compiling and building the exectable JAR
+### Compiling and building the executable JAR
 
 ```
 $ cd java-generator
