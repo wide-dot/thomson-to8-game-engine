@@ -1,0 +1,41 @@
+
+YM2413 format
+-------------------------------------------------------------------------------
+
+%10xx xxxx                       : register
+           %xxxx xxxx            : data
+
+-------------------------------------------------------------------------------
+
+%0000 0000                       : end of data
+
+-------------------------------------------------------------------------------
+
+LZSS
+org.apache.commons.compress.compressors.lz77support.LZ77Compressor
+parameters: length 4095, offset 65535
+depending on result, use the smallest nb of bytes: 
+
+%0000 xxxx                       : length (nb of frames to replay) (3-18)
+           %xxxx xxxx            : relative unsigned offset (negative) (3-258)
+
+%0001 xxxx                       : length (nb of frames to replay) (4-18)
+           %xxxx xxxx %xxxx xxxx : relative unsigned offset (negative) (4-65535)
+
+%0010 xxxx %xxxx xxxx            : length (nb of frames to replay) (19-4095)
+           %xxxx xxxx            : relative unsigned offset (negative) (4-258)
+
+%0011 xxxx %xxxx xxxx            : length (nb of frames to replay) (19-4095)
+           %xxxx xxxx %xxxx xxxx : relative unsigned offset (negative) (5-65535)
+
+-------------------------------------------------------------------------------
+
+%010x xxxx                       : wait n frames (1-31)
+
+%011x xxxx %xxxx xxxx            : wait n frames (32-16383)
+
+-------------------------------------------------------------------------------
+
+A étudier
+%0000 0001                       : pattern 1 
+%0000 0010                       : pattern 2
