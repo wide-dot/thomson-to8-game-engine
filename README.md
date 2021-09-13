@@ -13,14 +13,14 @@ Check you installation first.
 
 On Linux :
 
-```bash
+```
 $ java -version
 openjdk version "11.0.7" 2020-04-14
 OpenJDK Runtime Environment GraalVM CE 20.1.0 (build 11.0.7+10-jvmci-20.1-b02)
 OpenJDK 64-Bit Server VM GraalVM CE 20.1.0 (build 11.0.7+10-jvmci-20.1-b02, mixed mode, sharing)
 ```
 
-```bash
+```
 $ mvn -version
 Apache Maven 3.6.3 (cecedd343002696d0abb50b32b541b8a6ba2883f)
 Maven home: /home/robin/.sdkman/candidates/maven/current
@@ -35,7 +35,7 @@ OS name: "linux", version: "5.4.0-81-generic", arch: "amd64", family: "unix"
 
 ### Compiling and building the exectable JAR
 
-```bash
+```
 $ cd java-generator
 $ mvn clean compile assembly:single
 ```
@@ -49,7 +49,7 @@ the folder `/java-generator/target/`.
 
 On Linux :
 
-```bash
+```
 $ cd ./game-projects/TileDemo 
 $ mkdir dist /!\ Only if the directory does not exist /!\
 $ java -jar ../../java-generator/target/game-engine-0.0.1-SNAPSHOT-jar-with-dependencies.jar ./config-linux.properties 
