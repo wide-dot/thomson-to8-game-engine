@@ -170,7 +170,7 @@ TempoMod                       rmb   1
 TempoTurbo                     rmb   1                ; Stores the tempo if speed shoes are acquired (or 7Bh is played anywho)
 SpeedUpFlag                    rmb   1        
 DACEnabled                     rmb   1                
-IsPalFlag                      rmb   1    
+60HzData                       rmb   1                ; 1: play 60hz track at 50hz, 0: do not skip frames
  ENDSTRUCT
 
 ******************************************************************************
@@ -321,17 +321,6 @@ _YMBusyWait19 MACRO
  ENDM
 
 ******************************************************************************
-* InitSoundDriver
-* destroys A
-******************************************************************************
-
-InitSoundDriver
-        pshs  a
-        lda   #$01                     ; 1: play 60hz track at 50hz, 0: do not skip frames
-        sta   Smps.IsPalFlag 
-        puls  a,pc
-
-******************************************************************************
 * Setup YM2413 for Drum Mode
 * destroys A, B
 ******************************************************************************
@@ -346,7 +335,7 @@ YM2413_DrumModeOn
         bra   @a
 @end    lda   #$05                     ; saves values for FMSilenceAll routine
         sta   SongFM6.NoteControl 
-        lda   #$00
+        lda   #$05
         sta   SongFM7.NoteControl
         lda   #$01
         sta   SongFM8.NoteControl                
@@ -354,10 +343,10 @@ YM2413_DrumModeOn
 @data
         fdb   $0E20
         fdb   $1620
-        fdb   $1700 ; recommended setting is $1750 and $2705 for snare but $1700 and $2700 gives better SD sound (noise), affects HH that will sound more like a cowbell 
+        fdb   $1750 ; recommended setting is $1750 and $2705 for snare but $1700 and $2700 gives better SD sound (noise), affects HH that will sound more like a cowbell 
         fdb   $18C0
         fdb   $2605 ; (dependency) if modified, change hardcoded value at DrumModeOn end label
-        fdb   $2700 ; (dependency) if modified, change hardcoded value at DrumModeOn end label
+        fdb   $2705 ; (dependency) if modified, change hardcoded value at DrumModeOn end label
         fdb   $2801 ; (dependency) if modified, change hardcoded value at DrumModeOn end label
         fdb   $36F0 ; drum at max vol        
         fdb   $3700 ; drum at max vol
@@ -551,7 +540,7 @@ MusicFrame
         clr   DoSFXFlag
 
 UpdateEverything        
-        lda   Smps.IsPalFlag           ; TODO use SMPS relocate to convert timings
+        lda   Smps.60HzData            ; TODO use SMPS relocate to convert timings
         beq   @a                       ; to play 60hz songs at 50hz at normal speed
         dec   PALUpdTick               ; this will allow to throw away this code
         bne   @a
@@ -649,11 +638,11 @@ DACAfterDur
         stb   <YM2413_D0      
         rts
 @data
-        fcb   $34 ; $81 - Kick  (BD+TOM
-        fcb   $2C ; $82 - Snare (SNARE noise+TOM)
-        fcb   $21 ; $83 - Clap
-        fcb   $22 ; $84 - Scratch
-        fcb   $22 ; $85 - Timpani
+        fcb   $30 ; $81 - Kick  (BD+TOM 34
+        fcb   $28 ; $82 - Snare (SNARE noise+TOM) 2C
+        fcb   $21 ; $83 - Clap 21
+        fcb   $22 ; $84 - Scratch 22
+        fcb   $24 ; $85 - Timpani 22
         fcb   $24 ; $86 - Hi Tom
         fcb   $24 ; $87 - Bongo
         fcb   $24 ; $88 - Hi Timpani
