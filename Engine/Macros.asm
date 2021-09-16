@@ -140,7 +140,7 @@ _RunObjectRoutine MACRO
         ldx   #Obj_Index_Address
         aslb
         abx
-        lda   #\2        
+        lda   \2        
         jsr   [,x]
  ENDM
 

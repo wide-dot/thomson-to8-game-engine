@@ -12,7 +12,7 @@
         org   $6100
 			
         jsr   LoadAct
-        _RunObjectRoutine ObjID_Tilemap,0       
+        _RunObjectRoutine ObjID_Tilemap,glb_current_submap       
 
 * ==============================================================================
 * Main Loop
@@ -23,7 +23,7 @@ LevelMainLoop
         jsr   ReadJoypads
         jsr   AutoScroll
         jsr   RunObjects
-        _RunObjectRoutine ObjID_Tilemap,1
+        _RunObjectRoutine ObjID_Tilemap,glb_current_submap
         jsr   CheckSpritesRefresh
         jsr   EraseSprites
         jsr   UnsetDisplayPriority
