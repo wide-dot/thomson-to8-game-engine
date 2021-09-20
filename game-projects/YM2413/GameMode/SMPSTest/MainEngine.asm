@@ -28,19 +28,19 @@
 * ==============================================================================
 LevelMainLoop
         jsr   WaitVBL    
-        
+
         lda   Fire_Press
         bita  #c1_button_A_mask
         beq   LevelMainLoop
-        ;ldx   #Smps_SlowSmash
-        ;jsr   PlaySound
+        ldx   #Smps_SlowSmash
+        jsr   PlaySound
              
         bra   LevelMainLoop
         
 * ==============================================================================
 * Routines
 * ==============================================================================
-		INCLUDE "./Engine/Ram/BankSwitch.asm"
+        INCLUDE "./Engine/Ram/BankSwitch.asm"
         INCLUDE "./Engine/Graphics/WaitVBL.asm"
         INCLUDE "./Engine/Joypad/ReadJoypads.asm"
         INCLUDE "./Engine/Irq/IrqSmpsJoypad.asm"        
