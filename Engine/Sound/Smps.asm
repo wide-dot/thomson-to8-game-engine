@@ -334,11 +334,11 @@ YM2413_DrumModeOn
         _YMBusyWait5
         bra   @a
 @end    lda   #$05                     ; saves values for FMSilenceAll routine
-        sta   SongFM6.NoteControl 
+        sta   SongFM7.NoteControl 
         lda   #$05
-        sta   SongFM7.NoteControl
+        sta   SongFM8.NoteControl
         lda   #$01
-        sta   SongFM8.NoteControl                
+        sta   SongFM9.NoteControl                
         puls  d,x,pc       
 @data
         fdb   $0E20
@@ -374,14 +374,15 @@ FMSilenceAll
         ldy   #SongFM1.NoteControl
         sta   YM2413_D0                ; note off for all drums     
         _YMBusyWait5
+        _YMBusyWait5        
                 
 @a      _YMBusyWait5                   ; total wait btw two notes : 20 cycles
-        leay  sizeof{Track},y          ; (wait of 5 cycles)
         ldb   ,y                       ; (wait of 4 cycles)
         sta   YM2413_A0
         andb  #$EF                     ; note off for each track
         inca
         stb   YM2413_D0
+        leay  sizeof{Track},y          ; (wait of 5 cycles)        
         cmpa  #$29                     ; (wait of 2 cycles)
         bne   @a                       ; (wait of 3 cycles)
         rts
@@ -528,7 +529,7 @@ MusicFrame
         
         ; simple sound fx implementation with no priority
         ; TODO upgrade to a queue system like original code
-        ldx   Smps.SFXToPlay         ; get last requested sound effect to play
+        ldx   Smps.SFXToPlay           ; get last requested sound effect to play
         beq   @a                       ; 0 means no sound effect to play
         jsr   PlaySound
         ldd   #0                       ; reset to be able to play another effect from now
@@ -551,11 +552,11 @@ UpdateEverything
         bra   UpdateSound
 
 UpdateMusic
+        * jsr   TempoWait              ; optim : do not call TempoWait, instead skip update
         lda   Smps.CurrentTempo        ; tempo value
         adda  Smps.TempoTimeout        ; Adds previous value to
         sta   Smps.TempoTimeout        ; Store this as new
-        bcc   UpdateSound              ; skip update if tempo need more waits
-             
+        bcc   @rts                     ; skip update if tempo need more waits
         _UpdateTrack SongDAC,DACUpdateTrack
         _UpdateTrack SongFM1,FMUpdateTrack
         _UpdateTrack SongFM2,FMUpdateTrack
@@ -570,7 +571,7 @@ UpdateMusic
         _UpdateTrack SongPSG1,PSGUpdateTrack
         _UpdateTrack SongPSG2,PSGUpdateTrack        
         _UpdateTrack SongPSG3,PSGUpdateTrack
-        rts
+@rts    rts
 
 UpdateSound        
         lda   SoundPage                ; page switch to the sound
@@ -586,6 +587,37 @@ UpdateSound
         _UpdateTrack SFXPSG2,PSGUpdateTrack        
         _UpdateTrack SFXPSG3,PSGUpdateTrack
 @rts    rts
+
+* * ************************************************************************************
+* * 
+* TempoWait
+*         ; Tempo works as divisions of the 60Hz clock (there is a fix supplied for
+*         ; PAL that "kind of" keeps it on track.)  Every time the internal music clock
+*         ; overflows, it will update.  So a tempo of 80h will update every other
+*         ; frame, or 30 times a second.
+
+*         lda   Smps.CurrentTempo  ; tempo value
+*         adda  Smps.TempoTimeout  ; Adds previous value to
+*         sta   Smps.TempoTimeout  ; Store this as new
+*         bcc   @a
+*         rts                     ; If addition overflowed (answer greater than FFh), return
+* @a
+*         ; So if adding tempo value did NOT overflow, then we add 1 to all durations
+*         inc   SongDAC.DurationTimeout
+*         inc   SongFM1.DurationTimeout
+*         inc   SongFM2.DurationTimeout
+*         inc   SongFM3.DurationTimeout
+*         inc   SongFM4.DurationTimeout
+*         inc   SongFM5.DurationTimeout
+*         ;inc   SongFM6.DurationTimeout
+*         ;inc   SongFM7.DurationTimeout
+*         ;inc   SongFM8.DurationTimeout                
+*         ;inc   SongFM9.DurationTimeout                        
+*         ;inc   SongPSG4.DurationTimeout
+*         inc   SongPSG1.DurationTimeout
+*         inc   SongPSG2.DurationTimeout
+*         inc   SongPSG3.DurationTimeout
+*         rts
 
 ******************************************************************************
 * DACUpdateTrack
@@ -638,7 +670,7 @@ DACAfterDur
         stb   <YM2413_D0      
         rts
 @data
-        fcb   $30 ; $81 - Kick  (BD+TOM 34
+        fcb   $30 ; $81 - Kick  (BD+TOM) 34
         fcb   $28 ; $82 - Snare (SNARE noise+TOM) 2C
         fcb   $21 ; $83 - Clap 21
         fcb   $22 ; $84 - Scratch 22
@@ -712,7 +744,10 @@ FMSetFreq
 @a      addb  #$0B                     ; Add FMFrequencies offet for C0 Note, access lower notes with transpose
         addb  Transpose,y              ; Add current channel transpose (coord flag E9)
         addb  InstrTranspose,y         ; Add Instrument (Voice) offset (coord flag EF)
-        aslb                           ; Transform note into an index...
+        cmpb  #95                      ; array bound check
+        blo   @c
+        ldb   #94         
+@c      aslb                           ; Transform note into an index...
         ldu   #FMFrequencies
         lda   #0    
         ldd   d,u
@@ -918,11 +953,14 @@ PSGSetFreq
         bra   @b
 @a      addb  #$03                     ; Add Frequencies offet for C0 Note, access lower notes with transpose
         addb  Transpose,y              ; Add current channel transpose (coord flag E9)
-        aslb                           ; Transform note into an index...
+        cmpb  #70                      ; array bound check
+        blo   @c
+        ldb   #69                      
+@c      aslb                           ; Transform note into an index...
         ldu   #PSGFrequencies
         lda   #0    
         ldd   d,u
-        std   NextData,y               ; Store Frequency
+        std   NextData,y                ; Store Frequency
 @b      ldb   ,x                        ; Get next byte
         bpl   PSGSetDurationAndForward  ; Test for 80h not set, which is a note duration
         ldb   SavedDuration,y        
@@ -935,7 +973,7 @@ PSGSetDuration
         lda   TempoDivider,y
         mul
         stb   SavedDuration,y
-        
+
 PSGFinishTrackUpdate
         stb   DurationTimeout,y        ; Last set duration ... put into ticker
         stx   DataPointer,y            ; Stores to the track pointer memory
@@ -1085,14 +1123,15 @@ PSGUpdateFreq2
 ; (Note value $C8 is reserved for PSG3 to drive noise PSG4)
 ; Other notes can be accessed by transpose
 PSGFrequencies
-        fdb                                                         $03F8,$03C0,$0388 ; A2 - B2 (Access those 3 notes thru transpose) 
-		fdb   $0356,$0327,$02FA,$02CF,$02A5,$0281,$025C,$023B,$021A,$01FC,$01E0,$01C4 ; C3 - B3
+        fdb                                                         $03F8,$03C0,$0388 ; A2 - B2
+	fdb   $0356,$0327,$02FA,$02CF,$02A5,$0281,$025C,$023B,$021A,$01FC,$01E0,$01C4 ; C3 - B3
         fdb   $01AB,$0193,$017D,$0167,$0152,$0140,$012E,$011D,$010D,$00FE,$00F0,$00E2 ; C4 - B4
         fdb   $00D5,$00C9,$00BE,$00B3,$00A9,$00A0,$0097,$008E,$0086,$007F,$0078,$0071 ; C5 - B5
         fdb   $006A,$0064,$005F,$0059,$0054,$0050,$004B,$0047,$0043,$0040,$003C,$0039 ; C6 - B6
         fdb   $0035,$0032,$002F,$002C,$002A,$0028,$0025,$0023,$0022,$0020,$001F,$001D ; C7 - B7
-        fdb   $001A,$0019,$0017,$0016,$0015,$0014,$0012,$0011,$0010,$0001             ; C8 - G#8 (Last 3 values are also used for channel 3 when driving noise channel. $0000 doesn't work for real SN76489 chip, so was replaced by $0001 value)
-                 
+        fdb   $001A,$0019,$0017,$0016,$0015,$0014,$0012,$0011,$0010,$0001             ; C8 - G#8
+        ; (Last 3 values are also used for channel 3 when driving noise channel. $0000 doesn't work for real SN76489 chip, so was replaced by $0001 value)
+
 PSG_FlutterTbl
     ; Basically, for any tone 0-11, dynamic volume adjustments are applied to produce a pseudo-decay,
     ; or sometimes a ramp up for "soft" sounds, or really any other volume effect you might want!
@@ -1649,4 +1688,49 @@ cfSkip1
         leax  1,x
 cfNop 
         rts                                                 
-                   
+
+* YM2413 Instrument presets
+* -------------------------
+*
+* /* Order of array = { modulator, carrier } */
+* typedef struct {
+*     Bit8u tl;
+*     Bit8u dc;
+*     Bit8u dm;
+*     Bit8u fb;
+*     Bit8u am[2];
+*     Bit8u vib[2];
+*     Bit8u et[2];
+*     Bit8u ksr[2];
+*     Bit8u multi[2];
+*     Bit8u ksl[2];
+*     Bit8u ar[2];
+*     Bit8u dr[2];
+*     Bit8u sl[2];
+*     Bit8u rr[2];
+* } opll_patch_t;
+
+* static const opll_patch_t patch_ds1001[opll_patch_max] = {
+*     { 0x05, 0x00, 0x00, 0x06,{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x01 },{ 0x00, 0x00 },{ 0x03, 0x01 },{ 0x00, 0x00 },{ 0x0e, 0x08 },{ 0x08, 0x01 },{ 0x04, 0x02 },{ 0x02, 0x07 } }, * 1 : Violin
+*     { 0x14, 0x00, 0x01, 0x05,{ 0x00, 0x00 },{ 0x00, 0x01 },{ 0x00, 0x00 },{ 0x01, 0x00 },{ 0x03, 0x01 },{ 0x00, 0x00 },{ 0x0d, 0x0f },{ 0x08, 0x06 },{ 0x02, 0x01 },{ 0x03, 0x02 } }, * 2 : Guitar
+*     { 0x08, 0x00, 0x01, 0x00,{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x01, 0x01 },{ 0x01, 0x01 },{ 0x00, 0x00 },{ 0x0f, 0x0b },{ 0x0a, 0x02 },{ 0x02, 0x01 },{ 0x00, 0x02 } }, * 3 : Piano
+*     { 0x0c, 0x00, 0x00, 0x07,{ 0x00, 0x00 },{ 0x00, 0x01 },{ 0x01, 0x01 },{ 0x01, 0x00 },{ 0x01, 0x01 },{ 0x00, 0x00 },{ 0x0a, 0x06 },{ 0x08, 0x04 },{ 0x06, 0x02 },{ 0x01, 0x07 } }, * 4 : Flute
+*     { 0x1e, 0x00, 0x00, 0x06,{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x01, 0x01 },{ 0x01, 0x00 },{ 0x02, 0x01 },{ 0x00, 0x00 },{ 0x0e, 0x07 },{ 0x01, 0x06 },{ 0x00, 0x02 },{ 0x01, 0x08 } }, * 5 : Clarinet
+*     { 0x06, 0x00, 0x00, 0x00,{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x02, 0x01 },{ 0x00, 0x00 },{ 0x0a, 0x0e },{ 0x03, 0x02 },{ 0x0f, 0x0f },{ 0x04, 0x04 } }, * 6 : Oboe
+*     { 0x1d, 0x00, 0x00, 0x07,{ 0x00, 0x00 },{ 0x00, 0x01 },{ 0x01, 0x01 },{ 0x00, 0x00 },{ 0x01, 0x01 },{ 0x00, 0x00 },{ 0x08, 0x08 },{ 0x02, 0x01 },{ 0x01, 0x00 },{ 0x01, 0x07 } }, * 7 : Trumpet
+*     { 0x22, 0x01, 0x00, 0x07,{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x01, 0x01 },{ 0x00, 0x00 },{ 0x03, 0x01 },{ 0x00, 0x00 },{ 0x0a, 0x07 },{ 0x02, 0x02 },{ 0x00, 0x01 },{ 0x01, 0x07 } }, * 8 : Organ
+*     { 0x25, 0x00, 0x00, 0x00,{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x01, 0x00 },{ 0x01, 0x01 },{ 0x05, 0x01 },{ 0x00, 0x00 },{ 0x04, 0x07 },{ 0x00, 0x03 },{ 0x07, 0x00 },{ 0x02, 0x01 } }, * 9 : Horn
+*     { 0x0f, 0x00, 0x01, 0x07,{ 0x01, 0x00 },{ 0x00, 0x00 },{ 0x01, 0x00 },{ 0x01, 0x00 },{ 0x05, 0x01 },{ 0x00, 0x00 },{ 0x0a, 0x0a },{ 0x08, 0x05 },{ 0x05, 0x00 },{ 0x01, 0x02 } }, * A : Synthesizer
+*     { 0x24, 0x00, 0x00, 0x07,{ 0x00, 0x01 },{ 0x00, 0x01 },{ 0x00, 0x00 },{ 0x01, 0x00 },{ 0x07, 0x01 },{ 0x00, 0x00 },{ 0x0f, 0x0f },{ 0x08, 0x08 },{ 0x02, 0x01 },{ 0x02, 0x02 } }, * B : Harpsichord
+*     { 0x11, 0x00, 0x00, 0x06,{ 0x00, 0x00 },{ 0x01, 0x00 },{ 0x01, 0x01 },{ 0x01, 0x00 },{ 0x01, 0x03 },{ 0x00, 0x00 },{ 0x06, 0x07 },{ 0x05, 0x04 },{ 0x01, 0x01 },{ 0x08, 0x06 } }, * C : Vibraphone
+*     { 0x13, 0x00, 0x00, 0x05,{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x01, 0x02 },{ 0x03, 0x00 },{ 0x0c, 0x09 },{ 0x09, 0x05 },{ 0x00, 0x00 },{ 0x03, 0x02 } }, * D : Synthesizer Bass
+*     { 0x0c, 0x00, 0x00, 0x00,{ 0x00, 0x00 },{ 0x01, 0x01 },{ 0x01, 0x01 },{ 0x00, 0x00 },{ 0x01, 0x03 },{ 0x00, 0x00 },{ 0x09, 0x0c },{ 0x04, 0x00 },{ 0x03, 0x0f },{ 0x03, 0x06 } }, * E : Acoustic Bass
+*     { 0x0d, 0x00, 0x00, 0x00,{ 0x00, 0x00 },{ 0x00, 0x01 },{ 0x01, 0x01 },{ 0x00, 0x01 },{ 0x01, 0x02 },{ 0x00, 0x00 },{ 0x0c, 0x0d },{ 0x01, 0x05 },{ 0x05, 0x00 },{ 0x06, 0x06 } }, * F : Electric Guitar
+*     /* Rhythm Patches: rows 1 and 4 are bass drum, 2 and 5 are Snare Drum & Hi-Hat, 3 and 6 are Tom and Top Cymbal */
+*     { 0x18, 0x00, 0x01, 0x07,{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x01, 0x00 },{ 0x00, 0x00 },{ 0x0d, 0x00 },{ 0x0f, 0x00 },{ 0x06, 0x00 },{ 0x0a, 0x00 } },
+*     { 0x00, 0x00, 0x00, 0x00,{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x01, 0x00 },{ 0x00, 0x00 },{ 0x0c, 0x00 },{ 0x08, 0x00 },{ 0x0a, 0x00 },{ 0x07, 0x00 } },
+*     { 0x00, 0x00, 0x00, 0x00,{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x05, 0x00 },{ 0x00, 0x00 },{ 0x0f, 0x00 },{ 0x08, 0x00 },{ 0x05, 0x00 },{ 0x09, 0x00 } },
+*     { 0x00, 0x00, 0x00, 0x00,{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x01 },{ 0x00, 0x00 },{ 0x00, 0x0f },{ 0x00, 0x08 },{ 0x00, 0x06 },{ 0x00, 0x0d } },
+*     { 0x00, 0x00, 0x00, 0x00,{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x01 },{ 0x00, 0x00 },{ 0x00, 0x0d },{ 0x00, 0x08 },{ 0x00, 0x06 },{ 0x00, 0x08 } },
+*     { 0x00, 0x00, 0x00, 0x00,{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x00 },{ 0x00, 0x01 },{ 0x00, 0x00 },{ 0x00, 0x0a },{ 0x00, 0x0a },{ 0x00, 0x05 },{ 0x00, 0x05 } }
+* };             

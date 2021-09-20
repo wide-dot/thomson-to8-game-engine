@@ -125,7 +125,7 @@ public class SmpsRelocate{
 					relocateOffsetBack(pos+3, args[2]);
 				pos += 5;
 				break;
-				case (byte)0xE0: case (byte)0xE2: case (byte)0xE5: case (byte)0xE6: case (byte)0xE8: case (byte)0xE9: case (byte)0xEA: case (byte)0xEB: case (byte)0xEF:
+				case (byte)0xE0: case (byte)0xE2: case (byte)0xE5: case (byte)0xE6: case (byte)0xE8: case (byte)0xE9: case (byte)0xEA: case (byte)0xEB: case (byte)0xEC: case (byte)0xEF: case (byte)0xF3: case (byte)0xF5:
 					pos += 2;
 				break;				
 				default:
