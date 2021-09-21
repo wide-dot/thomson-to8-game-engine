@@ -2797,7 +2797,7 @@ public class BuildDisk
 				   "--output=" + binFile,
 				   "--list=" + lstFile,
 				   "--6809",	
-				   "--includedir=.",
+				   "--includedir="+path.getParent().toString(),
 				   "--includedir=../..",
 				   "--symbol-dump=" + glbTmpFile,
 				   Game.pragma				   
@@ -2858,7 +2858,7 @@ public class BuildDisk
 										   "--output=" + binFile,
 										   "--list=" + lstFile,
 										   "--6809",	
-										   "--includedir=.",
+										   "--includedir="+asmPath.getParent().toString(),
 										   "--includedir=../..",
 										   "--obj",
 										   Game.pragma));
