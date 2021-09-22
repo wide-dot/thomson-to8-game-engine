@@ -10,7 +10,7 @@
 *
 ********************************************************************************
         
-        INCLUDE "./GeneratedCode/RAMLoaderT2.glb"
+        INCLUDE "RAMLoaderT2.glb"
         
 RAMLoaderManager
 
@@ -79,5 +79,5 @@ RLM_CopyCode
 * RAMLoader
 * ==============================================================================
 RAMLoaderBin
-        INCLUDEBIN "./GeneratedCode/RAMLoaderT2.bin"
-        INCLUDE "./GeneratedCode/BuilderFileIndexT2.asm"
+        INCLUDEBIN "RAMLoaderT2.bin"
+        INCLUDE "BuilderFileIndexT2.asm"
