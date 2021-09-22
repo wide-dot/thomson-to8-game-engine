@@ -10,7 +10,7 @@
 *
 ********************************************************************************
 
-        INCLUDE "./GeneratedCode/RAMLoaderFd.glb"
+        INCLUDE "RAMLoaderFd.glb"
         
         org $0000
 
@@ -86,5 +86,5 @@ RLM_CopyCode_restore_s
 * RAMLoader
 * ==============================================================================
 RAMLoaderBin
-        INCLUDEBIN "./GeneratedCode/RAMLoaderFd.bin"
-        INCLUDE "./GeneratedCode/BuilderFileIndexFd.asm"
+        INCLUDEBIN "RAMLoaderFd.bin"
+        INCLUDE "BuilderFileIndexFd.asm"
