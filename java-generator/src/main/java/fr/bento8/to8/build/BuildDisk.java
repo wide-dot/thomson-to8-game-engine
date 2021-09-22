@@ -1145,51 +1145,56 @@ public class BuildDisk
 				}
 			}
 			
-			nbHalfPages += 1;
-			if (rImg.startAddress[rImg.curPage] < 0x2000 && rImg.endAddress[rImg.curPage] > 0x2000)
-				nbHalfPages += 1;	
+			if (rImg.startAddress[rImg.curPage] < rImg.endAddress[rImg.curPage]) {
 			
-			// Division de la page RAM en deux parties			
-			if (writeIndex) {			
-				RAMLoaderIndex rli = new RAMLoaderIndex();
-				rli.gml.add(gm);
-				if (gmc != null) {
-					rli.gmc = gmc;
-				}
-				rli.ram_page = rImg.curPage;
-				rli.ram_address = rImg.startAddress[rImg.curPage];
-				if (rImg.startAddress[rImg.curPage] < 0x2000 && rImg.endAddress[rImg.curPage] > 0x2000) {
-					rli.ram_endAddress = 0x2000;
-				} else {
-					rli.ram_endAddress = rImg.endAddress[rImg.curPage];
-				}
-				
-				if (rImg.mode == BuildDisk.FLOPPY_DISK) {
-					gm.fdIdx.add(rli);
-				} else if (rImg.mode == BuildDisk.MEGAROM_T2) {
-					gm.t2Idx.add(rli);				
-				}
-				
-				if (rImg.startAddress[rImg.curPage] < 0x2000 && rImg.endAddress[rImg.curPage] > 0x2000) {
-					rli = new RAMLoaderIndex();
+				nbHalfPages += 1;
+				if (rImg.startAddress[rImg.curPage] < 0x2000 && rImg.endAddress[rImg.curPage] > 0x2000)
+					nbHalfPages += 1;	
+
+				// Division de la page RAM en deux parties			
+				if (writeIndex) {			
+					RAMLoaderIndex rli = new RAMLoaderIndex();
 					rli.gml.add(gm);
 					if (gmc != null) {
 						rli.gmc = gmc;
 					}
 					rli.ram_page = rImg.curPage;
-					rli.ram_address = 0x2000;
-					rli.ram_endAddress = rImg.endAddress[rImg.curPage];
-					
+					rli.ram_address = rImg.startAddress[rImg.curPage];
+					if (rImg.startAddress[rImg.curPage] < 0x2000 && rImg.endAddress[rImg.curPage] > 0x2000) {
+						rli.ram_endAddress = 0x2000;
+					} else {
+						rli.ram_endAddress = rImg.endAddress[rImg.curPage];
+					}
+
 					if (rImg.mode == BuildDisk.FLOPPY_DISK) {
 						gm.fdIdx.add(rli);
 					} else if (rImg.mode == BuildDisk.MEGAROM_T2) {
-						gm.t2Idx.add(rli);	
-					}			
+						gm.t2Idx.add(rli);				
+					}
+
+					if (rImg.startAddress[rImg.curPage] < 0x2000 && rImg.endAddress[rImg.curPage] > 0x2000) {
+						rli = new RAMLoaderIndex();
+						rli.gml.add(gm);
+						if (gmc != null) {
+							rli.gmc = gmc;
+						}
+						rli.ram_page = rImg.curPage;
+						rli.ram_address = 0x2000;
+						rli.ram_endAddress = rImg.endAddress[rImg.curPage];
+
+						if (rImg.mode == BuildDisk.FLOPPY_DISK) {
+							gm.fdIdx.add(rli);
+						} else if (rImg.mode == BuildDisk.MEGAROM_T2) {
+							gm.t2Idx.add(rli);	
+						}			
+					}
+
+					logger.debug("\t\tFound solution for page : " + rImg.curPage + " start: " + String.format("$%1$04X", rImg.startAddress[rImg.curPage]) + " end: " + String.format("$%1$04X", rImg.endAddress[rImg.curPage]-1) + " non allocated space: " + (RamImage.PAGE_SIZE - rImg.endAddress[rImg.curPage]) + " octets");
+				} else {
+					logger.debug("\t\tFound solution for page : " + rImg.curPage + " start: " + String.format("$%1$04X", rImg.startAddress[rImg.curPage]) + " end: " + String.format("$%1$04X", rImg.endAddress[rImg.curPage]-1));
 				}
-				
-				logger.debug("\t\tFound solution for page : " + rImg.curPage + " start: " + String.format("$%1$04X", rImg.startAddress[rImg.curPage]) + " end: " + String.format("$%1$04X", rImg.endAddress[rImg.curPage]-1) + " non allocated space: " + (RamImage.PAGE_SIZE - rImg.endAddress[rImg.curPage]) + " octets");
 			} else {
-				logger.debug("\t\tFound solution for page : " + rImg.curPage + " start: " + String.format("$%1$04X", rImg.startAddress[rImg.curPage]) + " end: " + String.format("$%1$04X", rImg.endAddress[rImg.curPage]-1));
+				logger.debug("\t\tNo solution for page : " + rImg.curPage + " start: " + String.format("$%1$04X", rImg.startAddress[rImg.curPage]));
 			}
 			
 			firstLoop = false;
@@ -1345,7 +1350,11 @@ public class BuildDisk
 				}
 			}
 			
-			logger.debug("\t\tFound solution for page : " + game.romT2.curPage + " start: " + String.format("$%1$04X", game.romT2.startAddress[game.romT2.curPage]) + " end: " + String.format("$%1$04X", game.romT2.endAddress[game.romT2.curPage]-1) + " non allocated space: " + (RamImage.PAGE_SIZE - game.romT2.endAddress[game.romT2.curPage]) + " octets");
+			if (game.romT2.startAddress[game.romT2.curPage] < game.romT2.endAddress[game.romT2.curPage]) {
+				logger.debug("\t\tFound solution for page : " + game.romT2.curPage + " start: " + String.format("$%1$04X", game.romT2.startAddress[game.romT2.curPage]) + " end: " + String.format("$%1$04X", game.romT2.endAddress[game.romT2.curPage]-1) + " non allocated space: " + (RamImage.PAGE_SIZE - game.romT2.endAddress[game.romT2.curPage]) + " octets");
+			} else {
+				logger.debug("\t\tNo solution for page : " + game.romT2.curPage + " start: " + String.format("$%1$04X", game.romT2.startAddress[game.romT2.curPage]));
+			}
 			
 			firstPass = false;
 		}
@@ -1796,7 +1805,11 @@ public class BuildDisk
 				}
 			}
 			
-			logger.debug("\t\tFound solution for page : " + game.romT2.curPage + " start: " + String.format("$%1$04X", game.romT2.startAddress[game.romT2.curPage]) + " end: " + String.format("$%1$04X", game.romT2.endAddress[game.romT2.curPage]-1) + " non allocated space: " + (RamImage.PAGE_SIZE - game.romT2.endAddress[game.romT2.curPage]) + " octets");
+			if (game.romT2.startAddress[game.romT2.curPage] < game.romT2.endAddress[game.romT2.curPage]) {
+				logger.debug("\t\tFound solution for page : " + game.romT2.curPage + " start: " + String.format("$%1$04X", game.romT2.startAddress[game.romT2.curPage]) + " end: " + String.format("$%1$04X", game.romT2.endAddress[game.romT2.curPage]-1) + " non allocated space: " + (RamImage.PAGE_SIZE - game.romT2.endAddress[game.romT2.curPage]) + " octets");
+			} else {
+				logger.debug("\t\tNo solution for page : " + game.romT2.curPage + " start: " + String.format("$%1$04X", game.romT2.startAddress[game.romT2.curPage]));
+			}
 			
 			firstPass = false;
 		}
