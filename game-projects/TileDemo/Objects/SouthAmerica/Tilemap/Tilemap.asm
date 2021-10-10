@@ -103,8 +103,8 @@ SouthAmerica_submap001_layer001
         fdb   $0124            ; layer_mem_step_y          - nb of linear memory bytes to go from the last tile of a row to the first tile of the next row
         fcb   $04              ; layer_tile_size_bitmask_x - bitmask used in sub tile position representation (tile x size : 4px=2, 8px=3, 16px=4, 32px=5, ... 256px=8)
         fcb   $03              ; layer_tile_size_bitmask_y - bitmask used in sub tile position representation (tile y size : 4px=2, 8px=3, 16px=4, 32px=5, ... 256px=8)
-        fcb   $08              ; layer_tile_size_divider_x - number of byte to branch over in the division routine (tile x size : 4px=14, 8px=12, 16px=10, 32px=8, ... 256px=2)
-        fcb   $0A              ; layer_tile_size_divider_y - number of byte to branch over in the division routine (tile y size : 4px=14, 8px=12, 16px=10, 32px=8, ... 256px=2)
+        fcb   $08              ; layer_tile_size_divider_x - number of byte to branch over in the division routine (tile x size : 4px=0C, 8px=0A, 16px=08, 32px=06, ... 256px=0)
+        fcb   $0A              ; layer_tile_size_divider_y - number of byte to branch over in the division routine (tile y size : 4px=0C, 8px=0A, 16px=08, 32px=06, ... 256px=0)
         fdb   Tls_SouthAmerica ; layer_tiles_location      - location of tiles index (page and adress for each tiles)
         
         fcb   8  ; TODO move this Width to layer bin

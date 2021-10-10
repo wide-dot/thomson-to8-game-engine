@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
 
 import fr.bento8.to8.audio.Sound;
 import fr.bento8.to8.image.AnimationBin;
@@ -14,6 +13,7 @@ import fr.bento8.to8.image.Sprite;
 import fr.bento8.to8.image.SubSpriteBin;
 import fr.bento8.to8.image.TileBin;
 import fr.bento8.to8.image.Tileset;
+import fr.bento8.to8.util.OrderedProperties;
 
 public class Object {
 
@@ -44,7 +44,7 @@ public class Object {
 		this.animation = new AnimationBin(name);
 		this.imageSet = new ImageSetBin(name);	
 		
-		Properties prop = new Properties();
+		OrderedProperties prop = new OrderedProperties();
 		try {
 			InputStream input = new FileInputStream(propertiesFileName);
 			prop.load(input);

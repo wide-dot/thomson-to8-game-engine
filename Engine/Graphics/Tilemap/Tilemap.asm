@@ -101,6 +101,10 @@ DrawTileInit
         sta   dyn_sx+1
         ldd   layer_mem_step_y,u
         std   dyn_sy+1
+        lda   layer_width,u
+        suba  layer_vp_tiles_x,u
+        deca
+        sta   dyn_w+1
         ldu   layer_tiles_location,u
         stu   dyn_Tls+1
         bra   DrawTileLayer
@@ -150,6 +154,10 @@ dyn_x   lda   #$00                                    ; (dynamic) current column
         tsta
         bne   DrawTileColumn
 dyn_y   lda   #$00                                    ; (dynamic) current row index
+dyn_w   ldb   #$00
+        ldu   glb_submap_index
+        leau  b,u        
+        stu   glb_submap_index        
         tsta
         bne   DrawTileRow
                                                       ; TODO set here the background refresh flag   

@@ -9,13 +9,16 @@ import java.nio.file.StandardOpenOption;
 public class AsmSourceCode
 {
 	private Path path;
-	private String content = "";
+	public String content = "";
 
 	public AsmSourceCode(Path path) throws Exception {
 		String content = "* Generated Code\n";
 		this.path = path;
 		Files.write(path, content.getBytes(StandardCharsets.ISO_8859_1));
 	}	
+	
+	public AsmSourceCode() throws Exception {
+	}		
 	
 	public void add(String text) {
 		content += "\n"+text;

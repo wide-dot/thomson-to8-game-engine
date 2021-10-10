@@ -13,9 +13,9 @@
                                        *; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                        *
                                        *; loc_17FDA: ; allocObject:
-                                       *SingleObjLoad:
-                                       *    lea (Dynamic_Object_RAM).w,a1 ; a1=object
-                                       *    move.w  #(Dynamic_Object_RAM_End-Dynamic_Object_RAM)/object_size-1,d0 ; search to end of table
+SingleObjLoad                          *SingleObjLoad:
+        ldx   #Dynamic_Object_RAM      *    lea (Dynamic_Object_RAM).w,a1 ; a1=object
+        bra   SOL_loop                 *    move.w  #(Dynamic_Object_RAM_End-Dynamic_Object_RAM)/object_size-1,d0 ; search to end of table
                                        *    tst.w   (Two_player_mode).w
                                        *    beq.s   +
                                        *    move.w  #(Dynamic_Object_RAM_2P_End-Dynamic_Object_RAM)/object_size-1,d0 ; search to $BF00 exclusive
@@ -41,7 +41,7 @@ SingleObjLoad2                         *SingleObjLoad2:
         tfr   u,x                      *    movea.l a0,a1
         leax  next_object,x            *    move.w  #Dynamic_Object_RAM_End,d0  ; $D000
         cmpx  #Dynamic_Object_RAM_End  *    sub.w   a0,d0   ; subtract current object location
-        beq   SingleObjLoad2_02        *    if object_size=$40
+        beq   SOL_rts                  *    if object_size=$40
                                        *    lsr.w   #6,d0   ; divide by $40
                                        *    subq.w  #1,d0   ; keep from going over the object zone
                                        *    bcs.s   return_18014
@@ -51,14 +51,14 @@ SingleObjLoad2                         *SingleObjLoad2:
                                        *    bmi.s   return_18014        ; if negative, we have failed!
                                        *    endif
                                        *
-SingleObjLoad2_01                      *-
+SOL_loop                               *-
         tst   ,x                       *    tst.b   id(a1)  ; is object RAM slot empty?
-        beq   SingleObjLoad2_02        *    beq.s   return_18014    ; if yes, branch
+        beq   SOL_rts                  *    beq.s   return_18014    ; if yes, branch
         leax  next_object,x            *    lea next_object(a1),a1 ; load obj address ; goto next object RAM slot
         cmpx  #Dynamic_Object_RAM_End
-        bne   SingleObjLoad2_01        *    dbf d0,-    ; repeat until end
+        bne   SOL_loop                 *    dbf d0,-    ; repeat until end
                                        *
-SingleObjLoad2_02                      *return_18014:
+SOL_rts                                *return_18014:
         rts                            *    rts
                                        *
                                        *    if object_size<>$40

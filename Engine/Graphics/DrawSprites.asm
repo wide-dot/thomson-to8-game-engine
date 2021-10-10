@@ -219,7 +219,7 @@ DRS_DrawWithoutBackupB1
         _SetCartPageA        
         stx   DRS_dyn3B1+1                  ; save x reg
         ldy   #glb_screen_location_2
-        jsr   [rsv_draw_routine,x]        
+        jsr   [rsv_draw_routine,x]
 DRS_dyn3B1        
         ldx   #$0000                        ; (dynamic) restore x reg
         stu   rsv_bgdata_1,x                ; store pointer to saved background data

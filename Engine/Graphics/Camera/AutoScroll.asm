@@ -13,6 +13,10 @@ glb_camera_x_min                    fdb   $0000             ; min and max are in
 glb_camera_y_min                    fdb   $0000
 glb_camera_x_max                    fdb   $0000
 glb_camera_y_max                    fdb   $0000  
+glb_vp_x_min                        fdb   $0000             ; min and max are initialized at submap loading
+glb_vp_y_min                        fdb   $0000
+glb_vp_x_max                        fdb   $0000
+glb_vp_y_max                        fdb   $0000
 
 glb_auto_scroll_state               fcb   scroll_state_stop ; tell engine to enter a scroll mode
 glb_auto_scroll_frames              fdb   $0000             ; number of auto scroll frames
@@ -25,7 +29,7 @@ AutoScroll
         beq   ATS_Return
         ldd   glb_auto_scroll_frames
         subd  #1
-        bmi   ATS_Stop                                      ; check if auto scroll is still running
+        bmi  ATS_Stop                                      ; check if auto scroll is still running
         
 ATS_Up
         std   glb_auto_scroll_frames
@@ -45,7 +49,7 @@ ATS_Up
         
 ATS_Down
         deca
-        bne   ATS_Return
+        bne   ATS_Left
         ldd   glb_auto_scroll_step_remainder
         addd  glb_auto_scroll_step
         std   glb_auto_scroll_step_remainder
@@ -56,14 +60,41 @@ ATS_Down
         bgt   ATS_Stop      
         std   glb_camera_y_pos    
         rts
-        
+
 ATS_Stop
         ldd   #0
         sta   glb_auto_scroll_state 
         std   glb_auto_scroll_frames        
         std   glb_auto_scroll_step       
         std   glb_auto_scroll_step_remainder
-        
 ATS_Return
-        rts    
+        rts 
+
+ATS_Left
+        deca
+        bne   ATS_Right
+        ldd   glb_auto_scroll_step_remainder
+        addd  glb_auto_scroll_step
+        std   glb_auto_scroll_step_remainder
+        ldd   glb_camera_x_pos
+        subd  glb_auto_scroll_step_remainder16bit
+        clr   glb_auto_scroll_step_remainder
+        cmpd  glb_camera_x_min
+        blt   ATS_Stop      
+        std   glb_camera_x_pos    
+        rts
+
+ATS_Right
+        deca
+        bne   ATS_Return
+        ldd   glb_auto_scroll_step_remainder
+        addd  glb_auto_scroll_step
+        std   glb_auto_scroll_step_remainder
+        ldd   glb_camera_x_pos
+        addd  glb_auto_scroll_step_remainder16bit
+        clr   glb_auto_scroll_step_remainder
+        cmpd  glb_camera_x_max
+        bgt   ATS_Stop      
+        std   glb_camera_x_pos    
+        rts                   
         

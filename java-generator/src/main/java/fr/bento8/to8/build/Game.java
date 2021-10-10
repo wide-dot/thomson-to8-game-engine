@@ -1,16 +1,17 @@
 package fr.bento8.to8.build;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import fr.bento8.to8.image.PngToBottomUpB16Bin;
 import fr.bento8.to8.ram.RamImage;
 import fr.bento8.to8.storage.FdUtil;
 import fr.bento8.to8.storage.T2Util;
+import fr.bento8.to8.util.OrderedProperties;
 
 public class Game {
 	
@@ -46,6 +47,7 @@ public class Game {
 	public String outputDiskName;
 	public static String constAnim;
 	public static String generatedCodeDirName;
+	public static String generatedCodeDirNameDebug;
 	public boolean memoryExtension;
 	public static int nbMaxPagesRAM;	
 	public boolean useCache;
@@ -70,7 +72,7 @@ public class Game {
 	}
 	
 	public Game(String file) throws Exception {	
-			Properties prop = new Properties();
+			OrderedProperties prop = new OrderedProperties();
 			this.name = "Game";
 			
 			try {
@@ -142,6 +144,11 @@ public class Game {
 			if (generatedCodeDirName == null) {
 				throw new Exception("builder.generatedCode not found in "+file);
 			}
+			File tmpFile = new File (generatedCodeDirName);
+			tmpFile.mkdir();
+			generatedCodeDirNameDebug = generatedCodeDirName + "/debug/";
+			tmpFile = new File (generatedCodeDirNameDebug);
+			tmpFile.mkdir();
 
 			// Game Definition
 			// ********************************************************************		
@@ -203,6 +210,9 @@ public class Game {
 			if (outputDiskName == null) {
 				throw new Exception("builder.diskName not found in "+file);
 			}
+			String outputDir = Paths.get(outputDiskName).getParent().toString();
+			tmpFile = new File (outputDir);
+			tmpFile.mkdir();
 
 			if (prop.getProperty("builder.compilatedSprite.useCache") == null) {
 				throw new Exception("builder.compilatedSprite.useCache not found in "+file);
