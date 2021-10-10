@@ -6,13 +6,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
-import fr.bento8.to8.image.PngToBottomUpB16Bin;
 import fr.bento8.to8.image.PngToBottomUpB16Bin;
 import fr.bento8.to8.ram.RamImage;
 import fr.bento8.to8.storage.RAMLoaderIndex;
 import fr.bento8.to8.util.knapsack.Item;
+import fr.bento8.to8.util.OrderedProperties;
 
 public class GameMode {
 
@@ -52,7 +51,7 @@ public class GameMode {
 		this.ramT2 = new RamImage(Game.nbMaxPagesRAM);
 		ramT2.mode = BuildDisk.MEGAROM_T2;
 		
-		Properties prop = new Properties();
+		OrderedProperties prop = new OrderedProperties();
 		try {
 			InputStream input = new FileInputStream(fileName);
 			prop.load(input);

@@ -8,8 +8,13 @@ import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class PaletteTO8 {
 
+	static final Logger logger = LogManager.getLogger("log");
+	
 	private static LAB[] paletteLab;
 	private static int[] paletteRGB;
 	private static int to8RGB[] = {0,  97, 122, 143, 158, 171, 184, 194, 204, 212, 219, 227, 235, 242, 250, 255}; // relevé de voltage datasheet EF9369
@@ -42,9 +47,12 @@ public class PaletteTO8 {
 		ColorModel colorModel = ImageIO.read(new File(fileName)).getColorModel();
 		String code = "";
 		
+		logger.debug("Processing palette: "+fileName);
+		
 		// Construction de la palette de couleur
 		for (int colorIndex = 1; colorIndex < 17; colorIndex++) {
 			Color couleur = new Color(colorModel.getRGB(colorIndex));
+			
 			currentColor = LAB.fromRGBr(couleur.getRed(), couleur.getGreen(), couleur.getBlue(), 1.0);
 			minDistance = Double.POSITIVE_INFINITY;
 			nearestColor = 0;
@@ -56,6 +64,8 @@ public class PaletteTO8 {
 				}
 			}
 
+			logger.debug("Color:"+colorIndex+" R:"+couleur.getRed()+" ("+to8RGBIndex.get((nearestColor >> 16) & 0xFF)+") V:"+couleur.getGreen()+" ("+to8RGBIndex.get((nearestColor >> 8) & 0xFF)+") B:"+couleur.getBlue()+" ("+to8RGBIndex.get(nearestColor & 0xFF)+")");
+			
 			code += "        fdb   $"
 					+ Integer.toHexString(to8RGBIndex.get((nearestColor >> 8) & 0xFF))
 					+ Integer.toHexString(to8RGBIndex.get((nearestColor >> 16) & 0xFF))					

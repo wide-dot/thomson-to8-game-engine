@@ -6,10 +6,10 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 
 import fr.bento8.to8.util.FileUtil;
 import fr.bento8.to8.util.knapsack.Item;
+import fr.bento8.to8.util.OrderedProperties;
 
 public class GameModeCommon {
 
@@ -27,7 +27,7 @@ public class GameModeCommon {
 		
 		glb = new AsmSourceCode(BuildDisk.createFile(name+".glb", FileNames.SHARED_ASSETS));
 		
-		Properties prop = new Properties();
+		OrderedProperties prop = new OrderedProperties();
 		try {
 			InputStream input = new FileInputStream(fileName);
 			prop.load(input);

@@ -51,10 +51,10 @@ DSP_BufferPositionned
         
 DSP_InitPriority
         sta   buf_priority,x                ; init priority for this screen buffer with priority from object
-        asla                                ; change priority number to priority index (value x2)
         
 DSP_CheckLastEntry
         leay  buf_Tbl_Priority_Last_Entry,y
+        asla                                ; change priority number to priority index (value x2)	
         tst   a,y                           ; test left byte only is ok, no object will be stored at $00__ address
         bne   DSP_addToExistingNode         ; not the first object at this priority level, branch
         
@@ -89,11 +89,13 @@ DSP_LinkCurWithPrev
         puls  d,x,u,pc                      ; rts
         
 DSP_ChangePriority
-        leay  buf_Lst_Priority_Unset,y
-        stu   [,y]                          ; add object address to unset list
-        leay  2,y
-        sty   ,y                            ; set index to next free cell of unset list
-        leay  -buf_Lst_Priority_Unset-2,y
+        pshs  d,y
+	leay  buf_Lst_Priority_Unset,y
+        stu   [,y]                          ; add current object address to last free unset list cell
+        ldd   ,y
+        addd  #2
+        std   ,y                            ; set unset list free index to next free cell of unset list
+        puls  d,y                           ; get back DSP_buffer in y
         cmpa  #0
         bne   DSP_CheckLastEntry            ; priority is != 0, branch to add object to display priority list
         puls  d,x,u,pc                      ; rts
@@ -139,7 +141,8 @@ Tbl_Priority_First_Entry_1    fill  0,2+(nb_priority_levels*2) ; first address o
 Tbl_Priority_Last_Entry_1     fill  0,2+(nb_priority_levels*2) ; last address of object in linked list for each priority index (buffer 1) index 0 unused
 Lst_Priority_Unset_1          fdb   Lst_Priority_Unset_1+2     ; pointer to end of list (initialized to its own address+2) (buffer 1)
                               fill  0,(nb_graphical_objects*2) ; objects to delete from priority list
-                              
+DPS_buffer_end                              
+
 buf_Tbl_Priority_First_Entry  equ   0                                                            
 buf_Tbl_Priority_Last_Entry   equ   Tbl_Priority_Last_Entry_0-DPS_buffer_0          
 buf_Lst_Priority_Unset        equ   Lst_Priority_Unset_0-DPS_buffer_0				       

@@ -1,5 +1,6 @@
 package fr.bento8.to8.build;
 
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -51,6 +52,7 @@ import fr.bento8.to8.image.SubSprite;
 import fr.bento8.to8.image.SubSpriteBin;
 import fr.bento8.to8.image.TileBin;
 import fr.bento8.to8.image.Tileset;
+import fr.bento8.to8.image.encoder.MapRleEncoder;
 import fr.bento8.to8.ram.RamImage;
 import fr.bento8.to8.storage.DataIndex;
 import fr.bento8.to8.storage.FdUtil;
@@ -405,9 +407,12 @@ public class BuildDisk
 	private static void generateSprites(Object object) throws Exception {
 		AssemblyGenerator asm;
 		SimpleAssemblyGenerator sasm;
+		MapRleEncoder mrle;
 
 		// génération du sprite compilé
-		SubSprite curSubSprite;		
+		SubSprite curSubSprite;	
+		String associatedIdx = null;
+		BufferedImage imgCumulative = null;
 		
 		// Parcours des images de l'objet et compilation de l'image
 		AsmSourceCode asmImgIndex = new AsmSourceCode(createFile(object.imageSet.fileName, object.name));
@@ -417,7 +422,7 @@ public class BuildDisk
 			sprite.spriteFile = spriteProperties.getValue()[0].split(",")[0];
 			String spriteFileRef = (spriteProperties.getValue()[0].split(",").length>1?spriteProperties.getValue()[0].split(",")[1]:null);
 			sprite.associatedIdx = (spriteProperties.getValue()[0].split(",").length>2?(spriteProperties.getValue()[0].split(",")[2].equals("")?null:spriteProperties.getValue()[0].split(",")[2]):null);
-			boolean interlaced = (spriteProperties.getValue()[0].split(",").length>3?(spriteProperties.getValue()[0].split(",")[3].equals("full")?false:true):true);			
+			boolean interlaced = (spriteProperties.getValue()[0].split(",").length>3?(spriteProperties.getValue()[0].split(",")[3].equals("_full")?false:true):true);			
 			String[] spriteVariants = spriteProperties.getValue()[1].split(",");
 			if (spriteProperties.getValue().length > 2 && spriteProperties.getValue()[2].equalsIgnoreCase(BuildDisk.RAM))
 				sprite.inRAM = true;					
@@ -432,7 +437,7 @@ public class BuildDisk
 				
 				if (cur_variant.contains("B")) {
 					logger.debug("\t\t- BackupBackground/Draw/Erase");
-					SpriteSheet ss = new SpriteSheet(sprite.name, sprite.spriteFile, 1, 1, 1, cur_variant, interlaced);
+					SpriteSheet ss = new SpriteSheet(sprite, associatedIdx, imgCumulative, 1, 1, 1, cur_variant, interlaced);
 					asm = new AssemblyGenerator(ss, Game.generatedCodeDirName + object.name, 0);
 					asm.compileCode("A000");
 					// La valeur 64 doit être ajustée dans MainEngine.asm si modifiée TODO : rendre paramétrable
@@ -459,10 +464,29 @@ public class BuildDisk
 					curSubSprite.erase.inRAM = sprite.inRAM;							
 					object.subSpritesBin.add(curSubSprite.erase);
 				}
+				
+				if (cur_variant.contains("DMAP")) {
+					logger.debug("\t\t- Draw MAP RLE");
+					SpriteSheet ss = new SpriteSheet(sprite, associatedIdx, imgCumulative, 1, 1, 1, cur_variant, interlaced, spriteFileRef);
+					cur_variant = cur_variant.replace("DMAP", "D");
+					mrle = new MapRleEncoder(ss, Game.generatedCodeDirName + object.name, 0);
+					mrle.compileCode("A000");
+					curSubSprite.nb_cell = 0;
+					curSubSprite.x1_offset = mrle.getX1_offset();
+					curSubSprite.y1_offset = mrle.getY1_offset();
+					curSubSprite.x_size = mrle.getX_size();
+					curSubSprite.y_size = mrle.getY_size();
+					curSubSprite.center_offset = ss.center_offset;							
 
-				if (cur_variant.contains("D")) {
+					curSubSprite.draw = new SubSpriteBin(curSubSprite);
+					curSubSprite.draw.setName(cur_variant);
+					curSubSprite.draw.bin = Files.readAllBytes(Paths.get(mrle.getDrawBINFile()));
+					curSubSprite.draw.uncompressedSize = mrle.getDSize();
+					curSubSprite.draw.inRAM = sprite.inRAM;							
+					object.subSpritesBin.add(curSubSprite.draw);
+				}	else if (cur_variant.contains("D")) {
 					logger.debug("\t\t- Draw");
-					SpriteSheet ss = new SpriteSheet(sprite.name, sprite.spriteFile, 1, 1, 1, cur_variant, interlaced, spriteFileRef);
+					SpriteSheet ss = new SpriteSheet(sprite, associatedIdx, imgCumulative, 1, 1, 1, cur_variant, interlaced, spriteFileRef);
 					sasm = new SimpleAssemblyGenerator(ss, Game.generatedCodeDirName + object.name, 0);
 					sasm.compileCode("A000");
 					curSubSprite.nb_cell = 0;
@@ -479,13 +503,15 @@ public class BuildDisk
 					curSubSprite.draw.inRAM = sprite.inRAM;							
 					object.subSpritesBin.add(curSubSprite.draw);
 				}
-
+				
 				sprite.subSprites.put(cur_variant, curSubSprite);
 			}
 
 			// Sauvegarde de tous les rendus demandés pour l'image en cours
 			object.sprites.put(sprite.name, sprite);
 			object.imageSet.uncompressedSize += writeImgIndex(asmImgIndex, null, sprite, UNDEFINED);
+			associatedIdx = sprite.associatedIdx;
+			imgCumulative = sprite.imgCumulative;
 		}
 		
 		object.imageSet.bin = new byte[object.imageSet.uncompressedSize];
@@ -752,7 +778,9 @@ public class BuildDisk
 		
 		// Compilation de l'objet
 		prepend = "\topt   c,ct\n";
-		prepend += "\tINCLUDE \"" + Game.generatedCodeDirName + gm.name+ "/" + MODE_DIR[UNDEFINED] + "/" + FileNames.MAIN_GENCODEGLB+"\"\n";		
+		Path p = Paths.get(gm.engineAsmMainEngine);
+		String asmFileName = p.getFileName().toString();		
+		prepend += "\tINCLUDE \"" + Game.generatedCodeDirName + gm.name+ "/" + MODE_DIR[UNDEFINED] + "/" + FileUtil.removeExtension(asmFileName)+".glb" +"\"\n";		
 
 		if (obj.imageSet.uncompressedSize > 0 && obj.animation.uncompressedSize == 0) {
 			prepend += "\tINCLUDE \"" + Game.generatedCodeDirName + imgSetDir + "/" + FileUtil.removeExtension(obj.imageSet.fileName)+".glb" + "\"\n";
@@ -1601,7 +1629,9 @@ public class BuildDisk
 		
 		// Compilation de l'objet
 		prepend = "\topt   c,ct\n";		
-		prepend += "\tINCLUDE \"" + Game.generatedCodeDirName + gm.name+ "/" + MODE_DIR[mode] + "/" + FileNames.MAIN_GENCODEGLB+"\"\n";
+		Path p = Paths.get(gm.engineAsmMainEngine);
+		String asmFileName = p.getFileName().toString();			
+		prepend += "\tINCLUDE \"" + Game.generatedCodeDirName + gm.name+ "/" + MODE_DIR[mode] + "/" + FileUtil.removeExtension(asmFileName)+".glb" +"\"\n";
 		
 		if (obj.imageSet.uncompressedSize > 0 && obj.animation.uncompressedSize == 0) {			
 			prepend += "\tINCLUDE \"" + Game.generatedCodeDirName + imgSetDir + "/" + FileUtil.removeExtension(obj.imageSet.fileName)+".glb" + "\"\n";
@@ -2811,6 +2841,7 @@ public class BuildDisk
 				   "--list=" + lstFile,
 				   "--6809",	
 				   "--includedir="+path.getParent().toString(),
+				   "--includedir=./",
 				   "--includedir=../..",
 				   "--symbol-dump=" + glbTmpFile,
 				   Game.pragma				   
@@ -2820,6 +2851,7 @@ public class BuildDisk
 		if (mode==MEGAROM_T2) command.add("--define=T2");
 		if (option != null && option.length() >0) command.add(option);
 			
+		logger.debug(command);
 		Process p = new ProcessBuilder(command).inheritIO().start();
 		
 		int result = p.waitFor();
@@ -2872,6 +2904,7 @@ public class BuildDisk
 										   "--list=" + lstFile,
 										   "--6809",	
 										   "--includedir="+asmPath.getParent().toString(),
+										   "--includedir=./",										   
 										   "--includedir=../..",
 										   "--obj",
 										   Game.pragma));

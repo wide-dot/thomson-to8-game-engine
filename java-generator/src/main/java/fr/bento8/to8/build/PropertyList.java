@@ -1,10 +1,11 @@
 package fr.bento8.to8.build;
 
 import java.util.HashMap;
-import java.util.Properties;
+import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import fr.bento8.to8.util.OrderedProperties;
 
 public class PropertyList {
 
@@ -14,12 +15,12 @@ public class PropertyList {
 	 * @param Properties propriétés, String nom de la propriété
 	 * @return HashMap<String, String[]> La liste des valeurs pour la propriété
 	 */
-	public static HashMap<String, String[]> get(Properties properties, String name) 
+	public static HashMap<String, String[]> get(OrderedProperties properties, String name) 
 	{
-		HashMap<String, String[]> result = new HashMap<String, String[]>();
+		HashMap<String, String[]> result = new LinkedHashMap<String, String[]>();
 		Pattern pn = Pattern.compile("^" + name + "\\.(.*)$") ;  
 		Matcher m = null;
-		for (Entry<java.lang.Object, java.lang.Object> entry : properties.entrySet())
+		for (Entry<String, String> entry : properties.entrySet())
 		{
 			m = pn.matcher(((String)entry.getKey())) ;  
 			if (m.find()) {
