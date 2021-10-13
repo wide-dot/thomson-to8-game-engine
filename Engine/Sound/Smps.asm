@@ -348,9 +348,9 @@ YM2413_DrumModeOn
         fdb   $2605 ; (dependency) if modified, change hardcoded value at DrumModeOn end label
         fdb   $2705 ; (dependency) if modified, change hardcoded value at DrumModeOn end label
         fdb   $2801 ; (dependency) if modified, change hardcoded value at DrumModeOn end label
-        fdb   $36F0 ; drum at max vol        
-        fdb   $3700 ; drum at max vol
-        fdb   $3800 ; drum at max vol
+        fdb   $36F2 ; drum at max vol        
+        fdb   $3762 ; drum at max vol
+        fdb   $3844 ; drum at max vol
         fcb   $FF
         
 ******************************************************************************
