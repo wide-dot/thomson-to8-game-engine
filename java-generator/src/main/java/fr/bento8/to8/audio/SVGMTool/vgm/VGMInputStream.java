@@ -1,4 +1,4 @@
-package fr.bento8.to8.audio.YMTool.vgm;
+package fr.bento8.to8.audio.SVGMTool.vgm;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -9,25 +9,15 @@ import java.util.zip.GZIPInputStream;
 
 public class VGMInputStream extends InputStream {
 	private final InputStream input;
-
 	private final int offsetEOF;
-
 	private final int version;
-
 	private final int psgClock;
-
 	private final int fmClock;
-
 	private final int offsetGD3;
-
 	private final int totalSamples;
-
 	private final int offsetLoop;
-
 	private final int loopSamples;
-
 	private final int rate;
-
 	private int pos;
 
 	public VGMInputStream(File paramFile) throws IOException {
