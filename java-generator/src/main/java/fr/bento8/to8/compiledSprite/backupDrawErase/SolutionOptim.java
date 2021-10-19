@@ -18,7 +18,9 @@ public class SolutionOptim{
 
 	private static final Logger logger = LogManager.getLogger("log");
 
-	private int[] fact = new int[]{1, 1, 2, 6, 24, 120, 720, 5040, 40320, 500000};
+	private int[] fact = new int[]{0, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880};
+	private int maxTries;
+	private int combMax;
 
 	private Solution solution;
 	private byte[] data;
@@ -47,10 +49,26 @@ public class SolutionOptim{
 	List<Integer> regE = new ArrayList<Integer>(), regEBest = new ArrayList<Integer>();
 	List<Integer> offsetE = new ArrayList<Integer>(), offsetEBest = new ArrayList<Integer>();
 
-	public SolutionOptim(Solution solution, byte[] data, int maxTries) {
+	public SolutionOptim(Solution solution, byte[] data, int maxT) {
 		this.solution = solution;
 		this.data = data;
-		this.fact[9] = maxTries;
+		this.maxTries = (maxT<0?0:maxT);
+		
+		// An image is made of patterns.
+		// Patterns are organised in nodes.
+		// Nodes are divided in groups of instructions.
+		// The solution optim will try to rearrange the order of each groups inside a node
+		// to get the fastest execution time.
+		// Depending on the number of groups inside a node, the algorithm cannot try all combinations.
+		// If the number of groups in a node is <= 9 this programm will try all the exact combinations.
+		// If it's > 9, the we will try random orders in a limit of number of tries try (maxTries parameter).
+		
+		// The following code will handle the case when maxTries is lower than the number of combinations
+		// when the nb of groups is <= 9, in this case the algorithm will be ramdom instead of "all" combinations
+		combMax = 0;
+		while (combMax < fact.length && maxTries >= fact[combMax]) {
+			combMax++;				
+		}
 	}
 
 	private void saveState(boolean[] saveSet, byte[][] saveVal) {
@@ -115,66 +133,17 @@ public class SolutionOptim{
 		// Initialisation des contraintes
 		HashMap<Integer, Boolean> constaints = new HashMap<Integer, Boolean>();
 		Boolean isValidSolution = true;
+		Boolean isOneValidSolution = false;		
 
 		// Gestion des combinaisons		
 		boolean has_next = true;
-
 		int score = 0, bestScore = Integer.MAX_VALUE;
-
-		//log.printf("> Processed %d/%d\r", ++yourCounter, maxCounter)
-
-		// Initialisation de la meilleure solution
-		//logger.debug("patterns: ");
-		for (List<Integer[]> pl : pattern) {
-			//logger.debug(".");
-			for (Integer[] p : pl) {
-				//logger.debug("("+(p[0] != null?p[0]:"null")+","+(p[1] != null?p[1]:"null")+")");
-				if (p[0] != null) {
-					s = processPatternBackgroundBackup(p[0], saveU, s);
-					bestSolution.add(s);
-				}
-				if (p[1] != null) {
-					bestSolution.add(processPatternDraw(p[1], s));
-				}
-			}
-		}
-		//logger.debug("groupes: "+Arrays.toString(ind));
-
-		if (lastPattern != null) {
-			s = processPatternBackgroundBackup(lastPattern, saveU, s);
-			bestSolution.add(s);
-			bestSolution.add(processPatternDraw(lastPattern, s));
-		}
-
-		// flush du précédent pattern et purge des registres
-		for (int i = regBBSet.length-1; i >= 0; i--) {
-			if (regBBSet[i]) {
-				s.addRegisterPSH(i);
-
-				// Pour chaque registre sauvegardé dans les données du fond
-				// On enregistre l'id du registre et l'offset associé
-				// dans le cas d'un stack blast, on enregistre un index null
-				regE.add(i);
-				offsetE.add(offsetBBSet[i]);
-			}
-			regBBSet[i] = false;
-			offsetBBSet[i] = null;
-		}
-		regBBIdx = -1;
-
-		regEBest.clear();
-		regEBest.addAll(regE);
-		offsetEBest.clear();
-		offsetEBest.addAll(offsetE);
-		saveState(regSetBest, regValBest);
-
-		restoreState();
 
 		// Optimisation de la liste
 		while(has_next) {
 			has_next = false;
 
-			// V�rification des contraintes
+			// Vérification des contraintes
 			for (List<Integer[]> pl : pattern) {
 				for (Integer[] p : pl) {
 					if (p[0] != null) {
@@ -186,6 +155,10 @@ public class SolutionOptim{
 					}
 				}
 			}
+			
+			// allow to tell if a failure is detected
+	        if (isValidSolution)
+	        	isOneValidSolution = true;			
 
 			if (isValidSolution) {
 
@@ -275,6 +248,9 @@ public class SolutionOptim{
 				}
 			}
 		}
+		
+		if (!isOneValidSolution)
+			throw new Exception("No valid solution after trying all combinations.");
 
 		return bestSolution;
 	}
@@ -297,57 +273,18 @@ public class SolutionOptim{
 		// Initialisation des contraintes
 		HashMap<Integer, Boolean> constaints = new HashMap<Integer, Boolean>();
 		Boolean isValidSolution = true;
+		Boolean isOneValidSolution = false;
 
-		// Initialisation de la meilleure solution
-		for (List<Integer[]> pl : pattern) {
-			for (Integer[] p : pl) {
-				if (p[0] != null) {
-					s = processPatternBackgroundBackup(p[0], saveU, s);
-					bestSolution.add(s);
-				}
-				if (p[1] != null) {
-					bestSolution.add(processPatternDraw(p[1], s));
-				}
-			}
-		}
-
-		if (lastPattern != null) {
-			s = processPatternBackgroundBackup(lastPattern, saveU, s);
-			bestSolution.add(s);
-			bestSolution.add(processPatternDraw(lastPattern, s));
-		}
-
-		// flush du pr�c�dent pattern et purge des registres
-		for (int i = regBBSet.length-1; i >= 0; i--) {
-			if (regBBSet[i]) {
-				s.addRegisterPSH(i);
-
-				// Pour chaque registre sauvegard� dans les donn�es du fond
-				// On enregistre l'id du registre et l'offset associ�
-				// dans le cas d'un stack blast, on enregistre un index null
-				regE.add(i);
-				offsetE.add(offsetBBSet[i]);
-			}
-			regBBSet[i] = false;
-			offsetBBSet[i] = null;
-		}
-		regBBIdx = -1;
-
-		regEBest.clear();
-		regEBest.addAll(regE);
-		offsetEBest.clear();
-		offsetEBest.addAll(offsetE);
-		saveState(regSetBest, regValBest);
-
-		restoreState();
-
-		// Test des combinaisons		
-		int essais = (pattern.size()>9?fact[9]:fact[pattern.size()]);
-
+		// Test des combinaisons
 		int score = 0, bestScore = Integer.MAX_VALUE;
 		int a=0, b=0;
+		int essais = maxTries;
 		Random rand = new Random();
-		while (essais-- > 0) {
+		while (!isOneValidSolution || essais-- > 0) {
+			
+			if (essais == -500000)
+				throw new Exception("No valid solution after more than 500000 tries.");
+			
 			if (pattern.size() > 0) {
 				a = rand.nextInt(pattern.size());
 				b = rand.nextInt(pattern.size());
@@ -366,6 +303,10 @@ public class SolutionOptim{
 					}
 				}
 			}
+			
+			// allow to override maxTries/essais until a solution is found
+	        if (isValidSolution)
+	        	isOneValidSolution = true;
 
 			if (isValidSolution) {
 
@@ -580,7 +521,7 @@ public class SolutionOptim{
 				//logger.debug("Noeud: "+currentNode+" nb. patterns: "+nbPatterns+" nb. groupes: "+ind.length);
 
 				// Optimisation combinatoire
-				if (ind.length < 10) {
+				if (ind.length < combMax) {
 					bestSolution = OptimizeUFactorial(patterns, lastPattern, saveU, ind);
 				} else {
 					bestSolution = OptimizeRandom(patterns, lastPattern, saveU);
@@ -598,7 +539,7 @@ public class SolutionOptim{
 					asmCodeSize += s.getSize();
 				}
 				restoreState(regSetBest, regValBest);
-
+				
 				//logger.debug("Cycles: "+asmCodeCycles);
 
 				asmECode.addAll(0, Pattern.getEraseCodeBuf(bestSolution, regEBest, offsetEBest));
@@ -627,8 +568,6 @@ public class SolutionOptim{
 		int bestMaxIdx = -1;
 		int maxIdx = -1;
 		boolean isValid = true;
-
-		// TODO gestion erase de registres en fonction des instructions passées
 
 		// Parcours des combinaisons possibles
 		// Selection de la combinaison qui satisfait les registres déjà occupés
@@ -742,6 +681,7 @@ public class SolutionOptim{
 		List<Boolean> selectedLoadMask = new ArrayList<Boolean>();
 		Snippet snippet = null;
 		List<boolean[]> combiList = new ArrayList<boolean[]>();
+		List<boolean[]> resetRegList = new ArrayList<boolean[]>();
 
 		selectedCombi = -1;
 		minCycles = Integer.MAX_VALUE;
@@ -755,10 +695,13 @@ public class SolutionOptim{
 		// du registre dans le cache regSet et regVal, c'est fait uniquement pour la combinaison retenue dans la 
 		// seconde partie de cette méthode
 		
+		// this force the use of the combi if backgroundbackup and draw is not dissociable
 		if (!solution.patterns.get(id).isBackgroundBackupAndDrawDissociable() && solution.patterns.get(id).useIndexedAddressing()) {
 			combiList.add(solution.patterns.get(id).getRegisterCombi().get(lastSnippet.getCombiIdx()));
+			resetRegList.add(solution.patterns.get(id).getResetRegisters().get(lastSnippet.getCombiIdx()));
 		} else {
 			combiList = solution.patterns.get(id).getRegisterCombi();
+			resetRegList = solution.patterns.get(id).getResetRegisters();
 		}
 
 		for (int j = 0; j < combiList.size(); j++) {
@@ -775,8 +718,7 @@ public class SolutionOptim{
 					currentReg.add(k);
 					
 					if (regSet[k] &&
-						(solution.patterns.get(id).getResetRegisters().size() <= j || (solution.patterns.get(id).getResetRegisters().size() > j &&
-								                                                       solution.patterns.get(id).getResetRegisters().get(j)[k] == false))) {
+						(resetRegList.size() <= j || (resetRegList.size() > j && resetRegList.get(j)[k] == false))) {
 						// Le registre contient une valeur et n'est pas concerné par un reset dans le pattern
 						
 						// Chargement des données du sprite
@@ -844,9 +786,8 @@ public class SolutionOptim{
 		for (int j = 0; j < combiList.get(selectedCombi).length; j++) {
 
 			if (combiList.get(selectedCombi)[j] &&
-					(solution.patterns.get(id).getResetRegisters().size() <= selectedCombi ||
-					(solution.patterns.get(id).getResetRegisters().size() > selectedCombi &&
-							!solution.patterns.get(id).getResetRegisters().get(selectedCombi)[j]))) {
+					(resetRegList.size() <= selectedCombi ||
+					(resetRegList.size() > selectedCombi &&	!resetRegList.get(selectedCombi)[j]))) {
 
 				// On ne charge qui si le registre est dans la combinaison
 				// et qu'il n'a pas été réinitialisé dans le pattern
@@ -862,9 +803,9 @@ public class SolutionOptim{
 
 				// Cas particulier de A, on valorise D
 				if (j == Register.A && (regSet[Register.B] &&
-						((solution.patterns.get(id).getResetRegisters().size() <= selectedCombi ||
-						(solution.patterns.get(id).getResetRegisters().size() > selectedCombi &&
-								!solution.patterns.get(id).getResetRegisters().get(selectedCombi)[Register.B]))))) {
+						((resetRegList.size() <= selectedCombi ||
+						(resetRegList.size() > selectedCombi &&
+								!resetRegList.get(selectedCombi)[Register.B]))))) {
 					regSet[Register.D] = true;
 					regVal[Register.D][0] = regVal[j][0];
 					regVal[Register.D][1] = regVal[j][1];
@@ -872,9 +813,9 @@ public class SolutionOptim{
 
 				// Cas particulier de B, on valorise D
 				if (j == Register.B && (regSet[Register.A] && 
-						((solution.patterns.get(id).getResetRegisters().size() <= selectedCombi ||
-						(solution.patterns.get(id).getResetRegisters().size() > selectedCombi &&
-								!solution.patterns.get(id).getResetRegisters().get(selectedCombi)[Register.A]))))) {
+						((resetRegList.size() <= selectedCombi ||
+						(resetRegList.size() > selectedCombi &&
+								!resetRegList.get(selectedCombi)[Register.A]))))) {
 					regSet[Register.D] = true;
 					regVal[Register.D][2] = regVal[j][0];
 					regVal[Register.D][3] = regVal[j][1];
@@ -882,17 +823,17 @@ public class SolutionOptim{
 
 				// Cas particulier de D, on valorise A et B
 				if (j == Register.D) {
-					if ((solution.patterns.get(id).getResetRegisters().size() <= selectedCombi ||
-							(solution.patterns.get(id).getResetRegisters().size() > selectedCombi &&
-									!solution.patterns.get(id).getResetRegisters().get(selectedCombi)[Register.A]))) {
+					if ((resetRegList.size() <= selectedCombi ||
+							(resetRegList.size() > selectedCombi &&
+									!resetRegList.get(selectedCombi)[Register.A]))) {
 						regSet[Register.A] = true;
 						regVal[Register.A][0] = regVal[j][0];
 						regVal[Register.A][1] = regVal[j][1];
 					}
 
-					if ((solution.patterns.get(id).getResetRegisters().size() <= selectedCombi ||
-							(solution.patterns.get(id).getResetRegisters().size() > selectedCombi &&
-									!solution.patterns.get(id).getResetRegisters().get(selectedCombi)[Register.B]))) {				
+					if ((resetRegList.size() <= selectedCombi ||
+							(resetRegList.size() > selectedCombi &&
+									!resetRegList.get(selectedCombi)[Register.B]))) {				
 						regSet[Register.B] = true;
 						regVal[Register.B][0] = regVal[j][2];
 						regVal[Register.B][1] = regVal[j][3];
@@ -911,9 +852,9 @@ public class SolutionOptim{
 		boolean flush = false;
 		// Réinitialisation des registres écrasés par le pattern
 		// Nécessaire si le dernier pattern a bénéficié du cache mais écrase les registres
-		if (solution.patterns.get(id).getResetRegisters().size() > selectedCombi) {
-			for (int j = 0; j < solution.patterns.get(id).getResetRegisters().get(selectedCombi).length; j++) {
-				if (solution.patterns.get(id).getResetRegisters().get(selectedCombi)[j]) {
+		if (resetRegList.size() > selectedCombi) {
+			for (int j = 0; j < resetRegList.get(selectedCombi).length; j++) {
+				if (resetRegList.get(selectedCombi)[j]) {
 					regSet[j] = false;
 					if (regBBSet[j] || ((j == Register.A || j == Register.B) && regBBSet[Register.D] == true ) || (j == Register.D && (regBBSet[Register.A] == true || regBBSet[Register.B] == true))) {
 						flush = true;
