@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
@@ -23,6 +24,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -130,13 +132,14 @@ public class BuildDisk
 			processBackgroundImages();
 			generateSprites();
 			generateTilesets();
-			compileMainEngines(false);						
+			compileMainEngines(false);
 			compileObjects();
+			System.gc();
 			computeRamAddress();
 			computeRomAddress();
 			generateDynamicContent();
 			generateImgAniIndex();
-			applyDynamicContent();			
+			applyDynamicContent();		
 			compileMainEngines(true);
 			exomizeData();
 			writeObjectsFd(); 
@@ -724,7 +727,7 @@ public class BuildDisk
 	
 	private static void compileObjects() throws Exception {
 		logger.info("Compile Objects ...");
-
+		
 		// Parcours de tous les objets de chaque Game Mode
 		for (Entry<String, GameMode> gameMode : game.gameModes.entrySet()) {
 			
@@ -738,7 +741,7 @@ public class BuildDisk
 					}
 				}
 			}
-			
+						
 			for (Entry<String, Object> object : gameMode.getValue().objects.entrySet()) {
 				compileObject(gameMode.getValue(), object.getValue(), 0);
 			}		
@@ -2826,16 +2829,25 @@ public class BuildDisk
 		String binFile = asmFileName + ".bin";
 		String lstFile = asmFileName + ".lst";
 		String glbFile = asmFileName + ".glb";			
-		String glbTmpFile = asmFileName + ".tmp";
+		String glbTmpFile = asmFileName + ".tmp";	
 		
 		if (mode==MEGAROM_T2)
 			dynamicContentT2.patchSource(path);
 		else if (mode==FLOPPY_DISK)
 			dynamicContentFD.patchSource(path);
+		
+		File del = new File (binFile);
+		del.delete();
+		del = new File (lstFile);
+		del.delete();
+		del = new File (glbFile);
+		del.delete();
+		del = new File (glbTmpFile);
+		del.delete();
 
 		logger.debug("\t# Compile "+path.toString());
 		
-		List<String> command = new ArrayList(List.of(game.lwasm,
+		List<String> command = new ArrayList<String>(List.of(game.lwasm,
 				   path.toString(),
 				   "--output=" + binFile,
 				   "--list=" + lstFile,
@@ -2853,7 +2865,7 @@ public class BuildDisk
 			
 		logger.debug(command);
 		Process p = new ProcessBuilder(command).inheritIO().start();
-		
+	
 		int result = p.waitFor();
 	
 	    Pattern pattern = Pattern.compile("^.*[^\\}]\\sEQU\\s.*$", Pattern.MULTILINE);
@@ -2957,7 +2969,7 @@ public class BuildDisk
 	public static String duplicateFilePrepend(String fileName, String subDir, String prepend) throws IOException {
 		String basename = FileUtil.removeExtension(Paths.get(fileName).getFileName().toString());
 		String destFileName = Game.generatedCodeDirName+subDir+"/"+basename+".asm";
-
+		
 		// Creation du chemin si les répertoires sont manquants
 		File file = new File (destFileName);
 		file.getParentFile().mkdirs();

@@ -30,6 +30,8 @@ public class LWASMUtil {
 				cycles = Integer.parseInt(matcher.group(1));
 			}
 		}      
+		
+		reader.close();		
 
 		return cycles;
 	}
@@ -57,13 +59,17 @@ public class LWASMUtil {
 			}
 		}      
 
+		reader.close();
+		
 		return size;
 	}	
 	
 	public static int getSize(String binFile) throws IOException {
 	    Path bin = Paths.get(binFile);
 	    FileChannel imageFileChannel = FileChannel.open(bin);
-		return Math.toIntExact(imageFileChannel.size());
+	    int size = Math.toIntExact(imageFileChannel.size());
+	    imageFileChannel.close();
+		return size;
 	}		
 	
 }

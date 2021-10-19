@@ -18,7 +18,9 @@ public class SolutionOptim{
 
 	private static final Logger logger = LogManager.getLogger("log");
 
-	private int[] fact = new int[]{1, 1, 2, 6, 24, 120, 720, 5040, 40320, 500000};
+	private int[] fact = new int[]{0, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880};
+	private int maxTries;
+	private int combMax;
 
 	private Solution solution;
 	private byte[] data;
@@ -47,10 +49,26 @@ public class SolutionOptim{
 	List<Integer> regE = new ArrayList<Integer>(), regEBest = new ArrayList<Integer>();
 	List<Integer> offsetE = new ArrayList<Integer>(), offsetEBest = new ArrayList<Integer>();
 
-	public SolutionOptim(Solution solution, byte[] data, int maxTries) {
+	public SolutionOptim(Solution solution, byte[] data, int maxT) {
 		this.solution = solution;
 		this.data = data;
-		this.fact[9] = maxTries;
+		this.maxTries = (maxTries<=0?1:maxTries);
+		
+		// An image is made of patterns.
+		// Patterns are organised in nodes.
+		// Nodes are divided in groups of instructions.
+		// The solution optim will try to rearrange the order of each groups inside a node
+		// to get the fastest execution time.
+		// Depending on the number of groups inside a node, the algorithm cannot try all combinations.
+		// If the number of groups in a node is <= 9 this programm will try all the exact combinations.
+		// If it's > 9, the we will try random orders in a limit of number of tries try (maxTries parameter).
+		
+		// The following code will handle the case when maxTries is lower than the number of combinations
+		// when the nb of groups is <= 9, in this case the algorithm will be ramdom instead of "all" combinations
+		combMax = 0;
+		while (combMax < fact.length && maxTries >= fact[combMax]) {
+			combMax++;				
+		}
 	}
 
 	private void saveState(boolean[] saveSet, byte[][] saveVal) {
@@ -118,75 +136,11 @@ public class SolutionOptim{
 
 		// Gestion des combinaisons		
 		boolean has_next = true;
-
 		int score = 0, bestScore = Integer.MAX_VALUE;
-
-		//log.printf("> Processed %d/%d\r", ++yourCounter, maxCounter)
-
-		// Initialisation de la meilleure solution
-		//logger.debug("patterns: ");
-		for (List<Integer[]> pl : pattern) {
-			//logger.debug(".");
-			for (Integer[] p : pl) {
-				//logger.debug("("+(p[0] != null?p[0]:"null")+","+(p[1] != null?p[1]:"null")+")");
-				if (p[0] != null) {
-					s = processPatternBackgroundBackup(p[0], saveS, s);
-					bestSolution.add(s);
-				}
-				if (p[1] != null) {
-					bestSolution.add(processPatternDraw(p[1], s));
-				}
-			}
-		}
-		//logger.debug("groupes: "+Arrays.toString(ind));
-
-		if (lastPattern != null) {
-			//s = processPatternBackgroundBackup(lastPattern, saveS, s);
-			//bestSolution.add(s);
-			s = processPatternDraw(lastPattern, s);
-			bestSolution.add(s);
-		}
-
-		// flush du précédent pattern et purge des registres
-		for (int i = regBBSet.length-1; i >= 0; i--) {
-			if (regBBSet[i]) {
-				s.addRegisterPSH(i);
-
-				// Pour chaque registre sauvegardé dans les données du fond
-				// On enregistre l'id du registre et l'offset associé
-				// dans le cas d'un stack blast, on enregistre un index null
-				regE.add(i);
-				offsetE.add(offsetBBSet[i]);
-			}
-			regBBSet[i] = false;
-			offsetBBSet[i] = null;
-		}
-		regBBIdx = -1;
-
-		regEBest.clear();
-		regEBest.addAll(regE);
-		offsetEBest.clear();
-		offsetEBest.addAll(offsetE);
-		saveState(regSetBest, regValBest);
-
-		restoreState();
 
 		// Optimisation de la liste
 		while(has_next) {
 			has_next = false;
-
-			// Vérification des contraintes
-//			for (List<Integer[]> pl : pattern) {
-//				for (Integer[] p : pl) {
-//					if (p[0] != null) {
-//						constaints.put(p[0], true);
-//					}
-//					if (p[1] != null && !constaints.containsKey(p[1])) {
-//						isValidSolution = false;
-//						break;
-//					}
-//				}
-//			}
 
 			if (isValidSolution) {
 
@@ -206,8 +160,6 @@ public class SolutionOptim{
 				}
 
 				if (lastPattern != null) {
-//					s = processPatternBackgroundBackup(lastPattern, saveS, s);
-//					testSolution.add(s);
 					s = processPatternDraw(lastPattern, s);
 					testSolution.add(s);					
 				}
@@ -300,55 +252,10 @@ public class SolutionOptim{
 		HashMap<Integer, Boolean> constaints = new HashMap<Integer, Boolean>();
 		Boolean isValidSolution = true;
 
-		// Initialisation de la meilleure solution
-		for (List<Integer[]> pl : pattern) {
-			for (Integer[] p : pl) {
-				if (p[0] != null) {
-					s = processPatternBackgroundBackup(p[0], saveS, s);
-					bestSolution.add(s);
-				}
-				if (p[1] != null) {
-					bestSolution.add(processPatternDraw(p[1], s));
-				}
-			}
-		}
-
-		if (lastPattern != null) {
-//			s = processPatternBackgroundBackup(lastPattern, saveS, s);
-//			bestSolution.add(s);
-			s = processPatternDraw(lastPattern, s);
-			bestSolution.add(s);
-		}
-
-		// flush du pr�c�dent pattern et purge des registres
-		for (int i = regBBSet.length-1; i >= 0; i--) {
-			if (regBBSet[i]) {
-				s.addRegisterPSH(i);
-
-				// Pour chaque registre sauvegard� dans les donn�es du fond
-				// On enregistre l'id du registre et l'offset associ�
-				// dans le cas d'un stack blast, on enregistre un index null
-				regE.add(i);
-				offsetE.add(offsetBBSet[i]);
-			}
-			regBBSet[i] = false;
-			offsetBBSet[i] = null;
-		}
-		regBBIdx = -1;
-
-		regEBest.clear();
-		regEBest.addAll(regE);
-		offsetEBest.clear();
-		offsetEBest.addAll(offsetE);
-		saveState(regSetBest, regValBest);
-
-		restoreState();
-
 		// Test des combinaisons		
-		int essais = (pattern.size()>9?fact[9]:fact[pattern.size()]);
-
 		int score = 0, bestScore = Integer.MAX_VALUE;
 		int a=0, b=0;
+		int essais = maxTries;
 		Random rand = new Random();
 		while (essais-- > 0) {
 			if (pattern.size() > 0) {
@@ -356,19 +263,6 @@ public class SolutionOptim{
 				b = rand.nextInt(pattern.size());
 				Collections.swap(pattern, a, b);
 			}
-
-			// V�rification des contraintes
-//			for (List<Integer[]> pl : pattern) {
-//				for (Integer[] p : pl) {
-//					if (p[0] != null) {
-//						constaints.put(p[0], true);
-//					}
-//					if (p[1] != null && !constaints.containsKey(p[1])) {
-//						isValidSolution = false;
-//						break;
-//					}
-//				}
-//			}
 
 			if (isValidSolution) {
 
@@ -388,19 +282,17 @@ public class SolutionOptim{
 				}
 
 				if (lastPattern != null) {
-//					s = processPatternBackgroundBackup(lastPattern, saveS, s);
-//					testSolution.add(s);
 					s = processPatternDraw(lastPattern, s);
 					testSolution.add(s);
 				}
 
-				// flush du pr�c�dent pattern et purge des registres
+				// flush du précédent pattern et purge des registres
 				for (int i = regBBSet.length-1; i >= 0; i--) {
 					if (regBBSet[i]) {
 						s.addRegisterPSH(i);
 
-						// Pour chaque registre sauvegard� dans les donn�es du fond
-						// On enregistre l'id du registre et l'offset associ�
+						// Pour chaque registre sauvegardé dans les données du fond
+						// On enregistre l'id du registre et l'offset associé
 						// dans le cas d'un stack blast, on enregistre un index null
 						regE.add(i);
 						offsetE.add(offsetBBSet[i]);
@@ -415,8 +307,6 @@ public class SolutionOptim{
 					score += ts.getCycles();
 				}
 
-				//score += Pattern.getEraseCodeBufCycles(testSolution, regE, offsetE);
-
 				if (score < bestScore) {
 					bestScore = score;
 					//logger.debug("score: "+score);
@@ -428,14 +318,14 @@ public class SolutionOptim{
 					offsetEBest.addAll(offsetE);
 					saveState(regSetBest, regValBest);
 				} else {
-					// Meilleurs r�sultats si ligne suivante comment�e
+					// Meilleurs résultats si ligne suivante commentée
 					// Collections.swap(pattern, a, b);
 				}
 
 				testSolution.clear();
 				restoreState();
 			} else {
-				// Meilleurs r�sultats si ligne suivante comment�e
+				// Meilleurs résultats si ligne suivante commentée
 				// Collections.swap(pattern, a, b);
 			}
 
@@ -586,7 +476,7 @@ public class SolutionOptim{
 				//logger.debug("Noeud: "+currentNode+" nb. patterns: "+nbPatterns+" nb. groupes: "+ind.length);
 
 				// Optimisation combinatoire
-				if (ind.length < 10) {
+				if (ind.length < combMax) {
 					bestSolution = OptimizeUFactorial(patterns, lastPattern, saveS, ind);
 				} else {
 					bestSolution = OptimizeRandom(patterns, lastPattern, saveS);
