@@ -2854,10 +2854,12 @@ public class BuildDisk
 				   "--6809",	
 				   "--includedir="+path.getParent().toString(),
 				   "--includedir=./",
-				   "--includedir=../..",
 				   "--symbol-dump=" + glbTmpFile,
 				   Game.pragma				   
 				   ));
+		
+		for (int i=0; i<Game.includeDirs.length; i++)
+			command.add(Game.includeDirs[i]);
 		
 		if (Game.define != null && Game.define.length()>0) command.add(Game.define);
 		if (mode==MEGAROM_T2) command.add("--define=T2");
@@ -2916,10 +2918,12 @@ public class BuildDisk
 										   "--list=" + lstFile,
 										   "--6809",	
 										   "--includedir="+asmPath.getParent().toString(),
-										   "--includedir=./",										   
-										   "--includedir=../..",
+										   "--includedir=./",
 										   "--obj",
 										   Game.pragma));
+			
+			for (int i=0; i<Game.includeDirs.length; i++)
+				command.add(Game.includeDirs[i]);
 			
 			if (Game.define != null && Game.define.length()>0) command.add(Game.define);
 										   

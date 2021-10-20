@@ -243,7 +243,7 @@ public class SimpleAssemblyGenerator{
 
 	public List<String> getCodeFrameDrawStart(String org) {
 		List<String> asm = new ArrayList<String>();
-		asm.add("\tINCLUDE \"../../Engine/Constants.asm\"");		
+		asm.add("\tINCLUDE \"./Engine/Constants.asm\"");		
 		asm.add("\tORG $" + org + "");
 		asm.add("\tSETDP $FF");
 		asm.add("\tOPT C,CT");		

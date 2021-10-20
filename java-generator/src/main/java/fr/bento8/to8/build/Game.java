@@ -53,6 +53,7 @@ public class Game {
 	public boolean useCache;
 	public int maxTries;
 	public static String pragma;
+	public static String[] includeDirs;
 	public static String define;
 	
 	// Storage
@@ -182,6 +183,12 @@ public class Game {
 				pragma = "--pragma=" + pragma;
 			} else {
 				pragma = "";
+			}
+
+			includeDirs = prop.getProperty("builder.lwasm.includeDirs").split(";");
+			if (includeDirs != null) {
+				for (int i=0; i<includeDirs.length; i++)
+					includeDirs[i] = "--includedir=" + includeDirs[i];
 			}
 			
 			define = prop.getProperty("builder.lwasm.define");
