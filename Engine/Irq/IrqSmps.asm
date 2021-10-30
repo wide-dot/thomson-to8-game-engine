@@ -59,8 +59,6 @@ IrqSmps_end
         lda   #$00                                    ; (dynamic)
         _SetCartPageA                                 ; restore data page
         jmp   $E830                                   ; return to caller
-        
-Vint_runcount fdb $0000
 
 ; This space allow the use of system stack inside IRQ calls
 ; otherwise the writes in sys stack will erase data when S is in use

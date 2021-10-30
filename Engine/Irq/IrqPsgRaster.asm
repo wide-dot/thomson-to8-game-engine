@@ -123,5 +123,3 @@ IrqPsgRaster_end
         lda   #$00
         _SetCartPageA                                 ; restore data page
         jmp   $E830                                   ; return to caller 
-
-Vint_runcount fdb $0000

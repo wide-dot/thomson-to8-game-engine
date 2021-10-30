@@ -358,10 +358,12 @@ public class MapRleEncoder{
 					   "--list=" + lstDrawFileName,
 					   "--6809",	
 					   "--includedir=.",
-					   "--includedir=../..",
 					   "--raw",
 					   Game.pragma				   
 					   ));
+			
+			for (int i=0; i<Game.includeDirs.length; i++)
+				command.add(Game.includeDirs[i]);
 			
 			if (Game.define != null && Game.define.length()>0) command.add(Game.define);
 				
@@ -406,7 +408,7 @@ public class MapRleEncoder{
 
 	public List<String> getCodeFrameDrawHeader(String org) {
 		List<String> asm = new ArrayList<String>();
-		asm.add("\tINCLUDE \"../../Engine/Constants.asm\"");
+		asm.add("\tINCLUDE \"./Engine/Constants.asm\"");
 		asm.add("");
 		asm.add("\torg   $" + org + "");
 		asm.add("\tsetdp $FF");

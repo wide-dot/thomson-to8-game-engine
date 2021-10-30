@@ -66,8 +66,18 @@ am_SwapVideoPage
         
         ldd   glb_Main_runcount
         addd  #1
-        std   glb_Main_runcount        
+        std   glb_Main_runcount    
+
+	ldd   Vint_runcount            ; store in Vint_Main_runcount the number of elapsed 50Hz frames
+	subd  Vint_Last_runcount       ; used in AnimateSpriteSync
+	stb   Vint_Main_runcount
+	ldd   Vint_runcount
+	std   Vint_Last_runcount
+
         rts
         
-glb_Main_runcount     fdb $0000 ; page swap counter
-glb_Cur_Wrk_Screen_Id fcb $00   ; screen buffer set to write operations (0 or 1)
+glb_Main_runcount     fdb   0 ; page swap counter
+Vint_runcount         fdb   0
+Vint_Last_runcount    fdb   0
+Vint_Main_runcount    fcb   0
+glb_Cur_Wrk_Screen_Id fcb   0 ; screen buffer set to write operations (0 or 1)

@@ -1,7 +1,7 @@
 * ---------------------------------------------------------------------------
-* IrqSvgm
+* Irq Smidi
 * -------
-* IRQ Subroutine to play sound with SN76489/YM2413
+* IRQ Subroutine to play midi data
 *
 * input REG : [dp] with value E7 (from Monitor ROM)
 * reset REG : none
@@ -21,7 +21,7 @@ irq_one_frame     equ 312*64-1         ; one frame timer (lines*cycles_per_lines
 IrqSet50Hz
         ldb   #$42
         stb   irq_timer_ctrl           ; timer precision x8
-        ldd   #IrqSvgm
+        ldd   #IrqSmidi
         std   irq_routine
         ldx   #irq_one_frame           ; on every frame
         stx   irq_timer
@@ -42,9 +42,9 @@ IrqOff
         orcc  #$10                     ; tell 6809 to activate irq
         rts
         
-IrqSvgm 
+IrqSmidi 
         _GetCartPageA
-        sta   IrqSvgm_end+1            ; backup data page
+        sta   IrqSmidi_end+1           ; backup data page
         
         ldd   Vint_runcount
         addd  #1
@@ -55,7 +55,7 @@ IrqSvgm
         jsr   MusicFrame
 @a      lds   #0                       ; (dynamic) restore system stack   
         
-IrqSvgm_end        
+IrqSmidi_end        
         lda   #$00                     ; (dynamic)
         _SetCartPageA                  ; restore data page
         jmp   $E830                    ; return to caller
