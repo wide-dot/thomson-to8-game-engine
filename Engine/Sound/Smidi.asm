@@ -79,20 +79,18 @@ MusicFrame
         lda   MusicStatus              ; check if a music track is to play
         bne   @a
         rts    
-@a      lda   WaitFrame
-        deca
-        sta   WaitFrame
+@a      dec   WaitFrame
         beq   ReadCommand              ; no more frame to wait, play the next commands
         rts
 
 IsMusicLoop
-        tst   MusicLoop
+        lda   MusicLoop
         beq   StopMusic
         ldx   MusicIndex
+	lda   ,x
         bra   LoopRestart
     
 StopMusic
-        lda   #0                       
         sta   MusicStatus
         sta   MusicLoop
         rts
