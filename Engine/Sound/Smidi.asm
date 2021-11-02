@@ -52,12 +52,12 @@ PlayMusic
         pshs  a
 @a      stx   MusicIndex               ; store index for loop restart
         stx   MusicIndexPos            ; init data chunck index position
-        lda   ,x                       ; get memory page that contains track data
+        lda   sound_page,x             ; get memory page that contains track data
         sta   MusicPage
         sta   MusicStatus              ; no data on page 0, page is used to init status to a non zero value
         lda   #1
         sta   WaitFrame                ; wait frame is only zero where reading commands, should be init to 1
-        ldx   1,x                      ; get ptr to track data
+        ldx   sound_start_addr,x       ; get ptr to track data
         stx   MusicDataPos             ; init data location
         puls  a,pc
 
@@ -97,13 +97,13 @@ StopMusic
 
 BankSwitch        
         ldx   MusicIndexPos            ; read byte was $00, this is end of data chunk or music track
-        leax  5,x                      ; move to next index
-        lda   ,x                       ; get memory page that contains track data
+        leax  sound_meta_size,x        ; move to next index
+        lda   sound_page,x             ; get memory page that contains track data
         beq   IsMusicLoop              ; this is an end of track
 LoopRestart
         sta   MusicPage                ; store the new page
         stx   MusicIndexPos            ; this is an end of data chunck, save new index
-        ldx   1,x                      ; get ptr to track data
+        ldx   sound_start_addr,x       ; get ptr to track data
 	bra   @a
         ;
 ReadCommand

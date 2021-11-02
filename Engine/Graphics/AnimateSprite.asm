@@ -1,9 +1,6 @@
 * ---------------------------------------------------------------------------
 * Subroutine to animate a sprite using an animation script
 *
-*   this function also change render flags to match orientation given by
-*   the status byte;
-*
 * input REG : [u] pointeur sur l'objet
 *
 * ---------------------------------------------------------------------------
@@ -63,18 +60,12 @@ Anim_Run                                    *Anim_Run:
 		bhs   Anim_End_FF                   *    bhs     Anim_End_FF   ; MJ: if so, branch to flag routines
                                             *; loc_1657C:
 Anim_Next                                   *Anim_Next:
-	    * ne pas utiliser                   *    andi.b  #$7F,d0               ; clear sign bit
+	                                        *    andi.b  #$7F,d0               ; clear sign bit
         std   image_set,u                   *    move.b  d0,mapping_frame(a0)  ; load sprite number
-        ldb   status,u                      *    move.b  status(a0),d1         ; match the orientaion dictated by the object
-        andb  #status_x_orientation+status_y_orientation
-        stb   Anim_dyn+1
+                                            *    move.b  status(a0),d1         ; match the orientaion dictated by the object
                                             *    andi.b  #3,d1                 ; with the orientation used by the object engine
-        lda   render_flags,u                *    andi.b  #$FC,render_flags(a0)
-        anda  #^(render_xmirror_mask+render_ymirror_mask)
-Anim_dyn        
-        ora   #$00                          ; (dynamic)
+                                            *    andi.b  #$FC,render_flags(a0)
                                             *    or.b    d1,render_flags(a0)
-        sta   render_flags,u                
         inc   anim_frame,u                  *    addq.b  #1,anim_frame(a0)     ; next frame number
                                             *; return_1659A:
 Anim_Rts                                    *Anim_Wait:

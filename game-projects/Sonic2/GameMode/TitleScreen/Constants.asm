@@ -60,10 +60,10 @@ erase_nb_cell                 equ 6
 * Sound Constants
 * ===========================================================================
 
-pcm_page        equ 0
-pcm_start_addr  equ 1
-pcm_end_addr    equ 3
-pcm_meta_size   equ 5
+sound_page        equ 0
+sound_start_addr  equ 1
+sound_end_addr    equ 3
+sound_meta_size   equ 5
 
 * ===========================================================================
 * Object Constants

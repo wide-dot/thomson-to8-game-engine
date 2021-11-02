@@ -50,7 +50,7 @@ public class RamImage
 		this.curPage = 0;		
 	}	
 	
-	public void setData (int page, int startPos, byte[] newData) {
+	public void setData (int page, int startPos, byte[] newData) throws Exception {
 		int endPos = newData.length+startPos;		
 		
 		if (startPos < this.startAddress[page]) {

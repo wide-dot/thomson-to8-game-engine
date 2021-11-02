@@ -22,15 +22,15 @@ PlayPCM
         sta   $e7cf   ! CRA and sound
         
 PlayPCM_ReadChunk
-        lda   pcm_page,y                    ; load memory page
+        lda   sound_page,y                    ; load memory page
         beq   PlayPCM_End
         _SetCartPageA                
-        ldx   pcm_start_addr,y              ; Chunk start addr
+        ldx   sound_start_addr,y              ; Chunk start addr
        
 PlayPCM_Loop      
         lda   ,x+
         sta   $e7cd                         ; send byte to DAC
-        cmpx  pcm_end_addr,y
+        cmpx  sound_end_addr,y
         beq   PlayPCM_NextChunk        
         mul                                 ; tempo for 16hHz
         mul
@@ -39,7 +39,7 @@ PlayPCM_Loop
         bra   PlayPCM_Loop                  ; loop is 63 cycles instead of 62,5
          
 PlayPCM_NextChunk
-        leay  pcm_meta_size,y
+        leay  sound_meta_size,y
         mul                                 ; tempo for 16kHz
         nop
         bra   PlayPCM_ReadChunk

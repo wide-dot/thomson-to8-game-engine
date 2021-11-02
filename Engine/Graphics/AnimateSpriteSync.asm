@@ -1,8 +1,6 @@
 * ---------------------------------------------------------------------------
 * Subroutine to animate a sprite using an animation script
-*
-*   this function also change render flags to match orientation given by
-*   the status byte;
+* Use VBL to keep a constant animation rate
 *
 * input REG : [u] pointeur sur l'objet
 *
@@ -36,48 +34,42 @@ AnimateSpriteSync                           *AnimateSprite:
         aslb
         leay  b,x
         ldd   ,y
-	cmpa  #$FA
-	bhs   Anim_End_FF         
+        cmpa  #$FA
+        bhs   Anim_End_FF         
         std   image_set,u
         bra   Anim_Run
         
 Anim_NoLink
-	ldb   #0                            
+        ldb   #0                            
         stb   anim_frame,u                  *    move.b  #0,anim_frame(a0)          ; reset animation
         stb   anim_frame_duration,u         *    move.b  #0,anim_frame_duration(a0) ; reset frame duration
                                             *; loc_16560:
 Anim_Run                                    *Anim_Run:
         ldb   anim_frame_duration,u
         subb  Vint_Main_runcount
-	stb   anim_frame_duration,u
+        stb   anim_frame_duration,u
                                             *    subq.b  #1,anim_frame_duration(a0)   ; subtract 1 from frame duration
         bpl   Anim_Rts                      *    bpl.s   Anim_Wait                    ; if time remains, branch
         * no offset table                   *    add.w   d0,d0
         * anim is the address of anim       *    adda.w  (a1,d0.w),a1                 ; calculate address of appropriate animation script
         ldb   -1,x                            
-	stb   anim_frame_duration,u         *    move.b  (a1),anim_frame_duration(a0) ; load frame duration
+        stb   anim_frame_duration,u         *    move.b  (a1),anim_frame_duration(a0) ; load frame duration
                                             *    moveq   #0,d1
         ldb   anim_frame,u                  *    move.b  anim_frame(a0),d1 ; load current frame number
         aslb
         leay  b,x                                
         ldd   ,y                            *    move.b  1(a1,d1.w),d0 ; read sprite number from script
         * bmi   Anim_End_FF                 *    bmi.s   Anim_End_FF   ; if animation is complete, branch MJ: Delete this line
-	cmpa  #$FA                          *    cmp.b   #$FA,d0       ; MJ: is it a flag from FA to FF?
-	bhs   Anim_End_FF                   *    bhs     Anim_End_FF   ; MJ: if so, branch to flag routines
+        cmpa  #$FA                          *    cmp.b   #$FA,d0       ; MJ: is it a flag from FA to FF?
+        bhs   Anim_End_FF                   *    bhs     Anim_End_FF   ; MJ: if so, branch to flag routines
                                             *; loc_1657C:
 Anim_Next                                   *Anim_Next:
-	* ne pas utiliser                   *    andi.b  #$7F,d0               ; clear sign bit
+                                            *    andi.b  #$7F,d0               ; clear sign bit
         std   image_set,u                   *    move.b  d0,mapping_frame(a0)  ; load sprite number
-        ldb   status,u                      *    move.b  status(a0),d1         ; match the orientaion dictated by the object
-        andb  #status_x_orientation+status_y_orientation
-        stb   Anim_dyn+1
+                                            *    move.b  status(a0),d1         ; match the orientaion dictated by the object
                                             *    andi.b  #3,d1                 ; with the orientation used by the object engine
-        lda   render_flags,u                *    andi.b  #$FC,render_flags(a0)
-        anda  #^(render_xmirror_mask+render_ymirror_mask)
-Anim_dyn        
-        ora   #$00                          ; (dynamic)
+                                            *    andi.b  #$FC,render_flags(a0)
                                             *    or.b    d1,render_flags(a0)
-        sta   render_flags,u                
         inc   anim_frame,u                  *    addq.b  #1,anim_frame(a0)     ; next frame number
                                             *; return_1659A:
 Anim_Rts                                    *Anim_Wait:
@@ -89,7 +81,7 @@ Anim_Rts                                    *Anim_Wait:
 Anim_End_FF                                 *Anim_End_FF:
         inca                                *    addq.b  #1,d0       ; is the end flag = $FF ?
         bne   Anim_End_FE                   *    bne.s   Anim_End_FE ; if not, branch
-	ldb   #0                            
+        ldb   #0                            
         stb   anim_frame,u                  *    move.b  #0,anim_frame(a0) ; restart the animation
         ldd   ,x                            *    move.b  1(a1),d0          ; read sprite number
         bra   Anim_Next                     *    bra.s   Anim_Next

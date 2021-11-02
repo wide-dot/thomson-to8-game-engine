@@ -11,6 +11,12 @@
 HalfPipe_Img_z_depth  equ 4 ; number of z pos increment into a single image 
 
 * ===========================================================================
+* Physics Constants
+* ===========================================================================
+
+gravity                       equ $38 ; in 8bit decimal, sub-pixel value
+
+* ===========================================================================
 * Object Constants
 * ===========================================================================
 
@@ -21,6 +27,12 @@ ss_self_delete                equ ext_variables+6  ; flag usually set by parent 
 collision_property            equ ext_variables+7
 mapping_frame                 equ ext_variables+8
 ss_z_pos_img_start            equ ext_variables+9  ; and ext_variables+10  ; distance from camera to half-pipe segment end (0: front) at start of last image
+angle                         equ ext_variables+11 ; angle (z axis) 360 degrees = 256, from camera view: $00 right, $40 bottom, $80 left, $c0 top
+collision_flags               equ ext_variables+12 ; Collision response bitfield, tells what the object will do if hit by the character
+* --- collision bitfield variables for objects ---
+; format TTSS SSSS
+; TT is the type of collision - 00 is enemy, 01 sets the routine counter to $4, 10 is harm, and 11 seems to be a special thing for the starpole.
+; SSSSSS is the size, lifted from a lookup table in the collision response routine.
 
 ;ss_dplc_timer = $23
 ;ss_x_pos = objoff_2A
