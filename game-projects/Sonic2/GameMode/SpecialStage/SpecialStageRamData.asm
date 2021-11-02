@@ -14,8 +14,8 @@ Sub_SpecialStage_Main             equ 1
 
 nb_level_objects                  equ 3
 nb_reserved_objects               equ 2
-nb_dynamic_objects                equ 45
-nb_graphical_objects                        equ 60 * max 64 total
+nb_dynamic_objects                equ 40
+nb_graphical_objects              equ 46 * max 64 total
 
 ; Objects that will be run manually from Special Stage
 SpecialStageHalfPipe              fill  0,object_size

@@ -623,6 +623,11 @@ public class BuildDisk
 			rli.ram_page = 1;
 			rli.ram_address = 0x0100;
 			rli.ram_endAddress = 0x0100 + binBytes.length;
+			
+			if (rli.ram_endAddress >= 0x4000) {
+				throw new Exception ("game-mode binary should be 16128 bytes max ($6100-$9FFF).");
+			}			
+			
 			rli.split = false; // la page 1 n'est pas utilsée en zone cartouche
 			rli.gml.add(gameMode.getValue());
 			

@@ -43,9 +43,9 @@ TestLeft
         leax  -1,x
         ldd   #Ani_link_walk_side
         std   anim,u   
-        lda   status,u
-        anda  #^status_x_orientation        
-        sta   status,u                   
+        lda   render_flags,u
+        anda  #^render_xmirror_mask        
+        sta   render_flags,u                   
         cmpx  glb_vp_x_min 
         bhi   @a
         bra   Stall
@@ -58,9 +58,9 @@ TestRight
         leax  1,x
         ldd   #Ani_link_walk_side
         std   anim,u        
-        lda   status,u
-        ora   #status_x_orientation        
-        sta   status,u           
+        lda   render_flags,u
+        ora   #render_xmirror_mask        
+        sta   render_flags,u           
         cmpx  glb_vp_x_max 
         blo   @b
         bra   Stall                

@@ -42,7 +42,7 @@ LevelMainLoop
 * ==============================================================================
 * Routines
 * ==============================================================================
-		INCLUDE "./Engine/Ram/BankSwitch.asm"
+        INCLUDE "./Engine/Ram/BankSwitch.asm"
         INCLUDE "./Engine/Graphics/WaitVBL.asm"
         INCLUDE "./Engine/Graphics/DrawFullscreenImage.asm"	
         INCLUDE "./Engine/Graphics/AnimateSprite.asm"	

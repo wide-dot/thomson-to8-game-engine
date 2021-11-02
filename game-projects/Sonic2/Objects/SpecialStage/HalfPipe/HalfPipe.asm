@@ -893,15 +893,15 @@ HalfPipe_Continue
         beq   @a
         ldb   HalfPipe_Seq_UpdFlip+1
         bpl   @b   
-        lda   status,u
-        ora   #status_x_orientation         ; set flip - left orientation
-        sta   status,u
+        lda   render_flags,u
+        ora   #render_xmirror_mask          ; set flip - left orientation
+        sta   render_flags,u
         lda   #$FF
         sta   SSTrack_Orientation
         bra   @c
-@b      lda   status,u
-        anda   #^status_x_orientation       ; unset flip - right orientation
-        sta   status,u
+@b      lda   render_flags,u
+        anda   #^render_xmirror_mask        ; unset flip - right orientation
+        sta   render_flags,u
         lda   #0
         sta   SSTrack_Orientation
 @c      com   HalfPipe_Seq_UpdFlip
