@@ -357,7 +357,7 @@ public class MapRleEncoder{
 					   "--output=" + binDrawFileName,
 					   "--list=" + lstDrawFileName,
 					   "--6809",	
-					   "--includedir=.",
+					   "--includedir=./",
 					   "--raw",
 					   Game.pragma				   
 					   ));

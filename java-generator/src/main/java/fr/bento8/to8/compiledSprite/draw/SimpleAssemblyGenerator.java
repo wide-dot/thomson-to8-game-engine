@@ -184,12 +184,14 @@ public class SimpleAssemblyGenerator{
 					asmDrawFileName,
 					   "--output=" + binDrawFileName,
 					   "--list=" + lstDrawFileName,
-					   "--6809",	
-					   "--includedir=.",
-					   "--includedir=../..",
+					   "--6809",
+					   "--includedir=./",
 					   "--raw",
 					   Game.pragma				   
 					   ));
+			
+			for (int i=0; i<Game.includeDirs.length; i++)
+				command.add(Game.includeDirs[i]);			
 			
 			if (Game.define != null && Game.define.length()>0) command.add(Game.define);
 				
