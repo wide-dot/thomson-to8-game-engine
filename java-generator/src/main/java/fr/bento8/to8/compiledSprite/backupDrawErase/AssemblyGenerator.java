@@ -250,8 +250,8 @@ public class AssemblyGenerator{
 					 asmBckDrawFileName,
 					   "--output=" + binBckDrawFileName,
 					   "--list=" + lstBckDrawFileName,
-					   "--6809",	
-					   "--includedir=.",
+					   "--6809",
+					   "--includedir=./",
 					   "--raw",
 					   Game.pragma				   
 					   ));
