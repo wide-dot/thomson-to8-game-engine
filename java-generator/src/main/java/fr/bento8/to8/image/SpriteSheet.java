@@ -339,15 +339,16 @@ public class SpriteSheet {
 
 				if (subImageWidth <= 160 && height <= 200 && pixelSize == 8) { // Contrôle du format d'image
 
-					// On inverse l'image verticalement (y mirror)		
-					if (variant.contains("Y")) {
+					// On inverse l'image horizontalement et verticalement		
+					if (variant.contains("XY")) {
+						hFlipped = true;
 						vFlipped = true;
-						AffineTransform tx = AffineTransform.getScaleInstance(1, -1);
-						tx.translate(0, -image.getHeight(null));
+						AffineTransform tx = AffineTransform.getScaleInstance(-1, -1);
+						tx.translate(-image.getWidth(null), -image.getHeight(null));
 						AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
 						image = op.filter(image, null);
-					}
-
+					}					
+					
 					// On inverse l'image horizontalement (x mirror)
 					else if (variant.contains("X")) {
 						hFlipped = true;
@@ -357,12 +358,11 @@ public class SpriteSheet {
 						image = op.filter(image, null);
 					}
 
-					// On inverse l'image horizontalement et verticalement		
-					else if (variant.contains("XY")) {
-						hFlipped = true;
+					// On inverse l'image verticalement (y mirror)		
+					else if (variant.contains("Y")) {
 						vFlipped = true;
-						AffineTransform tx = AffineTransform.getScaleInstance(-1, -1);
-						tx.translate(-image.getWidth(null), -image.getHeight(null));
+						AffineTransform tx = AffineTransform.getScaleInstance(1, -1);
+						tx.translate(0, -image.getHeight(null));
 						AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
 						image = op.filter(image, null);
 					}
