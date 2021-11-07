@@ -159,7 +159,7 @@ CSR_UpdSpriteImageBasedOnMirror
 
         ; an image set is made of 1 to 4 image subsets
         ; each subset represent a mirrored version of the image (N: normal, X: x mirror, Y: y mirror, XY: xy mirror)
-        ; this code set the active image subset base don mirror flags
+        ; this code set the active image subset based on mirror flags
 
         lda   rsv_render_flags,u
         ora   #rsv_render_checkrefresh_mask
