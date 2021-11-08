@@ -14,63 +14,88 @@ import fr.bento8.to8.util.FileUtil;
 public class lineScroll{
 
 	private static final Logger logger = LogManager.getLogger("log");	
-
+	private static int _OUT_WIDTH = 320;
+	
 	public static void main(String[] args) throws Throwable {
 
-		System.out.println("*** line scroll generator ***");
+		System.out.println("*** parallax line scroll generator ***");
 
-		if (args.length != 5) {
+		String file = System.getProperty("image");
+		String maskFile = System.getProperty("mask");
+
+		if (file == null || file.equals("") || System.getProperty("frames") == null) {
 			System.out.println("Arguments:");
-			System.out.println(" <inputfile> : the png file");
-			System.out.println(" <steps> : px resolution of the scroll (integer)");
-			System.out.println(" <factor> : parallax factor");
-			System.out.println(" <direction> : direction");
-			System.out.println(" <frontoffset> : front offset");
-			System.out.println("ex: test.png 1 0.01 down 9");
+			System.out.println(" -Dimage=(String) : the source image to process, indexed png file (0: transparency, 1-16: color)");
+			System.out.println(" -Dframes=(int) : number of computed images");
+			System.out.println(" -Dmask=(String) : (optional) the non transparent pixels of this image will be used to mask (erase) pixels in final images, indexed png file (0: transparency, 1-16: color)");
 			throw new Exception("invalid number of arguments.");
+		}		
+
+		int frames = Integer.parseInt(System.getProperty("frames"));		
+		
+		if (frames <= 0) {
+			throw new Exception("invalid number of frames: "+frames+" (must be >0).");
 		}
 
 		try {
-			String file = args[0];
-			int scrollSteps = Integer.parseInt(args[1]);
-			double factor = Double.parseDouble(args[2]);
-			String direction = args[3];
-			int offset = Integer.parseInt(args[4]);
-
 			BufferedImage image = ImageIO.read(new File(file));
-			BufferedImage imageout;
 			int width = image.getWidth();
 			int height = image.getHeight();
 			ColorModel colorModel = image.getColorModel();
 			int pixelSize = colorModel.getPixelSize();
 
-			if (height * factor > 1) {
-				System.out.println("parallax factor is too high.");
-				throw new Exception("invalid parallax factor.");
+			BufferedImage maskImage = null;
+			int maskWidth = 0;
+			if (maskFile != null) {
+				maskImage = ImageIO.read(new File(maskFile));
+				maskWidth = maskImage.getWidth();
+				int maskHeight = maskImage.getHeight();
+				if (maskWidth != _OUT_WIDTH/2 || maskHeight != height) {
+					throw new Exception("mask image is "+maskWidth+"x"+maskHeight+" should be 160x"+height+" (same height as input img).");
+				}
 			}
-			
+			BufferedImage imageout;
+
 			if (height <= 200 && pixelSize == 8) {		
+				
+				int[] lw = new int[height]; // line width
+				int[] ls = new int[height]; // line start
+				
+				// count each line width
+				for (int y = 0; y < height; y++) {
+					boolean found = false;
+					for (int x = 0; x < width; x++) {
+						if ((image.getRaster().getDataBuffer()).getElem(x+(y*width))>0) {
+							lw[y]++;
+							if (!found) {
+								ls[y] = x;
+								found = true;
+							}
+						}
+					}
+				}
 
 				// generate images
-				int imagenum = 0;
-				int center = (width/2)-(160/2);
-				for (int imagepos = 0; imagepos < width-160; imagepos += scrollSteps) {
-					imageout = new BufferedImage(160, height, BufferedImage.TYPE_INT_ARGB);
-					System.out.println("image pos: "+imagepos);
+				for (int imgnum = 0; imgnum < frames; imgnum++) {
+					imageout = new BufferedImage(_OUT_WIDTH/2, height, BufferedImage.TYPE_INT_ARGB);
+					
+					System.out.println("image: "+imgnum);
 					for (int y = 0; y < height; y++) {
-						double linefactor = 1-(factor*(height-offset-y));
-						if (linefactor>1) linefactor=1;
-						for (int x = 0; x < 160; x++) {
-							int x2 = (int)Math.round(center+x+(imagepos-center)*linefactor);
-							if (x2 < width) {
-								imageout.setRGB(x, y, image.getRGB(x2, y));
-							} else {
-								imageout.setRGB(x, y, colorModel.getRGB(0));
+
+						if (lw[y] != 0) {
+							int xStart = lw[y] - (_OUT_WIDTH/2 - lw[y]/2) % lw[y];
+							int offset =  (imgnum * lw[y]) / frames;
+									
+							for (int x = 0; x < _OUT_WIDTH; x++) {
+								int x2 = ls[y] + (offset + xStart + x) % lw[y];
+								if (maskImage == null || (maskImage.getRaster().getDataBuffer()).getElem(x/2+(y*maskWidth))==0) {
+									imageout.setRGB(x/2, y, image.getRGB(x2, y));
+								}
 							}
 						}
 					}
 
-					File outputfile = new File(FileUtil.removeExtension(file)+"_"+(imagenum++)+".png");
+					File outputfile = new File(FileUtil.removeExtension(file)+"_"+String.format("%03d",imgnum)+".png");
 					ImageIO.write(imageout, "png", outputfile);
 				}
 
