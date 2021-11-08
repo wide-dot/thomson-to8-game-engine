@@ -2,6 +2,7 @@ package fr.bento8.to8.image;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
+import java.awt.image.IndexColorModel;
 import java.io.File;
 
 import javax.imageio.ImageIO;
@@ -77,7 +78,7 @@ public class lineScroll{
 
 				// generate images
 				for (int imgnum = 0; imgnum < frames; imgnum++) {
-					imageout = new BufferedImage(_OUT_WIDTH/2, height, BufferedImage.TYPE_INT_ARGB);
+					imageout = new BufferedImage(_OUT_WIDTH/2, height, BufferedImage.TYPE_BYTE_INDEXED, (IndexColorModel)colorModel);
 					
 					System.out.println("image: "+imgnum);
 					for (int y = 0; y < height; y++) {
