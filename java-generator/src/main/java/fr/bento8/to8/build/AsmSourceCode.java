@@ -71,6 +71,25 @@ public class AsmSourceCode
 			content += value[i++];
 		}
 	}
+	
+	public void addFcb(byte[] value) {
+		boolean firstpass = true;
+		int i = 0;
+		while (i < value.length) {
+			if (i%14 == 0) {
+				firstpass = true;
+				content += "\n        fcb   ";
+			}
+
+			if (firstpass) {
+				firstpass = false;
+			} else {
+				content += ",";
+			}
+			
+			content += "$"+String.format("%02X", value[i++] & 0xff);
+		}
+	}
 
 	public void flush() {
 		if(Files.exists(path)) {

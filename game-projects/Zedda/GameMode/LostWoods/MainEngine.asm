@@ -117,7 +117,7 @@ LevelMainLoop
         INCLUDE "./Engine/Graphics/CheckSpritesRefresh.asm"
         INCLUDE "./Engine/Graphics/EraseSprites.asm"
         INCLUDE "./Engine/Graphics/UnsetDisplayPriority.asm"
-        INCLUDE "./Engine/Graphics/DrawSpritesRLE.asm"
+        INCLUDE "./Engine/Graphics/DrawSpritesExtEnc.asm"
         INCLUDE "./Engine/Graphics/BgBufferAlloc.asm"	
         INCLUDE "./Engine/Joypad/ReadJoypads.asm"
         INCLUDE "./Engine/Irq/IrqSmpsJoypad.asm"        

@@ -1,6 +1,5 @@
 package fr.bento8.to8.image.encoder;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -17,18 +16,13 @@ import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import fr.bento8.to8.InstructionSet.Register;
 import fr.bento8.to8.build.AsmSourceCode;
 import fr.bento8.to8.build.BuildDisk;
 import fr.bento8.to8.build.Game;
-import fr.bento8.to8.compiledSprite.draw.PatternCluster;
-import fr.bento8.to8.compiledSprite.draw.PatternFinder;
-import fr.bento8.to8.compiledSprite.draw.Solution;
-import fr.bento8.to8.compiledSprite.draw.SolutionOptim;
 import fr.bento8.to8.image.SpriteSheet;
 import fr.bento8.to8.util.LWASMUtil;
 
-public class MapRleEncoder{
+public class MapRleEncoder extends Encoder{
 
 	private static final Logger logger = LogManager.getLogger("log");
 
@@ -36,9 +30,8 @@ public class MapRleEncoder{
 	boolean REARWARD = false;
 	public String spriteName;
 	public boolean spriteCenterEven;
-	private int cyclesDFrameCode;
-	private int sizeDFrameCode;
 	private int imageNum;
+	private int runcount = 0;
 	
 	private int x_offset;
 	private int x1_offset;
@@ -149,6 +142,14 @@ public class MapRleEncoder{
 		data = dataTrim;
 		alpha = alphaTrim;
 
+		if (BuildDisk.game.debug) {
+			Path path = Paths.get(Game.generatedCodeDirNameDebug+spriteName+"_"+runcount+"_rle.bin");
+			Path patha = Paths.get(Game.generatedCodeDirNameDebug+spriteName+"_"+runcount+"_rle-alpha.bin");
+	        Files.write(path, dataTrim);
+	        Files.write(patha, alphaTrim);
+	        runcount++;
+		}
+		
 		// Trim début + calcul offset
 		// Trim fin
 
