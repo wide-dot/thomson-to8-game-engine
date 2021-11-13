@@ -114,6 +114,8 @@ DRS_DrawWithoutBackupB0
         jsr   [rsv_draw_routine,x]          ; backup background and draw sprite on working screen buffer
         bra   DRS_dyn3B0
         jsr   DecMapAlpha
+        bra   DRS_dyn3B0       
+        jsr   zx0_decompress	
 DRS_dyn3B0        
         ldx   #$0000                        ; (dynamic) restore x reg
         stu   rsv_bgdata_0,x                ; store pointer to saved background data
@@ -224,6 +226,8 @@ DRS_DrawWithoutBackupB1
         jsr   [rsv_draw_routine,x]
         bra   DRS_dyn3B1        
         jsr   DecMapAlpha
+        bra   DRS_dyn3B1        
+        jsr   zx0_decompress	
 DRS_dyn3B1        
         ldx   #$0000                        ; (dynamic) restore x reg
         stu   rsv_bgdata_1,x                ; store pointer to saved background data

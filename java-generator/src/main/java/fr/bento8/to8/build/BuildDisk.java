@@ -54,7 +54,9 @@ import fr.bento8.to8.image.SubSprite;
 import fr.bento8.to8.image.SubSpriteBin;
 import fr.bento8.to8.image.TileBin;
 import fr.bento8.to8.image.Tileset;
+import fr.bento8.to8.image.encoder.Encoder;
 import fr.bento8.to8.image.encoder.MapRleEncoder;
+import fr.bento8.to8.image.encoder.ZX0Encoder;
 import fr.bento8.to8.ram.RamImage;
 import fr.bento8.to8.storage.DataIndex;
 import fr.bento8.to8.storage.FdUtil;
@@ -409,8 +411,7 @@ public class BuildDisk
 	
 	private static void generateSprites(Object object) throws Exception {
 		AssemblyGenerator asm;
-		SimpleAssemblyGenerator sasm;
-		MapRleEncoder mrle;
+		Encoder easm;
 
 		// génération du sprite compilé
 		SubSprite curSubSprite;	
@@ -468,45 +469,40 @@ public class BuildDisk
 					object.subSpritesBin.add(curSubSprite.erase);
 				}
 				
-				if (cur_variant.contains("DMAP")) {
-					logger.debug("\t\t- Draw MAP RLE");
-					SpriteSheet ss = new SpriteSheet(sprite, associatedIdx, imgCumulative, 1, 1, 1, cur_variant, interlaced, spriteFileRef);
-					cur_variant = cur_variant.replace("DMAP", "D");
-					mrle = new MapRleEncoder(ss, Game.generatedCodeDirName + object.name, 0);
-					mrle.compileCode("A000");
+				if (cur_variant.contains("D")) {
+					SpriteSheet ss;
+					if (cur_variant.contains("DMAP")) {
+						logger.debug("\t\t- Draw MAP RLE");
+						cur_variant = cur_variant.replace("DMAP", "D");						
+						ss = new SpriteSheet(sprite, associatedIdx, imgCumulative, 1, 1, 1, cur_variant, interlaced, spriteFileRef);
+						easm = new MapRleEncoder(ss, Game.generatedCodeDirName + object.name, 0);
+
+					} else if (cur_variant.contains("DZX0")) {
+						logger.debug("\t\t- Draw ZX0");
+						cur_variant = cur_variant.replace("DZX0", "D");						
+						ss = new SpriteSheet(sprite, associatedIdx, imgCumulative, 1, 1, 1, cur_variant, interlaced, spriteFileRef);
+						easm = new ZX0Encoder(ss, Game.generatedCodeDirName + object.name, 0);
+
+					} else {
+						logger.debug("\t\t- Draw");
+						ss = new SpriteSheet(sprite, associatedIdx, imgCumulative, 1, 1, 1, cur_variant, interlaced, spriteFileRef);
+						easm = new SimpleAssemblyGenerator(ss, Game.generatedCodeDirName + object.name, 0);
+					}
+					easm.compileCode("A000");
 					curSubSprite.nb_cell = 0;
-					curSubSprite.x1_offset = mrle.getX1_offset();
-					curSubSprite.y1_offset = mrle.getY1_offset();
-					curSubSprite.x_size = mrle.getX_size();
-					curSubSprite.y_size = mrle.getY_size();
+					curSubSprite.x1_offset = easm.getX1_offset();
+					curSubSprite.y1_offset = easm.getY1_offset();
+					curSubSprite.x_size = easm.getX_size();
+					curSubSprite.y_size = easm.getY_size();
 					curSubSprite.center_offset = ss.center_offset;							
 
 					curSubSprite.draw = new SubSpriteBin(curSubSprite);
 					curSubSprite.draw.setName(cur_variant);
-					curSubSprite.draw.bin = Files.readAllBytes(Paths.get(mrle.getDrawBINFile()));
-					curSubSprite.draw.uncompressedSize = mrle.getDSize();
+					curSubSprite.draw.bin = Files.readAllBytes(Paths.get(easm.getDrawBINFile()));
+					curSubSprite.draw.uncompressedSize = easm.getDSize();
 					curSubSprite.draw.inRAM = sprite.inRAM;							
-					object.subSpritesBin.add(curSubSprite.draw);
-				}	else if (cur_variant.contains("D")) {
-					logger.debug("\t\t- Draw");
-					SpriteSheet ss = new SpriteSheet(sprite, associatedIdx, imgCumulative, 1, 1, 1, cur_variant, interlaced, spriteFileRef);
-					sasm = new SimpleAssemblyGenerator(ss, Game.generatedCodeDirName + object.name, 0);
-					sasm.compileCode("A000");
-					curSubSprite.nb_cell = 0;
-					curSubSprite.x1_offset = sasm.getX1_offset();
-					curSubSprite.y1_offset = sasm.getY1_offset();
-					curSubSprite.x_size = sasm.getX_size();
-					curSubSprite.y_size = sasm.getY_size();
-					curSubSprite.center_offset = ss.center_offset;							
-
-					curSubSprite.draw = new SubSpriteBin(curSubSprite);
-					curSubSprite.draw.setName(cur_variant);
-					curSubSprite.draw.bin = Files.readAllBytes(Paths.get(sasm.getDrawBINFile()));
-					curSubSprite.draw.uncompressedSize = sasm.getDSize();
-					curSubSprite.draw.inRAM = sprite.inRAM;							
-					object.subSpritesBin.add(curSubSprite.draw);
+					object.subSpritesBin.add(curSubSprite.draw);					
 				}
-				
 				sprite.subSprites.put(cur_variant, curSubSprite);
 			}
 
