@@ -133,3 +133,4 @@ LevelMainLoop
         INCLUDE "./Engine/Graphics/Tilemap/Tilemap.asm"
         INCLUDE "./Engine/Graphics/GetImgIdA.asm"
         INCLUDE "./Engine/Graphics/Codec/DecRLE00.asm"
+zx0_decompress rts	
