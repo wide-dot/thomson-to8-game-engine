@@ -13,8 +13,8 @@
 		
         lda   #GmID_TitleScreen
         sta   glb_Cur_Game_Mode
-		lda   #GmID_SpecialStage		
-		sta   glb_Next_Game_Mode		
+	lda   #GmID_SpecialStage		
+	sta   glb_Next_Game_Mode		
 
         jsr   LoadAct       
 
@@ -41,7 +41,7 @@ LevelMainLoop
 * ==============================================================================
 * Routines
 * ==============================================================================
-		INCLUDE "./Engine/Ram/BankSwitch.asm"
+	INCLUDE "./Engine/Ram/BankSwitch.asm"
         INCLUDE "./Engine/Graphics/WaitVBL.asm"
         INCLUDE "./Engine/Graphics/AnimateSprite.asm"	
         INCLUDE "./Engine/Graphics/DisplaySprite.asm"	
@@ -56,7 +56,7 @@ LevelMainLoop
         INCLUDE "./Engine/ObjectManagement/ClearObj.asm"
         INCLUDE "./Engine/LevelManagement/LoadGameMode.asm"	
         INCLUDE "./Engine/Ram/ClearDataMemory.asm"
-	    INCLUDE "./Engine/Palette/UpdatePalette.asm"
-        INCLUDE "./Engine/Sound/PlayPCM.asm"
+	INCLUDE "./Engine/Palette/UpdatePalette.asm"
+        INCLUDE "./Engine/Sound/PlayDPCM16kHz.asm"
         INCLUDE "./Engine/Sound/Smps.asm"
         INCLUDE "./Engine/Irq/IrqSmpsRaster.asm"

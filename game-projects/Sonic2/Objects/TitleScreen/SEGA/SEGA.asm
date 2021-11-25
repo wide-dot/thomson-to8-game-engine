@@ -366,7 +366,7 @@ SEGA_PlaySample
         inc   routine_secondary,u
 
         ldy   #Pcm_SEGA
-        jsr   PlayPCM
+        jsr   PlayDPCM16kHz
 
         ldd   #$0000
         std   glb_Main_runcount
