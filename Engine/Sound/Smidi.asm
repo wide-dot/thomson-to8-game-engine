@@ -9,7 +9,7 @@
 
 MIDI.CTRL       equ    $E7F2
 MIDI.STAT       equ    MIDI.CTRL
-MIDI.RX         equ    $E7F3
+MIDI.RX         equ    $E7F3a
 MIDI.TX         equ    MIDI.RX
 MIDI.RXFULL     equ    %00000001
 MIDI.TXEMPTY    equ    %00000010
@@ -62,10 +62,10 @@ PlayMusic
         stb   WaitFrame                ; wait frame is only zero where reading commands, should be init to 1
         ldx   sound_start_addr,x       ; get ptr to track data
         stx   MusicDataPos             ; init data location
-	sta   CircularBufferEnd+1      ; init buffer index to 0
-	sta   CircularBufferPos+2      ; init buffer index to 0
-	ldd   #SampleFIRQ              ; set the FIRQ routine that will be called when the EF5860 tx buffer is empty
-	std   FIRQ.ROUTINE
+        sta   CircularBufferEnd+1      ; init buffer index to 0
+        sta   CircularBufferPos+2      ; init buffer index to 0
+        ldd   #SampleFIRQ              ; set the FIRQ routine that will be called when the EF5860 tx buffer is empty
+        std   FIRQ.ROUTINE
         puls  d,pc
 
 ******************************************************************************
@@ -82,15 +82,15 @@ PlayMusic
 * destroys A,B,X,Y
 ******************************************************************************
 _enableFIRQ MACRO
-	lda   MIDI.CTRL
-	anda  #^MIDI.TXIRQ
+        lda   MIDI.CTRL
+        anda  #^MIDI.TXIRQ
         sta   MIDI.CTRL
  ENDM 
 
 _writeBuffer MACRO
         sta   b,y                      ; send byte to the midi interface
-	incb
-	stb   CircularBufferEnd+1
+        incb
+        stb   CircularBufferEnd+1
         lda   ,x+
  ENDM 
 
@@ -106,7 +106,7 @@ IsMusicLoop
         lda   MusicLoop
         beq   StopMusic
         ldx   MusicIndex
-	lda   ,x
+        lda   ,x
         bra   LoopRestart
     
 StopMusic
@@ -123,11 +123,11 @@ LoopRestart
         sta   MusicPage                ; store the new page
         stx   MusicIndexPos            ; this is an end of data chunck, save new index
         ldx   sound_start_addr,x       ; get ptr to track data
-	bra   @a
+        bra   @a
         ;
 ReadCommand
         ldb   CircularBufferEnd+1      ; load next free position in circular buffer
-	ldy   #CircularBuffer
+        ldy   #CircularBuffer
         ldx   MusicDataPos             ; load current position in music track
         lda   MusicPage
 @a      _SetCartPageA
@@ -140,7 +140,7 @@ CommandLoop
 DoWait
         sta   WaitFrame
         stx   MusicDataPos
-	_enableFIRQ
+        _enableFIRQ
         rts
 
 DoCommand
@@ -174,25 +174,24 @@ DoSysEx
 
 SampleFIRQ
         sta   @a+1                     ; backup register A
-	lda   CircularBufferPos+2      ; read current offset in buffer
+        lda   CircularBufferPos+2      ; read current offset in buffer
 CircularBufferEnd
-	cmpa  #0                       ; (dynamic) end offset in buffer (set by IRQ routine when buffer is written)
-	beq   DisableFIRQ             ; branch if no more data to read (todo shutdown midi interface interupt until next buffer write ?)
-	inc   CircularBufferPos+2      ; increment the offset in buffer
-CircularBufferPos	
+        cmpa  #0                       ; (dynamic) end offset in buffer (set by IRQ routine when buffer is written)
+        beq   DisableFIRQ             ; branch if no more data to read (todo shutdown midi interface interupt until next buffer write ?)
+        inc   CircularBufferPos+2      ; increment the offset in buffer
+CircularBufferPos       
         lda   CircularBuffer           ; (dynamic) read the buffer at the current index
         sta   MIDI.TX                  ; send byte to the midi interface           
 @a      lda   #0                       ; (dynamic) restore register A
         rti
 DisableFIRQ
-	lda   MIDI.CTRL
-	anda  #^MIDI.TXIRQ
+        lda   MIDI.CTRL
+        anda  #^MIDI.TXIRQ
         sta   MIDI.CTRL
-        rti
+        bra   @a
 
         align 256
 CircularBuffer
         fill  0,256
 
-; todo IRQ routine must record the byte in buffer and then increment the last index, FIRQ is able to run simultaneously
 ; todo at encoding stage a frame is not allowed to hold more than 62 midi bytes, place a warning
