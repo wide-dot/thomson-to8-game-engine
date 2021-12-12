@@ -123,8 +123,8 @@ public class MidiConverter{
 				// write relative frame wait (msb 0)
 				while (relativeFrame > 0) {
 					data[dataIdx++] = (byte) ((relativeFrame%127) & 0xFF);
-					System.out.print(" ("+absolTick+")");
 					System.out.print(" "+String.format("%02X", (data[dataIdx-1])));
+					System.out.print(" (Tick "+absolTick+")");
 					relativeFrame -= relativeFrame%127;
 				}
 				

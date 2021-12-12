@@ -177,7 +177,7 @@ SampleFIRQ
         lda   CircularBufferPos+2      ; read current offset in buffer
 CircularBufferEnd
         cmpa  #0                       ; (dynamic) end offset in buffer (set by IRQ routine when buffer is written)
-        beq   DisableFIRQ             ; branch if no more data to read (todo shutdown midi interface interupt until next buffer write ?)
+        beq   DisableFIRQ              ; branch if no more data to read (todo shutdown midi interface interupt until next buffer write ?)
         inc   CircularBufferPos+2      ; increment the offset in buffer
 CircularBufferPos       
         lda   CircularBuffer           ; (dynamic) read the buffer at the current index
