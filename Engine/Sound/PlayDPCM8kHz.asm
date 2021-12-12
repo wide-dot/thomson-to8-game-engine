@@ -92,4 +92,7 @@ PlayDPCM8kHz
         puls  d,x,y,u,pc
 @DACDecodeTbl
         fcb   0,1,2,4,8,12,16,24,-32,-1,-2,-4,-8,-12,-16,-24
+        ; this table use same values as the one used by pcm2dpcm at encoding stage but /4
+        ; so there is no need to downsample from 8-bit to 6-bit
+
 
