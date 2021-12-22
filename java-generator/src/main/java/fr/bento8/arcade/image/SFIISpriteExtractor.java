@@ -3,8 +3,12 @@ package fr.bento8.arcade.image;
 import java.awt.image.BufferedImage;
 import java.awt.image.IndexColorModel;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.imageio.ImageIO;
 
 public class SFIISpriteExtractor {
@@ -13,52 +17,49 @@ public class SFIISpriteExtractor {
 	private static byte[] sf2gfx;
 	private static String outDirPath;
 	
-	public static final Byte STATUS_STAND               = 0x0;
-	public static final Byte STATUS_WALKING             = 0x0;
-	public static final Byte STATUS_NORMAL              = 0x2;
-	public static final Byte STATUS_CROUCH              = 0x4;
-	public static final Byte STATUS_STAND_UP            = 0x6;
-	public static final Byte STATUS_JUMP_START          = 0x8;
-	public static final Byte STATUS_LANDING             = 0xa;
-	public static final Byte STATUS_TURN_AROUND         = 0xc;
-	public static final Byte STATUS_CROUCH_TURN         = 0xe;
-	public static final Byte STATUS_FALLING             = 0x10; 
-	public static final Byte STATUS_STAND_BLOCK         = 0x12;
-	public static final Byte STATUS_STAND_BLOCK2        = 0x14;
-	public static final Byte STATUS_CROUCH_BLOCK        = 0x16;
-	public static final Byte STATUS_CROUCH_BLOCK2       = 0x18;
-	public static final Byte STATUS_STUN1               = 0x1a;
-	public static final Byte STATUS_STUN2               = 0x1c;
-	public static final Byte STATUS_STAND_BLOCK_FREEZE  = 0x1e;
-	public static final Byte STATUS_CROUCH_BLOCK_FREEZE = 0x20;
-	public static final Byte STATUS_CROUCH_STUN         = 0x22;
-	public static final Byte STATUS_FOOTSWEPT           = 0x24;
-	public static final Byte STATUS_KNOCKDOWN           = 0x26;
-	public static final Byte STATUS_BACK_UP             = 0x28;
-	public static final Byte STATUS_DIZZY               = 0x2a;
-	public static final Byte STATUS_HIT_AIR             = 0x2c;
-	public static final Byte STATUS_ELECTROCUTED        = 0x2e;
-	public static final Byte STATUS_TUMBLE_30           = 0x30;
-	public static final Byte STATUS_TUMBLE_32           = 0x32;
-	public static final Byte STATUS_TUMBLE_34           = 0x34;
-	public static final Byte STATUS_TUMBLE_36           = 0x36;
-	public static final Byte STATUS_PISSED_OFF          = 0x3c;
-	public static final Byte STATUS_GETTING_THROWN      = 0x3e;
-	public static final Byte STATUS_PUNCH               = 0x40;
-	public static final Byte STATUS_KICK                = 0x42;
-	public static final Byte STATUS_CROUCH_PUNCH        = 0x44;
-	public static final Byte STATUS_CROUCH_KICK         = 0x46;
-	public static final Byte STATUS_JUMP_PUNCH          = 0x48;
-	public static final Byte STATUS_JUMP_KICK           = 0x4a;	
-	public static final Byte STATUS_BOUNCE_WALL         = 0x4c;
-	public static final Byte STATUS_HADOUKEN            = 0x4c;
-	public static final Byte STATUS_RYUKEN_THROW        = 0x54;	
-	
-	public static final Byte POWER_0 = 0x0;
-	public static final Byte POWER_1 = 0x1;
-	public static final Byte POWER_2 = 0x2;
-	public static final Byte POWER_3 = 0x3;
-	public static final Byte POWER_4 = 0x4;
+	public static final Byte STATUS_STAND               = 0;
+	public static final Byte STATUS_WALKING             = 1;
+	public static final Byte STATUS_NORMAL              = 2;
+	public static final Byte STATUS_CROUCH              = 3;
+	public static final Byte STATUS_STAND_UP            = 4;
+	public static final Byte STATUS_JUMP_START          = 5;
+	public static final Byte STATUS_LANDING             = 6;
+	public static final Byte STATUS_TURN_AROUND         = 7;
+	public static final Byte STATUS_CROUCH_TURN         = 8;
+	public static final Byte STATUS_FALLING             = 9; 
+	public static final Byte STATUS_STAND_BLOCK         = 10;
+	public static final Byte STATUS_STAND_BLOCK2        = 11;
+	public static final Byte STATUS_CROUCH_BLOCK        = 12;
+	public static final Byte STATUS_CROUCH_BLOCK2       = 13;
+	public static final Byte STATUS_STUN1               = 14;
+	public static final Byte STATUS_STUN2               = 15;
+	public static final Byte STATUS_STAND_BLOCK_FREEZE  = 16;
+	public static final Byte STATUS_CROUCH_BLOCK_FREEZE = 17;
+	public static final Byte STATUS_CROUCH_STUN         = 18;
+	public static final Byte STATUS_FOOTSWEPT           = 19;
+	public static final Byte STATUS_KNOCKDOWN           = 20;
+	public static final Byte STATUS_BACK_UP             = 21;
+	public static final Byte STATUS_DIZZY               = 22;
+	public static final Byte STATUS_HIT_AIR             = 23;
+	public static final Byte STATUS_ELECTROCUTED        = 24;
+	public static final Byte STATUS_TUMBLE_30           = 25;
+	public static final Byte STATUS_TUMBLE_32           = 26;
+	public static final Byte STATUS_TUMBLE_34           = 27;
+	public static final Byte STATUS_TUMBLE_36           = 28;
+	public static final Byte STATUS_PISSED_OFF          = 29;
+	public static final Byte STATUS_GETTING_THROWN      = 30;
+	public static final Byte STATUS_PUNCH               = 31;
+	public static final Byte STATUS_KICK                = 32;
+	public static final Byte STATUS_CROUCH_PUNCH        = 33;
+	public static final Byte STATUS_CROUCH_KICK         = 34;
+	public static final Byte STATUS_JUMP_PUNCH          = 35;
+	public static final Byte STATUS_JUMP_KICK           = 36;	
+	public static final Byte STATUS_BOUNCE_WALL         = 37;
+	public static final Byte STATUS_HADOUKEN            = 38;
+	public static final Byte STATUS_RYUKEN_THROW        = 39;	
+	public static final Byte STATUS_size                = 40;
+	public static final String[] statusLabel = {"STAND", "WALKING", "NORMAL", "CROUCH", "STAND_UP", "JUMP_START", "LANDING", "TURN_AROUND", "CROUCH_TURN", "FALLING", "STAND_BLOCK", "STAND_BLOCK2", "CROUCH_BLOCK", "CROUCH_BLOCK2", "STUN1", "STUN2", "STAND_BLOCK_FREEZE", "CROUCH_BLOCK_FREEZE", "CROUCH_STUN", "FOOTSWEPT", "KNOCKDOWN", "BACK_UP", "DIZZY", "HIT_AIR", "ELECTROCUTED", "TUMBLE_30", "TUMBLE_32", "TUMBLE_34", "TUMBLE_36", "PISSED_OFF", "GETTING_THROWN", "PUNCH", "KICK", "CROUCH_PUNCH", "CROUCH_KICK", "JUMP_PUNCH", "JUMP_KICK", "BOUNCE_WALL", "HADOUKEN", "RYUKEN_THROW"};
+	public static final byte[] statusCodes = {0x0, 0x0, 0x2, 0x4, 0x6, 0x8, 0xa, 0xc, 0xe, 0x10, 0x12, 0x14, 0x16, 0x18, 0x1a, 0x1c, 0x1e, 0x20, 0x22, 0x24, 0x26, 0x28, 0x2a, 0x2c, 0x2e, 0x30, 0x32, 0x34, 0x36, 0x3c, 0x3e, 0x40, 0x42, 0x44, 0x46, 0x48, 0x4a, 0x4c, 0x4c, 0x54};
 	
 	public static final int SFIIWW_RYU = 0;
 	public static final int SFIIWW_EHONDA = 1;
@@ -71,14 +72,16 @@ public class SFIISpriteExtractor {
 	public static final int SFIIWW_BISON = 8;	
 	public static final int SFIIWW_SAGAT = 9;	
 	public static final int SFIIWW_BALROG = 10;	
-	public static final int SFIIWW_VEGA = 11;		
+	public static final int SFIIWW_VEGA = 11;
+	public static final int SFIIWW_size = 12;
 	
-	public static final String[] playerName = {"Ryu", "E.Honda", "Blanka", "Guile", "Ken", "Chun-Li", "Zangeif", "Dhalsim", "Bison", "Sagat", "Balrog", "Vega"}; 
+	public static final String[] playerName = {"Ryu", "E_Honda", "Blanka", "Guile", "Ken", "Chun-Li", "Zangeif", "Dhalsim", "M_Bison", "Sagat", "Balrog", "Vega"}; 
 	public static final int[] plyAnimIdx = {0x37f1e,0x3d2fc,0x43b90,0x4abac,0x51730,0x56dbc,0x5de06,0x64fbe,0x6aba0,0,0,0x76f66};
 	public static final int[] plyAnimIdx2 = {0,0x3ffbc,0x46df4,0,0,0,0,0,0,0,0,0x7905e};
-	public static final int[] plyAnimStart = {0x380a8,0x3d40c,0,0,0,0,0,0,0,0,0,0};
-	public static final int[] plyAnimEnd = {0x3a7a0,0,0,0,0,0,0,0,0,0,0,0};	
-	public static final int[] plyAnimStart2 = {0,0,0,0,0,0,0,0,0,0,0,0};		
+	public static final int[] plyAnimStart = {0x380a8,0x3d40c,0x43ca4,0,0,0,0,0,0,0,0,0};
+	public static final int[] plyAnimEnd = {0x3a7a0,0x3ffbc,0x46df4,0,0,0,0,0,0,0,0,0};	
+	public static final int[] plyAnimStart2 = {0,0,0,0,0,0,0,0,0,0,0,0};	// TODO replace by plyAnimStart[][] 	
+	public static final int[] plyAnimEnd2 = {0,0,0,0,0,0,0,0,0,0,0,0};
 	
 	public static short IMAGE_ATTR = (short) 0x8000;		/* images are in tile,attr pairs */
 	
@@ -87,6 +90,9 @@ public class SFIISpriteExtractor {
 	public static final int PALETTE_STAGE = 1;
 	
 	public static IndexColorModel colorModel;
+	public static List<String> animationScript = new ArrayList<String>();
+	
+	public static boolean explore_mode = false;
 	
 	public static void main(String[] args) throws IOException {
 		// need allroms.bin and sf2gfx.bin files
@@ -120,40 +126,83 @@ public class SFIISpriteExtractor {
 		}
 		outDirPath = outDir.getPath();
 		
+		if (args.length == 4 && args[3].equals("-explore")) {
+			explore_mode = true;
+		}
+		
 		System.out.println("SFII Sprite extractor");
 		setPalettes(PALETTE, PALETTE_STAGE);
-		extract(SFIIWW_RYU, STATUS_KICK, POWER_0);
+		
+		boolean explore_mode = true;
+		if (!explore_mode) {
+			for (int ply = 0; ply < SFIIWW_size; ply++) {
+				for (int status = 0; status < STATUS_size; status++) {
+					for (byte pwr = 0; pwr < 5; pwr++) {
+						extract(ply, (byte)status, pwr);
+					}
+				}
+			}
+		} else {
+			for (int ply = 0; ply < SFIIWW_size; ply++) {
+				int status = 0;
+				while (plyAnimStart[ply] != plyAnimEnd[ply]) {
+					extract(ply, (byte)status++, (byte)0);
+				}
+			}
+			
+		}
+		
+		FileWriter animRefFile = new FileWriter(outDirPath+"/animations.properties");
+		for (int i = 0; i < animationScript.size(); i++) {
+			animRefFile.write(animationScript.get(i)+"\n");
+		}
+		animRefFile.close();	
 	}
 
 	private static void extract(int ply, Byte status, Byte power) throws IOException {
-		System.out.println("Player: "+playerName[ply]+" Animation: "+status+" Power: "+power);
+		System.out.print("\nPlayer: "+playerName[ply]+" Animation: "+status+" Power: "+power+" Frames: ");
 //		int plyAnimIndex = avatar[ply];
-//		int iStatus = plyAnimIndex+(byteUtil.getInt16(allroms,plyAnimIndex+status)/2);
+//		int iStatus = plyAnimIndex+(byteUtil.getInt16(allroms,plyAnimIndex+statusCodes[status])/2);
 //		int iAnim = (plyAnimIndex+status)+(byteUtil.getInt16(allroms,iStatus+power)/2);
 //		int iAnimFrame = iAnim;
 		int iAnimFrame = plyAnimStart[ply];
 		
 		if (iAnimFrame != 0) {
+
+			String animRef;
+			if (explore_mode) {
+				animRef = "animation."+playerName[ply]+"_"+status+"_"+power+"=";
+			} else {
+				animRef = "animation."+playerName[ply]+"_"+statusLabel[status]+"_"+power+"=";
+			}
+			
 			// Decode Animation Frame
-			String label = ply+"_"+status+"_"+power;
 			int i = 0;
-		    AnimationFrame frame = new AnimationFrame(allroms, iAnimFrame);	
-		    drawSprite(frame, label, i++);
-		    iAnimFrame += frame.next();
+		    AnimationFrame frame = null;
 		    while (iAnimFrame != plyAnimEnd[ply]) {		    
 			    frame = new AnimationFrame(allroms, iAnimFrame);
-			    drawSprite(frame, label, i++);
-			    iAnimFrame += frame.next();
+			    drawSprite(frame, i++);
+			    iAnimFrame += frame.size;
+			    
+			    animRef += frame.frame_duration+":"+Integer.toHexString(frame.address)+";";
+			    System.out.print(frame.address+"("+frame.frame_duration+") ");
+			    
+				if (frame.end_block) {
+					break;
+				}			    
 			}
-		}
+		    plyAnimStart[ply] = iAnimFrame;
+		    animRef += "_resetAnim;"+Integer.toHexString(frame.loopAnim);
+		    animationScript.add(animRef);
+		} 
 	}
 	
-	private static void drawSprite(AnimationFrame image, String label, int frame) throws IOException {
+	private static void drawSprite(AnimationFrame image, int frame) throws IOException {
 	    if (image.address == 0) { return; }
 	    if (image.spriteTiles.tileCount == 0) { return; }
 	    
 	    if ((((short) image.spriteTiles.tileCount) & IMAGE_ATTR) == 0) {
-	    	sub_7f244(image, (short)(384/2), (short)200, label, frame); // draw unflipped	    	
+	    	sub_7f244(image, (short)(384/2), (short)200, frame); // draw unflipped	    	
 	        return;
 	    }
 	    
@@ -161,10 +210,10 @@ public class SFIISpriteExtractor {
 	    	image.spriteTiles.tileCount = 1;
 	    }
 		
-		sub_7ee58(image, (short)(384/2), (short)200, label, frame); // draw unflipped	    
+		sub_7ee58(image, (short)(384/2), (short)200, frame); // draw unflipped	    
 	}
 	
-	public static void sub_7f244(AnimationFrame image, short x, short y, String label, int frame) throws IOException {
+	public static void sub_7f244(AnimationFrame image, short x, short y, int frame) throws IOException {
 		short sx, sy;
 		int tile, attr;
 		short offsets = image.spriteTiles.offsets;
@@ -191,12 +240,13 @@ public class SFIISpriteExtractor {
 				}
 			}
 		}
-		File outputfile = new File(outDirPath+"/"+label+"_"+String.format("%04d", frame)+".png");
+		File outputfile = new File(outDirPath+"/frames/"+Integer.toHexString(image.address)+".png");
+		outputfile.mkdirs();
         ImageIO.write(pngImage, "png", outputfile);		
 	}	
 	
 	/* 7ee58 Object with No Flip */
-	public static void sub_7ee58(AnimationFrame image, short x, short y, String label, int frame) throws IOException {
+	public static void sub_7ee58(AnimationFrame image, short x, short y, int frame) throws IOException {
 		short sx, sy;
 		int tile, attr;
 		short offsets = image.spriteTiles.offsets;
@@ -224,7 +274,8 @@ public class SFIISpriteExtractor {
 				}
 			}
 		}
-        File outputfile = new File(outDirPath+"/"+label+"_"+String.format("%04d", frame)+".png");
+		File outputfile = new File(outDirPath+"/frames/"+Integer.toHexString(image.address)+".png");
+		outputfile.mkdirs();
         ImageIO.write(pngImage, "png", outputfile);		
 	}
 
@@ -318,8 +369,5 @@ public class SFIISpriteExtractor {
 	    }
 	    
 		colorModel = new IndexColorModel(8,256,paletteRGBA[0],paletteRGBA[1],paletteRGBA[2],paletteRGBA[3]);
-		BufferedImage image = new BufferedImage(384, 224, BufferedImage.TYPE_BYTE_INDEXED, colorModel);		
-        File outputfile = new File(outDirPath+"/"+"palette.png");
-        ImageIO.write(image, "png", outputfile);		
 	}
 }

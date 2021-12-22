@@ -53,6 +53,7 @@ public class SpriteTiles {
 	public int[] tiles = null;
 	
 	public SpriteTiles(byte[] allroms, int i) {
+		System.out.println("\n"+i);
 		tileCount = byteUtil.getInt16(allroms, i) & 0x7fff;
 		attr = byteUtil.getInt16(allroms, i+2);
 		dimensions = byteUtil.getInt16(allroms, i+4);
