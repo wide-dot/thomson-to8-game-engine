@@ -18,9 +18,14 @@ public class AnimationFrame {
 	public AnimationFrame (byte[] allroms, int i) {
 		
 		// skip 0 frame duration (0x3eb3c)
-		while (byteUtil.getInt16(allroms, i) == 0) { 
-			i += SIZE_ABNORMAL;
-			size += SIZE_ABNORMAL;
+		while (byteUtil.getInt16(allroms, i) == 0) {
+			if ((byteUtil.getInt16(allroms, i+2) & 0x8000) != 0) {
+				i += SIZE_ENDBLOCK;
+				size += SIZE_ENDBLOCK;
+			} else {
+				i += SIZE_ABNORMAL;
+				size += SIZE_ABNORMAL;
+			}
 		}		
 		
 		address = i;
@@ -28,7 +33,7 @@ public class AnimationFrame {
 		flags = byteUtil.getInt16(allroms, i+2);
 		tilemap = byteUtil.getInt32(allroms, i+4);
 		
-		System.out.println("\n\tFrame: 0x"+Integer.toHexString(i)+" Frame duration: "+frame_duration+" Image: 0x"+Integer.toHexString(tilemap)+" Flags: "+Integer.toHexString(flags));
+//		System.out.println("\n\tFrame: 0x"+Integer.toHexString(i)+" Frame duration: "+frame_duration+" Image: 0x"+Integer.toHexString(tilemap)+" Flags: "+Integer.toHexString(flags));
 		
 		if ((flags & 0x8000) != 0) { // bit 15 means end of animation 
 			end_block=true;

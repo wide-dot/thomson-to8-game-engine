@@ -7,7 +7,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.imageio.ImageIO;
 
@@ -16,6 +19,7 @@ public class SFIISpriteExtractor {
 	private static byte[] allroms;
 	private static byte[] sf2gfx;
 	private static String outDirPath;
+	private static String outDirImgPath;
 	
 	public static final Byte STATUS_STAND               = 0;
 	public static final Byte STATUS_WALKING             = 1;
@@ -58,7 +62,7 @@ public class SFIISpriteExtractor {
 	public static final Byte STATUS_HADOUKEN            = 38;
 	public static final Byte STATUS_RYUKEN_THROW        = 39;	
 	public static final Byte STATUS_size                = 40;
-	public static final String[] statusLabel = {"STAND", "WALKING", "NORMAL", "CROUCH", "STAND_UP", "JUMP_START", "LANDING", "TURN_AROUND", "CROUCH_TURN", "FALLING", "STAND_BLOCK", "STAND_BLOCK2", "CROUCH_BLOCK", "CROUCH_BLOCK2", "STUN1", "STUN2", "STAND_BLOCK_FREEZE", "CROUCH_BLOCK_FREEZE", "CROUCH_STUN", "FOOTSWEPT", "KNOCKDOWN", "BACK_UP", "DIZZY", "HIT_AIR", "ELECTROCUTED", "TUMBLE_30", "TUMBLE_32", "TUMBLE_34", "TUMBLE_36", "PISSED_OFF", "GETTING_THROWN", "PUNCH", "KICK", "CROUCH_PUNCH", "CROUCH_KICK", "JUMP_PUNCH", "JUMP_KICK", "BOUNCE_WALL", "HADOUKEN", "RYUKEN_THROW"};
+	public static final String[][] statusLabel = {{"STAND", "WALKING", "NORMAL", "CROUCH", "STAND_UP", "JUMP_START", "LANDING", "TURN_AROUND", "CROUCH_TURN", "FALLING", "STAND_BLOCK", "STAND_BLOCK2", "CROUCH_BLOCK", "CROUCH_BLOCK2", "STUN1", "STUN2", "STAND_BLOCK_FREEZE", "CROUCH_BLOCK_FREEZE", "CROUCH_STUN", "FOOTSWEPT", "KNOCKDOWN", "BACK_UP", "DIZZY", "HIT_AIR", "ELECTROCUTED", "TUMBLE_30", "TUMBLE_32", "TUMBLE_34", "TUMBLE_36", "PISSED_OFF", "GETTING_THROWN", "PUNCH", "KICK", "CROUCH_PUNCH", "CROUCH_KICK", "JUMP_PUNCH", "JUMP_KICK", "BOUNCE_WALL", "HADOUKEN", "RYUKEN_THROW"},{"","","","","","","","","","","","","","","","","","","",""}};
 	public static final byte[] statusCodes = {0x0, 0x0, 0x2, 0x4, 0x6, 0x8, 0xa, 0xc, 0xe, 0x10, 0x12, 0x14, 0x16, 0x18, 0x1a, 0x1c, 0x1e, 0x20, 0x22, 0x24, 0x26, 0x28, 0x2a, 0x2c, 0x2e, 0x30, 0x32, 0x34, 0x36, 0x3c, 0x3e, 0x40, 0x42, 0x44, 0x46, 0x48, 0x4a, 0x4c, 0x4c, 0x54};
 	
 	public static final int SFIIWW_RYU = 0;
@@ -75,26 +79,35 @@ public class SFIISpriteExtractor {
 	public static final int SFIIWW_VEGA = 11;
 	public static final int SFIIWW_size = 12;
 	
-	public static final String[] playerName = {"Ryu", "E_Honda", "Blanka", "Guile", "Ken", "Chun-Li", "Zangeif", "Dhalsim", "M_Bison", "Sagat", "Balrog", "Vega"}; 
-	public static final int[] plyAnimIdx = {0x37f1e,0x3d2fc,0x43b90,0x4abac,0x51730,0x56dbc,0x5de06,0x64fbe,0x6aba0,0,0,0x76f66};
-	public static final int[] plyAnimIdx2 = {0,0x3ffbc,0x46df4,0,0,0,0,0,0,0,0,0x7905e};
-	public static final int[] plyAnimStart = {0x380a8,0x3d40c,0x43ca4,0,0,0,0,0,0,0,0,0};
-	public static final int[] plyAnimEnd = {0x3a7a0,0x3ffbc,0x46df4,0,0,0,0,0,0,0,0,0};	
-	public static final int[] plyAnimStart2 = {0,0,0,0,0,0,0,0,0,0,0,0};	// TODO replace by plyAnimStart[][] 	
-	public static final int[] plyAnimEnd2 = {0,0,0,0,0,0,0,0,0,0,0,0};
+	public static final String[] playerName  = {"Ryu", "E_Honda", "Blanka", "Guile", "Ken", "Chun-Li", "Zangeif", "Dhalsim", "M_Bison", "Sagat", "Balrog", "Vega"};
+	public static final int[][] plyAnimIdx   = {{0x37f1e,0x3d2fc,0x43b90,0x4abac,0x51730,0x56dbc,0x5de06,0x64fbe,0x6aba0,0x6fe22,0x72ee0,0x76f66},{0,0x3ffbc,0x46df4,0,0,0,0,0,0,0,0,0x7905e}};
+	public static final int[][] plyAnimStart = {{0x380a8,0x3d40c,0x43ca4,0x4ad6a,0x518bc,0x56f80,0x5df86,0x6514c,0x6ad1c,0x6ff6c,0x73056,0x7708c},{0,0,0,0,0,0,0,0,0,0,0,0}};
+	public static final int[][] plyAnimEnd   = {{0x3a7a0,0x3ffbc,0x46df4,0x4d97a,0x540dc,0x59da4,0x60652,0x6775c,0x6c774,0x712d4,0x74a3a,0x78b44},{0,0,0,0,0,0,0,0,0,0,0,0}};	
 	
 	public static short IMAGE_ATTR = (short) 0x8000;		/* images are in tile,attr pairs */
 	
-	public static byte[][] paletteRGBA = new byte[4][256];
-	public static final int PALETTE = 0x8a8ac; //90000
-	public static final int PALETTE_STAGE = 1;
+	public static byte[][][] paletteRGBA = new byte[12][4][16];
+	public static final int[][] plyPalette = {
+			{0x0111, 0x0fd9, 0x0fb8, 0x0e97, 0x0c86, 0x0965, 0x0643, 0x0b00, 0x0fff, 0x0eec, 0x0dca, 0x0ba8, 0x0a87, 0x0765, 0x0f00, 0x0000}, // 0x8a8cc Common Ply
+			{0x0222, 0x0fec, 0x0fd9, 0x0fb7, 0x0e96, 0x0b64, 0x0843, 0x0631, 0x0678, 0x0dff, 0x0ace, 0x08ad, 0x077c, 0x0658, 0x0d43, 0x0000},
+			{0x0111, 0x0ffc, 0x0ee7, 0x0dc4, 0x0a90, 0x0870, 0x0650, 0x0530, 0x0fc0, 0x0f80, 0x0d60, 0x0a40, 0x0830, 0x0aac, 0x0778, 0x0000},
+			{0x0640, 0x0fff, 0x0fd9, 0x0fb8, 0x0e97, 0x0b75, 0x0dfa, 0x08d9, 0x0697, 0x0474, 0x0f50, 0x007d, 0x0fe0, 0x0964, 0x0050, 0x0000},
+			{0x0111, 0x0ffb, 0x0fd9, 0x0ea7, 0x0d86, 0x0a65, 0x0643, 0x0fe6, 0x0f60, 0x0f40, 0x0f00, 0x0c00, 0x0900, 0x0600, 0x0fc0, 0x0000},
+			{0x0000, 0x0fea, 0x0fc9, 0x0e97, 0x0c86, 0x0a65, 0x0850, 0x0740, 0x0500, 0x0009, 0x005b, 0x058d, 0x07ae, 0x0acf, 0x0fff, 0x0000},
+			{0x0111, 0x0640, 0x0a75, 0x0da7, 0x0feb, 0x0ffd, 0x0ec9, 0x0a00, 0x0d44, 0x0f66, 0x0b90, 0x0fd7, 0x0700, 0x0854, 0x0a98, 0x0000},
+			{0x0111, 0x0631, 0x0853, 0x0a75, 0x0c97, 0x0eb9, 0x0fdb, 0x0fff, 0x0aaa, 0x0f30, 0x0630, 0x0960, 0x0ca0, 0x0fd0, 0x0ff8, 0x0000},
+			{0x0234, 0x0600, 0x0900, 0x0c32, 0x0e65, 0x0f87, 0x0456, 0x007f, 0x0eef, 0x0aad, 0x0679, 0x0fd9, 0x0e96, 0x0a64, 0x0643, 0x0000}, // 0x8baac M Bison Stage
+			{0x0f00, 0x0a00, 0x0fc9, 0x0da8, 0x0b96, 0x0974, 0x0753, 0x0530, 0x0fff, 0x0bbb, 0x0777, 0x075f, 0x053a, 0x0407, 0x0005, 0x0000}, // 0x8bcac Sagat Stage
+			{0x0d55, 0x0631, 0x0953, 0x0b75, 0x0c96, 0x0eb7, 0x0fea, 0x0e66, 0x0f99, 0x0679, 0x069d, 0x09be, 0x0bde, 0x0def, 0x0fff, 0x0000}, // 0x8beac Balrog Stage
+			{0x0222, 0x0ffe, 0x0fea, 0x0fb8, 0x0e96, 0x0c75, 0x0954, 0x0740, 0x0ff0, 0x0b9f, 0x097e, 0x075b, 0x0429, 0x0f80, 0x0c00, 0x0000}};// 0x8c0ac Vega Stage
+	public static final IndexColorModel[] plyColorModel= new IndexColorModel[12];
 	
-	public static IndexColorModel colorModel;
 	public static List<String> animationScript = new ArrayList<String>();
+	public static Map<String, String> identicalImages = new HashMap<String, String>();
 	
 	public static boolean explore_mode = false;
 	
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws Exception {
 		// need allroms.bin and sf2gfx.bin files
 		//
 		//./interleave int1 1 sf2u.30a sf2u.37a
@@ -125,28 +138,42 @@ public class SFIISpriteExtractor {
 			return;
 		}
 		outDirPath = outDir.getPath();
+		outDirImgPath = outDirPath+"/frames/";
+		File dir = new File(outDirImgPath);
+		dir.mkdirs();
 		
+		for (int ply = 0; ply < playerName.length; ply++) {
+			dir = new File(outDirImgPath+playerName[ply]+"/");
+			dir.mkdirs();
+		}
+
 		if (args.length == 4 && args[3].equals("-explore")) {
 			explore_mode = true;
 		}
 		
 		System.out.println("SFII Sprite extractor");
-		setPalettes(PALETTE, PALETTE_STAGE);
+		setPalettes();
 		
 		boolean explore_mode = true;
 		if (!explore_mode) {
-			for (int ply = 0; ply < SFIIWW_size; ply++) {
-				for (int status = 0; status < STATUS_size; status++) {
-					for (byte pwr = 0; pwr < 5; pwr++) {
-						extract(ply, (byte)status, pwr);
+			// Process by animation index
+			for (int lvl = 0; lvl < plyAnimIdx.length; lvl++) {
+				for (int ply = 0; ply < SFIIWW_size; ply++) {
+					for (int status = 0; status < STATUS_size; status++) {
+						for (byte pwr = 0; pwr < 5; pwr++) {
+							extract(ply, lvl, (byte)status, pwr);
+						}
 					}
 				}
 			}
 		} else {
-			for (int ply = 0; ply < SFIIWW_size; ply++) {
-				int status = 0;
-				while (plyAnimStart[ply] != plyAnimEnd[ply]) {
-					extract(ply, (byte)status++, (byte)0);
+			// process all animations
+			for (int lvl = 0; lvl < plyAnimStart.length; lvl++) {
+				for (int ply = 0; ply < plyAnimStart[lvl].length; ply++) {
+					int status = 0;
+					while (plyAnimStart[lvl][ply] != plyAnimEnd[lvl][ply]) {
+						extract(ply, lvl, (byte)status++, (byte)0);
+					}
 				}
 			}
 			
@@ -154,71 +181,116 @@ public class SFIISpriteExtractor {
 		
 		FileWriter animRefFile = new FileWriter(outDirPath+"/animations.properties");
 		for (int i = 0; i < animationScript.size(); i++) {
-			animRefFile.write(animationScript.get(i)+"\n");
+			// replace duplicate images
+			String curLine = animationScript.get(i);
+			for (var ee : identicalImages.entrySet()) {
+				curLine = curLine.replaceAll(ee.getKey(), ee.getValue());
+			}
+			animRefFile.write(curLine+"\n");
 		}
 		animRefFile.close();	
+		System.out.print("\rEnd of process.                                                  ");
 	}
 
-	private static void extract(int ply, Byte status, Byte power) throws IOException {
-		System.out.print("\nPlayer: "+playerName[ply]+" Animation: "+status+" Power: "+power+" Frames: ");
+	private static void extract(int ply, int lvl, Byte status, Byte power) throws Exception {
 //		int plyAnimIndex = avatar[ply];
 //		int iStatus = plyAnimIndex+(byteUtil.getInt16(allroms,plyAnimIndex+statusCodes[status])/2);
 //		int iAnim = (plyAnimIndex+status)+(byteUtil.getInt16(allroms,iStatus+power)/2);
 //		int iAnimFrame = iAnim;
-		int iAnimFrame = plyAnimStart[ply];
+		
+		int iAnimFrame = plyAnimStart[lvl][ply];
 		
 		if (iAnimFrame != 0) {
 
 			String animRef;
 			if (explore_mode) {
-				animRef = "animation."+playerName[ply]+"_"+status+"_"+power+"=";
+				animRef = "animation."+playerName[ply]+"_"+lvl+"_"+status+"=";
 			} else {
-				animRef = "animation."+playerName[ply]+"_"+statusLabel[status]+"_"+power+"=";
+				animRef = "animation."+playerName[ply]+"_"+statusLabel[lvl][status]+"_"+power+"=";
 			}
+			System.out.print(animRef+"...                    \r");
 			
 			// Decode Animation Frame
 			int i = 0;
 		    AnimationFrame frame = null;
-		    while (iAnimFrame != plyAnimEnd[ply]) {		    
+		    while (iAnimFrame != plyAnimEnd[lvl][ply]) {		    
 			    frame = new AnimationFrame(allroms, iAnimFrame);
-			    drawSprite(frame, i++);
-			    iAnimFrame += frame.size;
+			    String existingImgName = drawSprite(ply, frame, i++);
 			    
+			    if(existingImgName == null) {
+			    	// no duplicate for this image, point to itself
+			    	identicalImages.put(Integer.toHexString(frame.address), Integer.toHexString(frame.address));
+			    } else {
+			    	// duplicate found, point to existing image
+			    	identicalImages.put(Integer.toHexString(frame.address), existingImgName);
+			    }
+			    
+			    iAnimFrame += frame.size;
 			    animRef += frame.frame_duration+":"+Integer.toHexString(frame.address)+";";
-			    System.out.print(frame.address+"("+frame.frame_duration+") ");
+//			    System.out.print(frame.address+"("+frame.frame_duration+") ");
 			    
 				if (frame.end_block) {
 					break;
 				}			    
 			}
-		    plyAnimStart[ply] = iAnimFrame;
-		    animRef += "_resetAnim;"+Integer.toHexString(frame.loopAnim);
+		    plyAnimStart[lvl][ply] = iAnimFrame;
+		    int inAnimFramePos = animRef.lastIndexOf(Integer.toHexString(frame.loopAnim));
+		    if (inAnimFramePos >= 0) {
+			    int goBackNFrames = (int) animRef.substring(inAnimFramePos).chars().filter(ch -> ch == ';').count();
+			    int totalNFrames = (int) animRef.chars().filter(ch -> ch == ';').count();
+		    	if(totalNFrames == goBackNFrames) {
+		    		animRef += "_resetAnim";
+		    	} else {
+		    		animRef += "_goBackNFrames;"+goBackNFrames;
+		    	}
+		    } else {
+		    	// loop frame is outside current animation
+	        	String gotoAnim = "";
+		        for (int as = 0; as < animationScript.size(); as++) {
+		            if (animationScript.get(as).lastIndexOf(Integer.toHexString(frame.loopAnim)) >= 0) {
+		            	gotoAnim = animationScript.get(as).split("=")[0].split("\\.")[1];
+		            }
+		        }
+		    	animRef += "_goToAnimation;"+gotoAnim;
+		    }
+
 		    animationScript.add(animRef);
 		} 
 	}
 	
-	private static void drawSprite(AnimationFrame image, int frame) throws IOException {
-	    if (image.address == 0) { return; }
-	    if (image.spriteTiles.tileCount == 0) { return; }
+	private static String drawSprite(int ply, AnimationFrame image, int frame) throws Exception {
+	    if (image.address == 0) { return null; }
+	    if (image.spriteTiles.tileCount == 0) { return null; }
+	    BufferedImage pngImage;
 	    
 	    if ((((short) image.spriteTiles.tileCount) & IMAGE_ATTR) == 0) {
-	    	sub_7f244(image, (short)(384/2), (short)200, frame); // draw unflipped	    	
-	        return;
+	    	
+	    	pngImage = sub_7f244(image, (short)(384/2), (short)200, frame, plyColorModel[ply]); // draw unflipped	   
+	    	
+	    } else {
+		    
+		    if ((image.spriteTiles.attr & 0xff00) == 0) {
+		    	image.spriteTiles.tileCount = 1;
+		    }
+			
+		    pngImage = sub_7ee58(image, (short)(384/2), (short)200, frame, plyColorModel[ply]); // draw unflipped	    
 	    }
 	    
-	    if ((image.spriteTiles.attr & 0xff00) == 0) {
-	    	image.spriteTiles.tileCount = 1;
-	    }
-		
-		sub_7ee58(image, (short)(384/2), (short)200, frame); // draw unflipped	    
+		// find already existing image
+		String srcImg = imageUtil.findIdentical(outDirImgPath+playerName[ply], pngImage);
+		if(srcImg == null) {
+			File outputfile = new File(outDirImgPath+playerName[ply]+"/"+Integer.toHexString(image.address)+".png");
+			ImageIO.write(pngImage, "png", outputfile);		
+		}	
+		return srcImg;
 	}
 	
-	public static void sub_7f244(AnimationFrame image, short x, short y, int frame) throws IOException {
+	public static BufferedImage sub_7f244(AnimationFrame image, short x, short y, int frame, IndexColorModel cm) {
 		short sx, sy;
 		int tile, attr;
 		short offsets = image.spriteTiles.offsets;
 		
-		BufferedImage pngImage = new BufferedImage(384, 224, BufferedImage.TYPE_BYTE_INDEXED, colorModel);
+		BufferedImage pngImage = new BufferedImage(384, 224, BufferedImage.TYPE_BYTE_INDEXED, cm);
 		
 		for (int i = 0; i < image.spriteTiles.tiles.length; i++) {
 			if (image.spriteTiles.tiles[i] <= 0xbfff) {
@@ -234,24 +306,23 @@ public class SFIISpriteExtractor {
 					} else {
 						sy = (short) ((short)(y + image.spriteTiles.getOffset(offsets+1)) & 0x1ff);
 						offsets += 2;
-						//System.out.println("DrawImage: "+sx+" "+sy+" "+tile+" "+attr);
+//						System.out.println("DrawImage: "+sx+" "+sy+" "+tile+" "+attr);
 						drawImage(pngImage, sx, sy, tile, attr);
 					}
 				}
 			}
 		}
-		File outputfile = new File(outDirPath+"/frames/"+Integer.toHexString(image.address)+".png");
-		outputfile.mkdirs();
-        ImageIO.write(pngImage, "png", outputfile);		
+		
+		return pngImage;
 	}	
 	
 	/* 7ee58 Object with No Flip */
-	public static void sub_7ee58(AnimationFrame image, short x, short y, int frame) throws IOException {
+	public static BufferedImage sub_7ee58(AnimationFrame image, short x, short y, int frame, IndexColorModel cm) {
 		short sx, sy;
 		int tile, attr;
 		short offsets = image.spriteTiles.offsets;
 		
-		BufferedImage pngImage = new BufferedImage(384, 224, BufferedImage.TYPE_BYTE_INDEXED, colorModel);
+		BufferedImage pngImage = new BufferedImage(384, 224, BufferedImage.TYPE_BYTE_INDEXED, cm);
 		
 		for (int i = 0; i < image.spriteTiles.tiles.length; i++) {
 			if (image.spriteTiles.tiles[i] <= 0xbfff) {			
@@ -268,21 +339,19 @@ public class SFIISpriteExtractor {
 					} else {
 						sy = (short) ((short)(y + image.spriteTiles.getOffset(offsets)) & 0x1ff);
 						offsets++;
-						System.out.println("DrawImage: "+sx+" "+sy+" "+tile+" "+attr);
+//						System.out.println("DrawImage: "+sx+" "+sy+" "+tile+" "+attr);
 						drawImage(pngImage, sx, sy, tile, attr);
 					}
 				}
 			}
 		}
-		File outputfile = new File(outDirPath+"/frames/"+Integer.toHexString(image.address)+".png");
-		outputfile.mkdirs();
-        ImageIO.write(pngImage, "png", outputfile);		
+		
+		return pngImage;
 	}
 
 	private static void drawImage(BufferedImage image, short sx, short sy, int tile, int attr) {
-		int colorOffset = (attr & 0x1ff);
 
-		//System.out.println("Read: "+tile);
+//		System.out.println("Read: "+tile);
    		for (int y = 0; y < 16; y++) {
    			for (int x = 0; x < 8; x+=4) {
    				
@@ -290,56 +359,56 @@ public class SFIISpriteExtractor {
    				if (color1 == 15) {
    					color1 = 0;
    				} else {
-   					color1 += (colorOffset*16);
+   					color1 += 1;
    				}
    				
    				int color2 = ((sf2gfx[tile+(y*8)+x] & 0b01000000) >> 6) | ((sf2gfx[tile+(y*8)+x+1] & 0b01000000) >> 5) | ((sf2gfx[tile+(y*8)+x+2] & 0b01000000) >> 4) | ((sf2gfx[tile+(y*8)+x+3] & 0b01000000) >> 3);
    				if (color2 == 15) {
    					color2 = 0;
    				} else {
-   					color2 += (colorOffset*16);
+   					color2 += 1;
    				}   				
    				
    				int color3 = ((sf2gfx[tile+(y*8)+x] & 0b00100000) >> 5) | ((sf2gfx[tile+(y*8)+x+1] & 0b00100000) >> 4) | ((sf2gfx[tile+(y*8)+x+2] & 0b00100000) >> 3) | ((sf2gfx[tile+(y*8)+x+3] & 0b00100000) >> 2);
    				if (color3 == 15) {
    					color3 = 0;
    				} else {
-   					color3 += (colorOffset*16);
+   					color3 += 1;
    				}   	
    				
    				int color4 = ((sf2gfx[tile+(y*8)+x] & 0b00010000) >> 4) | ((sf2gfx[tile+(y*8)+x+1] & 0b00010000) >> 3) | ((sf2gfx[tile+(y*8)+x+2] & 0b00010000) >> 2) | ((sf2gfx[tile+(y*8)+x+3] & 0b00010000) >> 1);
    				if (color4 == 15) {
    					color4 = 0;
    				} else {
-   					color4 += (colorOffset*16);
+   					color4 += 1;
    				}   	   	
    				
    				int color5 = ((sf2gfx[tile+(y*8)+x] & 0b00001000)) >> 3 | ((sf2gfx[tile+(y*8)+x+1] & 0b00001000) >> 2) | ((sf2gfx[tile+(y*8)+x+2] & 0b00001000) >> 1) | ((sf2gfx[tile+(y*8)+x+3] & 0b00001000));
    				if (color5 == 15) {
    					color5 = 0;
    				} else {
-   					color5 += (colorOffset*16);
+   					color5 += 1;
    				}
    				
    				int color6 = ((sf2gfx[tile+(y*8)+x] & 0b00000100) >> 2) | ((sf2gfx[tile+(y*8)+x+1] & 0b00000100) >> 1) | ((sf2gfx[tile+(y*8)+x+2] & 0b00000100)) | ((sf2gfx[tile+(y*8)+x+3] & 0b00000100) << 1);
    				if (color6 == 15) {
    					color6 = 0;
    				} else {
-   					color6 += (colorOffset*16);
+   					color6 += 1;
    				}   				
    				
    				int color7 = ((sf2gfx[tile+(y*8)+x] & 0b00000010) >> 1) | ((sf2gfx[tile+(y*8)+x+1] & 0b00000010)) | ((sf2gfx[tile+(y*8)+x+2] & 0b00000010) << 1) | ((sf2gfx[tile+(y*8)+x+3] & 0b00000010) << 2);
    				if (color7 == 15) {
    					color7 = 0;
    				} else {
-   					color7 += (colorOffset*16);
+   					color7 += 1;
    				}   	
    				
    				int color8 = ((sf2gfx[tile+(y*8)+x] & 0b00000001)) | ((sf2gfx[tile+(y*8)+x+1] & 0b00000001) << 1) | ((sf2gfx[tile+(y*8)+x+2] & 0b00000001) << 2) | ((sf2gfx[tile+(y*8)+x+3] & 0b00000001) << 3);
    				if (color8 == 15) {
    					color8 = 0;
    				} else {
-   					color8 += (colorOffset*16);
+   					color8 += 1;
    				}
    				
    				(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+(x*2)+sx, color1);
@@ -354,20 +423,21 @@ public class SFIISpriteExtractor {
     	}
 	}	
 	
-	public static void setPalettes(int address, int palette) throws IOException {
-		palette--;
-	    for(int u = 0; u < 16; u++) {
-	        for(int v = 0; v < 16; v++) {
-	        	int i = (u * 16) + v;
-	        	int j = address + (palette * 512) + i * 2;
-				paletteRGBA[3][i] = (byte)0xff; // (byte)((((byte)allroms[j]   & 0xf0) >> 4)*16);	        	
-				paletteRGBA[0][i] = (byte)((((byte)allroms[j]   & 0x0f)     )*16);
-				paletteRGBA[1][i] = (byte)((((byte)allroms[j+1] & 0xf0) >> 4)*16);
-				paletteRGBA[2][i] = (byte)((((byte)allroms[j+1] & 0x0f)     )*16);
-	        }
-	        paletteRGBA[3][0] = (byte)0x0;
+	public static void setPalettes() throws IOException {
+	    for(int ply = 0; ply < 12; ply++) {
+	    	paletteRGBA[ply][3][0] = (byte)0x0; // transparency at idx 0
+	    	paletteRGBA[ply][2][0] = (byte)0x0; //
+	    	paletteRGBA[ply][1][0] = (byte)0x0; //
+	    	paletteRGBA[ply][0][0] = (byte)0x0; //
+	    	
+		    for(int i = 1; i < 16; i++) {
+		    	paletteRGBA[ply][3][i] = (byte)0xff;	        	
+		    	paletteRGBA[ply][0][i] = (byte)(((plyPalette[ply][i-1] & 0x0f00) >> 8)*16);
+		    	paletteRGBA[ply][1][i] = (byte)(((plyPalette[ply][i-1] & 0x00f0) >> 4)*16);
+		    	paletteRGBA[ply][2][i] = (byte)(((plyPalette[ply][i-1] & 0x000f)     )*16);
+		    }
+	      
+	        plyColorModel[ply] = new IndexColorModel(8,16,paletteRGBA[ply][0],paletteRGBA[ply][1],paletteRGBA[ply][2],paletteRGBA[ply][3]);
 	    }
-	    
-		colorModel = new IndexColorModel(8,256,paletteRGBA[0],paletteRGBA[1],paletteRGBA[2],paletteRGBA[3]);
 	}
 }
