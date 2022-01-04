@@ -72,10 +72,12 @@ public class Compressor {
         }
         i >>= 1;
         while ((i >>= 1) > 0) {
-            writeBit(backwardsMode ? 1 : 0);
+            //writeBit(backwardsMode ? 1 : 0);
+        	writeBit(0);
             writeBit(invertMode == ((value & i) == 0) ? 1 : 0);
         }
-        writeBit(!backwardsMode ? 1 : 0);
+        //writeBit(!backwardsMode ? 1 : 0);
+        writeBit(1);
     }
 
     public byte[] compress(Block optimal, byte[] input, int skip, boolean backwardsMode, boolean invertMode, int delta[]) {

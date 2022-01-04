@@ -27,7 +27,6 @@ package zx0;
 
 import static java.nio.file.StandardOpenOption.*;
 import java.nio.file.*;
-import java.util.*;
 
 public class Main {
     public static final int MAX_OFFSET_ZX0 = 32640;
@@ -42,6 +41,16 @@ public class Main {
         }
     }
 
+    private static void reverse(byte[] array) {
+        int i = 0;
+        int j = array.length-1;
+        while (i < j) {
+            byte k = array[i];
+            array[i++] = array[j];
+            array[j--] = k;
+        }
+    }
+
     private static byte[] zx0(byte[] input, int skip, boolean backwardsMode, boolean classicMode, boolean quickMode, int threads, boolean verbose, int delta[]) {
         return new Compressor().compress(
                 new Optimizer().optimize(input, skip, quickMode ? MAX_OFFSET_ZX7 : MAX_OFFSET_ZX0, threads, verbose),
@@ -53,7 +62,7 @@ public class Main {
     }
 
     public static void main(String[] args) throws Exception {
-        System.out.println("ZX0 v2.1: Optimal data compressor by Einar Saukas");
+        System.out.println("ZX0 v2.2: Optimal data compressor by Einar Saukas");
 
         // process optional parameters
         int threads = DEFAULT_THREADS;
@@ -159,9 +168,8 @@ public class Main {
 
         // conditionally reverse input file
         if (backwardsMode) {
-            Collections.reverse(Arrays.asList(input));
+            reverse(input);
         }
-
 
         // generate output file
         byte[] output = null;
@@ -180,7 +188,7 @@ public class Main {
 
         // conditionally reverse output file
         if (backwardsMode) {
-            Collections.reverse(Arrays.asList(output));
+            reverse(output);
         }
 
         // write output file

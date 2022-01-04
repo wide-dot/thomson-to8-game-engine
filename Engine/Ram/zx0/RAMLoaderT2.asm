@@ -20,9 +20,8 @@
         
         org   $4000
         opt   c,ct
-        setdp $40                      ; dp for exomizer
 start	
-        INCLUDE "./Engine/Compression/Exomizer.asm"  
+        INCLUDE "./Engine/Compression/zx0/zx0_6809_mega_rear.asm"  
 
 RAMLoader
         ldx   #RL_RAM_index          
@@ -45,7 +44,7 @@ RL_LoadData
 
         ldu   ,x++                     ; source ROM (fin des donnees)
         ldy   ,x++                     ; destination RAM (fin des donnees)
-        jsr   >exo2                    ; decompresse les donnees        
+        jsr   >zx0_decompress          ; decompresse les donnees        
         bra   RL_While
 fill        
         fill  0,7-((fill-start)%7)      ; le code est un multilpe de 7 octets (pour la copie)

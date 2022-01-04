@@ -60,7 +60,9 @@ public class Optimizer {
         optimal = new Block[input.length];
         matchLength = new int[arraySize];
         bestLength = new int[input.length];
-        bestLength[2] = 2;
+        if (bestLength.length > 2) {
+            bestLength[2] = 2;
+        }
 
         // start with fake block
         lastMatch[INITIAL_OFFSET] = new Block(-1, skip-1, INITIAL_OFFSET, null);

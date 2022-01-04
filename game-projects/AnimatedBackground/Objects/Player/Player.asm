@@ -16,7 +16,8 @@ Player
 
 Player_Routines
         fdb   Init      
-        fdb   Live      
+        fdb   Live   
+
 Init
         ldd   #Ani_Player
         std   anim,u

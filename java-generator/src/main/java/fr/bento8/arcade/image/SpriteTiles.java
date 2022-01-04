@@ -2,6 +2,7 @@ package fr.bento8.arcade.image;
 
 public class SpriteTiles {
 	public int tileCount = 0;
+	public int tileCountFlags = 0;
 	public int attr = 0;
 	
 //    CPS1 Sprite attribute
@@ -53,14 +54,14 @@ public class SpriteTiles {
 	public int[] tiles = null;
 	
 	public SpriteTiles(byte[] allroms, int i) {
-//		System.out.println("\n"+i);
-		tileCount = byteUtil.getInt16(allroms, i) & 0x7fff;
+		tileCountFlags = byteUtil.getInt16(allroms, i);
+		tileCount = tileCountFlags & 0x7fff;
 		attr = byteUtil.getInt16(allroms, i+2);
 		dimensions = byteUtil.getInt16(allroms, i+4);
 		offsets = sub_7f224(dimensions);
 		offsetX = (short) byteUtil.getInt16(allroms, i+6);
 		offsetY = (short) byteUtil.getInt16(allroms, i+8);
-//		System.out.println("\t\tTile count: "+tileCount+" attr: "+Integer.toHexString(attr)+" dimensions: "+dimensions+" offsets: "+offsets+" offsetX: "+offsetX+" offsetY: "+offsetY);
+//		System.out.println(Integer.toHexString(i)+" Tile count: "+tileCount+" attr: "+Integer.toHexString(attr)+" dimensions: "+dimensions+" offsets: "+offsets+" offsetX: "+offsetX+" offsetY: "+offsetY);
 		
 		for (int j = 0; j < tileCount; j++) {
 			if (byteUtil.getInt16(allroms, i+10+(j*2))==0) {
