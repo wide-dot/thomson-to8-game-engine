@@ -166,7 +166,7 @@ public class Game {
 			
 			// Chargement des fichiers de configuration des Game Modes
 			for (Map.Entry<String,String[]> curGameMode : gameModeProperties.entrySet()) {
-				BuildDisk.logger.debug("\tLoad Game Mode "+curGameMode.getKey()+": "+curGameMode.getValue()[0]);
+				BuildDisk.prelog += ("\tLoad Game Mode "+curGameMode.getKey()+": "+curGameMode.getValue()[0]+"\n");
 				gameModes.put(curGameMode.getKey(), new GameMode(curGameMode.getKey(), curGameMode.getValue()[0]));
 			}	
 
@@ -198,15 +198,17 @@ public class Game {
 				define = "";
 			}	
 
-			exobin = prop.getProperty("builder.exobin");
-			if (exobin == null) {
-				throw new Exception("builder.exobin not found in "+file);
-			}
-
 			if (prop.getProperty("builder.debug") == null) {
 				throw new Exception("builder.debug not found in "+file);
 			}
 			debug = (prop.getProperty("builder.debug").contentEquals("Y")?true:false);
+			
+			exobin = prop.getProperty("builder.exobin");
+			if (exobin == null) {
+				BuildDisk.prelog += ("\nRam Data will be compressed by ZX0\n");
+			} else {
+				BuildDisk.prelog += ("\nRam Data will be compressed by Exomizer\n");
+			}
 
 			if (prop.getProperty("builder.logToConsole") == null) {
 				throw new Exception("builder.logToConsole not found in "+file);

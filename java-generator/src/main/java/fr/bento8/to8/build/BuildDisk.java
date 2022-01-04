@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
@@ -24,7 +23,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -68,10 +66,13 @@ import fr.bento8.to8.util.LWASMUtil;
 import fr.bento8.to8.util.knapsack.Item;
 import fr.bento8.to8.util.knapsack.Knapsack;
 import fr.bento8.to8.util.knapsack.Solution;
+import zx0.Compressor;
+import zx0.Optimizer;
 
 public class BuildDisk
 {
 	static final Logger logger = LogManager.getLogger("log");
+	public static String prelog = ""; // buffer that store log before log init
 
 	public static Game game;
 	private static FdUtil fd = new FdUtil();
@@ -143,7 +144,7 @@ public class BuildDisk
 			generateImgAniIndex();
 			applyDynamicContent();		
 			compileMainEngines(true);
-			exomizeData();
+			compressData();
 			writeObjectsFd(); 
 			writeObjectsT2();
 			compileRAMLoaderManager();
@@ -206,6 +207,8 @@ public class BuildDisk
 			loggerConfig.removeAppender("LogToConsole");
 			context.updateLoggers();
 		}			
+		
+		logger.debug(prelog);
 	}
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1679,7 +1682,7 @@ public class BuildDisk
 					RAMLoaderIndex fdic = null;
 					if (commons.containsKey(di.gmc)) {
 						for (RAMLoaderIndex dic : commons.get(di.gmc)) {
-							if (dic.ram_page == di.ram_page && dic.ram_address == di.ram_address && dic.ram_endAddress == di.ram_endAddress && Arrays.equals(di.exoBin, dic.exoBin)) {
+							if (dic.ram_page == di.ram_page && dic.ram_address == di.ram_address && dic.ram_endAddress == di.ram_endAddress && Arrays.equals(di.encBin, dic.encBin)) {
 								fdic = dic;
 								break;
 							}
@@ -1698,7 +1701,7 @@ public class BuildDisk
 						di.fd_sector = fd.getSector();
 		
 						index = (fd.getIndex() / 256) * 256; // round to start sector
-						fd.write(di.exoBin);
+						fd.write(di.encBin);
 						di.fd_nbSector = (int) Math.ceil((fd.getIndex() - index) / 256.0); // round to end sector
 						di.fd_endOffset = ((int) Math.ceil(fd.getIndex() / 256.0) * 256) - fd.getIndex();
 						
@@ -1732,7 +1735,7 @@ public class BuildDisk
 				RAMLoaderIndex fdic = null;
 				if (commons.containsKey(di.gmc)) {
 					for (RAMLoaderIndex dic : commons.get(di.gmc)) {
-						if (dic.ram_page == di.ram_page && dic.ram_address == di.ram_address && dic.ram_endAddress == di.ram_endAddress && Arrays.equals(di.exoBin, dic.exoBin)) {
+						if (dic.ram_page == di.ram_page && dic.ram_address == di.ram_address && dic.ram_endAddress == di.ram_endAddress && Arrays.equals(di.encBin, dic.encBin)) {
 							fdic = dic;
 							break;
 						}
@@ -1765,7 +1768,7 @@ public class BuildDisk
 				RAMLoaderIndex fdic = null;
 				if (commons.containsKey(di.gmc)) {
 					for (RAMLoaderIndex dic : commons.get(di.gmc)) {
-						if (dic.ram_page == di.ram_page && dic.ram_address == di.ram_address && dic.ram_endAddress == di.ram_endAddress && Arrays.equals(di.exoBin, dic.exoBin)) {
+						if (dic.ram_page == di.ram_page && dic.ram_address == di.ram_address && dic.ram_endAddress == di.ram_endAddress && Arrays.equals(di.encBin, dic.encBin)) {
 							fdic = dic;
 							break;
 						}
@@ -1775,7 +1778,7 @@ public class BuildDisk
 				if (fdic != null) {
 					fdic.rli.add(di); // save identical common, will be updated in knapsack
 				} else {
-					items[itemIdx++] = new Item(di, 1, di.exoBin.length);
+					items[itemIdx++] = new Item(di, 1, di.encBin.length);
 					
 					if (di.gmc != null) {
 						if (!commons.containsKey(di.gmc)) {
@@ -1811,7 +1814,7 @@ public class BuildDisk
 				
 				currentItem.bin.getRAMLoaderIndex().t2_page = game.romT2.curPage;					
 				currentItem.bin.getRAMLoaderIndex().t2_address = game.romT2.endAddress[game.romT2.curPage];
-				game.romT2.setDataAtCurPos(((RAMLoaderIndex) currentItem.bin).exoBin);
+				game.romT2.setDataAtCurPos(((RAMLoaderIndex) currentItem.bin).encBin);
 				currentItem.bin.getRAMLoaderIndex().t2_endAddress = game.romT2.endAddress[game.romT2.curPage];
 				
 				logger.debug("Item: "+currentItem.name+" T2 ROM "+currentItem.bin.getRAMLoaderIndex().t2_page+" "+String.format("$%1$04X", currentItem.bin.getRAMLoaderIndex().t2_address) + " " + String.format("$%1$04X", currentItem.bin.getRAMLoaderIndex().t2_endAddress-1));
@@ -2734,19 +2737,19 @@ public class BuildDisk
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
-	private static void exomizeData() throws Exception {
-		logger.info("Exomize data ...");
+	private static void compressData() throws Exception {
+		logger.info("Compress data ...");
 		
 		for(Entry<String, GameMode> gm : game.gameModes.entrySet()) {
 			logger.info("\t"+gm.getValue().name);
 			if (!abortFloppyDisk) {	
-				exomizeData(FLOPPY_DISK, gm.getValue().ramFD, gm.getValue().fdIdx, gm.getValue().name);
+				compressData(FLOPPY_DISK, gm.getValue().ramFD, gm.getValue().fdIdx, gm.getValue().name);
 			}
-			exomizeData(MEGAROM_T2, gm.getValue().ramT2, gm.getValue().t2Idx, gm.getValue().name);
+			compressData(MEGAROM_T2, gm.getValue().ramT2, gm.getValue().t2Idx, gm.getValue().name);
 		}
 	}
 	
-	private static void exomizeData(int mode, RamImage ram, List<RAMLoaderIndex> ldi, String gmName) throws Exception {
+	private static void compressData(int mode, RamImage ram, List<RAMLoaderIndex> ldi, String gmName) throws Exception {
 		logger.debug("\t\t" + MODE_LABEL[mode] + "...");
 		
 		String tmpFile = Game.generatedCodeDirName+"RAM data/"+MODE_LABEL[mode]+"/";
@@ -2767,16 +2770,20 @@ public class BuildDisk
 			File file = new File (filename+".raw");
 			file.getParentFile().mkdirs();
 			Files.write(Paths.get(filename+".raw"), fileData);
-			//BinUtil.RawToLinear(tmpFile, 0xA000);
 
-			di.exoBin = exomize(filename);
+			if (game.exobin != null) {
+				di.encBin = exomize(filename);
+			} else {
+				di.encBin = zx0(filename);
+			}
+			
 		}
 	}	
 	
 	/**
-	 * Effectue la compression du code assembleur
+	 * Encode binary file with exomizer
 	 * 
-	 * @param binFile fichier contenant le code assembleur a compiler
+	 * @param binFile binary file to encode
 	 * @return
 	 */
 	public static byte[] exomize(String binFile) {
@@ -2801,9 +2808,48 @@ public class BuildDisk
 			logger.debug(e); 
 			return null;
 		}
+	}	
+	
+	/**
+	 * Encode binary file with ZX0
+	 * 
+	 * @param binFile binary file to encode
+	 * @return
+	 */
+	public static byte[] zx0(String binFile) {
+		byte[] output = null;
+        int[] delta = { 0 };
+        
+		try {
+			byte[] data = Files.readAllBytes(Paths.get(binFile+".raw"));
+			
+			reverse(data);
+			output = new Compressor().compress(new Optimizer().optimize(data, 0, 32640, 4, true), data, 0, true, false, delta);
+			reverse(output);
+			
+			Files.write(Paths.get(binFile+".zx0"), output);			
+			return output;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.debug(e); 
+			return null;
+		}
 	}
+	
+	private static void reverse(byte[] array) {
+	        int i = 0;
+	        int j = array.length-1;
+	        while (i < j) {
+	            byte k = array[i];
+	            array[i++] = array[j];
+	            array[j--] = k;
+	        }
+	    }
+
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
+		
 	
 	/**
 	 * Effectue la compilation du code assembleur

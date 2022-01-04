@@ -92,7 +92,12 @@ anim                          equ 4  ; and 5  ; reference to current animation (
 prev_anim                     equ 6  ; and 7  ; reference to previous animation (Ani_)
 anim_frame                    equ 8           ; index of current frame in animation
 anim_frame_duration           equ 9           ; number of frames for each image in animation, range: 00-7F (0-127), 0 means display only during one frame
-anim_link                     equ 10          ; allow animation swap without reseting anim_frame and duration
+anim_flags                    equ 10
+
+* --- anim_flags bitfield variables ---
+anim_link_mask                equ $01 ; (bit 0) if set, allow the load of a new animation without reseting anim_frame and anim_frame_duration
+anim_lastframe_mask           equ $80 ; (bit 7) is set when the last frame of animation is reached
+
 image_set                     equ 11 ; and 12 ; reference to current image (Img_) (0000 if no image)
 x_pos                         equ 13 ; and 14 ; x playfield coordinate
 x_sub                         equ 15          ; x subpixel (1/256 of a pixel), must follow x_pos in data structure
@@ -103,12 +108,14 @@ x_pixel                       equ 19          ; x screen coordinate
 y_pixel                       equ 20          ; y screen coordinate, must follow x_pixel
 x_vel                         equ 21 ; and 22 ; horizontal velocity
 y_vel                         equ 23 ; and 24 ; vertical velocity
+x_acl                         equ 88 ; and 89 ; horizontal velocity
+y_acl                         equ 90 ; and 91 ; vertical velocity
 routine                       equ 25          ; index of current object routine
 routine_secondary             equ 26          ; index of current secondary routine
 routine_tertiary              equ 27          ; index of current tertiary routine
 routine_quaternary            equ 28          ; index of current quaternary routine
 
-ext_variables                 equ 88 ; to 113 ; reserved space for additionnal variables (25 bytes)
+ext_variables                 equ 92 ; to 113 ; reserved space for additionnal variables (21 bytes)
 
 * ---------------------------------------------------------------------------
 * reserved variables (engine)

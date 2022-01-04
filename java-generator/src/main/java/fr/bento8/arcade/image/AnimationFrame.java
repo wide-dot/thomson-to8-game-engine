@@ -32,8 +32,9 @@ public class AnimationFrame {
 		frame_duration = byteUtil.getInt16(allroms, i);
 		flags = byteUtil.getInt16(allroms, i+2);
 		tilemap = byteUtil.getInt32(allroms, i+4);
-		
-//		System.out.println("\n\tFrame: 0x"+Integer.toHexString(i)+" Frame duration: "+frame_duration+" Image: 0x"+Integer.toHexString(tilemap)+" Flags: "+Integer.toHexString(flags));
+		if (flags > 1 && flags < 8000) {
+		System.out.println("Frame: 0x"+Integer.toHexString(i)+" Frame duration: "+frame_duration+" Image: 0x"+Integer.toHexString(tilemap)+" Flags: "+Integer.toHexString(flags));
+		}
 		
 		if ((flags & 0x8000) != 0) { // bit 15 means end of animation 
 			end_block=true;

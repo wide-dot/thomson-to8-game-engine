@@ -3,7 +3,7 @@
 * ------------------------------------------------------------------------------
 *
 * Charge les donnees d'un mode de jeu depuis la disquette
-* decompresse les donnees avec exomizer et copie ces donnees en RAM
+* decompresse les donnees avec zx0 et copie ces donnees en RAM
 * Les donnees sont stockees par groupe de 7 octets
 * Donnees b: SEC, b: DRV/TRK, b: nb SEC, b: offset de fin, b: dest Page, w: dest Adresse
 * la derniere ligne contient comme premier octet une valeur negative (exemple $FF)
@@ -11,7 +11,7 @@
 * ---------
 * Les donnees sur la disquette sont continues. Lorsque des donnees se terminent a moitie
 * sur un secteur, les donnees de fin sont ignorees par l'offset. Si les donnees commencent
-* en milieu de secteur, c'est l'exomizer qui s'arretera. On optimise ainsi l'espace disquette
+* en milieu de secteur, c'est zx0 qui s'arretera. On optimise ainsi l'espace disquette
 * il n'y a pas de separateur ni de blanc entre les donnees.
 *
 ********************************************************************************
@@ -20,14 +20,13 @@
         
         org   $4000
         opt   c,ct
-        setdp $40                      ; dp for exomizer
 start	
-        INCLUDE "./Engine/Compression/Exomizer.asm"  
+        INCLUDE "./Engine/Compression/zx0/zx0_6809_mega_rear.asm"  
 
 RAMLoader 
         ldb   $E7E5
         orb   #$60                     ; charge la page video de travail et la positionne
-        stb   $E7E6                    ; dans l'espace cartouche comme buffer pour exomizer
+        stb   $E7E6                    ; dans l'espace cartouche comme buffer pour zx0
         
         ldu   #RL_RAM_index
         pshs  u
@@ -92,7 +91,9 @@ RL_NegOffset
 RL_Page
         lda   #0                       ; page memoire
         sta   $E7E5                    ; selection de la page en RAM Donnees (A000-DFFF)
-        jsr   exo2                     ; decompresse les donnees
+	leax  ,u
+	leau  ,y
+        jsr   >zx0_decompress          ; decompresse les donnees
         puls  u
         bra   RAMLoader_continue
 fill        

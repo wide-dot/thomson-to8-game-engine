@@ -1,5 +1,5 @@
-; CUSTOM VERSION FOR TO8 ENGINE
-; NOT THE ORIGINAL SOURCE
+; CUSTOM VERSION FOR TO8 ENGINE - NOT THE ORIGINAL SOURCE
+; License in /Engine/Compression/zx0 directory
 
 ; zx0_6809_standard.asm - ZX0 decompressor for M6809 - 109 bytes
 ;

@@ -177,8 +177,9 @@ SSR_Init                                                                  *Obj60
         sta   priority,u                                                  *    move.b  #3,priority(a0)
         stb   collision_flags,u                                           *    move.b  #1,collision_flags(a0)
 		
-        lda   #1
-        sta   anim_link,u
+        lda   anim_flags,u
+        ora   #anim_link_mask
+        sta   anim_flags,u
 		
         tst   angle,u                                                     *    tst.b   angle(a0)
         bmi   SSR_Ring                                                    *    bmi.s   loc_34FF0

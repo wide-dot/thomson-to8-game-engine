@@ -186,3 +186,9 @@ _rord MACRO
         rora
         rorb
  ENDM
+
+_negd MACRO
+        nega
+        negb
+        sbca   #0
+ ENDM

@@ -40,16 +40,18 @@ public class CommonSubImages {
     	// 1: directory of images to process
     	// 2: minimum of pixels for a match
     	// 3: maximum of sub images for an image
-    	new CommonSubImages(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]));
+    	new CommonSubImages(args[0], Integer.parseInt(args[1]));
     }
 	
-	public CommonSubImages(String srcDir, int minPx, int maxNbSubImg) throws Exception {
+	public CommonSubImages(String srcDir, int minPx) throws Exception {
 		try {
-			File[] imgs;
-			int[] imgsNbSub;
-			List<String>[] imgsSubsNames;
+			File[] imgs, imgs2;
+			int[] imgsNbSub, imgsNbSub2;
+			List<String>[] imgsSubsNames, imgsSubsNames2;
 			final File dir = new File(srcDir);
 			String destDir = srcDir+"/out/";
+			int totalPxIn = 0;
+			int totalPxOut = 0;
 			
 			// Get all images in directory
 	        if (dir.isDirectory()) {
@@ -61,10 +63,19 @@ public class CommonSubImages {
 	            imgs = new File[i];
 	            imgsNbSub = new int[i];
 	            imgsSubsNames = new ArrayList[i];
+		        System.out.println("Input file size:");
 	            i = 0;
 	            for (final File f : dir.listFiles(IMAGE_FILTER)) {
 	            	imgs[i++] = f;
-	            	System.out.println(f.getName());
+	            	BufferedImage image = ImageIO.read(f);
+	            	int nbPx = 0;
+	            	for (int p=0; p < image.getWidth()*image.getHeight(); p++) {
+	            		if ((image.getRaster().getDataBuffer()).getElem(p) != 0) {
+	            			nbPx++;
+	            			totalPxIn++;
+	            		}
+	            	}
+	            	System.out.println(f.getName()+" "+nbPx+" px");
 	            }	            
 	        } else {
 	        	System.out.println(srcDir + " is not a directory !");
@@ -126,7 +137,7 @@ public class CommonSubImages {
 
 		        if (bestPxCount > 0) {
 			        // extract the best sub image
-			        System.out.println("Best match "+nbSubImg+": "+bestPxCount+"px x:"+bxo+" y:"+byo);
+			        System.out.println("Best match "+nbSubImg+": "+bestPxCount+"px x:"+bxo+" y:"+byo+" "+imgs[bi].getName()+" "+imgs[bj].getName());
 			        
 			        BufferedImage imageA = ImageIO.read(imgs[bi]);
 			        BufferedImage imageB = ImageIO.read(imgs[bj]);
@@ -142,11 +153,14 @@ public class CommonSubImages {
 			            		((DataBufferByte) image.getRaster().getDataBuffer()).setElem(x+(y*imageA.getWidth()), (imageA.getRaster().getDataBuffer()).getElem(x+(y*imageA.getWidth())));
 			            		image.setRGB(x, y, imageA.getColorModel().getRGB((imageA.getRaster().getDataBuffer()).getElem(x+(y*imageA.getWidth()))));
 			            		subPxCount++;
+			            	} else {
+	    	            		((DataBufferByte) image.getRaster().getDataBuffer()).setElem(x+(y*imageA.getWidth()), imageA.getColorModel().getRGB(0));
+	    	            		image.setRGB(x, y, imageA.getColorModel().getRGB(0));			            		
 			            	}
 			            }
-			        }		        
-		
-			        // Test all images against this commun sub image, must be a perfect match 
+			        }		 
+			        
+			        // Test all images against this commun sub image, must be a full match of pattern found 
 			        int curSubPxCount;
 			        String imgIdLst = "";
 		
@@ -174,8 +188,8 @@ public class CommonSubImages {
 				    	            }
 				    	        }
 		    	        
-				    	        // if perfect match, substracted image is saved as a new working reference
-				    	        if (curSubPxCount == subPxCount && imgsNbSub[k] < maxNbSubImg) {
+				    	        // if full match, substracted image is saved as a new working reference
+				    	        if (curSubPxCount == subPxCount) {
 				    	        	File file = new File(destDir+imgs[k].getName());
 				    	        	file.getParentFile().mkdirs();		        
 				    	        	ImageIO.write(imageA, "png", file);
@@ -201,8 +215,26 @@ public class CommonSubImages {
 			        	file.getParentFile().mkdirs();		        
 			        	ImageIO.write(image, "png", file);
 			        	nbSubImg++;		        
+			        	
+			            imgs2 = new File[imgs.length + 1];
+			            imgsNbSub2 = new int[imgsNbSub.length + 1];
+			            imgsSubsNames2 = new ArrayList[imgsSubsNames.length + 1];
+			            
+			            int i;
+			            for (i = 0; i < imgs.length; i++)
+			            	imgs2[i] = imgs[i];
+			        	imgs2[i] = file;
+			        	imgs = imgs2;
+			        	
+			            for (i = 0; i < imgsNbSub.length; i++)
+			            	imgsNbSub2[i] = imgsNbSub[i];
+			            imgsNbSub2[i] = 0;
+			            imgsNbSub = imgsNbSub2;
+			            
+			            for (i = 0; i < imgsSubsNames.length; i++)
+			            	imgsSubsNames2[i] = imgsSubsNames[i];
+			            imgsSubsNames = imgsSubsNames2;				            
 			        }
-			        
 		        }
 	        }
 	        
@@ -211,6 +243,21 @@ public class CommonSubImages {
 	        	if (imgsSubsNames[k] != null)
 	        		System.out.println("Image: "+imgs[k].getName()+" "+Arrays.toString(imgsSubsNames[k].toArray()));
 	        }
+	        
+	        System.out.println("Output file size:");
+	        for (int i = 0; i < imgs.length; i++) {
+	        	File f = imgs[i];
+	        	BufferedImage image = ImageIO.read(f);
+	        	int nbPx = 0;
+	        	for (int p=0; p < image.getWidth()*image.getHeight(); p++) {
+	        		if ((image.getRaster().getDataBuffer()).getElem(p) != 0) {
+	        			nbPx++;
+	        			totalPxOut++;
+	        		}
+	        	}
+	        	System.out.println(f.getName()+" "+nbPx+" px");
+	        }
+	        System.out.println(String.format("Ratio: %.2f",totalPxOut/(float)totalPxIn));
 	        System.out.println("End of process.");
 
 		} catch (Exception e) {

@@ -27,19 +27,11 @@ AnimateSprite                               *AnimateSprite:
         beq   Anim_Run                      *    beq.s   Anim_Run         ; if not, branch
         stx   prev_anim,u                   *    move.b  d0,prev_anim(a0) ; set prev anim to current animation
         
-        tst   anim_link,u                   ; this is an animation link 
-        beq   Anim_NoLink                   ; that will not reset anim_frame
-        ldb   anim_frame,u                  ; when swaping animation
-        aslb
-        leay  b,x
-        ldd   ,y
-		cmpa  #$FA
-		bhs   Anim_End_FF         
-        std   image_set,u
-        bra   Anim_Run
+        lda   anim_flags,u
+        anda  #anim_link_mask               ; if animation link, when changing animation
+        bne   Anim_Reload                   ; will skip frame and duration reinit
         
-Anim_NoLink
-		ldb   #0                            
+        ldb   #0                            
         stb   anim_frame,u                  *    move.b  #0,anim_frame(a0)          ; reset animation
         stb   anim_frame_duration,u         *    move.b  #0,anim_frame_duration(a0) ; reset frame duration
                                             *; loc_16560:
@@ -49,15 +41,28 @@ Anim_Run                                    *Anim_Run:
         * no offset table                   *    add.w   d0,d0
         * anim is the address of anim       *    adda.w  (a1,d0.w),a1                 ; calculate address of appropriate animation script
         ldb   -1,x                            
-		stb   anim_frame_duration,u         *    move.b  (a1),anim_frame_duration(a0) ; load frame duration
-                                            *    moveq   #0,d1
+        stb   anim_frame_duration,u         *    move.b  (a1),anim_frame_duration(a0) ; load frame duration
+Anim_Reload                                 *    moveq   #0,d1
         ldb   anim_frame,u                  *    move.b  anim_frame(a0),d1 ; load current frame number
-        aslb
-        leay  b,x                                
+        lda   #0
+        _asld
+        leay  d,x
+        lda   2,y                           ; check if last animation frame
+        cmpa  #$FA
+        blo   @notlast
+        ldb   anim_flags,u
+        orb   #anim_lastframe_mask
+        stb   anim_flags,u
+        bra   @continue
+@notlast
+        ldb   anim_flags,u
+        andb  #^anim_lastframe_mask
+        stb   anim_flags,u
+@continue
         ldd   ,y                            *    move.b  1(a1,d1.w),d0 ; read sprite number from script
         * bmi   Anim_End_FF                 *    bmi.s   Anim_End_FF   ; if animation is complete, branch MJ: Delete this line
-		cmpa  #$FA                          *    cmp.b   #$FA,d0       ; MJ: is it a flag from FA to FF?
-		bhs   Anim_End_FF                   *    bhs     Anim_End_FF   ; MJ: if so, branch to flag routines
+        cmpa  #$FA                          *    cmp.b   #$FA,d0       ; MJ: is it a flag from FA to FF?
+        bhs   Anim_End_FF                   *    bhs     Anim_End_FF   ; MJ: if so, branch to flag routines
                                             *; loc_1657C:
 Anim_Next                                   *Anim_Next:
 	                                        *    andi.b  #$7F,d0               ; clear sign bit
@@ -77,7 +82,7 @@ Anim_Rts                                    *Anim_Wait:
 Anim_End_FF                                 *Anim_End_FF:
         inca                                *    addq.b  #1,d0       ; is the end flag = $FF ?
         bne   Anim_End_FE                   *    bne.s   Anim_End_FE ; if not, branch
-		ldb   #0                            
+        ldb   #0                            
         stb   anim_frame,u                  *    move.b  #0,anim_frame(a0) ; restart the animation
         ldd   ,x                            *    move.b  1(a1),d0          ; read sprite number
         bra   Anim_Next                     *    bra.s   Anim_Next

@@ -1,11 +1,11 @@
-* ---------------------------------------------------------------------------
-* Subroutine translating object speed to update object position
-* This moves the object horizontally and vertically
-* but does not apply gravity to it
-* ---------------------------------------------------------------------------
+; ---------------------------------------------------------------------------
+; Subroutine to make an object move and fall downward increasingly fast
+; This moves the object horizontally and vertically
+; and also applies gravity to its speed
+; ---------------------------------------------------------------------------
 
-                                       *; sub_163AC: SpeedToPos:
-ObjectMove                             *ObjectMove:
+                                       *; sub_16380: ObjectFall:
+ObjectMoveAndFall                      *ObjectMoveAndFall:
                                        *    move.l  x_pos(a0),d2    ; load x position
                                        *    move.l  y_pos(a0),d3    ; load y position
                                        *    move.w  x_vel(a0),d0    ; load horizontal speed
@@ -22,8 +22,12 @@ ObjectMove                             *ObjectMove:
 am_ObjectMove_01
         adca  #$00                     ; parameter is modified by the result of sign extend
         sta   x_pos,u                  ; update high byte of x_pos
+        ldd   x_vel,u
+        addd  x_acl,u                  ; apply horizontal gravity to velocity
+        std   x_vel,u
         
                                        *    move.w  y_vel(a0),d0    ; load vertical speed
+	                               *    addi.w  #$38,y_vel(a0)  ; increase vertical speed (apply gravity)
                                        *    ext.l   d0
                                        *    asl.l   #8,d0   ; shift velocity to line up with the middle 16 bits of the 32-bit position
                                        *    add.l   d0,d3   ; add to y-axis position    ; note this affects the subpixel position y_sub(a0) = 2+y_pos(a0)
@@ -39,6 +43,9 @@ am_ObjectMove_01
 am_ObjectMove_02
         adca  #$00                     ; parameter is modified by the result of sign extend
         sta   y_pos,u                  ; update high byte of y_pos
+        ldd   y_vel,u
+        addd  y_acl,u                  ; apply vertical gravity to velocity
+        std   y_vel,u
         rts                            *    rts
-                                       *; End of function ObjectMove
+                                       *; End of function ObjectMoveAndFall
                                        *; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

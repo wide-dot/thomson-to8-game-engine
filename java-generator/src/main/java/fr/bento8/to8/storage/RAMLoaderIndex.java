@@ -32,7 +32,7 @@ public class RAMLoaderIndex extends ItemBin{
 	public int ram_address;	   // adresse RAM
 	public int ram_endAddress; // adresse de destination (ptr de fin) RAM	
 	
-	public byte[] exoBin;
+	public byte[] encBin;
 	public boolean split = true;
 	
 	public List<GameMode> gml = new ArrayList<GameMode>();

@@ -117,6 +117,10 @@ public class ZX0Encoder extends Encoder{
 		byte[] output = null;
         int[] delta = { 0 };
         
+        // takes a dataIn table (values 0-16 : 0 transparent color, 1-16 colors)
+        // split into two tables :
+        // data : 0-15 colors (transparency is lost and now share the same index with color 0)
+        // alpha : transparency mask 0-1 (0 : transparent, 1 : opaque)
 		byte[] data = new byte[dataIn.length / 2];
 		byte[] alpha = new byte[dataIn.length / 2];
 		int i_start = 0, i_end = data.length;
@@ -157,6 +161,7 @@ public class ZX0Encoder extends Encoder{
 	        runcount++;
 		}        
 
+		// only process color data, transparency is lost
         output = new Compressor().compress(new Optimizer().optimize(data, 0, 32640, 4, true), data, 0, false, false, delta);
         src.addFcb(output);
         

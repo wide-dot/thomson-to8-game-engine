@@ -1,4 +1,5 @@
 ; CUSTOM VERSION FOR TO8 ENGINE - NOT THE ORIGINAL SOURCE
+; Added backward mode
 ; License in /Engine/Compression/zx0 directory
 
 ; zx0_6809_mega.asm - ZX0 decompressor for M6809 - 198 bytes
@@ -35,7 +36,7 @@ zx0_elias_rotate   macro
 zx0_get_1bit       macro
                    lsla                ; get next bit
                    bne done@           ; is bit stream empty? no, branch
-                   lda ,x+             ; load another group of 8 bits
+                   lda ,-x             ; load another group of 8 bits
                    rola                ; get next bit
 done@              equ *
                    endm
@@ -53,50 +54,17 @@ done@              equ *
 
 ;------------------------------------------------------------------------------
 ; Function    : zx0_decompress
-; Entry       : Reg X = start of compressed data
-;             : Reg U = start of decompression buffer
-; Exit        : Reg X = end of compressed data + 1
-;             : Reg U = end of decompression buffer + 1
+; Entry       : Reg X = last start of compressed data + 1
+;             : Reg U = last start of decompression buffer + 1
+; Exit        : Reg X = last end of compressed data 
+;             : Reg U = last end of decompression buffer 
 ; Destroys    : Regs D, Y
 ; Description : Decompress ZX0 data (version 1)
 ;------------------------------------------------------------------------------
-; Options:
-;
-;   ZX0_ONE_TIME_USE
-;     Defined variable to disable re-initialization of variables. Enable
-;     this option for one-time use of depacker for smaller code size.
-;       ex. ZX0_ONE_TIME_USE equ 1
-;
-;   ZX0_DISABLE_SAVE_REGS
-;     Defined variable to disable saving registers CC and DP. Enable
-;     this option for smaller code size and if calling program will take
-;     care of registers CC and DP.
-;       ex. ZX0_DISABLE_SAVE_REGS equ 1
-;
-;   ZX0_DISABLE_DISABLING_INTERRUPTS
-;     Defined variable to disable the disabling of interrupts. Enable
-;     this option if interrupts are already disable or if IRQ and FIRQ
-;     code won't mind register DP being changed.
-;       ex. ZX0_DISABLE_DISABLING_INTERRUPTS
 ;
 zx0_decompress
-                   stu   zx0_eof+1
-                   ldu   glb_screen_location_1		   		   
-                   cmpx  #0                       
-	           beq   zx0_eof       ; branch if no data part 1
-		   bra   zx0_start
-
-zx0_eof            ldx   #0                       ; (dynamic) load next data ptr
-                   beq   @rts
-	           ldd   #0                       
-	           std   zx0_eof+1                   ; clear exit flag for second pass
-	           ldu   glb_screen_location_2
-	           bra   zx0_start
-@rts               rts		   
-
-zx0_start
-                   ldd #$ffff          ; init offset = -1
-                   std >zx0_offset+2		   
+                   ldd #1              ; init offset = 1
+                   std >zx0_offset+2
 
 zx0_dp             equ */256
                    ldd #($80*256)+zx0_dp  ; init bit stream and register DP
@@ -109,12 +77,13 @@ zx0_new_offset     ldb #1              ; set elias = 1 (not necessary to set MSB
                    zx0_get_1bit        ; obtain MSB offset
                    zx0_get_elias       ;  "      "   "
                    clr <zx0_code+1     ; set MSB elias for below
-                   negb                ; adjust for negative offset (set carry for RORB below)
-                   beq zx0_eof         ; eof? (length = 256) if so exit
+                   addb #0             ; adjust for negative offset (set carry for RORB below)
+                   beq zx0_rts         ; eof? (length = 256) if so exit
                    rorb                ; last offset bit becomes first length bit
                    stb <zx0_offset+2   ; save MSB offset
-                   ldb ,x+             ; load LSB offset
+                   ldb ,-x             ; load LSB offset
                    rorb                ; last offset bit becomes first length bit
+		   incb
                    stb <zx0_offset+3   ; save LSB offset
                    ldb #1              ; set elias = 1
                    zx0_get_elias       ; get elias but skip first bit
@@ -125,8 +94,8 @@ skip@              incb                ; elias = elias + 1
 zx0_copy           stx <save_x@+1      ; save reg X
 zx0_code           ldx #$ffff          ; setup length
 zx0_offset         leay >$ffff,u       ; calculate offset address
-loop@              ldb ,y+             ; copy match
-                   stb ,u+             ;  "    "
+loop@              ldb ,-y             ; copy match
+                   stb ,-u             ;  "    "
                    leax -1,x           ; decrement loop counter
                    bne loop@           ; loop until done
 save_x@            ldx #$ffff          ; restore reg X
@@ -140,8 +109,8 @@ zx0_literals       ldb #1              ; set elias = 1
                    zx0_get_elias       ;  "      "
                    stb <zx0_code+2     ; save LSB elias
                    ldy <zx0_code+1     ; setup length
-loop@              ldb ,x+             ; copy literals
-                   stb ,u+             ;  "    "
+loop@              ldb ,-x             ; copy literals
+                   stb ,-u             ;  "    "
                    leay -1,y           ; decrement loop counter
                    bne loop@           ; loop until done
                    lsla                ; get next bit
@@ -150,7 +119,7 @@ loop@              ldb ,x+             ; copy literals
 
 ; interlaced elias gamma coding
 loop@              zx0_elias_rotate
-zx0_reload         lda ,x+             ; load another group of 8 bits
+zx0_reload         lda ,-x             ; load another group of 8 bits
                    rola
                    bcs zx0_rts
                    zx0_elias_rotate
@@ -172,6 +141,6 @@ zx0_last_offset    ldb #1              ; set elias = 1
 
 ; safety check
 zx0_dp_end         equ */256
-                   IFNE zx0_dp-zx0_dp_end
-                   WARNING "zx0_decompress code crossed over DP memory space"
-                   ENDC
+                   ifne zx0_dp-zx0_dp_end
+                   error "zx0_decompress code crossed over DP memory space"
+                   endc
