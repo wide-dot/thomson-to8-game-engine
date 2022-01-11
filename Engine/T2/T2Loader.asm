@@ -195,22 +195,26 @@ RL_END
 * Ext. Libraries
 * ===========================================================================
 
-;------------------------------
+;-------------------------------------------
 ; Changement disquette SDDRIVE
-; Modifier le LBA0 pour pointer
-; quatre faces de disquettes
-; plus loin dans la carte SD
-; Type de carte : b7 de $6057
+; Modifie le LBA0 pour pointer 4 faces de
+; disquettes plus loin dans la carte SD.
+; Type de carte :
+; - b7 de $6057 (2021.02.11 et suivants)
+; - b0 de $6057 (2018.07.02 et suivants)
 ; SD_LB0 :  4 octets en $6051
 ; Decalage 4*80*16=5120 secteurs
-; Secteurs : $1400 (pour SDHC)
-; Octets   : $280000 (pour SD)
-;------------------------------
+; Decalage carte SDHC : $1400 (secteurs)
+; Decalage carte SDSC : $280000 (octets)
+;-------------------------------------------   
 MoveToNextDisk
-  TST   <$57              ;test type de carte 
-  LBPL  MoveToNextDisk_SD ;traitement carte SD  
+  LDA   <$57           ;type de carte 
+  BEQ   SDSC           ;0=capacite standard (avant 2021.02.11)
+  BMI   SDHC           ;b7=1 haute capacite (a partir de 2021.02.11)
+  DECA                 ;1=haute capacite (avant 2021.02.11)       
+  BNE   SDSC           ;sinon capacite standard
 
-MoveToNextDisk_SDHC
+SDHC
   LDD   <$53           ;poids faible LBA0   
   ADDA  #$14           ;ajout 5120 secteurs
   STD   <$53           ;stockage
@@ -220,7 +224,7 @@ MoveToNextDisk_SDHC
   STD   <$51           ;stockage D
   RTS
 
-MoveToNextDisk_SD
+SDSC
   LDD   <$51           ;poids fort LBA0 
   ADDD  #$0028         ;ajout decalage
   STD   <$51           ;stockage D
