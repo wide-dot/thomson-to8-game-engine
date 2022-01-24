@@ -190,5 +190,35 @@ _rord MACRO
 _negd MACRO
         nega
         negb
-        sbca   #0
+        sbca  #0
+ ENDM
+
+_cba MACRO
+        pshs  b
+        cmpa  ,s+
+ ENDM
+
+_aba MACRO
+        pshs  b
+        adda  ,s+
+ ENDM
+
+_sba MACRO
+        pshs  b
+        suba  ,s+
+ ENDM
+
+_cab MACRO
+        pshs  a
+        cmpb  ,s+
+ ENDM
+
+_aab MACRO
+        pshs  a
+        addb  ,s+
+ ENDM
+
+_sab MACRO
+        pshs  a
+        subb  ,s+
  ENDM

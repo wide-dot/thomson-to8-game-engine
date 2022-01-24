@@ -337,7 +337,8 @@ public class SpriteSheet {
 				subImageWidth = width/nbColumns; // Largeur de la sous-image
 				subImageHeight = height/nbRows; // Hauteur de la sous-image
 
-				if (subImageWidth <= 160 && height <= 200 && pixelSize == 8) { // Contrôle du format d'image
+				//if (subImageWidth <= 160 && height <= 200 && pixelSize == 8) { // Contrôle du format d'image
+				if (pixelSize == 8) { // Contrôle du format d'image
 
 					// On inverse l'image horizontalement et verticalement		
 					if (variant.contains("XY")) {

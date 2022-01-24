@@ -258,8 +258,6 @@ public class BuildDisk
 		// - identifiants des objets communs, ils sont identiques pour un même Game Mode Common
 		// - identifiants des objets de Game Mode (Un id d'un même objet peut être différent selon le game Mode)
 		// L'id objet est utilisé comme index pour accéder à l'adresse du code de l'objet au runtime
-		// Remarque: le code d'un objet n'est jamais commun, (seules les images et animations le sont)
-		// En effet un code objet fait référence au MainEngine qui est spécifique au GameMode
 		// ----------------------------------------------------------------------------------------------------		
 		int objIndex;
 		for(Entry<String, GameMode> gameMode : game.gameModes.entrySet()) {
@@ -601,6 +599,7 @@ public class BuildDisk
 			writeSndIndex(asmBuilder, gameMode.getValue(), mode);
 			writeImgPgIndex(asmBuilder, gameMode.getValue(), mode);
 			writeAniPgIndex(asmBuilder, gameMode.getValue(), mode);
+			writeAniAsdIndex(asmBuilder, gameMode.getValue(), mode);
 			writeBackgroundImageIndex(asmBuilder, gameMode.getValue(), mode);			
 			writeLoadActIndex(asmBuilder, gameMode.getValue());
 			
@@ -2130,24 +2129,52 @@ public class BuildDisk
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 
-	private static int writeAniIndex(AsmSourceCode asm, Object object) {
+	private static int writeAniIndex(AsmSourceCode asm, Object object) throws Exception {
 		int size = 0;
+		
+		// Add animation data at start
+		for (Entry<String, String[]> animationDataProperties : object.animationDataProperties.entrySet()) {
+			if (asm != null) {
+				asm.add("\tINCLUDE \"" + animationDataProperties.getValue()[0] + "\"\n");
+			}
+			size += getBINSize(animationDataProperties.getValue()[0]);
+		}			
+		
 		for (Entry<String, String[]> animationProperties : object.animationsProperties.entrySet()) {
 			int i = 0;
 
-			if (asm != null) {
-				asm.addFcb(new String[] { animationProperties.getValue()[i] });
-				asm.addLabel(animationProperties.getKey() + " ");				
-			}
-			size++;
-
-			for (i = 1; i < animationProperties.getValue().length; i++) {
-
+			// automatic detection of animation script version
+			// if first field does not contains a comma, then it is v00
+			// if first field contains a comma, then it is v02
+			if (!animationProperties.getValue()[0].contains(",")) {
+			
+				// ** Animation **
+				// ***************
+				// Duration is the (number of frames-1) for each images
+				// so 0 means 1 frame per image
+				// TODO upgrade all demo animation script to reflect real frame nb
+				// and apply the same -1 calc as the v02 version
+				
+				// Write animation frame duration followed by animation label
+				// so animation duration will be accessed by -1,x
+				if (asm != null) {
+					asm.addFcb(new String[] { animationProperties.getValue()[0] });
+					asm.addLabel(animationProperties.getKey() + " ");				
+				}
+				size++;
+	
+				for (i = 1; i < animationProperties.getValue().length; i++) {
+	
 					if (Animation.tagSize.get(animationProperties.getValue()[i]) == null) {
+						
+						// not an end tag, this is a pointer to an image
 						if (asm != null)
 							asm.addFdb(new String[] { animationProperties.getValue()[i] });
 						size += 2;
+						
 					} else {
+						
+						// this is an end tag, process each end tag + parameter length
 						switch (Animation.tagSize.get(animationProperties.getValue()[i])) {
 						case 1:
 							if (asm != null)
@@ -2170,8 +2197,68 @@ public class BuildDisk
 							break;
 						}
 					}
+				}
+			} else {
+				
+				// ** Animation Advanced **
+				// ************************
+				// Duration is the number of frames for each images
+				// so 1 means 1 frame per image
+				
+				// Write animation label
+				if (asm != null) {
+					asm.addLabel(animationProperties.getKey() + " ");				
+				}
+	
+				for (i = 0; i < animationProperties.getValue().length; i++) {
+	
+					if (Animation.tagSize.get(animationProperties.getValue()[i]) == null) {
+						
+						// not an end tag, this is a pointer to an image, a duration value and animation flags offset
+						String[] data = animationProperties.getValue()[i].split(",");
+						if (data.length != 3)
+							throw new Exception ("Animation v02 need three comma separated parameters : image_name,duration,animation_flags\n ex: Img_5e9a2,8,$0000\n duration is the number of frames for the image");
+						
+						// decrement duration to simplify asm code
+						data[1] = Integer.toString(Integer.parseInt(data[1]) - 1); 
+						
+						if (asm != null) {
+							asm.addFdb(new String[] {data[0]});
+							asm.addFcb(new String[] {data[1]});
+							asm.addFcb(new String[] {data[2]});
+						}
+						size += 5;
+						
+					} else {
+						
+						// this is an end tag, process each end tag + parameter length
+						switch (Animation.tagSize.get(animationProperties.getValue()[i])) {
+						case 1:
+							if (asm != null)
+								asm.addFcb(new String[] { animationProperties.getValue()[i] });
+							size += 1;
+							break;
+						case 2:
+							if (asm != null) {
+								asm.addFcb(new String[] { animationProperties.getValue()[i++] });
+								asm.addFcb(new String[] { animationProperties.getValue()[i] });								
+							}
+							size += 2;
+							break;
+						case 3:
+							if (asm != null) {
+								asm.addFcb(new String[] { animationProperties.getValue()[i++] });
+								asm.addFdb(new String[] { animationProperties.getValue()[i] });								
+							}
+							size += 3;
+							break;
+						}
+					}
+				}
+				
 			}
 		}
+		
 		if (asm != null)		
 			asm.flush();
 		return size;
@@ -2734,6 +2821,44 @@ public class BuildDisk
 		}
 
 	}
+	
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
+	
+	private static void writeAniAsdIndex(AsmSourceCode asmBuilder, GameMode gameMode, int mode) throws Exception {
+		asmBuilder.addLabel("Ani_Asd_Index");	
+		asmBuilder.addFdb(new String[] {"$0000"});
+		
+		// Game Mode Common
+		for (GameModeCommon common : gameMode.gameModeCommon) {
+			if (common != null) {
+				for (Entry<String, Object> object : common.objects.entrySet()) {
+					writeAniAsdIndex(asmBuilder, object.getValue().animation, object.getValue().animationInRAM, mode, gameMode);
+				}
+			}
+		}
+		
+		// Objets du Game Mode
+		for (Entry<String, Object> object : gameMode.objects.entrySet()) {
+			writeAniAsdIndex(asmBuilder, object.getValue().animation, object.getValue().animationInRAM, mode, gameMode);
+		}
+	}	
+	
+	private static void writeAniAsdIndex(AsmSourceCode asmBuilder, AnimationBin abin, boolean objInRAM, int mode, GameMode gm) throws Exception {
+		if (abin != null && ((abin.dataIndex != null && abin.dataIndex.get(gm) != null) || (mode == MEGAROM_T2 && !objInRAM))) {
+			if (mode == FLOPPY_DISK) {
+				asmBuilder.addFdb(new String[] { String.format("$%1$04X", abin.dataIndex.get(gm).fd_ram_address & 0xFFFF) });
+			} else if (mode == MEGAROM_T2) {
+				if (objInRAM) {
+					asmBuilder.addFdb(new String[] { String.format("$%1$04X", abin.dataIndex.get(gm).t2_ram_address & 0xFFFF) });
+				} else {
+					asmBuilder.addFdb(new String[] { String.format("$%1$04X", abin.t2_address & 0xFFFF) });
+				}			
+			}
+		} else {
+			asmBuilder.addFdb(new String[] {"$0000"});			
+		}
+
+	}	
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	

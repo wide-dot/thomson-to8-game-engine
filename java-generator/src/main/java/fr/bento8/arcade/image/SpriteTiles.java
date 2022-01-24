@@ -52,6 +52,8 @@ public class SpriteTiles {
 	public short offsetX = 0;
 	public short offsetY = 0;
 	public int[] tiles = null;
+	public int[] attrs = null;	
+	boolean attrPair = false;
 	
 	public SpriteTiles(byte[] allroms, int i) {
 		tileCountFlags = byteUtil.getInt16(allroms, i);
@@ -61,18 +63,34 @@ public class SpriteTiles {
 		offsets = sub_7f224(dimensions);
 		offsetX = (short) byteUtil.getInt16(allroms, i+6);
 		offsetY = (short) byteUtil.getInt16(allroms, i+8);
-//		System.out.println(Integer.toHexString(i)+" Tile count: "+tileCount+" attr: "+Integer.toHexString(attr)+" dimensions: "+dimensions+" offsets: "+offsets+" offsetX: "+offsetX+" offsetY: "+offsetY);
+
+		if ((tileCountFlags & 0x8000) > 0) {attrPair = true;}		
 		
 		for (int j = 0; j < tileCount; j++) {
-			if (byteUtil.getInt16(allroms, i+10+(j*2))==0) {
-				tileCount++;
+			if (!attrPair) {
+				if (byteUtil.getInt16(allroms, i+10+(j*2))==0) {
+					tileCount++;
+				}
+			} else {
+				if (byteUtil.getInt16(allroms, i+10+(j*4))==0) {
+					tileCount++;
+				}				
 			}
 		}
 		
-		tiles = new int[tileCount];		
+		tiles = new int[tileCount];
+		attrs = new int[tileCount];
+		
 		for (int j = 0; j < tileCount; j++) {
-			tiles[j] = byteUtil.getInt16(allroms, i+10+(j*2));
-//			System.out.println("\t\tTile: 0x"+Integer.toHexString(tiles[j])+" Palette: "+ (attr & 0x1ff));			
+			if (attrPair) {
+				tiles[j] = byteUtil.getInt16(allroms, i+10+(j*4));
+				attrs[j] = byteUtil.getInt16(allroms, i+10+(j*4)+2);
+			}
+			else {
+				tiles[j] = byteUtil.getInt16(allroms, i+10+(j*2));
+				//attrs[j] = attr;				
+				attrs[j] = 0;
+			}
 		}
 		
 	}

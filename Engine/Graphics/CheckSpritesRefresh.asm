@@ -16,14 +16,14 @@ cur_ptr_sub_obj_draw    fdb   $0000
 
 glb_camera_x_pos        fdb   $0000 ; camera x position in palyfield coordinates
 glb_camera_y_pos        fdb   $0000 ; camera y position in palyfield coordinates
-							
+                        	
 * ---------------------------------------------------------------------------
 * Sub Priority Objects List - SOL
 * ---------------------------------------------------------------------------
 
 Tbl_Sub_Object_Erase          fill  0,nb_graphical_objects*2    ; entries of objects that have erase flag in the order back to front
-Tbl_Sub_Object_Draw           fill  0,nb_graphical_objects*2    ; entries of objects that have draw flag in the order back to front							
-									   
+Tbl_Sub_Object_Draw           fill  0,nb_graphical_objects*2    ; entries of objects that have draw flag in the order back to front                        	
+                                	   
 CheckSpritesRefresh
 
 CSR_Start
@@ -201,7 +201,7 @@ CSR_CheckPlayFieldCoord
         tsta 
         lbne  CSR_SetOutOfRange             ; out of range if y_pos + 256 > glb_camera_y_pos
         stb   y_pixel,u
-        bra  CSR_ComputeMappingFrame
+        bra   CSR_ComputeMappingFrame
         
 CSR_DoNotDisplaySprite
         lda   priority,u                     
@@ -236,56 +236,49 @@ CSR_ComputeMappingFrame
         ; and select the appropriate routine. If no routine is found, it will select the avaible routine.
         ; The selected image will also be based on image type overlay or not (Simple Draw or Draw/Erase)
 
-        lda   render_flags,u
-        anda  #render_playfieldcoord_mask
-        beq   @a                            ; branch if position is already expressed in screen coordinate
-        ldd   x_pos,u
-        subd  glb_camera_x_pos        
-        bra   @b
 @a      ldb   x_pixel,u                     ; compute mapping_frame 
 @b      eorb  rsv_image_center_offset,u     ; case of odd image center switch shifted image with normal
-        andb  #$01                          ; index of sub image is encoded in two bits: 00|B0, 01|D0, 10|B1, 11|D1         
+        andb  #1                            ; index of sub image is encoded in two bits: 00|B0, 01|D0, 10|B1, 11|D1         
         aslb                                ; set bit2 for 1px shifted image  
         lda   render_flags,u            
         anda  #render_overlay_mask          ; set bit1 for normal (background save) or overlay sprite (no background save)
-        beq   CSR_NoOverlay
+        beq   @c
         incb
-        
-CSR_NoOverlay
+@c
         lda   b,y
         beq   CSR_NoDefinedFrame
         leay  a,y                           ; read image subset index
         sty   rsv_mapping_frame,u
-        bra  CSR_UpdateMetadata
-        
+        bra   CSR_UpdateMetadata
 CSR_NoDefinedFrame
-        anda  #$01                          ; test if there is an image without 1px shift
-        ldb   a,y
-        bne   CSR_FrameFound
-        ldy   #$0000                        ; no defined frame, nothing will be displayed
+        eorb  #%00000010                    ; check if there is an alternate shifted image available
+        beq   @e
+        inc   rsv_image_center_offset,u     ; ajust offset for alternate
+        bra   @f
+@e      dec   rsv_image_center_offset,u
+@f      tst   b,y
+        bne   @c        
+
+        ldy   #0                            ; no defined frame, nothing will be displayed
         sty   rsv_mapping_frame,u
         lda   render_flags,u
         ora   #render_hide_mask             ; set hide flag
         sta   render_flags,u
         jmp   CSR_CheckErase
                 
-CSR_FrameFound        
-        leay  b,y                           ; read image subset index
-        sty   rsv_mapping_frame,u     
-
 CSR_UpdateMetadata
         lda   erase_nb_cell,y               ; copy current image metadata into object data
         sta   rsv_erase_nb_cell,u           ; this is needed to avoid a lot of page switch 
         lda   page_draw_routine,y           ; during following routines
-		sta   rsv_page_draw_routine,u
-		ldd   draw_routine,y
-		std   rsv_draw_routine,u
+        sta   rsv_page_draw_routine,u
+        ldd   draw_routine,y
+        std   rsv_draw_routine,u
         lda   page_erase_routine,y
-		sta   rsv_page_erase_routine,u
-		ldd   erase_routine,y
-		std   rsv_erase_routine,u
-		
-CSR_CheckPosition		
+        sta   rsv_page_erase_routine,u
+        ldd   erase_routine,y
+        std   rsv_erase_routine,u
+        
+CSR_CheckPosition        
         ldb   y_pixel,u                     ; check if sprite is fully in screen vertical range
         ldy   rsv_image_subset,u
         addb  image_subset_y1_offset,y

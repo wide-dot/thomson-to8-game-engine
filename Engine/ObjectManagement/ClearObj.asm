@@ -2,6 +2,7 @@
 * ClearObj
 * --------
 * Subroutine to clear an object data in OST
+* !!! DOES NOT CLEAR ext_variables !!!
 *
 * input REG : [u] pointer on objet (OST)
 * clear REG : [d,y]
@@ -24,9 +25,7 @@ ClearObj
         pshs  d,x,y,u
         pshs  d,x,y,u
         pshs  d,x,y,u
-        pshs  d,x,y,u
-        pshs  d,x,y,u
-	pshs  d,x,y,u
+        pshs  a,x
 	leau  ,s
 CLO_1        
         lds   #$0000        ; start of object should not be written with S as an index because of IRQ        

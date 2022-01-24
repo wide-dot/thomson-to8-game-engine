@@ -39,7 +39,7 @@ IrqOff
         lda   $6019                           
         anda  #$DF
         sta   $6019                    ; STATUS register
-        orcc  #$10                     ; tell 6809 to activate irq
+        orcc  #$10                     ; tell 6809 to deactivate irq
         rts
         
 IrqSmidi 

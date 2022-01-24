@@ -18,13 +18,22 @@ AnimateSpriteSync                           *AnimateSprite:
         _GetCartPageA
         sta   Anim_Rts+1                    ; backup cart page     
         ldx   #Ani_Page_Index
-        lda   #$00
         ldb   id,u
-        lda   d,x
+        abx
+        lda   ,x
         _SetCartPageA
-                                               
+;
         ldx   anim,u                        *    move.b  anim(a0),d0      ; move animation number to d0
-        cmpx  prev_anim,u                   *    cmp.b   prev_anim(a0),d0 ; is animation set to change?
+        bpl   @a                       ; branch if anim is an address of anim
+        ldx   #Ani_Asd_Index           ; negative means anim,u is a signed 8 bit offset for a LUT
+        ; ldb   id,u                   ; already loaded
+        aslb
+        abx
+        ldx   [,x]                     ; load Anim LUT (first entry in Asd LUT)
+        ldb   anim+1,u                 ; load offset
+        abx                            ; apply offset
+        ldx   ,x                       ; load target anim address
+@a      cmpx  prev_anim,u                   *    cmp.b   prev_anim(a0),d0 ; is animation set to change?
         beq   Anim_Run                      *    beq.s   Anim_Run         ; if not, branch
         stx   prev_anim,u                   *    move.b  d0,prev_anim(a0) ; set prev anim to current animation
         
@@ -51,18 +60,6 @@ Anim_Reload                                 *    moveq   #0,d1
         lda   #0
         _asld
         leay  d,x
-        lda   2,y                           ; check if last animation frame
-        cmpa  #$FA
-        blo   @notlast
-        ldb   anim_flags,u
-        orb   #anim_lastframe_mask
-        stb   anim_flags,u
-        bra   @continue
-@notlast
-        ldb   anim_flags,u
-        andb  #^anim_lastframe_mask
-        stb   anim_flags,u
-@continue                               
         ldd   ,y                            *    move.b  1(a1,d1.w),d0 ; read sprite number from script
         * bmi   Anim_End_FF                 *    bmi.s   Anim_End_FF   ; if animation is complete, branch MJ: Delete this line
         cmpa  #$FA                          *    cmp.b   #$FA,d0       ; MJ: is it a flag from FA to FF?
@@ -71,6 +68,13 @@ Anim_Reload                                 *    moveq   #0,d1
 Anim_Next                                   *Anim_Next:
                                             *    andi.b  #$7F,d0               ; clear sign bit
         std   image_set,u                   *    move.b  d0,mapping_frame(a0)  ; load sprite number
+        lda   status_flags,u
+        anda  #status_xflip_mask|status_yflip_mask
+        sta   @dyn+1
+        lda   render_flags,u
+        anda  #^render_xmirror_mask
+@dyn    ora   #0
+        sta   render_flags,u
                                             *    move.b  status(a0),d1         ; match the orientaion dictated by the object
                                             *    andi.b  #3,d1                 ; with the orientation used by the object engine
                                             *    andi.b  #$FC,render_flags(a0)
@@ -101,8 +105,9 @@ Anim_End_FE_dyn
         suba  #$00                          ; (dynamic)                          
         sta   anim_frame,u                  *    sub.b   d0,anim_frame(a0) ; jump back d0 bytes in the script
                                             *    sub.b   d0,d1
-        asla                                             
-        ldd   a,x                           *    move.b  1(a1,d1.w),d0     ; read sprite number
+        ldb   #2
+        mul                                             
+        ldd   d,x                           *    move.b  1(a1,d1.w),d0     ; read sprite number
         bra   Anim_Next                     *    bra.s   Anim_Next
                                             *; ===========================================================================
                                             *; loc_165C0:
