@@ -24,7 +24,8 @@ public class SFIISpriteExtractor {
 	private static String outDirPath;
 	private static String outDirImgPath;
 	
-	public static final String[][] statusLabel = {{"STAND", "NORMAL", "CROUCH", "STAND_UP", "JUMP_START", "LANDING", "TURN_AROUND", "CROUCH_TURN", "FALLING", "STAND_BLOCK", "STAND_BLOCK2", "CROUCH_BLOCK", "CROUCH_BLOCK2", "STUN1", "STUN2", "STAND_BLOCK_FREEZE", "CROUCH_BLOCK_FREEZE", "CROUCH_STUN", "FOOTSWEPT", "KNOCKDOWN", "BACK_UP", "DIZZY", "HIT_AIR", "ELECTROCUTED", "TUMBLE_30", "TUMBLE_32", "TUMBLE_34", "TUMBLE_36", "PISSED_OFF", "GETTING_THROWN", "PUNCH", "KICK", "CROUCH_PUNCH", "CROUCH_KICK", "JUMP_PUNCH", "JUMP_KICK", "BOUNCE_WALL", "HADOUKEN", "RYUKEN_THROW"},{"","","","","","","","","","","","","","","","","","","",""}};
+	public static final String[][] statusLabel = {{"walkOrStill", "idle", "crouch", "standup", "jump", "jumpland", "turn", "crouchTurn", "fall", "standBlock", "standBlock2", "crouchBlock", "crouchBlock2", "stun", "stun2", "standBlockFreeze", "crouchBlockFreeze", "crouchStun", "footswept", "knockdown", "backUp", "dizzy", "hitAir", "electrocuted", "tumble", "tumble2", "tumble3", "tumble4", "pissedOff", "gettingThrown", "punch", "kick", "crouchPunch", "crouchKick", "jumpPunch", "jumpKick", "special"},
+			                                      {"walkOrStill", "idle", "crouch", "standup", "jump", "jumpland", "turn", "crouchTurn", "fall", "standBlock", "standBlock2", "crouchBlock", "crouchBlock2", "stun", "stun2", "standBlockFreeze", "crouchBlockFreeze", "crouchStun", "footswept", "knockdown", "backUp", "dizzy", "hitAir", "electrocuted", "tumble", "tumble2", "tumble3", "tumble4", "pissedOff", "gettingThrown", "punch", "kick", "crouchPunch", "crouchKick", "jumpPunch", "jumpKick", "special"}};
 	
 	public static final int SFIIWW_RYU = 0;
 	public static final int SFIIWW_EHONDA = 1;
@@ -40,7 +41,7 @@ public class SFIISpriteExtractor {
 	public static final int SFIIWW_VEGA = 11;
 	public static final int SFIIWW_size = 12;
 	
-	public static final String[] playerName  = {"Ryu", "E_Honda", "Blanka", "Guile", "Ken", "Chun-Li", "Zangeif", "Dhalsim", "M_Bison", "Sagat", "Balrog", "Vega"};
+	public static final String[] playerName  = {"Ryu", "E_Honda", "Blanka", "Guile", "Ken", "Chun_Li", "Zangeif", "Dhalsim", "M_Bison", "Sagat", "Balrog", "Vega"};
 	public static final int[][] plyAnimIdx   = {{0x37f1e,0x3d2fc,0x43b90,0x4abac,0x51730,0x56dbc,0x5de06,0x64fbe,0x6aba0,0x6fe22,0x72ee0,0x76f66},{0,0x3ffbc,0x46df4,0,0,0,0,0,0,0,0,0x7905e}};
 	public static final int[][] plyAnimStart = {{0x380a8,0x3d40c,0x43ca4,0x4ad6a,0x518bc,0x56f80,0x5df86,0x6514c,0x6ad1c,0x6ff6c,0x73056,0x7708c},{0,0,0,0,0,0,0,0,0,0,0,0}};
 	public static final int[][] plyAnimEnd   = {{0x3a7a0,0x3ffbc,0x46df4,0x4d97a,0x540dc,0x59da4,0x60652,0x6775c,0x6c774,0x712d4,0x74a3a,0x78b44},{0,0,0,0,0,0,0,0,0,0,0,0}};
@@ -65,10 +66,20 @@ public class SFIISpriteExtractor {
 	public static final IndexColorModel[] plyColorModel= new IndexColorModel[12];
 	
 	public static List<String> animationScript = new ArrayList<String>();
+	public static List<byte[]> animationScriptData = new ArrayList<byte[]>();	
+	public static int astotal = 0;
+	
+	
 	public static List<String> sprites = new ArrayList<String>();
+	public static List<Integer> spritesPly = new ArrayList<Integer>();
+	public static Map<String, Integer> spritesFlags = new HashMap<String, Integer>();	
 	public static Map<String, String> identicalImages = new HashMap<String, String>();
 	
 	public static boolean explore_mode = false;
+	
+	static int gFlags = 0;
+    static int dsOffsetX = 0;
+    static int dsOffsetY = 0;	
 	
 	public static void main(String[] args) throws Exception {
 		// need allroms.bin and sf2gfx.bin files
@@ -120,10 +131,10 @@ public class SFIISpriteExtractor {
 			dir.mkdirs();
 		}
 		
-		System.out.println("SFII Sprite extractor");
+		System.out.println("SFII Sprite extractor (please clean output directory first)");
 		setPalettes();
 		
-		System.out.print("Extract all images ...\r");
+		System.out.println("Extract all images ...");
 		explore_mode = true;
 		
 		for (int lvl = 0; lvl < plyAnimStart.length; lvl++) {
@@ -134,42 +145,35 @@ public class SFIISpriteExtractor {
 				}
 			}
 		}
-		
-		FileWriter animRefFile = new FileWriter(outDirPath+"/noIndexAnimations.properties");
-		
-		// write sprite index
-		for (int i = 0; i < sprites.size(); i++) {
-			animRefFile.write(sprites.get(i)+"\n");
-		}	
-		
-		// write animation index
-		for (int i = 0; i < animationScript.size(); i++) {
-			// replace duplicate images
-			String curLine = animationScript.get(i);
-			for (var ee : identicalImages.entrySet()) {
-				curLine = curLine.replaceAll(ee.getKey(), ee.getValue());
-			}
-			animRefFile.write(curLine+"\n");
-		}
-		
-		animRefFile.close();	
-		animationScript.clear();
-		sprites.clear();
-		identicalImages.clear();
+	
 		outDirImgPath = outDirPath+"/frames/";
 		
-		System.out.print("Extract all animations by index ...\r");
+		System.out.println("\nExtract all animations by index ...");
 		explore_mode = false;
 		
 		// Process by animation index
-		for (int lvl = 0; lvl < plyAnimIdx.length; lvl++) {
+		//for (int lvl = 0; lvl < plyAnimIdx.length; lvl++) {
+		for (int lvl = 0; lvl < 1; lvl++) {
 			for (int ply = 0; ply < SFIIWW_size; ply++) {
-				
+				animationScript.clear();
+				animationScriptData.clear();
+				astotal = 0;
+				sprites.clear();
+				spritesPly.clear();
+				spritesFlags.clear();
+				identicalImages.clear();
+
+				System.out.println("\n"+playerName[ply]);
 				// find animations and secondary animations
 				int idxStart = plyAnimIdx[lvl][ply];
 				int idxEnd = idxStart + byteUtil.getInt16(allroms,idxStart);
 				int nbStatus = (idxEnd - idxStart) / 2;
 				for (int status = 0; status < nbStatus; status++) {
+					if (status >= statusLabel[lvl].length) {
+						animationScript.add("\n# *** Status "+status+" *** ");
+					} else {
+						animationScript.add("\n# *** Status "+status+" *** "+statusLabel[lvl][status]);
+					}
 					for (int pwr = 0; pwr < 10; pwr++) {
 						// check valid frame
 						int plyAnimIndex = plyAnimIdx[lvl][ply];
@@ -181,28 +185,57 @@ public class SFIISpriteExtractor {
 					    }
 					}
 				}
+				FileWriter asData = new FileWriter(outDirPath+"/"+playerName[ply]+"-data.asm");
+				asData.write("Asd_"+playerName[ply]+"\n");
+				for (int i = 0; i < animationScriptData.size(); i++) {
+					StringBuilder sb = new StringBuilder();
+				    sb.append(" fcb ");
+				    String prefix="";
+				    for (byte b : animationScriptData.get(i)) {
+				        sb.append(prefix+String.format("$%02X", b));
+				        prefix = ",";
+				    }
+				    asData.write(sb.toString()+"\n");					
+				}	
+				asData.close();
+				
+				FileWriter animRefFile = new FileWriter(outDirPath+"/"+playerName[ply]+"-anim.properties");
+				
+				// write sprite index
+				for (int i = 0; i < sprites.size(); i++) {
+					
+					// the player have a x direction in the game
+					// so x mirror should be included for all frames
+					// not the case for y axis
+					animRefFile.write("sprite.Img_"+sprites.get(i)+"=./images/"+playerName[spritesPly.get(i)]+"/"+sprites.get(i)+".png;");
+					boolean wrote = false;
+					if ((spritesFlags.get(sprites.get(i)) & 0x03)>0) {
+						animRefFile.write("NB0,XB0");
+						wrote = true;
+					}
+					if ((spritesFlags.get(sprites.get(i)) & 0x0c)>0) {
+						if (wrote)
+							animRefFile.write(",");				
+						animRefFile.write("YB0,XYB0");
+					}
+					animRefFile.write("\n");
+				}	
+				
+				// Write animation index
+				for (int i = 0; i < animationScript.size(); i++) {
+					// replace duplicate images
+					String curLine = animationScript.get(i);
+					for (var ee : identicalImages.entrySet()) {
+						curLine = curLine.replaceAll(ee.getKey(), ee.getValue());
+					}
+					animRefFile.write(curLine+"\n");
+				}
+				
+				animRefFile.close();				
 			}
 		}
-		
-		animRefFile = new FileWriter(outDirPath+"/animations.properties");
-		
-		// write sprite index
-		for (int i = 0; i < sprites.size(); i++) {
-			animRefFile.write(sprites.get(i)+"\n");
-		}	
-		
-		// write animation index
-		for (int i = 0; i < animationScript.size(); i++) {
-			// replace duplicate images
-			String curLine = animationScript.get(i);
-			for (var ee : identicalImages.entrySet()) {
-				curLine = curLine.replaceAll(ee.getKey(), ee.getValue());
-			}
-			animRefFile.write(curLine+"\n");
-		}
-		
-		animRefFile.close();	
-		System.out.print("\rEnd of process.                                                  ");
+			
+		System.out.println("\nEnd of process.");
 	}
 
 	private static void extract(int ply, int lvl, Byte status, Byte power) throws Exception {
@@ -212,13 +245,17 @@ public class SFIISpriteExtractor {
 		
 		if (explore_mode) {
 			iAnimFrame = plyAnimStart[lvl][ply];
-			animRef = "animation."+playerName[ply]+"_"+status+"=";
+			animRef = "animation.Ani_"+playerName[ply]+"_"+status+"=";
 		} else {
 			plyAnimIndex = plyAnimIdx[lvl][ply];
 			iStatus = plyAnimIndex+(byteUtil.getInt16(allroms,plyAnimIndex+(status*2)));
 			iAnim = iStatus+byteUtil.getInt16(allroms,iStatus+(power*2));
 			iAnimFrame = iAnim;
-			animRef = "animation."+playerName[ply]+"_"+status+"_"+power+"=";
+			if (status >= statusLabel[lvl].length) {
+				animRef = "animation.Ani_"+playerName[ply]+"_"+status+"_"+power+"=";
+			} else {
+				animRef = "animation.Ani_"+playerName[ply]+"_"+statusLabel[lvl][status]+"_"+power+"=";
+			}			
 		}
 		//System.out.print(animRef+"...                    \r");
 		
@@ -235,22 +272,42 @@ public class SFIISpriteExtractor {
 			    //}
 			    
 			    frame = new AnimationFrame(allroms, iAnimFrame);
+
 			    //System.out.print(Integer.toHexString(frame.address)+" ");
+				gFlags = 0;			    
 			    String existingImgName = drawSprite(ply, frame, i++);
 			    
 		    	String imgName = Integer.toHexString(frame.address);
 			    if(existingImgName == null) {
 			    	// no duplicate for this image, point to itself
 			    	identicalImages.put(imgName, imgName);
-			    	sprites.add("sprite."+imgName+"=./images/"+playerName[ply]+"/"+imgName+".png;NB0,XB0");
+			    	sprites.add(imgName);
+			    	spritesPly.add(ply);
+			    	
+			    	int flags = 0;
+			    	switch (gFlags) {
+			    	case 0x60: flags = 0x8; break;
+			    	case 0x40: flags = 0x4; break;			    	
+			    	case 0x20: flags = 0x2; break;
+			    	default:   flags = 0x1; break;
+			    	}
+			    	spritesFlags.put(imgName, flags);
+			    	
 			    } else {
 			    	// duplicate found, point to existing image
 			    	identicalImages.put(imgName, existingImgName);
+			    	int flags = spritesFlags.get(existingImgName);
+			    	switch (gFlags) {
+			    	case 0x60: flags |= 0x8; break;
+			    	case 0x40: flags |= 0x4; break;			    	
+			    	case 0x20: flags |= 0x2; break;
+			    	default:   flags |= 0x1; break;
+			    	}			    	
+			    	spritesFlags.put(existingImgName, flags);
 			    }
 			    
 			    iAnimFrame += frame.size;
-			    animRef += frame.frame_duration+":"+Integer.toHexString(frame.address)+";";
-//			    System.out.print(frame.address+"("+frame.frame_duration+") ");
+			    animRef += "Img_"+Integer.toHexString(frame.address)+","+frame.delay+",$"+String.format("%02x", frame.dataIndex)+";";
 			    
 				if (frame.end_block) {
 					break;
@@ -289,7 +346,7 @@ public class SFIISpriteExtractor {
 	    if (image.spriteTiles.tileCount == 0) { return null; }
 	    BufferedImage pngImage;
 	    
-	    pngImage = sub_7f244(image, (short)(imgWidth/2), (short)imgHeight, frame, plyColorModel[ply]);
+	    pngImage = sub_7f244(image, (short)(imgWidth/2), (short)(imgHeight), frame, plyColorModel[ply]);
 	    
 	    // Build ref image index
 	    if (explore_mode)
@@ -306,32 +363,98 @@ public class SFIISpriteExtractor {
 	
 	public static BufferedImage sub_7f244(AnimationFrame image, short x, short y, int frame, IndexColorModel cm) {
 		short sx, sy;
-		int tile, attr;
+		int tile;
 		short offsets = image.spriteTiles.offsets;
 		
-		BufferedImage pngImage = new BufferedImage(imgWidth, imgHeight, BufferedImage.TYPE_BYTE_INDEXED, cm);
+		BufferedImage pngImage = new BufferedImage(imgWidth, imgHeight*2, BufferedImage.TYPE_BYTE_INDEXED, cm);
+		//if (!explore_mode)
+		//	System.out.println("\nIMAGE: "+Integer.toHexString(image.address)+" "+Integer.toHexString(image.spriteTiles.tileCountFlags));		
+
+		int attr = image.spriteTiles.attr & 0xe0;		
+	    gFlags = image.spriteTiles.attr & 0x60; // keep only x and y flags
+		
+	    dsOffsetX = image.spriteTiles.offsetX;
+	    dsOffsetY = image.spriteTiles.offsetY;
+	    
+	    // A faire au runtime en choississant le mirror adapté
+	    // Necessite de recentrer les sprites sur l'axe Y => A confirmer
+	    //if ((image.flipBits & 0x3) > 1) {
+	    //	attr ^= ((image.flipBits & 0x3) << 5);      /* apply flips */
+	    //    dsOffsetY += image.yOffset; // Offset Anim Script
+	    //}			
 		
 		for (int i = 0; i < image.spriteTiles.tiles.length; i++) {
 			if (image.spriteTiles.tiles[i] <= 0xbfff) {
 				tile = image.spriteTiles.tiles[i] << 7;
-				attr = image.spriteTiles.attr & 0x1f;
 	
 	            if(tile == 0) {
 	            	offsets += 2;
 				} else {
+				    
+//					if ((attr & 0x20) > 0) {
+//						// X FLIP						
+//						if (image.spriteTiles.attrPair) {
+//							sx = (short) (x - image.spriteTiles.getOffset(offsets) - 16);
+//						} else {
+//							sx = (short) (x - (image.spriteTiles.getOffset(offsets) + ((attr & 0xf00) >> 4) + 16));
+//						}
+//					} else {
+//						sx = (short) (x + image.spriteTiles.getOffset(offsets));
+//					}
+//
+//					if ((attr & 0x40) > 0) {
+//						// Y FLIP
+//						if (image.spriteTiles.attrPair) {							
+//							sy = (short) ((y - image.spriteTiles.getOffset(offsets+1) - 16) & 0x1ff);
+//						} else {
+//							sy = (short) ((y - image.spriteTiles.getOffset(offsets+1) - ((attr & 0xf000) >> 8) + 0x10) & 0x1ff);
+//							if ((attr & 0x20) > 0) {
+//								sx = (short) (x - (image.spriteTiles.getOffset(offsets) - ((attr & 0xf00) >> 4) + 16));
+//							}
+//						}
+//					} else {
+//						sy = (short) ((short)(y + image.spriteTiles.getOffset(offsets+1)) & 0x1ff);
+//					}						
+					
 					sx = (short) (x + image.spriteTiles.getOffset(offsets));
-					if(sx > 512 || sx < 0) {
-						offsets += 2;
+					sy = (short) ((y + image.spriteTiles.getOffset(offsets+1)) & 0x1ff);
+															
+					offsets += 2;
+					
+//					// XFlip
+//					if ((attr & 0x20)==0) {
+//					    sx -= dsOffsetX;
+//					} else {
+//						sx += dsOffsetX;
+//					}
+//					
+//					// Y flip
+//					if ((attr & 0x40)==0) {
+//						sy += dsOffsetY;					
+//					} else {
+//						sy -= dsOffsetY;
+//					}						
+					
+					sx -= dsOffsetX;
+					sy += dsOffsetY;
+					
+//					if (image.spriteTiles.attrPair) {
+//						attr ^= image.spriteTiles.attrs[i];
+//					}
+					
+					if (image.spriteTiles.attrPair) {
+						attr = image.spriteTiles.attrs[i];
 					} else {
-						sy = (short) ((short)(y + image.spriteTiles.getOffset(offsets+1)) & 0x1ff);
-						offsets += 2;
-//						System.out.println("DrawImage: "+sx+" "+sy+" "+tile+" "+attr);
-						drawImage(pngImage, sx, sy, tile, attr);
+						attr = 0;
 					}
+					
+					//if (!explore_mode)
+					//	System.out.println("Draw tile: "+sx+" "+sy+" "+Integer.toHexString(tile)+" "+Integer.toHexString(image.spriteTiles.attrs[i])+" Yoffset:"+image.yOffset);
+					drawImage(pngImage, sx, sy, tile, attr);
 				}
 			}
 		}
-		
+
 		return pngImage;
 	}	
 
@@ -339,77 +462,131 @@ public class SFIISpriteExtractor {
 	// https://searchcode.com/total-file/1585206/src/vidhrdw/cps1.cpp/
 	
 	private static void drawImage(BufferedImage image, short sx, short sy, int tile, int attr) {
-
-//		System.out.println("Read: "+tile);
+			
+		int color[] = new int[8];
    		for (int y = 0; y < 16; y++) {
    			for (int x = 0; x < 8; x+=4) {
-   				
-   				int color1 = ((sf2gfx[tile+(y*8)+x] & 0b10000000) >> 7) | ((sf2gfx[tile+(y*8)+x+1] & 0b10000000) >> 6) | ((sf2gfx[tile+(y*8)+x+2] & 0b10000000) >> 5) | ((sf2gfx[tile+(y*8)+x+3] & 0b10000000) >> 4);
-   				if (color1 == 15) {
-   					color1 = 0;
-   				} else {
-   					color1 += 1;
-   				}
-   				
-   				int color2 = ((sf2gfx[tile+(y*8)+x] & 0b01000000) >> 6) | ((sf2gfx[tile+(y*8)+x+1] & 0b01000000) >> 5) | ((sf2gfx[tile+(y*8)+x+2] & 0b01000000) >> 4) | ((sf2gfx[tile+(y*8)+x+3] & 0b01000000) >> 3);
-   				if (color2 == 15) {
-   					color2 = 0;
-   				} else {
-   					color2 += 1;
-   				}   				
-   				
-   				int color3 = ((sf2gfx[tile+(y*8)+x] & 0b00100000) >> 5) | ((sf2gfx[tile+(y*8)+x+1] & 0b00100000) >> 4) | ((sf2gfx[tile+(y*8)+x+2] & 0b00100000) >> 3) | ((sf2gfx[tile+(y*8)+x+3] & 0b00100000) >> 2);
-   				if (color3 == 15) {
-   					color3 = 0;
-   				} else {
-   					color3 += 1;
-   				}   	
-   				
-   				int color4 = ((sf2gfx[tile+(y*8)+x] & 0b00010000) >> 4) | ((sf2gfx[tile+(y*8)+x+1] & 0b00010000) >> 3) | ((sf2gfx[tile+(y*8)+x+2] & 0b00010000) >> 2) | ((sf2gfx[tile+(y*8)+x+3] & 0b00010000) >> 1);
-   				if (color4 == 15) {
-   					color4 = 0;
-   				} else {
-   					color4 += 1;
-   				}   	   	
-   				
-   				int color5 = ((sf2gfx[tile+(y*8)+x] & 0b00001000)) >> 3 | ((sf2gfx[tile+(y*8)+x+1] & 0b00001000) >> 2) | ((sf2gfx[tile+(y*8)+x+2] & 0b00001000) >> 1) | ((sf2gfx[tile+(y*8)+x+3] & 0b00001000));
-   				if (color5 == 15) {
-   					color5 = 0;
-   				} else {
-   					color5 += 1;
-   				}
-   				
-   				int color6 = ((sf2gfx[tile+(y*8)+x] & 0b00000100) >> 2) | ((sf2gfx[tile+(y*8)+x+1] & 0b00000100) >> 1) | ((sf2gfx[tile+(y*8)+x+2] & 0b00000100)) | ((sf2gfx[tile+(y*8)+x+3] & 0b00000100) << 1);
-   				if (color6 == 15) {
-   					color6 = 0;
-   				} else {
-   					color6 += 1;
-   				}   				
-   				
-   				int color7 = ((sf2gfx[tile+(y*8)+x] & 0b00000010) >> 1) | ((sf2gfx[tile+(y*8)+x+1] & 0b00000010)) | ((sf2gfx[tile+(y*8)+x+2] & 0b00000010) << 1) | ((sf2gfx[tile+(y*8)+x+3] & 0b00000010) << 2);
-   				if (color7 == 15) {
-   					color7 = 0;
-   				} else {
-   					color7 += 1;
-   				}   	
-   				
-   				int color8 = ((sf2gfx[tile+(y*8)+x] & 0b00000001)) | ((sf2gfx[tile+(y*8)+x+1] & 0b00000001) << 1) | ((sf2gfx[tile+(y*8)+x+2] & 0b00000001) << 2) | ((sf2gfx[tile+(y*8)+x+3] & 0b00000001) << 3);
-   				if (color8 == 15) {
-   					color8 = 0;
-   				} else {
-   					color8 += 1;
-   				}
-   				
-   				(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+(x*2)+sx, color1);
-   				(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+(x*2)+1+sx, color2);
-   				(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+(x*2)+2+sx, color3);
-   				(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+(x*2)+3+sx, color4);
-   				(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+(x*2)+4+sx, color5);
-   				(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+(x*2)+5+sx, color6);
-   				(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+(x*2)+6+sx, color7);
-   				(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+(x*2)+7+sx, color8);
-    		}
-    	}
+				color[0] = ((sf2gfx[tile+(y*8)+x] & 0b10000000) >> 7) | ((sf2gfx[tile+(y*8)+x+1] & 0b10000000) >> 6) | ((sf2gfx[tile+(y*8)+x+2] & 0b10000000) >> 5) | ((sf2gfx[tile+(y*8)+x+3] & 0b10000000) >> 4);
+				if (color[0] == 15) {
+					color[0] = 0;
+				} else {
+					color[0] += 1;
+				}
+				
+				color[1] = ((sf2gfx[tile+(y*8)+x] & 0b01000000) >> 6) | ((sf2gfx[tile+(y*8)+x+1] & 0b01000000) >> 5) | ((sf2gfx[tile+(y*8)+x+2] & 0b01000000) >> 4) | ((sf2gfx[tile+(y*8)+x+3] & 0b01000000) >> 3);
+				if (color[1] == 15) {
+					color[1] = 0;
+				} else {
+					color[1] += 1;
+				}   				
+				
+				color[2] = ((sf2gfx[tile+(y*8)+x] & 0b00100000) >> 5) | ((sf2gfx[tile+(y*8)+x+1] & 0b00100000) >> 4) | ((sf2gfx[tile+(y*8)+x+2] & 0b00100000) >> 3) | ((sf2gfx[tile+(y*8)+x+3] & 0b00100000) >> 2);
+				if (color[2] == 15) {
+					color[2] = 0;
+				} else {
+					color[2] += 1;
+				}   	
+				
+				color[3] = ((sf2gfx[tile+(y*8)+x] & 0b00010000) >> 4) | ((sf2gfx[tile+(y*8)+x+1] & 0b00010000) >> 3) | ((sf2gfx[tile+(y*8)+x+2] & 0b00010000) >> 2) | ((sf2gfx[tile+(y*8)+x+3] & 0b00010000) >> 1);
+				if (color[3] == 15) {
+					color[3] = 0;
+				} else {
+					color[3] += 1;
+				}   	   	
+				
+				color[4] = ((sf2gfx[tile+(y*8)+x] & 0b00001000)) >> 3 | ((sf2gfx[tile+(y*8)+x+1] & 0b00001000) >> 2) | ((sf2gfx[tile+(y*8)+x+2] & 0b00001000) >> 1) | ((sf2gfx[tile+(y*8)+x+3] & 0b00001000));
+				if (color[4] == 15) {
+					color[4] = 0;
+				} else {
+					color[4] += 1;
+				}
+				
+				color[5] = ((sf2gfx[tile+(y*8)+x] & 0b00000100) >> 2) | ((sf2gfx[tile+(y*8)+x+1] & 0b00000100) >> 1) | ((sf2gfx[tile+(y*8)+x+2] & 0b00000100)) | ((sf2gfx[tile+(y*8)+x+3] & 0b00000100) << 1);
+				if (color[5] == 15) {
+					color[5] = 0;
+				} else {
+					color[5] += 1;
+				}   				
+				
+				color[6] = ((sf2gfx[tile+(y*8)+x] & 0b00000010) >> 1) | ((sf2gfx[tile+(y*8)+x+1] & 0b00000010)) | ((sf2gfx[tile+(y*8)+x+2] & 0b00000010) << 1) | ((sf2gfx[tile+(y*8)+x+3] & 0b00000010) << 2);
+				if (color[6] == 15) {
+					color[6] = 0;
+				} else {
+					color[6] += 1;
+				}   	
+				
+				color[7] = ((sf2gfx[tile+(y*8)+x] & 0b00000001)) | ((sf2gfx[tile+(y*8)+x+1] & 0b00000001) << 1) | ((sf2gfx[tile+(y*8)+x+2] & 0b00000001) << 2) | ((sf2gfx[tile+(y*8)+x+3] & 0b00000001) << 3);
+				if (color[7] == 15) {
+					color[7] = 0;
+				} else {
+					color[7] += 1;
+				}
+				
+				// Normal
+				if ((attr & 0x20)==0 && (attr & 0x40)==0) {		
+					draw(image, sx, sy, x, y, color);
+				} else 		
+				
+				// X flip
+				if ((attr & 0x20)>0 && (attr & 0x40)==0) {				
+					drawX(image, sx, sy, x, y, color);
+				} else
+				
+				// Y flip
+				if ((attr & 0x20)==0 && (attr & 0x40)>0) {
+					drawY(image, sx, sy, x, y, color);
+				} else 	
+				
+				// XY flip
+				if ((attr & 0x20)>0 && (attr & 0x40)>0) {
+					drawXY(image, sx, sy, x, y, color);
+				}					
+   			}
+   		}		
+	}	
+
+	public static void draw(BufferedImage image, short sx, short sy, int x, int y, int color[]) {
+		(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+(x*2)+sx,   color[0]);
+		(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+(x*2+1)+sx, color[1]);
+		(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+(x*2+2)+sx, color[2]);
+		(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+(x*2+3)+sx, color[3]);
+		(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+(x*2+4)+sx, color[4]);
+		(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+(x*2+5)+sx, color[5]);
+		(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+(x*2+6)+sx, color[6]);
+		(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+(x*2+7)+sx, color[7]);
+	}
+	
+	public static void drawX(BufferedImage image, short sx, short sy, int x, int y, int color[]) {
+		(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+15-(x*2)+sx,   color[0]);
+		(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+15-(x*2+1)+sx, color[1]);
+		(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+15-(x*2+2)+sx, color[2]);
+		(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+15-(x*2+3)+sx, color[3]);
+		(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+15-(x*2+4)+sx, color[4]);
+		(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+15-(x*2+5)+sx, color[5]);
+		(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+15-(x*2+6)+sx, color[6]);
+		(image.getRaster().getDataBuffer()).setElem(((y+sy)*image.getWidth())+15-(x*2+7)+sx, color[7]);
+	}	
+	
+	public static void drawY(BufferedImage image, short sx, short sy, int x, int y, int color[]) {
+		(image.getRaster().getDataBuffer()).setElem(((15-y+sy)*image.getWidth())+(x*2)+sx,   color[0]);
+		(image.getRaster().getDataBuffer()).setElem(((15-y+sy)*image.getWidth())+(x*2+1)+sx, color[1]);
+		(image.getRaster().getDataBuffer()).setElem(((15-y+sy)*image.getWidth())+(x*2+2)+sx, color[2]);
+		(image.getRaster().getDataBuffer()).setElem(((15-y+sy)*image.getWidth())+(x*2+3)+sx, color[3]);
+		(image.getRaster().getDataBuffer()).setElem(((15-y+sy)*image.getWidth())+(x*2+4)+sx, color[4]);
+		(image.getRaster().getDataBuffer()).setElem(((15-y+sy)*image.getWidth())+(x*2+5)+sx, color[5]);
+		(image.getRaster().getDataBuffer()).setElem(((15-y+sy)*image.getWidth())+(x*2+6)+sx, color[6]);
+		(image.getRaster().getDataBuffer()).setElem(((15-y+sy)*image.getWidth())+(x*2+7)+sx, color[7]);
+	}
+	
+	public static void drawXY(BufferedImage image, short sx, short sy, int x, int y, int color[]) {
+		(image.getRaster().getDataBuffer()).setElem(((15-y+sy)*image.getWidth())+15-(x*2)+sx,   color[0]);
+		(image.getRaster().getDataBuffer()).setElem(((15-y+sy)*image.getWidth())+15-(x*2+1)+sx, color[1]);
+		(image.getRaster().getDataBuffer()).setElem(((15-y+sy)*image.getWidth())+15-(x*2+2)+sx, color[2]);
+		(image.getRaster().getDataBuffer()).setElem(((15-y+sy)*image.getWidth())+15-(x*2+3)+sx, color[3]);
+		(image.getRaster().getDataBuffer()).setElem(((15-y+sy)*image.getWidth())+15-(x*2+4)+sx, color[4]);
+		(image.getRaster().getDataBuffer()).setElem(((15-y+sy)*image.getWidth())+15-(x*2+5)+sx, color[5]);
+		(image.getRaster().getDataBuffer()).setElem(((15-y+sy)*image.getWidth())+15-(x*2+6)+sx, color[6]);
+		(image.getRaster().getDataBuffer()).setElem(((15-y+sy)*image.getWidth())+15-(x*2+7)+sx, color[7]);
 	}	
 	
 	public static void setPalettes() throws IOException {

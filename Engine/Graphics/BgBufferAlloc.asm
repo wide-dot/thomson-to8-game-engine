@@ -33,9 +33,16 @@ BBA_Next
 BBA_FitCell
         ldd   next_entry,y
         std   ,x                            ; chain previous cell with next cell
-        clr   nb_cells,y                    ; delete current cell
-        ldy   cell_end,y                    ; return cell_end
-        bra   BBA_rts
+        ldd   cell_end,y                    ; return cell_end
+        std   cell_end_return+2
+
+        ldd   #0
+        sta   nb_cells,y                    ; clean current cell
+        std   cell_start,y                  ;
+        std   cell_end,y                    ;
+        std   next_entry,y                  ;
+
+        bra   cell_end_return
         
 BBA_DivideCell
         sta   BBA_dyn+1
@@ -46,9 +53,7 @@ BBA_dyn
         
         ldb   #cell_size
         mul
-        eora  #$FF                          ; set negative
-        eorb  #$FF                          ; set negative        
-        addd  #$01
+        _negd
         ldx   cell_end,y
         stx   cell_end_return+2        
         leax  d,x                           ; cell_end = cell_end - (number of requested cells * nb of bytes in a cell)

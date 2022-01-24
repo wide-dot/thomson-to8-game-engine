@@ -8,13 +8,9 @@
     opt   c,ct
 
 MIDI.CTRL       equ    $E7F2
-MIDI.STAT       equ    MIDI.CTRL
-MIDI.RX         equ    $E7F3a
-MIDI.TX         equ    MIDI.RX
-MIDI.RXFULL     equ    %00000001
-MIDI.TXEMPTY    equ    %00000010
-MIDI.RXIRQ      equ    %10000000
-MIDI.TXIRQ      equ    %00100000
+MIDI.TX         equ    $E7F3
+MIDI.TXIRQON    equ    %00110101 ; 8bits, no parity check, stop 1, tx interrupt
+MIDI.TXIRQOFF   equ    %00010101 ; 8bits, no parity check, stop 1, no interrupt
 
 FIRQ.ROUTINE    equ    $6023
 
@@ -25,6 +21,7 @@ MusicPage       fcb   0                ; current memory page of music data
 MusicDataPos    fdb   0                ; current playing position in Music Data
 MusicStatus     fcb   0                ; 0 : stop playing, 1-255 : play music
 WaitFrame       fcb   0                ; number of frames to wait before next play
+NbByteInFrame   fcb   0                ; number of bytes already written in current frame
 
 ******************************************************************************
 * ResetMidi - Reset Midi Controller
@@ -35,8 +32,8 @@ ResetMidi
         pshs  a
         lda   #$03
         sta   MIDI.CTRL                ; reset midi controller
-        lda   #$15               
-        sta   MIDI.CTRL                ; no r/w interrupt
+        lda   #MIDI.TXIRQOFF
+        sta   MIDI.CTRL
         puls  a,pc
 
 ******************************************************************************
@@ -66,6 +63,7 @@ PlayMusic
         sta   CircularBufferPos+2      ; init buffer index to 0
         ldd   #SampleFIRQ              ; set the FIRQ routine that will be called when the EF5860 tx buffer is empty
         std   FIRQ.ROUTINE
+        andcc #$BF                     ; activate FIRQ
         puls  d,pc
 
 ******************************************************************************
@@ -82,16 +80,24 @@ PlayMusic
 * destroys A,B,X,Y
 ******************************************************************************
 _enableFIRQ MACRO
-        lda   MIDI.CTRL
-        anda  #^MIDI.TXIRQ
+        lda   #MIDI.TXIRQON
         sta   MIDI.CTRL
  ENDM 
 
 _writeBuffer MACRO
-        sta   b,y                      ; send byte to the midi interface
+        sta   b,y                      ; write byte to the buffer
         incb
+        addb  #$80
         stb   CircularBufferEnd+1
-        lda   ,x+
+        addb  #$80
+        ; Place here _enableFIRQ for better accuracy but worse performance
+        dec   NbByteInFrame
+        bne   @a
+        ldu   #@b
+        lda   #1
+        bra   DoWait
+@a      lda   ,x+
+@b      equ   *
  ENDM 
 
 MusicFrame 
@@ -126,18 +132,26 @@ LoopRestart
         bra   @a
         ;
 ReadCommand
+        lda   #64
+        sta   NbByteInFrame
         ldb   CircularBufferEnd+1      ; load next free position in circular buffer
-        ldy   #CircularBuffer
+        addb  #$80                     ; adjust offset because write is made with 8 bit offset (-128,+127)
+        ldy   #CircularBuffer+128      ; and reading buffer is made by direct address (lda   CircularBuffer)
         ldx   MusicDataPos             ; load current position in music track
         lda   MusicPage
 @a      _SetCartPageA
         lda   ,x+                      ; read data byte in new page
+NextFrameJump
+        jmp   CommandLoop              ; (dynamic) at exit, continue location is stored here
 
+CommandReLoop
+        _writeBuffer
 CommandLoop
         bmi   DoCommand
         beq   BankSwitch
-
+        ldu   #CommandLoop             ; normal exit
 DoWait
+        stu   NextFrameJump+1          ; (dynamic) set routine to call next frame
         sta   WaitFrame
         stx   MusicDataPos
         _enableFIRQ
@@ -151,21 +165,18 @@ DoCommand
         cmpa  #$f0
         beq   DoSysEx                  ; branch (sysex)
                                        ; default (command En, 2 data byte)
-
 TXRdy3b                             
-        _writeBuffer
+        _writeBuffer 
 
 TXRdy2b
-        _writeBuffer
-        _writeBuffer
-        bra   CommandLoop
+        _writeBuffer 
+        bra   CommandReLoop
 
 DoSysEx
         _writeBuffer
         cmpa  #$f7
         bne   DoSysEx
-        _writeBuffer
-        bra   CommandLoop
+        lbra   CommandReLoop
 
 ******************************************************************************
 * SampleFIRQ - send a sample to the midi interface (FIRQ)
@@ -178,20 +189,17 @@ SampleFIRQ
 CircularBufferEnd
         cmpa  #0                       ; (dynamic) end offset in buffer (set by IRQ routine when buffer is written)
         beq   DisableFIRQ              ; branch if no more data to read (todo shutdown midi interface interupt until next buffer write ?)
-        inc   CircularBufferPos+2      ; increment the offset in buffer
 CircularBufferPos       
         lda   CircularBuffer           ; (dynamic) read the buffer at the current index
         sta   MIDI.TX                  ; send byte to the midi interface           
+        inc   CircularBufferPos+2      ; increment the offset in buffer
 @a      lda   #0                       ; (dynamic) restore register A
         rti
 DisableFIRQ
-        lda   MIDI.CTRL
-        anda  #^MIDI.TXIRQ
+        lda   #MIDI.TXIRQOFF
         sta   MIDI.CTRL
         bra   @a
 
         align 256
 CircularBuffer
         fill  0,256
-
-; todo at encoding stage a frame is not allowed to hold more than 62 midi bytes, place a warning

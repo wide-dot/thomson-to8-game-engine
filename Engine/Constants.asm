@@ -70,8 +70,10 @@ sound_meta_size   equ 5
 * Object Constants
 * ===========================================================================
 
-object_size                   equ 114 ; the size of an object - DEPENDENCY ClearObj routine
+object_core_size              equ 93  ; the size of an object without ext_vars - DEPENDENCY ClearObj routine
+object_size                   equ object_core_size+ext_variables_size ; the size of a dynamic object
 next_object                   equ object_size
+ext_variables                 equ object_core_size-1 ; start of reserved space for additionnal variables
 
 id                            equ 0           ; reference to object model id (ObjID_) (0: free slot)
 subtype                       equ 1           ; reference to object subtype (Sub_)
@@ -92,35 +94,40 @@ anim                          equ 4  ; and 5  ; reference to current animation (
 prev_anim                     equ 6  ; and 7  ; reference to previous animation (Ani_)
 anim_frame                    equ 8           ; index of current frame in animation
 anim_frame_duration           equ 9           ; number of frames for each image in animation, range: 00-7F (0-127), 0 means display only during one frame
-anim_flags                    equ 10
+anim_flags                    equ 10          ; byte offset to reference an anim_flags LUT (adv) / store a link flag (non adv)
 
 * --- anim_flags bitfield variables ---
 anim_link_mask                equ $01 ; (bit 0) if set, allow the load of a new animation without reseting anim_frame and anim_frame_duration
-anim_lastframe_mask           equ $80 ; (bit 7) is set when the last frame of animation is reached
 
-image_set                     equ 11 ; and 12 ; reference to current image (Img_) (0000 if no image)
-x_pos                         equ 13 ; and 14 ; x playfield coordinate
-x_sub                         equ 15          ; x subpixel (1/256 of a pixel), must follow x_pos in data structure
-y_pos                         equ 16 ; and 17 ; y playfield coordinate
-y_sub                         equ 18          ; y subpixel (1/256 of a pixel), must follow y_pos in data structure
-xy_pixel                      equ 19          ; x and y screen coordinate
-x_pixel                       equ 19          ; x screen coordinate
-y_pixel                       equ 20          ; y screen coordinate, must follow x_pixel
-x_vel                         equ 21 ; and 22 ; horizontal velocity
-y_vel                         equ 23 ; and 24 ; vertical velocity
-x_acl                         equ 88 ; and 89 ; horizontal velocity
-y_acl                         equ 90 ; and 91 ; vertical velocity
-routine                       equ 25          ; index of current object routine
-routine_secondary             equ 26          ; index of current secondary routine
-routine_tertiary              equ 27          ; index of current tertiary routine
-routine_quaternary            equ 28          ; index of current quaternary routine
+status_flags                  equ 11          ; orientation of sprite, is applied to animation xmirror flag during AnimateSprite
 
-ext_variables                 equ 92 ; to 113 ; reserved space for additionnal variables (21 bytes)
+* --- status_flags bitfield variables ---
+status_xflip_mask             equ $01 ; (bit 0) X Flip
+status_yflip_mask             equ $02 ; (bit 1) Y Flip
+
+image_set                     equ 12 ; and 13 ; reference to current image (Img_) (0000 if no image)
+x_pos                         equ 14 ; and 15 ; x playfield coordinate
+x_sub                         equ 16          ; x subpixel (1/256 of a pixel), must follow x_pos in data structure
+y_pos                         equ 17 ; and 18 ; y playfield coordinate
+y_sub                         equ 19          ; y subpixel (1/256 of a pixel), must follow y_pos in data structure
+xy_pixel                      equ 20          ; x and y screen coordinate
+x_pixel                       equ 20          ; x screen coordinate
+y_pixel                       equ 21          ; y screen coordinate, must follow x_pixel
+;x_offset                      equ 93          ; x screen coordinate offset that is applied at rendering
+;y_offset                      equ 94          ; x screen coordinate offset that is applied at rendering
+x_vel                         equ 22 ; and 23 ; horizontal velocity
+y_vel                         equ 24 ; and 25 ; vertical velocity
+x_acl                         equ 26 ; and 27 ; horizontal velocity
+y_acl                         equ 28 ; and 29 ; vertical velocity
+routine                       equ 30          ; index of current object routine
+routine_secondary             equ 31          ; index of current secondary routine
+routine_tertiary              equ 32          ; index of current tertiary routine
+routine_quaternary            equ 33          ; index of current quaternary routine
 
 * ---------------------------------------------------------------------------
-* reserved variables (engine)
+* reserved variables (update by engine)
 
-rsv_render_flags              equ 29
+rsv_render_flags              equ 34
 
 * --- rsv_render_flags bitfield variables ---
 rsv_render_checkrefresh_mask  equ $01 ; (bit 0) if erasesprite and display sprite flag are processed for this frame
@@ -129,67 +136,67 @@ rsv_render_displaysprite_mask equ $04 ; (bit 2) if a sprite need to be rendered 
 rsv_render_outofrange_mask    equ $08 ; (bit 3) if a sprite is out of range for full rendering in screen
 rsv_render_onscreen_mask      equ $80 ; (bit 7) DEPENDENCY should be bit 7 - has been rendered on last screen buffer (may be 0 or 1)
 
-rsv_prev_anim                 equ 30 ; and 31 ; reference to previous animation (Ani_) w * UTILE ?
-rsv_image_center_offset       equ 32 ; 0 or 1 offset that indicate if image center is even or odd (DRS_XYToAddress)
-rsv_image_subset              equ 33 ; and 34 ; reference to current image regarding mirror flags w
-rsv_mapping_frame             equ 35 ; and 36 ; reference to current image regarding mirror flags, overlay flag and x precision w
-rsv_erase_nb_cell             equ 37 ; b 
-rsv_page_draw_routine         equ 38 ; b
-rsv_draw_routine              equ 39 ; and 40 ; w
-rsv_page_erase_routine        equ 41 ; b
-rsv_erase_routine             equ 42 ; and 43 ; w 
-rsv_xy1_pixel                 equ 44 ;
-rsv_x1_pixel                  equ 44 ; x+x_offset-(x_size/2) screen coordinate
-rsv_y1_pixel                  equ 45 ; y+y_offset-(y_size/2) screen coordinate, must follow rsv_x1_pixel
-rsv_xy2_pixel                 equ 46 ;
-rsv_x2_pixel                  equ 46 ; x+x_offset+(x_size/2) screen coordinate
-rsv_y2_pixel                  equ 47 ; y+y_offset+(y_size/2) screen coordinate, must follow rsv_x2_pixel
+rsv_prev_anim                 equ 35 ; and 36 ; reference to previous animation (Ani_) w * UTILE ?
+rsv_image_center_offset       equ 37 ; 0 or 1 offset that indicate if image center is even or odd (DRS_XYToAddress)
+rsv_image_subset              equ 38 ; and 39 ; reference to current image regarding mirror flags w
+rsv_mapping_frame             equ 40 ; and 41 ; reference to current image regarding mirror flags, overlay flag and x precision w
+rsv_erase_nb_cell             equ 42 ; b 
+rsv_page_draw_routine         equ 43 ; b
+rsv_draw_routine              equ 44 ; and 45 ; w
+rsv_page_erase_routine        equ 46 ; b
+rsv_erase_routine             equ 47 ; and 48 ; w 
+rsv_xy1_pixel                 equ 49 ;
+rsv_x1_pixel                  equ 49 ; x+x_offset-(x_size/2) screen coordinate
+rsv_y1_pixel                  equ 50 ; y+y_offset-(y_size/2) screen coordinate, must follow rsv_x1_pixel
+rsv_xy2_pixel                 equ 51 ;
+rsv_x2_pixel                  equ 51 ; x+x_offset+(x_size/2) screen coordinate
+rsv_y2_pixel                  equ 52 ; y+y_offset+(y_size/2) screen coordinate, must follow rsv_x2_pixel
 
 * ---------------------------------------------------------------------------
 * reserved variables (engine) - buffer specific
 
-rsv_buffer_0                  equ 48 ; Start index of buffer 0 variables
-rsv_priority_0                equ 48 ; internal value that hold priority in video buffer 0
-rsv_priority_prev_obj_0       equ 49 ; and 50 ; previous object (OST address) in display priority list for video buffer 0 (0000 if none) w
-rsv_priority_next_obj_0       equ 51 ; and 52 ; next object (OST address) in display priority list for video buffer 0 (0000 if none) w
-rsv_prev_mapping_frame_0      equ 53 ; and 54 ; reference to previous image in video buffer 0 w
-rsv_prev_erase_nb_cell_0      equ 55 : b
-rsv_prev_page_erase_routine_0 equ 56 ; b
-rsv_prev_erase_routine_0      equ 57 ; and 58 ; w
-rsv_bgdata_0                  equ 59 ; and 60 ; address of background data in screen 0 w
-rsv_prev_xy_pixel_0           equ 61 ;
-rsv_prev_x_pixel_0            equ 61 ; previous x screen coordinate b
-rsv_prev_y_pixel_0            equ 62 ; previous y screen coordinate b, must follow x_pixel
-rsv_prev_xy1_pixel_0          equ 63 ;
-rsv_prev_x1_pixel_0           equ 63 ; previous x+x_offset-(x_size/2) screen coordinate b
-rsv_prev_y1_pixel_0           equ 64 ; previous y+y_offset-(y_size/2) screen coordinate b, must follow x1_pixel
-rsv_prev_xy2_pixel_0          equ 65 ;
-rsv_prev_x2_pixel_0           equ 65 ; previous x+x_offset+(x_size/2) screen coordinate b
-rsv_prev_y2_pixel_0           equ 66 ; previous y+y_offset+(y_size/2) screen coordinate b, must follow x2_pixel
-rsv_prev_render_flags_0       equ 67 ;
+rsv_buffer_0                  equ 53 ; Start index of buffer 0 variables
+rsv_priority_0                equ 53 ; internal value that hold priority in video buffer 0
+rsv_priority_prev_obj_0       equ 54 ; and 55 ; previous object (OST address) in display priority list for video buffer 0 (0000 if none) w
+rsv_priority_next_obj_0       equ 56 ; and 57 ; next object (OST address) in display priority list for video buffer 0 (0000 if none) w
+rsv_prev_mapping_frame_0      equ 58 ; and 59 ; reference to previous image in video buffer 0 w
+rsv_prev_erase_nb_cell_0      equ 60 : b
+rsv_prev_page_erase_routine_0 equ 61 ; b
+rsv_prev_erase_routine_0      equ 62 ; and 63 ; w
+rsv_bgdata_0                  equ 64 ; and 65 ; address of background data in screen 0 w
+rsv_prev_xy_pixel_0           equ 66 ;
+rsv_prev_x_pixel_0            equ 66 ; previous x screen coordinate b
+rsv_prev_y_pixel_0            equ 67 ; previous y screen coordinate b, must follow x_pixel
+rsv_prev_xy1_pixel_0          equ 68 ;
+rsv_prev_x1_pixel_0           equ 68 ; previous x+x_offset-(x_size/2) screen coordinate b
+rsv_prev_y1_pixel_0           equ 69 ; previous y+y_offset-(y_size/2) screen coordinate b, must follow x1_pixel
+rsv_prev_xy2_pixel_0          equ 70 ;
+rsv_prev_x2_pixel_0           equ 70 ; previous x+x_offset+(x_size/2) screen coordinate b
+rsv_prev_y2_pixel_0           equ 71 ; previous y+y_offset+(y_size/2) screen coordinate b, must follow x2_pixel
+rsv_prev_render_flags_0       equ 72 ;
 * --- rsv_prev_render_flags_0 bitfield variables ---
 rsv_prev_render_overlay_mask  equ $01 ; (bit 0) if a sprite has been rendered with compilated sprite and no background save on screen buffer 0/1
 rsv_prev_render_onscreen_mask equ $80 ; (bit 7) DEPENDENCY should be bit 7 - has been rendered on screen buffer 0/1
 
-rsv_buffer_1                  equ 68 ; Start index of buffer 1 variables
-rsv_priority_1                equ 68 ; internal value that hold priority in video buffer 1
-rsv_priority_prev_obj_1       equ 69 ; and 70 ; previous object (OST address) in display priority list for video buffer 1 (0000 if none) w
-rsv_priority_next_obj_1       equ 71 ; and 72 ; next object (OST address) in display priority list for video buffer 1 (0000 if none) w
-rsv_prev_mapping_frame_1      equ 73 ; and 74 ; reference to previous image in video buffer 1 w
-rsv_prev_erase_nb_cell_1      equ 75 ; b
-rsv_prev_page_erase_routine_1 equ 76 ; b
-rsv_prev_erase_routine_1      equ 77 ; and 78 ; w
-rsv_bgdata_1                  equ 79 ; and 80 ; address of background data in screen 1 w
-rsv_prev_xy_pixel_1           equ 81 ;
-rsv_prev_x_pixel_1            equ 81 ; previous x screen coordinate b
-rsv_prev_y_pixel_1            equ 82 ; previous y screen coordinate b, must follow x_pixel
-rsv_prev_xy1_pixel_1          equ 83 ;
-rsv_prev_x1_pixel_1           equ 83 ; previous x+x_size screen coordinate b
-rsv_prev_y1_pixel_1           equ 84 ; previous y+y_size screen coordinate b, must follow x_pixel
-rsv_prev_xy2_pixel_1          equ 85 ;
-rsv_prev_x2_pixel_1           equ 85 ; previous x+x_size screen coordinate b
-rsv_prev_y2_pixel_1           equ 86 ; previous y+y_size screen coordinate b, must follow x_pixel
-rsv_prev_render_flags_1       equ 87 ;
+rsv_buffer_1                  equ 73 ; Start index of buffer 1 variables
+rsv_priority_1                equ 73 ; internal value that hold priority in video buffer 1
+rsv_priority_prev_obj_1       equ 74 ; and 75 ; previous object (OST address) in display priority list for video buffer 1 (0000 if none) w
+rsv_priority_next_obj_1       equ 76 ; and 77 ; next object (OST address) in display priority list for video buffer 1 (0000 if none) w
+rsv_prev_mapping_frame_1      equ 78 ; and 79 ; reference to previous image in video buffer 1 w
+rsv_prev_erase_nb_cell_1      equ 80 ; b
+rsv_prev_page_erase_routine_1 equ 81 ; b
+rsv_prev_erase_routine_1      equ 82 ; and 83 ; w
+rsv_bgdata_1                  equ 84 ; and 85 ; address of background data in screen 1 w
+rsv_prev_xy_pixel_1           equ 86 ;
+rsv_prev_x_pixel_1            equ 86 ; previous x screen coordinate b
+rsv_prev_y_pixel_1            equ 87 ; previous y screen coordinate b, must follow x_pixel
+rsv_prev_xy1_pixel_1          equ 88 ;
+rsv_prev_x1_pixel_1           equ 88 ; previous x+x_size screen coordinate b
+rsv_prev_y1_pixel_1           equ 89 ; previous y+y_size screen coordinate b, must follow x_pixel
+rsv_prev_xy2_pixel_1          equ 90 ;
+rsv_prev_x2_pixel_1           equ 90 ; previous x+x_size screen coordinate b
+rsv_prev_y2_pixel_1           equ 91 ; previous y+y_size screen coordinate b, must follow x_pixel
+rsv_prev_render_flags_1       equ 92 ;
 
 buf_priority                  equ 0  ; offset for each rsv_buffer variables
 buf_priority_prev_obj         equ 1  ;

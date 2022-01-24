@@ -3,10 +3,7 @@ package fr.bento8.to8.audio.midi;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
 
 import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiEvent;
@@ -39,7 +36,7 @@ public class MidiConverter{
 		// Parse last track for midi messages and replace messages tick by 50hz wait frames
 		Track track = sequence.getTracks()[sequence.getTracks().length-1];
 		byte[] data = getMT32Data(track, tickpQrt, tempoLst);
-		Files.write(new File(FileUtil.removeExtension(args[0])+".to8.mid").toPath(), data);	
+		Files.write(new File(FileUtil.removeExtension(args[0])+".smid").toPath(), data);	
 	}
 	
 	public static List<long[]> initTempo(Sequence sequence, int tickpQrt) {
@@ -88,7 +85,7 @@ public class MidiConverter{
 		return tempoLst;
 	}	
 	
-	public static byte[] getMT32Data(Track track, int tickpQrt, List<long[]> tempoLst) {
+	public static byte[] getMT32Data(Track track, int tickpQrt, List<long[]> tempoLst) throws Exception {
 		byte[] data = new byte[2097152]; // 2Mo Buffer
 		int dataIdx = 0;
 		
@@ -96,6 +93,7 @@ public class MidiConverter{
 		long absolFrame = 0;
 		long lastAbsolFrame = 0;
 		int relativeFrame = 0;
+		int nbBytesSinceLastWait = 0;
 		
 		for (int i = 0; i < track.size(); i++) {
 			
@@ -119,12 +117,22 @@ public class MidiConverter{
 				relativeFrame = (int) (absolFrame - lastAbsolFrame);
 				lastAbsolFrame = absolFrame;
 				
-				System.out.print("wait ");
 				// write relative frame wait (msb 0)
 				while (relativeFrame > 0) {
-					data[dataIdx++] = (byte) ((relativeFrame%127) & 0xFF);
-					System.out.print(" "+String.format("%02X", (data[dataIdx-1])));
-					System.out.print(" (Tick "+absolTick+")");
+					// compute frame drops (more than 64 bytes in one frame)
+					// and adjust wait time
+					int waitTime = (relativeFrame%127) & 0xFF;
+					int frameDrop = (nbBytesSinceLastWait+1)/64;
+					nbBytesSinceLastWait = 0;
+					if (frameDrop > waitTime) {
+						System.out.println("*********** WARNING *********** Timing does not match data speed. Deviation: +"+(frameDrop-waitTime)*20+" ms.");
+					} else {
+						if (frameDrop != waitTime) {
+							data[dataIdx++] = (byte) (waitTime-frameDrop);
+							System.out.print("wait "+String.format("%02X", (data[dataIdx-1])));
+							System.out.print(" (Tick "+absolTick+")\n");
+						}
+					}
 					relativeFrame -= relativeFrame%127;
 				}
 				
@@ -133,6 +141,7 @@ public class MidiConverter{
 				for (int j = 0; j < message.getLength(); j++) {
 					data[dataIdx++] = message.getMessage()[j];
 					System.out.print(" "+String.format("%02X", (data[dataIdx-1])));
+					nbBytesSinceLastWait++;
 				}	
 				
 				System.out.println("");

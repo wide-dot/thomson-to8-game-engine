@@ -79,5 +79,6 @@ am_SwapVideoPage
 glb_Main_runcount     fdb   0 ; page swap counter
 Vint_runcount         fdb   0
 Vint_Last_runcount    fdb   0
+Vint_Main_runcount_w  fcb   0 ; pad to be able to load Vint_Main_runcount as a word
 Vint_Main_runcount    fcb   0
 glb_Cur_Wrk_Screen_Id fcb   0 ; screen buffer set to write operations (0 or 1)

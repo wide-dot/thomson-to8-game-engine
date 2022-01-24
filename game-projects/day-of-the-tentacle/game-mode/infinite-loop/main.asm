@@ -1,5 +1,8 @@
         INCLUDE "./Engine/Constants.asm"
 	INCLUDE "./Engine/Macros.asm"   
+
+ext_variables_size equ 6
+
         org   $6100
         jsr   LoadAct
 
@@ -33,6 +36,7 @@ nb_graphical_objects   equ 2
 * ==============================================================================
 * Routines
 * ==============================================================================
+
         INCLUDE "./Engine/Ram/BankSwitch.asm"
         INCLUDE "./Engine/Graphics/WaitVBL.asm"
         INCLUDE "./Engine/Graphics/AnimateSprite.asm"	

@@ -21,6 +21,7 @@ public class Object {
 	public String fileName;	
 	public String codeFileName;
 	public boolean codeInRAM = false;
+	public boolean isCommonCode = false;
 	
 	public HashMap<GameMode, ObjectCode> gmCode = new HashMap<GameMode, ObjectCode>();
 	public HashMap<String, Sprite> sprites = new HashMap<String, Sprite>();
@@ -35,6 +36,7 @@ public class Object {
 	
 	public HashMap<String, String[]> spritesProperties;
 	public HashMap<String, String[]> animationsProperties;	
+	public HashMap<String, String[]> animationDataProperties;
 	public HashMap<String, String[]> soundsProperties;
 	public HashMap<String, String[]> tilesetsProperties;
 	
@@ -52,9 +54,31 @@ public class Object {
 			throw new Exception("Impossible de charger le fichier de configuration: " + propertiesFileName, e);
 		}
 
-		String[] codeFileNameTmp = prop.getProperty("code").split(";");
+		String codeTmp = prop.getProperty("code");
+		String commonCodeTmp = prop.getProperty("common-code");
+		
+		if (codeTmp != null && commonCodeTmp != null) {
+			throw new Exception("Only one code or common-code property allowed in " + propertiesFileName);
+		}
+		
+		if (codeTmp == null && commonCodeTmp == null) {
+			throw new Exception("One code or common-code property mandatory in " + propertiesFileName);
+		}
+
+		if (codeTmp == null) {
+			codeTmp = commonCodeTmp;
+		}
+		String[] codeFileNameTmp = codeTmp.split(";");
+
 		if (codeFileNameTmp.length == 0)
-			throw new Exception("code not found in " + propertiesFileName);
+			throw new Exception("code or common-code not specified in " + propertiesFileName);
+		
+		if (commonCodeTmp != null) {
+			isCommonCode = true;
+		}
+		
+		// TODO common-code is not yet implemented
+		// should result in one code instance, not as many as objects 
 		
 		// Quand l'objet est créé, un premier code objet est rattaché à un gameMode
 		ObjectCode oc = new ObjectCode(this);
@@ -67,6 +91,10 @@ public class Object {
 
 		spritesProperties = PropertyList.get(prop, "sprite");
 		animationsProperties = PropertyList.get(prop, "animation");
+		animationDataProperties = PropertyList.get(prop, "animation-data");	
+		if (animationDataProperties.size()>1)
+			throw new Exception("Only one animation-data allowed in " + propertiesFileName);
+		
 		soundsProperties = PropertyList.get(prop, "sound");
 		tilesetsProperties = PropertyList.get(prop, "tileset");
 		

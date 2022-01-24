@@ -16,7 +16,7 @@ RunObjects                                  *RunObjects:
                                             *    tst.b   (Teleport_flag).w
                                             *    bne.s   RunObjects_End  ; rts
         ldu   #Object_RAM                   *    lea (Object_RAM).w,a0 ; a0=object
-                                            *
+        bra   am_RunNextObject
                                             *    moveq   #(Dynamic_Object_RAM_End-Object_RAM)/object_size-1,d7 ; run the first $80 objects out of levels
                                             *    moveq   #0,d0
                                             *    cmpi.b  #GameModeID_Demo,(Game_Mode).w  ; demo mode?
