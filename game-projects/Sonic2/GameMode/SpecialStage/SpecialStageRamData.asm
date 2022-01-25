@@ -2,6 +2,9 @@
 ; TODO : split entre variables qui doivent etre globales (restent ici)
 ; et celles specifiques a l'objet (vont avec le code objet)
 
+; ext_variables_size is for dynamic objects
+ext_variables_size                equ 14
+
 * ===========================================================================
 * Object Subtypes
 * ===========================================================================

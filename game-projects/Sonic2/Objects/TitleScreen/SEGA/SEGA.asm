@@ -172,18 +172,18 @@ SEGA_Init_01
 
         * Set x mirror on Sonic
         ldx   #Obj_Sonic1
-        lda   render_flags,x
-        ora   #render_xmirror_mask
-        sta   render_flags,x
+        lda   status_flags,x
+        ora   #status_xflip_mask
+        sta   status_flags,x
         ldb   #1
         stb   priority,x
 
         ldx   #Obj_Sonic2
-        sta   render_flags,x
+        sta   status_flags,x
         stb   priority,x
 
         ldx   #Obj_Sonic3
-        sta   render_flags,x
+        sta   status_flags,x
         stb   priority,x
 
         inc   routine_secondary,u
@@ -251,19 +251,19 @@ SEGA_MidWipe
 
         * Unset x mirror on Sonic
         ldx   #Obj_Sonic1
-        lda   render_flags,x
-        anda   #^render_xmirror_mask
-        sta   render_flags,x
+        lda   status_flags,x
+        anda   #^status_xflip_mask
+        sta   status_flags,x
         ldb   x_pixel,x
         subb  #$10
         stb   x_pixel,x
 
         ldx   #Obj_Sonic2
-        sta   render_flags,x
+        sta   status_flags,x
         stb   x_pixel,x
 
         ldx   #Obj_Sonic3
-        sta   render_flags,x
+        sta   status_flags,x
         stb   x_pixel,x
 
         * Set Sega Logo
