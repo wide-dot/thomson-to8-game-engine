@@ -1,25 +1,16 @@
 * ---------------------------------------------------------------------------
-* ClearObj
-* --------
-* Subroutine to clear an object data in OST
-* !!! DOES NOT CLEAR ext_variables !!!
-* If you want to clean ext_variables, crete a copy of this file and customize it
-* you will have to keep the same routine name (called by other Engine routines)
-* Best practice is to init ext_vars in object code
-* Look at the Sonic2 demo for an example of cutomization (ClearObj107)
+* ClearObj107
+* -----------
+* Subroutine to clear an object data in OST and ext_variables
 *
 * input REG : [u] pointer on objet (OST)
 * clear REG : [d,y]
 * ---------------------------------------------------------------------------
 
-        IFNE object_core_size-93
-        WARNING "ClearObj routine must be upgraded to clean object_core_size bytes (actually 93 bytes)"
-        ENDC
-
-ClearObj 
+ClearObj
         pshs  d,x,y,u
         sts   CLO_1+2
-        leas  object_core_size,u        
+        leas  107,u        
         ldd   #$0000
         ldx   #$0000
         leay  ,x
@@ -33,7 +24,9 @@ ClearObj
         pshs  d,x,y,u
         pshs  d,x,y,u
         pshs  d,x,y,u
-        pshs  a,x
+        pshs  d,x,y,u
+        pshs  d,x,y,u
+        pshs  a
 	leau  ,s
 CLO_1        
         lds   #$0000        ; start of object should not be written with S as an index because of IRQ        

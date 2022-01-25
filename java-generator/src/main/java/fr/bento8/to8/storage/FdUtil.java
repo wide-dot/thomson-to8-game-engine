@@ -1,5 +1,6 @@
 package fr.bento8.to8.storage;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -7,6 +8,8 @@ import java.nio.file.Paths;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import fr.bento8.to8.util.FileUtil;
 
 /**
  * @author Benoà®t Rousseau
@@ -23,6 +26,26 @@ public class FdUtil
 	public FdUtil() {
 	}
 
+	// fd2sd
+	public static void main(String[] args) throws Exception {
+		File fd = new File(args[0]);
+		FdUtil fdu = new FdUtil();
+		try {
+			byte[] tmp = Files.readAllBytes(fd.toPath());
+			if (tmp.length <= fdu.fdBytes.length) {
+			for (int i = 0; i < tmp.length; i++) {
+				fdu.fdBytes[i] = tmp[i];
+			}
+			fdu.saveToSd(FileUtil.removeExtension(args[0]));
+			} else {
+				System.out.println("Input file too big. Max 655360 bytes");
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}	
+	
 	/**
 	 * Positionne l'index d'écriture sur un secteur dans une image fd
 	 * en fonction d'une unité, d'une piste et d'un numéro de secteur
@@ -165,5 +188,4 @@ public class FdUtil
 			e.printStackTrace();
 		}
 	}
-
 }

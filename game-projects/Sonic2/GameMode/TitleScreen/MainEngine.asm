@@ -53,7 +53,7 @@ LevelMainLoop
         INCLUDE "./Engine/Joypad/ReadJoypads.asm"
         INCLUDE "./Engine/ObjectManagement/RunObjects.asm"
         INCLUDE "./Engine/ObjectManagement/DeleteObject.asm"
-        INCLUDE "./Engine/ObjectManagement/ClearObj.asm"
+        INCLUDE "./Engine/ObjectManagement/ClearObj107.asm"
         INCLUDE "./Engine/LevelManagement/LoadGameMode.asm"	
         INCLUDE "./Engine/Ram/ClearDataMemory.asm"
 	INCLUDE "./Engine/Palette/UpdatePalette.asm"

@@ -73,7 +73,7 @@ sound_meta_size   equ 5
 object_core_size              equ 93  ; the size of an object without ext_vars - DEPENDENCY ClearObj routine
 object_size                   equ object_core_size+ext_variables_size ; the size of a dynamic object
 next_object                   equ object_size
-ext_variables                 equ object_core_size-1 ; start of reserved space for additionnal variables
+ext_variables                 equ object_core_size ; start of reserved space for additionnal variables
 
 id                            equ 0           ; reference to object model id (ObjID_) (0: free slot)
 subtype                       equ 1           ; reference to object subtype (Sub_)
