@@ -35,12 +35,12 @@ AnimateSpriteAdv
         stx   prev_anim,u
         ldb   #0
         stb   anim_frame,u
-        stb   anim_frame_duration,u
+        bra   @b
 ;
 @Anim_Run
         dec   anim_frame_duration,u
         bpl   @Anim_Rts
-        ldb   anim_frame,u
+@b      ldb   anim_frame,u
         lda   #4
         mul
         leay  d,x
