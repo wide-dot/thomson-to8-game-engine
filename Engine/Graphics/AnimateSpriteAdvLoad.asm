@@ -40,7 +40,7 @@ AnimateSpriteAdvLoad
         leax  d,x
         ldd   ,x
         std   image_set,u
-        ldd   2,y
+        ldd   2,x
         sta   anim_frame_duration,u
         stb   anim_flags,u
         inc   anim_frame,u

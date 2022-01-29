@@ -77,7 +77,7 @@ am_SwapVideoPage
         rts
         
 glb_Main_runcount     fdb   0 ; page swap counter
-Vint_runcount         fdb   0
+Vint_runcount         fdb   0 ; incremented in 50Hz IRQ
 Vint_Last_runcount    fdb   0
 Vint_Main_runcount_w  fcb   0 ; pad to be able to load Vint_Main_runcount as a word
 Vint_Main_runcount    fcb   0

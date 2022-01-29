@@ -43,7 +43,7 @@ AnimateSpriteSync                           *AnimateSprite:
         
         ldb   #0                            
         stb   anim_frame,u                  *    move.b  #0,anim_frame(a0)          ; reset animation
-        stb   anim_frame_duration,u         *    move.b  #0,anim_frame_duration(a0) ; reset frame duration
+        bra   @b                            *    move.b  #0,anim_frame_duration(a0) ; reset frame duration
                                             *; loc_16560:
 Anim_Run                                    *Anim_Run:
         ldb   anim_frame_duration,u
@@ -53,7 +53,7 @@ Anim_Run                                    *Anim_Run:
         bpl   Anim_Rts                      *    bpl.s   Anim_Wait                    ; if time remains, branch
         * no offset table                   *    add.w   d0,d0
         * anim is the address of anim       *    adda.w  (a1,d0.w),a1                 ; calculate address of appropriate animation script
-        ldb   -1,x                            
+@b      ldb   -1,x                            
         stb   anim_frame_duration,u         *    move.b  (a1),anim_frame_duration(a0) ; load frame duration
 Anim_Reload                                 *    moveq   #0,d1
         ldb   anim_frame,u                  *    move.b  anim_frame(a0),d1 ; load current frame number
