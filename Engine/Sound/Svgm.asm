@@ -4,7 +4,7 @@
 * by Bentoc October 2021
 * ---------------------------------------------------------------------------
 
-	opt   c,ct
+        opt   c,ct
 
 ; Hardware Addresses
 PSG             equ   $E7FF
@@ -28,13 +28,13 @@ PlayMusic
         pshs  d
         lda   ,x                       ; get memory page that contains track data
         sta   MusicPage
-	sta   MusicStatus
-	lda   #1
-	sta   WaitFrame
+        sta   MusicStatus
+        lda   #1
+        sta   WaitFrame
         ldx   1,x                      ; get ptr to track data
         stx   MusicData
-	stx   MusicDataPos
-        puls  d,pc	
+        stx   MusicDataPos
+        puls  d,pc        
 
 ******************************************************************************
 * MusicFrame - processes a music frame (VInt)
@@ -55,60 +55,60 @@ PlayMusic
 MusicFrame 
         lda   MusicStatus
         bne   @a
-	rts    
+        rts    
 @a      lda   WaitFrame
         deca
-	sta   WaitFrame
+        sta   WaitFrame
         beq   UpdateMusic
         rts
 
 UpdateMusic
         lda   MusicPage
         bne   @a
-	rts                            ; no music to play
+        rts                            ; no music to play
 @a      _SetCartPageA
         ldx   MusicDataPos
 
 UpdateLoop
-	lda   ,x+
-	cmpa  #$39
-	beq   DoCommand
-	blo   YM2413
+        lda   ,x+
+        cmpa  #$39
+        beq   DoCommand
+        blo   YM2413
 
-SN76489	
+SN76489        
         sta   <PSG
-	bra   UpdateLoop
+        bra   UpdateLoop
 
 DoCommand
-	lda   ,x+
-	beq   DoStopTrack
-	bmi   DoSpecialCommand
+        lda   ,x+
+        beq   DoStopTrack
+        bmi   DoSpecialCommand
         
 DoWait
-	sta   WaitFrame
-	stx   MusicDataPos
+        sta   WaitFrame
+        stx   MusicDataPos
 
 DoSpecialCommand
-        rts	
+        rts        
 
 DoStopTrack
         lda   #0
-	sta   MusicStatus
+        sta   MusicStatus
         lda   #1
-	sta   WaitFrame
+        sta   WaitFrame
         ldx   MusicData
-	stx   MusicDataPos	
-	jsr   PSGSilenceAll
-	jsr   FMSilenceAll
-	rts
-       	
+        stx   MusicDataPos        
+        jsr   PSGSilenceAll
+        jsr   FMSilenceAll
+        rts
+               
 YM2413
         sta   <YM2413_A0
         ldb   ,x+
         stb   <YM2413_D0
-	nop
-	nop                            ; tempo (should be 24 cycles between two register writes)
-	bra   UpdateLoop
+        nop
+        nop                            ; tempo (should be 24 cycles between two register writes)
+        bra   UpdateLoop
 
 ******************************************************************************
 * PSGSilenceAll
@@ -135,17 +135,17 @@ FMSilenceAll
         ldd   #$200E
         stb   YM2413_A0
         nop                            ; (wait of 2 cycles)
-	ldb   #0                       ; (wait of 2 cycles)
+        ldb   #0                       ; (wait of 2 cycles)
         sta   YM2413_D0                ; note off for all drums     
 
         lda   #$20                     ; (wait of 2 cycles)
-	brn   *                        ; (wait of 3 cycles)
-@a      exg   a,b                      ; (wait of 8 cycles)                      		
-        exg   a,b                      ; (wait of 8 cycles)                      		
+        brn   *                        ; (wait of 3 cycles)
+@a      exg   a,b                      ; (wait of 8 cycles)                                      
+        exg   a,b                      ; (wait of 8 cycles)                                      
         sta   YM2413_A0
         nop
         inca
         stb   YM2413_D0
         cmpa  #$29                     ; (wait of 2 cycles)
         bne   @a                       ; (wait of 3 cycles)
-        rts	
+        rts        

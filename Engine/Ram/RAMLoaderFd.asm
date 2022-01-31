@@ -21,7 +21,7 @@
         org   $4000
         opt   c,ct
         setdp $40                      ; dp for exomizer
-start	
+start        
         INCLUDE "./Engine/Compression/Exomizer.asm"  
 
 RAMLoader 

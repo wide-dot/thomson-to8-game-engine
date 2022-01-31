@@ -81,22 +81,22 @@ done@              equ *
 ;
 zx0_decompress
                    stu   zx0_eof+1
-                   ldu   glb_screen_location_1		   		   
+                   ldu   glb_screen_location_1                                      
                    cmpx  #0                       
-	           beq   zx0_eof       ; branch if no data part 1
-		   bra   zx0_start
+                   beq   zx0_eof       ; branch if no data part 1
+                   bra   zx0_start
 
 zx0_eof            ldx   #0                       ; (dynamic) load next data ptr
                    beq   @rts
-	           ldd   #0                       
-	           std   zx0_eof+1                   ; clear exit flag for second pass
-	           ldu   glb_screen_location_2
-	           bra   zx0_start
-@rts               rts		   
+                   ldd   #0                       
+                   std   zx0_eof+1                   ; clear exit flag for second pass
+                   ldu   glb_screen_location_2
+                   bra   zx0_start
+@rts               rts                   
 
 zx0_start
                    ldd #$ffff          ; init offset = -1
-                   std >zx0_offset+2		   
+                   std >zx0_offset+2                   
 
 zx0_dp             equ */256
                    ldd #($80*256)+zx0_dp  ; init bit stream and register DP

@@ -9,7 +9,7 @@
 *
 * input REG : none
 * ---------------------------------------------------------------------------
-								
+                                                                
 * ---------------------------------------------------------------------------
 * Background Backup Cells - BBC
 * ---------------------------------------------------------------------------
@@ -38,8 +38,8 @@ Lst_FreeCell_1                fcb   nb_free_cells ; init of first free cell
                               fdb   cell_start_adr-cell_size*nb_free_cells
                               fdb   cell_start_adr
                               fdb   $0000
-                              fill  0,(entry_size*(nb_free_cells/2))-1 ; (buffer 1)						
-									   
+                              fill  0,(entry_size*(nb_free_cells/2))-1 ; (buffer 1)                                                
+                                                                           
 EraseSprites
 
 ESP_Start

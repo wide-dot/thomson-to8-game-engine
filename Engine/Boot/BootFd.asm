@@ -36,12 +36,12 @@ Vsync_2
 Tempo        
         leay  -1,y
         bne   Tempo                    * tempo pour etre dans la bordure invisible   
-								        
+                                                                        
         dec   <pal_cycles              * decremente le compteur du nombre de frame
         beq   InitVideo                * si termine
         
 PalRun
-        lda   ,u			           * chargement de la composante verte et rouge
+        lda   ,u                                   * chargement de la composante verte et rouge
         anda  <pal_mask                * on efface la valeur vert ou rouge par masque
         ldb   #$FF                     * composante verte et rouge couleur cible
         andb  <pal_mask                * on efface la valeur vert ou rouge par masque
@@ -63,9 +63,9 @@ PalVRSave
 PalVRSuivante                         
         com   <pal_mask                * inversion du masque pour traiter l'autre semioctet
         bmi   PalRun                   * si on traite $F0 on branche sinon on continue
-	    
+            
 SetPalBleu
-        ldb   1,u			           * chargement composante bleue courante
+        ldb   1,u                                   * chargement composante bleue courante
         cmpb  #$0F                     * comparaison composante courante et cible
         beq   SetPalNext               * si composante est egale a la cible on passe
         bhi   SetPalBleudec            * si la composante est superieure on branche
@@ -75,7 +75,7 @@ SetPalBleudec
         decb                           * on decremente la composante bleue
 SetPalSaveBleu                         
         stb   1,u                      * sauvegarde de la nouvelle valeur bleue
-								       
+                                                                       
 SetPalNext                             
         lda   <pal_idx                 * Lecture index couleur
         sta   $E7DB                    * selectionne l'indice de couleur a ecrire
@@ -100,7 +100,7 @@ pal_buffer
         fcb   $49                      * I
         fcb   $43                      * C
         fcb   $32                      * 2
-								       
+                                                                       
 pal_idx                                
         fcb   $00                      * index de la couleur courante dans le traitement
         fcb   $00                      * espace reserve pour somme de controle
@@ -190,7 +190,7 @@ pal_from
         fdb   $7707                    * couleur $10 Gris (Fond Bas)
         fdb   $AA03                    * couleur $16 Jaune (Interieur case)
         fdb   $330A                    * couleur $18 Mauve (Fond TO8)
-								       
+                                                                       
 pal_len                                
         fcb   $0C                      * pour chaque couleur on defini un index limite
         fcb   $0E                      * (exclu) de chargement. ex: 0C, 0E, ... 
@@ -202,6 +202,6 @@ end_pal_len
    
 pal_cycles
         fcb   $10                      * nombre de frames de la transition (VSYNC)
-								       
+                                                                       
 pal_mask                               
         fcb   $0F                      * masque pour l'aternance du traitemet vert/rouge

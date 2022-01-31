@@ -16,14 +16,14 @@ cur_ptr_sub_obj_draw    fdb   $0000
 
 glb_camera_x_pos        fdb   $0000 ; camera x position in palyfield coordinates
 glb_camera_y_pos        fdb   $0000 ; camera y position in palyfield coordinates
-                        	
+                                
 * ---------------------------------------------------------------------------
 * Sub Priority Objects List - SOL
 * ---------------------------------------------------------------------------
 
 Tbl_Sub_Object_Erase          fill  0,nb_graphical_objects*2    ; entries of objects that have erase flag in the order back to front
-Tbl_Sub_Object_Draw           fill  0,nb_graphical_objects*2    ; entries of objects that have draw flag in the order back to front                        	
-                                	   
+Tbl_Sub_Object_Draw           fill  0,nb_graphical_objects*2    ; entries of objects that have draw flag in the order back to front                                
+                                           
 CheckSpritesRefresh
 
 CSR_Start

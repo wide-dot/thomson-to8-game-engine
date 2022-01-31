@@ -560,6 +560,6 @@ Vsync_2
 Tempo        
         leay  -1,y
         bne   Tempo                    * tempo pour etre dans la bordure invisible   
-								       * lors du changement de palette
+                                                                       * lors du changement de palette
         rts
         

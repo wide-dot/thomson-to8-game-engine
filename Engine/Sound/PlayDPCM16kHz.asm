@@ -29,10 +29,10 @@ PlayDPCM16kHz
         stb   $e7cd   ! Full sound line
         ora   #$04    ! Disable mute by
         sta   $e7cf   ! CRA and sound
-	ldu   #@DACDecodeTbl
-	lda   #32                      ; init delta value
-	sta   @smplh+1
-	sta   @smpll+1
+        ldu   #@DACDecodeTbl
+        lda   #32                      ; init delta value
+        sta   @smplh+1
+        sta   @smpll+1
 @ReadChunk
         lda   sound_page,y             ; [4] load memory page
         beq   @End                     ; [3]
@@ -47,25 +47,25 @@ PlayDPCM16kHz
         ldb   a,u                      ; [5] read high nibble sample
 @smplh  addb  #00                      ; [2]
         stb   @smpll+1                 ; [5]
-	stb   $e7cd                    ; [5] send byte to DAC
+        stb   $e7cd                    ; [5] send byte to DAC
         lda   ,x+                      ; [6] reload data byte
         anda  #$0F                     ; [2]
         ldb   a,u                      ; [5] read low nibble sample
 @smpll  addb  #00                      ; [2]
         stb   @smplh+1                 ; [5]
         exg   a,b                      ; [38] wait
-        exg   a,b                      ; ...				       
-        exg   a,b                      ; ...				       
-        exg   a,b                      ; ...				       
-        brn   *                        ; ...	
-        brn   *                        ; ...						
-	stb   $e7cd                    ; [5] send byte to DAC
+        exg   a,b                      ; ...                                       
+        exg   a,b                      ; ...                                       
+        exg   a,b                      ; ...                                       
+        brn   *                        ; ...        
+        brn   *                        ; ...                                                
+        stb   $e7cd                    ; [5] send byte to DAC
         cmpx  sound_end_addr,y         ; [7]
         beq   @NextChunk               ; [3]
-        exg   a,b                      ; [20] wait	
+        exg   a,b                      ; [20] wait        
         exg   a,b                      ; ...
-        nop                            ; ...		
-        nop                            ; ...			
+        nop                            ; ...                
+        nop                            ; ...                        
         bra   @Loop                    ; [3]
 @NextChunk
         leay  sound_meta_size,y        ; [5]
@@ -85,6 +85,6 @@ PlayDPCM16kHz
         _SetCartPageA
         puls  d,x,y,u,pc
 @DACDecodeTbl
-	fcb   0,1,2,4,8,12,16,24,-32,-1,-2,-4,-8,-12,-16,-24
+        fcb   0,1,2,4,8,12,16,24,-32,-1,-2,-4,-8,-12,-16,-24
         ; this table use same values as the one used by pcm2dpcm at encoding stage but /4
         ; so there is no need to downsample from 8-bit to 6-bit

@@ -34,7 +34,7 @@ ClearObj
         pshs  d,x,y,u
         pshs  d,x,y,u
         pshs  a,x
-	leau  ,s
+        leau  ,s
 CLO_1        
         lds   #$0000        ; start of object should not be written with S as an index because of IRQ        
         pshu  d,x,y         ; saving 12 bytes + (2 bytes * _sr calls) inside IRQ routine
