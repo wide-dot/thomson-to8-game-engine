@@ -100,10 +100,10 @@ InstrTranspose                 rmb   1                ; instrument transpose
                                                       ; FM       0001       xxxx 
                                                       ; ...  
                                                       ; PSG      Chn    |a| |1Fh|
-                                                      ; VOL1     0x90 = 100 1xxxx	vol 4b xxxx = attenuation value
-                                                      ; VOL2     0xb0 = 101 1xxxx	vol 4b
-                                                      ; VOL3     0xd0 = 110 1xxxx	vol 4b
-                                                      ; VOL4     0xf0 = 111 1xxxx	vol 4b       
+                                                      ; VOL1     0x90 = 100 1xxxx        vol 4b xxxx = attenuation value
+                                                      ; VOL2     0xb0 = 101 1xxxx        vol 4b
+                                                      ; VOL3     0xd0 = 110 1xxxx        vol 4b
+                                                      ; VOL4     0xf0 = 111 1xxxx        vol 4b       
 InstrAndVolume                 rmb   1                ; current instrument and volume
 LoopCounters                   rmb   $A               ; Loop counter index 0
                                                       ;   ... open ...
@@ -178,7 +178,7 @@ DACEnabled                     rmb   1
 StructStart
 Smps          SmpsVar
 
-tracksStart		; This is the beginning of all BGM track memory
+tracksStart                ; This is the beginning of all BGM track memory
 SongDACFMStart
 SongDAC         Track
 SongFMStart
@@ -642,7 +642,7 @@ DACUpdateTrack
         bra   @b                       ; read all consecutive coordination flags 
 @a        
         bpl   SetDuration              ; test for 80h not set, which is a note duration
-        stb   SongDAC.NextData	       ; This is a note; store it here
+        stb   SongDAC.NextData               ; This is a note; store it here
         ldb   ,x
         bpl   SetDurationAndForward    ; test for 80h not set, which is a note duration
         ldb   SongDAC.SavedDuration
@@ -702,7 +702,7 @@ _FMNoteOff MACRO                       ; (dependency) should be preceded by A lo
         stb   <YM2413_D0               ; send to YM
         stb   NoteControl,y               
 @skip   equ   *        
- ENDM	
+ ENDM        
 
 FMUpdateTrack
         dec   DurationTimeout,y        ; Decrement duration
@@ -1125,15 +1125,15 @@ PSGUpdateFreq2
 
 PSGFrequencies
                 fdb $03F8,$03C0,$0388
-		fdb $356,$326,$2F9,$2CE,$2A5,$280,$25C,$23A
-		fdb $21A,$1FB,$1DF,$1C4,$1AB,$193,$17D,$167
-		fdb $153,$140,$12E,$11D,$10D,$FE,$EF,$E2
-		fdb  $D6,$C9,$BE,$B4,$A9,$A0,$97,$8F
-		fdb  $87,$7F,$78,$71,$6B,$65,$5F,$5A
-		fdb  $55,$50,$4B,$47,$43,$40,$3C,$39
-		fdb  $36,$33,$30,$2D,$2B,$28,$26,$24
-		fdb  $22,$20,$1F,$1D,$1B,$1A,$18,$17
-		fdb  $16,$15,$13,$12,$11,1
+                fdb $356,$326,$2F9,$2CE,$2A5,$280,$25C,$23A
+                fdb $21A,$1FB,$1DF,$1C4,$1AB,$193,$17D,$167
+                fdb $153,$140,$12E,$11D,$10D,$FE,$EF,$E2
+                fdb  $D6,$C9,$BE,$B4,$A9,$A0,$97,$8F
+                fdb  $87,$7F,$78,$71,$6B,$65,$5F,$5A
+                fdb  $55,$50,$4B,$47,$43,$40,$3C,$39
+                fdb  $36,$33,$30,$2D,$2B,$28,$26,$24
+                fdb  $22,$20,$1F,$1D,$1B,$1A,$18,$17
+                fdb  $16,$15,$13,$12,$11,1
         ; (Last 3 values are also used for channel 3 when driving noise channel. $0000 doesn't work for real SN76489 chip, so was replaced by $0001 value)
 
 PSG_FlutterTbl
@@ -1514,10 +1514,10 @@ cfSetVoice
 @rts    rts
 
 ; (via Saxman's doc): F0wwxxyyzz - modulation
-; o	ww - Wait for ww period of time before modulation starts
-; o	xx - Modulation Speed
-; o	yy - Modulation change per Mod. Step
-; o	zz - Number of steps in modulation
+; o        ww - Wait for ww period of time before modulation starts
+; o        xx - Modulation Speed
+; o        yy - Modulation change per Mod. Step
+; o        zz - Number of steps in modulation
 ;
 cfModulation
         lda   PlaybackControl,y

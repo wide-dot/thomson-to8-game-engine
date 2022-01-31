@@ -35,9 +35,9 @@
 
 zx0_decompress
                    stu   zx0_eof+1
-                   ldu   glb_screen_location_1		   		   
+                   ldu   glb_screen_location_1                                      
                    cmpx  #0                       
-	           beq   zx0_eof       ; branch if no data part 1
+                   beq   zx0_eof       ; branch if no data part 1
 
 zx0_start
                    ldd #$ffff
@@ -105,10 +105,10 @@ skip@              bcc loop@           ; loop until done
                    rts
 zx0_eof            ldx   #0                       ; (dynamic) load next data ptr
                    beq   @rts
-	           ldd   #0                       
-	           std   zx0_eof+1                   ; clear exit flag for second pass
-	           ldu   glb_screen_location_2
-	           bra   zx0_start
+                   ldd   #0                       
+                   std   zx0_eof+1                   ; clear exit flag for second pass
+                   ldu   glb_screen_location_2
+                   bra   zx0_start
 @rts               rts
 
 ; bit stream

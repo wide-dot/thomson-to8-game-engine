@@ -68,11 +68,11 @@ am_SwapVideoPage
         addd  #1
         std   glb_Main_runcount    
 
-	ldd   Vint_runcount            ; store in Vint_Main_runcount the number of elapsed 50Hz frames
-	subd  Vint_Last_runcount       ; used in AnimateSpriteSync
-	stb   Vint_Main_runcount
-	ldd   Vint_runcount
-	std   Vint_Last_runcount
+        ldd   Vint_runcount            ; store in Vint_Main_runcount the number of elapsed 50Hz frames
+        subd  Vint_Last_runcount       ; used in AnimateSpriteSync
+        stb   Vint_Main_runcount
+        ldd   Vint_runcount
+        std   Vint_Last_runcount
 
         rts
         

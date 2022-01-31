@@ -83,7 +83,7 @@ zx0_new_offset     ldb #1              ; set elias = 1 (not necessary to set MSB
                    stb <zx0_offset+2   ; save MSB offset
                    ldb ,-x             ; load LSB offset
                    rorb                ; last offset bit becomes first length bit
-		   incb
+                   incb
                    stb <zx0_offset+3   ; save LSB offset
                    ldb #1              ; set elias = 1
                    zx0_get_elias       ; get elias but skip first bit

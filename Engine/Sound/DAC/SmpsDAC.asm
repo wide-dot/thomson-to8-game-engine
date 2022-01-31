@@ -147,7 +147,7 @@ IsPalFlag                      rmb   1
 StructStart
 AbsVar          Var
 
-tracksStart		; This is the beginning of all BGM track memory
+tracksStart                ; This is the beginning of all BGM track memory
 SongDACFMStart
 SongDAC         Track
 SongFMStart
@@ -644,7 +644,7 @@ DACUpdateTrack
         bra   @b                       ; read all consecutive coordination flags 
 @a        
         bpl   SetDuration              ; test for 80h not set, which is a note duration
-        sta   SongDAC.NextData	       ; This is a note; store it here
+        sta   SongDAC.NextData               ; This is a note; store it here
         lda   ,x
         bpl   SetDurationAndForward    ; test for 80h not set, which is a note duration
         lda   SongDAC.SavedDuration

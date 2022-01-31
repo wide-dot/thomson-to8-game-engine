@@ -31,10 +31,10 @@ AnimateSpriteAdvLoad
         stx   prev_anim,u
         ldb   #0
         stb   anim_frame,u
-	bra   @b
+        bra   @b
 @a      ldb   anim_frame,u
-	beq   @b                       ; frame 0 means just initialized skip dec compensation
-	decb                           ; otherwise frame is in progress (remember AnimateSprite sets one frame ahead after each tick)
+        beq   @b                       ; frame 0 means just initialized skip dec compensation
+        decb                           ; otherwise frame is in progress (remember AnimateSprite sets one frame ahead after each tick)
 @b      lda   #4
         mul
         leax  d,x

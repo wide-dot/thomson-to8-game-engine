@@ -20,7 +20,7 @@
         
         org   $4000
         opt   c,ct
-start	
+start        
         INCLUDE "./Engine/Compression/zx0/zx0_6809_mega_rear.asm"  
 
 RAMLoader 
@@ -91,8 +91,8 @@ RL_NegOffset
 RL_Page
         lda   #0                       ; page memoire
         sta   $E7E5                    ; selection de la page en RAM Donnees (A000-DFFF)
-	leax  ,u
-	leau  ,y
+        leax  ,u
+        leau  ,y
         jsr   >zx0_decompress          ; decompresse les donnees
         puls  u
         bra   RAMLoader_continue

@@ -100,10 +100,10 @@ InstrTranspose                 rmb   1                ; instrument transpose
                                                       ; FM       0001       xxxx 
                                                       ; ...  
                                                       ; PSG      Chn    |a| |1Fh|
-                                                      ; VOL1     0x90 = 100 1xxxx	vol 4b xxxx = attenuation value
-                                                      ; VOL2     0xb0 = 101 1xxxx	vol 4b
-                                                      ; VOL3     0xd0 = 110 1xxxx	vol 4b
-                                                      ; VOL4     0xf0 = 111 1xxxx	vol 4b       
+                                                      ; VOL1     0x90 = 100 1xxxx        vol 4b xxxx = attenuation value
+                                                      ; VOL2     0xb0 = 101 1xxxx        vol 4b
+                                                      ; VOL3     0xd0 = 110 1xxxx        vol 4b
+                                                      ; VOL4     0xf0 = 111 1xxxx        vol 4b       
 InstrAndVolume                 rmb   1                ; current instrument and volume
 LoopCounters                   rmb   $A               ; Loop counter index 0
                                                       ;   ... open ...
@@ -178,7 +178,7 @@ DACEnabled                     rmb   1
 StructStart
 Smps          SmpsVar
 
-tracksStart		; This is the beginning of all BGM track memory
+tracksStart                ; This is the beginning of all BGM track memory
 SongDACFMStart
 SongDAC         Track
 SongFMStart
@@ -642,7 +642,7 @@ DACUpdateTrack
         bra   @b                       ; read all consecutive coordination flags 
 @a        
         bpl   SetDuration              ; test for 80h not set, which is a note duration
-        stb   SongDAC.NextData	       ; This is a note; store it here
+        stb   SongDAC.NextData               ; This is a note; store it here
         ldb   ,x
         bpl   SetDurationAndForward    ; test for 80h not set, which is a note duration
         ldb   SongDAC.SavedDuration
@@ -702,7 +702,7 @@ _FMNoteOff MACRO                       ; (dependency) should be preceded by A lo
         stb   <YM2413_D0               ; send to YM
         stb   NoteControl,y               
 @skip   equ   *        
- ENDM	
+ ENDM        
 
 FMUpdateTrack
         dec   DurationTimeout,y        ; Decrement duration
@@ -1124,7 +1124,7 @@ PSGUpdateFreq2
 ; Other notes can be accessed by transpose
 PSGFrequencies
         fdb                                                         $03F8,$03C0,$0388 ; A2 - B2
-	fdb   $0356,$0327,$02FA,$02CF,$02A5,$0281,$025C,$023B,$021A,$01FC,$01E0,$01C4 ; C3 - B3
+        fdb   $0356,$0327,$02FA,$02CF,$02A5,$0281,$025C,$023B,$021A,$01FC,$01E0,$01C4 ; C3 - B3
         fdb   $01AB,$0193,$017D,$0167,$0152,$0140,$012E,$011D,$010D,$00FE,$00F0,$00E2 ; C4 - B4
         fdb   $00D5,$00C9,$00BE,$00B3,$00A9,$00A0,$0097,$008E,$0086,$007F,$0078,$0071 ; C5 - B5
         fdb   $006A,$0064,$005F,$0059,$0054,$0050,$004B,$0047,$0043,$0040,$003C,$0039 ; C6 - B6
@@ -1510,10 +1510,10 @@ cfSetVoice
 @rts    rts
 
 ; (via Saxman's doc): F0wwxxyyzz - modulation
-; o	ww - Wait for ww period of time before modulation starts
-; o	xx - Modulation Speed
-; o	yy - Modulation change per Mod. Step
-; o	zz - Number of steps in modulation
+; o        ww - Wait for ww period of time before modulation starts
+; o        xx - Modulation Speed
+; o        yy - Modulation change per Mod. Step
+; o        zz - Number of steps in modulation
 ;
 cfModulation
         lda   PlaybackControl,y

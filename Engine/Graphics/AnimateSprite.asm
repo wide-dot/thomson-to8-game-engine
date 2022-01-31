@@ -62,7 +62,7 @@ Anim_Reload                                 *    moveq   #0,d1
         bhs   Anim_End_FF                   *    bhs     Anim_End_FF   ; MJ: if so, branch to flag routines
                                             *; loc_1657C:
 Anim_Next                                   *Anim_Next:
-	                                        *    andi.b  #$7F,d0               ; clear sign bit
+                                                *    andi.b  #$7F,d0               ; clear sign bit
         std   image_set,u                   *    move.b  d0,mapping_frame(a0)  ; load sprite number
         lda   status_flags,u
         anda  #status_xflip_mask|status_yflip_mask

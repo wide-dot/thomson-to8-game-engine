@@ -27,7 +27,7 @@ DecMapAlpha
         ldx   glb_screen_location_1
         stu   @end+2
         cmpy  #0                       
-	beq   @end                     ; branch if no data part 1
+        beq   @end                     ; branch if no data part 1
         bra   @loop
 @l10x
         ldb   ,y+                      ; non-identical bytes
@@ -38,7 +38,7 @@ DecMapAlpha
         lda   ,y+                      ; new chunk
         lsla
         bcc   @l0x
-        beq   @maskl	
+        beq   @maskl        
         bpl   @l10x
 @l11x
         lsla                           ; 14 bits offset
@@ -78,8 +78,8 @@ DecMapAlpha
 @end    
         ldy   #0                       ; (dynamic) load next data ptr
         beq   @rts
-	ldd   #0                       
-	std   @end+2                   ; clear exit flag for second pass
-	ldx   glb_screen_location_2
-	bra   @loop
+        ldd   #0                       
+        std   @end+2                   ; clear exit flag for second pass
+        ldx   glb_screen_location_2
+        bra   @loop
 @rts    rts

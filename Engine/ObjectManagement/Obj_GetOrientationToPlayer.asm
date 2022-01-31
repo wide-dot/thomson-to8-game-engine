@@ -24,7 +24,7 @@ Gotp_Player_H_Distance       fdb   $0000     * closest character's h distance to
 Gotp_Player_V_Distance       fdb   $0000     * closest character's v distance to obj 
 Gotp_Abs_H_Distance_Mainc    fdb   $0000     * absolute horizontal distance to main character
 Gotp_H_Distance_Sidek        fdb   $0000     * horizontal distance to sidekick
-									   
+                                                                           
                                        *; ---------------------------------------------------------------------------
                                        *; Get Orientation To Player
                                        *; Returns the horizontal and vertical distances of the closest player object.

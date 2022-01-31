@@ -16,7 +16,7 @@
 * DisplaySprite_x
 * input REG : [x] object pointer (OST)
 * ---------------------------------------------------------------------------
-									   
+                                                                           
 DisplaySprite_x 
         pshs  d,x,u
         tfr   x,u
@@ -54,7 +54,7 @@ DSP_InitPriority
         
 DSP_CheckLastEntry
         leay  buf_Tbl_Priority_Last_Entry,y
-        asla                                ; change priority number to priority index (value x2)	
+        asla                                ; change priority number to priority index (value x2)        
         tst   a,y                           ; test left byte only is ok, no object will be stored at $00__ address
         bne   DSP_addToExistingNode         ; not the first object at this priority level, branch
         
@@ -90,7 +90,7 @@ DSP_LinkCurWithPrev
         
 DSP_ChangePriority
         pshs  d,y
-	leay  buf_Lst_Priority_Unset,y
+        leay  buf_Lst_Priority_Unset,y
         stu   [,y]                          ; add current object address to last free unset list cell
         ldd   ,y
         addd  #2
@@ -145,4 +145,4 @@ DPS_buffer_end
 
 buf_Tbl_Priority_First_Entry  equ   0                                                            
 buf_Tbl_Priority_Last_Entry   equ   Tbl_Priority_Last_Entry_0-DPS_buffer_0          
-buf_Lst_Priority_Unset        equ   Lst_Priority_Unset_0-DPS_buffer_0				       
+buf_Lst_Priority_Unset        equ   Lst_Priority_Unset_0-DPS_buffer_0                                       
