@@ -3,6 +3,7 @@ package fr.bento8.to8.audio.midi;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.sound.midi.MetaMessage;
@@ -17,6 +18,10 @@ import javax.sound.midi.Track;
 import fr.bento8.to8.util.FileUtil;
 
 public class MidiConverter{
+	
+	// This converter will skip any midi message that is not supported by Roland MT32
+	// in order to save save at runtime
+	// TODO : be able to specify filtered messages as a parameter
 
 	public static void main(String[] args) throws Exception {
 		Sequence sequence = MidiSystem.getSequence(new File(args[0]));
@@ -101,7 +106,7 @@ public class MidiConverter{
 			
 			// MT-32 keep only supported messages
 			MidiMessage message = event.getMessage();
-			if (message instanceof ShortMessage && (
+			if (!(message instanceof MetaMessage) && !(message instanceof SysexMessage) && (
 				((ShortMessage)message).getCommand() == ShortMessage.NOTE_ON ||
 				((ShortMessage)message).getCommand() == ShortMessage.NOTE_OFF ||
 				((ShortMessage)message).getCommand() == ShortMessage.CONTROL_CHANGE ||
@@ -145,6 +150,8 @@ public class MidiConverter{
 				}	
 				
 				System.out.println("");
+			} else {
+				System.out.println("*********** SKIPPED *********** "+(message instanceof MetaMessage||message instanceof MetaMessage?"":"midi message: "+((ShortMessage)message).getCommand())+" "+Arrays.toString(message.getMessage())+" "+message.getClass().getSimpleName());
 			}
 		}
 		
