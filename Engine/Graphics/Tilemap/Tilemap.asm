@@ -136,6 +136,7 @@ DrawTileLayer
         ldu   glb_submap_index
         lda   #0
         ldb   ,u                                      ; load tile index in b (0-256)
+	beq   skip                                   ; skip empty tile (index 0)
         std   @dyn+1                                  ; multiply d by 3
         _lsld
 @dyn    addd  #$0000                                  ; (dynamic)
@@ -162,3 +163,7 @@ dyn_w   ldb   #$00
         bne   DrawTileRow
                                                       ; TODO set here the background refresh flag   
         rts
+
+skip    leau  1,u
+        stu   glb_submap_index
+	bra   dyn_x
