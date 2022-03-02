@@ -1,6 +1,6 @@
 * ---------------------------------------------------------------------------
 * Single object loading subroutine
-* Find an empty object array
+* Find an empty object array, return 0 if memory is full
 *
 * input  REG : [u] pointeur sur l'objet courant  
 * output REG : [x] pointeur sur l'objet libre   
@@ -57,6 +57,7 @@ SOL_loop                               *-
         leax  next_object,x            *    lea next_object(a1),a1 ; load obj address ; goto next object RAM slot
         cmpx  #Dynamic_Object_RAM_End
         bne   SOL_loop                 *    dbf d0,-    ; repeat until end
+	ldx   #0
                                        *
 SOL_rts                                *return_18014:
         rts                            *    rts
