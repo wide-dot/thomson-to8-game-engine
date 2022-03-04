@@ -77,7 +77,7 @@ AnimateSpriteAdv
         lda   #$00
         _SetCartPageA
         rts
-
+;
 @Anim_End_FF ;_resetAnim
         inca
         bne   @Anim_End_FE

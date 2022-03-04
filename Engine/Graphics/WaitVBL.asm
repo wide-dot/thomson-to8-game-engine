@@ -70,7 +70,10 @@ am_SwapVideoPage
 
         ldd   Vint_runcount            ; store in Vint_Main_runcount the number of elapsed 50Hz frames
         subd  Vint_Last_runcount       ; used in AnimateSpriteSync
-        stb   Vint_Main_runcount
+	cmpb  #5                       ; cap Animation and Mvt Sync to 10fps
+	bls   @a
+	ldb   #5
+@a      stb   Vint_Main_runcount
         ldd   Vint_runcount
         std   Vint_Last_runcount
 
