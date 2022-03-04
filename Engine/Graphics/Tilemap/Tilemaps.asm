@@ -144,7 +144,7 @@ DTM_Buffer0
 	addd  layer_vp_offset,u
         jsr   TLM_XYToAddress
 	cmpd  glb_submap+glb_submap_location_buf0
-	bne   DrawTileInit
+	bne   @b
 	rts
 @a      std   glb_submap+glb_submap_index_buf0
         std   glb_submap+glb_submap_index
@@ -157,6 +157,7 @@ DTM_Buffer0
 	negb
 	addd  layer_vp_offset,u
         jsr   TLM_XYToAddress
+@b	std   glb_submap+glb_submap_location_buf0
         bra   DrawTileInit
 
 DTM_Buffer1        
@@ -173,7 +174,7 @@ DTM_Buffer1
 	addd  layer_vp_offset,u
         jsr   TLM_XYToAddress
 	cmpd  glb_submap+glb_submap_location_buf1
-	bne   DrawTileInit
+	bne   @b
 	rts
 @a      std   glb_submap+glb_submap_index_buf1
         std   glb_submap+glb_submap_index
@@ -185,7 +186,8 @@ DTM_Buffer1
 	andb  #%00000111               ; mask for 8px wide tile TODO make it a parameter
 	negb
 	addd  layer_vp_offset,u
-        jsr   TLM_XYToAddress
+	jsr   TLM_XYToAddress
+@b	std   glb_submap+glb_submap_location_buf1
 
 DrawTileInit
         lda   layer_vp_tiles_x,u
