@@ -190,6 +190,8 @@ DTM_Buffer1
 @b	std   glb_submap+glb_submap_location_buf1
 
 DrawTileInit
+	lda   #1
+	sta   glb_force_sprite_refresh
         lda   layer_vp_tiles_x,u
         sta   dyn_x+1                                 ; init column counter
         sta   dyn_xi+1                                ; init column counter
