@@ -10,12 +10,14 @@
 * input REG : none
 * ---------------------------------------------------------------------------
 
-cur_priority            fdb   $00
-cur_ptr_sub_obj_erase   fdb   $0000
-cur_ptr_sub_obj_draw    fdb   $0000
+cur_priority             fcb   0
+cur_ptr_sub_obj_erase    fdb   0
+cur_ptr_sub_obj_draw     fdb   0
 
-glb_camera_x_pos        fdb   $0000 ; camera x position in palyfield coordinates
-glb_camera_y_pos        fdb   $0000 ; camera y position in palyfield coordinates
+glb_camera_x_pos         fdb   0 ; camera x position in palyfield coordinates
+glb_camera_y_pos         fdb   0 ; camera y position in palyfield coordinates
+
+glb_force_sprite_refresh fcb   0
                                 
 * ---------------------------------------------------------------------------
 * Sub Priority Objects List - SOL
@@ -360,6 +362,8 @@ CSR_CheckErase
 CSR_CheckErase_InRange        
         lda   buf_prev_render_flags,x
         lbpl  CSR_SetEraseFalse             ; branch if object is not on screen
+	lda   glb_force_sprite_refresh
+	bne   CSR_SetEraseTrue
         ldd   xy_pixel,u
         lsra                                ; x position precision is x_pixel/2 and mapping_frame with or without 1px shit, y position precision is y_pixel  
         cmpd  buf_prev_xy_pixel,x

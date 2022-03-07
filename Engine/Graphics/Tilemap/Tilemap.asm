@@ -86,6 +86,8 @@ DTM_Buffer1
         std   glb_submap_index
 
 DrawTileInit
+	lda   #1
+	sta   glb_force_sprite_refresh
         ldd   layer_vp_offset,u
         addd  #$A000
         std   glb_screen_location_1

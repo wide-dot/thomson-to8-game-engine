@@ -43,11 +43,10 @@ public class PaletteTO8 {
 		LAB currentColor = new LAB(0, 0, 0);
 		int j, nearestColor;
 		double distance, minDistance;
-		
+
+		logger.debug("Processing palette: "+fileName);
 		ColorModel colorModel = ImageIO.read(new File(fileName)).getColorModel();
 		String code = "";
-		
-		logger.debug("Processing palette: "+fileName);
 		
 		// Construction de la palette de couleur
 		for (int colorIndex = 1; colorIndex < 17; colorIndex++) {

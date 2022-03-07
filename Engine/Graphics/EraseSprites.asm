@@ -41,6 +41,8 @@ Lst_FreeCell_1                fcb   nb_free_cells ; init of first free cell
                               fill  0,(entry_size*(nb_free_cells/2))-1 ; (buffer 1)                                                
                                                                            
 EraseSprites
+	lda   #0
+	sta   glb_force_sprite_refresh
 
 ESP_Start
         lda   glb_Cur_Wrk_Screen_Id         ; read current screen buffer for write operations
