@@ -117,8 +117,8 @@ y_pixel                       equ 21          ; y screen coordinate, must follow
 ;y_offset                      equ 94          ; x screen coordinate offset that is applied at rendering
 x_vel                         equ 22 ; and 23 ; horizontal velocity
 y_vel                         equ 24 ; and 25 ; vertical velocity
-x_acl                         equ 26 ; and 27 ; horizontal velocity
-y_acl                         equ 28 ; and 29 ; vertical velocity
+x_acl                         equ 26 ; and 27 ; horizontal gravity
+y_acl                         equ 28 ; and 29 ; vertical gravity
 routine                       equ 30          ; index of current object routine
 routine_secondary             equ 31          ; index of current secondary routine
 routine_tertiary              equ 32          ; index of current tertiary routine
