@@ -801,10 +801,10 @@ HalfPipe_Display
         
 HalfPipe_KeepSameTrackImage
  IFGE (HalfPipe_one_z_step-255)
-        ldb   HalfPipe_Nb_Elapsed_Frames         ; 8x16 bit mul sucks 
+        ldb   HalfPipe_Nb_Elapsed_Frames         ; 8x16 bit mul (fix this code, remove stack usage) 
         ldy   #HalfPipe_one_z_step               ; TODO NEVER TESTED 
         pshs  y,d,cc                             ; USAGE WHEN track refresh rate >= 12fps (HalfPipe_Img_Duration <= 4)
-		lda   4,s                                ; CAP to HalfPipe_Img_z_depth
+	lda   4,s                                ; CAP to HalfPipe_Img_z_depth
         mul
         std   3,s
         tfr   y,d
@@ -813,9 +813,9 @@ HalfPipe_KeepSameTrackImage
         mul
         addd  2,s
         std   2,s
-		puls  pc,y,d,cc
-		sty   HalfPipe_z_step
-		jmp   DisplaySprite
+	puls  pc,y,d,cc
+	sty   HalfPipe_z_step
+	jmp   DisplaySprite
  ELSE		
         lda   HalfPipe_Nb_Elapsed_Frames         ; 8x8 bit mul is the way to go
         ldb   #HalfPipe_one_z_step               ; look for one main loop duration and adjust
