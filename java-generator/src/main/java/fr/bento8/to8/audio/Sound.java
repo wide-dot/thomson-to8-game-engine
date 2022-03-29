@@ -21,7 +21,7 @@ public class Sound{
 	}
 	
 	public void setAllBinaries(String fileName, boolean inRAM) throws Exception {
-		
+		// split data based on content
 		if (FileUtil.getExtensionByStringHandling(fileName).equals(Optional.of("smid"))) {
 			processSmid(fileName);
 		} else {
@@ -30,6 +30,8 @@ public class Sound{
 	}	
 	
 	public void process(String fileName) throws Exception {
+		// Split data in 16Ko chunks
+		
 		int pageSize = 0x4000 - BinUtil.linearHeaderTrailerSize;
 		byte[] buffer = new byte[pageSize];
 		byte[] data = Files.readAllBytes(Paths.get(fileName));		
@@ -54,6 +56,9 @@ public class Sound{
 	}
 	
 	public void processSmid(String fileName) throws Exception {
+		// Split data in 16Ko chunks
+		// Handle datastructure to avoid cutting in middle of a message
+		
 		int pageSize = 0x4000 - BinUtil.linearHeaderTrailerSize;
 		byte[] buffer = new byte[pageSize*2];
 		byte[] data = Files.readAllBytes(Paths.get(fileName));				

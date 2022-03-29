@@ -38,6 +38,7 @@ public class Object {
 	public HashMap<String, String[]> animationsProperties;	
 	public HashMap<String, String[]> animationDataProperties;
 	public HashMap<String, String[]> soundsProperties;
+	public HashMap<String, String[]> dataProperties;
 	public HashMap<String, String[]> tilesetsProperties;
 	
 	public Object(GameMode gm, String name, String propertiesFileName) throws Exception {
@@ -95,7 +96,13 @@ public class Object {
 		if (animationDataProperties.size()>1)
 			throw new Exception("Only one animation-data allowed in " + propertiesFileName);
 		
+		// TODO sound is to be renamed by data
+		// need to change all naming in builder and historical game demos
+		// we are using an alias here
 		soundsProperties = PropertyList.get(prop, "sound");
+		dataProperties = PropertyList.get(prop, "data");
+		soundsProperties.putAll(dataProperties);
+		
 		tilesetsProperties = PropertyList.get(prop, "tileset");
 		
 		if (prop.getProperty("spriteIndex") != null && prop.getProperty("spriteIndex").equalsIgnoreCase(BuildDisk.RAM))
