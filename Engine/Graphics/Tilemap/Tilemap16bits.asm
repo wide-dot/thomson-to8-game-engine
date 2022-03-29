@@ -126,30 +126,37 @@ DrawTileInit
 	lda   #1
 	sta   glb_force_sprite_refresh
 
-	
+	lda   glb_camera_x_pos+1
+	anda  #%00111000                              ; get tile position in chunk
+	asra
+	asra
+	leay  a,y
+	asra  
+	suba  #8
+	nega
+	sta   @nb_tiles_x
+	ldb   glb_camera_y_pos+1
+	andb  #%01110000                              ; get tile position in chunk
+	leay  b,y                                     ; y points to first tile to draw in chunk
+	asrb  
+	asrb  
+	asrb  
+	asrb  
+	subb  #16
+	negb
+	stb   @nb_tiles_y
 
-
-
-
-
-
-
-
-        lda   #10                                     ; nb vertical tiles - 1
+        lda   #10
         sta   dyn_y+1                                 ; init row counter        
-        lda   8/4                                     ; nb of linear memory bytes between two tiles in a column
-        sta   dyn_sx+1
-        ldd   (40*64)-(152/4-8/4)                     ; nb of linear memory bytes to go from the last tile of a row to the first tile of the next row
-        std   dyn_sy+1
         lda   glb_map_width
-        suba  #19                                     ; nb horizontal tiles
-        sta   dyn_w+1
+        suba  #19
+        sta   dyn_w+1                                 ; we need to known how much tiles to move for next line    
         ldu   glb_map_tiles_adr
-        bra   DrawTileLayer
+        bra   DrawTile
 
 DrawTileRow  
         dec   dyn_y+1
-dyn_sy  ldd   #$0000                                  ; (dynamic) y memory step
+        ldd   #(40*64)-(152/4-8/4)                    ; nb of linear memory bytes to go from the last tile of a row to the first tile of the next row
         ldx   glb_screen_location_1
         leax  d,x
         stx   glb_screen_location_1
@@ -158,11 +165,11 @@ dyn_sy  ldd   #$0000                                  ; (dynamic) y memory step
         stx   glb_screen_location_2  
 dyn_xi  lda   #18                                     ; nb horizontal tiles - 1
         sta   dyn_x+1                                 ; init column counter
-        bra   DrawTileLayer
+        bra   DrawTile
         
 DrawTileColumn        
         dec   dyn_x+1
-dyn_sx  ldb   #$00                                    ; (dynamic) x memory step
+dyn_sx  ldb   #8/4                                    ; nb of linear memory bytes between two tiles in a column
         ldx   glb_screen_location_1
         abx
         stx   glb_screen_location_1
@@ -170,16 +177,14 @@ dyn_sx  ldb   #$00                                    ; (dynamic) x memory step
         abx
         stx   glb_screen_location_2                
                 
-DrawTileLayer        
-        ldu   glb_submap_index
-        lda   #0
-        ldb   ,u                                      ; load tile index in b (0-256)
+DrawTile      
+        ldd   ,y                                      ; load tile index in d (16 bits)
 	beq   skip                                    ; skip empty tile (index 0)
         std   @dyn+1                                  ; multiply d by 3
         _lsld
 @dyn    addd  #0                                      ; (dynamic)
-        leau  1,u
-        stu   glb_submap_index
+        leay  2,y                                     ; move to next tile in chunk
+        sty   glb_submap_index                        ; TODO check use
         ldu   glb_map_tiles_adr
         leau  d,u
         pulu  a,x                                     ; a: tile routine page, x: tile routine address
