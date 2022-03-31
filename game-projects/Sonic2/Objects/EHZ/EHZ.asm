@@ -9,7 +9,6 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./Engine/Macros.asm"
-        INCLUDE "./Engine/Graphics/Tilemap/DataTypes/map16bits.equ"
 
 TilemapMain
         asla
@@ -64,10 +63,7 @@ TileMapRegister
 	sta   glb_map_width
 
 	; init engine variables
-	ldd   #0
-	std   glb_map_idx
-
-        ldd   #glb_map_idx_init
+        ldd   #glb_camera_init
         std   glb_old_camera_x_pos0
         std   glb_old_camera_x_pos1
         std   glb_old_camera_y_pos0
