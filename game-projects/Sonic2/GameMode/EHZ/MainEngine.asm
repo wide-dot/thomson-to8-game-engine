@@ -13,6 +13,14 @@
 		
         jsr   LoadAct       
 
+        ldd   #0
+        std   glb_camera_x_pos
+        ldd   #576
+        std   glb_camera_y_pos
+
+	; register tilemap
+        _RunObjectRoutine ObjID_EHZ,#0   
+
 * ==============================================================================
 * Main Loop
 * ==============================================================================
@@ -24,7 +32,8 @@ LevelMainLoop
         jsr   CheckSpritesRefresh
         jsr   EraseSprites
         jsr   UnsetDisplayPriority
-        jsr   DrawSprites        
+        jsr   DrawTilemaps   
+        jsr   DrawSprites     
         bra   LevelMainLoop
 
 * ---------------------------------------------------------------------------
@@ -54,3 +63,4 @@ LevelMainLoop
 	INCLUDE "./Engine/Palette/UpdatePalette.asm"
         INCLUDE "./Engine/Sound/Smps.asm"
         INCLUDE "./Engine/Irq/IrqSmpsRaster.asm"
+        INCLUDE "./Engine/Graphics/Tilemap/Tilemap16bits.asm"

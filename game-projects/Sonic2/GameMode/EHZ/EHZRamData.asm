@@ -17,7 +17,7 @@ nb_graphical_objects              equ 43 * max 64 total
 * ---------------------------------------------------------------------------
 * Object Status Table - OST
 * ---------------------------------------------------------------------------
-        
+
 Object_RAM 
 Reserved_Object_RAM
 MainCharacter                 fill  0,object_size
