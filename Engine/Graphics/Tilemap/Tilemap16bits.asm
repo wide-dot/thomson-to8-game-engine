@@ -29,6 +29,14 @@ glb_map_idx_init      equ   $FFFF ; force refresh if used in glb_old_camera...
 glb_chunks            fdb   0,0   ; 4 chunks to be rendered on screen
 
 DrawTilemaps
+        ; check if a map was registred
+	; and mount the map
+	lda   glb_map_pge
+	bne   @a
+	rts
+@a
+        _SetCartPageA        
+        ldu   glb_map_adr
 
 	; check if camera has moved
 	; and if tiles need an update
@@ -43,10 +51,10 @@ DrawTilemaps
         rts
 @b1     ldx   glb_camera_x_pos
 	cmpx  glb_old_camera_x_pos1
-	bne   @continue1
+	bne   @endx1
 	ldd   glb_camera_y_pos
 	cmpd  glb_old_camera_y_pos1
-	bne   @continue1
+	bne   @endy1
         rts
 @endx0 	ldd   glb_camera_y_pos
 @endy0	std   glb_old_camera_y_pos0
@@ -57,15 +65,19 @@ DrawTilemaps
 	stx   glb_old_camera_x_pos1
 @end
 
-	lda   glb_map_pge
-	bne   @a
-	rts
-@a
-        _SetCartPageA        
-        ldu   glb_map_adr
+	; screen will be refreshed
+	lda   #1
+	sta   glb_force_sprite_refresh
 
-        lda   layer_map_width,u
-	sta   
+	; process first tile position on screen
+	lda   glb_camera_x_pos+1
+	anda  #%00000111                              ; mask for 8px tile in width
+	nega
+	ldb   glb_camera_y_pos+1
+	andb  #%00001111                              ; mask for 16px tile in height
+	negb
+	addd  #$3820                                  ; hardcoded position on screen x=8, y=20
+        jsr   TLM_XYToAddress
 
         ; Transform a camera position into an index to map (made of 64x128px chunks)
         ldd   glb_camera_x_pos
@@ -110,31 +122,20 @@ DrawTilemaps
 @b	ldb   glb_map_defchunk0_pge
 	_SetCartPageB
 	ldb   #0
-	leay  d,x                                     ; y now points to start of chunk definition
-
-	; process tile position on screen
-	lda   glb_camera_x_pos+1
-	anda  #%00000111                              ; mask for 8px tile in width
-	nega
-	ldb   glb_camera_y_pos+1
-	andb  #%00001111                              ; mask for 16px tile in height
-	negb
-	addd  #$381C                                  ; hardcoded position on screen x=56, y=28
-        jsr   TLM_XYToAddress
+	asra
+	leau  d,x                                     ; u now points to start of chunk definition
+	stu   map_idx
 
 DrawTileInit
-	lda   #1
-	sta   glb_force_sprite_refresh
-
 	lda   glb_camera_x_pos+1
 	anda  #%00111000                              ; get tile position in chunk
 	asra
 	asra
 	leay  a,y
 	asra  
-	suba  #8
+	suba  #8                                      ; chunk hold 8 tiles in a row
 	nega
-	sta   @nb_tiles_x
+	sta   nb_tiles_x
 	ldb   glb_camera_y_pos+1
 	andb  #%01110000                              ; get tile position in chunk
 	leay  b,y                                     ; y points to first tile to draw in chunk
@@ -142,74 +143,97 @@ DrawTileInit
 	asrb  
 	asrb  
 	asrb  
-	subb  #16
+	subb  #16                                     ; chunk hold 16 tiles in a col
 	negb
-	stb   @nb_tiles_y
+	stb   nb_tiles_y
 
         lda   #10
         sta   dyn_y+1                                 ; init row counter        
         lda   glb_map_width
         suba  #19
+	asla                                          ; 2 bytes index
         sta   dyn_w+1                                 ; we need to known how much tiles to move for next line    
-        ldu   glb_map_tiles_adr
         bra   DrawTile
 
 DrawTileRow  
         dec   dyn_y+1
+
+	; move tile position on screen to next line
         ldd   #(40*64)-(152/4-8/4)                    ; nb of linear memory bytes to go from the last tile of a row to the first tile of the next row
-        ldx   glb_screen_location_1
-        leax  d,x
-        stx   glb_screen_location_1
-        ldx   glb_screen_location_2
-        leax  d,x
-        stx   glb_screen_location_2  
-dyn_xi  lda   #18                                     ; nb horizontal tiles - 1
+        addd  glb_screen_location_1
+        std   glb_screen_location_1
+        ldd   #(40*64)-(152/4-8/4)
+        addd  glb_screen_location_2
+        std   glb_screen_location_2 
+
+dyn_xi  lda   #18                                     ; nb horizontal tiles - 1 TODO ******************************** init new line for chunk 1 put nb_tile_x instead
         sta   dyn_x+1                                 ; init column counter
         bra   DrawTile
         
 DrawTileColumn        
         dec   dyn_x+1
-dyn_sx  ldb   #8/4                                    ; nb of linear memory bytes between two tiles in a column
-        ldx   glb_screen_location_1
-        abx
-        stx   glb_screen_location_1
-        ldx   glb_screen_location_2
-        abx
-        stx   glb_screen_location_2                
-                
-DrawTile      
-        ldd   ,y                                      ; load tile index in d (16 bits)
+
+	; move tile position on screen to next column
+        ldd   #8/4                                    ; nb of linear memory bytes between two tiles in a column
+        addd  glb_screen_location_1
+        std   glb_screen_location_1
+        ldd   #8/4                                    ; nb of linear memory bytes between two tiles in a column
+        addd  glb_screen_location_2
+        std   glb_screen_location_2              
+
+DrawTile
+	ldu   #0                                      ; (dynamic)
+map_idx equ   *-2
+        ldd   ,u                                      ; load tile index in d (16 bits)
 	beq   skip                                    ; skip empty tile (index 0)
-        std   @dyn+1                                  ; multiply d by 3
+        leau  2,u                                     ; move to next tile in chunk
+        stu   map_idx
+	
+        std   @dyn+1                                  ; multiply tile index by 3 to load tile page and addr
         _lsld
 @dyn    addd  #0                                      ; (dynamic)
-        leay  2,y                                     ; move to next tile in chunk
-        sty   glb_submap_index                        ; TODO check use
         ldu   glb_map_tiles_adr
         leau  d,u
+	_GetCartPageA                                 ; backup Chunk index page 
+	sta   @dyn_pg+1
+	lda   glb_map_tiles_pge
+        _SetCartPageA                                 ; set Tile index page
         pulu  a,x                                     ; a: tile routine page, x: tile routine address
-
-        ; draw compilated tile
         ldy   #glb_screen_location_2     
-        stx   glb_Address        
-        jsr   RunPgSubRoutine        
+        _SetCartPageA                                 ; set data page for sub routine to call
+        jsr   [,x]                                    ; draw compilated tile
+@dyn_pg lda   #$00
+        _SetCartPageA                                 ; restore Chunk index page
         
-dyn_x   lda   #0                                      ; (dynamic) current column index
-        tsta
-        bne   DrawTileColumn
-dyn_y   lda   #0                                      ; (dynamic) current row index
-dyn_w   ldb   #0
-        ldu   glb_submap_index
-        leau  b,u        
-        stu   glb_submap_index
-        tsta
-        bne   DrawTileRow
-                                                      ; TODO set here the background refresh flag   
-        rts
+NextTile
+dyn_x   lda   #0                                      ; (dynamic) current column index - Chunk 1 et 3 : init at nb_tiles_x - Chunk 2 et 4 : init at 18-nb_tiles_x
+        bne   DrawTileColumn 
 
-skip    leau  1,u
-        stu   glb_submap_index
-	bra   dyn_x
+        ; end of tile line on current Chunk, move to next
+        ldu   map_idx
+	stu   glb_left_chunk_index
+	ldu   glb_right_chunk_index
+        stu   map_idx
+	lda   #18
+	suba  nb_tiles_x
+	sta   dyn_x+1
+
+dyn_w   ldb   #0                                      ; Chunk 1 bra load Chunk 2, Chunk 3 bra load Chunk 4
+        ldu   map_idx
+        leau  b,u
+        stu   map_idx
+dyn_y   lda   #0                                      ; (dynamic) current row index - Chunk 1 et 3 : init at nb_tiles_x - Chunk 2 et 4 : init at 18-nb_tiles_x
+        lbne  DrawTileRow                             
+        rts                                           ; Chunk 2 bra load Chunk 3, Chunk 4 bra end
+
+skip    leau  2,u
+        stu   map_idx
+	bra   NextTile
+
+glb_left_chunk_index fdb 0
+glb_right_chunk_index fdb 0
+nb_tiles_x fcb   0
+nb_tiles_y fcb   0
 
 ********************************************************************************
 * x_pixel and y_pixel coordinate system
