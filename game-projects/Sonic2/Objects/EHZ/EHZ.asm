@@ -90,62 +90,7 @@ EHZ_width equ 88
         fdb   EHZ_width*5
         fdb   EHZ_width*6
         fdb   EHZ_width*7
-        fdb   EHZ_width*8
-        fdb   EHZ_width*9
-        fdb   EHZ_width*10
-        fdb   EHZ_width*11
-        fdb   EHZ_width*12
-        fdb   EHZ_width*13
-        fdb   EHZ_width*14
-        fdb   EHZ_width*15
-        fdb   EHZ_width*16
-        fdb   EHZ_width*17
-        fdb   EHZ_width*18
-        fdb   EHZ_width*19
-        fdb   EHZ_width*20
-        fdb   EHZ_width*21
-        fdb   EHZ_width*22
-        fdb   EHZ_width*23
-        fdb   EHZ_width*24
-        fdb   EHZ_width*25
-        fdb   EHZ_width*26
-        fdb   EHZ_width*27
-        fdb   EHZ_width*28
-        fdb   EHZ_width*29
-        fdb   EHZ_width*30
-        fdb   EHZ_width*31
-        fdb   EHZ_width*32
-        fdb   EHZ_width*33
-        fdb   EHZ_width*34
-        fdb   EHZ_width*35
-        fdb   EHZ_width*36
-        fdb   EHZ_width*37
-        fdb   EHZ_width*38
-        fdb   EHZ_width*39
-        fdb   EHZ_width*40
-        fdb   EHZ_width*41
-        fdb   EHZ_width*42
-        fdb   EHZ_width*43
-        fdb   EHZ_width*44
-        fdb   EHZ_width*45
-        fdb   EHZ_width*46
-        fdb   EHZ_width*47
-        fdb   EHZ_width*48
-        fdb   EHZ_width*49
-        fdb   EHZ_width*50
-        fdb   EHZ_width*51
-        fdb   EHZ_width*52
-        fdb   EHZ_width*53
-        fdb   EHZ_width*54
-        fdb   EHZ_width*55
-        fdb   EHZ_width*56
-        fdb   EHZ_width*57
-        fdb   EHZ_width*58
-        fdb   EHZ_width*59
-        fdb   EHZ_width*60
-        fdb   EHZ_width*61
-        fdb   EHZ_width*62
-        fdb   EHZ_width*63
+	; only 8 lines of chunks in map, no need to go further
         
 Tls_EHZ  
         INCLUDEGEN Tls_EHZ index

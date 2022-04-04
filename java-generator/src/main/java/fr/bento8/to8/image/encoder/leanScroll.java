@@ -346,8 +346,7 @@ public class leanScroll{
 			for (int i = l_step; i <= l_max; i += l_step) {	
 				for (int j = u_step; j <= u_max; j += u_step) {
 					if ((x-i >= 0  && y-j >= 0 && (image.getRaster().getDataBuffer()).getElem(x-i+(y-j)*width) != (image.getRaster().getDataBuffer()).getElem(x+y*width))) {
-						if (x+i >= width && y-j < 0)
-							keepPixel(x,y);
+						keepPixel(x,y);
 						return;
 					}
 				}
