@@ -41,11 +41,16 @@
 *
 ********************************************************************************
 WaitVBL
+        ldd   Vint_runcount
+        subd  Vint_Last_runcount
+	cmpb  #2
+	bhs   SwapVideoPage
+@a
         tst   $E7E7              * le faisceau n'est pas dans l'ecran
-        bpl   WaitVBL            * tant que le bit est a 0 on boucle
-WaitVBL_01
+        bpl   @a                 * tant que le bit est a 0 on boucle
+@b
         tst   $E7E7              * le faisceau est dans l'ecran
-        bmi   WaitVBL_01         * tant que le bit est a 1 on boucle
+        bmi   @b                 * tant que le bit est a 1 on boucle
                         
 SwapVideoPage
         ldb   am_SwapVideoPage+1 * charge la valeur du ldb suivant am_SwapVideoPage
@@ -64,9 +69,10 @@ am_SwapVideoPage
         eorb  #$01               * alterne bit0 = 0 ou 1 changement demi-page de la page 0 visible dans l'espace ecran
         stb   $E7C3
         
-        ldd   glb_Main_runcount
-        addd  #1
-        std   glb_Main_runcount    
+        inc   glb_Main_runcount+1
+        bne   @a
+        inc   glb_Main_runcount  
+@a
 
         ldd   Vint_runcount            ; store in Vint_Main_runcount the number of elapsed 50Hz frames
         subd  Vint_Last_runcount       ; used in AnimateSpriteSync
@@ -74,9 +80,9 @@ am_SwapVideoPage
 	bls   @a
 	ldb   #5
 @a      stb   Vint_Main_runcount
+
         ldd   Vint_runcount
         std   Vint_Last_runcount
-
         rts
         
 glb_Main_runcount     fdb   0 ; page swap counter
