@@ -32,7 +32,8 @@ public class Sound{
 	public void process(String fileName) throws Exception {
 		// Split data in 16Ko chunks
 		
-		int pageSize = 0x4000 - BinUtil.linearHeaderTrailerSize;
+		//int pageSize = 0x4000 - BinUtil.linearHeaderTrailerSize;
+		int pageSize = 0x4000;
 		byte[] buffer = new byte[pageSize];
 		byte[] data = Files.readAllBytes(Paths.get(fileName));		
 		int i = 0, j = 0;		

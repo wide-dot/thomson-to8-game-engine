@@ -20,7 +20,8 @@ nb_graphical_objects              equ 43 * max 64 total
 
 Object_RAM 
 Reserved_Object_RAM
-MainCharacter                 fill  0,object_size
+MainCharacter                 fcb   ObjID_Sonic
+                              fill  0,object_size-1
 Sidekick                      fill  0,object_size
 Reserved_Object_RAM_End
 

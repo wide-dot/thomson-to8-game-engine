@@ -22,8 +22,13 @@ Init
         std   anim,u
         ldb   #$04
         stb   priority,u
-        ldd   #$807F
-        std   xy_pixel,u
+        ldd   #128
+        std   x_pos,u
+        ldd   #576
+        std   y_pos,u
+        lda   render_flags,u
+        ora   #render_playfieldcoord_mask        
+        sta   render_flags,u  
         inc   routine,u
 Move
         lda   Dpad_Held
@@ -31,28 +36,52 @@ Move
 TestLeft
         bita  #c1_button_left_mask
         beq   TestRight   
-        dec   x_pixel,u
+        ldd   x_pos,u
+	subd  speed
+	std   x_pos,u
+	ldd   glb_camera_x_pos
+	subd  speed
+	std   glb_camera_x_pos
         bra   TestUp
 TestRight        
         bita  #c1_button_right_mask
         beq   TestUp   
-        inc   x_pixel,u
+        ldd   x_pos,u
+	addd  speed
+	std   x_pos,u
+	ldd   glb_camera_x_pos
+	addd  speed
+	std   glb_camera_x_pos
 TestUp
         bita  #c1_button_up_mask
         beq   TestDown   
-        dec   y_pixel,u
+        ldd   y_pos,u
+	subd  speed
+	std   y_pos,u
+	ldd   glb_camera_y_pos
+	subd  speed
+	std   glb_camera_y_pos
         bra   TestBtn
 TestDown
         bita  #c1_button_down_mask
         beq   TestBtn   
-        inc   y_pixel,u
+	ldd   y_pos,u
+	addd  speed
+	std   y_pos,u
+	ldd   glb_camera_y_pos
+	addd  speed
+	std   glb_camera_y_pos
 TestBtn
         bitb  #c1_button_A_mask
         beq   Continue
-        lda   glb_Next_Game_Mode
-        sta   GameMode
-        lda   #$FF
-        sta   ChangeGameMode
+	ldd   speed
+	addd  #2
+	cmpd  #10
+	bne   Comtinue
+	ldd   #0
+	std   speed
 Continue
         jsr   AnimateSprite   
         jmp   DisplaySprite
+
+speed   fdb   2
