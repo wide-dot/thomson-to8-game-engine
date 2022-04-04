@@ -18,7 +18,7 @@
 
         ldd   #0
         std   glb_camera_x_pos
-        ldd   #578
+        ldd   #576
         std   glb_camera_y_pos
 
 	; register tilemap
@@ -170,4 +170,4 @@ EHZ_Mask
 	INCLUDE "./Engine/Palette/UpdatePalette.asm"
         INCLUDE "./Engine/Irq/IrqSmps.asm"        
         INCLUDE "./Engine/Sound/Smps.asm"
-        INCLUDE "./Engine/Graphics/Tilemap/Tilemap16bits.asm"
+        INCLUDE "./Engine/Graphics/Tilemap/Tilemap16bits2.asm"

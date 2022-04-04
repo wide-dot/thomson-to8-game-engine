@@ -24,7 +24,7 @@ Init
         stb   priority,u
         ldd   #128
         std   x_pos,u
-        ldd   #576+100
+        ldd   #576+134
         std   y_pos,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask        
@@ -49,9 +49,9 @@ TestRight
         beq   TestUp   
 	ldd   glb_camera_x_pos
 	addd  speed
-	cmpd  #88*64-160
+	cmpd  #88*64-160+8+16
 	bls   @r
-	ldd   #88*64-160
+	ldd   #88*64-160+8+16
 @r	std   glb_camera_x_pos
 	addd  #128
 	std   x_pos,u
@@ -65,7 +65,7 @@ TestUp
 	bpl   @u
 	ldd   #0
 @u	std   glb_camera_y_pos
-	addd  #128
+	addd  #134
 	std   y_pos,u
         bra   TestBtn
 TestDown
@@ -75,11 +75,11 @@ TestDown
 	ldd   glb_camera_y_pos
 	addd  speed
 	addd  speed
-	cmpd  #8*128-192
+	cmpd  #8*128-192+16*2
 	bls   @d
-	ldd   #8*128-192
+	ldd   #8*128-192+16*2
 @d	std   glb_camera_y_pos
-	addd  #128
+	addd  #134
 	std   y_pos,u
 TestBtn
         ldb   Fire_Press
