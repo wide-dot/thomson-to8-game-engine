@@ -15,7 +15,7 @@
         sta   glb_Cur_Game_Mode
 		sta   glb_Next_Game_Mode
 
-        _RunObject ObjID_HalfPipe,SpecialStageHalfPipe
+        _RunObject ObjID_HalfPipe,#SpecialStageHalfPipe
 
 * ==============================================================================
 * Main Loop
@@ -25,7 +25,7 @@ LevelMainLoop
         jsr   UpdatePalette
         ; jsr   ReadJoypads moved to irq
         ; jsr   LoadGameMode     
-        _RunObject ObjID_HalfPipe,SpecialStageHalfPipe
+        _RunObject ObjID_HalfPipe,#SpecialStageHalfPipe
         jsr   RunObjects
         jsr   CheckSpritesRefresh                                              
         jsr   EraseSprites

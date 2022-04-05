@@ -100,63 +100,40 @@ _RunPgSubRoutine MACRO
         ; param 1 : ObjID_
         ; param 2 : Object data RAM address
         ; manual launch of an object from a different dynamic memory page and not from the resident page 1
-        
-        ldx   #Obj_Index_Page
-        ldb   #\1   
-        abx
-        lda   ,x                       ; memory page routine
-        
-        ldx   #Obj_Index_Address
-        aslb
-        abx        
-        ldu   ,x                       ; address routine
-        stu   glb_Address        
-        
-        ldu   #\2              
+        lda   Obj_Index_Page+\1   
+        ldu   Obj_Index_Address+2*\1
+        stu   glb_Address       
+        ldu   \2             
         jsr   RunPgSubRoutine
- ENDM           
+ ENDM    
  
+_MountObject MACRO 
+        ; param 1 : ObjID_
+        ; manual mount of an object from the resident page 1
+        lda   Obj_Index_Page+\1
+        _SetCartPageA
+        ldx   Obj_Index_Address+2*\1
+ ENDM
+
 _RunObject MACRO 
-        ldx   #Obj_Index_Page
-        ldb   #\1   
-        abx
-        lda   ,x                       ; memory page routine
-        _SetCartPageA                  ; set data page for sub routine to call
-                
-        ldx   #Obj_Index_Address
-        aslb
-        abx
-        ldu   #\2        
-        jsr   [,x]
+        ; param 1 : ObjID_
+        ; param 2 : Object data RAM address
+        ; manual launch of an object from the resident page 1
+        _MountObject \1
+        ldu   \2        
+        jsr   ,x
  ENDM
 
 _RunObjectRoutine MACRO 
-        ldx   #Obj_Index_Page
-        ldb   #\1   
-        abx
-        lda   ,x                       ; memory page routine
-        _SetCartPageA                  ; set data page for sub routine to call
-                
-        ldx   #Obj_Index_Address
-        aslb
-        abx
+        ; param 1 : ObjID_
+        ; param 2 : Object routine
+        ; manual launch of an object from the resident page 1
+	; this object does not need or have a data structure for this routine
+        _MountObject \1
         lda   \2        
-        jsr   [,x]
+        jsr   ,x
  ENDM
 
-_MountObject MACRO 
-        ldx   #Obj_Index_Page
-        ldb   #\1   
-        abx
-        lda   ,x                       ; memory page routine
-        _SetCartPageA                  ; set data page to access object data
-                
-        ldx   #Obj_Index_Address
-        aslb
-        abx
-        ldx   ,x
- ENDM
- 
 _asld MACRO
         aslb
         rola

@@ -22,7 +22,7 @@
         std   glb_camera_y_pos
 
 	; register tilemap
-        _RunObjectRoutine ObjID_EHZ,0
+        _RunObjectRoutine ObjID_EHZ,#0
 
 	; start music
         lda   #$01
@@ -117,7 +117,7 @@ EHZ_Back
 	bne   @a
 	rts
 @a
-        _RunObjectRoutine ObjID_EHZ_Back,0
+        _RunObjectRoutine ObjID_EHZ_Back,#0
         _SetCartPageA        
 
 	; get image location, this code works for a ND0 only image
@@ -133,7 +133,7 @@ EHZ_Mask
 	bne   @a
 	rts
 @a
-        _RunObjectRoutine ObjID_EHZ_Mask,0
+        _RunObjectRoutine ObjID_EHZ_Mask,#0
         _SetCartPageA        
 
 	; get image location, this code works for a ND0 only image
