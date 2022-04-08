@@ -17,9 +17,9 @@
 	lds   #$9CDF ; free 320 bytes (40 bytes x 8 lines)
 
         ldd   #0
-        std   glb_camera_x_pos
+        std   <glb_camera_x_pos
         ldd   #578
-        std   glb_camera_y_pos
+        std   <glb_camera_y_pos
 
 	; register tilemap
         _RunObjectRoutine ObjID_EHZ,#0   
@@ -56,7 +56,7 @@ LevelMainLoop
 * ==============================================================================
 * Routines
 * ==============================================================================
-	INCLUDE "./Engine/Ram/BankSwitch.asm"
+	    INCLUDE "./Engine/Ram/BankSwitch.asm"
         INCLUDE "./Engine/Graphics/WaitVBL.asm"
         INCLUDE "./Engine/Graphics/AnimateSpriteSync.asm"	
         INCLUDE "./Engine/Graphics/DisplaySprite.asm"	
@@ -70,7 +70,7 @@ LevelMainLoop
         INCLUDE "./Engine/ObjectManagement/DeleteObject.asm"
         INCLUDE "./Engine/ObjectManagement/ClearObj107.asm"	
         INCLUDE "./Engine/Ram/ClearDataMemory.asm"
-	INCLUDE "./Engine/Palette/UpdatePalette.asm"
-        INCLUDE "./Engine/Irq/IrqSmpsJoypad.asm"        
+	    INCLUDE "./Engine/Palette/UpdatePalette.asm"
+        INCLUDE "./Engine/Irq/IrqSmps.asm"        
         INCLUDE "./Engine/Sound/Smps.asm"
         INCLUDE "./Engine/Graphics/Tilemap/Tilemap16bits.asm"

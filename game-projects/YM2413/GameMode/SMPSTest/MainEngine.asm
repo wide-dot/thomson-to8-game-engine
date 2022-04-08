@@ -27,7 +27,8 @@
 * Main Loop
 * ==============================================================================
 LevelMainLoop
-        jsr   WaitVBL    
+        jsr   WaitVBL   
+        jsr   ReadJoypads 
 
         lda   Fire_Press
         bita  #c1_button_A_mask
@@ -43,7 +44,7 @@ LevelMainLoop
         INCLUDE "./Engine/Ram/BankSwitch.asm"
         INCLUDE "./Engine/Graphics/WaitVBL.asm"
         INCLUDE "./Engine/Joypad/ReadJoypads.asm"
-        INCLUDE "./Engine/Irq/IrqSmpsJoypad.asm"        
+        INCLUDE "./Engine/Irq/IrqSmps.asm"        
         INCLUDE "./Engine/Sound/Smps.asm"
         ;INCLUDE "./Engine/Irq/IrqPsg.asm"                
         ;INCLUDE "./Engine/Sound/PSGlib.asm"

@@ -102,7 +102,7 @@ TestBtn
         ;sta   ChangeGameMode
 
 SetAutoScroll
-        ldd   glb_camera_y_pos
+        ldd   <glb_camera_y_pos
         addd  #screen_top+8+16+12   ; Link sprite height is supposed 25, sprite is centered, so add 25/2
         cmpd  y_pos,u
         blo   @a
@@ -123,7 +123,7 @@ SetAutoScroll
         ldx   #8                    ; auto scroll nb frames        
         ldy   #$1000                ; auto scroll nb pixels by frame                
         bra   @scrl
-@b      ldd   glb_camera_x_pos
+@b      ldd   <glb_camera_x_pos
         addd  #screen_left+16+8+5  ; Link sprite width is supposed 11, sprite is centered, so add 11/2
         cmpd  x_pos,u
         blo   @c

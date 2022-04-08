@@ -21,9 +21,9 @@ TilemapRoutines
 
 TilemapInit
         ldd   #$0000
-        std   glb_camera_x_pos
+        std   <glb_camera_x_pos
         ldd   #$0000
-        std   glb_camera_y_pos
+        std   <glb_camera_y_pos
         inc   glb_current_submap        
         ldx   #Savage_submap001                    ; default submap at startup
         jmp   TilemapLoad
@@ -33,7 +33,7 @@ Tilemap01
 
 TilemapLoad
         stx   glb_submap
-        _GetCartPageA
+        lda   $E7E6
         sta   glb_submap_page
 
         ; set camera limits

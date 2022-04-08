@@ -17,6 +17,7 @@
 LevelMainLoop
         jsr   WaitVBL    
         jsr   UpdatePalette
+        jsr   ReadJoypads
         jsr   RunObjects
         jsr   CheckSpritesRefresh                                              
         jsr   EraseSprites
@@ -33,7 +34,7 @@ LevelMainLoop
 * ==============================================================================
 * Routines
 * ==============================================================================
-	INCLUDE "./Engine/Ram/BankSwitch.asm"
+	    INCLUDE "./Engine/Ram/BankSwitch.asm"
         INCLUDE "./Engine/Graphics/WaitVBL.asm"
         INCLUDE "./Engine/Graphics/DrawFullscreenImage.asm"	
         INCLUDE "./Engine/Graphics/AnimateSprite.asm"	
@@ -52,4 +53,4 @@ LevelMainLoop
         INCLUDE "./Engine/LevelManagement/LoadGameMode.asm"
         INCLUDE "./Engine/Palette/UpdatePalette.asm"
         INCLUDE "./Engine/Sound/PSGlib.asm"
-        INCLUDE "./Engine/Irq/IrqPsgJoypad.asm"	
+        INCLUDE "./Engine/Irq/IrqPsg.asm"	

@@ -30,6 +30,8 @@ RAMLoader
 RL_While
         ldd   ,x++                     ; A: T2 src page, B: Dest RAM page
         bpl   RL_LoadData              ; valeur negative de secteur signifie fin du tableau de donnee
+	lda   #glb_direct_page         ; set direct page to access globals
+	tfr   a,dp
         jmp   $6100                    ; on lance le mode de jeu en page 1
         
 RL_LoadData

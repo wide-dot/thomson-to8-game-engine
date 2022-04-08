@@ -20,9 +20,8 @@ _lds MACRO
  
 _SetCartPageA MACRO
  IFDEF T2
-        tsta
-        bpl   RAMPg@
         sta   glb_Page
+        bpl   RAMPg@
         
         lda   $E7E6
         anda  #$DF                     ; passe le bit5 a 0 pour cartouche au lieu de 1 pour RAM
@@ -33,7 +32,7 @@ _SetCartPageA MACRO
                 
         lda   #$AA                     ; sequence pour commutation de page T.2
         sta   $0555
-        lda   #$55
+        lsra                           ; lda   #$55
         sta   $02AA
         lda   #$C0
         sta   $0555
@@ -41,8 +40,7 @@ _SetCartPageA MACRO
         anda  #$7F                     ; le bit 7 doit etre a 0        
         sta   $0555                    ; selection de la page T.2 en zone cartouche
         bra   End@
-RAMPg@  sta   glb_Page                 ; selection de la page RAM en zone cartouche (bit 5 integre au numero de page)
-        sta   $E7E6 
+RAMPg@  sta   $E7E6                    ; selection de la page RAM en zone cartouche (bit 5 integre au numero de page)
 End@    equ   *
  ELSE
         sta   $E7E6                    ; selection de la page RAM en zone cartouche
@@ -51,7 +49,10 @@ End@    equ   *
  
 _GetCartPageA MACRO
  IFDEF T2
-        lda   glb_Page
+        lda   glb_Page                 ; glb_page at 0 means that glb_page variable is not in use
+	bne   exit@                    ; usefull when we dont work with T2 (ex: optimized tilemap that use only RAM)
+	lda   $E7E6
+exit@   equ   *
  ELSE
         lda   $E7E6
  ENDC
@@ -90,7 +91,10 @@ End@    equ   *
  
 _GetCartPageB MACRO
  IFDEF T2
-        ldb   glb_Page
+        ldb   glb_Page                 ; glb_page at 0 means that glb_page variable is not in use
+	bne   exit@                    ; usefull when we dont work with T2 (ex: optimized tilemap that use only RAM)
+	ldb   $E7E6
+exit@   equ   *
  ELSE
         ldb   $E7E6
  ENDC

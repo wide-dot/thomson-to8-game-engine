@@ -23,7 +23,7 @@
 LevelMainLoop
         jsr   WaitVBL    
         jsr   UpdatePalette
-        ; jsr   ReadJoypads moved to irq
+        jsr   ReadJoypads
         ; jsr   LoadGameMode     
         _RunObject ObjID_HalfPipe,#SpecialStageHalfPipe
         jsr   RunObjects
@@ -62,4 +62,4 @@ LevelMainLoop
         INCLUDE "./Engine/Graphics/ClearInterlacedDataMemory.asm"
         INCLUDE "./Engine/Palette/UpdatePalette.asm"
         INCLUDE "./Engine/Sound/Smps.asm"
-        INCLUDE "./Engine/Irq/IrqSmpsJoypad.asm"	
+        INCLUDE "./Engine/Irq/IrqSmps.asm"	

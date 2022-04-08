@@ -23,7 +23,7 @@ TileMapRegister
         ldx   #EHZ_map
         stx   glb_map_adr
 
-        _GetCartPageA
+        lda   $E7E6
         sta   glb_map_pge
 
 	; register tiles

@@ -72,9 +72,9 @@ Sword_Wait
 	rts
 	* Set camera position
 @a      ldd   #$0000
-        std   glb_camera_x_pos
+        std   <glb_camera_x_pos
         ldd   #$00C6
-        std   glb_camera_y_pos	
+        std   <glb_camera_y_pos	
 
         * Allocate and init all sub objects
         * Title overlay
@@ -118,14 +118,14 @@ Sword_Wait
 	bra   @b
 
 Sword_Move
-        ldd   glb_camera_y_pos	
+        ldd   <glb_camera_y_pos	
 	subd  #16
-	std   glb_camera_y_pos	
+	std   <glb_camera_y_pos	
 	bls   @a
         rts
 @a      inc   routine,u
         ldd   #0
-	std   glb_camera_y_pos	
+	std   <glb_camera_y_pos	
 
 Sword_Flash
         * Set new color palette

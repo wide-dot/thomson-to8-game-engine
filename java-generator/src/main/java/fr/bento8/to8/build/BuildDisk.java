@@ -1656,7 +1656,7 @@ public class BuildDisk
 		logger.debug("file " + objectCodeTmpFile + " final size:" + obj.gmCode.get(gm).code.bin.length + " bytes");
 		
 		if (obj.gmCode.get(gm).code.uncompressedSize != obj.gmCode.get(gm).code.bin.length) {
-			throw new Exception("Second compilation pass for file " + objectCodeTmpFile + " gives different binary size !");
+			throw new Exception("Second compilation pass for file " + objectCodeTmpFile + " gives different binary size ! (original: "+obj.gmCode.get(gm).code.uncompressedSize+" bytes)");
 		}		
 	}		
 	

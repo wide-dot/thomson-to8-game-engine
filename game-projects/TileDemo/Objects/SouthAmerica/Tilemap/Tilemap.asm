@@ -29,7 +29,7 @@ TilemapRoutines
 
 TilemapInit
         ldd   #$0000
-        std   glb_camera_x_pos
+        std   <glb_camera_x_pos
         std   glb_camera_y_pos
         inc   glb_current_submap        
         ldx   #SouthAmerica_submap001                 ; default submap at startup
@@ -51,9 +51,9 @@ Tilemap01
         bhi   TilemapReturn
         inc   glb_current_submap
         ldd   #128
-        std   glb_camera_x_pos
+        std   <glb_camera_x_pos
         ldd   #256
-        std   glb_camera_y_pos
+        std   <glb_camera_y_pos
         ldd   #screen_left+28+128  
         std   x_pos,x
         ldx   #SouthAmerica_submap002
@@ -64,7 +64,7 @@ Tilemap02
         
 TilemapLoad
         stx   glb_submap
-        _GetCartPageA
+        lda   $E7E6
         sta   glb_submap_page
 
         ; set camera limits

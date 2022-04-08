@@ -383,9 +383,7 @@ public class AssemblyGenerator{
 		asm.add("\tOPT C,CT");
 		asm.add("BCKDRAW_" + spriteName + "_" + imageNum);
 		asm.add("\tSTS glb_register_s\n");
-		asm.add("\tLEAS ,U");
-		asm.add("\tLDU ,Y");
-
+		asm.add("\tLEAS ,Y");
 		return asm;
 	}
 
@@ -393,7 +391,6 @@ public class AssemblyGenerator{
 		int cycles = 0;
 		cycles += Register.costExtendedST[Register.S];
 		cycles += Register.costIndexedLEA;
-		cycles += Register.costIndexedLD[Register.U];
 		return cycles;
 	}
 
@@ -401,25 +398,24 @@ public class AssemblyGenerator{
 		int size = 0;
 		size += Register.sizeExtendedST[Register.S];
 		size += Register.sizeIndexedLEA;		
-		size += Register.sizeIndexedLD[Register.U];
 		return size;
 	}
 
 	public List<String> getCodeFrameBckDrawMid() {
 		List<String> asm = new ArrayList<String>();
-		asm.add("\n\tLDU glb_screen_location_1");		
+		asm.add("\n\tLDU <glb_screen_location_1");		
 		return asm;
 	}
 
 	public int getCodeFrameBckDrawMidCycles() {
 		int cycles = 0;
-		cycles += Register.costExtendedST[Register.U];
+		cycles += Register.costDirectLD[Register.U];
 		return cycles;
 	}
 
 	public int getCodeFrameBckDrawMidSize() {
 		int size = 0;
-		size += Register.sizeExtendedST[Register.U];
+		size += Register.sizeDirectLD[Register.U];
 		return size;
 	}
 

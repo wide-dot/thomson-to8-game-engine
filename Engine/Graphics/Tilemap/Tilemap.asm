@@ -33,7 +33,7 @@ DrawTilemap
         sty   @dyn2+1
         ldb   layer_tile_size_divider_x,u
         stb   @dynb1+1
-        ldd   glb_camera_x_pos
+        ldd   <glb_camera_x_pos
         subd  submap_x_pos,x
 @dynb1  bra   *+2
         _lsrd
@@ -47,7 +47,7 @@ DrawTilemap
         std   @dyn1+1
         ldb   layer_tile_size_divider_y,u
         stb   @dynb2+1
-        ldd   glb_camera_y_pos
+        ldd   <glb_camera_y_pos
         subd  submap_y_pos,x
 @dynb2  bra   *+2
         _lsrd
@@ -87,13 +87,13 @@ DTM_Buffer1
 
 DrawTileInit
 	lda   #1
-	sta   glb_force_sprite_refresh
+	sta   <glb_force_sprite_refresh
         ldd   layer_vp_offset,u
         addd  #$A000
-        std   glb_screen_location_1
+        std   <glb_screen_location_1
         ldd   layer_vp_offset,u        
         addd  #$C000
-        std   glb_screen_location_2
+        std   <glb_screen_location_2
         lda   layer_vp_tiles_x,u
         sta   dyn_x+1                                 ; init column counter
         sta   dyn_xi+1                                ; init column counter
@@ -114,12 +114,12 @@ DrawTileInit
 DrawTileRow  
         dec   dyn_y+1
 dyn_sy  ldd   #$0000                                  ; (dynamic) y memory step
-        ldx   glb_screen_location_1
+        ldx   <glb_screen_location_1
         leax  d,x
-        stx   glb_screen_location_1
-        ldx   glb_screen_location_2
+        stx   <glb_screen_location_1
+        ldx   <glb_screen_location_2
         leax  d,x
-        stx   glb_screen_location_2  
+        stx   <glb_screen_location_2  
 dyn_xi  lda   #$00
         sta   dyn_x+1                                 ; init column counter
         bra   DrawTileLayer
@@ -127,12 +127,12 @@ dyn_xi  lda   #$00
 DrawTileColumn        
         dec   dyn_x+1
 dyn_sx  ldb   #$00                                    ; (dynamic) x memory step
-        ldx   glb_screen_location_1
+        ldx   <glb_screen_location_1
         abx
-        stx   glb_screen_location_1
-        ldx   glb_screen_location_2
+        stx   <glb_screen_location_1
+        ldx   <glb_screen_location_2
         abx
-        stx   glb_screen_location_2                
+        stx   <glb_screen_location_2                
                 
 DrawTileLayer        
         ldu   glb_submap_index
@@ -149,7 +149,7 @@ dyn_Tls ldu   #0000                                   ; (dynamic) Tileset
         pulu  a,x                                     ; a: tile routine page, x: tile routine address
 
         ; draw compilated tile
-        ldy   #glb_screen_location_2     
+        ldu   <glb_screen_location_2     
         stx   glb_Address        
         jsr   RunPgSubRoutine        
         

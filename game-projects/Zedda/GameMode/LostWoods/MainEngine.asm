@@ -25,7 +25,7 @@ IntroMainLoop
         jsr   WaitVBL   
         jsr   UpdatePalette
         jsr   ReadJoypads
-	ldb   Fire_Press
+	    ldb   Fire_Press
         bitb  #c1_button_A_mask
         bne   InitLevelMainLoop
         jsr   RunObjects
@@ -120,7 +120,7 @@ LevelMainLoop
         INCLUDE "./Engine/Graphics/DrawSpritesExtEnc.asm"
         INCLUDE "./Engine/Graphics/BgBufferAlloc.asm"	
         INCLUDE "./Engine/Joypad/ReadJoypads.asm"
-        INCLUDE "./Engine/Irq/IrqSmpsJoypad.asm"        
+        INCLUDE "./Engine/Irq/IrqSmps.asm"        
         INCLUDE "./Engine/Sound/Smps.asm"
         INCLUDE "./Engine/ObjectManagement/RunObjects.asm"
         INCLUDE "./Engine/ObjectManagement/DeleteObject.asm"

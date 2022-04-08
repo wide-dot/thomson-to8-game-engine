@@ -75,7 +75,6 @@ IrqSmps
         
         sts   @a+2                                    ; backup system stack
         lds   #IRQSysStack                            ; set tmp system stack for IRQ 
-        jsr   ReadJoypads        
         jsr   MusicFrame
 @a      lds   #0                                      ; (dynamic) restore system stack   
         
@@ -129,7 +128,6 @@ IrqSmpsRaster_render
 
         sts   @a+2                                    ; backup system stack
         lds   #IRQSysStack                            ; set tmp system stack for IRQ 
-        jsr   ReadJoypads        
         jsr   MusicFrame
 @a      lds   #0                                      ; (dynamic) restore system stack   
 

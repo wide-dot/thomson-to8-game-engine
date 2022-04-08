@@ -24,7 +24,7 @@
 
 
 DecMapAlpha
-        ldx   glb_screen_location_1
+        ldx   <glb_screen_location_1
         stu   @end+2
         cmpy  #0                       
         beq   @end                     ; branch if no data part 1
@@ -80,6 +80,6 @@ DecMapAlpha
         beq   @rts
         ldd   #0                       
         std   @end+2                   ; clear exit flag for second pass
-        ldx   glb_screen_location_2
+        ldx   <glb_screen_location_2
         bra   @loop
 @rts    rts
