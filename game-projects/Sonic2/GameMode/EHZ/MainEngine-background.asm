@@ -10,27 +10,20 @@
         INCLUDE "./Engine/Constants.asm"
         INCLUDE "./Engine/Macros.asm"        
         org   $6100
-		
+	INCLUDE "./Engine/InitGlobals.asm"		
+
         jsr   LoadAct       
 
-	; locate system stack to allow compilated img to go over video memory range
-	lds   #$9CDF ; free 320 bytes (40 bytes x 8 lines)
-
         ldd   #0
-        std   glb_camera_x_pos
+        std   <glb_camera_x_pos
         ldd   #576
-        std   glb_camera_y_pos
+        std   <glb_camera_y_pos
 
 	; register tilemap
         _RunObjectRoutine ObjID_EHZ,#0
 
 	; start music
-        lda   #$01
-        sta   Smps.60HzData 
-        jsr   YM2413_DrumModeOn
         jsr   IrqSet50Hz
-        ldx   #Smps_EHZ
-        jsr   PlayMusic 
 
 * ==============================================================================
 * Main Loop
@@ -47,6 +40,7 @@ LevelMainLoop
 	jsr   CheckCameraMove
 	jsr   EHZ_Back
         jsr   DrawTilemaps   
+	;jsr   DrawBufferedTile
         jsr   DrawSprites    
 	jsr   EHZ_Mask
         bra   LevelMainLoop
@@ -83,25 +77,25 @@ CheckCameraMove
 	; and if tiles need an update
         tst   glb_Cur_Wrk_Screen_Id
         bne   @b1
-@b0     ldx   glb_camera_x_pos
+@b0     ldx   <glb_camera_x_pos
 	cmpx  glb_old_camera_x_pos0
 	bne   @endx0
-	ldd   glb_camera_y_pos
+	ldd   <glb_camera_y_pos
 	cmpd  glb_old_camera_y_pos0
 	bne   @endy0
         rts
-@b1     ldx   glb_camera_x_pos
+@b1     ldx   <glb_camera_x_pos
 	cmpx  glb_old_camera_x_pos1
 	bne   @endx1
-	ldd   glb_camera_y_pos
+	ldd   <glb_camera_y_pos
 	cmpd  glb_old_camera_y_pos1
 	bne   @endy1
         rts
-@endx0 	ldd   glb_camera_y_pos
+@endx0 	ldd   <glb_camera_y_pos
 @endy0	std   glb_old_camera_y_pos0
 	stx   glb_old_camera_x_pos0
 	bra   @end
-@endx1 	ldd   glb_camera_y_pos
+@endx1 	ldd   <glb_camera_y_pos
 @endy1	std   glb_old_camera_y_pos1
 	stx   glb_old_camera_x_pos1
 @end
@@ -109,11 +103,11 @@ CheckCameraMove
 	; Force sprite to be refreshed when background changes
 	; ----------------------------------------------------
 	lda   #1
-	sta   glb_force_sprite_refresh
+	sta   <glb_force_sprite_refresh
 	rts
 
 EHZ_Back
-	lda   glb_force_sprite_refresh
+	lda   <glb_force_sprite_refresh
 	bne   @a
 	rts
 @a
@@ -125,11 +119,11 @@ EHZ_Back
 	lda   13,x
 	ldx   14,x
         _SetCartPageA        
-        ldy   #glb_screen_location_2
+        ldu   <glb_screen_location_2
         jmp   ,x
 
 EHZ_Mask
-	lda   glb_force_sprite_refresh
+	lda   <glb_force_sprite_refresh
 	bne   @a
 	rts
 @a
@@ -141,7 +135,7 @@ EHZ_Mask
 	lda   13,x
 	ldx   14,x
         _SetCartPageA        
-        ldy   #glb_screen_location_2
+        ldu   <glb_screen_location_2
         jmp   ,x
 
 * ---------------------------------------------------------------------------
@@ -168,6 +162,7 @@ EHZ_Mask
         INCLUDE "./Engine/ObjectManagement/ClearObj107.asm"	
         INCLUDE "./Engine/Ram/ClearDataMemory.asm"
 	INCLUDE "./Engine/Palette/UpdatePalette.asm"
-        INCLUDE "./Engine/Irq/IrqSmps.asm"        
-        INCLUDE "./Engine/Sound/Smps.asm"
-        INCLUDE "./Engine/Graphics/Tilemap/Tilemap16bits2.asm"
+        INCLUDE "./Engine/Irq/IrqSvgm.asm"        
+        INCLUDE "./Engine/Sound/Svgm.asm"
+        INCLUDE "./Engine/Graphics/Tilemap/Tilemap16bits.asm"
+        INCLUDE "./Engine/Graphics/Tilemap/TilemapBuffer.asm"

@@ -24,6 +24,7 @@
 LevelMainLoop
         jsr   WaitVBL    
         jsr   UpdatePalette
+        jsr   ReadJoypads
         jsr   LoadGameMode                
         jsr   RunObjects
         jsr   CheckSpritesRefresh

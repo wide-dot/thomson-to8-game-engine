@@ -24,10 +24,24 @@ dk_write_location             equ $604F
 * Globals
 * ===========================================================================
 
-glb_system_stack              equ $9FFA
-glb_screen_location_1         equ $9FFA  ; start address for rendering of current sprite Part1     
-glb_screen_location_2         equ $9FFC  ; start address for rendering of current sprite Part2 (Must follow Part1)
+glb_direct_page               equ $9F    ; direct page for globals
+
+; compilated sprite
 glb_register_s                equ $9FFE  ; reverved space to store S from ROM routines
+
+; DrawSprites
+glb_screen_location_1         equ $9FFC  ; start address for rendering of current sprite Part1     
+glb_screen_location_2         equ $9FFA  ; start address for rendering of current sprite Part2 (Must follow Part1)
+
+; CheckSpritesRefresh
+glb_cur_priority              equ $9FF9
+glb_cur_ptr_sub_obj_erase     equ $9FF7
+glb_cur_ptr_sub_obj_draw      equ $9FF5
+glb_camera_x_pos              equ $9FF3 ; camera x position in palyfield coordinates
+glb_camera_y_pos              equ $9FF1 ; camera y position in palyfield coordinates
+glb_force_sprite_refresh      equ $9FF0
+
+glb_system_stack              equ $9FF0
 
 * ===========================================================================
 * Display Constants

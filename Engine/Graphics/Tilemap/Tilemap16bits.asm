@@ -49,28 +49,53 @@ DrawTilemaps
         _SetCartPageA        
         ldu   glb_map_adr
 
-	lda   glb_force_sprite_refresh
+	lda   <glb_force_sprite_refresh
 	bne   @a
 	rts
 @a
 
 	; compute top left tile position on screen
+	; position is rounder to 2 px
+	; horizontally beacuse of 2px per byte
+	; vertically beacuse of interlacing
 	; ----------------------------------------
-	lda   glb_camera_x_pos+1
-	anda  #%00000111                              ; mask for 8px tile in width
+	lda   <glb_camera_x_pos+1
+	anda  #%00000110                    ; mask for 8px tile in width
 	nega
-	adda  #$34                                    ; hardcoded position on screen x=4
+	adda  #12                           ; on screen position of camera (full screen: 4)
 
-	ldb   glb_camera_y_pos+1
-	andb  #%00001111                              ; mask for 16px tile in height
+	ldb   <glb_camera_y_pos+1
+	andb  #%00001110                    ; mask for 16px tile in height
 	negb
-	addb  #$22                                    ; hardcoded position on screen y=6
+	addb  #20                           ; on screen position of camera (full screen: 6)
 
-        jsr   TLM_XYToAddress
+        lsra                                ; x=x/2, sprites moves by 2 pixels on x axis
+        lsra                                ; x=x/2, RAMA RAMB interlace  
+        bcs   @RAM2First                    ; Branch if write must begin in RAM2 first
+@RAM1First
+        sta   @dyn1
+        lda   #40                           ; 40 bytes per line in RAMA or RAMB
+        mul
+	addd  #$C000                        ; (dynamic)
+@dyn1   equ   *-1        
+        std   <glb_screen_location_2
+        subd  #$2000
+        std   <glb_screen_location_1     
+        bra   @end
+@RAM2First
+        sta   @dyn2
+        lda   #40                           ; 40 bytes per line in RAMA or RAMB
+        mul
+	addd  #$A000                        ; (dynamic)
+@dyn2   equ   *-1        
+        std   <glb_screen_location_2
+        addd  #$2001
+        std   <glb_screen_location_1
+@end
 
         ; Transform a camera position into an index to map (made of 64x128px chunks)
 	; --------------------------------------------------------------------------
-        ldd   glb_camera_x_pos
+        ldd   <glb_camera_x_pos
         _lsrd
         _lsrd
         _lsrd
@@ -78,7 +103,7 @@ DrawTilemaps
         _lsrd
         _lsrd                                                 
         std   @dyn1+1
-        ldd   glb_camera_y_pos
+        ldd   <glb_camera_y_pos
         _lsrd
         _lsrd
         _lsrd
@@ -95,22 +120,22 @@ DrawTilemaps
 	; Compute tile offset in chunks
 	; -----------------------------
 
-	ldb   #20                                     ; nb of tile in screen width 
-	lda   glb_camera_x_pos+1
+	ldb   #18                                     ; nb of tile in screen width (fullscreen 20)
+	lda   <glb_camera_x_pos+1
 	anda  #%00000111
 	bne   @skip
 	decb
 @skip   stb   scr_tile_x
 
-	ldb   #13                                     ; nb of tile in screen height
-	lda   glb_camera_y_pos+1
-	anda  #%00000111
+	ldb   #11                                     ; nb of tile in screen height (fullscreen 13)
+	lda   <glb_camera_y_pos+1
+	anda  #%00001111
 	bne   @skip
 	decb
 @skip   stb   scr_tile_y
 
 
-	lda   glb_camera_x_pos+1
+	lda   <glb_camera_x_pos+1
 	anda  #%00111000
 	asra
 	asra
@@ -130,7 +155,7 @@ scr_tile_x equ *-1
 	anda  #%00000111                              ; skip middle chunks that are 8 tiles wide
 	sta   r_h_tl                                  ; save nb of horizontal tiles in right chunks
 
-	ldb   glb_camera_y_pos+1
+	ldb   <glb_camera_y_pos+1
 	andb  #%01110000                              ; get tile position in chunk
 	stb   y_off+1                                 ; vertical offset to first tile in top left chunk
 	asrb  
@@ -209,10 +234,10 @@ scr_tile_y equ *-1
 NextRight
         stb   c_h_tl                                  ; preprocess next chunk location based on current one
 	aslb
-	ldx   glb_screen_location_1
+	ldx   <glb_screen_location_1
 	abx
 	stx   c_stp_1
-	ldx   glb_screen_location_2
+	ldx   <glb_screen_location_2
 	abx
 	stx   c_stp_2
 	rts
@@ -224,11 +249,11 @@ PrepDown
 	_asld
 	_asld
 	std   @bck
-	addd  glb_screen_location_1
+	addd  <glb_screen_location_1
 	std   @l1_bck
 	ldd   #0
 @bck    equ   *-2
-	addd  glb_screen_location_2
+	addd  <glb_screen_location_2
 	std   @l2_bck
 	rts
 NextDown
@@ -273,15 +298,27 @@ chunk_offset  equ   *-2
 
 DrawChunk
 	lda   c_h_tl
+ IFDEF T2
 	lbeq  EndOfChunk
+ ELSE
+	beq   EndOfChunk
+ ENDC
 	sta   c_h_tl_bck
 	lda   c_v_tl_bck
+ IFDEF T2
 	lbeq  EndOfChunk
+ ELSE
+	beq   EndOfChunk
+ ENDC
 	sta   c_v_tl
 
 DrawTile
         ldd   ,u++                                    ; load tile index in d (16 bits)
-	lbeq   NextCol                                ; LWASM bug ? why byte overflow ?
+ IFDEF T2
+	lbeq  NextCol
+ ELSE
+	beq   NextCol
+ ENDC
 
         std   @dyn+1                                  ; multiply tile index by 3 to load tile page and addr
         _lsld
@@ -292,7 +329,7 @@ DrawTile
 	lda   glb_map_tiles_pge
         _SetCartPageA                                 ; set tile index page
         pulu  a,x                                     ; a: tile routine page, x: tile routine address
-        ldy   #glb_screen_location_2     
+        ldu   <glb_screen_location_2     
         _SetCartPageA                                 ; set compilated tile data page
         jsr   ,x                                      ; draw compilated tile
         lda   #0
@@ -308,12 +345,16 @@ NextCol
 	; Move tile position on screen to next column
         ; -------------------------------------------
         ldd   #8/4                                    ; nb of linear memory bytes between two tiles in a column
-        addd  glb_screen_location_1
-        std   glb_screen_location_1
+        addd  <glb_screen_location_1
+        std   <glb_screen_location_1
         ldd   #8/4                                    ; nb of linear memory bytes between two tiles in a column
-        addd  glb_screen_location_2
-        std   glb_screen_location_2  
-	lbra   DrawTile                               ; LWASM bug ? why byte overflow ?
+        addd  <glb_screen_location_2
+        std   <glb_screen_location_2  
+ IFDEF T2
+	jmp   DrawTile
+ ELSE
+	bra   DrawTile
+ ENDC
 
         ; Check end of line of current Chunk
         ; ----------------------------------
@@ -326,10 +367,10 @@ EndOfRow                                              ; end of line on right chu
 EndOfChunk
         ldd   #0                                      ; (dynamic) nb of linear memory bytes to go from the last tile of a row to the first tile of the next row
 c_stp_1 equ   *-2
-        std   glb_screen_location_1
+        std   <glb_screen_location_1
         ldd   #0                                      ; (dynamic)
 c_stp_2 equ   *-2
-        std   glb_screen_location_2 
+        std   <glb_screen_location_2 
 
         lda   glb_map_chunk_pge
         _SetCartPageA
@@ -347,57 +388,12 @@ start_x equ   *-2
 	; -----------------------------------------
         ldd   #0                                      ; (dynamic) nb of linear memory bytes to go from the last tile of a row to the first tile of the next row
 r_stp_1 equ   *-2
-        addd  glb_screen_location_1
-        std   glb_screen_location_1
+        addd  <glb_screen_location_1
+        std   <glb_screen_location_1
         ldd   #0                                      ; (dynamic)
 r_stp_2 equ   *-2
-        addd  glb_screen_location_2
-        std   glb_screen_location_2 
+        addd  <glb_screen_location_2
+        std   <glb_screen_location_2 
 	jmp   DrawTile
 
 cpt_x fcb 0
-
-********************************************************************************
-* x_pixel and y_pixel coordinate system
-* x coordinates:
-*    - off-screen left 00-2F (0-47)
-*    - on screen 30-CF (48-207)
-*    - off-screen right D0-FF (208-255)
-*
-* y coordinates:
-*    - off-screen top 00-1B (0-27)
-*    - on screen 1C-E3 (28-227)
-*    - off-screen bottom E4-FF (228-255)
-********************************************************************************
-
-TLM_XYToAddress
-        suba  #$30
-        bcc   @x_positive
-        suba  #96                           ; get x position one line up, skipping (160-255)
-        decb
-@x_positive        
-        lsra                                ; x=x/2, sprites moves by 2 pixels on x axis
-        lsra                                ; x=x/2, RAMA RAMB enterlace  
-        bcs   @RAM2First                    ; Branch if write must begin in RAM2 first
-@RAM1First
-        sta   @dyn1
-        lda   #40                          ; 40 bytes per line in RAMA or RAMB
-        mul
-	addd  #0                            ; (dynamic)
-@dyn1   equ   *-1        
-        addd  #$C000-$1C*40
-        std   glb_screen_location_2
-        subd  #$2000
-        std   glb_screen_location_1     
-        rts
-@RAM2First
-        sta   @dyn2
-        lda   #$28                          ; 40 bytes per line in RAMA or RAMB
-        mul
-	addd  #0                            ; (dynamic)
-@dyn2   equ   *-1        
-        addd  #$A000-$1C*40
-        std   glb_screen_location_2
-        addd  #$2001
-        std   glb_screen_location_1
-        rts

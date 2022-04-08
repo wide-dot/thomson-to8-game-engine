@@ -39,9 +39,9 @@ TestLeft
         ldd   x_pos,u
 	subd  speed
 	std   x_pos,u
-	ldd   glb_camera_x_pos
+	ldd   <glb_camera_x_pos
 	subd  speed
-	std   glb_camera_x_pos
+	std   <glb_camera_x_pos
         bra   TestUp
 TestRight        
         bita  #c1_button_right_mask
@@ -49,18 +49,18 @@ TestRight
         ldd   x_pos,u
 	addd  speed
 	std   x_pos,u
-	ldd   glb_camera_x_pos
+	ldd   <glb_camera_x_pos
 	addd  speed
-	std   glb_camera_x_pos
+	std   <glb_camera_x_pos
 TestUp
         bita  #c1_button_up_mask
         beq   TestDown   
         ldd   y_pos,u
 	subd  speed
 	std   y_pos,u
-	ldd   glb_camera_y_pos
+	ldd   <glb_camera_y_pos
 	subd  speed
-	std   glb_camera_y_pos
+	std   <glb_camera_y_pos
         bra   TestBtn
 TestDown
         bita  #c1_button_down_mask
@@ -68,9 +68,9 @@ TestDown
 	ldd   y_pos,u
 	addd  speed
 	std   y_pos,u
-	ldd   glb_camera_y_pos
+	ldd   <glb_camera_y_pos
 	addd  speed
-	std   glb_camera_y_pos
+	std   <glb_camera_y_pos
 TestBtn
         bitb  #c1_button_A_mask
         beq   Continue

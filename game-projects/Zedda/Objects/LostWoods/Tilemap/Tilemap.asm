@@ -24,9 +24,9 @@ TilemapRoutines
 
 TilemapInit
         ldd   #$0120
-        std   glb_camera_x_pos
+        std   <glb_camera_x_pos
         ldd   #$01C0
-        std   glb_camera_y_pos
+        std   <glb_camera_y_pos
         inc   glb_current_submap        
         ldx   #LostWoods_submap001                    ; default submap at startup
         jmp   TilemapLoad
@@ -47,7 +47,7 @@ Tilemap01
         bne   @a
         inc   glb_current_submap
         ldd   #512                                    ; new camera position
-        std   glb_camera_x_pos
+        std   <glb_camera_x_pos
         ldd   x_pos,x
         addd  #12                                     ; new sprite position
         std   x_pos,x
@@ -73,7 +73,7 @@ Tilemap02
         bne   @a        
         inc   glb_current_submap
         ldd   #512                                    ; new camera position
-        std   glb_camera_y_pos
+        std   <glb_camera_y_pos
         ldd   y_pos,x
         addd  #26                                     ; new sprite position
         std   y_pos,x
@@ -97,7 +97,7 @@ Tilemap02
         bne   @b        
         dec   glb_current_submap
         ldd   #384                                    ; new camera position
-        std   glb_camera_x_pos
+        std   <glb_camera_x_pos
         ldd   x_pos,x
         subd  #12                                     ; new sprite position
         std   x_pos,x
@@ -123,7 +123,7 @@ Tilemap03
         bne   @a        
         dec   glb_current_submap
         ldd   #320                                    ; new camera position
-        std   glb_camera_y_pos
+        std   <glb_camera_y_pos
         ldd   y_pos,x
         subd  #26                                     ; new sprite position
         std   y_pos,x
@@ -135,7 +135,7 @@ Tilemap03
         
 TilemapLoad
         stx   glb_submap
-        _GetCartPageA
+        lda   $E7E6
         sta   glb_submap_page
 
         ; set camera limits

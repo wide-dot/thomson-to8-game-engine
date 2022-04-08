@@ -25,7 +25,7 @@ LoadGameModeNow
         ldb   glb_Cur_Game_Mode
         jmp   Build_RAMLoaderManager          
  ELSE
-                ldb   #$64                     ; Page 4 contains RAMLoaderManager
+        ldb   #$64                     ; Page 4 contains RAMLoaderManager
         stb   $E7E6
         lda   GameMode
         ldb   glb_Cur_Game_Mode

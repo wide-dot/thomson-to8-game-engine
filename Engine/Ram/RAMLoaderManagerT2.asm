@@ -72,7 +72,9 @@ RLM_CopyCode
         
 * Execution du Game Mode Engine en page 0a
 ************************************************************
-        lds   #glb_system_stack         ; positionnement pile systeme         
+        lds   #glb_system_stack         ; positionnement pile systeme
+        lda   glb_direct_page         ; set direct page to access globals
+		tfr   a,dp         
         jmp   RAMLoader     
 
 * ==============================================================================

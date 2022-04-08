@@ -27,7 +27,7 @@ Spritemap
         stu   dyn2+1
         ldb   spmap_tile_size_divider_x,y
         stb   @dynb1+1
-	ldd   glb_camera_x_pos
+	ldd   <glb_camera_x_pos
 	subd  spmap_x_pos,y
 @dynb1  bra   *+2
         _lsrd

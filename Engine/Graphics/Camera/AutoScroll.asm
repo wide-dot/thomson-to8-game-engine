@@ -39,12 +39,12 @@ ATS_Up
         ldd   glb_auto_scroll_step_remainder                ; this code allow
         addd  glb_auto_scroll_step                          ; sub pixel move by
         std   glb_auto_scroll_step_remainder                ; storing remainder
-        ldd   glb_camera_y_pos
+        ldd   <glb_camera_y_pos
         subd  glb_auto_scroll_step_remainder16bit    
         clr   glb_auto_scroll_step_remainder   
         cmpd  glb_camera_y_min
         blt   ATS_Stop
-        std   glb_camera_y_pos
+        std   <glb_camera_y_pos
         rts
         
 ATS_Down
@@ -53,12 +53,12 @@ ATS_Down
         ldd   glb_auto_scroll_step_remainder
         addd  glb_auto_scroll_step
         std   glb_auto_scroll_step_remainder
-        ldd   glb_camera_y_pos
+        ldd   <glb_camera_y_pos
         addd  glb_auto_scroll_step_remainder16bit
         clr   glb_auto_scroll_step_remainder
         cmpd  glb_camera_y_max
         bgt   ATS_Stop      
-        std   glb_camera_y_pos    
+        std   <glb_camera_y_pos    
         rts
 
 ATS_Stop
@@ -76,12 +76,12 @@ ATS_Left
         ldd   glb_auto_scroll_step_remainder
         addd  glb_auto_scroll_step
         std   glb_auto_scroll_step_remainder
-        ldd   glb_camera_x_pos
+        ldd   <glb_camera_x_pos
         subd  glb_auto_scroll_step_remainder16bit
         clr   glb_auto_scroll_step_remainder
         cmpd  glb_camera_x_min
         blt   ATS_Stop      
-        std   glb_camera_x_pos    
+        std   <glb_camera_x_pos    
         rts
 
 ATS_Right
@@ -90,11 +90,11 @@ ATS_Right
         ldd   glb_auto_scroll_step_remainder
         addd  glb_auto_scroll_step
         std   glb_auto_scroll_step_remainder
-        ldd   glb_camera_x_pos
+        ldd   <glb_camera_x_pos
         addd  glb_auto_scroll_step_remainder16bit
         clr   glb_auto_scroll_step_remainder
         cmpd  glb_camera_x_max
         bgt   ATS_Stop      
-        std   glb_camera_x_pos    
+        std   <glb_camera_x_pos    
         rts                   
         

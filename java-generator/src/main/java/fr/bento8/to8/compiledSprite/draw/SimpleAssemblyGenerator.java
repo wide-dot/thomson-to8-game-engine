@@ -252,37 +252,34 @@ public class SimpleAssemblyGenerator extends Encoder{
 		asm.add("\tSETDP $FF");
 		asm.add("\tOPT C,CT");		
 		asm.add("DRAW_" + spriteName + "_" + imageNum);
-		asm.add("\tLDU ,Y");
 		return asm;
 	}
 
 	public int getCodeFrameDrawStartCycles() throws Exception {
 		int cycles = 0;
-		cycles += Register.costIndexedLD[Register.U];
 		return cycles;
 	}
 
 	public int getCodeFrameDrawStartSize() throws Exception {
 		int size = 0;
-		size += Register.sizeIndexedLD[Register.U];
 		return size;
 	}
 
 	public List<String> getCodeFrameDrawMid() {
 		List<String> asm = new ArrayList<String>();
-		asm.add("\n\tLDU glb_screen_location_1");		
+		asm.add("\n\tLDU <glb_screen_location_1");		
 		return asm;
 	}
 
 	public int getCodeFrameDrawMidCycles() {
 		int cycles = 0;
-		cycles += Register.costExtendedST[Register.U];
+		cycles += Register.costDirectLD[Register.U];
 		return cycles;
 	}
 
 	public int getCodeFrameDrawMidSize() {
 		int size = 0;
-		size += Register.sizeExtendedST[Register.U];
+		size += Register.sizeDirectLD[Register.U];
 		return size;
 	}
 

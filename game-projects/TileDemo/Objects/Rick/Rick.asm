@@ -70,7 +70,7 @@ TestBtn
         ;lda   #$FF
         ;sta   ChangeGameMode
 SetAutoScroll
-        ldd   glb_camera_y_pos
+        ldd   <glb_camera_y_pos
         addd  #screen_top+8+32+10   ; rick sprite height is supposed 21, sprite is centered, so add 21/2
         cmpd  y_pos,u
         blo   @a

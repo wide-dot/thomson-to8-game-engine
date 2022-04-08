@@ -196,17 +196,17 @@ public class ZX0Encoder extends Encoder{
 					src += "        ; set graphic routine parameters\n";
 					
 					if (!isPlane0Empty) {
-					    src += "        ldx   glb_screen_location_1\n";
+					    src += "        ldx   <glb_screen_location_1\n";
 					    src += "        leax  "+(-center)+",x\n";
-					    src += "        stx   glb_screen_location_1\n";								
+					    src += "        stx   <glb_screen_location_1\n";								
 						src += "        leau  @a,pcr\n";			    
 					} else {
 						src += "        ldu   #0\n";
 					}
 					if (!isPlane1Empty) {
-					    src += "        ldx   glb_screen_location_2\n";
+					    src += "        ldx   <glb_screen_location_2\n";
 					    src += "        leax  "+(-center)+",x\n";
-					    src += "        stx   glb_screen_location_2\n";								
+					    src += "        stx   <glb_screen_location_2\n";								
 						src += "        leax  @b,pcr\n";
 					} else {
 						src += "        ldx   #0\n";

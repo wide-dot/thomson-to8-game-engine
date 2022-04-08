@@ -80,6 +80,7 @@ done@              equ *
 ;       ex. ZX0_DISABLE_DISABLING_INTERRUPTS
 ;
 zx0_decompress
+                   pshs  dp
                    stu   zx0_eof+1
                    ldu   glb_screen_location_1                                      
                    cmpx  #0                       
@@ -92,7 +93,7 @@ zx0_eof            ldx   #0                       ; (dynamic) load next data ptr
                    std   zx0_eof+1                   ; clear exit flag for second pass
                    ldu   glb_screen_location_2
                    bra   zx0_start
-@rts               rts                   
+@rts               puls  dp,pc                   
 
 zx0_start
                    ldd #$ffff          ; init offset = -1
