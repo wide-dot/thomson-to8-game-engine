@@ -53,11 +53,11 @@ TileMapRegister
 	sta   glb_map_width
 
 	; init engine variables
-        ldd   #glb_camera_init
-        std   glb_old_camera_x_pos0
-        std   glb_old_camera_x_pos1
-        std   glb_old_camera_y_pos0
-        std   glb_old_camera_y_pos1
+        ;ldd   #glb_camera_init
+        ;std   glb_old_camera_x_pos0
+        ;std   glb_old_camera_x_pos1
+        ;std   glb_old_camera_y_pos0
+        ;std   glb_old_camera_y_pos1
         rts  
 
 EHZ_map
