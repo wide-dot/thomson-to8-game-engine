@@ -36,28 +36,14 @@ TileMapRegister
 	std   glb_map_defchunk0_adr
 
 	; load chunk definitions (part 1)
-	ldu   layer_chunk1,x
-	lda   ,u
-	sta   glb_map_defchunk1_pge
-	ldd   1,u
-	std   glb_map_defchunk1_adr
-
-	; load chunk definitions (part 1)
-	ldu   layer_chunk1,x
-	lda   ,u
-	sta   glb_map_defchunk1_pge
-	ldd   1,u
-	std   glb_map_defchunk1_adr
+	;ldu   layer_chunk1,x
+	;lda   ,u
+	;sta   glb_map_defchunk1_pge
+	;ldd   1,u
+	;std   glb_map_defchunk1_adr
 
         lda   layer_map_width,x
 	sta   glb_map_width
-
-	; init engine variables
-        ;ldd   #glb_camera_init
-        ;std   glb_old_camera_x_pos0
-        ;std   glb_old_camera_x_pos1
-        ;std   glb_old_camera_y_pos0
-        ;std   glb_old_camera_y_pos1
         rts  
 
 EHZ_map

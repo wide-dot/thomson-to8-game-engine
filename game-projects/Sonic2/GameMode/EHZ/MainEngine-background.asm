@@ -23,14 +23,15 @@
         _RunObjectRoutine ObjID_EHZ,#0
 
         ; init tile buffer based on camera pos
-	ldd   #0
-	std   glb_tmb_x      ;(0-32767)                  
-	ldd   #576
-	std   glb_tmb_y      ;(0-32767)
-	_ldd  18,11
-	sta   glb_tmb_width  ;(1-20)       
-	stb   glb_tmb_height ;(1-13)  
-	jsr   FeedTileBuffer
+	;jsr   InitTileBuffer
+	;ldd   #0
+	;std   glb_tmb_x      ;(0-32767)                  
+	;ldd   #576
+	;std   glb_tmb_y      ;(0-32767)
+	;_ldd  18,11
+	;sta   glb_tmb_width  ;(1-20)       
+	;stb   glb_tmb_height ;(1-13)  
+	;jsr   FeedTileBuffer
 
 	; start music
         jsr   IrqSet50Hz
@@ -49,8 +50,9 @@ LevelMainLoop
         jsr   UnsetDisplayPriority
 	jsr   CheckCameraMove
 	jsr   EHZ_Back
-        ;jsr   DrawTilemaps 
-	jsr   DrawBufferedTile
+        jsr   DrawTilemaps 
+        ;jsr   ComputeTileBuffer
+	;jsr   DrawBufferedTile
         jsr   DrawSprites    
 	jsr   EHZ_Mask
         bra   LevelMainLoop
@@ -174,5 +176,5 @@ EHZ_Mask
 	INCLUDE "./Engine/Palette/UpdatePalette.asm"
         INCLUDE "./Engine/Irq/IrqSvgm.asm"        
         INCLUDE "./Engine/Sound/Svgm.asm"
-        ;INCLUDE "./Engine/Graphics/Tilemap/Tilemap16bits.asm"
-        INCLUDE "./Engine/Graphics/Tilemap/TilemapBuffer.asm"
+        INCLUDE "./Engine/Graphics/Tilemap/Tilemap16bits.asm"
+        ;INCLUDE "./Engine/Graphics/Tilemap/TilemapBuffer.asm"

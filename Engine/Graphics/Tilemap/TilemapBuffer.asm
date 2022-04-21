@@ -32,165 +32,168 @@ b_v_tl                fcb   0
 c_h_tl_bck            fcb   0 ; backup value of horizontal width of chunks
 c_v_tl_bck            fcb   0 ; backup value of vertical height of chunks
 cur_c	              fcb   0 ; current chunk id
-x_off                 fdb   0 ; position in top left chunk
-y_off                 fdb   0 ; position in top left chunk
-cur_y_off             fdb   0 ; current y offset
+x_off                 fdb   0 ; x start position in top left chunk
+y_off                 fdb   0 ; y start position in top left chunk
 
 b_loc                 fdb   0 ; location in buffer
+tmb_x                 fdb   0
+tmb_y                 fdb   0
+tmb_old_camera_x      fdb   0 ; last camera position (x axis)
+tmb_old_camera_y      fdb   0 ; last camera position (y axis)
 
-tmb_last_0            fill  0,8
-tmb_last_1            fill  0,8
-tmb_buffer_x          equ   0 ; last location in buffer (x axis)
-tmb_buffer_y          equ   2 ; last location in buffer (y axis)
-tmb_camera_x          equ   4 ; last camera position (x axis)
-tmb_camera_y          equ   6 ; last camera position (y axis)
+tmb_vp_h_tiles        equ   18 ; viewport tiles on x axis
+tmb_vp_v_tiles        equ   11 ; viewport tiles on y axis
+tmb_vp_h_px           equ   tmb_vp_h_tiles*8
+tmb_vp_v_px           equ   tmb_vp_v_tiles*16
 
-ComputeDeltaTileBuffer
-;
-;        ; compute position in cycling buffer
-;        ; ---------------------------------------------------------------------
-;
-;        tst   glb_Cur_Wrk_Screen_Id
-;        bne   @scr1
-;	ldx   tmb_last_0
-;	bra   @scr0
-;@scr1	ldx   tmb_last_1
-;@scr0
-;
-;	; check if full refresh is needed
-;        ; glb_tmb_full_refresh can be set manually before routine call
-;	tst   glb_tmb_full_refresh
-;	bne   @skip
-;	ldd   <glb_camera_y_pos
-;	subd  camera_y,x
-;	stb   glb_tmb_y_offset
-;	cmpd  #16*11
-;	bge   @refrsh
-;	cmpd  #-16*11
-;	ble   @refrsh
-;	ldd   <glb_camera_x_pos
-;	subd  camera_x,x
-;	stb   glb_tmb_x_offset
-;	cmpd  #16*11
-;	bge   @refrsh
-;	cmpd  #-16*11
-;	ble   @refrsh
-;	bra   @skip
-;@refrsh	lda   #1
-;	sta   glb_tmb_full_refresh
-;@skip
-;
-;        ldd   <glb_camera_x_pos
-;	std   camera_x,x
-;        anda  #%00000000                    ; col mask (0-32)
-;        andb  #%11111000                    ; tile width 8px (>>3) 
-;        _lsrd                               ; col size 4 bytes (<<2)
-;        pshs  d,x
-;        ldd   <glb_camera_y_pos+1
-;	std   camera_y,x
-;        anda  #%00000000
-;        andb  #%11110000                    ; line mask (0-16)
-;        _lsld                               ; tile height 16px (>>4) 
-;        _lsld                               ; line skip 128 bytes (<<7)
-;        _lsld
-;	tst   glb_tmb_full_refresh
-;	bne   @refrsh
-;    	cmpd  b_loc_y,x                     ; check vertical change
-;	beq   @x_axis                       ; branch if no change on y axis
-;     	tfr   d,u
-;	subd  b_loc_y,x                     ; compute vertical change
-;	_asld                               ; divide d by 128 in a (compute nb of tile lines)
-;	bra   @a
-;@refrsh tfr   d,u
-;	lda   #11                           ; full height in tiles
-;@a	stu   b_loc_y,x                     ; backup new value as old
-;	ldb   #18
-;	stb   glb_tmb_width
-;; il manque le addd de b_x
-;	sta   glb_tmb_height                ; number of vertical tiles to draw (positive or negative)
-;	bmi   @a
-;	ldd   
-;        std   glb_tmb_offset                ; fill tiles down
-;	jsr   FeedTileBuffer 
-;	bra   @b
-;@a	; fill tiles up
-;        jsr   FeedTileBuffer
-;@b      bpl   @continue
-;        puls  d,x,pc                        ; a full render was done no need to draw on x_axis
-;@continue
-;	puls  d,x
-;    	cmpd  b_loc_x,x                     ; check horizontal change
-;	beq   @end
-;        tfr   d,u
-;    	subd  b_loc_x,x                     ; check horizontal change
-;	stu   b_loc_x,x                     ; backup new value as old
-;	_asrd
-;	_asrd
-;	stb   glb_tmb_width
-;; todo check values >screen width
-;; set other params
-;	bmi   @a
-;	; fill tiles right
-;	jsr   FeedTileBuffer 
-;	bra   @c
-;@a	; fill tiles left
-;@c      jsr   FeedTileBuffer
-@end    rts
+InitTileBuffer
+	ldd   <glb_camera_x_pos
+	addd  #tmb_vp_h_px
+	std   tmb_old_camera_x
+	ldd   <glb_camera_y_pos
+	addd  #tmb_vp_v_px
+	std   tmb_old_camera_y
+	rts
 
-; ****************************************************************************************************************************
-; * FeedTileBuffer
-; * Feed the tile buffer, based on camera x and y and a number of tiles in width and height
-; * 
-; * glb_tmb_x      (0-32767)                  
-; * glb_tmb_y      (0-32767)          
-; * glb_tmb_width  (1-20)       
-; * glb_tmb_height (1-13)        
-; *
-; ****************************************************************************************************************************
+ComputeTileBuffer
 
-FeedTileBuffer
-        ; check if a map was registred and mount the map
+        ; check if a map was registred
         ; ---------------------------------------------------------------------
 
 	lda   glb_map_pge
 	bne   @a
 	rts
 @a
+
+	; compute tiles that needs to be added to buffer
+	; ---------------------------------------------------------------------
+
+	; compute y location
+	ldu   <glb_camera_y_pos
+	ldd   tmb_old_camera_y
+	subd  <glb_camera_y_pos
+	beq   @next
+	bpl   @a
+	leau  tmb_vp_v_px,u
+	leau  d,u
+@a      stu   tmb_y
+        ; compute height in tiles
+	ldd   <glb_camera_y_pos
+    	_asrd
+	_asrd
+	_asrd
+	_asrd
+	std   @dyn
+        ldd   tmb_old_camera_y
+    	_asrd
+	_asrd
+	_asrd
+	_asrd
+	subd   #0
+@dyn    equ   *-2
+	beq   @next
+	bpl   @b
+	_negd
+@b	cmpd  #tmb_vp_v_tiles
+	ble   @c
+    	ldb   #tmb_vp_v_tiles
+@c      stb   glb_tmb_height
+	ldd   <glb_camera_x_pos
+	std   tmb_x
+	lda   #tmb_vp_h_tiles
+	sta   glb_tmb_width
+	jsr   FeedTileBuffer
+@next
+
+	; compute x location
+	ldu   <glb_camera_x_pos
+	ldd   tmb_old_camera_x
+	subd  <glb_camera_x_pos
+	beq   @exit
+	bpl   @a
+	leau  tmb_vp_h_px,u
+	leau  d,u
+@a      stu   tmb_x
+        ; compute width in tiles
+	ldd   <glb_camera_x_pos
+    	_asrd
+	_asrd
+	_asrd
+	std   @dyn
+        ldd   tmb_old_camera_x
+    	_asrd
+	_asrd
+	_asrd
+	subd   #0
+@dyn    equ   *-2
+	beq   @exit
+	bpl   @b
+	_negd
+@b	cmpd  #tmb_vp_h_tiles
+	ble   @c
+    	ldb   #tmb_vp_h_tiles
+@c      stb   glb_tmb_width
+	ldd   <glb_camera_y_pos
+	std   tmb_y
+	lda   #tmb_vp_v_tiles
+	sta   glb_tmb_height
+	jsr   FeedTileBuffer
+@exit
+	ldd   <glb_camera_x_pos
+	std   tmb_old_camera_x
+	ldd   <glb_camera_y_pos
+	std   tmb_old_camera_y
+	rts
+
+; ****************************************************************************************************************************
+; * FeedTileBuffer
+; * Feed the tile buffer, based on camera x and y and a number of tiles in width and height
+; * 
+; * tmb_x      (0-32767)                  
+; * tmb_y      (0-32767)          
+; * glb_tmb_width  (1-20)       
+; * glb_tmb_height (1-13)        
+; *
+; ****************************************************************************************************************************
+
+FeedTileBuffer
+
+        ; mount the map
+        ; ---------------------------------------------------------------------
+
+	lda   glb_map_pge
         _SetCartPageA        
         ldu   glb_map_adr
 
         ; compute position in cycling buffer
         ; ---------------------------------------------------------------------
  
-        ldd   #0                            ; (dynamic)
-glb_tmb_x equ *-2
-        anda  #%00000000                    ; col mask (0-32)
+        ldb   tmb_x+1                       ; col mask (0-32)
         andb  #%11111000                    ; tile width 8px (>>3) 
-        _lsrd                               ; col size 4 bytes (<<2)
-	std   @dyn
-        ldd   #0                            ; (dynamic)
-glb_tmb_y equ *-2
-        anda  #%00000000
+        lsrb                                ; col size 4 bytes (<<2)
+	stb   @dyn
+        ldb   tmb_y+1                       
+	anda  #%00000000
         andb  #%11110000                    ; line mask (0-16)
         _lsld                               ; tile height 16px (>>4) 
         _lsld                               ; line skip 128 bytes (<<7)
         _lsld
         addd  #0                            ; (dynamic) add x position to index 
-@dyn    equ   *-2
-        addd  #tile_buffer
+@dyn    equ   *-1
+        adda  #tile_buffer/256
         std   b_loc
 
         ; transform a camera position into an index to map (64x128px chunks)
         ; ---------------------------------------------------------------------
-        ldd   glb_tmb_x
+        ldd   tmb_x
         _lsrd
         _lsrd
         _lsrd
         _lsrd 
         _lsrd
         _lsrd                                                 
-        std   @dyn1+1
-        ldd   glb_tmb_y
+        std   @dyn1
+        ldd   tmb_y
         _lsrd
         _lsrd
         _lsrd
@@ -200,14 +203,15 @@ glb_tmb_y equ *-2
 	andb  #%11111110                              ; faster than _lsrd (last shift for 128px map) and lsld (2 bytes index in mul ref)
         leax  layer_mul_ref,u
 	ldd   d,x                                     ; use precalculated values to get y in map (16 bits mul)
-@dyn1   addd  #0                                      ; (dynamic) add x position to index 
+        addd  #0                                      ; (dynamic) add x position to index 
+@dyn1   equ   *-2
         addd  glb_map_chunk_adr                       ; (dynamic) add map data address to index
 	tfr   d,x
         
 	; compute tile offset in chunks
         ; ---------------------------------------------------------------------
 
-	lda   glb_tmb_x+1
+	lda   tmb_x+1
 	anda  #%00111000
 	asra
 	asra
@@ -217,8 +221,9 @@ glb_tmb_y equ *-2
 	nega
 	cmpa  #0
 glb_tmb_width equ *-1                                 ; (dynamic) nb of tile in screen width 
-	bge   @onehc                                  ; branch if requested tiles in width are covered by the first chunk 
-	sta   l_h_tl                                  ; save nb of tiles in left chunks
+	blt   @a                                      ; branch if requested tiles in width are covered by more chunks than the first one 
+        lda   glb_tmb_width                           ; if not cap to the requested width
+@a	sta   l_h_tl                                  ; save nb of tiles in left chunks
 	lda   glb_tmb_width
 	suba  l_h_tl
 	tfr   a,b
@@ -229,35 +234,23 @@ glb_tmb_width equ *-1                                 ; (dynamic) nb of tile in 
 	anda  #%00000111                              ; skip middle chunks that are 8 tiles wide
 	sta   r_h_tl                                  ; save nb of horizontal tiles in right chunks
 	sta   r_h_tl_bck
-        bra   @y
-@onehc  lda   #0                                      ; only one chunk involved
-	sta   h_tl_bck
-	sta   r_h_tl
-        lda   glb_tmb_width
-        sta   l_h_tl
-@y
 
-	ldb   glb_tmb_y+1
-	andb  #%01110000                              ; get tile position in chunk
-	stb   y_off+1                                 ; vertical offset to first tile in top left chunk
-	asrb  
-	asrb  
-	asrb  
-	asrb  
-	subb  #8                                      ; chunk hold 8 tiles in a col
-	negb
-	cmpb  #0
+	lda   tmb_y+1
+	anda  #%01110000                              ; get tile position in chunk
+	sta   y_off+1                                 ; vertical offset to first tile in top left chunk
+	asra  
+	asra  
+	asra  
+	asra  
+	suba  #8                                      ; chunk hold 8 tiles in a col
+	nega
+	cmpa  #0
 glb_tmb_height equ *-1                                ; (dynamic) nb of tile in screen width 
-	bge   @onevc                                  ; branch if requested tiles in width are covered by the first chunk 
-	stb   u_v_tl                                  ; save nb of vertical tiles in top chunks
+	blt   @a                                      ; branch if requested tiles in width are covered by the first chunk 
+        lda   glb_tmb_height
+@a	sta   u_v_tl                                  ; save nb of vertical tiles in top chunks
 	lda   glb_tmb_height                          ; (dynamic) nb of tile in screen height
 	suba  u_v_tl
-	bpl   @a                                      ; branch if more than one chunk is involved
-@b      lda   #0                                      ; only one chunk involved
-	sta   v_tl
-	sta   b_v_tl
-        bra   @end
-@a	beq   @b
 	tfr   a,b
 	asrb
 	asrb
@@ -265,13 +258,6 @@ glb_tmb_height equ *-1                                ; (dynamic) nb of tile in 
 	stb   v_tl                                    ; nb of full sized (middle) vertical chunks
 	anda  #%00000111                              ; skip middle chunks that are 8 tiles high
 	sta   b_v_tl                                  ; save nb of vertical tiles in bottom chunks
-	bra   @end
-@onevc  lda   #0                                      ; only one chunk involved
-	sta   v_tl
-	sta   b_v_tl
-        lda   glb_tmb_height
-        sta   u_v_tl
-@end
 
 	; load chunks
 	; --------------------
@@ -281,16 +267,17 @@ glb_tmb_height equ *-1                                ; (dynamic) nb of tile in 
 	ldb   u_v_tl                   ; first line begin with upper vertical chunk height
 	stb   c_v_tl_bck
 
-	ldd   x_off                    ; offset in top left chunk is horizontal and vertical
-	addd  y_off
+	ldd   y_off                    ; offset in top left chunk is horizontal and vertical
+        std   c_y_off
+	addd  x_off
 	std   chunk_offset
 @vloop
-	stx   @start_pos_bck
+	stx   @start_pos_bck           ; position in chunk map
 	stx   start_pos
-	ldb   h_tl_bck                 ; load nb of middle chunks (8 tiles width) on x axis for one row
+	ldb   h_tl_bck                 ; restore nb of middle chunks (8 tiles width) on x axis for one row
 	stb   h_tl
-	ldd   b_loc
-        andb  #%10000000
+	ldd   b_loc                    ; load location in cycling buffer
+        andb  #%10000000               ; compute line start
         std   cl_pos_bck
 	ldb   l_h_tl                   ; nb of tiles on left chunk
         stb   c_h_tl                   ; store in current nb of tiles               
@@ -303,6 +290,9 @@ glb_tmb_height equ *-1                                ; (dynamic) nb of tile in 
 	std   @l1_bck                  ; save location for next row
 @hloop
   	jsr   LoadChunk
+	ldd   #0
+c_y_off equ   *-2
+	std   chunk_offset
 	ldd   b_loc                    ; compute location for next col
 	addd  #4
         anda  #%00000000
@@ -343,6 +333,8 @@ cl_pos_bck equ *-2
 	sta   c_v_tl_bck
 @b	decb
 	stb   v_tl
+	ldd   #0
+        std   c_y_off
 	ldd   x_off
 	std   chunk_offset             ; offset in next row of chunk is only horizontal
 	jmp   @vloop
@@ -353,10 +345,10 @@ LoadChunk
         andb  #%10000000
         std   cl_pos                                  ; save line start for cycling buffer
 	ldb   c_h_tl                                  ; preprocess line return
-	aslb                                          ; buffer : 4 bytes per tile in width
-	aslb
-	lda   #0
-	_negd
+	lslb                                          ; buffer : 4 bytes per tile in width
+	lslb
+	lda   #%11111111
+	negb
 	addd  #128+4                                  ; one line in buffer and one tile width
 	std   r_stp_1
 
@@ -501,7 +493,7 @@ DrawBufferedTile
         ; compute number of tiles to render
         ; saves one tile row or col when camera pos is a multiple of tile size
         ; ---------------------------------------------------------------------
-        ldb   #18-1                         ; nb of tile in screen width 
+        ldb   #tmb_vp_h_tiles-1               ; nb of tile in screen width 
         lda   <glb_camera_x_pos+1
         anda  #%00000111
         bne   @skip
@@ -509,7 +501,7 @@ DrawBufferedTile
 @skip   stb   DBT_ccpt
         stb   DBT_ccpt_bck
 
-        ldb   #11                           ; nb of tile in screen height
+        ldb   #tmb_vp_v_tiles               ; nb of tile in screen height
         lda   <glb_camera_y_pos+1
         anda  #%00001111
         bne   @skip
@@ -562,19 +554,18 @@ DrawBufferedTile
 
         ; compute position in cycling buffer
         ; ---------------------------------------------------------------------
-        ldd   <glb_camera_x_pos
-        anda  #%00000000                    ; col mask (0-32)
+        ldb   <glb_camera_x_pos+1           ; col mask (0-32)
         andb  #%11111000                    ; tile width 8px (>>3) 
-        _lsrd                               ; col size 4 bytes (<<2)
-        std   @dyn2
-        anda  #%00000000
+        lsrb                                ; col size 4 bytes (<<2)
+        stb   @dyn2
         ldb   <glb_camera_y_pos+1
+        anda  #%00000000
         andb  #%11110000                    ; line mask (0-16)
         _lsld                               ; tile height 16px (>>4) 
         _lsld                               ; line skip 128 bytes (<<7)
         _lsld
         addd  #0                            ; (dynamic) add x position to index 
-@dyn2   equ   *-2
+@dyn2   equ   *-1
         addd  #tile_buffer
         tfr   d,u
 
