@@ -16,10 +16,14 @@
 * -------------------
 * Registre: $E7CD (8bits)
 *
-* 11 000000 (0: appuye | 1: relache) 
-* ||[------] 6 bits convertisseur numerique-analogique
-* ||_Fire Joypad1
-* |__Fire Joypad2
+*   [------] 6 bits convertisseur numerique-analogique 
+* 11 001100 (0: appuye | 1: relache) 
+* ||   ||
+* ||   ||_Fire B Joypad1
+* ||   |__Fire B Joypad2
+* ||
+* ||_Fire A Joypad1
+* |__Fire A Joypad2
 *
 * Variables globales: Joypads_Held, Joypads_Press
 * -----------------------------------------------

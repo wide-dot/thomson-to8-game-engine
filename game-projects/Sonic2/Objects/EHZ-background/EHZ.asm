@@ -51,12 +51,12 @@ EHZ_map
         fdb   0                   ; submap_camera_y_min - camera position limit
         fdb   5480                ; submap_camera_x_max - camera position limit
         fdb   848                 ; submap_camera_y_max - camera position limit   
-EHZ_width equ 88
-        fcb   EHZ_width           ; layer_map_width     - Width (byte) nb of tiles in this layer map rows
-        fcb   8                   ; layer_map_height    - Height  (byte) nb of tiles in this layer map columns 
-        fdb   Map_EHZ             ; layer_map           - map made of 64x128 tiles
-        fdb   Chunk_EHZ_0         ; layer_chunk0        - index to chunk definition (subset of 8x8 tiles) id 0-127
-	fdb   0                   ; layer_chunk1        - index to chunk definition (subset of 8x8 tiles) id 128-255
+EHZ_width equ 128
+        fcb   EHZ_width           ; layer_map_width     - Width (byte) nb of chunks in this layer map rows
+        fcb   8                   ; layer_map_height    - Height (byte) nb of chunks in this layer map columns 
+        fdb   Map_EHZ             ; layer_map           - map made of 64x128 chunks
+        fdb   Chunk_EHZ_0         ; layer_chunk0        - index to chunk definition (subset of 8x16 tiles) id 0-127
+	fdb   0                   ; layer_chunk1        - index to chunk definition (subset of 8x16 tiles) id 128-255
         fdb   Tls_EHZ             ; layer_tiles         - location of tiles index (page and adress for each tiles)
 	fdb   EHZ_width*0         ; layer_mul_ref       - table of precalculated values for y position in map
         fdb   EHZ_width*1
