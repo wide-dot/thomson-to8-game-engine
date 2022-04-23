@@ -3,6 +3,7 @@
 * ---------------------------------------------------------------------------
 
         INCLUDE "./Engine/Graphics/Tilemap/DataTypes/map16bits.equ"
+        SETDP $9F
 
 ; data structure for current loaded map
 ; -------------------------------------
@@ -18,26 +19,27 @@ glb_map_tiles_pge     fcb   0 ; tile index
 glb_map_tiles_adr     fdb   0 ; tile index
 glb_map_width         fcb   0
 
-; variables
-h_tl                  fcb   0 ; nb of full sized (middle) horizontal chunks
-h_tl_bck              fcb   0
-v_tl                  fcb   0 ; nb of full sized (middle) vertical chunks
-c_h_tl                fcb   0 ; variable that stores current left, middle or right width of chunks
-l_h_tl                fcb   0
-r_h_tl                fcb   0
-r_h_tl_bck            fcb   0
-c_v_tl                fcb   0 ; variable that stores current up, middle or bottom height of chunks
-u_v_tl                fcb   0
-b_v_tl                fcb   0
-c_h_tl_bck            fcb   0 ; backup value of horizontal width of chunks
-c_v_tl_bck            fcb   0 ; backup value of vertical height of chunks
-cur_c	              fcb   0 ; current chunk id
-x_off                 fdb   0 ; x start position in top left chunk
-y_off                 fdb   0 ; y start position in top left chunk
+; tmp variables
+h_tl                  equ   glb_tmp_var    ; nb of full sized (middle) horizontal chunks
+h_tl_bck              equ   glb_tmp_var+1
+v_tl                  equ   glb_tmp_var+2  ; nb of full sized (middle) vertical chunks
+c_h_tl                equ   glb_tmp_var+3  ; variable that stores current left, middle or right width of chunks
+l_h_tl                equ   glb_tmp_var+4 
+r_h_tl                equ   glb_tmp_var+5 
+r_h_tl_bck            equ   glb_tmp_var+6 
+c_v_tl                equ   glb_tmp_var+7  ; variable that stores current up, middle or bottom height of chunks
+u_v_tl                equ   glb_tmp_var+8 
+b_v_tl                equ   glb_tmp_var+9 
+c_h_tl_bck            equ   glb_tmp_var+10 ; backup value of horizontal width of chunks
+c_v_tl_bck            equ   glb_tmp_var+11 ; backup value of vertical height of chunks
+cur_c	              equ   glb_tmp_var+12 ; current chunk id
+x_off                 equ   glb_tmp_var+13 ; x start position in top left chunk
+y_off                 equ   glb_tmp_var+15 ; y start position in top left chunk
+b_loc                 equ   glb_tmp_var+17 ; location in buffer
+tmb_x                 equ   glb_tmp_var+19
+tmb_y                 equ   glb_tmp_var+21
 
-b_loc                 fdb   0 ; location in buffer
-tmb_x                 fdb   0
-tmb_y                 fdb   0
+; persistant variables
 tmb_old_camera_x      fdb   0 ; last camera position (x axis)
 tmb_old_camera_y      fdb   0 ; last camera position (y axis)
 
@@ -390,30 +392,35 @@ DrawChunk
 	sta   c_v_tl
 
 DrawTile
+	ldy   b_loc
         ldd   ,u++                                    ; load tile index in d (16 bits)
- IFDEF T2
-	lbeq  NextCol
- ELSE
-	beq   NextCol
- ENDC
-
-        std   @dyn+1                                  ; multiply tile index by 3 to load tile page and addr
+        bne   @a
+	ldd   #0
+	std   ,y
+	jmp   NextCol
+@a	stu   @dyn2
+	sta   @dyn0
+	anda  #%10000000
+	sta   ,y
+	lda   #0
+@dyn0   equ   *-1
+	anda  #%01111111
+	std   @dyn1                                   ; multiply tile index by 3 to load tile page and addr
         _lsld
-@dyn    addd  #0                                      ; (dynamic)
-	stu   @dyn1
+        addd  #0                                      ; (dynamic)
+@dyn1   equ   *-2
         ldu   glb_map_tiles_adr
         leau  d,u
 	lda   glb_map_tiles_pge
         _SetCartPageA                                 ; set tile index page
         pulu  a,x                                     ; a: tile routine page, x: tile routine address
-        ldu   b_loc
-	sta   1,u
-	stx   2,u
+	sta   1,y
+	stx   2,y
         lda   #0
 chk_idx_pge equ *-1
         _SetCartPageA                                 ; restore chunk definition page
 	ldu   #0
-@dyn1   equ *-2
+@dyn2   equ *-2
 
 NextCol
         dec   c_h_tl                                  ; check remaining tiles in this row
@@ -569,6 +576,8 @@ DrawBufferedTile
         addd  #tile_buffer
         tfr   d,u
 
+	ldy   #tmb_hprio_tiles              ; high priority tiles queue
+
 ; **************************************
 ; * Tile rendering Loop
 ; **************************************
@@ -585,7 +594,16 @@ DBT_cloop
         pshs  u
         stb   $E7E6
         beq   @skip
-        ldu   <glb_screen_location_2
+	tsta
+	bpl   @low
+	stb   ,y+
+	stx   ,y++
+	ldx   <glb_screen_location_1
+	stx   ,y++
+	ldx   <glb_screen_location_2
+	stx   ,y++
+	bra   @skip
+@low    ldu   <glb_screen_location_2
         jsr   ,x
 @skip   puls  d,x,u
         leau  2,u
@@ -643,12 +661,49 @@ ls_pos  equ   *-2              ; line start pos
         dec   DBT_lcpt
         bne   DBT_lloop
 @rts    puls  x,u
+	lda   #0
+	sta   ,y                ; end marker for high priority tiles
         rts
 
 DBT_lcpt     fcb   0
 DBT_ccpt     fcb   0
 
+tmb_hprio_tiles
+	fill  0,tmb_vp_h_tiles*tmb_vp_v_tiles*7 ; all tiles in high priority ... that's crazy
+	fcb   0 ; end marker
+
         align 2048
 tile_buffer
         fill  0,16*128
+
+; ****************************************************************************************************************************
+; *
+; *
+; *
+; *
+; *
+; *
+; *
+; *
+; *
+; *
+; *
+; ****************************************************************************************************************************
+
+DrawHighPriorityBufferedTile
+        ldy   #tmb_hprio_tiles
+@loop
+	ldb   ,y+
+        stb   $E7E6
+        beq   @exit
+	ldx   ,y++
+	ldu   ,y++
+	stu   <glb_screen_location_1
+	ldu   ,y++
+        jsr   ,x
+	bra   @loop
+@exit	rts
+
+
+
 
