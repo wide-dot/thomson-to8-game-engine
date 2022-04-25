@@ -191,7 +191,7 @@ DTM_Buffer1
 
 DrawTileInit
 	lda   #1
-	sta   <glb_force_sprite_refresh
+	sta   glb_camera_move
         lda   layer_vp_tiles_x,u
         sta   dyn_x+1                                 ; init column counter
         sta   dyn_xi+1                                ; init column counter

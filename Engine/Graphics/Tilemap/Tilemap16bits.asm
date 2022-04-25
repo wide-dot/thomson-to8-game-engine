@@ -49,7 +49,7 @@ DrawTilemaps
         _SetCartPageA        
         ldu   glb_map_adr
 
-	lda   <glb_force_sprite_refresh
+	lda   glb_camera_move
 	bne   @a
 	rts
 @a

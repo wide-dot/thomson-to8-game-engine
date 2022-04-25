@@ -45,12 +45,11 @@ LevelMainLoop
         jsr   UpdatePalette
         jsr   ReadJoypads           
         jsr   RunObjects
+	jsr   CheckCameraMove
         jsr   CheckSpritesRefresh
         jsr   EraseSprites
         jsr   UnsetDisplayPriority
-	jsr   CheckCameraMove
 	jsr   EHZ_Back
-        ;jsr   DrawTilemaps 
         jsr   ComputeTileBuffer
 	jsr   DrawBufferedTile
         jsr   DrawSprites
@@ -88,6 +87,8 @@ glb_old_camera_y_pos1 fdb   -1
 CheckCameraMove
 	; check if camera has moved
 	; and if tiles need an update
+	lda   #0
+	sta   glb_camera_move
         tst   glb_Cur_Wrk_Screen_Id
         bne   @b1
 @b0     ldx   <glb_camera_x_pos
@@ -117,10 +118,11 @@ CheckCameraMove
 	; ----------------------------------------------------
 	lda   #1
 	sta   <glb_force_sprite_refresh
+	sta   glb_camera_move
 	rts
 
 EHZ_Back
-	lda   <glb_force_sprite_refresh
+	lda   glb_camera_move
 	bne   @a
 	rts
 @a
@@ -173,5 +175,4 @@ EHZ_Mask
 	INCLUDE "./Engine/Palette/UpdatePalette.asm"
         INCLUDE "./Engine/Irq/IrqSvgm.asm"        
         INCLUDE "./Engine/Sound/Svgm.asm"
-        ;INCLUDE "./Engine/Graphics/Tilemap/Tilemap16bits.asm"
         INCLUDE "./Engine/Graphics/Tilemap/TilemapBuffer.asm"

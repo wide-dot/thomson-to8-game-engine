@@ -15,3 +15,4 @@
         std   glb_camera_x_pos         
         std   glb_camera_y_pos         
 	sta   glb_force_sprite_refresh
+	sta   glb_camera_move
