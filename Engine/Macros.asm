@@ -20,28 +20,7 @@ _lds MACRO
  
 _SetCartPageA MACRO
  IFDEF T2
-        sta   glb_Page
-        bpl   RAMPg@
-        
-        lda   $E7E6
-        anda  #$DF                     ; passe le bit5 a 0 pour cartouche au lieu de 1 pour RAM
-        sta   $E7E6
-        
-        lda   #$F0                     ; sortie du mode commande T.2
-        sta   $0555                    ; dans le cas ou l'irq intervient en cours de changement de page
-                
-        lda   #$AA                     ; sequence pour commutation de page T.2
-        sta   $0555
-        lsra                           ; lda   #$55
-        sta   $02AA
-        lda   #$C0
-        sta   $0555
-        lda   glb_Page
-        anda  #$7F                     ; le bit 7 doit etre a 0        
-        sta   $0555                    ; selection de la page T.2 en zone cartouche
-        bra   End@
-RAMPg@  sta   $E7E6                    ; selection de la page RAM en zone cartouche (bit 5 integre au numero de page)
-End@    equ   *
+        jsr   SetCartPageA
  ELSE
         sta   $E7E6                    ; selection de la page RAM en zone cartouche
  ENDC
@@ -49,10 +28,7 @@ End@    equ   *
  
 _GetCartPageA MACRO
  IFDEF T2
-        lda   glb_Page                 ; glb_page at 0 means that glb_page variable is not in use
-	bne   exit@                    ; usefull when we dont work with T2 (ex: optimized tilemap that use only RAM)
-	lda   $E7E6
-exit@   equ   *
+        jsr   GetCartPageA
  ELSE
         lda   $E7E6
  ENDC
@@ -60,30 +36,7 @@ exit@   equ   *
 
 _SetCartPageB MACRO
  IFDEF T2
-        tstb
-        bpl   RAMPg@
-        stb   glb_Page
-        
-        ldb   $E7E6
-        andb  #$DF                     ; passe le bit5 a 0 pour cartouche au lieu de 1 pour RAM
-        stb   $E7E6
-        
-        ldb   #$F0                     ; sortie du mode commande T.2
-        stb   $0555                    ; dans le cas ou l'irq intervient en cours de changement de page
-                
-        ldb   #$AA                     ; sequence pour commutation de page T.2
-        stb   $0555
-        ldb   #$55
-        stb   $02AA
-        ldb   #$C0
-        stb   $0555
-        ldb   glb_Page
-        andb  #$7F                     ; le bit 7 doit etre a 0
-        stb   $0555                    ; selection de la page T.2 en zone cartouche
-        bra   End@
-RAMPg@  stb   glb_Page                 ; selection de la page RAM en zone cartouche (bit 5 integre au numero de page)
-        stb   $E7E6 
-End@    equ   *
+        jsr   SetCartPageB
  ELSE
         stb   $E7E6                    ; selection de la page RAM en zone cartouche
  ENDC
@@ -91,16 +44,13 @@ End@    equ   *
  
 _GetCartPageB MACRO
  IFDEF T2
-        ldb   glb_Page                 ; glb_page at 0 means that glb_page variable is not in use
-	bne   exit@                    ; usefull when we dont work with T2 (ex: optimized tilemap that use only RAM)
-	ldb   $E7E6
-exit@   equ   *
+        jsr   GetCartPageB
  ELSE
         ldb   $E7E6
  ENDC
  ENDM     
 
-_RunPgSubRoutine MACRO
+_RunObjectSwap MACRO
         ; param 1 : ObjID_
         ; param 2 : Object data RAM address
         ; manual launch of an object from a different dynamic memory page and not from the resident page 1
@@ -110,6 +60,17 @@ _RunPgSubRoutine MACRO
         ldu   \2             
         jsr   RunPgSubRoutine
  ENDM    
+
+_RunObjectSwapRoutine MACRO
+        ; param 1 : ObjID_
+        ; param 2 : Object routine
+        ; manual launch of an object from a different dynamic memory page and not from the resident page 1
+        lda   Obj_Index_Page+\1   
+        ldu   Obj_Index_Address+2*\1
+        stu   glb_Address       
+        lda   \2        
+        jsr   RunPgSubRoutine
+ ENDM 
  
 _MountObject MACRO 
         ; param 1 : ObjID_

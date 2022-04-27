@@ -668,14 +668,6 @@ ls_pos  equ   *-2              ; line start pos
 DBT_lcpt     fcb   0
 DBT_ccpt     fcb   0
 
-tmb_hprio_tiles
-        fill  0,tmb_vp_h_tiles*tmb_vp_v_tiles*7 ; all tiles in high priority ... that's crazy
-        fcb   0 ; end marker
-
-        align 2048
-tile_buffer
-        fill  0,16*128
-
 ; ****************************************************************************************************************************
 ; *
 ; *
@@ -705,3 +697,10 @@ DrawHighPriorityBufferedTile
         bne   @loop
         rts
 
+tmb_hprio_tiles
+        fill  0,tmb_vp_h_tiles*tmb_vp_v_tiles*7 ; all tiles in high priority ... that's crazy
+        fcb   0 ; end marker
+
+        align 2048
+tile_buffer
+        fill  0,16*128

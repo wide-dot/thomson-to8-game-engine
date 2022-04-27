@@ -33,6 +33,13 @@
 	;stb   glb_tmb_height ;(1-13)  
 	;jsr   FeedTileBuffer
 
+        lda   #$01                     ; 1: play 60hz track at 50hz, 0: do not skip frames
+        sta   Smps.60HzData 
+        _RunObjectRoutine ObjID_Smps,#0 ; YM2413_DrumModeOn
+        jsr   IrqSet50Hz
+        ldb   #0                        ; music id 0
+        _RunObjectRoutine ObjID_Smps,#2 ; PlayMusic 
+
 	; start music
         jsr   IrqSet50Hz
 
@@ -173,6 +180,5 @@ EHZ_Mask
         INCLUDE "./Engine/ObjectManagement/ClearObj107.asm"	
         INCLUDE "./Engine/Ram/ClearDataMemory.asm"
 	INCLUDE "./Engine/Palette/UpdatePalette.asm"
-        INCLUDE "./Engine/Irq/IrqSvgm.asm"        
-        INCLUDE "./Engine/Sound/Svgm.asm"
+        INCLUDE "./Engine/Irq/IrqSmpsObj.asm"        
         INCLUDE "./Engine/Graphics/Tilemap/TilemapBuffer.asm"
