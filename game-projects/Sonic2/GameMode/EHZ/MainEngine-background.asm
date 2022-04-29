@@ -26,8 +26,8 @@
 	jsr   InitTileBuffer
 
 	; init Animated tiles
-	;ldx   #Animated_EHZ_script
-        ;jsr   ZoneAnimScriptInit
+	ldx   #Animated_EHZ_script
+        jsr   ZoneAnimScriptInit
 
         lda   #$01                     ; 1: play 60hz track at 50hz, 0: do not skip frames
         sta   Smps.60HzData 
@@ -46,7 +46,7 @@ LevelMainLoop
         jsr   WaitVBL    
 	jsr   PaletteCycling
         jsr   UpdatePalette
-        ;jsr   ZoneAnimScript
+        jsr   ZoneAnimScript
         jsr   ReadJoypads           
         jsr   RunObjects
 	jsr   CheckCameraMove
@@ -212,13 +212,14 @@ ZoneAnimScriptList equ *-2
 @a      sta   ZACurIndex,u             ; save new index
         ldb   1,y
         stb   ZAMaxFrame,u
-        adda  #2                       ; skip header
         ldb   ,y                       ; load global frame duration
 	bpl   @globalduration
         asla                           ; 2 data bytes per index
+        adda  #2                       ; skip header
         ldd   a,y
         bra   @b 
 @globalduration
+        adda  #2                       ; skip header
         lda   a,y
 @b      std   ZACurFrame,u             ; and ZADuration
         leau  ZASize,u
