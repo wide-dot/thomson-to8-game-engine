@@ -43,6 +43,7 @@ public class DynamicContent
 	}		
 	
 	public void patchSource(Path path) throws IOException {
+		
 		List<String> fileContent = new ArrayList<>(Files.readAllLines(path, StandardCharsets.ISO_8859_1));
 		Pattern p = Pattern.compile("(.*)INCLUDEGEN\\s*([a-zA-Z0-9_]+)\\s*([a-zA-Z0-9_]+)(.*)");      
 		Matcher m;   
@@ -54,6 +55,7 @@ public class DynamicContent
 		    	fileContent.add(i++, tag); // generate unique asm tag to be able to retreive compiled address of data table
 		        fileContent.set(i, m.group(1)+"fill  0,"+get(m.group(2), m.group(3)).length+m.group(4));
 		        tags.put(tag, new String[]{m.group(2), m.group(3), null, null}); // object, method, data dest page, data dest address
+				System.out.println("Patch source for: "+path+" found: "+tag+" "+m.group(2)+" "+m.group(3));		        
 		    }
 		}
 
@@ -61,6 +63,7 @@ public class DynamicContent
 	}
 	
 	public void patchSourceNoTag(Path path) throws IOException {
+		
 		List<String> fileContent = new ArrayList<>(Files.readAllLines(path, StandardCharsets.ISO_8859_1));
 		Pattern p = Pattern.compile("(.*)INCLUDEGEN\\s*([a-zA-Z0-9_]+)\\s*([a-zA-Z0-9_]+)(.*)");      
 		Matcher m;   
@@ -69,24 +72,39 @@ public class DynamicContent
 			m = p.matcher(fileContent.get(i));
 		    if (m.matches()) {
 		        fileContent.set(i, m.group(1)+"fill  0,"+get(m.group(2), m.group(3)).length+m.group(4));
+				System.out.println("Patch source NoTag for: "+path+" found: "+m.group(2)+" "+m.group(3));
 		    }
 		}
 
 		Files.write(path, fileContent, StandardCharsets.ISO_8859_1);
 	}	
 	
-	public void savePatchLocations(Path path, GameMode gm, int page) throws IOException {
+	public void savePatchLocations(Path path, Path pathGlb, GameMode gm, int page) throws IOException {
 		if (gm == null) return;
 		
-		List<String> fileContent = new ArrayList<>(Files.readAllLines(path, StandardCharsets.ISO_8859_1));
+		List<String> fileContent = new ArrayList<>(Files.readAllLines(pathGlb, StandardCharsets.ISO_8859_1));
 		Pattern p = Pattern.compile("\\s*("+TAG+"[0-9]+)\\s+EQU\\s+\\$(\\S*)\\s*");
-		Matcher m;   
+		Pattern p2;
+		Matcher m, m2;
+				
+		List<String> fileContent2 = new ArrayList<>(Files.readAllLines(path, StandardCharsets.ISO_8859_1));
 		
 		for (int i = 0; i < fileContent.size(); i++) {
 			m = p.matcher(fileContent.get(i));
 		    if (m.matches()) {
-		        tags.put(m.group(1), new String[] {tags.get(m.group(1))[0], tags.get(m.group(1))[1], Integer.toString(page), m.group(2)});
-		        tagsGm.put(m.group(1), gm);
+		    	
+		    	// Discard if a tag is found in glb but not in asm file
+				p2 = Pattern.compile("("+m.group(1)+")$");
+				for (int j = 0; j < fileContent2.size(); j++) {
+					m2 = p2.matcher(fileContent2.get(j));
+				    if (m2.matches()) {
+			    		tags.put(m.group(1), new String[] {tags.get(m.group(1))[0], tags.get(m.group(1))[1], Integer.toString(page), m.group(2)});
+			        	tagsGm.put(m.group(1), gm);
+			        	System.out.println("Patch location for: "+pathGlb+" page: "+page+" pattern: "+m.group(1)+" gm: "+gm.name);
+			        	break;
+				    }
+				}
+		    	
 		    }
 		}
 	}	
