@@ -77,6 +77,12 @@ Tls_EHZ
         ; Animated tileset
 TlsAni_EHZ
 	fcb   $61
+        fdb   TlsAni_EHZ_pulseball1
+	fcb   $61
+        fdb   TlsAni_EHZ_pulseball2
+	fcb   $61
+        fdb   TlsAni_EHZ_pulseball3
+	fcb   $61
         fdb   TlsAni_EHZ_flower1
 	fcb   $61
         fdb   TlsAni_EHZ_flower2
@@ -84,9 +90,3 @@ TlsAni_EHZ
         fdb   TlsAni_EHZ_flower3
 	fcb   $61
         fdb   TlsAni_EHZ_flower4
-	fcb   $61
-        fdb   TlsAni_EHZ_pulseball1
-	fcb   $61
-        fdb   TlsAni_EHZ_pulseball2
-	fcb   $61
-        fdb   TlsAni_EHZ_pulseball3
