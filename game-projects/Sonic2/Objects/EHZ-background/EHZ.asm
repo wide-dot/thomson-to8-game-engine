@@ -73,4 +73,20 @@ Tls_EHZ
         ; page    (byte) page number of compilated tile routine
         ; address (word) absolute address of compilated tile routine
         ; [repeated for each tile]
-        ; endmark (byte) value $00
+
+        ; Animated tileset
+TlsAni_EHZ
+	fcb   $61
+        fdb   TlsAni_EHZ_flower1
+	fcb   $61
+        fdb   TlsAni_EHZ_flower2
+	fcb   $61
+        fdb   TlsAni_EHZ_flower3
+	fcb   $61
+        fdb   TlsAni_EHZ_flower4
+	fcb   $61
+        fdb   TlsAni_EHZ_pulseball1
+	fcb   $61
+        fdb   TlsAni_EHZ_pulseball2
+	fcb   $61
+        fdb   TlsAni_EHZ_pulseball3

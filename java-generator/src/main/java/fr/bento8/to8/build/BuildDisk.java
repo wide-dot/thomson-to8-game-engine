@@ -142,8 +142,8 @@ public class BuildDisk
 			computeRomAddress();
 			generateDynamicContent();
 			generateImgAniIndex();
-			applyDynamicContent();		
 			compileMainEngines(true);
+			applyDynamicContent();			
 			compressData();
 			writeObjectsFd(); 
 			writeObjectsT2();
@@ -569,7 +569,8 @@ public class BuildDisk
 			}
 
 			object.tilesets.put(tileset.name, tileset);
-			dynamicContentFD.set(tileset.name, "index", 1+tileId*3);
+			dynamicContentFD.set(tileset.name, "index", tileId*3);
+			dynamicContentT2.set(tileset.name, "index", tileId*3);
 		}
 	}	
 	
@@ -605,7 +606,7 @@ public class BuildDisk
 			
 			Files.write(Paths.get(mainEngineTmpFile), ("\tINCLUDE \"" + Game.generatedCodeDirName + gameMode.getKey() + "/" + FileNames.MAIN_GENCODE + "\"\n").getBytes(), StandardOpenOption.APPEND);
 			
-			compileRAW(mainEngineTmpFile, mode);
+			compileRAW(mainEngineTmpFile, mode, gameMode.getValue(), 1);
 			byte[] binBytes = Files.readAllBytes(Paths.get(getBINFileName(mainEngineTmpFile)));
 
 			if (binBytes.length > RamImage.PAGE_SIZE) {
@@ -1430,7 +1431,7 @@ public class BuildDisk
 			
 			// FLOPPY DISK
 			if (!abortFloppyDisk) {
-				data = new byte[1+tileset.getValue().tiles.size()*3];
+				data = new byte[tileset.getValue().tiles.size()*3];
 				i = 0;
 			
 				for (TileBin tile : tileset.getValue().tiles) {
@@ -1438,12 +1439,11 @@ public class BuildDisk
 					data[i++] = (byte)(tile.dataIndex.get(gm).fd_ram_address >> 8);		
 					data[i++] = (byte)(tile.dataIndex.get(gm).fd_ram_address & 0xFF);
 				}
-				data[i] = 0; //end token
 				dynamicContentFD.set(tileset.getValue().name, "index", data);
 			}
 
 			// MEGAROM T2
-			data = new byte[1+tileset.getValue().tiles.size()*3];
+			data = new byte[tileset.getValue().tiles.size()*3];
 			i = 0;
 			if (tileset.getValue().inRAM) {
 				for (TileBin tile : tileset.getValue().tiles) {
@@ -1458,10 +1458,9 @@ public class BuildDisk
 					data[i++] = (byte)(tile.t2_address & 0xFF);
 				}
 			}
-			data[i] = 0; //end token
 			dynamicContentT2.set(tileset.getValue().name, "index", data);			
 		}
-		
+
 		// Place new dynamic content here
 		// ...
 	}	
@@ -1473,14 +1472,16 @@ public class BuildDisk
 		for (Entry<String, String[]> tag : dynamicContentFD.tags.entrySet()) {
 			if (tag.getValue()[2] != null && tag.getValue()[3] != null) { // page, address
 				byte[] data = dynamicContentFD.get(tag.getValue()[0], tag.getValue()[1]); // object, method
-				dynamicContentFD.tagsGm.get(tag.getKey()).ramFD.setData(Integer.parseInt(tag.getValue()[2]), Integer.parseInt(tag.getValue()[3], 16), data);
+				System.out.println("FD key: "+tag.getKey()+" Object: "+tag.getValue()[0]+" method: "+tag.getValue()[1]+" Page: "+Integer.parseInt(tag.getValue()[2])+" StartPos: "+(Integer.parseInt(tag.getValue()[3], 16)>0x4000?Integer.parseInt(tag.getValue()[3], 16)-0x6000:Integer.parseInt(tag.getValue()[3], 16)));
+				dynamicContentFD.tagsGm.get(tag.getKey()).ramFD.setData(Integer.parseInt(tag.getValue()[2]), (Integer.parseInt(tag.getValue()[3], 16)>0x4000?Integer.parseInt(tag.getValue()[3], 16)-0x6000:Integer.parseInt(tag.getValue()[3], 16)), data);
 			}
 		}
 		
 		for (Entry<String, String[]> tag : dynamicContentT2.tags.entrySet()) {
 			if (tag.getValue()[2] != null && tag.getValue()[3] != null) { // page, address
 				byte[] data = dynamicContentT2.get(tag.getValue()[0], tag.getValue()[1]); // object, method
-				dynamicContentT2.tagsGm.get(tag.getKey()).ramT2.setData(Integer.parseInt(tag.getValue()[2]), Integer.parseInt(tag.getValue()[3], 16), data);
+				System.out.println("T2 key: "+tag.getKey()+" Object: "+tag.getValue()[0]+" method: "+tag.getValue()[1]+" Page: "+Integer.parseInt(tag.getValue()[2])+" StartPos: "+(Integer.parseInt(tag.getValue()[3], 16)>0x4000?Integer.parseInt(tag.getValue()[3], 16)-0x6000:Integer.parseInt(tag.getValue()[3], 16)));				
+				dynamicContentT2.tagsGm.get(tag.getKey()).ramT2.setData(Integer.parseInt(tag.getValue()[2]),  (Integer.parseInt(tag.getValue()[3], 16)>0x4000?Integer.parseInt(tag.getValue()[3], 16)-0x6000:Integer.parseInt(tag.getValue()[3], 16)), data);
 			}
 		}		
 		
@@ -3061,9 +3062,9 @@ public class BuildDisk
 	    input.close();
 	    
 		if (mode==MEGAROM_T2)
-			dynamicContentT2.savePatchLocations(out, gm, page);
+			dynamicContentT2.savePatchLocations(path, out, gm, page);
 		else if (mode==FLOPPY_DISK)
-			dynamicContentFD.savePatchLocations(out, gm, page);
+			dynamicContentFD.savePatchLocations(path, out, gm, page);
 	    
 		return result;
 	}
@@ -3081,6 +3082,7 @@ public class BuildDisk
 			String lstFile = asmFileName + ".lst";
 			
 			dynamicContentFD.patchSourceNoTag(asmPath);
+			dynamicContentT2.patchSourceNoTag(asmPath);
 			
 			logger.debug("\t# Compile : " + asmPath.toString());
 
