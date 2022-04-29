@@ -27,7 +27,7 @@
 
 	; init Animated tiles
 	ldx   #Animated_EHZ_script
-        jsr   ZoneAnimScriptInit
+        jsr   TileAnimScriptInit
 
         lda   #$01                     ; 1: play 60hz track at 50hz, 0: do not skip frames
         sta   Smps.60HzData 
@@ -46,10 +46,10 @@ LevelMainLoop
         jsr   WaitVBL    
 	jsr   PaletteCycling
         jsr   UpdatePalette
-        jsr   ZoneAnimScript
+        jsr   TileAnimScript
         jsr   ReadJoypads           
         jsr   RunObjects
-	jsr   CheckCameraMove
+	jsr   ForceRefresh
         jsr   CheckSpritesRefresh
         jsr   EraseSprites
         jsr   UnsetDisplayPriority
@@ -83,41 +83,7 @@ PaletteCycling
 	stu   ,x
 	rts
 
-glb_old_camera_x_pos0 fdb   -1
-glb_old_camera_x_pos1 fdb   -1
-glb_old_camera_y_pos0 fdb   -1
-glb_old_camera_y_pos1 fdb   -1
-
-CheckCameraMove
-	; check if camera has moved
-	; and if tiles need an update
-	lda   #0
-	sta   glb_camera_move
-        tst   glb_Cur_Wrk_Screen_Id
-        bne   @b1
-@b0     ldx   <glb_camera_x_pos
-	cmpx  glb_old_camera_x_pos0
-	bne   @endx0
-	ldd   <glb_camera_y_pos
-	cmpd  glb_old_camera_y_pos0
-	bne   @endy0
-        rts
-@b1     ldx   <glb_camera_x_pos
-	cmpx  glb_old_camera_x_pos1
-	bne   @endx1
-	ldd   <glb_camera_y_pos
-	cmpd  glb_old_camera_y_pos1
-	bne   @endy1
-        rts
-@endx0 	ldd   <glb_camera_y_pos
-@endy0	std   glb_old_camera_y_pos0
-	stx   glb_old_camera_x_pos0
-	bra   @end
-@endx1 	ldd   <glb_camera_y_pos
-@endy1	std   glb_old_camera_y_pos1
-	stx   glb_old_camera_x_pos1
-@end
-
+ForceRefresh
 	; Force sprite to be refreshed when background changes
 	; ----------------------------------------------------
 	lda   #1
@@ -153,84 +119,7 @@ EHZ_Mask
         ldu   <glb_screen_location_2
         jmp   ,x
 
-; ===========================================================================
-; ZONE ANIMATION SCRIPTS - TODO mettre dans une lib
-;
-
-ZACurIndex equ   0 ; current index in animation script
-ZACurFrame equ   1 ; current frame in animation
-ZADuration equ   2 ; remaining duration of current frame (20ms by step)
-ZAMaxFrame equ   3 ; max index in animation script
-ZASize     equ   4 ; size of this data structure
-ZoneAnimScriptData
-        fill  0,16*ZASize
-
-ZoneAnimScriptInit
-	stx   ZoneAnimScriptList
-        ldu   #ZoneAnimScriptData
-@loop	ldy   ,x++
-        beq   @rts
-        ldd   ,y                       ; load global frame duration, number of frames in animation
-	bpl   @globalduration
-        stb   ZAMaxFrame,u
-        ldd   2,y
-        incb
-        std   ZACurFrame,u             ; and ZADuration
-        bra   @common 
-@globalduration
-        inca
-        std   ZADuration,u             ; and ZAMaxFrame
-        lda   2,y
-        sta   ZACurFrame,u
-@common lda   #0
-        sta   ZACurIndex,u
-        leau  ZASize,u
-        bra   @loop
-@rts    rts
-
-
-; *** suba  Vint_Main_runcount
-ZoneAnimScript
-        ldx   #0                       ; (dynamic)
-ZoneAnimScriptList equ *-2
-        beq   @rts                     ; no animation script to process
-        ldu   #ZoneAnimScriptData
-@loop	ldy   ,x++                     ; process a script
-        beq   @rts                     ; at the end of script list ?
-        lda   ZADuration,u
-        suba  Vint_Main_runcount       ; tick down animation frame in sync with elapsed 50hz IRQ
-        bcs   @loadScript
-        sta   ZADuration,u             ; animation is not over
-        leau  ZASize,u
-        bra   @loop
-@loadScript
-        lda   ZACurIndex,u             ; animation frame is over, load next one
-        inca  
-        cmpa  ZAMaxFrame,u             ; at the end of script ?
-        bne   @a                       ; if not continue
-        lda   #0                       ; otherwise reset animation
-@a      sta   ZACurIndex,u             ; save new index
-        ldb   1,y
-        stb   ZAMaxFrame,u
-        ldb   ,y                       ; load global frame duration
-	bpl   @globalduration
-        asla                           ; 2 data bytes per index
-        adda  #2                       ; skip header
-        ldd   a,y
-        bra   @b 
-@globalduration
-        adda  #2                       ; skip header
-        lda   a,y
-@b      std   ZACurFrame,u             ; and ZADuration
-        leau  ZASize,u
-        bra   @loop
-@rts    rts
-
-ZoneAnimRun
-	ldb   a,x
-        stb   $E7E6
-        inca
-        jmp   [a,x]
+        INCLUDE "./Engine/Graphics/Tilemap/TileAnimScript.asm"  
 
 ; ===========================================================================
 ; for each script :
@@ -294,51 +183,51 @@ Animated_EHZ_5
 	fcb   3,9
 
 TlsAni_EHZ_flower1
-        lda   ZoneAnimScriptData+0*ZASize+1
+        lda   TileAnimScriptData+0*ZASize+1
         ldx   #TlsAni_EHZ_flower1_imgs
-        jmp   ZoneAnimRun
+        jmp   TileAnimRun
 TlsAni_EHZ_flower1_imgs
         INCLUDEGEN Tls_EHZ_flower1 index
 
 TlsAni_EHZ_flower2
-        lda   ZoneAnimScriptData+1*ZASize+1
+        lda   TileAnimScriptData+1*ZASize+1
         ldx   #TlsAni_EHZ_flower2_imgs
-        jmp   ZoneAnimRun
+        jmp   TileAnimRun
 TlsAni_EHZ_flower2_imgs
         INCLUDEGEN Tls_EHZ_flower2 index
 
 TlsAni_EHZ_flower3
-        lda   ZoneAnimScriptData+2*ZASize+1
+        lda   TileAnimScriptData+2*ZASize+1
         ldx   #TlsAni_EHZ_flower3_imgs
-        jmp   ZoneAnimRun
+        jmp   TileAnimRun
 TlsAni_EHZ_flower3_imgs
         INCLUDEGEN Tls_EHZ_flower3 index
 
 TlsAni_EHZ_flower4
-        lda   ZoneAnimScriptData+3*ZASize+1
+        lda   TileAnimScriptData+3*ZASize+1
         ldx   #TlsAni_EHZ_flower4_imgs
-        jmp   ZoneAnimRun
+        jmp   TileAnimRun
 TlsAni_EHZ_flower4_imgs
         INCLUDEGEN Tls_EHZ_flower4 index
 
 TlsAni_EHZ_pulseball1
-        lda   ZoneAnimScriptData+4*ZASize+1
+        lda   TileAnimScriptData+4*ZASize+1
         ldx   #TlsAni_EHZ_pulseball1_imgs
-        jmp   ZoneAnimRun
+        jmp   TileAnimRun
 TlsAni_EHZ_pulseball1_imgs
         INCLUDEGEN Tls_EHZ_pulseball1 index
 
 TlsAni_EHZ_pulseball2
-        lda   ZoneAnimScriptData+4*ZASize+1
+        lda   TileAnimScriptData+4*ZASize+1
         ldx   #TlsAni_EHZ_pulseball2_imgs
-        jmp   ZoneAnimRun
+        jmp   TileAnimRun
 TlsAni_EHZ_pulseball2_imgs
         INCLUDEGEN Tls_EHZ_pulseball2 index
 
 TlsAni_EHZ_pulseball3
-        lda   ZoneAnimScriptData+4*ZASize+1
+        lda   TileAnimScriptData+4*ZASize+1
         ldx   #TlsAni_EHZ_pulseball3_imgs
-        jmp   ZoneAnimRun
+        jmp   TileAnimRun
 TlsAni_EHZ_pulseball3_imgs
         INCLUDEGEN Tls_EHZ_pulseball3 index
 
@@ -366,5 +255,5 @@ TlsAni_EHZ_pulseball3_imgs
         INCLUDE "./Engine/ObjectManagement/ClearObj107.asm"	
         INCLUDE "./Engine/Ram/ClearDataMemory.asm"
 	INCLUDE "./Engine/Palette/UpdatePalette.asm"
-        INCLUDE "./Engine/Irq/IrqSmpsObj.asm"        
+        INCLUDE "./Engine/Irq/IrqSmpsObj.asm"      
         INCLUDE "./Engine/Graphics/Tilemap/TilemapBuffer.asm"
