@@ -34,65 +34,65 @@ Init
         inc   routine,u
 Move
 TestLeft
-        lda   Dpad_Held
-        bita  #c1_button_left_mask
+        lda   Ctrl_1_Held
+        bita  #button_left_mask
         beq   TestRight   
-	ldd   <glb_camera_x_pos
-	subd  speed
-	bpl   @l
-	ldd   #0
-@l	std   <glb_camera_x_pos
-	addd  #128
-	std   x_pos,u
+        ldd   <glb_camera_x_pos
+        subd  speed
+        bpl   @l
+        ldd   #0
+@l      std   <glb_camera_x_pos
+        addd  #128
+        std   x_pos,u
         bra   TestUp
 TestRight        
-	lda   Dpad_Held
-        bita  #c1_button_right_mask
+        lda   Ctrl_1_Held
+        bita  #button_right_mask
         beq   TestUp   
-	ldd   <glb_camera_x_pos
-	addd  speed
-	cmpd  #88*64-160+8+16
-	bls   @r
-	ldd   #88*64-160+8+16
-@r	std   <glb_camera_x_pos
-	addd  #128
-	std   x_pos,u
+        ldd   <glb_camera_x_pos
+        addd  speed
+        cmpd  #88*64-160+8+16
+        bls   @r
+        ldd   #88*64-160+8+16
+@r      std   <glb_camera_x_pos
+        addd  #128
+        std   x_pos,u
 TestUp
-	lda   Dpad_Held
-        bita  #c1_button_up_mask
+        lda   Ctrl_1_Held
+        bita  #button_up_mask
         beq   TestDown   
-	ldd   <glb_camera_y_pos
-	subd  speed
-	subd  speed
-	bpl   @u
-	ldd   #0
-@u	std   <glb_camera_y_pos
-	addd  #134
-	std   y_pos,u
+        ldd   <glb_camera_y_pos
+        subd  speed
+        subd  speed
+        bpl   @u
+        ldd   #0
+@u      std   <glb_camera_y_pos
+        addd  #134
+        std   y_pos,u
         bra   TestBtn
 TestDown
-	lda   Dpad_Held
-        bita  #c1_button_down_mask
+        lda   Ctrl_1_Held
+        bita  #button_down_mask
         beq   TestBtn   
-	ldd   <glb_camera_y_pos
-	addd  speed
-	addd  speed
-	cmpd  #8*128-192+16*2
-	bls   @d
-	ldd   #8*128-192+16*2
-@d	std   <glb_camera_y_pos
-	addd  #134
-	std   y_pos,u
+        ldd   <glb_camera_y_pos
+        addd  speed
+        addd  speed
+        cmpd  #8*128-192+16*2
+        bls   @d
+        ldd   #8*128-192+16*2
+@d      std   <glb_camera_y_pos
+        addd  #134
+        std   y_pos,u
 TestBtn
-        ldb   Fire_Press
-        bitb  #c1_button_A_mask
+        ldb   Ctrl_1_Press
+        bitb  #button_A_mask
         beq   Continue
-	ldd   speed
-	addd  #2
-	cmpd  #18
-	bne   @a
-	ldd   #2
-@a	std   speed
+        ldd   speed
+        addd  #2
+        cmpd  #18
+        bne   @a
+        ldd   #2
+@a      std   speed
 Continue
         jsr   AnimateSpriteSync   
         jmp   DisplaySprite
@@ -112,10 +112,10 @@ Obj01                                                 *Obj01:
                                                       *  jmp (DebugMode).l
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_19F5C:
-                                                      *Obj01_Normal:
+Obj01_Normal                                          *Obj01_Normal:
                                                       *  moveq   #0,d0
         lda   routine,u                               *  move.b  routine(a0),d0
-        asla
+        asla                                           
         ldx   #TitleScreen_Routines                   *  move.w  Obj01_Index(pc,d0.w),d1
         jmp   [a,x]                                   *  jmp Obj01_Index(pc,d1.w)
                                                       *; ===========================================================================
@@ -131,51 +131,67 @@ Obj01_Index                                           *Obj01_Index:  offsetTable
                                                       *; loc_19F76: Obj_01_Sub_0: Obj01_Main:
 Obj01_Init                                            *  Obj01_Init:
         inc   routine,u                               *  addq.b  #2,routine(a0)  ; => Obj01_Control
-        ldd   #$1309                                  *  move.b  #$13,y_radius(a0) ; this sets Sonic's collision height (2*pixels)
+        _ldd  $13,9*WIDTH_FACTOR                      *  move.b  #$13,y_radius(a0) ; this sets Sonic's collision height (2*pixels)
         std   y_radius,u ; and x_radius               *  move.b  #9,x_radius(a0)
         ; unused                                      *  move.l  #Mapunc_Sonic,mappings(a0)
         lda   #$02                                    *            
         sta   priority,u                              *  move.b  #2,priority(a0)
-        lda   #18*WIDTH_FACTOR
+        lda   #18*WIDTH_FACTOR                         
         sta   width_pixels,u                          *  move.b  #$18,width_pixels(a0)
-                                                      *  move.b  #4,render_flags(a0)
+        lda   render_flags,u
+        ora   #render_playfieldcoord_mask        
+        sta   render_flags,u                          *  move.b  #4,render_flags(a0)
         ldd   #$600                                   *
-        std   glb_Sonic_top_speed                     *  move.w  #$600,(Sonic_top_speed).w   ; set Sonic's top speed
+        std   Sonic_top_speed                         *  move.w  #$600,(Sonic_top_speed).w   ; set Sonic's top speed
         ldd   #$0C80                                  *
-        sta   glb_Sonic_acceleration                  *  move.w  #$C,(Sonic_acceleration).w  ; set Sonic's acceleration
-        stb   glb_Sonic_deceleration                  *  move.w  #$80,(Sonic_deceleration).w ; set Sonic's deceleration
-        tst   glb_Last_star_pole_hit                  *  tst.b   (Last_star_pole_hit).w
+        sta   Sonic_acceleration                      *  move.w  #$C,(Sonic_acceleration).w  ; set Sonic's acceleration
+        stb   Sonic_deceleration                      *  move.w  #$80,(Sonic_deceleration).w ; set Sonic's deceleration
+        tst   Last_star_pole_hit                      *  tst.b   (Last_star_pole_hit).w
         bne   Obj01_Init_Continued                    *  bne.s   Obj01_Init_Continued
                                                       *  ; only happens when not starting at a checkpoint:
-                                                      *  move.w  #make_art_tile(ArtTile_ArtUnc_Sonic,0,0),art_tile(a0)
-                                                      *  bsr.w   Adjust2PArtPointer
-                                                      *  move.b  #$C,top_solid_bit(a0)
-                                                      *  move.b  #$D,lrb_solid_bit(a0)
+        ; unused                                      *  move.w  #make_art_tile(ArtTile_ArtUnc_Sonic,0,0),art_tile(a0)
+        ; unused                                      *  bsr.w   Adjust2PArtPointer
+        ldd   #$0C0D
+        sta   top_solid_bit,u                         *  move.b  #$C,top_solid_bit(a0)
+        sta   Saved_Solid_bits
+        stb   lrb_solid_bit,u                         *  move.b  #$D,lrb_solid_bit(a0)
         ldd   x_pos,u                                 *               
-        std   glb_Saved_x_pos                         *  move.w  x_pos(a0),(Saved_x_pos).w
+        std   Saved_x_pos                             *  move.w  x_pos(a0),(Saved_x_pos).w
         ldd   y_pos,u                                 *               
-        std   glb_Saved_y_pos                         *  move.w  y_pos(a0),(Saved_y_pos).w
-                                                      *  move.w  art_tile(a0),(Saved_art_tile).w
-                                                      *  move.w  top_solid_bit(a0),(Saved_Solid_bits).w
+        std   Saved_y_pos                             *  move.w  y_pos(a0),(Saved_y_pos).w
+        ; unused                                      *  move.w  art_tile(a0),(Saved_art_tile).w
+        ; moved                                       *  move.w  top_solid_bit(a0),(Saved_Solid_bits).w
                                                       *
 Obj01_Init_Continued                                  *  Obj01_Init_Continued:
-                                                      *  move.b  #0,flips_remaining(a0)
-                                                      *  move.b  #4,flip_speed(a0)
-                                                      *  move.b  #0,(Super_Sonic_flag).w
-                                                      *  move.b  #$1E,air_left(a0)
-                                                      *  subi.w  #$20,x_pos(a0)
-                                                      *  addi_.w #4,y_pos(a0)
-        ldd   #$0000                                  *
-        std   glb_Sonic_Pos_Record_Index              *  move.w  #0,(Sonic_Pos_Record_Index).w
+        ldd   #$0004
+        sta   flips_remaining,u                       *  move.b  #0,flips_remaining(a0)
+        stb   flip_speed,u                            *  move.b  #4,flip_speed(a0)
+        ; unimplemented                               *  move.b  #0,(Super_Sonic_flag).w
+        lda   #$1E
+        sta   air_left,u                              *  move.b  #$1E,air_left(a0)
+        ;ldd   x_pos,u
+        ;subd  #$20*WIDTH_FACTOR
+        ;std   x_pos,u                                 *  subi.w  #$20,x_pos(a0)
+        ;ldd   y_pos,u
+        ;addd  #4
+        ;std   y_pos,u                                 *  addi_.w #4,y_pos(a0)
+        ;ldd   #$0000                                  *
+        ;std   Sonic_Pos_Record_Index                  *  move.w  #0,(Sonic_Pos_Record_Index).w
                                                       *
+        ; init Sonic_Pos_Record_Buf with sonic's x and y pos
+        ; init Sonic_Stat_Record_Buf at 0 (joyp control)
                                                       *  move.w  #$3F,d2
-                                                      *- bsr.w   Sonic_RecordPos
+        ;jsr   Sonic_RecordPos                         *- bsr.w   Sonic_RecordPos
                                                       *  subq.w  #4,a1
                                                       *  move.l  #0,(a1)
                                                       *  dbf d2,-
                                                       *
-                                                      *  addi.w  #$20,x_pos(a0)
-                                                      *  subi_.w #4,y_pos(a0)
+        ;ldd   x_pos,u
+        ;addd  #$20*WIDTH_FACTOR
+        ;std   x_pos,u                                 *  addi.w  #$20,x_pos(a0)
+        ;ldd   y_pos,u
+        ;subd  #4
+        ;std   y_pos,u                                 *  subi_.w #4,y_pos(a0)
                                                       *; ---------------------------------------------------------------------------
                                                       *; Normal state for Sonic
                                                       *; ---------------------------------------------------------------------------
@@ -189,34 +205,39 @@ Obj01_Control                                         *  Obj01_Control:
                                                       *  clr.b   (Control_Locked).w      ; unlock control
                                                       *  rts
                                                       *; -----------------------------------------------------------------------
-                                                      *+ tst.b   (Control_Locked).w  ; are controls locked?
-                                                      *  bne.s   +           ; if yes, branch
-                                                      *  move.w  (Ctrl_1).w,(Ctrl_1_Logical).w   ; copy new held buttons, to enable joypad control
-                                                      *+
-                                                      *  btst    #0,obj_control(a0)  ; is Sonic interacting with another object that holds him in place or controls his movement somehow?
-                                                      *  bne.s   +           ; if yes, branch to skip Sonic's control
+        tst   Control_Locked                          *+ tst.b   (Control_Locked).w  ; are controls locked?
+        bne   @a                                      *  bne.s   +           ; if yes, branch
+        ldd   Ctrl_1
+        std   Ctrl_1_Logical                          *  move.w  (Ctrl_1).w,(Ctrl_1_Logical).w   ; copy new held buttons, to enable joypad control
+@a                                                    *+
+
+        lda   obj_control,u
+        bita  #1                                      *  btst    #0,obj_control(a0)  ; is Sonic interacting with another object that holds him in place or controls his movement somehow?
+        bne   @a                                      *  bne.s   +           ; if yes, branch to skip Sonic's control
                                                       *  moveq   #0,d0
         lda   status_flags,u                          *  move.b  status(a0),d0
         anda  #status_inair|status_jumporroll         *  andi.w  #6,d0   ; %0000 %0110
         ldx   #Obj01_Modes                            *  move.w  Obj01_Modes(pc,d0.w),d1
         jmp   [a,x]                                   *  jsr Obj01_Modes(pc,d1.w)    ; run Sonic's movement control code
-                                                      *+
-                                                      *  cmpi.w  #-$100,(Camera_Min_Y_pos).w ; is vertical wrapping enabled?
+@a                                                    *+
+
+        ; unimplemented                               *  cmpi.w  #-$100,(Camera_Min_Y_pos).w ; is vertical wrapping enabled?
                                                       *  bne.s   +               ; if not, branch
                                                       *  andi.w  #$7FF,y_pos(a0)         ; perform wrapping of Sonic's y position
                                                       *+
-        jsr   Sonic_Display                           *  bsr.s   Sonic_Display
+
+        jsr   Sonic_Display                            *  bsr.s   Sonic_Display
         ;jsr   Sonic_Super                             *  bsr.w   Sonic_Super
         ;jsr   Sonic_RecordPos                         *  bsr.w   Sonic_RecordPos
         ;jsr   Sonic_Water                             *  bsr.w   Sonic_Water
         ldd   Primary_Angle ; and Secondary_Angle     *  move.b  (Primary_Angle).w,next_tilt(a0)
-	std   next_tilt,u   ; and tilt,u              *  move.b  (Secondary_Angle).w,tilt(a0)
+        std   next_tilt,u   ; and tilt,u              *  move.b  (Secondary_Angle).w,tilt(a0)
         ;tst   WindTunnel_flag                         *  tst.b   (WindTunnel_flag).w
         ;beq   @a                                      *  beq.s   +
         ;tst   anim,u                                  *  tst.b   anim(a0)
         ;bne   @a                                      *  bne.s   +
         ;ldd   prev_anim,u                             *  move.b  prev_anim(a0),anim(a0)
-        ;std   anim,u
+        ;std   anim,u                                  
 @a                                                    *+
 
         jsr   Sonic_Animate                           *  bsr.w   Sonic_Animate
@@ -234,7 +255,7 @@ Obj01_Modes                                           *Obj01_Modes:  offsetTable
         fdb Obj01_MdNormal_Checks                     *      offsetTableEntry.w Obj01_MdNormal_Checks    ; 0 - not airborne or rolling
         fdb Obj01_MdAir                               *      offsetTableEntry.w Obj01_MdAir          ; 2 - airborne
         fdb Obj01_MdRoll                              *      offsetTableEntry.w Obj01_MdRoll         ; 4 - rolling
-        fdb ObjObj01_MdJump                           *      offsetTableEntry.w Obj01_MdJump         ; 6 - jumping
+        fdb Obj01_MdJump                              *      offsetTableEntry.w Obj01_MdJump         ; 6 - jumping
                                                       *; ===========================================================================
                                                       *
                                                       *; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -248,7 +269,7 @@ Sonic_Display                                         *Sonic_Display:
                                                       *  bcc.s   Obj01_ChkInvin
                                                       *; loc_1A0D4:
 Obj01_Display                                         *Obj01_Display:
-        jmp   DisplaySprite                           *  jsr (DisplaySprite).l
+        jsr   DisplaySprite                           *  jsr (DisplaySprite).l
                                                       *; loc_1A0DA:
 Obj01_ChkInvin                                        *Obj01_ChkInvin:       ; Checks if invincibility has expired and disables it if it has.
                                                       *  btst    #status_sec_isInvincible,status_secondary(a0)
@@ -300,8 +321,8 @@ Obj01_ExitChk                                         *Obj01_ExitChk:
                                                       *
                                                       *; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       *
-                                                      *; loc_1A15C:
-Sonic_RecordPos                                       *Sonic_RecordPos:
+; unimplemented                                       *; loc_1A15C:
+;Sonic_RecordPos                                       *Sonic_RecordPos:
                                                       *  move.w  (Sonic_Pos_Record_Index).w,d0
                                                       *  lea (Sonic_Pos_Record_Buf).w,a1
                                                       *  lea (a1,d0.w),a1
@@ -314,7 +335,7 @@ Sonic_RecordPos                                       *Sonic_RecordPos:
                                                       *  move.w  (Ctrl_1_Logical).w,(a1)+
                                                       *  move.w  status(a0),(a1)+
                                                       *
-        rts                                           *  rts
+;        rts                                           *  rts
                                                       *; End of subroutine Sonic_RecordPos
                                                       *
                                                       *; ---------------------------------------------------------------------------
@@ -402,24 +423,28 @@ Obj01_OutWater                                        *Obj01_OutWater:
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1A26E:
 Obj01_MdNormal_Checks                                 *Obj01_MdNormal_Checks:
-                                                      *  move.b  (Ctrl_1_Press_Logical).w,d0
-                                                      *  andi.b  #button_B_mask|button_C_mask|button_A_mask,d0
-                                                      *  bne.s   Obj01_MdNormal
-                                                      *  cmpi.b  #AniIDSonAni_Blink,anim(a0)
-                                                      *  beq.s   return_1A2DE
-                                                      *  cmpi.b  #AniIDSonAni_GetUp,anim(a0)
-                                                      *  beq.s   return_1A2DE
-                                                      *  cmpi.b  #AniIDSonAni_Wait,anim(a0)
-                                                      *  bne.s   Obj01_MdNormal
-                                                      *  cmpi.b  #$1E,anim_frame(a0)
-                                                      *  blo.s   Obj01_MdNormal
-                                                      *  move.b  (Ctrl_1_Held_Logical).w,d0
-                                                      *  andi.b  #button_up_mask|button_down_mask|button_left_mask|button_right_mask|button_B_mask|button_C_mask|button_A_mask,d0
-                                                      *  beq.s   return_1A2DE
-                                                      *  move.b  #AniIDSonAni_Blink,anim(a0)
-                                                      *  cmpi.b  #$AC,anim_frame(a0)
-                                                      *  blo.s   return_1A2DE
-                                                      *  move.b  #AniIDSonAni_GetUp,anim(a0)
+        lda   Ctrl_1_Press_Logical                    *  move.b  (Ctrl_1_Press_Logical).w,d0
+        anda  button_B_mask|button_A_mask             *  andi.b  #button_B_mask|button_C_mask|button_A_mask,d0
+        bne   Obj01_MdNormal                          *  bne.s   Obj01_MdNormal
+        ldd   anim,u
+        cmpd  #SonAni_Blink                           *  cmpi.b  #AniIDSonAni_Blink,anim(a0)
+        beq   return_1A2DE                            *  beq.s   return_1A2DE
+        cmpd  #SonAni_GetUp                           *  cmpi.b  #AniIDSonAni_GetUp,anim(a0)
+        beq   return_1A2DE                            *  beq.s   return_1A2DE
+        cmpd  SonAni_Wait                             *  cmpi.b  #AniIDSonAni_Wait,anim(a0)
+        bne   Obj01_MdNormal                          *  bne.s   Obj01_MdNormal
+        lda   anim_frame,u                            
+        cmpa  #$1E                                    *  cmpi.b  #$1E,anim_frame(a0)
+        blo   Obj01_MdNormal                          *  blo.s   Obj01_MdNormal
+        ldb   Ctrl_1_Held_Logical                     *  move.b  (Ctrl_1_Held_Logical).w,d0
+        andb  #button_up_mask|button_down_mask|button_left_mask|button_right_mask|button_B_mask|button_A_mask *  andi.b  #button_up_mask|button_down_mask|button_left_mask|button_right_mask|button_B_mask|button_C_mask|button_A_mask,d0
+        beq   return_1A2DE                            *  beq.s   return_1A2DE
+        ldx   #SonAni_Blink
+        stx   anim,u                                  *  move.b  #AniIDSonAni_Blink,anim(a0)
+        cmpa  #$AC                                    *  cmpi.b  #$AC,anim_frame(a0)
+        blo   return_1A2DE                            *  blo.s   return_1A2DE
+        ldd   #SonAni_GetUp
+        std   anim,u                                  *  move.b  #AniIDSonAni_GetUp,anim(a0)
         bra   return_1A2DE                            *  bra.s   return_1A2DE
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1A2B8:
@@ -445,16 +470,16 @@ Obj01_MdAir                                           *Obj01_MdAir:
         jsr   Sonic_JumpHeight                        *  bsr.w   Sonic_JumpHeight
         jsr   Sonic_ChgJumpDir                        *  bsr.w   Sonic_ChgJumpDir
         jsr   Sonic_LevelBound                        *  bsr.w   Sonic_LevelBound
-        jsr   ObjectFallSync
+        jsr   ObjectFallSync                           
         jsr   ObjectMoveSync                          *  jsr (ObjectMoveAndFall).l
         lda   status_flags,u                          *  btst    #6,status(a0)   ; is Sonic underwater?
-	bita  #status_underwater
+        bita  #status_underwater                       
         beq   @a                                      *  beq.s   +       ; if not, branch
         ldd   y_vel,u                                 *  subi.w  #$28,y_vel(a0)  ; reduce gravity by $28 ($38-$28=$10)
-	subd  #$28
-	std   y_vel,u
+        subd  #$28                                     
+        std   y_vel,u                                  
 @a                                                    *+
-
+                                                       
         jsr   Sonic_JumpAngle                         *  bsr.w   Sonic_JumpAngle
         jsr   Sonic_DoLevelCollision                  *  bsr.w   Sonic_DoLevelCollision
         rts                                           *  rts
@@ -482,20 +507,21 @@ Obj01_MdRoll                                          *Obj01_MdRoll:
                                                       *; Notes: This is identical to Obj01_MdAir, at least at this outer level.
                                                       *;        Why they gave it a separate copy of the code, I don't know.
                                                       *; loc_1A330: Obj01_MdJump2:
+                                                       
 Obj01_MdJump                                          *Obj01_MdJump:
         jsr   Sonic_JumpHeight                        *  bsr.w   Sonic_JumpHeight
         jsr   Sonic_ChgJumpDir                        *  bsr.w   Sonic_ChgJumpDir
         jsr   Sonic_LevelBound                        *  bsr.w   Sonic_LevelBound
-        jsr   ObjectFallSync
+        jsr   ObjectFallSync                           
         jsr   ObjectMoveSync                          *  jsr (ObjectMoveAndFall).l
         lda   status_flags,u                          *  btst    #6,status(a0)   ; is Sonic underwater?
-	bita  #status_underwater
+        bita  #status_underwater                       
         beq   @a                                      *  beq.s   +       ; if not, branch
         ldd   y_vel,u                                 *  subi.w  #$28,y_vel(a0)  ; reduce gravity by $28 ($38-$28=$10)
-	subd  #$28
-	std   y_vel,u
+        subd  #$28                                     
+        std   y_vel,u                                  
 @a                                                    *+
-
+                                                       
         jsr   Sonic_JumpAngle                         *  bsr.w   Sonic_JumpAngle
         jsr   Sonic_DoLevelCollision                  *  bsr.w   Sonic_DoLevelCollision
         rts                                           *  rts
@@ -754,7 +780,7 @@ Obj01_UpdateSpeedOnGround                             *Obj01_UpdateSpeedOnGround
                                                       *  move.w  #0,d0
                                                       *+
                                                       *  move.w  d0,inertia(a0)
-Obj01_Traction                                        *  bra.s   Obj01_Traction
+        bra   Obj01_Traction                          *  bra.s   Obj01_Traction
                                                       *; ---------------------------------------------------------------------------
                                                       *; slow down when facing left and not pressing a direction
                                                       *; loc_1A624:
@@ -1237,7 +1263,7 @@ Obj01_NoRoll                                          *Obj01_NoRoll:
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1A9FA:
 Obj01_ChkRoll                                         *Obj01_ChkRoll:
-        lda   status_flags,u
+        lda   status_flags,u                           
         bita  #status_jumporroll                      *  btst    #2,status(a0)   ; is Sonic already rolling?
         beq   Obj01_DoRoll                            *  beq.s   Obj01_DoRoll    ; if not, branch
         rts                                           *  rts
@@ -1245,21 +1271,21 @@ Obj01_ChkRoll                                         *Obj01_ChkRoll:
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1AA04:
 Obj01_DoRoll                                          *Obj01_DoRoll:
-	ora   #status_jumporroll
+        ora   #status_jumporroll                       
         sta   status_flags,u                          *  bset    #2,status(a0)
-        ldd   #0E07                                   *  move.b  #$E,y_radius(a0)
+        ldd   #$0E07                                  *  move.b  #$E,y_radius(a0)
         std   y_radius ; and x_radius                 *  move.b  #7,x_radius(a0)
-        ldd   #AniIDSonAni_Roll                       *  move.b  #AniIDSonAni_Roll,anim(a0)  ; use "rolling" animation
-        std   anim,u
-        ldd   y_pos
-        addd  #5
-	std   y_pos                                   *  addq.w  #5,y_pos(a0)
+        ldd   #SonAni_Roll                            *  move.b  #AniIDSonAni_Roll,anim(a0)  ; use "rolling" animation
+        std   anim,u                                   
+        ldd   y_pos                                    
+        addd  #5                                       
+        std   y_pos                                   *  addq.w  #5,y_pos(a0)
                                                       *  move.w  #SndID_Roll,d0
                                                       *  jsr (PlaySound).l   ; play rolling sound
         ldd   inertia,u                               *  tst.w   inertia(a0)
         bne   return_1AA36                            *  bne.s   return_1AA36
         ldd   #$200                                   *  move.w  #$200,inertia(a0)
-	std   inertia,u
+        std   inertia,u                                
                                                       *
 return_1AA36                                          *return_1AA36:
         rts                                           *  rts
@@ -1289,11 +1315,11 @@ Sonic_Jump                                            *Sonic_Jump:
                                                       *  move.w  #$800,d2    ; set higher jump speed if super
                                                       *+
         ;lda   status_flags,u                          *  btst    #6,status(a0)   ; Test if underwater
-	;bita  #status_underwater
+        ;bita  #status_underwater                      
         ;beq   @a                                      *  beq.s   +       ; if not, branch
         ;ldd   #$380                                   *  move.w  #$380,d2    ; set lower jump speed if under
 @a                                                    *+
-
+                                                       
                                                       *  moveq   #0,d0
                                                       *  move.b  angle(a0),d0
                                                       *  subi.b  #$40,d0
@@ -1327,7 +1353,7 @@ return_1AAE6                                          *return_1AAE6:
                                                       *; loc_1AAE8:
 Sonic_RollJump                                        *Sonic_RollJump:
         lda   #status_jumporroll                      *  bset    #4,status(a0)   ; set the rolling+jumping flag
-	sta   status_flags,u
+        sta   status_flags,u                           
         rts                                           *  rts
                                                       *; End of function Sonic_Jump
                                                       *
@@ -1347,19 +1373,19 @@ Sonic_JumpHeight                                      *Sonic_JumpHeight:
                                                       *
         ldx   #-$400                                  *  move.w  #-$400,d1
         ;lda   status_flags,u                          *  btst    #6,status(a0)   ; is Sonic underwater?
-	;bita  #status_underwater
+        ;bita  #status_underwater                      
         ;beq   @a                                      *  beq.s   +       ; if not, branch
         ;ldx   #-$200                                  *  move.w  #-$200,d1
 @a                                                    *+
-
+                                                       
         cmpx  y_vel,u                                 *  cmp.w   y_vel(a0),d1    ; is Sonic going up faster than d1?
         ble   @a                                      *  ble.s   +       ; if not, branch
-        ldb   Fire_Press                              *  move.b  (Ctrl_1_Held_Logical).w,d0
-        bitb  #c1_button_A_mask                       *  andi.b  #button_B_mask|button_C_mask|button_A_mask,d0 ; is a jump button pressed?
+        ldb   Ctrl_1_Held_Logical                     *  move.b  (Ctrl_1_Held_Logical).w,d0
+        bitb  #button_B_mask|button_A_mask            *  andi.b  #button_B_mask|button_C_mask|button_A_mask,d0 ; is a jump button pressed?
         bne   @a                                      *  bne.s   +       ; if yes, branch
         stx   y_vel,u                                 *  move.w  d1,y_vel(a0)    ; immediately reduce Sonic's upward speed to d1
 @a                                                    *+
-
+                                                       
         ;ldd   y_vel,u                                 *  tst.b   y_vel(a0)       ; is Sonic exactly at the height of his jump?
         ;beq   Sonic_CheckGoSuper                      *  beq.s   Sonic_CheckGoSuper  ; if yes, test for turning into Super Sonic
         rts                                           *  rts
@@ -1368,7 +1394,7 @@ Sonic_JumpHeight                                      *Sonic_JumpHeight:
 Sonic_UpVelCap                                        *Sonic_UpVelCap:
         tst   pinball_mode,u                          *  tst.b   pinball_mode(a0)    ; is Sonic charging a spindash or in a rolling-only area?
         bne   return_1AB36                            *  bne.s   return_1AB36        ; if yes, return
-        ldx   #-$FC0
+        ldx   #-$FC0                                   
         cmpx  y_vel,u                                 *  cmpi.w  #-$FC0,y_vel(a0)    ; is Sonic moving up really fast?
         blt   return_1AB36                            *  bge.s   return_1AB36        ; if not, return
         stx   y_vel,u                                 *  move.w  #-$FC0,y_vel(a0)    ; cap upward speed
@@ -1460,11 +1486,11 @@ Sonic_Super                                           *Sonic_Super:
                                                       *  move.w  #$C,(Sonic_acceleration).w
                                                       *  move.w  #$80,(Sonic_deceleration).w
         lda   status_flags,u                          *  btst    #6,status(a0)   ; Check if underwater, return if not
-	bita  #status_underwater
+        bita  #status_underwater                       
         beq   return_1AC3C                            *  beq.s   +       ; if not, branch
         ldd   #-$200                                  *  beq.s   return_1AC3C
 @a                                                    *+
-
+                                                       
                                                       *  move.w  #$300,(Sonic_top_speed).w
                                                       *  move.w  #6,(Sonic_acceleration).w
                                                       *  move.w  #$40,(Sonic_deceleration).w
@@ -1498,8 +1524,8 @@ Sonic_CheckSpindash                                   *Sonic_CheckSpindash:
                                                       *  blo.s   +
                                                       *  move.b  #2,(Sonic_Dust+anim).w
                                                       *+
-                                                      *  bsr.w   Sonic_LevelBound
-                                                      *  bsr.w   AnglePos
+        ;jsr   Sonic_LevelBound                        *  bsr.w   Sonic_LevelBound
+        ;jsr   AnglePos                                *  bsr.w   AnglePos
                                                       *
 return_1AC8C                                          *return_1AC8C:
         rts                                           *  rts
@@ -1762,11 +1788,11 @@ Sonic_JumpRightFlip                                   *Sonic_JumpRightFlip:
         adda  flip_speed,u                            *  move.b  flip_speed(a0),d1
                                                       *  add.b   d1,d0
         bcc   BranchTo_Sonic_JumpFlipSet              *  bcc.s   BranchTo_Sonic_JumpFlipSet
-        ldb   flips_remaining,u
+        ldb   flips_remaining,u                        
         decb                                          *  subq.b  #1,flips_remaining(a0)
         bcc   BranchTo_Sonic_JumpFlipSet              *  bcc.s   BranchTo_Sonic_JumpFlipSet
         andb  #0                                      *  move.b  #0,flips_remaining(a0)
-        stb   flips_remaining,u
+        stb   flips_remaining,u                        
                                                       *  moveq   #0,d0
                                                       *
 BranchTo_Sonic_JumpFlipSet                            *BranchTo_Sonic_JumpFlipSet ; BranchTo
@@ -2043,7 +2069,7 @@ return_1B11E                                          *return_1B11E:
                                                       *; Sonic when he gets hurt
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1B120: Obj_01_Sub_4:
-Sonic_Hurt                                            *  Obj01_Hurt:
+Obj01_Hurt                                            *  Obj01_Hurt:
                                                       *  tst.w   (Debug_mode_flag).w
                                                       *  beq.s   Obj01_Hurt_Normal
                                                       *  btst    #button_B,(Ctrl_1_Press).w
@@ -2059,20 +2085,20 @@ Obj01_Hurt_Normal                                     *Obj01_Hurt_Normal:
                                                       *  jsr (ObjectMove).l
                                                       *  addi.w  #$30,y_vel(a0)
         lda   status_flags,u                          *  btst    #6,status(a0)
-	bita  #status_underwater
+        bita  #status_underwater                       
         beq   @a                                      *  beq.s   +
         ldd   y_vel,u                                 *  subi.w  #$20,y_vel(a0)
-	subd  #$20
-	std   y_vel,u
+        subd  #$20                                     
+        std   y_vel,u                                  
 @a                                                    *+
-
+                                                       
                                                       *  cmpi.w  #-$100,(Camera_Min_Y_pos).w
                                                       *  bne.s   +
                                                       *  andi.w  #$7FF,y_pos(a0)
                                                       *+
                                                       *  bsr.w   Sonic_HurtStop
-                                                      *  bsr.w   Sonic_LevelBound
-        bsr   Sonic_RecordPos                         *  bsr.w   Sonic_RecordPos
+        jsr   Sonic_LevelBound                        *  bsr.w   Sonic_LevelBound
+        ;jsr   Sonic_RecordPos                        *  bsr.w   Sonic_RecordPos
         jsr   Sonic_Animate                           *  bsr.w   Sonic_Animate
                                                       *  bsr.w   LoadSonicDynPLC
         jmp   DisplaySprite                           *  jmp (DisplaySprite).l
@@ -2105,7 +2131,7 @@ return_1B1C8                                          *return_1B1C8:
 Sonic_HurtInstantRecover                              *Sonic_HurtInstantRecover:
                                                       *  subq.b  #2,routine(a0)  ; => Obj01_Control
                                                       *  move.b  #0,routine_secondary(a0)
-        bsr   Sonic_RecordPos                         *  bsr.w   Sonic_RecordPos
+        ;jsr   Sonic_RecordPos                        *  bsr.w   Sonic_RecordPos
         jsr   Sonic_Animate                           *  bsr.w   Sonic_Animate
                                                       *  bsr.w   LoadSonicDynPLC
         jmp   DisplaySprite                           *  jmp (DisplaySprite).l
@@ -2117,7 +2143,7 @@ Sonic_HurtInstantRecover                              *Sonic_HurtInstantRecover:
                                                       *; ---------------------------------------------------------------------------
                                                       *
                                                       *; loc_1B1E6: Obj_01_Sub_6:
-Sonic_Dead                                            *  Obj01_Dead:
+Obj01_Dead                                            *  Obj01_Dead:
                                                       *  tst.w   (Debug_mode_flag).w
                                                       *  beq.s   +
                                                       *  btst    #button_B,(Ctrl_1_Press).w
@@ -2127,9 +2153,9 @@ Sonic_Dead                                            *  Obj01_Dead:
         rts                                           *  rts
                                                       *+
         jsr   CheckGameOver                           *  bsr.w   CheckGameOver
-        jsr   ObjectFallSync
+        jsr   ObjectFallSync                           
         jsr   ObjectMoveSync                          *  jsr (ObjectMoveAndFall).l
-        bsr   Sonic_RecordPos                         *  bsr.w   Sonic_RecordPos
+        ;jsr   Sonic_RecordPos                        *  bsr.w   Sonic_RecordPos
         jsr   Sonic_Animate                           *  bsr.w   Sonic_Animate
                                                       *  bsr.w   LoadSonicDynPLC
         jmp   DisplaySprite                           *  jmp (DisplaySprite).l
@@ -2209,7 +2235,7 @@ return_1B31A                                          *return_1B31A:
                                                       *; Sonic when he's offscreen and waiting for the level to restart
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1B31C: Obj_01_Sub_8:
-Sonic_Gone                                            *  Obj01_Gone:
+Obj01_Gone                                            *  Obj01_Gone:
                                                       *  tst.w   restart_countdown(a0)
                                                       *  beq.s   +
                                                       *  subq.w  #1,restart_countdown(a0)
@@ -2222,7 +2248,7 @@ Sonic_Gone                                            *  Obj01_Gone:
                                                       *; Sonic when he's waiting for the camera to scroll back to where he respawned
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1B330: Obj_01_Sub_A:
-Sonic_Respawning                                      *  Obj01_Respawning:
+Obj01_Respawning                                      *  Obj01_Respawning:
                                                       *  tst.w   (Camera_X_pos_diff).w
                                                       *  bne.s   +
                                                       *  tst.w   (Camera_Y_pos_diff).w
@@ -2249,115 +2275,173 @@ Sonic_Animate                                         *Sonic_Animate:
                                                       *  lea (SuperSonicAniData).l,a1
                                                       *+
                                                       *  moveq   #0,d0
-                                                      *  move.b  anim(a0),d0
-                                                      *  cmp.b   prev_anim(a0),d0    ; has animation changed?
-                                                      *  beq.s   SAnim_Do        ; if not, branch
-                                                      *  move.b  d0,prev_anim(a0)    ; set previous animation
-                                                      *  move.b  #0,anim_frame(a0)   ; reset animation frame
-                                                      *  move.b  #0,anim_frame_duration(a0)  ; reset frame duration
-                                                      *  bclr    #5,status(a0)
+        _GetCartPageA
+        sta   @page                    ; backup cart page     
+        ldx   #Ani_Page_Index
+        ldb   id,u
+        abx
+        lda   ,x
+        _SetCartPageA
+        ldx   anim,u                                  *  move.b  anim(a0),d0
+        bpl   @a                       ; branch if anim is an address of anim
+        ldx   #Ani_Asd_Index           ; negative means anim,u is a signed 8 bit offset for a LUT
+        ; ldb   id,u                   ; already loaded
+        aslb
+        abx
+        ldx   [,x]                     ; load Anim LUT (first entry in Asd LUT)
+        ldb   anim+1,u                 ; load offset
+        abx                            ; apply offset
+        ldx   ,x                       ; load target anim address
+@a      cmpx  prev_anim,u                             *  cmp.b   prev_anim(a0),d0    ; has animation changed?
+        beq   SAnim_Do                                *  beq.s   SAnim_Do        ; if not, branch
+        stx   prev_anim,u                             *  move.b  d0,prev_anim(a0)    ; set previous animation
+        ldb   #0                            
+        stb   anim_frame,u                            *  move.b  #0,anim_frame(a0)   ; reset animation frame
+        stb   anim_frame_duration,u                   *  move.b  #0,anim_frame_duration(a0)  ; reset frame duration
+        ldb   status,u
+        andb  #^status_pushing 
+        stb   status,u                                *  bclr    #5,status(a0)
                                                       *; loc_1B384:
 SAnim_Do                                              *SAnim_Do:
-                                                      *  add.w   d0,d0
-                                                      *  adda.w  (a1,d0.w),a1    ; calculate address of appropriate animation script
-                                                      *  move.b  (a1),d0
-                                                      *  bmi.s   SAnim_WalkRun   ; if animation is walk/run/roll/jump, branch
-                                                      *  move.b  status(a0),d1
-                                                      *  andi.b  #1,d1
-                                                      *  andi.b  #$FC,render_flags(a0)
-                                                      *  or.b    d1,render_flags(a0)
-                                                      *  subq.b  #1,anim_frame_duration(a0)  ; subtract 1 from frame duration
-                                                      *  bpl.s   SAnim_Delay         ; if time remains, branch
-                                                      *  move.b  d0,anim_frame_duration(a0)  ; load frame duration
+        ; no offset table                             *  add.w   d0,d0
+        ; anim is the address of anim                 *  adda.w  (a1,d0.w),a1    ; calculate address of appropriate animation script
+        ldb   -1,x                            
+        stb   anim_frame_duration,u                   *  move.b  (a1),d0
+        stb   @b
+        bmi   SAnim_WalkRun                           *  bmi.s   SAnim_WalkRun   ; if animation is walk/run/roll/jump, branch
+        ldb   status,u                                *  move.b  status(a0),d1
+        andb  #status_x_orientation                   *  andi.b  #1,d1
+        stb   @c
+        ldb   render_flags,u
+        andb  #^(render_xmirror_mask|render_ymirror_mask) *  andi.b  #$FC,render_flags(a0)
+        orb   #0                                      *  or.b    d1,render_flags(a0)
+@c      equ   *-1
+        stb   render_flags,u
+        ldb   anim_frame_duration,u
+        subb  Vint_Main_runcount
+        stb   anim_frame_duration,u                   *  subq.b  #1,anim_frame_duration(a0)  ; subtract 1 from frame duration
+        bpl   SAnim_Delay                             *  bpl.s   SAnim_Delay         ; if time remains, branch
+        ldb   #0
+@b      equ   *-1
+        stb   anim_frame_duration,u                   *  move.b  d0,anim_frame_duration(a0)  ; load frame duration
                                                       *; loc_1B3AA:
 SAnim_Do2                                             *SAnim_Do2:
                                                       *  moveq   #0,d1
-                                                      *  move.b  anim_frame(a0),d1   ; load current frame number
-                                                      *  move.b  1(a1,d1.w),d0       ; read sprite number from script
-                                                      *  cmpi.b  #$F0,d0
-                                                      *  bhs.s   SAnim_End_FF        ; if animation is complete, branch
+        ldb   anim_frame,u                            *  move.b  anim_frame(a0),d1   ; load current frame number
+        lda   #0
+        _asld
+        leay  d,x
+        ldd   ,y                                      *  move.b  1(a1,d1.w),d0       ; read sprite number from script
+        cmpa  #$F0                                    *  cmpi.b  #$F0,d0
+        bhs   SAnim_End_FF                            *  bhs.s   SAnim_End_FF        ; if animation is complete, branch
                                                       *; loc_1B3BA:
 SAnim_Next                                            *SAnim_Next:
-                                                      *  move.b  d0,mapping_frame(a0)    ; load sprite number
-                                                      *  addq.b  #1,anim_frame(a0)   ; go to next frame
+        std   image_set,u                             *  move.b  d0,mapping_frame(a0)    ; load sprite number
+        inc   anim_frame,u                            *  addq.b  #1,anim_frame(a0)   ; go to next frame
                                                       *; return_1B3C2:
 SAnim_Delay                                           *SAnim_Delay:
+        lda   #$00
+@page   equ   *-1
+        _SetCartPageA
         rts                                           *  rts
                                                       *; ===========================================================================
                                                       *; loc_1B3C4:
 SAnim_End_FF                                          *SAnim_End_FF:
-                                                      *  addq.b  #1,d0       ; is the end flag = $FF ?
-                                                      *  bne.s   SAnim_End_FE    ; if not, branch
-                                                      *  move.b  #0,anim_frame(a0)   ; restart the animation
-                                                      *  move.b  1(a1),d0    ; read sprite number
+        inca                                          *  addq.b  #1,d0       ; is the end flag = $FF ?
+        bne   SAnim_End_FE                            *  bne.s   SAnim_End_FE    ; if not, branch
+        ldb   #0      
+        stb   anim_frame,u                            *  move.b  #0,anim_frame(a0)   ; restart the animation
+        ldd   ,x                                      *  move.b  1(a1),d0    ; read sprite number
         bra   SAnim_Next                              *  bra.s   SAnim_Next
                                                       *; ===========================================================================
                                                       *; loc_1B3D4:
 SAnim_End_FE                                          *SAnim_End_FE:
-                                                      *  addq.b  #1,d0       ; is the end flag = $FE ?
-                                                      *  bne.s   SAnim_End_FD    ; if not, branch
-                                                      *  move.b  2(a1,d1.w),d0   ; read the next byte in the script
-                                                      *  sub.b   d0,anim_frame(a0)   ; jump back d0 bytes in the script
+        inca                                          *  addq.b  #1,d0       ; is the end flag = $FE ?
+        bne   SAnim_End_FD                            *  bne.s   SAnim_End_FD    ; if not, branch
+        lda   anim_frame,u                  
+        stb   @d                                      *  move.b  2(a1,d1.w),d0   ; read the next byte in the script
+        suba  #0
+@d      equ   *-1        
+        sta   anim_frame,u                            *  sub.b   d0,anim_frame(a0)   ; jump back d0 bytes in the script
                                                       *  sub.b   d0,d1
-                                                      *  move.b  1(a1,d1.w),d0   ; read sprite number
+        ldb   #2
+        mul                                             
+        ldd   d,x                                     *  move.b  1(a1,d1.w),d0   ; read sprite number
         bra   SAnim_Next                              *  bra.s   SAnim_Next
                                                       *; ===========================================================================
                                                       *; loc_1B3E8:
 SAnim_End_FD                                          *SAnim_End_FD:
-                                                      *  addq.b  #1,d0           ; is the end flag = $FD ?
-                                                      *  bne.s   SAnim_End       ; if not, branch
-                                                      *  move.b  2(a1,d1.w),anim(a0) ; read next byte, run that animation
+        inca                                          *  addq.b  #1,d0           ; is the end flag = $FD ?
+        bne   SAnim_End                               *  bne.s   SAnim_End       ; if not, branch
+        ldd   1,y
+        std   anim,u                                  *  move.b  2(a1,d1.w),anim(a0) ; read next byte, run that animation
                                                       *; return_1B3F2:
 SAnim_End                                             *SAnim_End:
+        lda   @page
+        _SetCartPageA
         rts                                           *  rts
                                                       *; ===========================================================================
                                                       *; loc_1B3F4:
 SAnim_WalkRun                                         *SAnim_WalkRun:
-                                                      *  addq.b  #1,d0       ; is the start flag = $FF ?
-                                                      *  bne.w   SAnim_Roll  ; if not, branch
+        inca                                          *  addq.b  #1,d0       ; is the start flag = $FF ?
+        bne   SAnim_Roll                              *  bne.w   SAnim_Roll  ; if not, branch
                                                       *  moveq   #0,d0       ; is animation walking/running?
-                                                      *  move.b  flip_angle(a0),d0   ; if not, branch
-                                                      *  bne.w   SAnim_Tumble
-                                                      *  moveq   #0,d1
-                                                      *  move.b  angle(a0),d0    ; get Sonic's angle
-                                                      *  bmi.s   +
-                                                      *  beq.s   +
-                                                      *  subq.b  #1,d0
-                                                      *+
-                                                      *  move.b  status(a0),d2
-                                                      *  andi.b  #1,d2       ; is Sonic mirrored horizontally?
-                                                      *  bne.s   +       ; if yes, branch
-                                                      *  not.b   d0      ; reverse angle
-                                                      *+
-                                                      *  addi.b  #$10,d0     ; add $10 to angle
-                                                      *  bpl.s   +       ; if angle is $0-$7F, branch
-                                                      *  moveq   #3,d1
-                                                      *+
+        lda   flip_angle,u                            *  move.b  flip_angle(a0),d0   ; if not, branch
+        bne   SAnim_Tumble                            *  bne.w   SAnim_Tumble
+        lda   #0
+        sta   @h                                      *  moveq   #0,d1
+        ldb   angle,u                                 *  move.b  angle(a0),d0    ; get Sonic's angle
+        bmi   @e                                      *  bmi.s   +
+        beq   @e                                      *  beq.s   +
+        decb                                          *  subq.b  #1,d0
+@e                                                    *+
+        lda   status,u                                *  move.b  status(a0),d2
+        anda  #render_xmirror_mask                    *  andi.b  #1,d2       ; is Sonic mirrored horizontally?
+        bne   @f                                      *  bne.s   +       ; if yes, branch
+        negb                                          *  not.b   d0      ; reverse angle
+@f                                                    *+
+        addb  #$10                                    *  addi.b  #$10,d0     ; add $10 to angle
+        stb   @i
+        bpl   @g                                      *  bpl.s   +       ; if angle is $0-$7F, branch
+        lda   #3
+        sta   @h                                      *  moveq   #3,d1
+@g                                                    *+
                                                       *  andi.b  #$FC,render_flags(a0)
-                                                      *  eor.b   d1,d2
-                                                      *  or.b    d2,render_flags(a0)
-                                                      *  btst    #5,status(a0)
-                                                      *  bne.w   SAnim_Push
-                                                      *  lsr.b   #4,d0       ; divide angle by 16
-                                                      *  andi.b  #6,d0       ; angle must be 0, 2, 4 or 6
-                                                      *  mvabs.w inertia(a0),d2  ; get Sonic's "speed" for animation purposes
-                                                      *    if status_sec_isSliding = 7
-                                                      *  tst.b   status_secondary(a0)
-                                                      *  bpl.w   +
-                                                      *    else
-                                                      *  btst    #status_sec_isSliding,status_secondary(a0)
-                                                      *  beq.w   +
-                                                      *    endif
-                                                      *  add.w   d2,d2
-                                                      *+
-                                                      *  tst.b   (Super_Sonic_flag).w
-                                                      *  bne.s   SAnim_Super
-                                                      *  lea (SonAni_Run).l,a1   ; use running animation
-                                                      *  cmpi.w  #$600,d2        ; is Sonic at running speed?
-                                                      *  bhs.s   +           ; use running animation
-                                                      *  lea (SonAni_Walk).l,a1  ; if yes, branch
+        eora  #0                                      *  eor.b   d1,d2
+@i      equ   *-1
+        ldb   render_flags,u
+        andb  #^(render_xmirror_mask|render_ymirror_mask) 
+        orb   #0                                      *  or.b    d1,render_flags(a0)
+@h      equ   *-1
+        stb   render_flags,u
+        lda   status,u
+        bita  #status_pushing                         *  btst    #5,status(a0)
+        bne   SAnim_Push                              *  bne.w   SAnim_Push
+        ldb   #0
+@i      equ   *-1
+        lsrb
+        lsrb
+        lsrb
+        lsrb                                          *  lsr.b   #4,d0       ; divide angle by 16
+        andb  #6                                      *  andi.b  #6,d0       ; angle must be 0, 2, 4 or 6
+        ldd   inertia,u                               *  mvabs.w inertia(a0),d2  ; get Sonic's "speed" for animation purposes
+        ;                                             *    if status_sec_isSliding = 7
+        tst   status_secondary                        *  tst.b   status_secondary(a0)
+        bpl   @j                                      *  bpl.w   +
+        ;                                             *    else
+        ;                                             *  btst    #status_sec_isSliding,status_secondary(a0)
+        ;                                             *  beq.w   +
+        ;                                             *    endif
+        _lsld                                         *  add.w   d2,d2
+@j                                                    *+
+        ; unimplemented                               *  tst.b   (Super_Sonic_flag).w
+        ; unimplemented                               *  bne.s   SAnim_Super
+        ldx   #SonAni_Run                             *  lea (SonAni_Run).l,a1   ; use running animation
+        cmpd  #$600                                   *  cmpi.w  #$600,d2        ; is Sonic at running speed?
+        bhs   @k                                      *  bhs.s   +           ; use running animation
+        ldx   #SonAni_Walk                            *  lea (SonAni_Walk).l,a1  ; if yes, branch
                                                       *  add.b   d0,d0
-                                                      *+
+@k                                                    *+
                                                       *  add.b   d0,d0
                                                       *  move.b  d0,d3
                                                       *  moveq   #0,d1
@@ -2368,7 +2452,7 @@ SAnim_WalkRun                                         *SAnim_WalkRun:
                                                       *  move.b  #0,anim_frame(a0)
                                                       *  move.b  1(a1),d0
                                                       *+
-                                                      *  move.b  d0,mapping_frame(a0)
+        st    image_set,u                             *  move.b  d0,mapping_frame(a0)
                                                       *  add.b   d3,mapping_frame(a0)
                                                       *  subq.b  #1,anim_frame_duration(a0)
                                                       *  bpl.s   return_1B4AC
@@ -2382,23 +2466,25 @@ SAnim_WalkRun                                         *SAnim_WalkRun:
                                                       *  addq.b  #1,anim_frame(a0)       ; modify frame number
                                                       *
 return_1B4AC                                          *return_1B4AC:
+        lda   @page
+        _SetCartPageA
         rts                                           *  rts
                                                       *; ===========================================================================
                                                       *; loc_1B4AE:
-SAnim_Super                                           *SAnim_Super:
+                                                      *SAnim_Super:
                                                       *  lea (SupSonAni_Run).l,a1    ; use fast animation
                                                       *  cmpi.w  #$800,d2        ; is Sonic moving fast?
                                                       *  bhs.s   SAnim_SuperRun      ; if yes, branch
                                                       *  lea (SupSonAni_Walk).l,a1   ; use slower animation
                                                       *  add.b   d0,d0
                                                       *  add.b   d0,d0
-        bra   SAnim_SuperWalk                         *  bra.s   SAnim_SuperWalk
+                                                      *  bra.s   SAnim_SuperWalk
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1B4C6:
-SAnim_SuperRun                                        *SAnim_SuperRun:
+                                                      *SAnim_SuperRun:
                                                       *  lsr.b   #1,d0
                                                       *; loc_1B4C8:
-SAnim_SuperWalk                                       *SAnim_SuperWalk:
+                                                      *SAnim_SuperWalk:
                                                       *  move.b  d0,d3
                                                       *  moveq   #0,d1
                                                       *  move.b  anim_frame(a0),d1
@@ -2428,8 +2514,8 @@ SAnim_SuperWalk                                       *SAnim_SuperWalk:
                                                       *  move.b  d2,anim_frame_duration(a0)
                                                       *  addq.b  #1,anim_frame(a0)
                                                       *
-return_1B51E                                          *return_1B51E:
-        rts                                           *  rts
+                                                      *return_1B51E:
+                                                      *  rts
                                                       *; ===========================================================================
                                                       *; loc_1B520:
 SAnim_Tumble                                          *SAnim_Tumble:
@@ -2740,4 +2826,2488 @@ SAnim_Push                                            *SAnim_Push:
                                                       *    if ~~removeJmpTos
                                                       *  align 4
                                                       *    endif
+                                                       
+; ***************************************************************************************************************************************************
+
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Subroutine to change Sonic's angle & position as he walks along the floor
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1E234: Sonic_AnglePos:
+AnglePos                                              * AnglePos:
+                                                      *         move.l  #Primary_Collision,(Collision_addr).w
+                                                      *         cmpi.b  #$C,top_solid_bit(a0)
+                                                      *         beq.s   +
+                                                      *         move.l  #Secondary_Collision,(Collision_addr).w
+                                                      * +
+                                                      *         move.b  top_solid_bit(a0),d5
+                                                      *         btst    #3,status(a0)
+                                                      *         beq.s   +
+                                                      *         moveq   #0,d0
+                                                      *         move.b  d0,(Primary_Angle).w
+                                                      *         move.b  d0,(Secondary_Angle).w
+        rts                                           *         rts
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * +       moveq   #3,d0
+                                                      *         move.b  d0,(Primary_Angle).w
+                                                      *         move.b  d0,(Secondary_Angle).w
+                                                      *         move.b  angle(a0),d0
+                                                      *         addi.b  #$20,d0
+                                                      *         bpl.s   loc_1E286
+                                                      *         move.b  angle(a0),d0
+                                                      *         bpl.s   +
+                                                      *         subq.b  #1,d0
+                                                      * +
+                                                      *         addi.b  #$20,d0
+                                                      *         bra.s   loc_1E292
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * loc_1E286:
+                                                      *         move.b  angle(a0),d0
+                                                      *         bpl.s   loc_1E28E
+                                                      *         addq.b  #1,d0
+                                                      * 
+                                                      * loc_1E28E:
+                                                      *         addi.b  #$1F,d0
+                                                      * 
+                                                      * loc_1E292:
+                                                      *         andi.b  #$C0,d0
+                                                      *         cmpi.b  #$40,d0
+                                                      *         beq.w   Sonic_WalkVertL
+                                                      *         cmpi.b  #$80,d0
+                                                      *         beq.w   Sonic_WalkCeiling
+                                                      *         cmpi.b  #$C0,d0
+                                                      *         beq.w   Sonic_WalkVertR
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.w  x_pos(a0),d3
+                                                      *         moveq   #0,d0
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d2
+                                                      *         move.b  x_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d3
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         movea.w #$10,a3
+                                                      *         move.w  #0,d6
+                                                      *         bsr.w   FindFloor
+                                                      *         move.w  d1,-(sp)
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.w  x_pos(a0),d3
+                                                      *         moveq   #0,d0
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d2
+                                                      *         move.b  x_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         neg.w   d0
+                                                      *         add.w   d0,d3
+                                                      *         lea     (Secondary_Angle).w,a4
+                                                      *         movea.w #$10,a3
+                                                      *         move.w  #0,d6
+                                                      *         bsr.w   FindFloor
+                                                      *         move.w  (sp)+,d0
+                                                      *         bsr.w   Sonic_Angle
+                                                      *         tst.w   d1
+                                                      *         beq.s   return_1E31C
+                                                      *         bpl.s   loc_1E31E
+                                                      *         cmpi.w  #-$E,d1
+                                                      *         blt.s   return_1E31C
+                                                      *         add.w   d1,y_pos(a0)
+                                                      * 
+                                                      * return_1E31C:
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_1E31E:
+                                                      *         mvabs.b x_vel(a0),d0
+                                                      *         addq.b  #4,d0
+                                                      *         cmpi.b  #$E,d0
+                                                      *         blo.s   +
+                                                      *         move.b  #$E,d0
+                                                      * +
+                                                      *         cmp.b   d0,d1
+                                                      *         bgt.s   loc_1E33C
+                                                      * 
+                                                      * loc_1E336:
+                                                      *         add.w   d1,y_pos(a0)
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_1E33C:
+                                                      *         tst.b   stick_to_convex(a0)
+                                                      *         bne.s   loc_1E336
+                                                      *         bset    #1,status(a0)
+                                                      *         bclr    #5,status(a0)
+                                                      *         move.b  #AniIDSonAni_Run,prev_anim(a0)  ; Force character's animation to restart
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Subroutine to change Sonic's angle as he walks along the floor
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1E356:
+                                                      * Sonic_Angle:
+                                                      *         move.b  (Secondary_Angle).w,d2
+                                                      *         cmp.w   d0,d1
+                                                      *         ble.s   +
+                                                      *         move.b  (Primary_Angle).w,d2
+                                                      *         move.w  d0,d1
+                                                      * +
+                                                      *         btst    #0,d2
+                                                      *         bne.s   loc_1E380
+                                                      *         move.b  d2,d0
+                                                      *         sub.b   angle(a0),d0
+                                                      *         bpl.s   +
+                                                      *         neg.b   d0
+                                                      * +
+                                                      *         cmpi.b  #$20,d0
+                                                      *         bhs.s   loc_1E380
+                                                      *         move.b  d2,angle(a0)
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_1E380:
+                                                      *         move.b  angle(a0),d2
+                                                      *         addi.b  #$20,d2
+                                                      *         andi.b  #$C0,d2
+                                                      *         move.b  d2,angle(a0)
+                                                      *         rts
+                                                      * ; End of function Sonic_Angle
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Subroutine allowing Sonic to walk up a vertical slope/wall to his right
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1E392:
+                                                      * Sonic_WalkVertR:
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.w  x_pos(a0),d3
+                                                      *         moveq   #0,d0
+                                                      *         move.b  x_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         neg.w   d0
+                                                      *         add.w   d0,d2
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d3
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         movea.w #$10,a3
+                                                      *         move.w  #0,d6
+                                                      *         bsr.w   FindWall
+                                                      *         move.w  d1,-(sp)
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.w  x_pos(a0),d3
+                                                      *         moveq   #0,d0
+                                                      *         move.b  x_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d2
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d3
+                                                      *         lea     (Secondary_Angle).w,a4
+                                                      *         movea.w #$10,a3
+                                                      *         move.w  #0,d6
+                                                      *         bsr.w   FindWall
+                                                      *         move.w  (sp)+,d0
+                                                      *         bsr.w   Sonic_Angle
+                                                      *         tst.w   d1
+                                                      *         beq.s   return_1E400
+                                                      *         bpl.s   loc_1E402
+                                                      *         cmpi.w  #-$E,d1
+                                                      *         blt.s   return_1E400
+                                                      *         add.w   d1,x_pos(a0)
+                                                      * 
+                                                      * return_1E400:
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_1E402:
+                                                      *         mvabs.b y_vel(a0),d0
+                                                      *         addq.b  #4,d0
+                                                      *         cmpi.b  #$E,d0
+                                                      *         blo.s   +
+                                                      *         move.b  #$E,d0
+                                                      * +
+                                                      *         cmp.b   d0,d1
+                                                      *         bgt.s   loc_1E420
+                                                      * 
+                                                      * loc_1E41A:
+                                                      *         add.w   d1,x_pos(a0)
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_1E420:
+                                                      *         tst.b   stick_to_convex(a0)
+                                                      *         bne.s   loc_1E41A
+                                                      *         bset    #1,status(a0)
+                                                      *         bclr    #5,status(a0)
+                                                      *         move.b  #AniIDSonAni_Run,prev_anim(a0)  ; Force character's animation to restart
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * ;loc_1E43A
+                                                      * Sonic_WalkCeiling:
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.w  x_pos(a0),d3
+                                                      *         moveq   #0,d0
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         sub.w   d0,d2
+                                                      *         eori.w  #$F,d2
+                                                      *         move.b  x_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d3
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         movea.w #-$10,a3
+                                                      *         move.w  #$800,d6
+                                                      *         bsr.w   FindFloor
+                                                      *         move.w  d1,-(sp)
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.w  x_pos(a0),d3
+                                                      *         moveq   #0,d0
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         sub.w   d0,d2
+                                                      *         eori.w  #$F,d2
+                                                      *         move.b  x_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         sub.w   d0,d3
+                                                      *         lea     (Secondary_Angle).w,a4
+                                                      *         movea.w #-$10,a3
+                                                      *         move.w  #$800,d6
+                                                      *         bsr.w   FindFloor
+                                                      *         move.w  (sp)+,d0
+                                                      *         bsr.w   Sonic_Angle
+                                                      *         tst.w   d1
+                                                      *         beq.s   return_1E4AE
+                                                      *         bpl.s   loc_1E4B0
+                                                      *         cmpi.w  #-$E,d1
+                                                      *         blt.s   return_1E4AE
+                                                      *         sub.w   d1,y_pos(a0)
+                                                      * 
+                                                      * return_1E4AE:
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_1E4B0:
+                                                      *         mvabs.b x_vel(a0),d0
+                                                      *         addq.b  #4,d0
+                                                      *         cmpi.b  #$E,d0
+                                                      *         blo.s   +
+                                                      *         move.b  #$E,d0
+                                                      * +
+                                                      *         cmp.b   d0,d1
+                                                      *         bgt.s   loc_1E4CE
+                                                      * 
+                                                      * loc_1E4C8:
+                                                      *         sub.w   d1,y_pos(a0)
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_1E4CE:
+                                                      *         tst.b   stick_to_convex(a0)
+                                                      *         bne.s   loc_1E4C8
+                                                      *         bset    #1,status(a0)
+                                                      *         bclr    #5,status(a0)
+                                                      *         move.b  #AniIDSonAni_Run,prev_anim(a0)  ; Force character's animation to restart
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * ;loc_1E4E8
+                                                      * Sonic_WalkVertL:
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.w  x_pos(a0),d3
+                                                      *         moveq   #0,d0
+                                                      *         move.b  x_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         sub.w   d0,d2
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         sub.w   d0,d3
+                                                      *         eori.w  #$F,d3
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         movea.w #-$10,a3
+                                                      *         move.w  #$400,d6
+                                                      *         bsr.w   FindWall
+                                                      *         move.w  d1,-(sp)
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.w  x_pos(a0),d3
+                                                      *         moveq   #0,d0
+                                                      *         move.b  x_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d2
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         sub.w   d0,d3
+                                                      *         eori.w  #$F,d3
+                                                      *         lea     (Secondary_Angle).w,a4
+                                                      *         movea.w #-$10,a3
+                                                      *         move.w  #$400,d6
+                                                      *         bsr.w   FindWall
+                                                      *         move.w  (sp)+,d0
+                                                      *         bsr.w   Sonic_Angle
+                                                      *         tst.w   d1
+                                                      *         beq.s   return_1E55C
+                                                      *         bpl.s   loc_1E55E
+                                                      *         cmpi.w  #-$E,d1
+                                                      *         blt.s   return_1E55C
+                                                      *         sub.w   d1,x_pos(a0)
+                                                      * 
+                                                      * return_1E55C:
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_1E55E:
+                                                      *         mvabs.b y_vel(a0),d0
+                                                      *         addq.b  #4,d0
+                                                      *         cmpi.b  #$E,d0
+                                                      *         blo.s   +
+                                                      *         move.b  #$E,d0
+                                                      * +
+                                                      *         cmp.b   d0,d1
+                                                      *         bgt.s   loc_1E57C
+                                                      * 
+                                                      * loc_1E576:
+                                                      *         sub.w   d1,x_pos(a0)
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_1E57C:
+                                                      *         tst.b   stick_to_convex(a0)
+                                                      *         bne.s   loc_1E576
+                                                      *         bset    #1,status(a0)
+                                                      *         bclr    #5,status(a0)
+                                                      *         move.b  #AniIDSonAni_Run,prev_anim(a0)  ; Force character's animation to restart
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Subroutine to find which tile is in the specified location
+                                                      * ; d2 = y_pos
+                                                      * ; d3 = x_pos
+                                                      * ; returns relevant block ID in (a1)
+                                                      * ; a1 is pointer to block in chunk table
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1E596: Floor_ChkTile:
+                                                      * Find_Tile:
+                                                      *         move.w  d2,d0   ; y_pos
+                                                      *         add.w   d0,d0
+                                                      *         andi.w  #$F00,d0        ; rounded 2*y_pos
+                                                      *         move.w  d3,d1   ; x_pos
+                                                      *         lsr.w   #3,d1
+                                                      *         move.w  d1,d4
+                                                      *         lsr.w   #4,d1   ; x_pos/128 = x_of_chunk
+                                                      *         andi.w  #$7F,d1
+                                                      *         add.w   d1,d0   ; d0 is relevant chunk ID now
+                                                      *         moveq   #-1,d1
+                                                      *         clr.w   d1              ; d1 is now $FFFF0000 = Chunk_Table
+                                                      *         lea     (Level_Layout).w,a1
+                                                      *         move.b  (a1,d0.w),d1    ; move 128*128 chunk ID to d1
+                                                      *         add.w   d1,d1
+                                                      *         move.w  word_1E5D0(pc,d1.w),d1
+                                                      *         move.w  d2,d0   ; y_pos
+                                                      *         andi.w  #$70,d0
+                                                      *         add.w   d0,d1
+                                                      *         andi.w  #$E,d4  ; x_pos/8
+                                                      *         add.w   d4,d1
+                                                      *         movea.l d1,a1   ; address of block ID
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * ; precalculated values for Find_Tile
+                                                      * ; (Sonic 1 calculated it every time instead of using a table)
+                                                      * word_1E5D0:
+                                                      * c := 0
+                                                      *         rept 256
+                                                      *                 dc.w    c
+                                                      * c := c+$80
+                                                      *         endm
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; Scans vertically for up to 2 16x16 blocks to find solid ground or ceiling.
+                                                      * ; d2 = y_pos
+                                                      * ; d3 = x_pos
+                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
+                                                      * ; d6 = $0000 for no flip, $0800 for vertical flip
+                                                      * ; a3 = delta-y for next location to check if current one is empty
+                                                      * ; a4 = pointer to angle buffer
+                                                      * ; returns relevant block ID in (a1)
+                                                      * ; returns distance in d1
+                                                      * ; returns angle in (a4)
+                                                      * 
+                                                      * ; loc_1E7D0:
+                                                      * FindFloor:
+                                                      *         bsr.w   Find_Tile
+                                                      *         move.w  (a1),d0
+                                                      *         move.w  d0,d4
+                                                      *         andi.w  #$3FF,d0
+                                                      *         beq.s   loc_1E7E2
+                                                      *         btst    d5,d4
+                                                      *         bne.s   loc_1E7F0
+                                                      * 
+                                                      * loc_1E7E2:
+                                                      *         add.w   a3,d2
+                                                      *         bsr.w   FindFloor2
+                                                      *         sub.w   a3,d2
+                                                      *         addi.w  #$10,d1
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_1E7F0:      ; block has some solidity
+                                                      *         movea.l (Collision_addr).w,a2   ; pointer to collision data, i.e. blockID -> collisionID array
+                                                      *         move.b  (a2,d0.w),d0    ; get collisionID
+                                                      *         andi.w  #$FF,d0
+                                                      *         beq.s   loc_1E7E2
+                                                      *         lea     (ColCurveMap).l,a2
+                                                      *         move.b  (a2,d0.w),(a4)  ; get angle from AngleMap --> (a4)
+                                                      *         lsl.w   #4,d0
+                                                      *         move.w  d3,d1   ; x_pos
+                                                      *         btst    #$A,d4  ; adv.blockID in d4 - X flipping
+                                                      *         beq.s   +
+                                                      *         not.w   d1
+                                                      *         neg.b   (a4)
+                                                      * +
+                                                      *         btst    #$B,d4  ; Y flipping
+                                                      *         beq.s   +
+                                                      *         addi.b  #$40,(a4)
+                                                      *         neg.b   (a4)
+                                                      *         subi.b  #$40,(a4)
+                                                      * +
+                                                      *         andi.w  #$F,d1  ; x_pos (mod 16)
+                                                      *         add.w   d0,d1   ; d0 = 16*blockID -> offset in ColArray to look up
+                                                      *         lea     (ColArray).l,a2
+                                                      *         move.b  (a2,d1.w),d0    ; heigth from ColArray
+                                                      *         ext.w   d0
+                                                      *         eor.w   d6,d4
+                                                      *         btst    #$B,d4  ; Y flipping
+                                                      *         beq.s   +
+                                                      *         neg.w   d0
+                                                      * +
+                                                      *         tst.w   d0
+                                                      *         beq.s   loc_1E7E2       ; no collision
+                                                      *         bmi.s   loc_1E85E
+                                                      *         cmpi.b  #$10,d0
+                                                      *         beq.s   loc_1E86A
+                                                      *         move.w  d2,d1
+                                                      *         andi.w  #$F,d1
+                                                      *         add.w   d1,d0
+                                                      *         move.w  #$F,d1
+                                                      *         sub.w   d0,d1
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_1E85E:
+                                                      *         move.w  d2,d1
+                                                      *         andi.w  #$F,d1
+                                                      *         add.w   d1,d0
+                                                      *         bpl.w   loc_1E7E2
+                                                      * 
+                                                      * loc_1E86A:
+                                                      *         sub.w   a3,d2
+                                                      *         bsr.w   FindFloor2
+                                                      *         add.w   a3,d2
+                                                      *         subi.w  #$10,d1
+                                                      *         rts
+                                                      * ; End of function FindFloor
+                                                      * 
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; Checks a 16x16 block to find solid ground or ceiling.
+                                                      * ; d2 = y_pos
+                                                      * ; d3 = x_pos
+                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
+                                                      * ; d6 = $0000 for no flip, $0800 for vertical flip
+                                                      * ; a4 = pointer to angle buffer
+                                                      * ; returns relevant block ID in (a1)
+                                                      * ; returns distance in d1
+                                                      * ; returns angle in (a4)
+                                                      * 
+                                                      * ; loc_1E878:
+                                                      * FindFloor2:
+                                                      *         bsr.w   Find_Tile
+                                                      *         move.w  (a1),d0
+                                                      *         move.w  d0,d4
+                                                      *         andi.w  #$3FF,d0
+                                                      *         beq.s   loc_1E88A
+                                                      *         btst    d5,d4
+                                                      *         bne.s   loc_1E898
+                                                      * 
+                                                      * loc_1E88A:
+                                                      *         move.w  #$F,d1
+                                                      *         move.w  d2,d0
+                                                      *         andi.w  #$F,d0
+                                                      *         sub.w   d0,d1
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_1E898:
+                                                      *         movea.l (Collision_addr).w,a2
+                                                      *         move.b  (a2,d0.w),d0
+                                                      *         andi.w  #$FF,d0
+                                                      *         beq.s   loc_1E88A
+                                                      *         lea     (ColCurveMap).l,a2
+                                                      *         move.b  (a2,d0.w),(a4)
+                                                      *         lsl.w   #4,d0
+                                                      *         move.w  d3,d1
+                                                      *         btst    #$A,d4
+                                                      *         beq.s   +
+                                                      *         not.w   d1
+                                                      *         neg.b   (a4)
+                                                      * +
+                                                      *         btst    #$B,d4
+                                                      *         beq.s   +
+                                                      *         addi.b  #$40,(a4)
+                                                      *         neg.b   (a4)
+                                                      *         subi.b  #$40,(a4)
+                                                      * +
+                                                      *         andi.w  #$F,d1
+                                                      *         add.w   d0,d1
+                                                      *         lea     (ColArray).l,a2
+                                                      *         move.b  (a2,d1.w),d0
+                                                      *         ext.w   d0
+                                                      *         eor.w   d6,d4
+                                                      *         btst    #$B,d4
+                                                      *         beq.s   +
+                                                      *         neg.w   d0
+                                                      * +
+                                                      *         tst.w   d0
+                                                      *         beq.s   loc_1E88A
+                                                      *         bmi.s   loc_1E900
+                                                      *         move.w  d2,d1
+                                                      *         andi.w  #$F,d1
+                                                      *         add.w   d1,d0
+                                                      *         move.w  #$F,d1
+                                                      *         sub.w   d0,d1
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_1E900:
+                                                      *         move.w  d2,d1
+                                                      *         andi.w  #$F,d1
+                                                      *         add.w   d1,d0
+                                                      *         bpl.w   loc_1E88A
+                                                      *         not.w   d1
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * ; Checks a 16x16 block to find solid ground or ceiling. May check an additional
+                                                      * ; 16x16 block up for ceilings.
+                                                      * ; d2 = y_pos
+                                                      * ; d3 = x_pos
+                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
+                                                      * ; d6 = $0000 for no flip, $0800 for vertical flip
+                                                      * ; a4 = pointer to angle buffer
+                                                      * ; returns relevant block ID in (a1)
+                                                      * ; returns distance in d1
+                                                      * ; returns angle in (a4)
+                                                      * 
+                                                      * ; loc_1E910: Obj_CheckInFloor:
+                                                      * Ring_FindFloor:
+                                                      *         bsr.w   Find_Tile
+                                                      *         move.w  (a1),d0
+                                                      *         move.w  d0,d4
+                                                      *         andi.w  #$3FF,d0
+                                                      *         beq.s   loc_1E922
+                                                      *         btst    d5,d4
+                                                      *         bne.s   loc_1E928
+                                                      * 
+                                                      * loc_1E922:
+                                                      *         move.w  #$10,d1
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_1E928:
+                                                      *         movea.l (Collision_addr).w,a2
+                                                      *         move.b  (a2,d0.w),d0
+                                                      *         andi.w  #$FF,d0
+                                                      *         beq.s   loc_1E922
+                                                      *         lea     (ColCurveMap).l,a2
+                                                      *         move.b  (a2,d0.w),(a4)
+                                                      *         lsl.w   #4,d0
+                                                      *         move.w  d3,d1
+                                                      *         btst    #$A,d4
+                                                      *         beq.s   +
+                                                      *         not.w   d1
+                                                      *         neg.b   (a4)
+                                                      * +
+                                                      *         btst    #$B,d4
+                                                      *         beq.s   +
+                                                      *         addi.b  #$40,(a4)
+                                                      *         neg.b   (a4)
+                                                      *         subi.b  #$40,(a4)
+                                                      * +
+                                                      *         andi.w  #$F,d1
+                                                      *         add.w   d0,d1
+                                                      *         lea     (ColArray).l,a2
+                                                      *         move.b  (a2,d1.w),d0
+                                                      *         ext.w   d0
+                                                      *         eor.w   d6,d4
+                                                      *         btst    #$B,d4
+                                                      *         beq.s   +
+                                                      *         neg.w   d0
+                                                      * +
+                                                      *         tst.w   d0
+                                                      *         beq.s   loc_1E922
+                                                      *         bmi.s   loc_1E996
+                                                      *         cmpi.b  #$10,d0
+                                                      *         beq.s   loc_1E9A2
+                                                      *         move.w  d2,d1
+                                                      *         andi.w  #$F,d1
+                                                      *         add.w   d1,d0
+                                                      *         move.w  #$F,d1
+                                                      *         sub.w   d0,d1
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_1E996:
+                                                      *         move.w  d2,d1
+                                                      *         andi.w  #$F,d1
+                                                      *         add.w   d1,d0
+                                                      *         bpl.w   loc_1E922
+                                                      * 
+                                                      * loc_1E9A2:
+                                                      *         sub.w   a3,d2
+                                                      *         bsr.w   FindFloor2
+                                                      *         add.w   a3,d2
+                                                      *         subi.w  #$10,d1
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; Scans horizontally for up to 2 16x16 blocks to find solid walls.
+                                                      * ; d2 = y_pos
+                                                      * ; d3 = x_pos
+                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
+                                                      * ; d6 = $0000 for no flip, $0400 for horizontal flip
+                                                      * ; a3 = delta-x for next location to check if current one is empty
+                                                      * ; a4 = pointer to angle buffer
+                                                      * ; returns relevant block ID in (a1)
+                                                      * ; returns distance to left/right in d1
+                                                      * ; returns angle in (a4)
+                                                      * 
+                                                      * ; loc_1E9B0:
+                                                      * FindWall:
+                                                      *         bsr.w   Find_Tile
+                                                      *         move.w  (a1),d0
+                                                      *         move.w  d0,d4
+                                                      *         andi.w  #$3FF,d0        ; plain blockID
+                                                      *         beq.s   loc_1E9C2       ; no collision
+                                                      *         btst    d5,d4
+                                                      *         bne.s   loc_1E9D0
+                                                      * 
+                                                      * loc_1E9C2:
+                                                      *         add.w   a3,d3
+                                                      *         bsr.w   FindWall2
+                                                      *         sub.w   a3,d3
+                                                      *         addi.w  #$10,d1
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_1E9D0:
+                                                      *         movea.l (Collision_addr).w,a2
+                                                      *         move.b  (a2,d0.w),d0
+                                                      *         andi.w  #$FF,d0 ; relevant collisionArrayEntry
+                                                      *         beq.s   loc_1E9C2
+                                                      *         lea     (ColCurveMap).l,a2
+                                                      *         move.b  (a2,d0.w),(a4)
+                                                      *         lsl.w   #4,d0   ; offset in collision array
+                                                      *         move.w  d2,d1   ; y
+                                                      *         btst    #$B,d4  ; y-mirror?
+                                                      *         beq.s   +
+                                                      *         not.w   d1
+                                                      *         addi.b  #$40,(a4)
+                                                      *         neg.b   (a4)
+                                                      *         subi.b  #$40,(a4)
+                                                      * +
+                                                      *         btst    #$A,d4  ; x-mirror?
+                                                      *         beq.s   +
+                                                      *         neg.b   (a4)
+                                                      * +
+                                                      *         andi.w  #$F,d1  ; y
+                                                      *         add.w   d0,d1   ; line to look up
+                                                      *         lea     (ColArray2).l,a2        ; rotated collision array
+                                                      *         move.b  (a2,d1.w),d0    ; collision value
+                                                      *         ext.w   d0
+                                                      *         eor.w   d6,d4   ; set x-flip flag if from the right
+                                                      *         btst    #$A,d4  ; x-mirror?
+                                                      *         beq.s   +
+                                                      *         neg.w   d0
+                                                      * +
+                                                      *         tst.w   d0
+                                                      *         beq.s   loc_1E9C2
+                                                      *         bmi.s   loc_1EA3E
+                                                      *         cmpi.b  #$10,d0
+                                                      *         beq.s   loc_1EA4A
+                                                      *         move.w  d3,d1   ; x
+                                                      *         andi.w  #$F,d1
+                                                      *         add.w   d1,d0
+                                                      *         move.w  #$F,d1
+                                                      *         sub.w   d0,d1
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_1EA3E:
+                                                      *         move.w  d3,d1
+                                                      *         andi.w  #$F,d1
+                                                      *         add.w   d1,d0
+                                                      *         bpl.w   loc_1E9C2       ; no collision
+                                                      * 
+                                                      * loc_1EA4A:
+                                                      *         sub.w   a3,d3
+                                                      *         bsr.w   FindWall2
+                                                      *         add.w   a3,d3
+                                                      *         subi.w  #$10,d1
+                                                      *         rts
+                                                      * ; End of function FindWall
+                                                      * 
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; Checks a 16x16 blocks to find solid walls.
+                                                      * ; d2 = y_pos
+                                                      * ; d3 = x_pos
+                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
+                                                      * ; d6 = $0000 for no flip, $0400 for horizontal flip
+                                                      * ; a4 = pointer to angle buffer
+                                                      * ; returns relevant block ID in (a1)
+                                                      * ; returns distance to left/right in d1
+                                                      * ; returns angle in (a4)
+                                                      * 
+                                                      * ; loc_1EA58:
+                                                      * FindWall2:
+                                                      *         bsr.w   Find_Tile
+                                                      *         move.w  (a1),d0
+                                                      *         move.w  d0,d4
+                                                      *         andi.w  #$3FF,d0
+                                                      *         beq.s   loc_1EA6A
+                                                      *         btst    d5,d4
+                                                      *         bne.s   loc_1EA78
+                                                      * 
+                                                      * loc_1EA6A:
+                                                      *         move.w  #$F,d1
+                                                      *         move.w  d3,d0
+                                                      *         andi.w  #$F,d0
+                                                      *         sub.w   d0,d1
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_1EA78:
+                                                      *         movea.l (Collision_addr).w,a2
+                                                      *         move.b  (a2,d0.w),d0
+                                                      *         andi.w  #$FF,d0
+                                                      *         beq.s   loc_1EA6A
+                                                      *         lea     (ColCurveMap).l,a2
+                                                      *         move.b  (a2,d0.w),(a4)
+                                                      *         lsl.w   #4,d0
+                                                      *         move.w  d2,d1
+                                                      *         btst    #$B,d4
+                                                      *         beq.s   +
+                                                      *         not.w   d1
+                                                      *         addi.b  #$40,(a4)
+                                                      *         neg.b   (a4)
+                                                      *         subi.b  #$40,(a4)
+                                                      * +
+                                                      *         btst    #$A,d4
+                                                      *         beq.s   +
+                                                      *         neg.b   (a4)
+                                                      * +
+                                                      *         andi.w  #$F,d1
+                                                      *         add.w   d0,d1
+                                                      *         lea     (ColArray2).l,a2
+                                                      *         move.b  (a2,d1.w),d0
+                                                      *         ext.w   d0
+                                                      *         eor.w   d6,d4
+                                                      *         btst    #$A,d4
+                                                      *         beq.s   +
+                                                      *         neg.w   d0
+                                                      * +
+                                                      *         tst.w   d0
+                                                      *         beq.s   loc_1EA6A
+                                                      *         bmi.s   loc_1EAE0
+                                                      *         move.w  d3,d1
+                                                      *         andi.w  #$F,d1
+                                                      *         add.w   d1,d0
+                                                      *         move.w  #$F,d1
+                                                      *         sub.w   d0,d1
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_1EAE0:
+                                                      *         move.w  d3,d1
+                                                      *         andi.w  #$F,d1
+                                                      *         add.w   d1,d0
+                                                      *         bpl.w   loc_1EA6A
+                                                      *         not.w   d1
+                                                      *         rts
+                                                      * ; End of function FindWall2
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; The subroutine appears to convert the collision array from an unknown
+                                                      * ; 'raw' format to its current format, and write it to ROM, overwritting
+                                                      * ; the original. This doesn't work on standard read-only cartridges, and
+                                                      * ; would instead require a special dev cartridge.
+                                                      * ; This subroutine exists in Sonic 1 as well, but was oddly changed in
+                                                      * ; the S2 Nick Arcade prototype to just handle loading GHZ's collision
+                                                      * ; instead (though it too is dummied out, hence collision being broken).
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; return_1EAF0: FloorLog_Unk:
+                                                      * ConvertCollisionArray:
+                                                      *         rts
+                                                      * ; ---------------------------------------------------------------------------
+                                                      *         lea     (ColArray).l,a1 ; Source location of 'raw' collision array
+                                                      *         lea     (ColArray).l,a2 ; Destinatation of converted collision array (overwrites the original)
+                                                      * 
+                                                      *         move.w  #$100-1,d3      ; Number of blocks in collision array
+                                                      * .blockLoop:
+                                                      *         moveq   #16,d5          ; Start on the 16th bit (the leftmost pixel)
+                                                      * 
+                                                      *         move.w  #16-1,d2        ; Width of a block in pixels
+                                                      * .columnLoop:
+                                                      *         moveq   #0,d4
+                                                      * 
+                                                      *         ; It seems the 'raw' format stored the collision of each pixel in rows.
+                                                      *         ; This block of code changes it from rows to columns, so each word contains
+                                                      *         ; a bit for each pixel in a column.
+                                                      *         move.w  #16-1,d1        ; Height of a block in pixels
+                                                      * .rowLoop:
+                                                      *         move.w  (a1)+,d0        ; Get row of collision bits
+                                                      *         lsr.l   d5,d0           ; Push the selected bit of this row into the 'eXtend' flag
+                                                      *         addx.w  d4,d4           ; Shift d4 to the left, and insert the selected bit into bit 0
+                                                      *         dbf     d1,.rowLoop     ; Loop for each row of pixels in a block
+                                                      * 
+                                                      *         move.w  d4,(a2)+        ; Store column of collision bits
+                                                      *         suba.w  #2*16,a1        ; Back to the start of the block
+                                                      *         subq.w  #1,d5           ; Get next bit in the row
+                                                      *         dbf     d2,.columnLoop  ; Loop for each column of pixels in a block
+                                                      * 
+                                                      *         adda.w  #2*16,a1        ; Next block
+                                                      *         dbf     d3,.blockLoop   ; Loop for each block in the collision array
+                                                      * 
+                                                      *         lea     (ColArray).l,a1
+                                                      *         lea     (ColArray2).l,a2        ; Write converted collision array to location of rotated collison array
+                                                      *         bsr.s   .convertArrayToStandardFormat
+                                                      *         lea     (ColArray).l,a1
+                                                      *         lea     (ColArray).l,a2         ; Write converted collision array to location of normal collison array
+                                                      * 
+                                                      * ; loc_1EB46: FloorLog_Unk2:
+                                                      * .convertArrayToStandardFormat:
+                                                      *         move.w  #$1000-1,d3     ; Size of the collision array
+                                                      * 
+                                                      * .processCollisionArrayLoop:
+                                                      *         moveq   #0,d2
+                                                      *         move.w  #$F,d1
+                                                      *         move.w  (a1)+,d0        ; Get current column of collision pixels
+                                                      *         beq.s   .noCollision    ; Branch if there's no collision in this column
+                                                      *         bmi.s   .topPixelSolid  ; Branch if top pixel of collision is solid
+                                                      * 
+                                                      *         ; Here we count, starting from the bottom, how many pixels tall
+                                                      *         ; the collision in this column is.
+                                                      * .processColumnLoop1:
+                                                      *         lsr.w   #1,d0
+                                                      *         bcc.s   .pixelNotSolid1
+                                                      *         addq.b  #1,d2
+                                                      * .pixelNotSolid1:
+                                                      *         dbf     d1,.processColumnLoop1
+                                                      * 
+                                                      *         bra.s   .columnProcessed
+                                                      * ; ===========================================================================
+                                                      * .topPixelSolid:
+                                                      *         cmpi.w  #$FFFF,d0               ; Is entire column solid?
+                                                      *         beq.s   .entireColumnSolid      ; Branch if so
+                                                      * 
+                                                      *         ; Here we count, starting from the top, how many pixels tall
+                                                      *         ; the collision in this column is (the resulting number is negative).
+                                                      * .processColumnLoop2:
+                                                      *         lsl.w   #1,d0
+                                                      *         bcc.s   .pixelNotSolid2
+                                                      *         subq.b  #1,d2
+                                                      * .pixelNotSolid2:
+                                                      *         dbf     d1,.processColumnLoop2
+                                                      * 
+                                                      *         bra.s   .columnProcessed
+                                                      * ; ===========================================================================
+                                                      * .entireColumnSolid:
+                                                      *         move.w  #16,d0
+                                                      * 
+                                                      * ; loc_1EB78:
+                                                      * .noCollision:
+                                                      *         move.w  d0,d2
+                                                      * 
+                                                      * ; loc_1EB7A:
+                                                      * .columnProcessed:
+                                                      *         move.b  d2,(a2)+        ; Store column collision height to ROM
+                                                      *         dbf     d3,.processCollisionArrayLoop
+                                                      * 
+                                                      *         rts
+                                                      * 
+                                                      * ; End of function ConvertCollisionArray
+                                                      * 
+                                                      *     if gameRevision<2
+                                                      *         nop
+                                                      *     endif
+                                                      * 
+                                                      * 
+                                                      * 
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Subroutine to calculate how much space is in front of Sonic or Tails on the ground
+                                                      * ; d0 = some input angle
+                                                      * ; d1 = output about how many pixels (up to some high enough amount)
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EB84: Sonic_WalkSpeed:
+                                                      * CalcRoomInFront:
+                                                      *         move.l  #Primary_Collision,(Collision_addr).w
+                                                      *         cmpi.b  #$C,top_solid_bit(a0)
+                                                      *         beq.s   +
+                                                      *         move.l  #Secondary_Collision,(Collision_addr).w
+                                                      * +
+                                                      *         move.b  lrb_solid_bit(a0),d5                    ; Want walls or ceilings
+                                                      *         move.l  x_pos(a0),d3
+                                                      *         move.l  y_pos(a0),d2
+                                                      *         move.w  x_vel(a0),d1
+                                                      *         ext.l   d1
+                                                      *         asl.l   #8,d1
+                                                      *         add.l   d1,d3
+                                                      *         move.w  y_vel(a0),d1
+                                                      *         ext.l   d1
+                                                      *         asl.l   #8,d1
+                                                      *         add.l   d1,d2
+                                                      *         swap    d2
+                                                      *         swap    d3
+                                                      *         move.b  d0,(Primary_Angle).w
+                                                      *         move.b  d0,(Secondary_Angle).w
+                                                      *         move.b  d0,d1
+                                                      *         addi.b  #$20,d0
+                                                      *         bpl.s   loc_1EBDC
+                                                      * 
+                                                      *         move.b  d1,d0
+                                                      *         bpl.s   +
+                                                      *         subq.b  #1,d0
+                                                      * +
+                                                      *         addi.b  #$20,d0
+                                                      *         bra.s   loc_1EBE6
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * loc_1EBDC:
+                                                      *         move.b  d1,d0
+                                                      *         bpl.s   +
+                                                      *         addq.b  #1,d0
+                                                      * +
+                                                      *         addi.b  #$1F,d0
+                                                      * 
+                                                      * loc_1EBE6:
+                                                      *         andi.b  #$C0,d0
+                                                      *         beq.w   CheckFloorDist_Part2            ; Player is going mostly down
+                                                      *         cmpi.b  #$80,d0
+                                                      *         beq.w   CheckCeilingDist_Part2          ; Player is going mostly up
+                                                      *         andi.b  #$38,d1
+                                                      *         bne.s   +
+                                                      *         addq.w  #8,d2
+                                                      * +
+                                                      *         cmpi.b  #$40,d0
+                                                      *         beq.w   CheckLeftWallDist_Part2         ; Player is going mostly left
+                                                      *         bra.w   CheckRightWallDist_Part2        ; Player is going mostly right
+                                                      * 
+                                                      * ; End of function CalcRoomInFront
+                                                      * 
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Subroutine to calculate how much space is empty above Sonic's/Tails' head
+                                                      * ; d0 = input angle perpendicular to the spine
+                                                      * ; d1 = output about how many pixels are overhead (up to some high enough amount)
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; sub_1EC0A:
+                                                      * CalcRoomOverHead:
+                                                      *         move.l  #Primary_Collision,(Collision_addr).w
+                                                      *         cmpi.b  #$C,top_solid_bit(a0)
+                                                      *         beq.s   +
+                                                      *         move.l  #Secondary_Collision,(Collision_addr).w
+                                                      * +
+                                                      *         move.b  lrb_solid_bit(a0),d5
+                                                      *         move.b  d0,(Primary_Angle).w
+                                                      *         move.b  d0,(Secondary_Angle).w
+                                                      *         addi.b  #$20,d0
+                                                      *         andi.b  #$C0,d0
+                                                      *         cmpi.b  #$40,d0
+                                                      *         beq.w   CheckLeftCeilingDist
+                                                      *         cmpi.b  #$80,d0
+                                                      *         beq.w   Sonic_CheckCeiling
+                                                      *         cmpi.b  #$C0,d0
+                                                      *         beq.w   CheckRightCeilingDist
+                                                      * 
+                                                      * ; End of function CalcRoomOverHead
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Subroutine to check if Sonic/Tails is near the floor
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EC4E: Sonic_HitFloor:
+                                                      * Sonic_CheckFloor:
+                                                      *         move.l  #Primary_Collision,(Collision_addr).w
+                                                      *         cmpi.b  #$C,top_solid_bit(a0)
+                                                      *         beq.s   +
+                                                      *         move.l  #Secondary_Collision,(Collision_addr).w
+                                                      * +
+                                                      *         move.b  top_solid_bit(a0),d5
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.w  x_pos(a0),d3
+                                                      *         moveq   #0,d0
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d2
+                                                      *         move.b  x_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d3
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         movea.w #$10,a3
+                                                      *         move.w  #0,d6
+                                                      *         bsr.w   FindFloor
+                                                      *         move.w  d1,-(sp)
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.w  x_pos(a0),d3
+                                                      *         moveq   #0,d0
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d2
+                                                      *         move.b  x_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         sub.w   d0,d3
+                                                      *         lea     (Secondary_Angle).w,a4
+                                                      *         movea.w #$10,a3
+                                                      *         move.w  #0,d6
+                                                      *         bsr.w   FindFloor
+                                                      *         move.w  (sp)+,d0
+                                                      *         move.b  #0,d2
+                                                      * 
+                                                      * loc_1ECC6:
+                                                      *         move.b  (Secondary_Angle).w,d3
+                                                      *         cmp.w   d0,d1
+                                                      *         ble.s   loc_1ECD4
+                                                      *         move.b  (Primary_Angle).w,d3
+                                                      *         exg     d0,d1
+                                                      * 
+                                                      * loc_1ECD4:
+                                                      *         btst    #0,d3
+                                                      *         beq.s   +
+                                                      *         move.b  d2,d3
+                                                      * +
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      *         ; a bit of unused/dead code here
+                                                      * ;CheckFloorDist:
+                                                      *         move.w  y_pos(a0),d2 ; a0=character
+                                                      *         move.w  x_pos(a0),d3
+                                                      * 
+                                                      * ; Checks a 16x16 block to find solid ground. May check an additional
+                                                      * ; 16x16 block up for ceilings.
+                                                      * ; d2 = y_pos
+                                                      * ; d3 = x_pos
+                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
+                                                      * ; returns relevant block ID in (a1)
+                                                      * ; returns distance in d1
+                                                      * ; returns angle in d3, or zero if angle was odd
+                                                      * ;loc_1ECE6:
+                                                      * CheckFloorDist_Part2:
+                                                      *         addi.w  #$A,d2
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         movea.w #$10,a3
+                                                      *         move.w  #0,d6
+                                                      *         bsr.w   FindFloor
+                                                      *         move.b  #0,d2
+                                                      * 
+                                                      * ; d2 what to use as angle if (Primary_Angle).w is odd
+                                                      * ; returns angle in d3, or value in d2 if angle was odd
+                                                      * loc_1ECFE:
+                                                      *         move.b  (Primary_Angle).w,d3
+                                                      *         btst    #0,d3
+                                                      *         beq.s   +
+                                                      *         move.b  d2,d3
+                                                      * +
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      *         ; Unused collision checking subroutine
+                                                      * 
+                                                      *         move.w  x_pos(a0),d3 ; a0=character
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         subq.w  #4,d2
+                                                      *         move.l  #Primary_Collision,(Collision_addr).w
+                                                      *         cmpi.b  #$D,lrb_solid_bit(a0)
+                                                      *         beq.s   +
+                                                      *         move.l  #Secondary_Collision,(Collision_addr).w
+                                                      * +
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         move.b  #0,(a4)
+                                                      *         movea.w #$10,a3
+                                                      *         move.w  #0,d6
+                                                      *         move.b  lrb_solid_bit(a0),d5
+                                                      *         bsr.w   FindFloor
+                                                      *         move.b  (Primary_Angle).w,d3
+                                                      *         btst    #0,d3
+                                                      *         beq.s   +
+                                                      *         move.b  #0,d3
+                                                      * +
+                                                      *         rts
+                                                      * 
+                                                      * ; ===========================================================================
+                                                      * ; loc_1ED56:
+                                                      * ChkFloorEdge:
+                                                      *         move.w  x_pos(a0),d3
+                                                      * ; loc_1ED5A:
+                                                      * ChkFloorEdge_Part2:
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         moveq   #0,d0
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d2
+                                                      *         move.l  #Primary_Collision,(Collision_addr).w
+                                                      *         cmpi.b  #$C,top_solid_bit(a0)
+                                                      *         beq.s   +
+                                                      *         move.l  #Secondary_Collision,(Collision_addr).w
+                                                      * +
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         move.b  #0,(a4)
+                                                      *         movea.w #$10,a3
+                                                      *         move.w  #0,d6
+                                                      *         move.b  top_solid_bit(a0),d5
+                                                      *         bsr.w   FindFloor
+                                                      *         move.b  (Primary_Angle).w,d3
+                                                      *         btst    #0,d3
+                                                      *         beq.s   +
+                                                      *         move.b  #0,d3
+                                                      * +
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * ; Identical to ChkFloorEdge except that this uses a1 instead of a0
+                                                      * ;loc_1EDA8:
+                                                      * ChkFloorEdge2:
+                                                      *         move.w  x_pos(a1),d3
+                                                      *         move.w  y_pos(a1),d2
+                                                      *         moveq   #0,d0
+                                                      *         move.b  y_radius(a1),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d2
+                                                      *         move.l  #Primary_Collision,(Collision_addr).w
+                                                      *         cmpi.b  #$C,top_solid_bit(a1)
+                                                      *         beq.s   +
+                                                      *         move.l  #Secondary_Collision,(Collision_addr).w
+                                                      * +
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         move.b  #0,(a4)
+                                                      *         movea.w #$10,a3
+                                                      *         move.w  #0,d6
+                                                      *         move.b  top_solid_bit(a1),d5
+                                                      *         bsr.w   FindFloor
+                                                      *         move.b  (Primary_Angle).w,d3
+                                                      *         btst    #0,d3
+                                                      *         beq.s   return_1EDF8
+                                                      *         move.b  #0,d3
+                                                      * 
+                                                      * return_1EDF8:
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Subroutine checking if an object should interact with the floor
+                                                      * ; (objects such as a monitor Sonic bumps from underneath)
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EDFA: ObjHitFloor:
+                                                      * ObjCheckFloorDist:
+                                                      *         move.w  x_pos(a0),d3
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d2
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         move.b  #0,(a4)
+                                                      *         movea.w #$10,a3
+                                                      *         move.w  #0,d6
+                                                      *         moveq   #$C,d5
+                                                      *         bsr.w   FindFloor
+                                                      *         move.b  (Primary_Angle).w,d3
+                                                      *         btst    #0,d3
+                                                      *         beq.s   +
+                                                      *         move.b  #0,d3
+                                                      * +
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Collision check used to let the HTZ boss fire attack to hit the ground
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EE30:
+                                                      * FireCheckFloorDist:
+                                                      *         move.w  x_pos(a1),d3
+                                                      *         move.w  y_pos(a1),d2
+                                                      *         move.b  y_radius(a1),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d2
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         move.b  #0,(a4)
+                                                      *         movea.w #$10,a3
+                                                      *         move.w  #0,d6
+                                                      *         moveq   #$C,d5
+                                                      *         bra.w   FindFloor
+                                                      * ; End of function FireCheckFloorDist
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Collision check used to let scattered rings bounce on the ground
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EE56:
+                                                      * RingCheckFloorDist:
+                                                      *         move.w  x_pos(a0),d3
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d2
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         move.b  #0,(a4)
+                                                      *         movea.w #$10,a3
+                                                      *         move.w  #0,d6
+                                                      *         moveq   #$C,d5
+                                                      *         bra.w   Ring_FindFloor
+                                                      * ; End of function RingCheckFloorDist
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Stores a distance to the nearest wall above Sonic/Tails,
+                                                      * ; where "above" = right, into d1
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EE7C:
+                                                      * CheckRightCeilingDist:
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.w  x_pos(a0),d3
+                                                      *         moveq   #0,d0
+                                                      *         move.b  x_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         sub.w   d0,d2
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d3
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         movea.w #$10,a3
+                                                      *         move.w  #0,d6
+                                                      *         bsr.w   FindWall
+                                                      *         move.w  d1,-(sp)
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.w  x_pos(a0),d3
+                                                      *         moveq   #0,d0
+                                                      *         move.b  x_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d2
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d3
+                                                      *         lea     (Secondary_Angle).w,a4
+                                                      *         movea.w #$10,a3
+                                                      *         move.w  #0,d6
+                                                      *         bsr.w   FindWall
+                                                      *         move.w  (sp)+,d0
+                                                      *         move.b  #-$40,d2
+                                                      *         bra.w   loc_1ECC6
+                                                      * ; End of function CheckRightCeilingDist
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Stores a distance to the nearest wall on the right of Sonic/Tails into d1
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; Checks a 16x16 block to find solid walls. May check an additional
+                                                      * ; 16x16 block up for walls.
+                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
+                                                      * ; returns relevant block ID in (a1)
+                                                      * ; returns distance in d1
+                                                      * ; returns angle in d3, or zero if angle was odd
+                                                      * ; sub_1EEDC:
+                                                      * CheckRightWallDist:
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.w  x_pos(a0),d3
+                                                      * ; loc_1EEE4:
+                                                      * CheckRightWallDist_Part2:
+                                                      *         addi.w  #$A,d3
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         movea.w #$10,a3
+                                                      *         move.w  #0,d6
+                                                      *         bsr.w   FindWall
+                                                      *         move.b  #$C0,d2
+                                                      *         bra.w   loc_1ECFE
+                                                      * ; End of function CheckRightWallDist
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EF00: ObjCheckLeftWallDist:
+                                                      * ObjCheckRightWallDist:
+                                                      *         add.w   x_pos(a0),d3
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         move.b  #0,(a4)
+                                                      *         movea.w #$10,a3
+                                                      *         move.w  #0,d6
+                                                      *         moveq   #$D,d5
+                                                      *         bsr.w   FindWall
+                                                      *         move.b  (Primary_Angle).w,d3
+                                                      *         btst    #0,d3
+                                                      *         beq.s   +
+                                                      *         move.b  #-$40,d3
+                                                      * +
+                                                      *         rts
+                                                      * ; End of function ObjCheckRightWallDist
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Stores a distance from Sonic/Tails to the nearest ceiling into d1
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EF2E: Sonic_DontRunOnWalls: CheckCeilingDist:
+                                                      * Sonic_CheckCeiling:
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.w  x_pos(a0),d3
+                                                      *         moveq   #0,d0
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         sub.w   d0,d2
+                                                      *         eori.w  #$F,d2 ; flip position upside-down within the current 16x16 block?
+                                                      *         move.b  x_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d3
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         movea.w #-$10,a3
+                                                      *         move.w  #$800,d6
+                                                      *         bsr.w   FindFloor
+                                                      *         move.w  d1,-(sp)
+                                                      * 
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.w  x_pos(a0),d3
+                                                      *         moveq   #0,d0
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         sub.w   d0,d2
+                                                      *         eori.w  #$F,d2
+                                                      *         move.b  x_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         sub.w   d0,d3
+                                                      *         lea     (Secondary_Angle).w,a4
+                                                      *         movea.w #-$10,a3
+                                                      *         move.w  #$800,d6
+                                                      *         bsr.w   FindFloor
+                                                      *         move.w  (sp)+,d0
+                                                      * 
+                                                      *         move.b  #$80,d2
+                                                      *         bra.w   loc_1ECC6
+                                                      * ; End of function Sonic_CheckCeiling
+                                                      * 
+                                                      * ; ===========================================================================
+                                                      *         ; a bit of unused/dead code here
+                                                      * ;CheckCeilingDist:
+                                                      *         move.w  y_pos(a0),d2 ; a0=character
+                                                      *         move.w  x_pos(a0),d3
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; Checks a 16x16 block to find solid ceiling. May check an additional
+                                                      * ; 16x16 block up for ceilings.
+                                                      * ; d2 = y_pos
+                                                      * ; d3 = x_pos
+                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
+                                                      * ; returns relevant block ID in (a1)
+                                                      * ; returns distance in d1
+                                                      * ; returns angle in d3, or zero if angle was odd
+                                                      * ; loc_1EF9E: CheckSlopeDist:
+                                                      * CheckCeilingDist_Part2:
+                                                      *         subi.w  #$A,d2
+                                                      *         eori.w  #$F,d2
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         movea.w #-$10,a3
+                                                      *         move.w  #$800,d6
+                                                      *         bsr.w   FindFloor
+                                                      *         move.b  #$80,d2
+                                                      *         bra.w   loc_1ECFE
+                                                      * ; End of function CheckCeilingDist
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Stores a distance to the nearest wall above the object into d1
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EFBE: ObjHitCeiling:
+                                                      * ObjCheckCeilingDist:
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.w  x_pos(a0),d3
+                                                      *         moveq   #0,d0
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         sub.w   d0,d2
+                                                      *         eori.w  #$F,d2
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         movea.w #-$10,a3
+                                                      *         move.w  #$800,d6
+                                                      *         moveq   #$D,d5
+                                                      *         bsr.w   FindFloor
+                                                      *         move.b  (Primary_Angle).w,d3
+                                                      *         btst    #0,d3
+                                                      *         beq.s   +
+                                                      *         move.b  #$80,d3
+                                                      * +
+                                                      *         rts
+                                                      * ; End of function ObjCheckCeilingDist
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Stores a distance to the nearest wall above Sonic/Tails,
+                                                      * ; where "above" = left, into d1
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EFF6:
+                                                      * CheckLeftCeilingDist:
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.w  x_pos(a0),d3
+                                                      *         moveq   #0,d0
+                                                      *         move.b  x_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         sub.w   d0,d2
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         sub.w   d0,d3
+                                                      *         eori.w  #$F,d3
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         movea.w #-$10,a3
+                                                      *         move.w  #$400,d6
+                                                      *         bsr.w   FindWall
+                                                      *         move.w  d1,-(sp)
+                                                      * 
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.w  x_pos(a0),d3
+                                                      *         moveq   #0,d0
+                                                      *         move.b  x_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d2
+                                                      *         move.b  y_radius(a0),d0
+                                                      *         ext.w   d0
+                                                      *         sub.w   d0,d3
+                                                      *         eori.w  #$F,d3
+                                                      *         lea     (Secondary_Angle).w,a4
+                                                      *         movea.w #-$10,a3
+                                                      *         move.w  #$400,d6
+                                                      *         bsr.w   FindWall
+                                                      *         move.w  (sp)+,d0
+                                                      *         move.b  #$40,d2
+                                                      *         bra.w   loc_1ECC6
+                                                      * ; End of function CheckLeftCeilingDist
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Stores a distance to the nearest wall on the left of Sonic/Tails into d1
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; Checks a 16x16 block to find solid walls. May check an additional
+                                                      * ; 16x16 block up for walls.
+                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
+                                                      * ; returns relevant block ID in (a1)
+                                                      * ; returns distance in d1
+                                                      * ; returns angle in d3, or zero if angle was odd
+                                                      * ; loc_1F05E: Sonic_HitWall:
+                                                      * CheckLeftWallDist:
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         move.w  x_pos(a0),d3
+                                                      * ; loc_1F066:
+                                                      * CheckLeftWallDist_Part2:
+                                                      *         subi.w  #$A,d3
+                                                      *         eori.w  #$F,d3
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         movea.w #-$10,a3
+                                                      *         move.w  #$400,d6
+                                                      *         bsr.w   FindWall
+                                                      *         move.b  #$40,d2
+                                                      *         bra.w   loc_1ECFE
+                                                      * ; End of function CheckLeftWallDist
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1F086: ObjCheckRightWallDist:
+                                                      * ObjCheckLeftWallDist:
+                                                      *         add.w   x_pos(a0),d3
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         ; Engine bug: colliding with left walls is erratic with this function.
+                                                      *         ; The cause is this: a missing instruction to flip collision on the found
+                                                      *         ; 16x16 block; this one:
+                                                      *         ;eori.w #$F,d3
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         move.b  #0,(a4)
+                                                      *         movea.w #-$10,a3
+                                                      *         move.w  #$400,d6
+                                                      *         moveq   #$D,d5
+                                                      *         bsr.w   FindWall
+                                                      *         move.b  (Primary_Angle).w,d3
+                                                      *         btst    #0,d3
+                                                      *         beq.s   +
+                                                      *         move.b  #$40,d3
+                                                      * +
+                                                      *         rts
+
+; ***************************************************************************************************************************************************
+
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Object touch response subroutine - $20(a0) in the object RAM
+                                                      * ; collides Sonic with most objects (enemies, rings, monitors...) in the level
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_3F554:
+                                                      * TouchResponse:
+                                                      *         nop
+                                                      *         jsrto   (Touch_Rings).l, JmpTo_Touch_Rings
+                                                      *         ; Bumpers in CNZ
+                                                      *         cmpi.b  #casino_night_zone,(Current_Zone).w
+                                                      *         bne.s   +
+                                                      *         jsrto   (Check_CNZ_bumpers).l, JmpTo_Check_CNZ_bumpers
+                                                      * +
+                                                      *         tst.b   (Current_Boss_ID).w
+                                                      *         bne.w   Touch_Boss
+                                                      *         move.w  x_pos(a0),d2 ; load Sonic's position into d2,d3
+                                                      *         move.w  y_pos(a0),d3
+                                                      *         subi_.w #8,d2
+                                                      *         moveq   #0,d5
+                                                      *         move.b  y_radius(a0),d5
+                                                      *         subq.b  #3,d5
+                                                      *         sub.w   d5,d3
+                                                      *         cmpi.b  #$4D,mapping_frame(a0)  ; is Sonic ducking?
+                                                      *         bne.s   Touch_NoDuck            ; if not, branch
+                                                      *         addi.w  #$C,d3
+                                                      *         moveq   #$A,d5
+                                                      * ; loc_3F592:
+                                                      * Touch_NoDuck:
+                                                      *         move.w  #$10,d4
+                                                      *         add.w   d5,d5
+                                                      *         lea     (Dynamic_Object_RAM).w,a1
+                                                      *         move.w  #(Dynamic_Object_RAM_End-Dynamic_Object_RAM)/object_size-1,d6
+                                                      * ; loc_3F5A0:
+                                                      * Touch_Loop:
+                                                      *         move.b  collision_flags(a1),d0
+                                                      *         bne.w   Touch_Width
+                                                      * ; loc_3F5A8:
+                                                      * Touch_NextObj:
+                                                      *         lea     next_object(a1),a1 ; load obj address ; goto next object
+                                                      *         dbf     d6,Touch_Loop ; repeat 6F more times
+                                                      * 
+                                                      *         moveq   #0,d0
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * ; loc_3F5B4: Touch_Height:
+                                                      * Touch_Width:
+                                                      *         andi.w  #$3F,d0
+                                                      *         add.w   d0,d0
+                                                      *         lea     Touch_Sizes(pc,d0.w),a2
+                                                      *         moveq   #0,d1
+                                                      *         move.b  (a2)+,d1
+                                                      *         move.w  x_pos(a1),d0
+                                                      *         sub.w   d1,d0
+                                                      *         sub.w   d2,d0
+                                                      *         bcc.s   loc_3F5D6
+                                                      *         add.w   d1,d1
+                                                      *         add.w   d1,d0
+                                                      *         bcs.s   Touch_Height
+                                                      *         bra.w   Touch_NextObj
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3F5D6:
+                                                      *         cmp.w   d4,d0
+                                                      *         bhi.w   Touch_NextObj
+                                                      * ; loc_3F5DC: Touch_Width:
+                                                      * Touch_Height:
+                                                      *         moveq   #0,d1
+                                                      *         move.b  (a2)+,d1
+                                                      *         move.w  y_pos(a1),d0
+                                                      *         sub.w   d1,d0
+                                                      *         sub.w   d3,d0
+                                                      *         bcc.s   loc_3F5F6
+                                                      *         add.w   d1,d1
+                                                      *         add.w   d1,d0
+                                                      *         bcs.w   Touch_ChkValue
+                                                      *         bra.w   Touch_NextObj
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3F5F6:
+                                                      *         cmp.w   d5,d0
+                                                      *         bhi.w   Touch_NextObj
+                                                      *         bra.w   Touch_ChkValue
+                                                      * ; ===========================================================================
+                                                      * ; collision sizes (width,height)
+                                                      * ; byte_3F600:
+                                                      * Touch_Sizes:
+                                                      *         dc.b   4,  4    ;   0
+                                                      *         dc.b $14,$14    ;   1
+                                                      *         dc.b  $C,$14    ;   2
+                                                      *         dc.b $14, $C    ;   3
+                                                      *         dc.b   4,$10    ;   4
+                                                      *         dc.b  $C,$12    ;   5
+                                                      *         dc.b $10,$10    ;   6 - monitors
+                                                      *         dc.b   6,  6    ;   7 - rings
+                                                      *         dc.b $18, $C    ;   8
+                                                      *         dc.b  $C,$10    ;   9
+                                                      *         dc.b $10,  8    ;  $A
+                                                      *         dc.b   8,  8    ;  $B
+                                                      *         dc.b $14,$10    ;  $C
+                                                      *         dc.b $14,  8    ;  $D
+                                                      *         dc.b  $E, $E    ;  $E
+                                                      *         dc.b $18,$18    ;  $F
+                                                      *         dc.b $28,$10    ; $10
+                                                      *         dc.b $10,$18    ; $11
+                                                      *         dc.b   8,$10    ; $12
+                                                      *         dc.b $20,$70    ; $13
+                                                      *         dc.b $40,$20    ; $14
+                                                      *         dc.b $80,$20    ; $15
+                                                      *         dc.b $20,$20    ; $16
+                                                      *         dc.b   8,  8    ; $17
+                                                      *         dc.b   4,  4    ; $18
+                                                      *         dc.b $20,  8    ; $19
+                                                      *         dc.b  $C, $C    ; $1A
+                                                      *         dc.b   8,  4    ; $1B
+                                                      *         dc.b $18,  4    ; $1C
+                                                      *         dc.b $28,  4    ; $1D
+                                                      *         dc.b   4,  8    ; $1E
+                                                      *         dc.b   4,$18    ; $1F
+                                                      *         dc.b   4,$28    ; $20
+                                                      *         dc.b   4,$10    ; $21
+                                                      *         dc.b $18,$18    ; $22
+                                                      *         dc.b  $C,$18    ; $23
+                                                      *         dc.b $48,  8    ; $24
+                                                      *         dc.b $18,$28    ; $25
+                                                      *         dc.b $10,  4    ; $26
+                                                      *         dc.b $20,  2    ; $27
+                                                      *         dc.b   4,$40    ; $28
+                                                      *         dc.b $18,$80    ; $29
+                                                      *         dc.b $20,$10    ; $2A
+                                                      *         dc.b $10,$20    ; $2B
+                                                      *         dc.b $10,$30    ; $2C
+                                                      *         dc.b $10,$40    ; $2D
+                                                      *         dc.b $10,$50    ; $2E
+                                                      *         dc.b $10,  2    ; $2F
+                                                      *         dc.b $10,  1    ; $30
+                                                      *         dc.b   2,  8    ; $31
+                                                      *         dc.b $20,$1C    ; $32
+                                                      * ; ===========================================================================
+                                                      * ; loc_3F666:
+                                                      * Touch_Boss:
+                                                      *         lea     Touch_Sizes(pc),a3
+                                                      *         move.w  x_pos(a0),d2
+                                                      *         move.w  y_pos(a0),d3
+                                                      *         subi_.w #8,d2
+                                                      *         moveq   #0,d5
+                                                      *         move.b  y_radius(a0),d5
+                                                      *         subq.b  #3,d5
+                                                      *         sub.w   d5,d3
+                                                      *         cmpi.b  #$4D,mapping_frame(a0)
+                                                      *         bne.s   +
+                                                      *         addi.w  #$C,d3
+                                                      *         moveq   #$A,d5
+                                                      * +
+                                                      *         move.w  #$10,d4
+                                                      *         add.w   d5,d5
+                                                      *         lea     (Dynamic_Object_RAM).w,a1
+                                                      *         move.w  #(Dynamic_Object_RAM_End-Dynamic_Object_RAM)/object_size-1,d6
+                                                      * 
+                                                      * loc_3F69C:
+                                                      *         move.b  collision_flags(a1),d0
+                                                      *         bne.s   loc_3F6AE
+                                                      * 
+                                                      * loc_3F6A2:
+                                                      *         lea     next_object(a1),a1 ; a1=object
+                                                      *         dbf     d6,loc_3F69C
+                                                      * 
+                                                      *         moveq   #0,d0
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3F6AE:
+                                                      *         bsr.w   BossSpecificCollision
+                                                      *         andi.w  #$3F,d0
+                                                      *         beq.s   loc_3F6A2
+                                                      *         add.w   d0,d0
+                                                      *         lea     (a3,d0.w),a2
+                                                      *         moveq   #0,d1
+                                                      *         move.b  (a2)+,d1
+                                                      *         move.w  x_pos(a1),d0
+                                                      *         sub.w   d1,d0
+                                                      *         sub.w   d2,d0
+                                                      *         bcc.s   loc_3F6D4
+                                                      *         add.w   d1,d1
+                                                      *         add.w   d1,d0
+                                                      *         bcs.s   loc_3F6D8
+                                                      *         bra.s   loc_3F6A2
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3F6D4:
+                                                      *         cmp.w   d4,d0
+                                                      *         bhi.s   loc_3F6A2
+                                                      * 
+                                                      * loc_3F6D8:
+                                                      *         moveq   #0,d1
+                                                      *         move.b  (a2)+,d1
+                                                      *         move.w  y_pos(a1),d0
+                                                      *         sub.w   d1,d0
+                                                      *         sub.w   d3,d0
+                                                      *         bcc.s   loc_3F6EE
+                                                      *         add.w   d1,d1
+                                                      *         add.w   d1,d0
+                                                      *         bcs.s   Touch_ChkValue
+                                                      *         bra.s   loc_3F6A2
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3F6EE:
+                                                      *         cmp.w   d5,d0
+                                                      *         bhi.s   loc_3F6A2
+                                                      * ; loc_3F6F2:
+                                                      * Touch_ChkValue:
+                                                      *         move.b  collision_flags(a1),d1  ; load touch response number
+                                                      *         andi.b  #$C0,d1                 ; is touch response $40 or higher?
+                                                      *         beq.w   Touch_Enemy             ; if not, branch
+                                                      *         cmpi.b  #$C0,d1                 ; is touch response $C0 or higher?
+                                                      *         beq.w   Touch_Special           ; if yes, branch
+                                                      *         tst.b   d1                      ; is touch response $80-$BF ?
+                                                      *         bmi.w   Touch_ChkHurt           ; if yes, branch
+                                                      *         ; touch response is $40-$7F
+                                                      *         move.b  collision_flags(a1),d0
+                                                      *         andi.b  #$3F,d0
+                                                      *         cmpi.b  #6,d0                   ; is touch response $46 ?
+                                                      *         beq.s   Touch_Monitor           ; if yes, branch
+                                                      *         move.w  (MainCharacter+invulnerable_time).w,d0
+                                                      *         tst.w   (Two_player_mode).w
+                                                      *         beq.s   +
+                                                      *         move.w  invulnerable_time(a0),d0
+                                                      * +
+                                                      *         cmpi.w  #90,d0
+                                                      *         bhs.w   +
+                                                      *         move.b  #4,routine(a1)  ; set the object's routine counter
+                                                      *         move.w  a0,parent(a1)
+                                                      * +
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * ; loc_3F73C:
+                                                      * Touch_Monitor:
+                                                      *         tst.w   y_vel(a0)       ; is Sonic moving upwards?
+                                                      *         bpl.s   loc_3F768       ; if not, branch
+                                                      *         move.w  y_pos(a0),d0
+                                                      *         subi.w  #$10,d0
+                                                      *         cmp.w   y_pos(a1),d0
+                                                      *         blo.s   return_3F78A
+                                                      *         neg.w   y_vel(a0)       ; reverse Sonic's y-motion
+                                                      *         move.w  #-$180,y_vel(a1)
+                                                      *         tst.b   routine_secondary(a1)
+                                                      *         bne.s   return_3F78A
+                                                      *         move.b  #4,routine_secondary(a1) ; set the monitor's routine counter
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3F768:
+                                                      *         cmpa.w  #MainCharacter,a0
+                                                      *         beq.s   +
+                                                      *         tst.w   (Two_player_mode).w
+                                                      *         beq.s   return_3F78A
+                                                      * +
+                                                      *         cmpi.b  #AniIDSonAni_Roll,anim(a0)
+                                                      *         bne.s   return_3F78A
+                                                      *         neg.w   y_vel(a0)       ; reverse Sonic's y-motion
+                                                      *         move.b  #4,routine(a1)
+                                                      *         move.w  a0,parent(a1)
+                                                      * 
+                                                      * return_3F78A:
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * ; loc_3F78C:
+                                                      * Touch_Enemy:
+                                                      *         btst    #status_sec_isInvincible,status_secondary(a0)   ; is Sonic invincible?
+                                                      *         bne.s   +                       ; if yes, branch
+                                                      *         cmpi.b  #AniIDSonAni_Spindash,anim(a0)
+                                                      *         beq.s   +
+                                                      *         cmpi.b  #AniIDSonAni_Roll,anim(a0)              ; is Sonic rolling?
+                                                      *         bne.w   Touch_ChkHurt           ; if not, branch
+                                                      * +
+                                                      *         btst    #6,render_flags(a1)
+                                                      *         beq.s   Touch_Enemy_Part2
+                                                      *         tst.b   boss_hitcount2(a1)
+                                                      *         beq.s   return_3F7C6
+                                                      *         neg.w   x_vel(a0)
+                                                      *         neg.w   y_vel(a0)
+                                                      *         move.b  #0,collision_flags(a1)
+                                                      *         subq.b  #1,boss_hitcount2(a1)
+                                                      * 
+                                                      * return_3F7C6:
+                                                      *         rts
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; loc_3F7C8:
+                                                      * Touch_Enemy_Part2:
+                                                      *         tst.b   collision_property(a1)
+                                                      *         beq.s   Touch_KillEnemy
+                                                      *         neg.w   x_vel(a0)
+                                                      *         neg.w   y_vel(a0)
+                                                      *         move.b  #0,collision_flags(a1)
+                                                      *         subq.b  #1,collision_property(a1)
+                                                      *         bne.s   return_3F7E8
+                                                      *         bset    #7,status(a1)
+                                                      * 
+                                                      * return_3F7E8:
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * ; loc_3F7EA:
+                                                      * Touch_KillEnemy:
+                                                      *         bset    #7,status(a1)
+                                                      *         moveq   #0,d0
+                                                      *         move.w  (Chain_Bonus_counter).w,d0
+                                                      *         addq.w  #2,(Chain_Bonus_counter).w      ; add 2 to chain bonus counter
+                                                      *         cmpi.w  #6,d0
+                                                      *         blo.s   loc_3F802
+                                                      *         moveq   #6,d0
+                                                      * 
+                                                      * loc_3F802:
+                                                      *         move.w  d0,objoff_3E(a1)
+                                                      *         move.w  Enemy_Points(pc,d0.w),d0
+                                                      *         cmpi.w  #$20,(Chain_Bonus_counter).w    ; have 16 enemies been destroyed?
+                                                      *         blo.s   loc_3F81C                       ; if not, branch
+                                                      *         move.w  #1000,d0                        ; fix bonus to 10000 points
+                                                      *         move.w  #$A,objoff_3E(a1)
+                                                      * 
+                                                      * loc_3F81C:
+                                                      *         movea.w a0,a3
+                                                      *         bsr.w   AddPoints2
+                                                      *         _move.b #ObjID_Explosion,id(a1) ; load obj
+                                                      *         move.b  #0,routine(a1)
+                                                      *         tst.w   y_vel(a0)
+                                                      *         bmi.s   loc_3F844
+                                                      *         move.w  y_pos(a0),d0
+                                                      *         cmp.w   y_pos(a1),d0
+                                                      *         bhs.s   loc_3F84C
+                                                      *         neg.w   y_vel(a0)
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3F844:
+                                                      *         addi.w  #$100,y_vel(a0)
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3F84C:
+                                                      *         subi.w  #$100,y_vel(a0)
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * ; byte_3F854:
+                                                      * Enemy_Points:   dc.w 10, 20, 50, 100
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3F85C:
+                                                      *         bset    #7,status(a1)
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Subroutine for checking if Sonic/Tails should be hurt and hurting them if so
+                                                      * ; note: sonic or tails must be at a0
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_3F862:
+                                                      * Touch_ChkHurt:
+                                                      *         btst    #status_sec_isInvincible,status_secondary(a0)   ; is Sonic invincible?
+                                                      *         beq.s   Touch_Hurt              ; if not, branch
+                                                      * ; loc_3F86A:
+                                                      * Touch_NoHurt:
+                                                      *         moveq   #-1,d0
+                                                      *         rts
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; loc_3F86E:
+                                                      * Touch_Hurt:
+                                                      *         nop
+                                                      *         tst.w   invulnerable_time(a0)
+                                                      *         bne.s   Touch_NoHurt
+                                                      *         movea.l a1,a2
+                                                      * 
+                                                      * ; End of function TouchResponse
+                                                      * ; continue straight to HurtCharacter
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Hurting Sonic/Tails subroutine
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_3F878: HurtSonic:
+                                                      * HurtCharacter:
+                                                      *         move.w  (Ring_count).w,d0
+                                                      *         cmpa.w  #MainCharacter,a0
+                                                      *         beq.s   loc_3F88C
+                                                      *         tst.w   (Two_player_mode).w
+                                                      *         beq.s   Hurt_Sidekick
+                                                      *         move.w  (Ring_count_2P).w,d0
+                                                      * 
+                                                      * loc_3F88C:
+                                                      *         btst    #status_sec_hasShield,status_secondary(a0)
+                                                      *         bne.s   Hurt_Shield
+                                                      *         tst.w   d0
+                                                      *         beq.w   KillCharacter
+                                                      *         jsr     (SingleObjLoad).l
+                                                      *         bne.s   Hurt_Shield
+                                                      *         _move.b #ObjID_LostRings,id(a1) ; load obj
+                                                      *         move.w  x_pos(a0),x_pos(a1)
+                                                      *         move.w  y_pos(a0),y_pos(a1)
+                                                      *         move.w  a0,parent(a1)
+                                                      * 
+                                                      * ; loc_3F8B8:
+                                                      * Hurt_Shield:
+                                                      *         bclr    #status_sec_hasShield,status_secondary(a0) ; remove shield
+                                                      * 
+                                                      * ; loc_3F8BE:
+                                                      * Hurt_Sidekick:
+                                                      *         move.b  #4,routine(a0)
+                                                      *         jsrto   (Sonic_ResetOnFloor_Part2).l, JmpTo_Sonic_ResetOnFloor_Part2
+                                                      *         bset    #1,status(a0)
+                                                      *         move.w  #-$400,y_vel(a0) ; make Sonic bounce away from the object
+                                                      *         move.w  #-$200,x_vel(a0)
+                                                      *         btst    #6,status(a0)   ; underwater?
+                                                      *         beq.s   Hurt_Reverse    ; if not, branch
+                                                      *         move.w  #-$200,y_vel(a0) ; bounce slower
+                                                      *         move.w  #-$100,x_vel(a0)
+                                                      * 
+                                                      * ; loc_3F8EE:
+                                                      * Hurt_Reverse:
+                                                      *         move.w  x_pos(a0),d0
+                                                      *         cmp.w   x_pos(a2),d0
+                                                      *         blo.s   Hurt_ChkSpikes  ; if Sonic is left of the object, branch
+                                                      *         neg.w   x_vel(a0)       ; if Sonic is right of the object, reverse
+                                                      * 
+                                                      * ; loc_3F8FC:
+                                                      * Hurt_ChkSpikes:
+                                                      *         move.w  #0,inertia(a0)
+                                                      *         move.b  #AniIDSonAni_Hurt2,anim(a0)
+                                                      *         move.w  #$78,invulnerable_time(a0)
+                                                      *         move.w  #SndID_Hurt,d0  ; load normal damage sound
+                                                      *         cmpi.b  #ObjID_Spikes,(a2)      ; was damage caused by spikes?
+                                                      *         bne.s   Hurt_Sound      ; if not, branch
+                                                      *         move.w  #SndID_HurtBySpikes,d0  ; load spikes damage sound
+                                                      * 
+                                                      * ; loc_3F91C:
+                                                      * Hurt_Sound:
+                                                      *         jsr     (PlaySound).l
+                                                      *         moveq   #-1,d0
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Subroutine to kill Sonic or Tails
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_3F926: KillSonic:
+KillCharacter                                         * KillCharacter:
+                                                      *         tst.w   (Debug_placement_mode).w
+                                                      *         bne.s   ++
+                                                      *         clr.b   status_secondary(a0)
+                                                      *         move.b  #6,routine(a0)
+                                                      *         jsrto   (Sonic_ResetOnFloor_Part2).l, JmpTo_Sonic_ResetOnFloor_Part2
+                                                      *         bset    #1,status(a0)
+                                                      *         move.w  #-$700,y_vel(a0)
+                                                      *         move.w  #0,x_vel(a0)
+                                                      *         move.w  #0,inertia(a0)
+                                                      *         move.b  #AniIDSonAni_Death,anim(a0)
+                                                      *         bset    #high_priority_bit,art_tile(a0)
+                                                      *         move.w  #SndID_Hurt,d0
+                                                      *         cmpi.b  #ObjID_Spikes,id(a2)
+                                                      *         bne.s   +
+                                                      *         move.w  #SndID_HurtBySpikes,d0
+                                                      * +
+                                                      *         jsr     (PlaySound).l
+                                                      * +
+                                                      *         moveq   #-1,d0
+        rts                                           *         rts
+                                                      * ; ===========================================================================
+                                                      * ;loc_3F976:
+                                                      * Touch_Special:
+                                                      *         move.b  collision_flags(a1),d1
+                                                      *         andi.b  #$3F,d1
+                                                      *         cmpi.b  #6,d1
+                                                      *         beq.s   loc_3FA00
+                                                      *         cmpi.b  #7,d1
+                                                      *         beq.w   loc_3FA18
+                                                      *         cmpi.b  #$B,d1
+                                                      *         beq.s   BranchTo_loc_3F85C
+                                                      *         cmpi.b  #$A,d1
+                                                      *         beq.s   loc_3FA00
+                                                      *         cmpi.b  #$C,d1
+                                                      *         beq.s   loc_3F9CE
+                                                      *         cmpi.b  #$14,d1
+                                                      *         beq.s   loc_3FA00
+                                                      *         cmpi.b  #$15,d1
+                                                      *         beq.s   loc_3FA00
+                                                      *         cmpi.b  #$16,d1
+                                                      *         beq.s   loc_3FA00
+                                                      *         cmpi.b  #$17,d1
+                                                      *         beq.s   loc_3FA00
+                                                      *         cmpi.b  #$18,d1
+                                                      *         beq.s   loc_3FA00
+                                                      *         cmpi.b  #$1A,d1
+                                                      *         beq.s   loc_3FA22
+                                                      *         cmpi.b  #$21,d1
+                                                      *         beq.s   loc_3FA12
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * BranchTo_loc_3F85C ; BranchTo
+                                                      *         bra.w   loc_3F85C
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3F9CE:
+                                                      *         sub.w   d0,d5
+                                                      *         cmpi.w  #8,d5
+                                                      *         bhs.s   BranchTo_Touch_Enemy
+                                                      *         move.w  x_pos(a1),d0
+                                                      *         subq.w  #4,d0
+                                                      *         btst    #0,status(a1)
+                                                      *         beq.s   loc_3F9E8
+                                                      *         subi.w  #$10,d0
+                                                      * 
+                                                      * loc_3F9E8:
+                                                      *         sub.w   d2,d0
+                                                      *         bcc.s   loc_3F9F4
+                                                      *         addi.w  #$18,d0
+                                                      *         bcs.s   BranchTo_Touch_ChkHurt
+                                                      *         bra.s   BranchTo_Touch_Enemy
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3F9F4:
+                                                      *         cmp.w   d4,d0
+                                                      *         bhi.s   BranchTo_Touch_Enemy
+                                                      * 
+                                                      * BranchTo_Touch_ChkHurt ; BranchTo
+                                                      *         bra.w   Touch_ChkHurt
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * BranchTo_Touch_Enemy ; BranchTo
+                                                      *         bra.w   Touch_Enemy
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3FA00:
+                                                      *         move.w  a0,d1
+                                                      *         subi.w  #MainCharacter,d1
+                                                      *         beq.s   +
+                                                      *         addq.b  #1,collision_property(a1)
+                                                      * +
+                                                      *         addq.b  #1,collision_property(a1)
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3FA12:
+                                                      *         addq.b  #1,collision_property(a1)
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3FA18:
+                                                      *         move.b  #2,collision_property(a1)
+                                                      *         bra.w   Touch_Enemy
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3FA22:
+                                                      *         move.b  #-1,collision_property(a1)
+                                                      *         bra.w   Touch_Enemy
+                                                      * ; ===========================================================================
+                                                      * ; loc_3FA2C:
+                                                      * BossSpecificCollision:
+                                                      *         cmpi.b  #$F,d0
+                                                      *         bne.s   +       ; rts
+                                                      *         moveq   #0,d0
+                                                      *         move.b  (Current_Boss_ID).w,d0
+                                                      *         beq.s   +       ; rts
+                                                      *         subq.w  #1,d0
+                                                      *         add.w   d0,d0
+                                                      *         move.w  BossCollision_Index(pc,d0.w),d0
+                                                      *         jmp     BossCollision_Index(pc,d0.w)
+                                                      * ; ===========================================================================
+                                                      * +       rts
+                                                      * ; ===========================================================================
+                                                      * ; off_3FA48:
+                                                      * BossCollision_Index:offsetTable ; jump depending on boss ID
+                                                      *         offsetTableEntry.w BossCollision_EHZ_CPZ
+                                                      *         offsetTableEntry.w BossCollision_EHZ_CPZ
+                                                      *         offsetTableEntry.w BossCollision_HTZ
+                                                      *         offsetTableEntry.w BossCollision_ARZ
+                                                      *         offsetTableEntry.w BossCollision_MCZ
+                                                      *         offsetTableEntry.w BossCollision_CNZ
+                                                      *         offsetTableEntry.w BossCollision_MTZ
+                                                      *         offsetTableEntry.w BossCollision_OOZ
+                                                      *         offsetTableEntry.w return_3FA5E
+                                                      * ; ===========================================================================
+                                                      * ;loc_3FA5A:
+                                                      * BossCollision_EHZ_CPZ:
+                                                      *         move.b  collision_flags(a1),d0
+                                                      * 
+                                                      * return_3FA5E:
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * ;loc_3FA60:
+                                                      * BossCollision_HTZ:
+                                                      *         tst.b   (Boss_CollisionRoutine).w
+                                                      *         bne.s   +
+                                                      *         rts
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * +
+                                                      *         move.w  d7,-(sp)
+                                                      *         moveq   #0,d1
+                                                      *         move.b  objoff_15(a1),d1
+                                                      *         subq.b  #2,d1
+                                                      *         cmpi.b  #7,d1
+                                                      *         bgt.s   loc_3FAA8
+                                                      *         move.w  d1,d7
+                                                      *         add.w   d7,d7
+                                                      *         move.w  x_pos(a1),d0
+                                                      *         btst    #0,render_flags(a1)
+                                                      *         beq.s   loc_3FA8E
+                                                      *         add.w   word_3FAB0(pc,d7.w),d0
+                                                      *         bra.s   loc_3FA92
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3FA8E:
+                                                      *         sub.w   word_3FAB0(pc,d7.w),d0
+                                                      * 
+                                                      * loc_3FA92:
+                                                      *         move.b  byte_3FAC0(pc,d1.w),d1
+                                                      *         ori.l   #$40000,d1
+                                                      *         move.w  y_pos(a1),d7
+                                                      *         subi.w  #$1C,d7
+                                                      *         bsr.w   Boss_DoCollision
+                                                      * 
+                                                      * loc_3FAA8:
+                                                      *         move.w  (sp)+,d7
+                                                      *         move.b  collision_flags(a1),d0
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * word_3FAB0:
+                                                      *         dc.w   $1C
+                                                      *         dc.w   $20      ; 1
+                                                      *         dc.w   $28      ; 2
+                                                      *         dc.w   $34      ; 3
+                                                      *         dc.w   $3C      ; 4
+                                                      *         dc.w   $44      ; 5
+                                                      *         dc.w   $60      ; 6
+                                                      *         dc.w   $70      ; 7
+                                                      * byte_3FAC0:
+                                                      *         dc.b   4
+                                                      *         dc.b   4        ; 1
+                                                      *         dc.b   8        ; 2
+                                                      *         dc.b  $C        ; 3
+                                                      *         dc.b $14        ; 4
+                                                      *         dc.b $1C        ; 5
+                                                      *         dc.b $24        ; 6
+                                                      *         dc.b   8        ; 7
+                                                      * ; ===========================================================================
+                                                      * ;loc_3FAC8:
+                                                      * BossCollision_ARZ:
+                                                      *         move.w  d7,-(sp)
+                                                      *         move.w  x_pos(a1),d0
+                                                      *         move.w  y_pos(a1),d7
+                                                      *         tst.b   (Boss_CollisionRoutine).w
+                                                      *         beq.s   ++
+                                                      *         addi_.w #4,d7
+                                                      *         subi.w  #$50,d0
+                                                      *         btst    #0,render_flags(a1)
+                                                      *         beq.s   +
+                                                      *         addi.w  #$A0,d0
+                                                      * +
+                                                      *         move.l  #$140010,d1
+                                                      *         bsr.w   Boss_DoCollision
+                                                      * +
+                                                      *         move.w  (sp)+,d7
+                                                      *         move.b  collision_flags(a1),d0
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * ;loc_3FAFE:
+                                                      * BossCollision_MCZ:
+                                                      *         sf      boss_hurt_sonic(a1)
+                                                      *         cmpi.b  #1,(Boss_CollisionRoutine).w
+                                                      *         blt.s   BossCollision_MCZ2
+                                                      * ; Boss_CollisionRoutine = 1, i.e. diggers pointing to the side
+                                                      *         move.w  d7,-(sp)
+                                                      *         move.w  x_pos(a1),d0
+                                                      *         move.w  y_pos(a1),d7
+                                                      *         addi_.w #4,d7
+                                                      *         subi.w  #$30,d0
+                                                      *         btst    #0,render_flags(a1)     ; left or right?
+                                                      *         beq.s   +
+                                                      *         addi.w  #$60,d0                 ; x+$30, otherwise x-$30
+                                                      * +
+                                                      *         move.l  #$40004,d1              ; heigth 4, width 4
+                                                      *         bsr.w   Boss_DoCollision
+                                                      *         move.w  (sp)+,d7
+                                                      *         move.b  collision_flags(a1),d0
+                                                      *         cmpi.w  #$78,invulnerable_time(a0)
+                                                      *         bne.s   +       ; rts
+                                                      *         st      boss_hurt_sonic(a1)     ; sonic has just been hurt flag
+                                                      * +
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * ; Boss_CollisionRoutine = 0, i.e. diggers pointing towards top
+                                                      * ;loc_3FB46:
+                                                      * BossCollision_MCZ2:
+                                                      *         move.w  d7,-(sp)
+                                                      *         movea.w #$14,a5
+                                                      *         movea.w #0,a4
+                                                      * 
+                                                      * -       move.w  x_pos(a1),d0
+                                                      *         move.w  y_pos(a1),d7
+                                                      *         subi.w  #$20,d7
+                                                      *         add.w   a5,d0                   ; first check x+$14, second x-$14
+                                                      *         move.l  #$100004,d1             ; heigth $10, width 4
+                                                      *         bsr.w   Boss_DoCollision
+                                                      *         movea.w #-$14,a5
+                                                      *         adda_.w #1,a4
+                                                      *         cmpa.w  #1,a4
+                                                      *         beq.s   -                       ; jump back once for second check
+                                                      *         move.w  (sp)+,d7
+                                                      *         move.b  collision_flags(a1),d0
+                                                      *         cmpi.w  #$78,invulnerable_time(a0)
+                                                      *         bne.s   +       ; rts
+                                                      *         st      boss_hurt_sonic(a1)     ; sonic has just been hurt flag
+                                                      * +
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * ;loc_3FB8A:
+                                                      * BossCollision_CNZ:
+                                                      *         tst.b   (Boss_CollisionRoutine).w
+                                                      *         beq.s   ++
+                                                      *         move.w  d7,-(sp)
+                                                      *         move.w  x_pos(a1),d0
+                                                      *         move.w  y_pos(a1),d7
+                                                      *         addi.w  #$28,d7
+                                                      *         move.l  #$80010,d1
+                                                      *         cmpi.b  #1,(Boss_CollisionRoutine).w
+                                                      *         beq.s   +
+                                                      *         move.w  #$20,d1
+                                                      *         subi_.w #8,d7
+                                                      *         addi_.w #4,d0
+                                                      * +
+                                                      *         bsr.w   Boss_DoCollision
+                                                      *         move.w  (sp)+,d7
+                                                      * +
+                                                      *         move.b  collision_flags(a1),d0
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * ;loc_3FBC4:
+                                                      * BossCollision_MTZ:
+                                                      *         move.b  collision_flags(a1),d0
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * ;loc_3FBCA:
+                                                      * BossCollision_OOZ:
+                                                      *         cmpi.b  #1,(Boss_CollisionRoutine).w
+                                                      *         blt.s   loc_3FC46
+                                                      *         beq.s   loc_3FC1C
+                                                      *         move.w  d7,-(sp)
+                                                      *         move.w  x_pos(a1),d0
+                                                      *         move.w  y_pos(a1),d7
+                                                      *         moveq   #0,d1
+                                                      *         move.b  mainspr_mapframe(a1),d1
+                                                      *         subq.b  #2,d1
+                                                      *         add.w   d1,d1
+                                                      *         btst    #0,render_flags(a1)
+                                                      *         beq.s   loc_3FBF6
+                                                      *         add.w   word_3FC10(pc,d1.w),d0
+                                                      *         bra.s   loc_3FBFA
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3FBF6:
+                                                      *         sub.w   word_3FC10(pc,d1.w),d0
+                                                      * 
+                                                      * loc_3FBFA:
+                                                      *         sub.w   word_3FC10+2(pc,d1.w),d7
+                                                      *         move.l  #$60008,d1
+                                                      *         bsr.w   Boss_DoCollision
+                                                      *         move.w  (sp)+,d7
+                                                      *         move.w  #0,d0
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * word_3FC10:
+                                                      *         dc.w   $14,    0
+                                                      *         dc.w   $10,  $10
+                                                      *         dc.w   $10, -$10
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3FC1C:
+                                                      *         move.w  d7,-(sp)
+                                                      *         move.w  x_pos(a1),d0
+                                                      *         move.w  y_pos(a1),d7
+                                                      *         moveq   #$10,d1
+                                                      *         btst    #0,render_flags(a1)
+                                                      *         beq.s   +
+                                                      *         neg.w   d1
+                                                      * +
+                                                      *         sub.w   d1,d0
+                                                      *         move.l  #$8000C,d1
+                                                      *         bsr.w   loc_3FC7A
+                                                      *         move.w  (sp)+,d7
+                                                      *         move.b  #0,d0
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3FC46:
+                                                      *         move.b  collision_flags(a1),d0
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * ;loc_3FC4C:
+                                                      *         ; d7 = y_boss, d3 = y_sonic, d1 (high word) = heigth
+                                                      *         ; d0 = x_boss, d2 = x_sonic, d1 (low word)  = width
+                                                      * Boss_DoCollision:
+                                                      *         sub.w   d1,d0
+                                                      *         sub.w   d2,d0
+                                                      *         bcc.s   loc_3FC5A
+                                                      *         add.w   d1,d1
+                                                      *         add.w   d1,d0
+                                                      *         bcs.s   loc_3FC5E
+                                                      * 
+                                                      * return_3FC58:
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3FC5A:
+                                                      *         cmp.w   d4,d0
+                                                      *         bhi.s   return_3FC58
+                                                      * 
+                                                      * loc_3FC5E:
+                                                      *         swap    d1
+                                                      *         sub.w   d1,d7
+                                                      *         sub.w   d3,d7
+                                                      *         bcc.s   loc_3FC70
+                                                      *         add.w   d1,d1
+                                                      *         add.w   d1,d7
+                                                      *         bcs.w   Touch_ChkHurt
+                                                      *         bra.s   return_3FC58
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3FC70:
+                                                      *         cmp.w   d5,d7
+                                                      *         bhi.w   return_3FC58
+                                                      *         bra.w   Touch_ChkHurt
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3FC7A:
+                                                      *         sub.w   d1,d0
+                                                      *         sub.w   d2,d0
+                                                      *         bcc.s   loc_3FC88
+                                                      *         add.w   d1,d1
+                                                      *         add.w   d1,d0
+                                                      *         bcs.s   loc_3FC8C
+                                                      * 
+                                                      * return_3FC86:
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3FC88:
+                                                      *         cmp.w   d4,d0
+                                                      *         bhi.s   return_3FC86
+                                                      * 
+                                                      * loc_3FC8C:
+                                                      *         swap    d1
+                                                      *         sub.w   d1,d7
+                                                      *         sub.w   d3,d7
+                                                      *         bcc.s   loc_3FC9E
+                                                      *         add.w   d1,d1
+                                                      *         add.w   d1,d7
+                                                      *         bcs.w   loc_3FCA4
+                                                      *         bra.s   return_3FC86
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * loc_3FC9E:
+                                                      *         cmp.w   d5,d7
+                                                      *         bhi.w   return_3FC86
+                                                      * 
+                                                      * loc_3FCA4:
+                                                      *         neg.w   x_vel(a0)
+                                                      *         neg.w   y_vel(a0)
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      *     if gameRevision<2
+                                                      *         nop
+                                                      *     endif
+                                                      * 
+                                                      *     if ~~removeJmpTos
+                                                      * JmpTo_Sonic_ResetOnFloor_Part2 ; JmpTo
+                                                      *         jmp     (Sonic_ResetOnFloor_Part2).l
+                                                      * JmpTo_Check_CNZ_bumpers
+                                                      *         jmp     (Check_CNZ_bumpers).l
+                                                      * JmpTo_Touch_Rings ; JmpTo
+                                                      *         jmp     (Touch_Rings).l
+                                                      * 
+                                                      *         align 4
+                                                      *     endif
+                                                      * 
+                                                      * 
+                                                      * 
+                                                      * 
+                                                      * ; ===========================================================================
+                                                      * ;loc_3FCC4:
+                                                      * AniArt_Load:
+                                                      *         moveq   #0,d0
+                                                      *         move.b  (Current_Zone).w,d0
+                                                      *         add.w   d0,d0
+                                                      *         add.w   d0,d0
+                                                      *         move.w  PLC_DYNANM+2(pc,d0.w),d1
+                                                      *         lea     PLC_DYNANM(pc,d1.w),a2
+                                                      *         move.w  PLC_DYNANM(pc,d0.w),d0
+                                                      *         jmp     PLC_DYNANM(pc,d0.w)
+                                                      * ; ===========================================================================
+                                                      *         rts
+                                                      * ; ===========================================================================
+
+
+Sonic_top_speed                 fdb   0
+Sonic_acceleration              fdb   0
+Sonic_deceleration              fdb   0
+;Sonic_Pos_Record_Index         fdb   0 ; into Sonic_Pos_Record_Buf and Sonic_Stat_Record_Buf
+
+Primary_Angle                   fcb   0
+Secondary_Angle                 fcb   0
+Water_flag                      fcb   0
+
+Last_star_pole_hit              fcb   0 ; 1 byte -- max activated starpole ID in this act
+Saved_Last_star_pole_hit        fcb   0
+Saved_x_pos                     fdb   0
+Saved_y_pos                     fdb   0
+Saved_Solid_bits                fdb   0
+
+Control_Locked                  fcb   0
+
  ENDC

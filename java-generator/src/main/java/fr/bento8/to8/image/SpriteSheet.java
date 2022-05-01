@@ -48,6 +48,9 @@ public class SpriteSheet {
 	int[] y1_offset; // position haut gauche de l'image par rapport au centre		
 	int[] x_size; // largeur de l'image en pixel (sans les pixels transparents)		
 	int[] y_size; // hauteur de l'image en pixel (sans les pixels transparents)		
+	boolean[] alpha; // vrai si l'image contient au moins un pixel transparent	
+	boolean[] evenAlpha; // vrai si l'image contient au moins un pixel transparent sur les lignes paires
+	boolean[] oddAlpha; // vrai si l'image contient au moins un pixel transparent sur les lignes impaires	
 	public int center; // position du centre de l'image (dans le référentiel pixels)
 	public int center_offset; // est ce que le centre est pair (0) ou impair (1)
 	
@@ -459,6 +462,10 @@ public class SpriteSheet {
 		y1_offset = new int[subImageNb];		
 		x_size = new int[subImageNb];		
 		y_size = new int[subImageNb];
+		alpha = new boolean[subImageNb];
+		evenAlpha = new boolean[subImageNb];
+		oddAlpha = new boolean[subImageNb];
+		boolean even = true;		
 		plane0_empty = true;
 		plane1_empty = true;
 
@@ -496,13 +503,25 @@ public class SpriteSheet {
 			boolean firstPixel = true;
 			
 			int index = startIndex;
-			int endLineIndex = startIndex + subImageWidth;	
+			int endLineIndex = startIndex + subImageWidth;
+
+			even = false; // 
+			alpha[position] = false;
+			evenAlpha[position] = false;
+			oddAlpha[position] = false;
+			
 			while (index <= endIndex) { // Parcours de tous les pixels de l'image
 				
 				// Ecriture des pixels 2 à 2
 				pixels[position][page][indexDest] = (byte) (((DataBufferByte) image.getRaster().getDataBuffer()).getElem(index));
 				if (pixels[position][page][indexDest] == 0) {
 					data[position][page][indexDest] = 0;
+					alpha[position] = true;
+					if (even) {
+						evenAlpha[position] = true;
+					} else {
+						oddAlpha[position] = true;
+					}
 				} else {
 					if (page == 0 && pixels[position][page][indexDest] > 0) {
 						plane0_empty = false;
@@ -547,10 +566,17 @@ public class SpriteSheet {
 					endLineIndex = index + subImageWidth;
 					indexDest = 80*curLine;
 					page = 0;
+					even = !even;
 				} else {
 					pixels[position][page][indexDest+1] = (byte) (((DataBufferByte) image.getRaster().getDataBuffer()).getElem(index));
 					if (pixels[position][page][indexDest+1] == 0) {
 						data[position][page][indexDest+1] = 0;
+						alpha[position] = true;
+						if (even) {
+							evenAlpha[position] = true;
+						} else {
+							oddAlpha[position] = true;
+						}					
 					} else {
 					
 						if (page == 0 && pixels[position][page][indexDest+1] > 0) {
@@ -603,6 +629,7 @@ public class SpriteSheet {
 						endLineIndex = index + subImageWidth;
 						indexDest = 80*curLine;
 						page = 0;
+						even = !even;
 					}
 				}
 			}
@@ -656,7 +683,6 @@ public class SpriteSheet {
 
 		return position;
 	}
-
 	
 	public byte[] getSubImagePixels(int position, int ramPage) {
 		return pixels[computePosition(position)][ramPage];
@@ -689,6 +715,18 @@ public class SpriteSheet {
 	public int getSubImageYSize(int position) {
 		return y_size[computePosition(position)];
 	}
+	
+	public boolean getAlpha(int position) {
+		return alpha[computePosition(position)];
+	}	
+	
+	public boolean getOddAlpha(int position) {
+		return oddAlpha[computePosition(position)];
+	}	
+	
+	public boolean getEvenAlpha(int position) {
+		return evenAlpha[computePosition(position)];
+	}		
 	
 	public int getCenter() {
 		return center;

@@ -38,6 +38,8 @@ y_off                 equ   glb_tmp_var+15 ; y start position in top left chunk
 b_loc                 equ   glb_tmp_var+17 ; location in buffer
 tmb_x                 equ   glb_tmp_var+19
 tmb_y                 equ   glb_tmp_var+21
+DBT_lcpt              equ   glb_tmp_var+23
+DBT_ccpt              equ   glb_tmp_var+24
 
 ; persistant variables
 tmb_old_camera_x      fdb   0 ; last camera position (x axis)
@@ -574,7 +576,6 @@ DrawBufferedTile
         addd  #0                            ; (dynamic) add x position to index 
 @dyn2   equ   *-1
         addd  #tile_buffer
-        tfr   d,u
 
         ldy   #tmb_hprio_tiles              ; high priority tiles queue
 
@@ -583,6 +584,7 @@ DrawBufferedTile
 ; **************************************
 
 DBT_lloop
+        tfr   d,u
         std   ls_pos
         andb  #%10000000
         std   l_pos
@@ -593,8 +595,10 @@ DBT_cloop
         pulu  d,x
         pshs  u
         stb   $E7E6
-        beq   @skip
-        tsta
+        bne   @a
+        inc   glb_alphaTiles           ; if a tile contains transparency, set the tag
+        bra   @skip
+@a      tsta
         bpl   @low
         stb   ,y+
         stx   ,y++
@@ -630,8 +634,10 @@ DBT_ccpt_bck equ   *-1
         pulu  d,x
         pshs  u
         stb   $E7E6
-        beq   @skip
-        ldu   <glb_screen_location_2
+        bne   @a
+        inc   glb_alphaTiles           ; if a tile contains transparency, set the tag
+        bra   @skip
+@a      ldu   <glb_screen_location_2
         jsr   ,x
 @skip   puls  d,x,u
 
@@ -656,17 +662,13 @@ ls_pos  equ   *-2              ; line start pos
         addd  #128
         anda  #%00000111
         adda  #tile_buffer/256 ; add base address
-        tfr   d,u
 
         dec   DBT_lcpt
-        bne   DBT_lloop
+        lbne  DBT_lloop
 @rts    leas  4,s               ; empty the stack
         lda   #0
         sta   ,y                ; end marker for high priority tiles
         rts
-
-DBT_lcpt     fcb   0
-DBT_ccpt     fcb   0
 
 ; ****************************************************************************************************************************
 ; *
