@@ -56,7 +56,14 @@ public class SimpleAssemblyGenerator extends Encoder{
 	private String asmDrawFileName, lstDrawFileName, binDrawFileName;
 	private Path asmDFile, lstDFile, binDFile;
 	
-	public SimpleAssemblyGenerator(SpriteSheet spriteSheet, String destDir, int imageNum) throws Exception {
+	public static final int _NO_ALPHA = 0;
+	public static final int _ALPHA = 1;
+	public static final int _ODD_ALPHA = 2;
+	public static final int _EVEN_ALPHA = 3;
+	
+	private static boolean alpha = false;
+	
+	public SimpleAssemblyGenerator(SpriteSheet spriteSheet, String destDir, int imageNum, int alphaOption) throws Exception {
 		this.imageNum = imageNum;
 		spriteCenterEven = (spriteSheet.center % 2) == 0;
 		spriteName = spriteSheet.getName();
@@ -72,6 +79,19 @@ public class SimpleAssemblyGenerator extends Encoder{
 		logger.debug("\t\t\tXSize: "+getX_size());
 		logger.debug("\t\t\tYSize: "+getY_size());	
 		logger.debug("\t\t\tCenter: "+spriteSheet.getCenter());
+		
+		switch (alphaOption) {
+		case _NO_ALPHA: alpha = false;
+		        break;
+		case _ALPHA: alpha = spriteSheet.getAlpha(imageNum);
+		        break;
+		case _ODD_ALPHA: alpha = spriteSheet.getOddAlpha(imageNum);
+        		break;
+		case _EVEN_ALPHA: alpha = spriteSheet.getEvenAlpha(imageNum);
+        		break;
+        default: alpha = false;
+		}
+		logger.debug("\t\t\tAlpha: "+alpha);
 		
 		destDir += "/"+spriteName;
 		asmDrawFileName = destDir+"_"+imageNum+"_"+spriteSheet.variant+".asm";
@@ -125,12 +145,12 @@ public class SimpleAssemblyGenerator extends Encoder{
 
 			// Calcul des cycles et taille du code de cadre
 			cyclesDFrameCode = 0;
-			cyclesDFrameCode += getCodeFrameDrawStartCycles();
+			cyclesDFrameCode += getCodeFrameDrawStartCycles(alpha);
 			cyclesDFrameCode += getCodeFrameDrawMidCycles();
 			cyclesDFrameCode += getCodeFrameDrawEndCycles();
 
 			sizeDFrameCode = 0;
-			sizeDFrameCode += getCodeFrameDrawStartSize();
+			sizeDFrameCode += getCodeFrameDrawStartSize(alpha);
 			sizeDFrameCode += getCodeFrameDrawMidSize();
 			sizeDFrameCode += getCodeFrameDrawEndSize();					
 		} else {
@@ -164,7 +184,7 @@ public class SimpleAssemblyGenerator extends Encoder{
 				Files.deleteIfExists(asmDFile);
 				Files.createFile(asmDFile);
 
-				Files.write(asmDFile, getCodeFrameDrawStart(org), Charset.forName("UTF-8"), StandardOpenOption.APPEND);
+				Files.write(asmDFile, getCodeFrameDrawStart(org, alpha), Charset.forName("UTF-8"), StandardOpenOption.APPEND);
 				Files.write(asmDFile, spriteCode1, Charset.forName("UTF-8"), StandardOpenOption.APPEND);
 				Files.write(asmDFile, getCodeFrameDrawMid(), Charset.forName("UTF-8"), StandardOpenOption.APPEND);
 				Files.write(asmDFile, spriteCode2, Charset.forName("UTF-8"), StandardOpenOption.APPEND);
@@ -245,23 +265,32 @@ public class SimpleAssemblyGenerator extends Encoder{
 		return strBuilder.toString();
 	}
 
-	public List<String> getCodeFrameDrawStart(String org) {
+	public List<String> getCodeFrameDrawStart(String org, boolean alphaFlag) {
 		List<String> asm = new ArrayList<String>();
 		asm.add("\tINCLUDE \"./Engine/Constants.asm\"");		
 		asm.add("\tORG $" + org + "");
 		asm.add("\tSETDP $FF");
 		asm.add("\tOPT C,CT");		
 		asm.add("DRAW_" + spriteName + "_" + imageNum);
+		if (alphaFlag) {
+			asm.add("\n\tstb   <glb_alphaTiles"); // tile rendering use b to load ram page, only 4 cycles in direct mode, better than inc
+		}
 		return asm;
 	}
 
-	public int getCodeFrameDrawStartCycles() throws Exception {
+	public int getCodeFrameDrawStartCycles(boolean alphaFlag) throws Exception {
 		int cycles = 0;
+		if (alphaFlag) {
+			cycles += Register.costDirectST[Register.B];
+		}		
 		return cycles;
 	}
 
-	public int getCodeFrameDrawStartSize() throws Exception {
+	public int getCodeFrameDrawStartSize(boolean alphaFlag) throws Exception {
 		int size = 0;
+		if (alphaFlag) {
+			size += Register.sizeDirectST[Register.B];
+		}		
 		return size;
 	}
 

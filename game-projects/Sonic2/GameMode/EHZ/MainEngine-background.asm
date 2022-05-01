@@ -32,22 +32,20 @@
         lda   #$01                     ; 1: play 60hz track at 50hz, 0: do not skip frames
         sta   Smps.60HzData 
         _RunObjectRoutine ObjID_Smps,#0 ; YM2413_DrumModeOn
-        jsr   IrqSet50Hz
         ldb   #0                        ; music id 0
         _RunObjectRoutine ObjID_Smps,#2 ; PlayMusic 
 
 	; start music
-        jsr   IrqSet50Hz
+        jsr   IrqSet50Hz 
 
 * ==============================================================================
 * Main Loop
 * ==============================================================================
 LevelMainLoop
         jsr   WaitVBL    
-	jsr   PaletteCycling
-        jsr   UpdatePalette
         jsr   TileAnimScript
-        jsr   ReadJoypads           
+        jsr   ReadJoypads  
+        _RunObject ObjID_Sonic,#MainCharacter         
         jsr   RunObjects
 	jsr   ForceRefresh
         jsr   CheckSpritesRefresh
@@ -60,28 +58,6 @@ LevelMainLoop
         jsr   DrawHighPriorityBufferedTile    
 	jsr   EHZ_Mask
         bra   LevelMainLoop
-
-glb_pal_elapsed_frames fcb 0
-
-PaletteCycling
-	lda   Vint_Main_runcount
-	adda  glb_pal_elapsed_frames
-	cmpa  #8
-	bhi   @a
-	sta   glb_pal_elapsed_frames
-	rts
-@a	
-	lda   #0
-	sta   glb_pal_elapsed_frames
-	sta   Refresh_palette
-	ldx   Cur_palette
-	ldu   4,x
-	ldd   2,x
-	std   4,x
-	ldd   ,x
-	std   2,x
-	stu   ,x
-	rts
 
 ForceRefresh
 	; Force sprite to be refreshed when background changes
@@ -96,6 +72,17 @@ EHZ_Back
 	bne   @a
 	rts
 @a
+
+        ; this is not perfect as it will cause a tiny glitch (nearly unoticable)
+        ; will not refresh background if last frame was made 
+        ; will only non alpha tiles, not the new one ...
+	lda   glb_alphaTiles
+	bne   @a
+	rts
+@a
+        lda   #0
+        sta   glb_alphaTiles
+
         _RunObjectRoutine ObjID_EHZ_Back,#0
         _SetCartPageA        
 
@@ -249,11 +236,12 @@ TlsAni_EHZ_pulseball3_imgs
         INCLUDE "./Engine/Graphics/UnsetDisplayPriority.asm"
         INCLUDE "./Engine/Graphics/DrawSprites.asm"
         INCLUDE "./Engine/Graphics/BgBufferAlloc.asm"	
-        INCLUDE "./Engine/Joypad/ReadJoypads.asm"
+        INCLUDE "./Engine/Joypad/ReadJoypads2.asm"
         INCLUDE "./Engine/ObjectManagement/RunObjects.asm"
         INCLUDE "./Engine/ObjectManagement/DeleteObject.asm"
         INCLUDE "./Engine/ObjectManagement/ClearObj107.asm"	
+        INCLUDE "./Engine/ObjectManagement/ObjectMoveSync.asm"	
+        INCLUDE "./Engine/ObjectManagement/ObjectFallSync.asm"	
         INCLUDE "./Engine/Ram/ClearDataMemory.asm"
-	INCLUDE "./Engine/Palette/UpdatePalette.asm"
         INCLUDE "./Engine/Irq/IrqSmpsObj.asm"      
         INCLUDE "./Engine/Graphics/Tilemap/TilemapBuffer.asm"

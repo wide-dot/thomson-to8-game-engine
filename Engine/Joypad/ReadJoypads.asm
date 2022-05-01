@@ -1,40 +1,47 @@
 ********************************************************************************
-* Get joystick parameters
+* Get joystick parameters (Version 1)
 *
-* Direction des Joypads
-* ---------------------
-* Registre: $E7CC (8bits)
+* Read Joypads and store result as Press and Help values :
+* One byte with direction for player 1 and player 2
+* One byte with button for player 1 and player 2
+*
+* Note : to have one byte for each player, use V2
+* ------------------------------------------------------------------------------
+*
+* Joypads Direction
+* -----------------
+* Register: $E7CC (8bits)
 *
 * Joypad2     Joypad1
-* 1111        1111 (0: appuye | 1: relache)  
-* ||||_Haut   ||||_Haut
-* |||__Bas    |||__Bas
-* ||___Gauche ||___Gauche
-* |____Droite |____Droite
+* 1111        1111 (0: press | 1: release)  
+* ||||_Up     ||||_Up
+* |||__Down   |||__Down
+* ||___Left   ||___Left
+* |____Right  |____Right
 *
-* Boutons des Joypads
-* -------------------
-* Registre: $E7CD (8bits)
+* Joypads Bouttons
+* ----------------
+* Register: $E7CD (8bits)
 *
-*   [------] 6 bits convertisseur numerique-analogique 
-* 11 001100 (0: appuye | 1: relache) 
+*   [------] 6 bits DAC
+* 11 001100 (0: press | 1: release) 
 * ||   ||
-* ||   ||_Fire B Joypad1
-* ||   |__Fire B Joypad2
+* ||   ||_ Btn B Joypad1
+* ||   |__ Btn B Joypad2
 * ||
-* ||_Fire A Joypad1
-* |__Fire A Joypad2
+* ||______ Btn A Joypad1
+* |_______ Btn A Joypad2
 *
-* Variables globales: Joypads_Held, Joypads_Press
+* Result values: Joypads_Held, Joypads_Press
 * -----------------------------------------------
 * (16 bits)
 * Joypad2     Joypad1                                                          
-* 0000        0000 (0: relache | 1: appuye) 00 000000 (0: relache | 1: appuye)  
-* ||||_Haut   ||||_Haut                     ||[------] Non utilise             
-* |||__Bas    |||__Bas                      ||_Fire Joypad1                    
-* ||___Gauche ||___Gauche                   |__Fire Joypad2                    
-* |____Droite |____Droite                                                      
-* 
+* 0000        0000 (0: release | 1: press) 00 000000 (0: release | 1: press)  
+* ||||_Up     ||||_Up                       ||  ||         
+* |||__Down   |||__Down                     ||  ||_ Btn B Joypad1
+* ||___Left   ||___Left                     ||  |__ Btn B Joypad2                   
+* |____Right  |____Right                    ||_____ Btn A Joypad1                 
+*                                           |______ Btn A Joypad2
 ********************************************************************************
 
 ; dedicated mask

@@ -487,7 +487,7 @@ public class BuildDisk
 					} else {
 						logger.debug("\t\t- Draw");
 						ss = new SpriteSheet(sprite, associatedIdx, imgCumulative, 1, 1, 1, cur_variant, interlaced, spriteFileRef);
-						easm = new SimpleAssemblyGenerator(ss, Game.generatedCodeDirName + object.name, 0);
+						easm = new SimpleAssemblyGenerator(ss, Game.generatedCodeDirName + object.name, 0, SimpleAssemblyGenerator._NO_ALPHA);
 					}
 					easm.compileCode("A000");
 					curSubSprite.nb_cell = 0;
@@ -556,7 +556,7 @@ public class BuildDisk
 			for (tileId = 0; tileId < tileset.nbTiles; tileId++) {
 				logger.debug("\t\t"+object.name+" Compile tile: " + tileId);
 
-					sasm = new SimpleAssemblyGenerator(ss, Game.generatedCodeDirName + object.name, tileId);
+					sasm = new SimpleAssemblyGenerator(ss, Game.generatedCodeDirName + object.name, tileId, SimpleAssemblyGenerator._ODD_ALPHA);
 					sasm.compileCode("A000");						
 
 					TileBin tileBin = new TileBin(tileset);

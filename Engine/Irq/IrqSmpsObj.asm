@@ -11,6 +11,11 @@
 *
 * IrqOff
 * reset REG : [a]
+*
+* IrqSync
+* input REG : [a] screen line (0-199)
+*             [x] timer value
+* reset REG : [d]
 * ---------------------------------------------------------------------------
 
 irq_routine       equ $6027 
@@ -50,9 +55,11 @@ IrqSet50Hz
         stb   irq_timer_ctrl                     ; timer precision x8
         ldd   #IrqSmps
         std   irq_routine
+
+        lda   #199                               ; screen line to sync
         ldx   #irq_one_frame                     ; on every frame
-        stx   irq_timer
-        jsr   IrqOn   
+        jsr   IrqSync
+        jsr   IrqOn 
         rts
        
 IrqOn         
@@ -69,19 +76,60 @@ IrqOff
         orcc  #$10                                    ; tell 6809 to activate irq
         rts
         
+IrqSync 
+        ldb   #$42
+        stb   irq_timer_ctrl
+        
+        ldb   #8                                      ; ligne * 64 (cycles par ligne) / 8 (nb cycles boucle tempo)
+        mul
+        tfr   d,y
+        leay  -32,y                                   ; manual adjustment
+
+IrqSync_1
+        tst   $E7E7                                   ;
+        bmi   IrqSync_1                               ; while spot is in a visible screen line        
+IrqSync_2
+        tst   $E7E7                                   ;
+        bpl   IrqSync_2                               ; while spot is not in a visible screen line
+IrqSync_3
+        leay  -1,y                                    ;
+        bne   IrqSync_3                               ; wait until desired line
+       
+        stx   irq_timer                               ; spot is at the end of desired line
+        rts     
+
 IrqSmps 
-        sts   @a+2                                    ; backup system stack
+        sts   @bcks                                   ; backup system stack
         lds   #IRQSysStack                            ; set tmp system stack for IRQ 
         _GetCartPageA
         sta   IrqSmps_end+1                           ; backup data page
         ldd   Vint_runcount
         addd  #1
         std   Vint_runcount
+PaletteCycling
+	lda   glb_pal_elapsed_frames
+        inca
+	sta   glb_pal_elapsed_frames
+	cmpa  #8
+	ble   @a	
+	lda   #0
+	sta   glb_pal_elapsed_frames
+	sta   Refresh_palette
+	ldx   Cur_palette
+	ldu   4,x
+	ldd   2,x
+	std   4,x
+	ldd   ,x
+	std   2,x
+	stu   ,x
+@a
+        jsr   UpdatePalette
         _RunObjectRoutine ObjID_Smps,#4               ; MusicFrame
 IrqSmps_end        
         lda   #$00                                    ; (dynamic)
         _SetCartPageA                                 ; restore data page
-@a      lds   #0                                      ; (dynamic) restore system stack   
+        lds   #0                                      ; (dynamic) restore system stack   
+@bcks   equ   *-2
         jmp   $E830                                   ; return to caller
 
 ; This space allow the use of system stack inside IRQ calls
@@ -89,3 +137,6 @@ IrqSmps_end
 ; (outside of IRQ) for another task than sys stack, ex: stack blast copy 
               fill  0,32
 IRQSysStack
+
+glb_pal_elapsed_frames fcb 0
+	INCLUDE "./Engine/Palette/UpdatePalette.asm"
