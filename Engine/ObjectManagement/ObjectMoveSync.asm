@@ -11,6 +11,8 @@ ObjectMoveSync
 ; apply X velocity in sync with framerate
 ; ---------------------------------------
         ldx   Vint_Main_runcount_w     ; take number of elapsed frame since last render and multiply by velocity
+        bne   @loop1
+        ldx   #1
 @loop1   
         ldd   x_pos+1,u                ; x_pos must be followed by x_sub in memory
         addd  x_vel,u
@@ -28,6 +30,8 @@ ObjectMoveSync
 ; apply Y velocity in sync with framerate
 ; ---------------------------------------
         ldx   Vint_Main_runcount_w     ; take number of elapsed frame since last render and multiply by velocity
+        bne   @loop2
+        ldx   #1
 @loop2   
         ldd   y_pos+1,u                ; y_pos must be followed by y_sub in memory
         addd  y_vel,u
@@ -38,4 +42,4 @@ ObjectMoveSync
         sta   y_pos,u                  ; update high byte of y_pos
         leax  -1,x
         bne   @loop2   
-        rts
+@c      rts

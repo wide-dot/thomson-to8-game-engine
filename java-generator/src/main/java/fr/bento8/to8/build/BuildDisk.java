@@ -1484,8 +1484,7 @@ public class BuildDisk
 				dynamicContentT2.tagsGm.get(tag.getKey()).ramT2.setData(Integer.parseInt(tag.getValue()[2]),  (Integer.parseInt(tag.getValue()[3], 16)>0x4000?Integer.parseInt(tag.getValue()[3], 16)-0x6000:Integer.parseInt(tag.getValue()[3], 16)), data);
 			}
 		}		
-		
-		// TODO faire ROM T2 ici
+	
 	}
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
