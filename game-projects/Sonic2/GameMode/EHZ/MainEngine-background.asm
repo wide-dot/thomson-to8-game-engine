@@ -17,9 +17,7 @@
         ldd   #0
         std   <glb_camera_x_pos
         ldd   #576
-        std   <glb_camera_y_pos
-
-	; register tilemap
+        std   <glb_camera_y_pos	; register tilemap
         _RunObjectRoutine ObjID_EHZ,#0
 
         ; init tile buffer based on camera pos
@@ -37,6 +35,17 @@
 
 	; start music
         jsr   IrqSet50Hz 
+
+        ldu   #MainCharacter
+        ldd   #screen_left+$60/2
+        std   x_pos,u
+        ldd   #screen_top+20+$028F
+        std   y_pos,u
+
+        ldd   #0
+        std   <glb_camera_x_pos
+        ldd   #576
+        std   <glb_camera_y_pos
 
 * ==============================================================================
 * Main Loop
@@ -230,6 +239,7 @@ TlsAni_EHZ_pulseball3_imgs
 	INCLUDE "./Engine/Ram/BankSwitch.asm"
         INCLUDE "./Engine/Graphics/WaitVBL.asm"
         INCLUDE "./Engine/Graphics/AnimateSpriteSync.asm"	
+        INCLUDE "./Objects/MainCharacters/Sonic-EHZ/Sonic_Animate.asm"
         INCLUDE "./Engine/Graphics/DisplaySprite.asm"	
         INCLUDE "./Engine/Graphics/CheckSpritesRefresh.asm"
         INCLUDE "./Engine/Graphics/EraseSprites.asm"

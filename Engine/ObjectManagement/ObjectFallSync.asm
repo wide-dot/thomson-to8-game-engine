@@ -5,6 +5,8 @@
 ObjectFallSync
         ldd   x_vel,u
         ldx   Vint_Main_runcount_w     ; take number of elapsed frame since last render and multiply by gravity
+        bne   @loop
+        ldx   #1
 @loop   
         addd  x_acl,u
         leax  -1,x
@@ -13,6 +15,8 @@ ObjectFallSync
 
         ldd   y_vel,u
         ldx   Vint_Main_runcount_w     ; take number of elapsed frame since last render and multiply by gravity
+        bne   @loop
+        ldx   #1
 @loop   
         addd  y_acl,u
         leax  -1,x
