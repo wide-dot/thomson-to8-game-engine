@@ -54,7 +54,7 @@ LevelMainLoop
         jsr   WaitVBL    
         jsr   TileAnimScript
         jsr   ReadJoypads  
-        _RunObject ObjID_Sonic,#MainCharacter         
+        _RunObject ObjID_Sonic,#MainCharacter      
         jsr   RunObjects
 	jsr   ForceRefresh
         jsr   CheckSpritesRefresh

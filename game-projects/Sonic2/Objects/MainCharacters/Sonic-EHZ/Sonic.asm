@@ -9,6 +9,9 @@
         INCLUDE "./Engine/Macros.asm"   
 
 WIDTH_FACTOR equ 1/2 ; BM16 is wide dot
+Sonic_top_speed_tmp    equ glb_tmp_var
+Sonic_acceleration_tmp equ glb_tmp_var+2
+Sonic_deceleration_tmp equ glb_tmp_var+4
 
  IFDEF sonic
 TestImageSet
@@ -145,9 +148,10 @@ Obj01_Init                                            *  Obj01_Init:
         sta   render_flags,u                          *  move.b  #4,render_flags(a0)
         ldd   #$600                                   *
         std   Sonic_top_speed                         *  move.w  #$600,(Sonic_top_speed).w   ; set Sonic's top speed
-        ldd   #$0C80                                  *
-        sta   Sonic_acceleration                      *  move.w  #$C,(Sonic_acceleration).w  ; set Sonic's acceleration
-        stb   Sonic_deceleration                      *  move.w  #$80,(Sonic_deceleration).w ; set Sonic's deceleration
+        ldd   #$000C                                  *
+        std   Sonic_acceleration                      *  move.w  #$C,(Sonic_acceleration).w  ; set Sonic's acceleration
+        ldd   #$0080
+        std   Sonic_deceleration                      *  move.w  #$80,(Sonic_deceleration).w ; set Sonic's deceleration
         tst   Last_star_pole_hit                      *  tst.b   (Last_star_pole_hit).w
         bne   Obj01_Init_Continued                    *  bne.s   Obj01_Init_Continued
                                                       *  ; only happens when not starting at a checkpoint:
@@ -533,64 +537,77 @@ Obj01_MdJump                                          *Obj01_MdJump:
                                                       *
                                                       *; loc_1A35A:
 Sonic_Move                                            *Sonic_Move:
-                                                      *  move.w  (Sonic_top_speed).w,d6
-                                                      *  move.w  (Sonic_acceleration).w,d5
-                                                      *  move.w  (Sonic_deceleration).w,d4
+        ldd   Sonic_top_speed
+        std   Sonic_top_speed_tmp                     *  move.w  (Sonic_top_speed).w,d6
+        ldd   Sonic_acceleration
+        std   Sonic_acceleration_tmp                  *  move.w  (Sonic_acceleration).w,d5
+        ldd   Sonic_deceleration
+        std   Sonic_deceleration_tmp                  *  move.w  (Sonic_deceleration).w,d4
                                                       *    if status_sec_isSliding = 7
-                                                      *  tst.b   status_secondary(a0)
-                                                      *  bmi.w   Obj01_Traction
+        tst   status_secondary,u                      *  tst.b   status_secondary(a0)
+        lbmi  Obj01_Traction                          *  bmi.w   Obj01_Traction
                                                       *    else
                                                       *  btst    #status_sec_isSliding,status_secondary(a0)
                                                       *  bne.w   Obj01_Traction
                                                       *    endif
-                                                      *  tst.w   move_lock(a0)
-                                                      *  bne.w   Obj01_ResetScr
-                                                      *  btst    #button_left,(Ctrl_1_Held_Logical).w    ; is left being pressed?
-                                                      *  beq.s   Obj01_NotLeft           ; if not, branch
-                                                      *  bsr.w   Sonic_MoveLeft
+        tst   move_lock,u                             *  tst.w   move_lock(a0)
+        bne   Obj01_ResetScr                          *  bne.w   Obj01_ResetScr
+        lda   Ctrl_1_Held_Logical
+        anda  #button_left_mask                       *  btst    #button_left,(Ctrl_1_Held_Logical).w    ; is left being pressed?
+        beq   Obj01_NotLeft                           *  beq.s   Obj01_NotLeft           ; if not, branch
+        jsr   Sonic_MoveLeft                          *  bsr.w   Sonic_MoveLeft
                                                       *; loc_1A382:
 Obj01_NotLeft                                         *Obj01_NotLeft:
-                                                      *  btst    #button_right,(Ctrl_1_Held_Logical).w   ; is right being pressed?
-                                                      *  beq.s   Obj01_NotRight          ; if not, branch
-                                                      *  bsr.w   Sonic_MoveRight
+        lda   Ctrl_1_Held_Logical                     *  btst    #button_right,(Ctrl_1_Held_Logical).w   ; is right being pressed?
+        anda  #button_right_mask                       
+        beq   Obj01_NotRight                          *  beq.s   Obj01_NotRight          ; if not, branch
+        jsr   Sonic_MoveRight                         *  bsr.w   Sonic_MoveRight
                                                       *; loc_1A38E:
 Obj01_NotRight                                        *Obj01_NotRight:
-                                                      *  move.b  angle(a0),d0
-                                                      *  addi.b  #$20,d0
-                                                      *  andi.b  #$C0,d0     ; is Sonic on a slope?
-                                                      *  bne.w   Obj01_ResetScr  ; if yes, branch
-                                                      *  tst.w   inertia(a0) ; is Sonic moving?
-                                                      *  bne.w   Obj01_ResetScr  ; if yes, branch
-                                                      *  bclr    #5,status(a0)
-        ldd   #SonAni_Wait                            *  move.b  #AniIDSonAni_Wait,anim(a0)  ; use "standing" animation
-        std   anim,u
-                                                      *  btst    #3,status(a0)
-                                                      *  beq.w   Sonic_Balance
-                                                      *  moveq   #0,d0
+        lda   angle,u                                 *  move.b  angle(a0),d0
+        adda  #$20                                    *  addi.b  #$20,d0
+        anda  #$C0                                    *  andi.b  #$C0,d0     ; is Sonic on a slope?
+        bne   Obj01_ResetScr                          *  bne.w   Obj01_ResetScr  ; if yes, branch
+        ldd   inertia,u                               *  tst.w   inertia(a0) ; is Sonic moving?
+        bne   Obj01_ResetScr                          *  bne.w   Obj01_ResetScr  ; if yes, branch
+        ldb   status,u
+        andb  #^status_pushing 
+        stb   status,u                                *  bclr    #5,status(a0)
+        ldx   #SonAni_Wait                            *  move.b  #AniIDSonAni_Wait,anim(a0)  ; use "standing" animation
+        stx   anim,u
+        bitb  #status_norgroundnorfall                *  btst    #3,status(a0)
+        beq   Sonic_Balance                           *  beq.w   Sonic_Balance
+        lda   interact,u                              *  moveq   #0,d0
                                                       *  move.b  interact(a0),d0
                                                       *    if object_size=$40
                                                       *  lsl.w   #6,d0
                                                       *    else
-                                                      *  mulu.w  #object_size,d0
+        ldb   #object_size
+        mul                                           *  mulu.w  #object_size,d0
                                                       *    endif
-                                                      *  lea (Object_RAM).w,a1 ; a1=character
-                                                      *  lea (a1,d0.w),a1 ; a1=object
-                                                      *  tst.b   status(a1)
-                                                      *  bmi.w   Sonic_Lookup
-                                                      *  moveq   #0,d1
-                                                      *  move.b  width_pixels(a1),d1
-                                                      *  move.w  d1,d2
-                                                      *  add.w   d2,d2
-                                                      *  subq.w  #2,d2
-                                                      *  add.w   x_pos(a0),d1
-                                                      *  sub.w   x_pos(a1),d1
-                                                      *  tst.b   (Super_Sonic_flag).w
-                                                      *  bne.w   SuperSonic_Balance
-                                                      *  cmpi.w  #2,d1
-                                                      *  blt.s   Sonic_BalanceOnObjLeft
-                                                      *  cmp.w   d2,d1
-                                                      *  bge.s   Sonic_BalanceOnObjRight
-                                                      *  bra.w   Sonic_Lookup
+        ldx   #Object_RAM                             *  lea (Object_RAM).w,a1 ; a1=character
+        leax  d,u                                     *  lea (a1,d0.w),a1 ; a1=object
+        tst   status,x                                *  tst.b   status(a1)
+        bmi   Sonic_Lookup                            *  bmi.w   Sonic_Lookup
+        lda   #0                                      *  moveq   #0,d1
+        ldb   width_pixels,x                          *  move.b  width_pixels(a1),d1
+        std   @d1                                     *  move.w  d1,d2
+        _lsld                                         *  add.w   d2,d2
+        subb  #2                                      *  subq.w  #2,d2
+        stb   @d2
+        ldd   #0
+@d1     equ   *-2
+        addd  x_pos,u                                 *  add.w   x_pos(a0),d1
+        subd  x_pos,x                                 *  sub.w   x_pos(a1),d1
+        ;tst   Super_Sonic_flag                        *  tst.b   (Super_Sonic_flag).w
+        ;bne   SuperSonic_Balance                      *  bne.w   SuperSonic_Balance
+        cmpd  #2                                      *  cmpi.w  #2,d1
+        blt   Sonic_BalanceOnObjLeft                  *  blt.s   Sonic_BalanceOnObjLeft
+        cmpd  #0                                      *  cmp.w   d2,d1
+@d2     equ   *-1
+        bge   Sonic_BalanceOnObjRight                 *  bge.s   Sonic_BalanceOnObjRight
+        bra   Sonic_Lookup                            *  bra.w   Sonic_Lookup
+
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1A3FE:
 SuperSonic_Balance                                    *SuperSonic_Balance:
@@ -765,42 +782,44 @@ Obj01_UpdateSpeedOnGround                             *Obj01_UpdateSpeedOnGround
                                                       *  beq.w   +
                                                       *  move.w  #$C,d5
                                                       *+
-                                                      *  move.b  (Ctrl_1_Held_Logical).w,d0
-                                                      *  andi.b  #button_left_mask|button_right_mask,d0 ; is left/right pressed?
-                                                      *  bne.s   Obj01_Traction  ; if yes, branch
-                                                      *  move.w  inertia(a0),d0
-                                                      *  beq.s   Obj01_Traction
-                                                      *  bmi.s   Obj01_SettleLeft
+        lda   Ctrl_1_Held_Logical                     *  move.b  (Ctrl_1_Held_Logical).w,d0
+        anda  #button_left_mask|button_right_mask     *  andi.b  #button_left_mask|button_right_mask,d0 ; is left/right pressed?
+        bne   Obj01_Traction                          *  bne.s   Obj01_Traction  ; if yes, branch
+        ldd   inertia,u                               *  move.w  inertia(a0),d0
+        beq   Obj01_Traction                          *  beq.s   Obj01_Traction
+        bmi   Obj01_SettleLeft                        *  bmi.s   Obj01_SettleLeft
                                                       *
                                                       *; slow down when facing right and not pressing a direction
                                                       *; Obj01_SettleRight:
-                                                      *  sub.w   d5,d0
-                                                      *  bcc.s   +
-                                                      *  move.w  #0,d0
-                                                      *+
-                                                      *  move.w  d0,inertia(a0)
+        subd  Sonic_acceleration_tmp                  *  sub.w   d5,d0
+        bcc   >                                       *  bcc.s   +
+        ldd   #0                                      *  move.w  #0,d0
+!                                                     *+
+        std   inertia,u                               *  move.w  d0,inertia(a0)
         bra   Obj01_Traction                          *  bra.s   Obj01_Traction
                                                       *; ---------------------------------------------------------------------------
                                                       *; slow down when facing left and not pressing a direction
                                                       *; loc_1A624:
 Obj01_SettleLeft                                      *Obj01_SettleLeft:
-                                                      *  add.w   d5,d0
-                                                      *  bcc.s   +
-                                                      *  move.w  #0,d0
-                                                      *+
-                                                      *  move.w  d0,inertia(a0)
+        addd  Sonic_acceleration_tmp                  *  add.w   d5,d0
+        bcc   >                                       *  bcc.s   +
+        ldd   #0                                      *  move.w  #0,d0
+!                                                     *+
+        std   inertia,u                               *  move.w  d0,inertia(a0)
                                                       *
                                                       *; increase or decrease speed on the ground
                                                       *; loc_1A630:
 Obj01_Traction                                        *Obj01_Traction:
-                                                      *  move.b  angle(a0),d0
-                                                      *  jsr (CalcSine).l
-                                                      *  muls.w  inertia(a0),d1
-                                                      *  asr.l   #8,d1
-                                                      *  move.w  d1,x_vel(a0)
-                                                      *  muls.w  inertia(a0),d0
-                                                      *  asr.l   #8,d0
-                                                      *  move.w  d0,y_vel(a0)
+        lda   angle,u                                 *  move.b  angle(a0),d0
+        ;jsr  CalcSine                                *  jsr (CalcSine).l
+        ;                                             *  muls.w  inertia(a0),d1
+        ;                                              *  asr.l   #8,d1
+        ldd   inertia,u
+        _asrd ; wide pixel
+        std   x_vel,u                                 *  move.w  d1,x_vel(a0)
+        ;                                              *  muls.w  inertia(a0),d0
+        ;                                              *  asr.l   #8,d0
+        ;                                              *  move.w  d0,y_vel(a0)
                                                       *
                                                       *; stops Sonic from running through walls that meet the ground
                                                       *; loc_1A64E:
@@ -856,50 +875,68 @@ return_1A6BE                                          *return_1A6BE:
                                                       *
                                                       *; loc_1A6C0:
 Sonic_MoveLeft                                        *Sonic_MoveLeft:
-                                                      *  move.w  inertia(a0),d0
-                                                      *  beq.s   +
-                                                      *  bpl.s   Sonic_TurnLeft ; if Sonic is already moving to the right, branch
-                                                      *+
-                                                      *  bset    #0,status(a0)
+        ldd   inertia,u                               *  move.w  inertia(a0),d0
+        beq   >                                       *  beq.s   +
+        bpl   Sonic_TurnLeft                          *  bpl.s   Sonic_TurnLeft ; if Sonic is already moving to the right, branch
+!                                                     *+
+        ldb   status,u
+        bitb  #status_x_orientation
+        bne   >
+        orb   #status_x_orientation                   *  bset    #0,status(a0)
                                                       *  bne.s   +
-                                                      *  bclr    #5,status(a0)
-                                                      *  move.b  #AniIDSonAni_Run,prev_anim(a0)  ; force walking animation to restart if it's already in-progress
-                                                      *+
-                                                      *  sub.w   d5,d0   ; add acceleration to the left
-                                                      *  move.w  d6,d1
-                                                      *  neg.w   d1
-                                                      *  cmp.w   d1,d0   ; compare new speed with top speed
-                                                      *  bgt.s   +   ; if new speed is less than the maximum, branch
-                                                      *  add.w   d5,d0   ; remove this frame's acceleration change
-                                                      *  cmp.w   d1,d0   ; compare speed with top speed
-                                                      *  ble.s   +   ; if speed was already greater than the maximum, branch
-                                                      *  move.w  d1,d0   ; limit speed on ground going left
-                                                      *+
-                                                      *  move.w  d0,inertia(a0)
-                                                      *  move.b  #AniIDSonAni_Walk,anim(a0)  ; use walking animation
+        andb  #^status_pushing 
+        stb   status,u                                *  bclr    #5,status(a0)
+        ldd   #SonAni_Run
+        std   prev_anim,u                             *  move.b  #AniIDSonAni_Run,prev_anim(a0)  ; force walking animation to restart if it's already in-progress
+!                                                     *+
+        ldd   Sonic_top_speed_tmp
+        _negd
+        std   @top_s
+        ldd   inertia,u
+        subd  Sonic_acceleration_tmp                  *  sub.w   d5,d0   ; add acceleration to the left
+        ; moved                                       *  move.w  d6,d1
+        ; moved                                       *  neg.w   d1
+        cmpd  #0
+@top_s  equ   *-2                                     *  cmp.w   d1,d0   ; compare new speed with top speed
+        bgt   >                                       *  bgt.s   +   ; if new speed is less than the maximum, branch
+        addd  Sonic_acceleration_tmp                  *  add.w   d5,d0   ; remove this frame's acceleration change
+        cmpd  @top_s                                  *  cmp.w   d1,d0   ; compare speed with top speed
+        ble   >                                       *  ble.s   +   ; if speed was already greater than the maximum, branch
+        ldd   @top_s                                  *  move.w  d1,d0   ; limit speed on ground going left
+!                                                     *+
+        std   inertia,u                               *  move.w  d0,inertia(a0)
+        ldd   #SonAni_Walk
+        std   anim,u                                  *  move.b  #AniIDSonAni_Walk,anim(a0)  ; use walking animation
         rts                                           *  rts
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1A6FA:
 Sonic_TurnLeft                                        *Sonic_TurnLeft:
-                                                      *  sub.w   d4,d0
-                                                      *  bcc.s   +
-                                                      *  move.w  #-$80,d0
-                                                      *+
-                                                      *  move.w  d0,inertia(a0)
-                                                      *  move.b  angle(a0),d0
-                                                      *  addi.b  #$20,d0
-                                                      *  andi.b  #$C0,d0
-                                                      *  bne.s   return_1A744
-                                                      *  cmpi.w  #$400,d0
-                                                      *  blt.s   return_1A744
-                                                      *  move.b  #AniIDSonAni_Stop,anim(a0)  ; use "stopping" animation
-                                                      *  bclr    #0,status(a0)
-                                                      *  move.w  #SndID_Skidding,d0
-                                                      *  jsr (PlaySound).l
-                                                      *  cmpi.b  #$C,air_left(a0)
-                                                      *  blo.s   return_1A744    ; if he's drowning, branch to not make dust
-                                                      *  move.b  #6,(Sonic_Dust+routine).w
-                                                      *  move.b  #$15,(Sonic_Dust+mapping_frame).w
+        subd  Sonic_deceleration_tmp                  *  sub.w   d4,d0
+        bcc   >                                       *  bcc.s   +
+        ldd   #-$80                                   *  move.w  #-$80,d0
+!                                                     *+
+        std   inertia,u                               *  move.w  d0,inertia(a0)
+        ldb   angle,u                                 *  move.b  angle(a0),d0
+        addb  #$20                                    *  addi.b  #$20,d0
+        andb  #$C0                                    *  andi.b  #$C0,d0
+        bne   return_1A744                            *  bne.s   return_1A744
+        cmpd  #$400                                   *  cmpi.w  #$400,d0
+        blt   return_1A744                            *  blt.s   return_1A744
+        ldd   #SonAni_Stop
+        std   anim,u                                  *  move.b  #AniIDSonAni_Stop,anim(a0)  ; use "stopping" animation
+        ldb   status,u
+        andb  #^status_x_orientation
+        stb   status,u                                *  bclr    #0,status(a0)
+        ; unimplemented sound                         *  move.w  #SndID_Skidding,d0
+        ; unimplemented sound                         *  jsr (PlaySound).l
+        lda   air_left,u                              *  cmpi.b  #$C,air_left(a0)
+        cmpa  #$C
+        blo   return_1A744                            *  blo.s   return_1A744    ; if he's drowning, branch to not make dust
+        ;ldx   #Sonic_Dust
+        ;lda   #6
+        ;sta   routine,x                               *  move.b  #6,(Sonic_Dust+routine).w
+        ;ldd   #Imgxxx
+        ;std   image_set,x                            *  move.b  #$15,(Sonic_Dust+mapping_frame).w
                                                       *
 return_1A744                                          *return_1A744:
         rts                                           *  rts
@@ -910,46 +947,59 @@ return_1A744                                          *return_1A744:
                                                       *
                                                       *; loc_1A746:
 Sonic_MoveRight                                       *Sonic_MoveRight:
-                                                      *  move.w  inertia(a0),d0
-                                                      *  bmi.s   Sonic_TurnRight ; if Sonic is already moving to the left, branch
-                                                      *  bclr    #0,status(a0)
+        ldd   inertia,u                               *  move.w  inertia(a0),d0
+        bmi   Sonic_TurnRight                         *  bmi.s   Sonic_TurnRight ; if Sonic is already moving to the left, branch
+        ldb   status,u
+        bitb  #status_x_orientation
+        beq   >
+        andb  #^(status_x_orientation|status_pushing)  *  bclr    #0,status(a0)
                                                       *  beq.s   +
-                                                      *  bclr    #5,status(a0)
-                                                      *  move.b  #AniIDSonAni_Run,prev_anim(a0)  ; force walking animation to restart if it's already in-progress
-                                                      *+
-                                                      *  add.w   d5,d0   ; add acceleration to the right
-                                                      *  cmp.w   d6,d0   ; compare new speed with top speed
-                                                      *  blt.s   +   ; if new speed is less than the maximum, branch
-                                                      *  sub.w   d5,d0   ; remove this frame's acceleration change
-                                                      *  cmp.w   d6,d0   ; compare speed with top speed
-                                                      *  bge.s   +   ; if speed was already greater than the maximum, branch
-                                                      *  move.w  d6,d0   ; limit speed on ground going right
-                                                      *+
-                                                      *  move.w  d0,inertia(a0)
-                                                      *  move.b  #AniIDSonAni_Walk,anim(a0)  ; use walking animation
+        stb   status,u                                *  bclr    #5,status(a0)
+        ldd   #SonAni_Run
+        std   prev_anim,u                             *  move.b  #AniIDSonAni_Run,prev_anim(a0)  ; force walking animation to restart if it's already in-progress
+!                                                     *+
+        ldd   inertia,u
+        addd  Sonic_acceleration_tmp                  *  add.w   d5,d0   ; add acceleration to the right
+        cmpd  Sonic_top_speed_tmp                     *  cmp.w   d6,d0   ; compare new speed with top speed
+        blt   >                                       *  blt.s   +   ; if new speed is less than the maximum, branch
+        subd  Sonic_acceleration_tmp                  *  sub.w   d5,d0   ; remove this frame's acceleration change
+        cmpd  Sonic_top_speed_tmp                     *  cmp.w   d6,d0   ; compare speed with top speed
+        bge   >                                       *  bge.s   +   ; if speed was already greater than the maximum, branch
+        ldd   Sonic_top_speed_tmp                     *  move.w  d6,d0   ; limit speed on ground going right
+!                                                     *+
+        std   inertia,u                               *  move.w  d0,inertia(a0)
+        ldd   #SonAni_Walk
+        std   anim,u                                  *  move.b  #AniIDSonAni_Walk,anim(a0)  ; use walking animation
         rts                                           *  rts
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1A77A:
 Sonic_TurnRight                                       *Sonic_TurnRight:
-                                                      *  add.w   d4,d0
-                                                      *  bcc.s   +
-                                                      *  move.w  #$80,d0
-                                                      *+
-                                                      *  move.w  d0,inertia(a0)
-                                                      *  move.b  angle(a0),d0
-                                                      *  addi.b  #$20,d0
-                                                      *  andi.b  #$C0,d0
-                                                      *  bne.s   return_1A7C4
-                                                      *  cmpi.w  #-$400,d0
-                                                      *  bgt.s   return_1A7C4
-                                                      *  move.b  #AniIDSonAni_Stop,anim(a0)  ; use "stopping" animation
-                                                      *  bset    #0,status(a0)
-                                                      *  move.w  #SndID_Skidding,d0  ; use "stopping" sound
-                                                      *  jsr (PlaySound).l
-                                                      *  cmpi.b  #$C,air_left(a0)
-                                                      *  blo.s   return_1A7C4    ; if he's drowning, branch to not make dust
-                                                      *  move.b  #6,(Sonic_Dust+routine).w
-                                                      *  move.b  #$15,(Sonic_Dust+mapping_frame).w
+        addd  Sonic_deceleration_tmp                  *  add.w   d4,d0
+        bcc   >                                       *  bcc.s   +
+        ldd   #$80                                    *  move.w  #$80,d0
+!                                                     *+
+        std   inertia,u                               *  move.w  d0,inertia(a0)
+        ldb   angle,u                                 *  move.b  angle(a0),d0
+        addb  #$20                                    *  addi.b  #$20,d0
+        andb  #$C0                                    *  andi.b  #$C0,d0
+        bne   return_1A744                            *  bne.s   return_1A7C4
+        cmpd  #-$400                                  *  cmpi.w  #-$400,d0
+        bgt   return_1A744                            *  bgt.s   return_1A7C4
+        ldd   #SonAni_Stop
+        std   anim,u                                  *  move.b  #AniIDSonAni_Stop,anim(a0)  ; use "stopping" animation
+        ldb   status,u
+        orb   #status_x_orientation
+        stb   status,u                                *  bset    #0,status(a0)
+        ; unimplemented sound                         *  move.w  #SndID_Skidding,d0
+        ; unimplemented sound                         *  jsr (PlaySound).l
+        lda   air_left,u                              *  cmpi.b  #$C,air_left(a0)
+        cmpa  #$C
+        blo   return_1A744                            *  blo.s   return_1A7C4    ; if he's drowning, branch to not make dust
+        ;ldx   #Sonic_Dust
+        ;lda   #6
+        ;sta   routine,x                               *  move.b  #6,(Sonic_Dust+routine).w
+        ;ldd   #Imgxxx
+        ;std   image_set,x                            *  move.b  #$15,(Sonic_Dust+mapping_frame).w
                                                       *
 return_1A7C4                                          *return_1A7C4:
         rts                                           *  rts
@@ -1059,7 +1109,7 @@ Sonic_SetRollSpeeds                                   *Sonic_SetRollSpeeds:
                                                       *  move.w  #-$1000,d1  ; limit Sonic's speed rolling left
                                                       *+
                                                       *  move.w  d1,x_vel(a0)    ; set x velocity based on $14 and angle
-        bra   Obj01_CheckWallsOnGround                *  bra.w   Obj01_CheckWallsOnGround
+        jmp   Obj01_CheckWallsOnGround                *  bra.w   Obj01_CheckWallsOnGround
                                                       *; End of function Sonic_RollSpeed
                                                       *
                                                       *
@@ -1330,7 +1380,9 @@ Sonic_Jump                                            *Sonic_Jump:
                                                       *  asr.l   #8,d0
                                                       *  add.w   d0,y_vel(a0)    ; make Sonic jump (in Y)
                                                       *  bset    #1,status(a0)
-                                                      *  bclr    #5,status(a0)
+        ldb   status,u
+        andb  #^status_pushing 
+        stb   status,u                                *  bclr    #5,status(a0)
                                                       *  addq.l  #4,sp
                                                       *  move.b  #1,jumping(a0)
                                                       *  clr.b   stick_to_convex(a0)
@@ -2048,7 +2100,9 @@ Sonic_ResetOnFloor_Part2                              *Sonic_ResetOnFloor_Part2:
                                                       *; loc_1B0DA:
 Sonic_ResetOnFloor_Part3                              *Sonic_ResetOnFloor_Part3:
                                                       *  bclr    #1,status(a0)
-                                                      *  bclr    #5,status(a0)
+        ldb   status,u
+        andb  #^status_pushing 
+        stb   status,u                                *  bclr    #5,status(a0)
                                                       *  bclr    #4,status(a0)
                                                       *  move.b  #0,jumping(a0)
                                                       *  move.w  #0,(Chain_Bonus_counter).w
@@ -4796,7 +4850,7 @@ SAnim_WalkRun                                         *SAnim_WalkRun:
         decb                                          *  subq.b  #1,d0
 !                                                     *+
         lda   status,u                                *  move.b  status(a0),d2
-        anda  #render_xmirror_mask                    *  andi.b  #1,d2       ; is Sonic mirrored horizontally?
+        anda  #status_x_orientation                   *  andi.b  #1,d2       ; is Sonic mirrored horizontally?
         bne   >                                       *  bne.s   +       ; if yes, branch
         negb                                          *  not.b   d0      ; reverse angle
 !                                                     *+
@@ -4807,11 +4861,12 @@ SAnim_WalkRun                                         *SAnim_WalkRun:
         stb   @d1                                     *  moveq   #3,d1
 !                                                     *+
                                                       *  andi.b  #$FC,render_flags(a0)
-        eora  #0                                      *  eor.b   d1,d2
-@d1     equ   *-1
         ldb   render_flags,u
         andb  #^(render_xmirror_mask|render_ymirror_mask) 
-        orb   @d1                                     *  or.b    d1,render_flags(a0)
+        eora  #0                                      *  eor.b   d1,d2
+@d1     equ   *-1
+        sta   @d2
+        orb   @d2                                     *  or.b    d2,render_flags(a0)
         stb   render_flags,u
         lda   status,u
         bita  #status_pushing                         *  btst    #5,status(a0)
@@ -4819,6 +4874,9 @@ SAnim_WalkRun                                         *SAnim_WalkRun:
         ; moved                                       *  lsr.b   #4,d0       ; divide angle by 16
         ; moved                                       *  andi.b  #6,d0       ; angle must be 0, 2, 4 or 6
         ldd   inertia,u                               *  mvabs.w inertia(a0),d2  ; get Sonic's "speed" for animation purposes
+        bpl   >
+        _negd
+!
         ;                                             *    if status_sec_isSliding = 7
         tst   status_secondary,u                      *  tst.b   status_secondary(a0)
         bpl   >                                       *  bpl.w   +
@@ -4849,6 +4907,7 @@ SAnim_WalkRun                                         *SAnim_WalkRun:
         ldx   b,x
         stx   anim,u
         jsr   Call_SAnim_Do2
+        dec   anim_frame,u
                                                       *  moveq   #0,d1
                                                       *  move.b  anim_frame(a0),d1
                                                       *  move.b  1(a1,d1.w),d0
@@ -4858,7 +4917,7 @@ SAnim_WalkRun                                         *SAnim_WalkRun:
                                                       *  move.b  1(a1),d0
                                                       *+
                                                       *  move.b  d0,mapping_frame(a0)
-        stb   image_set,u                             *  add.b   d3,mapping_frame(a0)
+                                                      *  add.b   d3,mapping_frame(a0)
         ldb   anim_frame_duration,u
         subb  Vint_Main_runcount
         stb   anim_frame_duration,u                   *  subq.b  #1,anim_frame_duration(a0)
