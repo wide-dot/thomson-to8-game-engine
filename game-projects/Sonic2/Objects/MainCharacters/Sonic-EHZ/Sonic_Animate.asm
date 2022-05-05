@@ -129,4 +129,26 @@ SAnim_End                                             *SAnim_End:
         ldd   @page ; and set b to 0
         _SetCartPageA
         rts                                           *  rts
-
+                                                      *
+SAnim_WalkRun_Sub
+        _GetCartPageA
+        sta   @page                    ; backup cart page     
+        ldx   #Ani_Page_Index
+        ldb   id,u
+        abx
+        lda   ,x
+        _SetCartPageA
+        ldx   anim,u                                  *  moveq   #0,d1
+        ldb   anim_frame,u                            *  move.b  anim_frame(a0),d1   ; load current frame number
+        lda   #0
+        _asld
+        leay  d,x
+        ldd   ,y                                      *  move.b  1(a1,d1.w),d0       ; read sprite number from script
+        cmpa  #$FF                                    *  cmpi.b  #-1,d0
+        bne   >                                       *  bne.s   +
+        ldb   #0      
+        stb   anim_frame,u                            *  move.b  #0,anim_frame(a0)   ; restart the animation
+        ldd   ,x                                      *  move.b  1(a1),d0    ; read sprite number
+!
+        std   image_set,u                             *  move.b  d0,mapping_frame(a0)
+        bra   SAnim_Delay
