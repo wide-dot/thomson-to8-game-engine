@@ -44,13 +44,23 @@ TileMapRegister
 
         lda   layer_map_width,x
 	sta   glb_map_width
+
+        ldd   submap_camera_x_min,x
+        std   glb_camera_x_min_pos
+        ldd   submap_camera_x_max,x
+        std   glb_camera_x_max_pos
+        ldd   submap_camera_y_min,x
+        std   glb_camera_y_min_pos
+        ldd   submap_camera_y_max,x
+        std   glb_camera_y_max_pos
+
         rts  
 
 EHZ_map
         fdb   0                   ; submap_camera_x_min - camera position limit
         fdb   0                   ; submap_camera_y_min - camera position limit
-        fdb   5480                ; submap_camera_x_max - camera position limit
-        fdb   848                 ; submap_camera_y_max - camera position limit   
+        fdb   5480+16             ; submap_camera_x_max - camera position limit
+        fdb   848+16              ; submap_camera_y_max - camera position limit   
 EHZ_width equ 128
         fcb   EHZ_width           ; layer_map_width     - Width (byte) nb of chunks in this layer map rows
         fcb   8                   ; layer_map_height    - Height (byte) nb of chunks in this layer map columns 

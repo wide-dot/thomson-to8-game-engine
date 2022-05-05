@@ -460,7 +460,7 @@ Obj01_MdNormal                                        *Obj01_MdNormal:
         jsr   Sonic_Move                              *  bsr.w   Sonic_Move
         jsr   Sonic_Roll                              *  bsr.w   Sonic_Roll
         jsr   Sonic_LevelBound                        *  bsr.w   Sonic_LevelBound
-        jsr   ObjectMoveSync                          *  jsr (ObjectMove).l
+        jsr   ObjectMove                              *  jsr (ObjectMove).l
         jsr   AnglePos                                *  bsr.w   AnglePos
         jsr   Sonic_SlopeRepel                        *  bsr.w   Sonic_SlopeRepel
                                                       *
@@ -475,8 +475,8 @@ Obj01_MdAir                                           *Obj01_MdAir:
         jsr   Sonic_JumpHeight                        *  bsr.w   Sonic_JumpHeight
         jsr   Sonic_ChgJumpDir                        *  bsr.w   Sonic_ChgJumpDir
         jsr   Sonic_LevelBound                        *  bsr.w   Sonic_LevelBound
-        jsr   ObjectFallSync                           
-        jsr   ObjectMoveSync                          *  jsr (ObjectMoveAndFall).l
+        jsr   ObjectFall                               
+        jsr   ObjectMove                              *  jsr (ObjectMoveAndFall).l
         lda   status_flags,u                          *  btst    #6,status(a0)   ; is Sonic underwater?
         bita  #status_underwater                       
         beq   >                                       *  beq.s   +       ; if not, branch
@@ -500,7 +500,7 @@ Obj01_MdRoll                                          *Obj01_MdRoll:
         jsr   Sonic_RollRepel                         *  bsr.w   Sonic_RollRepel
         jsr   Sonic_RollSpeed                         *  bsr.w   Sonic_RollSpeed
         jsr   Sonic_LevelBound                        *  bsr.w   Sonic_LevelBound
-        jsr   ObjectMoveSync                          *  jsr (ObjectMove).l
+        jsr   ObjectMove                              *  jsr (ObjectMove).l
         jsr   AnglePos                                *  bsr.w   AnglePos
         jsr   Sonic_SlopeRepel                        *  bsr.w   Sonic_SlopeRepel
         rts                                           *  rts
@@ -515,8 +515,8 @@ Obj01_MdJump                                          *Obj01_MdJump:
         jsr   Sonic_JumpHeight                        *  bsr.w   Sonic_JumpHeight
         jsr   Sonic_ChgJumpDir                        *  bsr.w   Sonic_ChgJumpDir
         jsr   Sonic_LevelBound                        *  bsr.w   Sonic_LevelBound
-        jsr   ObjectFallSync                           
-        jsr   ObjectMoveSync                          *  jsr (ObjectMoveAndFall).l
+        jsr   ObjectFall                               
+        jsr   ObjectMove                              *  jsr (ObjectMoveAndFall).l
         lda   status_flags,u                          *  btst    #6,status(a0)   ; is Sonic underwater?
         bita  #status_underwater                       
         beq   >                                       *  beq.s   +       ; if not, branch
@@ -539,9 +539,17 @@ Obj01_MdJump                                          *Obj01_MdJump:
 Sonic_Move                                            *Sonic_Move:
         ldd   Sonic_top_speed
         std   Sonic_top_speed_tmp                     *  move.w  (Sonic_top_speed).w,d6
-        ldd   Sonic_acceleration
+        lda   Vint_Main_runcount
+        bne   >
+        lda   #1
+!       ldb   Sonic_acceleration+1
+        mul
         std   Sonic_acceleration_tmp                  *  move.w  (Sonic_acceleration).w,d5
-        ldd   Sonic_deceleration
+        lda   Vint_Main_runcount
+        bne   >
+        lda   #1
+!       ldb   Sonic_deceleration+1
+        mul
         std   Sonic_deceleration_tmp                  *  move.w  (Sonic_deceleration).w,d4
                                                       *    if status_sec_isSliding = 7
         tst   status_secondary,u                      *  tst.b   status_secondary(a0)
@@ -813,10 +821,16 @@ Obj01_Traction                                        *Obj01_Traction:
         lda   angle,u                                 *  move.b  angle(a0),d0
         ;jsr  CalcSine                                *  jsr (CalcSine).l
         ;                                             *  muls.w  inertia(a0),d1
-        ;                                              *  asr.l   #8,d1
+        ;                                             *  asr.l   #8,d1
         ldd   inertia,u
-        _asrd ; wide pixel
-        std   x_vel,u                                 *  move.w  d1,x_vel(a0)
+        ldx   Vint_Main_runcount_w     ; take number of elapsed frame since last render and multiply by inertia/2
+        beq   @end
+@loop
+        addd  inertia,u
+        leax  -1,x
+        bne   @loop 
+@end    _asrd ; wide dot pixel
+        std   x_vel,u                                  *  move.w  d1,x_vel(a0)
         ;                                              *  muls.w  inertia(a0),d0
         ;                                              *  asr.l   #8,d0
         ;                                              *  move.w  d0,y_vel(a0)
@@ -920,6 +934,9 @@ Sonic_TurnLeft                                        *Sonic_TurnLeft:
         addb  #$20                                    *  addi.b  #$20,d0
         andb  #$C0                                    *  andi.b  #$C0,d0
         bne   return_1A744                            *  bne.s   return_1A744
+        ldd   inertia,u
+        addd  Sonic_deceleration_tmp
+        subd  Sonic_deceleration
         cmpd  #$400                                   *  cmpi.w  #$400,d0
         blt   return_1A744                            *  blt.s   return_1A744
         ldd   #SonAni_Stop
@@ -982,9 +999,12 @@ Sonic_TurnRight                                       *Sonic_TurnRight:
         ldb   angle,u                                 *  move.b  angle(a0),d0
         addb  #$20                                    *  addi.b  #$20,d0
         andb  #$C0                                    *  andi.b  #$C0,d0
-        bne   return_1A744                            *  bne.s   return_1A7C4
+        bne   return_1A7C4                            *  bne.s   return_1A7C4
+        ldd   inertia,u
+        subd  Sonic_deceleration_tmp
+        addd  Sonic_deceleration
         cmpd  #-$400                                  *  cmpi.w  #-$400,d0
-        bgt   return_1A744                            *  bgt.s   return_1A7C4
+        bgt   return_1A7C4                            *  bgt.s   return_1A7C4
         ldd   #SonAni_Stop
         std   anim,u                                  *  move.b  #AniIDSonAni_Stop,anim(a0)  ; use "stopping" animation
         ldb   status,u
@@ -994,7 +1014,7 @@ Sonic_TurnRight                                       *Sonic_TurnRight:
         ; unimplemented sound                         *  jsr (PlaySound).l
         lda   air_left,u                              *  cmpi.b  #$C,air_left(a0)
         cmpa  #$C
-        blo   return_1A744                            *  blo.s   return_1A7C4    ; if he's drowning, branch to not make dust
+        blo   return_1A7C4                            *  blo.s   return_1A7C4    ; if he's drowning, branch to not make dust
         ;ldx   #Sonic_Dust
         ;lda   #6
         ;sta   routine,x                               *  move.b  #6,(Sonic_Dust+routine).w
@@ -2206,8 +2226,8 @@ Obj01_Dead                                            *  Obj01_Dead:
         rts                                           *  rts
                                                       *+
         jsr   CheckGameOver                           *  bsr.w   CheckGameOver
-        jsr   ObjectFallSync                           
-        jsr   ObjectMoveSync                          *  jsr (ObjectMoveAndFall).l
+        jsr   ObjectFall                               
+        jsr   ObjectMove                              *  jsr (ObjectMoveAndFall).l
         ;jsr   Sonic_RecordPos                        *  bsr.w   Sonic_RecordPos
         jsr   Sonic_Animate                           *  bsr.w   Sonic_Animate
                                                       *  bsr.w   LoadSonicDynPLC
@@ -4905,19 +4925,8 @@ SAnim_WalkRun                                         *SAnim_WalkRun:
         lsrb
         andb  #6
         ldx   b,x
-        stx   anim,u
-        jsr   Call_SAnim_Do2
-        dec   anim_frame,u
-                                                      *  moveq   #0,d1
-                                                      *  move.b  anim_frame(a0),d1
-                                                      *  move.b  1(a1,d1.w),d0
-                                                      *  cmpi.b  #-1,d0
-                                                      *  bne.s   +
-                                                      *  move.b  #0,anim_frame(a0)
-                                                      *  move.b  1(a1),d0
-                                                      *+
-                                                      *  move.b  d0,mapping_frame(a0)
-                                                      *  add.b   d3,mapping_frame(a0)
+        stx   anim,u                                  *  add.b   d3,mapping_frame(a0)
+        jsr   SAnim_WalkRun_Sub
         ldb   anim_frame_duration,u
         subb  Vint_Main_runcount
         stb   anim_frame_duration,u                   *  subq.b  #1,anim_frame_duration(a0)

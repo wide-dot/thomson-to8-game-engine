@@ -42,11 +42,6 @@
         ldd   #screen_top+20+$028F
         std   y_pos,u
 
-        ldd   #0
-        std   <glb_camera_x_pos
-        ldd   #576
-        std   <glb_camera_y_pos
-
 * ==============================================================================
 * Main Loop
 * ==============================================================================
@@ -54,7 +49,8 @@ LevelMainLoop
         jsr   WaitVBL    
         jsr   TileAnimScript
         jsr   ReadJoypads  
-        _RunObject ObjID_Sonic,#MainCharacter      
+        _RunObject ObjID_Sonic,#MainCharacter 
+        _RunObject ObjID_Scroll,#MainCharacter   
         jsr   RunObjects
 	jsr   ForceRefresh
         jsr   CheckSpritesRefresh
@@ -250,8 +246,8 @@ TlsAni_EHZ_pulseball3_imgs
         INCLUDE "./Engine/ObjectManagement/RunObjects.asm"
         INCLUDE "./Engine/ObjectManagement/DeleteObject.asm"
         INCLUDE "./Engine/ObjectManagement/ClearObj107.asm"	
-        INCLUDE "./Engine/ObjectManagement/ObjectMoveSync.asm"	
-        INCLUDE "./Engine/ObjectManagement/ObjectFallSync.asm"	
+        INCLUDE "./Engine/ObjectManagement/ObjectMove.asm"	
+        INCLUDE "./Engine/ObjectManagement/ObjectFall.asm"	
         INCLUDE "./Engine/Ram/ClearDataMemory.asm"
         INCLUDE "./Engine/Irq/IrqSmpsObj.asm"      
         INCLUDE "./Engine/Graphics/Tilemap/TilemapBuffer.asm"

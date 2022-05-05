@@ -39,9 +39,13 @@ glb_cur_ptr_sub_obj_erase     equ $9FF7
 glb_cur_ptr_sub_obj_draw      equ $9FF5
 glb_camera_x_pos              equ $9FF3 ; camera x position in palyfield coordinates
 glb_camera_y_pos              equ $9FF1 ; camera y position in palyfield coordinates
-glb_force_sprite_refresh      equ $9FF0
-glb_camera_move               equ $9FEF
-glb_alphaTiles                equ $9FEE
+glb_camera_x_min_pos          equ $9FEF
+glb_camera_y_min_pos          equ $9FED
+glb_camera_x_max_pos          equ $9FEB
+glb_camera_y_max_pos          equ $9FE9
+glb_force_sprite_refresh      equ $9FE8
+glb_camera_move               equ $9FE7
+glb_alphaTiles                equ $9FE6
 glb_tmp_var                   equ $9F00 ; custom tmp var space for routine
 glb_system_stack              equ $9F00
 
