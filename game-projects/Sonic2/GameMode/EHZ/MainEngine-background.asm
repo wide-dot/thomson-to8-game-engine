@@ -14,10 +14,15 @@
 
         jsr   LoadAct       
 
+LevelSizeLoad ; todo move to an object
         ldd   #0
         std   <glb_camera_x_pos
         ldd   #576
-        std   <glb_camera_y_pos	; register tilemap
+        std   <glb_camera_y_pos
+
+	ldd   #camera_Y_pos_bias_default
+        std   Camera_Y_pos_bias
+
         _RunObjectRoutine ObjID_EHZ,#0
 
         ; init tile buffer based on camera pos
@@ -246,8 +251,6 @@ TlsAni_EHZ_pulseball3_imgs
         INCLUDE "./Engine/ObjectManagement/RunObjects.asm"
         INCLUDE "./Engine/ObjectManagement/DeleteObject.asm"
         INCLUDE "./Engine/ObjectManagement/ClearObj107.asm"	
-        INCLUDE "./Engine/ObjectManagement/ObjectMove.asm"	
-        INCLUDE "./Engine/ObjectManagement/ObjectFall.asm"	
         INCLUDE "./Engine/Ram/ClearDataMemory.asm"
         INCLUDE "./Engine/Irq/IrqSmpsObj.asm"      
         INCLUDE "./Engine/Graphics/Tilemap/TilemapBuffer.asm"
