@@ -13,98 +13,6 @@ Sonic_top_speed_tmp    equ glb_tmp_var
 Sonic_acceleration_tmp equ glb_tmp_var+2
 Sonic_deceleration_tmp equ glb_tmp_var+4
 
- IFDEF sonic
-TestImageSet
-        lda   routine,u
-        asla
-        ldx   #TitleScreen_Routines
-        jmp   [a,x]
-
-TitleScreen_Routines
-        fdb   Init
-        fdb   Move
-Init
-        ldd   #SonAni_Walk
-        std   anim,u
-        ldb   #$04
-        stb   priority,u
-        ldd   #128
-        std   x_pos,u
-        ldd   #576+134
-        std   y_pos,u
-        lda   render_flags,u
-        ora   #render_playfieldcoord_mask        
-        sta   render_flags,u  
-        inc   routine,u
-Move
-TestLeft
-        lda   Ctrl_1_Held
-        bita  #button_left_mask
-        beq   TestRight   
-        ldd   <glb_camera_x_pos
-        subd  speed
-        bpl   @l
-        ldd   #0
-@l      std   <glb_camera_x_pos
-        addd  #128
-        std   x_pos,u
-        bra   TestUp
-TestRight        
-        lda   Ctrl_1_Held
-        bita  #button_right_mask
-        beq   TestUp   
-        ldd   <glb_camera_x_pos
-        addd  speed
-        cmpd  #88*64-160+8+16
-        bls   @r
-        ldd   #88*64-160+8+16
-@r      std   <glb_camera_x_pos
-        addd  #128
-        std   x_pos,u
-TestUp
-        lda   Ctrl_1_Held
-        bita  #button_up_mask
-        beq   TestDown   
-        ldd   <glb_camera_y_pos
-        subd  speed
-        subd  speed
-        bpl   @u
-        ldd   #0
-@u      std   <glb_camera_y_pos
-        addd  #134
-        std   y_pos,u
-        bra   TestBtn
-TestDown
-        lda   Ctrl_1_Held
-        bita  #button_down_mask
-        beq   TestBtn   
-        ldd   <glb_camera_y_pos
-        addd  speed
-        addd  speed
-        cmpd  #8*128-192+16*2
-        bls   @d
-        ldd   #8*128-192+16*2
-@d      std   <glb_camera_y_pos
-        addd  #134
-        std   y_pos,u
-TestBtn
-        ldb   Ctrl_1_Press
-        bitb  #button_A_mask
-        beq   Continue
-        ldd   speed
-        addd  #2
-        cmpd  #18
-        bne   @a
-        ldd   #2
-@a      std   speed
-Continue
-        jsr   AnimateSpriteSync   
-        jmp   DisplaySprite
-
-speed   fdb   2
- ENDC
-
- ;IFDEF sonic
                                                       *; ===========================================================================
                                                       *; ----------------------------------------------------------------------------
                                                       *; Object 01 - Sonic
@@ -470,20 +378,16 @@ return_1A2DE                                          *return_1A2DE:
                                                       *; ===========================================================================
                                                       *; Start of subroutine Obj01_MdAir
                                                       *; Called if Sonic is airborne, but not in a ball (thus, probably not jumping)
-                                                      *; loc_1A2E0: Obj01_MdJump
+Obj01_MdJump                                          *; loc_1A2E0: Obj01_MdJump
 Obj01_MdAir                                           *Obj01_MdAir:
         jsr   Sonic_JumpHeight                        *  bsr.w   Sonic_JumpHeight
         jsr   Sonic_ChgJumpDir                        *  bsr.w   Sonic_ChgJumpDir
         jsr   Sonic_LevelBound                        *  bsr.w   Sonic_LevelBound
-        jsr   ObjectFall                               
-        jsr   ObjectMove                              *  jsr (ObjectMoveAndFall).l
-        lda   status_flags,u                          *  btst    #6,status(a0)   ; is Sonic underwater?
-        bita  #status_underwater                       
-        beq   >                                       *  beq.s   +       ; if not, branch
-        ldd   y_vel,u                                 *  subi.w  #$28,y_vel(a0)  ; reduce gravity by $28 ($38-$28=$10)
-        subd  #$28                                     
-        std   y_vel,u                                  
-!                                                     *+                                           
+        jsr   ObjectMoveAndFall                        *  jsr (ObjectMoveAndFall).l
+        ; moved in ObjectFall                          *  btst    #6,status(a0)   ; is Sonic underwater?
+        ;                                              *  beq.s   +       ; if not, branch
+        ;                                              *  subi.w  #$28,y_vel(a0)  ; reduce gravity by $28 ($38-$28=$10)
+        ;                                              *+                                           
         jsr   Sonic_JumpAngle                         *  bsr.w   Sonic_JumpAngle
         jsr   Sonic_DoLevelCollision                  *  bsr.w   Sonic_DoLevelCollision
         rts                                           *  rts
@@ -511,24 +415,100 @@ Obj01_MdRoll                                          *Obj01_MdRoll:
                                                       *; Notes: This is identical to Obj01_MdAir, at least at this outer level.
                                                       *;        Why they gave it a separate copy of the code, I don't know.
                                                       *; loc_1A330: Obj01_MdJump2:
-Obj01_MdJump                                          *Obj01_MdJump:
-        jsr   Sonic_JumpHeight                        *  bsr.w   Sonic_JumpHeight
-        jsr   Sonic_ChgJumpDir                        *  bsr.w   Sonic_ChgJumpDir
-        jsr   Sonic_LevelBound                        *  bsr.w   Sonic_LevelBound
-        jsr   ObjectFall                               
-        jsr   ObjectMove                              *  jsr (ObjectMoveAndFall).l
-        lda   status_flags,u                          *  btst    #6,status(a0)   ; is Sonic underwater?
-        bita  #status_underwater                       
-        beq   >                                       *  beq.s   +       ; if not, branch
-        ldd   y_vel,u                                 *  subi.w  #$28,y_vel(a0)  ; reduce gravity by $28 ($38-$28=$10)
-        subd  #$28                                     
-        std   y_vel,u                                  
-!                                                     *+
-        jsr   Sonic_JumpAngle                         *  bsr.w   Sonic_JumpAngle
-        jsr   Sonic_DoLevelCollision                  *  bsr.w   Sonic_DoLevelCollision
-        rts                                           *  rts
-                                                      *; End of subroutine Obj01_MdJump
+        ; duplicate code                              *Obj01_MdJump:
+        ; see Obj01_MdAir                             *  bsr.w   Sonic_JumpHeight
+                                                      *  bsr.w   Sonic_ChgJumpDir
+                                                      *  bsr.w   Sonic_LevelBound
+                                                      *  jsr (ObjectMoveAndFall).l
+                                                      *  btst    #6,status(a0)   ; is Sonic underwater?
+                                                      *  beq.s   +       ; if not, branch
+                                                      *  subi.w  #$28,y_vel(a0)  ; reduce gravity by $28 ($38-$28=$10)
+                                                      *+
+                                                      *  bsr.w   Sonic_JumpAngle
+                                                      *  bsr.w   Sonic_DoLevelCollision
+                                                      *  rts
+        ; end of duplicate code                       *; End of subroutine Obj01_MdJump
                                                       *
+
+ObjectMoveAndFall
+        ldb   #$38                                    
+        lda   status_flags,u
+        bita  #status_underwater                      
+        beq   >             
+        ldb   #$10
+!       anda  #0
+        std   @gravity
+        ldx   Vint_Main_runcount_w
+        bne   >
+        ldx   #1
+!       ldd   #0
+        std   @y_vel
+        ldy   #0
+@y_vel  equ   -2
+        ldd   y_vel,u
+@loop   addd  #0
+@gravity equ  *-2
+        bcs   >
+        leay  d,y
+        leax  -1,x
+        bne   @loop 
+        bra   @a
+!       subd  @gravity
+        _negd 
+        leay  d,y
+        ldd   #0
+@a      std   y_vel,u
+        sty   @y_vel
+        ;
+        ldd   x_vel,u
+        ldx   Vint_Main_runcount_w     ; take number of elapsed frame since last render and multiply by inertia/2
+        beq   @ObjMv
+!       addd  x_vel,u
+        leax  -1,x
+        bne   < 
+@ObjMv  _asrd ; wide dot ratio
+        std   @x_vel
+                                       *    move.l  x_pos(a0),d2    ; load x position
+                                       *    move.l  y_pos(a0),d3    ; load y position
+                                       *    move.w  x_vel(a0),d0    ; load horizontal speed
+                                       *    ext.l   d0
+                                       *    asl.l   #8,d0   ; shift velocity to line up with the middle 16 bits of the 32-bit position
+                                       *    add.l   d0,d2   ; add to x-axis position    ; note this affects the subpixel position x_sub(a0) = 2+x_pos(a0)
+        ldb   @x_vel
+        sex                            ; velocity is positive or negative, take care of that
+        sta   @b
+        ldd   #0
+@x_vel  equ   *-2
+        addd  x_pos+1,u                ; x_pos must be followed by x_sub in memory
+        std   x_pos+1,u                ; update low byte of x_pos and x_sub byte
+        lda   x_pos,u
+        adca  #$00                     ; parameter is modified by the result of sign extend
+@b      equ   *-1
+        sta   x_pos,u                  ; update high byte of x_pos
+                                       *    move.w  y_vel(a0),d0    ; load vertical speed
+                                       *    ext.l   d0
+                                       *    asl.l   #8,d0   ; shift velocity to line up with the middle 16 bits of the 32-bit position
+                                       *    add.l   d0,d3   ; add to y-axis position    ; note this affects the subpixel position y_sub(a0) = 2+y_pos(a0)
+                                       *    move.l  d2,u_pos(a0)    ; update x-axis position
+                                       *    move.l  d3,y_pos(a0)    ; update y-axis position
+        ldb   @y_vel
+        sex                            ; velocity is positive or negative, take care of that
+        sta   @c
+        ldd   @y_vel
+        addd  y_pos+1,u                ; y_pos must be followed by y_sub in memory
+        std   y_pos+1,u                ; update low byte of y_pos and y_sub byte
+        lda   y_pos,u
+        adca  #$00                     ; parameter is modified by the result of sign extend
+@c      equ   *-1
+        sta   y_pos,u                  ; update high byte of y_pos
+        rts                            *    rts
+                                       *; End of function ObjectMove
+                                       *; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+ObjectMove
+        ldd   y_vel,u
+        std   @y_vel
+        ldd   x_vel,u
+        bra   @ObjMv
                                                       *; ---------------------------------------------------------------------------
                                                       *; Subroutine to make Sonic walk/run
                                                       *; ---------------------------------------------------------------------------
@@ -829,8 +809,7 @@ Obj01_Traction                                        *Obj01_Traction:
         addd  inertia,u
         leax  -1,x
         bne   @loop 
-@end    _asrd ; wide dot pixel
-        std   x_vel,u                                  *  move.w  d1,x_vel(a0)
+@end    std   x_vel,u                                  *  move.w  d1,x_vel(a0)
         ;                                              *  muls.w  inertia(a0),d0
         ;                                              *  asr.l   #8,d0
         ;                                              *  move.w  d0,y_vel(a0)
@@ -1179,6 +1158,7 @@ Sonic_BrakeRollingLeft                                *Sonic_BrakeRollingLeft:
                                                       *; End of subroutine Sonic_RollRight
                                                       *
                                                       *
+
                                                       *; ---------------------------------------------------------------------------
                                                       *; Subroutine for moving Sonic left or right when he's in the air
                                                       *; ---------------------------------------------------------------------------
@@ -1187,72 +1167,103 @@ Sonic_BrakeRollingLeft                                *Sonic_BrakeRollingLeft:
                                                       *
                                                       *; loc_1A8E8:
 Sonic_ChgJumpDir                                      *Sonic_ChgJumpDir:
-                                                      *  move.w  (Sonic_top_speed).w,d6
-                                                      *  move.w  (Sonic_acceleration).w,d5
-                                                      *  asl.w   #1,d5
-                                                      *  btst    #4,status(a0)       ; did Sonic jump from rolling?
-                                                      *  bne.s   Obj01_Jump_ResetScr ; if yes, branch to skip midair control
-                                                      *  move.w  x_vel(a0),d0
-                                                      *  btst    #button_left,(Ctrl_1_Held_Logical).w
-                                                      *  beq.s   +   ; if not holding left, branch
+        ldd   Sonic_top_speed
+        std   Sonic_top_speed_tmp                     *  move.w  (Sonic_top_speed).w,d6
+        lda   Vint_Main_runcount
+        bne   >
+        lda   #1
+!       ldb   Sonic_acceleration+1                    *  move.w  (Sonic_acceleration).w,d5
+        mul
+        _asld                                         *  asl.w   #1,d5
+        std   Sonic_acceleration_tmp                  
+        lda   status,u
+        anda  #status_jumpingafterrolling             *  btst    #4,status(a0)       ; did Sonic jump from rolling?
+        bne   Obj01_Jump_ResetScr                     *  bne.s   Obj01_Jump_ResetScr ; if yes, branch to skip midair control
+        ldx   x_vel,u                                 *  move.w  x_vel(a0),d0
+        lda   Ctrl_1_Held_Logical
+        anda  #button_left_mask                       *  btst    #button_left,(Ctrl_1_Held_Logical).w
+        beq   >                                       *  beq.s   +   ; if not holding left, branch
                                                       *
-                                                      *  bset    #0,status(a0)
-                                                      *  sub.w   d5,d0   ; add acceleration to the left
-                                                      *  move.w  d6,d1
-                                                      *  neg.w   d1
-                                                      *  cmp.w   d1,d0   ; compare new speed with top speed
-                                                      *  bgt.s   +   ; if new speed is less than the maximum, branch
-                                                      *  move.w  d1,d0   ; limit speed in air going left, even if Sonic was already going faster (speed limit/cap)
-                                                      *+
-                                                      *  btst    #button_right,(Ctrl_1_Held_Logical).w
-                                                      *  beq.s   +   ; if not holding right, branch
+        lda   status,u
+        ora   #status_x_orientation                   
+        sta   status,u                                *  bset    #0,status(a0)
+        ldd   Sonic_acceleration_tmp
+        _negd
+        leax  d,x                                     *  sub.w   d5,d0   ; add acceleration to the left
+        ldd   Sonic_top_speed_tmp                     *  move.w  d6,d1
+        _negd                                         *  neg.w   d1
+        std   @d1
+        cmpx  #0                                      *  cmp.w   d1,d0   ; compare new speed with top speed
+@d1     equ   *-2
+        bgt   >                                       *  bgt.s   +   ; if new speed is less than the maximum, branch
+        ldx   @d1                                     *  move.w  d1,d0   ; limit speed in air going left, even if Sonic was already going faster (speed limit/cap)
+!                                                     *+
+        lda   Ctrl_1_Held_Logical
+        anda  #button_right_mask                      *  btst    #button_right,(Ctrl_1_Held_Logical).w
+        beq   >                                       *  beq.s   +   ; if not holding right, branch
                                                       *
-                                                      *  bclr    #0,status(a0)
-                                                      *  add.w   d5,d0   ; accelerate right in the air
-                                                      *  cmp.w   d6,d0   ; compare new speed with top speed
-                                                      *  blt.s   +   ; if new speed is less than the maximum, branch
-                                                      *  move.w  d6,d0   ; limit speed in air going right, even if Sonic was already going faster (speed limit/cap)
+        lda   status,u
+        anda  #^status_x_orientation                   
+        sta   status,u                                *  bclr    #0,status(a0)
+        ldd   Sonic_acceleration_tmp
+        leax  d,x                                     *  add.w   d5,d0   ; accelerate right in the air
+        cmpx  Sonic_top_speed_tmp                     *  cmp.w   d6,d0   ; compare new speed with top speed
+        blt   >                                       *  blt.s   +   ; if new speed is less than the maximum, branch
+        ldx   Sonic_top_speed_tmp                     *  move.w  d6,d0   ; limit speed in air going right, even if Sonic was already going faster (speed limit/cap)
                                                       *; Obj01_JumpMove:
-                                                      *+ move.w  d0,x_vel(a0)
+!       stx   x_vel,u                                 *+ move.w  d0,x_vel(a0)
                                                       *
                                                       *; loc_1A932: Obj01_ResetScr2:
 Obj01_Jump_ResetScr                                   *Obj01_Jump_ResetScr:
-                                                      *  cmpi.w  #(224/2)-16,(Camera_Y_pos_bias).w   ; is screen in its default position?
-                                                      *  beq.s   Sonic_JumpPeakDecelerate    ; if yes, branch
-                                                      *  bhs.s   +               ; depending on the sign of the difference,
-                                                      *  addq.w  #4,(Camera_Y_pos_bias).w    ; either add 2
-                                                      *+ subq.w  #2,(Camera_Y_pos_bias).w    ; or subtract 2
+        ldd   Camera_Y_pos_bias
+        cmpd  #camera_Y_pos_bias_default              *  cmpi.w  #(224/2)-16,(Camera_Y_pos_bias).w   ; is screen in its default position?
+        beq   Sonic_JumpPeakDecelerate                *  beq.s   Sonic_JumpPeakDecelerate    ; if yes, branch
+        bhs   >                                       *  bhs.s   +               ; depending on the sign of the difference,
+        addd  #4                                      *  addq.w  #4,(Camera_Y_pos_bias).w    ; either add 2
+!       subd  #2                                      *+ subq.w  #2,(Camera_Y_pos_bias).w    ; or subtract 2
+        std   Camera_Y_pos_bias
+
                                                       *
                                                       *; loc_1A944:
 Sonic_JumpPeakDecelerate                              *Sonic_JumpPeakDecelerate:
-                                                      *  cmpi.w  #-$400,y_vel(a0)    ; is Sonic moving faster than -$400 upwards?
-                                                      *  blo.s   return_1A972        ; if yes, return
-                                                      *  move.w  x_vel(a0),d0
-                                                      *  move.w  d0,d1
-                                                      *  asr.w   #5,d1       ; d1 = x_velocity / 32
-                                                      *  beq.s   return_1A972    ; return if d1 is 0
-                                                      *  bmi.s   Sonic_JumpPeakDecelerateLeft    ; branch if moving left
+        ldd   y_vel,u
+        cmpd  #-$400                                  *  cmpi.w  #-$400,y_vel(a0)    ; is Sonic moving faster than -$400 upwards?
+        blo   return_1A972                            *  blo.s   return_1A972        ; if yes, return
+        ldd   x_vel,u                                 *  move.w  x_vel(a0),d0
+        ;                                             *  move.w  d0,d1
+        _asrd
+        _asrd
+        _asrd
+        _asrd
+        _asrd                                         *  asr.w   #5,d1       ; d1 = x_velocity / 32
+        std   @d1
+        beq   return_1A972                            *  beq.s   return_1A972    ; return if d1 is 0
+        bmi   Sonic_JumpPeakDecelerateLeft            *  bmi.s   Sonic_JumpPeakDecelerateLeft    ; branch if moving left
                                                       *
                                                       *; Sonic_JumpPeakDecelerateRight:
-                                                      *  sub.w   d1,d0   ; reduce x velocity by d1
-                                                      *  bcc.s   +
-                                                      *  move.w  #0,d0
-                                                      *+
-                                                      *  move.w  d0,x_vel(a0)
+        ldd   x_vel,u
+        subd  #0                                      *  sub.w   d1,d0   ; reduce x velocity by d1
+@d1     equ   *-2
+        bcc   >                                       *  bcc.s   +
+        ldd   #0                                      *  move.w  #0,d0
+!                                                     *+
+        std   x_vel,u                                 *  move.w  d0,x_vel(a0)
         rts                                           *  rts
                                                       *;-------------------------------------------------------------
                                                       *; loc_1A966:
 Sonic_JumpPeakDecelerateLeft                          *Sonic_JumpPeakDecelerateLeft:
-                                                      *  sub.w   d1,d0   ; reduce x velocity by d1
-                                                      *  bcs.s   +
-                                                      *  move.w  #0,d0
-                                                      *+
-                                                      *  move.w  d0,x_vel(a0)
+        ldd   x_vel,u
+        subd  @d1                                     *  sub.w   d1,d0   ; reduce x velocity by d1
+        bcs   >                                       *  bcs.s   +
+        ldd   #0                                      *  move.w  #0,d0
+!                                                     *+
+        std   x_vel,u                                 *  move.w  d0,x_vel(a0)
                                                       *
 return_1A972                                          *return_1A972:
         rts                                           *  rts
                                                       *; End of subroutine Sonic_ChgJumpDir
                                                       *; ===========================================================================
+
                                                       *
                                                       *; ---------------------------------------------------------------------------
                                                       *; Subroutine to prevent Sonic from leaving the boundaries of a level
@@ -1349,8 +1360,8 @@ Obj01_DoRoll                                          *Obj01_DoRoll:
         ldd   y_pos                                    
         addd  #5                                       
         std   y_pos                                   *  addq.w  #5,y_pos(a0)
-                                                      *  move.w  #SndID_Roll,d0
-                                                      *  jsr (PlaySound).l   ; play rolling sound
+        ;                                              *  move.w  #SndID_Roll,d0
+        ;                                              *  jsr (PlaySound).l   ; play rolling sound
         ldd   inertia,u                               *  tst.w   inertia(a0)
         bne   return_1AA36                            *  bne.s   return_1AA36
         ldd   #$200                                   *  move.w  #$200,inertia(a0)
@@ -1369,62 +1380,71 @@ return_1AA36                                          *return_1AA36:
                                                       *
                                                       *; loc_1AA38:
 Sonic_Jump                                            *Sonic_Jump:
-                                                      *  move.b  (Ctrl_1_Press_Logical).w,d0
-                                                      *  andi.b  #button_B_mask|button_C_mask|button_A_mask,d0 ; is A, B or C pressed?
-                                                      *  beq.w   return_1AAE6    ; if not, return
-                                                      *  moveq   #0,d0
-                                                      *  move.b  angle(a0),d0
-                                                      *  addi.b  #$80,d0
-                                                      *  bsr.w   CalcRoomOverHead
-                                                      *  cmpi.w  #6,d1           ; does Sonic have enough room to jump?
-                                                      *  blt.w   return_1AAE6        ; if not, branch
-                                                      *  move.w  #$680,d2
-                                                      *  tst.b   (Super_Sonic_flag).w
-                                                      *  beq.s   +
-                                                      *  move.w  #$800,d2    ; set higher jump speed if super
+        lda   Ctrl_1_Press_Logical                    *  move.b  (Ctrl_1_Press_Logical).w,d0
+        anda  #button_B_mask|button_A_mask            *  andi.b  #button_B_mask|button_C_mask|button_A_mask,d0 ; is A, B or C pressed?
+        beq   return_1AAE6                            *  beq.w   return_1AAE6    ; if not, return
+        ;lda   #0                                      *  moveq   #0,d0
+        ;ldb   angle,u                                 *  move.b  angle(a0),d0
+        ;addb  #$80                                    *  addi.b  #$80,d0
+        ;bsr   CalcRoomOverHead                        *  bsr.w   CalcRoomOverHead
+        ;cmpd  #6                                      *  cmpi.w  #6,d1           ; does Sonic have enough room to jump?
+        ;blt   return_1AAE6                            *  blt.w   return_1AAE6        ; if not, branch
+        ldx   #$680                                   *  move.w  #$680,d2
+        ; unimplemented                               *  tst.b   (Super_Sonic_flag).w
+        ;                                             *  beq.s   +
+        ;                                              *  move.w  #$800,d2    ; set higher jump speed if super
                                                       *+
-        ;lda   status_flags,u                          *  btst    #6,status(a0)   ; Test if underwater
-        ;bita  #status_underwater                      
-        ;beq   @a                                      *  beq.s   +       ; if not, branch
-        ;ldd   #$380                                   *  move.w  #$380,d2    ; set lower jump speed if under
-@a                                                    *+
-                                                       
-                                                      *  moveq   #0,d0
-                                                      *  move.b  angle(a0),d0
-                                                      *  subi.b  #$40,d0
-                                                      *  jsr (CalcSine).l
-                                                      *  muls.w  d2,d1
-                                                      *  asr.l   #8,d1
-                                                      *  add.w   d1,x_vel(a0)    ; make Sonic jump (in X... this adds nothing on level ground)
-                                                      *  muls.w  d2,d0
-                                                      *  asr.l   #8,d0
-                                                      *  add.w   d0,y_vel(a0)    ; make Sonic jump (in Y)
-                                                      *  bset    #1,status(a0)
+        lda   status_flags,u                          *  btst    #6,status(a0)   ; Test if underwater
+        bita  #status_underwater                      
+        beq   >                                       *  beq.s   +       ; if not, branch
+        ldx   #$380                                   *  move.w  #$380,d2    ; set lower jump speed if under
+!                                                     *+
+        ;lda   #0                                      *  moveq   #0,d0
+        ;ldb   angle,u                                 *  move.b  angle(a0),d0
+        ;subb  #$40                                    *  subi.b  #$40,d0
+        ;jsr   CalcSine                                *  jsr (CalcSine).l
+        ;                                              *  muls.w  d2,d1
+        ;                                              *  asr.l   #8,d1
+        ;                                             *  add.w   d1,x_vel(a0)    ; make Sonic jump (in X... this adds nothing on level ground)
+        ;                                              *  muls.w  d2,d0
+        ;                                              *  asr.l   #8,d0
+        tfr   x,d
+        _negd
+        addd  y_vel,u
+        std   y_vel,u                                 *  add.w   d0,y_vel(a0)    ; make Sonic jump (in Y)
         ldb   status,u
+        orb   #status_inair                           *  bset    #1,status(a0)
         andb  #^status_pushing 
         stb   status,u                                *  bclr    #5,status(a0)
-                                                      *  addq.l  #4,sp
-                                                      *  move.b  #1,jumping(a0)
-                                                      *  clr.b   stick_to_convex(a0)
-                                                      *  move.w  #SndID_Jump,d0
-                                                      *  jsr (PlaySound).l   ; play jumping sound
-                                                      *  move.b  #$13,y_radius(a0)
-                                                      *  move.b  #9,x_radius(a0)
-                                                      *  btst    #2,status(a0)
-                                                      *  bne.s   Sonic_RollJump
-                                                      *  move.b  #$E,y_radius(a0)
-                                                      *  move.b  #7,x_radius(a0)
-                                                      *  move.b  #AniIDSonAni_Roll,anim(a0)  ; use "jumping" animation
-                                                      *  bset    #2,status(a0)
-                                                      *  addq.w  #5,y_pos(a0)
+        leas  2,s ; skip end of caller routine        *  addq.l  #4,sp
+        lda   #1
+        sta   jumping,u                               *  move.b  #1,jumping(a0)
+        clr   stick_to_convex,u                       *  clr.b   stick_to_convex(a0)
+        ;                                             *  move.w  #SndID_Jump,d0
+        ;                                             *  jsr (PlaySound).l   ; play jumping sound
+        ldd   #$1309                                  *  move.b  #$13,y_radius(a0)
+        std   y_radius,u ; and x_radius               *  move.b  #9,x_radius(a0)
+        lda   status,u
+        anda  #status_jumporroll                      *  btst    #2,status(a0)
+        bne   Sonic_RollJump                          *  bne.s   Sonic_RollJump
+        ldd   #$0E07                                  *  move.b  #$E,y_radius(a0)
+        std   y_radius,u ; and x_radius               *  move.b  #7,x_radius(a0)
+        ldd   #SonAni_Roll                            *  move.b  #AniIDSonAni_Roll,anim(a0)  ; use "jumping" animation
+        std   anim,u
+        lda   status,u
+        ora   #status_jumporroll
+        sta   status,u                                *  bset    #2,status(a0)
+        ldd   y_pos,u 
+        subd  #5
+        std   y_pos,u                                 *  addq.w  #5,y_pos(a0)
                                                       *
 return_1AAE6                                          *return_1AAE6:
         rts                                           *  rts
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1AAE8:
 Sonic_RollJump                                        *Sonic_RollJump:
-        lda   #status_jumporroll                      *  bset    #4,status(a0)   ; set the rolling+jumping flag
-        sta   status_flags,u                           
+        ora   #status_jumpingafterrolling             *  bset    #4,status(a0)   ; set the rolling+jumping flag
+        sta   status,u                           
         rts                                           *  rts
                                                       *; End of function Sonic_Jump
                                                       *
@@ -1443,11 +1463,11 @@ Sonic_JumpHeight                                      *Sonic_JumpHeight:
         beq   Sonic_UpVelCap                          *  beq.s   Sonic_UpVelCap  ; if not, branch
                                                       *
         ldx   #-$400                                  *  move.w  #-$400,d1
-        ;lda   status_flags,u                          *  btst    #6,status(a0)   ; is Sonic underwater?
-        ;bita  #status_underwater                      
-        ;beq   @a                                      *  beq.s   +       ; if not, branch
-        ;ldx   #-$200                                  *  move.w  #-$200,d1
-@a                                                    *+
+        lda   status_flags,u                          *  btst    #6,status(a0)   ; is Sonic underwater?
+        bita  #status_underwater                      
+        beq   >                                       *  beq.s   +       ; if not, branch
+        ldx   #-$200                                  *  move.w  #-$200,d1
+!                                                     *+
                                                        
         cmpx  y_vel,u                                 *  cmp.w   y_vel(a0),d1    ; is Sonic going up faster than d1?
         ble   @a                                      *  ble.s   +       ; if not, branch
@@ -1457,8 +1477,8 @@ Sonic_JumpHeight                                      *Sonic_JumpHeight:
         stx   y_vel,u                                 *  move.w  d1,y_vel(a0)    ; immediately reduce Sonic's upward speed to d1
 @a                                                    *+
                                                        
-        ;ldd   y_vel,u                                 *  tst.b   y_vel(a0)       ; is Sonic exactly at the height of his jump?
-        ;beq   Sonic_CheckGoSuper                      *  beq.s   Sonic_CheckGoSuper  ; if yes, test for turning into Super Sonic
+        ;ldd   y_vel,u                                *  tst.b   y_vel(a0)       ; is Sonic exactly at the height of his jump?
+        ;beq   Sonic_CheckGoSuper                     *  beq.s   Sonic_CheckGoSuper  ; if yes, test for turning into Super Sonic
         rts                                           *  rts
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1AB22:
@@ -1467,7 +1487,7 @@ Sonic_UpVelCap                                        *Sonic_UpVelCap:
         bne   return_1AB36                            *  bne.s   return_1AB36        ; if yes, return
         ldx   #-$FC0                                   
         cmpx  y_vel,u                                 *  cmpi.w  #-$FC0,y_vel(a0)    ; is Sonic moving up really fast?
-        blt   return_1AB36                            *  bge.s   return_1AB36        ; if not, return
+        bge   return_1AB36                            *  bge.s   return_1AB36        ; if not, return
         stx   y_vel,u                                 *  move.w  #-$FC0,y_vel(a0)    ; cap upward speed
                                                       *
 return_1AB36                                          *return_1AB36:
@@ -1819,26 +1839,26 @@ loc_1AE44                                             *loc_1AE44:
                                                       *
                                                       *; loc_1AE4A:
 Sonic_JumpAngle                                       *Sonic_JumpAngle:
-                                                      *  move.b  angle(a0),d0    ; get Sonic's angle
-                                                      *  beq.s   Sonic_JumpFlip  ; if already 0, branch
-                                                      *  bpl.s   loc_1AE5A   ; if higher than 0, branch
+        lda   angle,u                                 *  move.b  angle(a0),d0    ; get Sonic's angle
+        beq   Sonic_JumpFlip                          *  beq.s   Sonic_JumpFlip  ; if already 0, branch
+        bpl   loc_1AE5A                               *  bpl.s   loc_1AE5A   ; if higher than 0, branch
                                                       *
-                                                      *  addq.b  #2,d0       ; increase angle
-                                                      *  bcc.s   BranchTo_Sonic_JumpAngleSet
-                                                      *  moveq   #0,d0
+        adda  #2                                      *  addq.b  #2,d0       ; increase angle
+        bcc   BranchTo_Sonic_JumpAngleSet             *  bcc.s   BranchTo_Sonic_JumpAngleSet
+        lda   #0                                      *  moveq   #0,d0
                                                       *
 BranchTo_Sonic_JumpAngleSet                           *BranchTo_Sonic_JumpAngleSet ; BranchTo
         bra   Sonic_JumpAngleSet                      *  bra.s   Sonic_JumpAngleSet
                                                       *; ===========================================================================
                                                       *
 loc_1AE5A                                             *loc_1AE5A:
-                                                      *  subq.b  #2,d0       ; decrease angle
+        suba  #2                                      *  subq.b  #2,d0       ; decrease angle
         bcc   Sonic_JumpAngleSet                      *  bcc.s   Sonic_JumpAngleSet
-                                                      *  moveq   #0,d0
+        lda   #0                                      *  moveq   #0,d0
                                                       *
                                                       *; loc_1AE60:
 Sonic_JumpAngleSet                                    *Sonic_JumpAngleSet:
-                                                      *  move.b  d0,angle(a0)
+        sta   angle,u                                 *  move.b  d0,angle(a0)
                                                       *; End of function Sonic_JumpAngle
                                                       *  ; continue straight to Sonic_JumpFlip
                                                       *
@@ -1852,19 +1872,20 @@ Sonic_JumpAngleSet                                    *Sonic_JumpAngleSet:
 Sonic_JumpFlip                                        *Sonic_JumpFlip:
         lda   flip_angle,u                            *  move.b  flip_angle(a0),d0
         beq   return_1AEA8                            *  beq.s   return_1AEA8
-        ldx   inertia,u                               *  tst.w   inertia(a0)
+        tst   inertia,u                               *  tst.w   inertia(a0)
         bmi   Sonic_JumpLeftFlip                      *  bmi.s   Sonic_JumpLeftFlip
                                                       *; loc_1AE70:
 Sonic_JumpRightFlip                                   *Sonic_JumpRightFlip:
-        adda  flip_speed,u                            *  move.b  flip_speed(a0),d1
-                                                      *  add.b   d1,d0
+        ;                                             *  move.b  flip_speed(a0),d1
+        adda  flip_speed,u                            *  add.b   d1,d0
         bcc   BranchTo_Sonic_JumpFlipSet              *  bcc.s   BranchTo_Sonic_JumpFlipSet
         ldb   flips_remaining,u                        
         decb                                          *  subq.b  #1,flips_remaining(a0)
-        bcc   BranchTo_Sonic_JumpFlipSet              *  bcc.s   BranchTo_Sonic_JumpFlipSet
-        andb  #0                                      *  move.b  #0,flips_remaining(a0)
         stb   flips_remaining,u                        
-                                                      *  moveq   #0,d0
+        bcc   BranchTo_Sonic_JumpFlipSet              *  bcc.s   BranchTo_Sonic_JumpFlipSet
+        anda  #0                                      
+        sta   flips_remaining,u                       *  move.b  #0,flips_remaining(a0) 
+        ;                                             *  moveq   #0,d0
                                                       *
 BranchTo_Sonic_JumpFlipSet                            *BranchTo_Sonic_JumpFlipSet ; BranchTo
         bra   Sonic_JumpFlipSet                       *  bra.s   Sonic_JumpFlipSet
@@ -1873,16 +1894,19 @@ BranchTo_Sonic_JumpFlipSet                            *BranchTo_Sonic_JumpFlipSe
 Sonic_JumpLeftFlip                                    *Sonic_JumpLeftFlip:
         tst   flip_turned,u                           *  tst.b   flip_turned(a0)
         bne   Sonic_JumpRightFlip                     *  bne.s   Sonic_JumpRightFlip
-        ldd   flip_speed,u                            *  move.b  flip_speed(a0),d1
-                                                      *  sub.b   d1,d0
-                                                      *  bcc.s   Sonic_JumpFlipSet
-                                                      *  subq.b  #1,flips_remaining(a0)
-                                                      *  bcc.s   Sonic_JumpFlipSet
-                                                      *  move.b  #0,flips_remaining(a0)
-                                                      *  moveq   #0,d0
+        ;                                             *  move.b  flip_speed(a0),d1
+        suba  flip_speed,u                            *  sub.b   d1,d0
+        bcc   Sonic_JumpFlipSet                       *  bcc.s   Sonic_JumpFlipSet
+        ldb   flips_remaining,u                        
+        decb                                          *  subq.b  #1,flips_remaining(a0)
+        stb   flips_remaining,u 
+        bcc   Sonic_JumpFlipSet                       *  bcc.s   Sonic_JumpFlipSet
+        anda   #0
+        stb   flips_remaining,u                       *  move.b  #0,flips_remaining(a0)
+        ;                                             *  moveq   #0,d0
                                                       *; loc_1AEA4:
 Sonic_JumpFlipSet                                     *Sonic_JumpFlipSet:
-                                                      *  move.b  d0,flip_angle(a0)
+        sta   flip_angle,u                            *  move.b  d0,flip_angle(a0)
                                                       *
 return_1AEA8                                          *return_1AEA8:
         rts                                           *  rts
@@ -1931,14 +1955,17 @@ Sonic_DoLevelCollision                                *Sonic_DoLevelCollision:
                                                       *  move.b  y_vel(a0),d2
                                                       *  addq.b  #8,d2
                                                       *  neg.b   d2
-                                                      *  cmp.b   d2,d1
-                                                      *  bge.s   +
+        ldd   y_pos,u
+        cmpd  #screen_top+20+$028F+5                  *  cmp.b   d2,d1
+        bge   >                                       *  bge.s   +
                                                       *  cmp.b   d2,d0
-                                                      *  blt.s   return_1AF8A
-                                                      *+
+        rts                                           *  blt.s   return_1AF8A
+!                                                     *+
+        ldd   #screen_top+20+$028F+5
+        std   y_pos,u
                                                       *  add.w   d1,y_pos(a0)
                                                       *  move.b  d3,angle(a0)
-                                                      *  bsr.w   Sonic_ResetOnFloor
+        jsr   Sonic_ResetOnFloor                      *  bsr.w   Sonic_ResetOnFloor
                                                       *  move.b  d3,d0
                                                       *  addi.b  #$20,d0
                                                       *  andi.b  #$40,d0
@@ -1948,12 +1975,14 @@ Sonic_DoLevelCollision                                *Sonic_DoLevelCollision:
                                                       *  andi.b  #$20,d0
                                                       *  beq.s   loc_1AF5A
                                                       *  asr y_vel(a0)
-        bra   loc_1AF7C                               *  bra.s   loc_1AF7C
+        ;bra   loc_1AF7C                               *  bra.s   loc_1AF7C
                                                       *; ===========================================================================
                                                       *
 loc_1AF5A                                             *loc_1AF5A:
-                                                      *  move.w  #0,y_vel(a0)
-                                                      *  move.w  x_vel(a0),inertia(a0)
+        ldd   #0
+        std   y_vel,u                                 *  move.w  #0,y_vel(a0)
+        ldd   x_vel,u
+        std   inertia,u                               *  move.w  x_vel(a0),inertia(a0)
         rts                                           *  rts
                                                       *; ===========================================================================
                                                       *
@@ -2100,9 +2129,10 @@ return_1B09E                                          *return_1B09E:
                                                       *
                                                       *; loc_1B0A0:
 Sonic_ResetOnFloor                                    *Sonic_ResetOnFloor:
-                                                      *  tst.b   pinball_mode(a0)
-                                                      *  bne.s   Sonic_ResetOnFloor_Part3
-                                                      *  move.b  #AniIDSonAni_Walk,anim(a0)
+        tst   pinball_mode,u                          *  tst.b   pinball_mode(a0)
+        bne   Sonic_ResetOnFloor_Part3                *  bne.s   Sonic_ResetOnFloor_Part3
+        ldd   #SonAni_Walk
+        std   anim,u                                  *  move.b  #AniIDSonAni_Walk,anim(a0)
                                                       *; loc_1B0AC:
 Sonic_ResetOnFloor_Part2                              *Sonic_ResetOnFloor_Part2:
                                                       *  ; some routines outside of Tails' code can call Sonic_ResetOnFloor_Part2
@@ -2110,29 +2140,36 @@ Sonic_ResetOnFloor_Part2                              *Sonic_ResetOnFloor_Part2:
                                                       *  _cmpi.b #ObjID_Sonic,id(a0) ; is this object ID Sonic (obj01)?
                                                       *  bne.w   Tails_ResetOnFloor_Part2    ; if not, branch to the Tails version of this code
                                                       *
-                                                      *  btst    #2,status(a0)
-                                                      *  beq.s   Sonic_ResetOnFloor_Part3
-                                                      *  bclr    #2,status(a0)
-                                                      *  move.b  #$13,y_radius(a0) ; this increases Sonic's collision height to standing
-                                                      *  move.b  #9,x_radius(a0)
-                                                      *  move.b  #AniIDSonAni_Walk,anim(a0)  ; use running/walking/standing animation
-                                                      *  subq.w  #5,y_pos(a0)    ; move Sonic up 5 pixels so the increased height doesn't push him into the ground
+        lda   status,u
+        anda  #status_jumporroll                      *  btst    #2,status(a0)
+        beq   Sonic_ResetOnFloor_Part3                *  beq.s   Sonic_ResetOnFloor_Part3
+        anda  #^status_jumporroll
+        sta   status,u                                *  bclr    #2,status(a0)
+        ldd   #$1309                                  *  move.b  #$13,y_radius(a0) ; this increases Sonic's collision height to standing
+        std   y_radius,u ; and x_radius               *  move.b  #9,x_radius(a0)
+        ldd   #SonAni_Walk
+        std   anim,u                                  *  move.b  #AniIDSonAni_Walk,anim(a0)  ; use running/walking/standing animation
+        ldd   y_pos,u
+        subd  #5
+        std   y_pos,u                                 *  subq.w  #5,y_pos(a0)    ; move Sonic up 5 pixels so the increased height doesn't push him into the ground
                                                       *; loc_1B0DA:
 Sonic_ResetOnFloor_Part3                              *Sonic_ResetOnFloor_Part3:
-                                                      *  bclr    #1,status(a0)
         ldb   status,u
-        andb  #^status_pushing 
+        andb  #^(status_inair|status_jumpingafterrolling|status_pushing) *  bclr    #1,status(a0)
         stb   status,u                                *  bclr    #5,status(a0)
                                                       *  bclr    #4,status(a0)
-                                                      *  move.b  #0,jumping(a0)
-                                                      *  move.w  #0,(Chain_Bonus_counter).w
-                                                      *  move.b  #0,flip_angle(a0)
-                                                      *  move.b  #0,flip_turned(a0)
-                                                      *  move.b  #0,flips_remaining(a0)
-                                                      *  move.w  #0,(Sonic_Look_delay_counter).w
-                                                      *  cmpi.b  #AniIDSonAni_Hang2,anim(a0)
-                                                      *  bne.s   return_1B11E
-                                                      *  move.b  #AniIDSonAni_Walk,anim(a0)
+        ldd   #0
+        sta   jumping,u                               *  move.b  #0,jumping(a0)
+        std   Chain_Bonus_counter                     *  move.w  #0,(Chain_Bonus_counter).w
+        sta   flip_angle,u                            *  move.b  #0,flip_angle(a0)
+        sta   flip_turned,u                           *  move.b  #0,flip_turned(a0)
+        sta   flips_remaining,u                       *  move.b  #0,flips_remaining(a0)
+        std   Sonic_Look_delay_counter                *  move.w  #0,(Sonic_Look_delay_counter).w
+        ;ldd   anim,u       
+        ;cmpd  #SonAni_Hang2                          *  cmpi.b  #AniIDSonAni_Hang2,anim(a0)
+        ;bne   return_1B11E                           *  bne.s   return_1B11E
+        ;ldd   #SonAni_Walk
+        ;std   anim,u                                 *  move.b  #AniIDSonAni_Walk,anim(a0)
                                                       *
 return_1B11E                                          *return_1B11E:
         rts                                           *  rts
@@ -2226,8 +2263,7 @@ Obj01_Dead                                            *  Obj01_Dead:
         rts                                           *  rts
                                                       *+
         jsr   CheckGameOver                           *  bsr.w   CheckGameOver
-        jsr   ObjectFall                               
-        jsr   ObjectMove                              *  jsr (ObjectMoveAndFall).l
+        jsr   ObjectMoveAndFall                       *  jsr (ObjectMoveAndFall).l
         ;jsr   Sonic_RecordPos                        *  bsr.w   Sonic_RecordPos
         jsr   Sonic_Animate                           *  bsr.w   Sonic_Animate
                                                       *  bsr.w   LoadSonicDynPLC
@@ -2801,7 +2837,7 @@ AnglePos                                              * AnglePos:
                                                       * ; returns angle in (a4)
                                                       * 
                                                       * ; loc_1E7D0:
-                                                      * FindFloor:
+FindFloor                                             * FindFloor:
                                                       *         bsr.w   Find_Tile
                                                       *         move.w  (a1),d0
                                                       *         move.w  d0,d4
@@ -2810,15 +2846,15 @@ AnglePos                                              * AnglePos:
                                                       *         btst    d5,d4
                                                       *         bne.s   loc_1E7F0
                                                       * 
-                                                      * loc_1E7E2:
+loc_1E7E2                                             * loc_1E7E2:
                                                       *         add.w   a3,d2
                                                       *         bsr.w   FindFloor2
                                                       *         sub.w   a3,d2
                                                       *         addi.w  #$10,d1
-                                                      *         rts
+        rts                                           *         rts
                                                       * ; ===========================================================================
                                                       * 
-                                                      * loc_1E7F0:      ; block has some solidity
+loc_1E7F0                                             * loc_1E7F0:      ; block has some solidity
                                                       *         movea.l (Collision_addr).w,a2   ; pointer to collision data, i.e. blockID -> collisionID array
                                                       *         move.b  (a2,d0.w),d0    ; get collisionID
                                                       *         andi.w  #$FF,d0
@@ -2858,21 +2894,21 @@ AnglePos                                              * AnglePos:
                                                       *         add.w   d1,d0
                                                       *         move.w  #$F,d1
                                                       *         sub.w   d0,d1
-                                                      *         rts
+        rts                                           *         rts
                                                       * ; ===========================================================================
                                                       * 
-                                                      * loc_1E85E:
+loc_1E85E                                             * loc_1E85E:
                                                       *         move.w  d2,d1
                                                       *         andi.w  #$F,d1
                                                       *         add.w   d1,d0
                                                       *         bpl.w   loc_1E7E2
                                                       * 
-                                                      * loc_1E86A:
+loc_1E86A                                             * loc_1E86A:
                                                       *         sub.w   a3,d2
                                                       *         bsr.w   FindFloor2
                                                       *         add.w   a3,d2
                                                       *         subi.w  #$10,d1
-                                                      *         rts
+        rts                                           *         rts
                                                       * ; End of function FindFloor
                                                       * 
                                                       * 
@@ -3392,7 +3428,7 @@ AnglePos                                              * AnglePos:
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       * 
                                                       * ; sub_1EC0A:
-                                                      * CalcRoomOverHead:
+CalcRoomOverHead                                      * CalcRoomOverHead:
                                                       *         move.l  #Primary_Collision,(Collision_addr).w
                                                       *         cmpi.b  #$C,top_solid_bit(a0)
                                                       *         beq.s   +
@@ -3419,7 +3455,7 @@ AnglePos                                              * AnglePos:
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       * 
                                                       * ; loc_1EC4E: Sonic_HitFloor:
-                                                      * Sonic_CheckFloor:
+Sonic_CheckFloor                                      * Sonic_CheckFloor:
                                                       *         move.l  #Primary_Collision,(Collision_addr).w
                                                       *         cmpi.b  #$C,top_solid_bit(a0)
                                                       *         beq.s   +
@@ -3456,19 +3492,19 @@ AnglePos                                              * AnglePos:
                                                       *         move.w  (sp)+,d0
                                                       *         move.b  #0,d2
                                                       * 
-                                                      * loc_1ECC6:
+loc_1ECC6                                             * loc_1ECC6:
                                                       *         move.b  (Secondary_Angle).w,d3
                                                       *         cmp.w   d0,d1
                                                       *         ble.s   loc_1ECD4
                                                       *         move.b  (Primary_Angle).w,d3
                                                       *         exg     d0,d1
                                                       * 
-                                                      * loc_1ECD4:
+loc_1ECD4                                             * loc_1ECD4:
                                                       *         btst    #0,d3
                                                       *         beq.s   +
                                                       *         move.b  d2,d3
                                                       * +
-                                                      *         rts
+        rts                                           *         rts
                                                       * ; ===========================================================================
                                                       * 
                                                       *         ; a bit of unused/dead code here
@@ -3485,7 +3521,7 @@ AnglePos                                              * AnglePos:
                                                       * ; returns distance in d1
                                                       * ; returns angle in d3, or zero if angle was odd
                                                       * ;loc_1ECE6:
-                                                      * CheckFloorDist_Part2:
+CheckFloorDist_Part2                                  * CheckFloorDist_Part2:
                                                       *         addi.w  #$A,d2
                                                       *         lea     (Primary_Angle).w,a4
                                                       *         movea.w #$10,a3
@@ -3495,13 +3531,13 @@ AnglePos                                              * AnglePos:
                                                       * 
                                                       * ; d2 what to use as angle if (Primary_Angle).w is odd
                                                       * ; returns angle in d3, or value in d2 if angle was odd
-                                                      * loc_1ECFE:
+loc_1ECFE                                             * loc_1ECFE:
                                                       *         move.b  (Primary_Angle).w,d3
                                                       *         btst    #0,d3
                                                       *         beq.s   +
                                                       *         move.b  d2,d3
                                                       * +
-                                                      *         rts
+        rts                                           *         rts
                                                       * ; ===========================================================================
                                                       * 
                                                       *         ; Unused collision checking subroutine
@@ -3529,10 +3565,10 @@ AnglePos                                              * AnglePos:
                                                       * 
                                                       * ; ===========================================================================
                                                       * ; loc_1ED56:
-                                                      * ChkFloorEdge:
+ChkFloorEdge                                          * ChkFloorEdge:
                                                       *         move.w  x_pos(a0),d3
                                                       * ; loc_1ED5A:
-                                                      * ChkFloorEdge_Part2:
+ChkFloorEdge_Part2                                    * ChkFloorEdge_Part2:
                                                       *         move.w  y_pos(a0),d2
                                                       *         moveq   #0,d0
                                                       *         move.b  y_radius(a0),d0
@@ -3554,11 +3590,11 @@ AnglePos                                              * AnglePos:
                                                       *         beq.s   +
                                                       *         move.b  #0,d3
                                                       * +
-                                                      *         rts
+        rts                                           *         rts
                                                       * ; ===========================================================================
                                                       * ; Identical to ChkFloorEdge except that this uses a1 instead of a0
                                                       * ;loc_1EDA8:
-                                                      * ChkFloorEdge2:
+ChkFloorEdge2                                         * ChkFloorEdge2:
                                                       *         move.w  x_pos(a1),d3
                                                       *         move.w  y_pos(a1),d2
                                                       *         moveq   #0,d0
@@ -3581,8 +3617,8 @@ AnglePos                                              * AnglePos:
                                                       *         beq.s   return_1EDF8
                                                       *         move.b  #0,d3
                                                       * 
-                                                      * return_1EDF8:
-                                                      *         rts
+return_1EDF8                                          * return_1EDF8:
+        rts                                           *         rts
                                                       * ; ===========================================================================
                                                       * 
                                                       * ; ---------------------------------------------------------------------------
@@ -3593,7 +3629,7 @@ AnglePos                                              * AnglePos:
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       * 
                                                       * ; loc_1EDFA: ObjHitFloor:
-                                                      * ObjCheckFloorDist:
+ObjCheckFloorDist                                     * ObjCheckFloorDist:
                                                       *         move.w  x_pos(a0),d3
                                                       *         move.w  y_pos(a0),d2
                                                       *         move.b  y_radius(a0),d0
@@ -3663,7 +3699,7 @@ AnglePos                                              * AnglePos:
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       * 
                                                       * ; loc_1EE7C:
-                                                      * CheckRightCeilingDist:
+CheckRightCeilingDist                                 * CheckRightCeilingDist:
                                                       *         move.w  y_pos(a0),d2
                                                       *         move.w  x_pos(a0),d3
                                                       *         moveq   #0,d0
@@ -3750,7 +3786,7 @@ AnglePos                                              * AnglePos:
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       * 
                                                       * ; loc_1EF2E: Sonic_DontRunOnWalls: CheckCeilingDist:
-                                                      * Sonic_CheckCeiling:
+Sonic_CheckCeiling                                    * Sonic_CheckCeiling:
                                                       *         move.w  y_pos(a0),d2
                                                       *         move.w  x_pos(a0),d3
                                                       *         moveq   #0,d0
@@ -3851,7 +3887,7 @@ AnglePos                                              * AnglePos:
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       * 
                                                       * ; loc_1EFF6:
-                                                      * CheckLeftCeilingDist:
+CheckLeftCeilingDist:                                 * CheckLeftCeilingDist:
                                                       *         move.w  y_pos(a0),d2
                                                       *         move.w  x_pos(a0),d3
                                                       *         moveq   #0,d0
@@ -4890,7 +4926,7 @@ SAnim_WalkRun                                         *SAnim_WalkRun:
         stb   render_flags,u
         lda   status,u
         bita  #status_pushing                         *  btst    #5,status(a0)
-        bne   SAnim_Push                              *  bne.w   SAnim_Push
+        lbne  SAnim_Push                              *  bne.w   SAnim_Push
         ; moved                                       *  lsr.b   #4,d0       ; divide angle by 16
         ; moved                                       *  andi.b  #6,d0       ; angle must be 0, 2, 4 or 6
         ldd   inertia,u                               *  mvabs.w inertia(a0),d2  ; get Sonic's "speed" for animation purposes
@@ -5044,53 +5080,74 @@ loc_1B572                                             *loc_1B572:
                                                       *; ===========================================================================
                                                       *; loc_1B586:
 SAnim_Roll                                            *SAnim_Roll:
-                                                      *  subq.b  #1,anim_frame_duration(a0)  ; subtract 1 from frame duration
-                                                      *  bpl.w   SAnim_Delay         ; if time remains, branch
-        incb                                          *  addq.b  #1,d0       ; is the start flag = $FE ?
+        ldb   anim_frame_duration,u
+        subb  Vint_Main_runcount
+        stb   anim_frame_duration,u                   *  subq.b  #1,anim_frame_duration(a0)  ; subtract 1 from frame duration
+        bmi   >                                       *  bpl.w   SAnim_Delay         ; if time remains, branch
+        rts
+!       incb                                          *  addq.b  #1,d0       ; is the start flag = $FE ?
         bne   SAnim_Push                              *  bne.s   SAnim_Push  ; if not, branch
-                                                      *  mvabs.w inertia(a0),d2
-                                                      *  lea (SonAni_Roll2).l,a1
-                                                      *  cmpi.w  #$600,d2
-                                                      *  bhs.s   +
-                                                      *  lea (SonAni_Roll).l,a1
-                                                      *+
-                                                      *  neg.w   d2
-                                                      *  addi.w  #$400,d2
-                                                      *  bpl.s   +
-                                                      *  moveq   #0,d2
-                                                      *+
-                                                      *  lsr.w   #8,d2
-                                                      *  move.b  d2,anim_frame_duration(a0)
-                                                      *  move.b  status(a0),d1
-                                                      *  andi.b  #1,d1
-                                                      *  andi.b  #$FC,render_flags(a0)
-                                                      *  or.b    d1,render_flags(a0)
-                                                      *  bra.w   SAnim_Do2
+        ldd   inertia,u                               *  mvabs.w inertia(a0),d2
+        bpl   >
+        _negd
+!       ldx   #SonAni_Roll2                           *  lea (SonAni_Roll2).l,a1
+        cmpd  #$600                                   *  cmpi.w  #$600,d2
+        bhs   >                                       *  bhs.s   +
+        ldx   #SonAni_Roll                            *  lea (SonAni_Roll).l,a1
+!                                                     *+
+        _negd                                         *  neg.w   d2
+        addd  #$400                                   *  addi.w  #$400,d2
+        bpl   >                                       *  bpl.s   +
+        ldd   #0                                      *  moveq   #0,d2
+!                                                     *+
+        ;                                             *  lsr.w   #8,d2
+        sta   anim_frame_duration,u                   *  move.b  d2,anim_frame_duration(a0)
+        lda   status,u                                *  move.b  status(a0),d1
+        anda  #status_x_orientation                   *  andi.b  #1,d1
+        ldb   render_flags,u
+        andb  #^(render_xmirror_mask|render_ymirror_mask) *  andi.b  #$FC,render_flags(a0)
+        orb   #0                                      *  or.b    d1,render_flags(a0)
+@a      equ   *-1
+        stb   render_flags,u
+        jmp   Call_SAnim_Do2                          *  bra.w   SAnim_Do2
                                                       *; ===========================================================================
                                                       *
+
 SAnim_Push                                            *SAnim_Push:
-                                                      *  subq.b  #1,anim_frame_duration(a0)  ; subtract 1 from frame duration
-                                                      *  bpl.w   SAnim_Delay         ; if time remains, branch
-                                                      *  move.w  inertia(a0),d2
-                                                      *  bmi.s   +
-                                                      *  neg.w   d2
-                                                      *+
-                                                      *  addi.w  #$800,d2
-                                                      *  bpl.s   +
-                                                      *  moveq   #0,d2
-                                                      *+
-                                                      *  lsr.w   #6,d2
-                                                      *  move.b  d2,anim_frame_duration(a0)
-                                                      *  lea (SonAni_Push).l,a1
-                                                      *  tst.b   (Super_Sonic_flag).w
-                                                      *  beq.s   +
-                                                      *  lea (SupSonAni_Push).l,a1
-                                                      *+
-                                                      *  move.b  status(a0),d1
-                                                      *  andi.b  #1,d1
-                                                      *  andi.b  #$FC,render_flags(a0)
-                                                      *  or.b    d1,render_flags(a0)
-        jmp   SAnim_Do2                               *  bra.w   SAnim_Do2
+        ldb   anim_frame_duration,u
+        subb  Vint_Main_runcount
+        stb   anim_frame_duration,u                   *  subq.b  #1,anim_frame_duration(a0)  ; subtract 1 from frame duration
+        bmi   >                                       *  bpl.w   SAnim_Delay         ; if time remains, branch
+        rts
+!       ldd   inertia,u                               *  move.w  inertia(a0),d2
+        bmi   >                                       *  bmi.s   +
+        _negd                                         *  neg.w   d2
+!                                                     *+
+        addd  #$800                                   *  addi.w  #$800,d2
+        bpl   >                                       *  bpl.s   +
+        ldd   #0                                      *  moveq   #0,d2
+!                                                     *+
+        _lsrd
+        _lsrd
+        _lsrd
+        _lsrd
+        _lsrd
+        _lsrd                                         *  lsr.w   #6,d2
+        std   anim_frame_duration                     *  move.b  d2,anim_frame_duration(a0)
+        ldd   #SonAni_Push                            *  lea (SonAni_Push).l,a1
+        ; unimplemented                               *  tst.b   (Super_Sonic_flag).w
+        ;                                             *  beq.s   +
+        ;                                             *  lea (SupSonAni_Push).l,a1
+        ;                                             *+
+        lda   status,u                                *  move.b  status(a0),d1
+        anda  #status_x_orientation                   *  andi.b  #1,d1
+        ldb   render_flags,u
+        andb  #^(render_xmirror_mask|render_ymirror_mask) *  andi.b  #$FC,render_flags(a0)
+        orb   #0                                      *  or.b    d1,render_flags(a0)
+@a      equ   *-1
+        stb   render_flags,u
+        jmp   Call_SAnim_Do2                          *  bra.w   SAnim_Do2
+
                                                       *; ===========================================================================
                                                       *
                                                       *; ---------------------------------------------------------------------------
@@ -5282,4 +5339,5 @@ Saved_Solid_bits                fdb   0
 
 Control_Locked                  fcb   0
 
- ;ENDC
+Chain_Bonus_counter             fcb   0
+Sonic_Look_delay_counter        fcb   0
