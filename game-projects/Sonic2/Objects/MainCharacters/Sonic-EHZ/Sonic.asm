@@ -2143,6 +2143,7 @@ Sonic_ResetOnFloor_Part2                              *Sonic_ResetOnFloor_Part2:
         lda   status,u
         anda  #status_jumporroll                      *  btst    #2,status(a0)
         beq   Sonic_ResetOnFloor_Part3                *  beq.s   Sonic_ResetOnFloor_Part3
+        lda   status,u
         anda  #^status_jumporroll
         sta   status,u                                *  bclr    #2,status(a0)
         ldd   #$1309                                  *  move.b  #$13,y_radius(a0) ; this increases Sonic's collision height to standing
