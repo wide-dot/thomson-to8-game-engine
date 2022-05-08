@@ -159,10 +159,11 @@ status_underwater             equ   $40 ; (bit 6) Set if underwater
 * ===========================================================================
 
 gravity                       equ   $38 ; 56 sub-pixels par frame
-camera_Y_pos_bias_default     equ   (200/2)-16 ; position of default camera center on screen
+camera_Y_pos_bias_default     equ   screen_top+(200/2)-16 ; position of default camera center on screen
 
 * ===========================================================================
 * Game specific globals
 * ===========================================================================
 
 Camera_Y_pos_bias             fdb   0
+Camera_Max_Y_Pos_Changing     fcb   0

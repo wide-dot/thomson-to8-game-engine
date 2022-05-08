@@ -15,13 +15,21 @@
         jsr   LoadAct       
 
 LevelSizeLoad ; todo move to an object
-        ldd   #0
-        std   <glb_camera_x_pos
-        ldd   #576
-        std   <glb_camera_y_pos
+
+        ldu   #MainCharacter
+        ldd   #screen_left+$60/2
+        std   x_pos,u
+        ldd   #screen_top+20+$028F
+        std   y_pos,u
 
 	ldd   #camera_Y_pos_bias_default
         std   Camera_Y_pos_bias
+
+        ldd   #0
+        std   <glb_camera_x_pos
+        ldd   y_pos,u
+        subd  Camera_Y_pos_bias
+        std   <glb_camera_y_pos
 
         _RunObjectRoutine ObjID_EHZ,#0
 
@@ -40,12 +48,6 @@ LevelSizeLoad ; todo move to an object
 
 	; start music
         jsr   IrqSet50Hz 
-
-        ldu   #MainCharacter
-        ldd   #screen_left+$60/2
-        std   x_pos,u
-        ldd   #screen_top+20+$028F
-        std   y_pos,u
 
 * ==============================================================================
 * Main Loop
