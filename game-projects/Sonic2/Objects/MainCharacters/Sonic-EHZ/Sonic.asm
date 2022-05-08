@@ -1437,6 +1437,9 @@ Sonic_Jump                                            *Sonic_Jump:
         ldd   y_pos,u 
         subd  #5
         std   y_pos,u                                 *  addq.w  #5,y_pos(a0)
+        ldd   inertia,u
+        std   x_vel,u
+        jsr   ObjectMove
                                                       *
 return_1AAE6                                          *return_1AAE6:
         rts                                           *  rts
