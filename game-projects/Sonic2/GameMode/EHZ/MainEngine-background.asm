@@ -31,6 +31,10 @@ LevelSizeLoad ; todo move to an object
         subd  Camera_Y_pos_bias
         std   <glb_camera_y_pos
 
+        ; global speed setting, animation and movement scale
+        lda   #5
+        sta   Vint_Main_runcount_cap
+
         _RunObjectRoutine ObjID_EHZ,#0
 
         ; init tile buffer based on camera pos
