@@ -238,20 +238,20 @@ ScrollVerti                                           * ScrollVerti:
         cmpx  #$800                                   *         cmpi.w  #$800,d1        ; is the player travelling very fast?
         bhs   @doScroll_fast                          *         bhs.s   .doScroll_fast  ; if he is, branch
 @doScroll_medium                                      * ;.doScroll_medium:
-        ldx   #6                                      *         move.w  #6<<8,d1        ; If player is going too fast, cap camera movement to 6 pixels per frame
-        cmpd  #6                                      *         cmpi.w  #6,d0           ; is player going down too fast?
+        ldx   #12                                      *         move.w  #6<<8,d1        ; If player is going too fast, cap camera movement to 6 pixels per frame
+        cmpd  #12                                      *         cmpi.w  #6,d0           ; is player going down too fast?
         lbgt   @scrollDown_max                         *         bgt.s   .scrollDown_max ; if so, move camera at capped speed
-        cmpd  #-6                                     *         cmpi.w  #-6,d0          ; is player going up too fast?
+        cmpd  #-12                                     *         cmpi.w  #-6,d0          ; is player going up too fast?
         blt   @scrollUp_max                           *         blt.s   .scrollUp_max   ; if so, move camera at capped speed
         bra   @scrollUpOrDown                         *         bra.s   .scrollUpOrDown ; otherwise, move camera at player's speed
                                                       * ; ===========================================================================
                                                       * ; loc_D7EA:
 @doScroll_slow                                        * .doScroll_slow:
         ldd   @d
-        ldx   #2                                      *         move.w  #2<<8,d1        ; If player is going too fast, cap camera movement to 2 pixels per frame
-        cmpd  #2                                      *         cmpi.w  #2,d0           ; is player going down too fast?
+        ldx   #4                                      *         move.w  #2<<8,d1        ; If player is going too fast, cap camera movement to 2 pixels per frame
+        cmpd  #4                                      *         cmpi.w  #2,d0           ; is player going down too fast?
         bgt   @scrollDown_max                         *         bgt.s   .scrollDown_max ; if so, move camera at capped speed
-        cmpd  #-2                                     *         cmpi.w  #-2,d0          ; is player going up too fast?
+        cmpd  #-4                                     *         cmpi.w  #-2,d0          ; is player going up too fast?
         blt   @scrollUp_max                           *         blt.s   .scrollUp_max   ; if so, move camera at capped speed
         bra   @scrollUpOrDown                         *         bra.s   .scrollUpOrDown ; otherwise, move camera at player's speed
                                                       * ; ===========================================================================
@@ -259,10 +259,10 @@ ScrollVerti                                           * ScrollVerti:
 @doScroll_fast                                        * .doScroll_fast:
                                                       *         ; related code appears in ScrollBG
                                                       *         ; S3K uses 24 instead of 16
-        ldx   #16                                     *         move.w  #16<<8,d1       ; If player is going too fast, cap camera movement to $10 pixels per frame
-        cmpd  #16                                     *         cmpi.w  #16,d0          ; is player going down too fast?
+        ldx   #32                                     *         move.w  #16<<8,d1       ; If player is going too fast, cap camera movement to $10 pixels per frame
+        cmpd  #32                                     *         cmpi.w  #16,d0          ; is player going down too fast?
         bgt   @scrollDown_max                         *         bgt.s   .scrollDown_max ; if so, move camera at capped speed
-        cmpd  #-16                                    *         cmpi.w  #-16,d0         ; is player going up too fast?
+        cmpd  #-32                                    *         cmpi.w  #-16,d0         ; is player going up too fast?
         blt   @scrollUp_max                           *         blt.s   .scrollUp_max   ; if so, move camera at capped speed
         bra   @scrollUpOrDown                         *         bra.s   .scrollUpOrDown ; otherwise, move camera at player's speed
                                                       * ; ===========================================================================
