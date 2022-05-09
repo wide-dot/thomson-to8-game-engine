@@ -539,7 +539,7 @@ Sonic_Move                                            *Sonic_Move:
                                                       *  bne.w   Obj01_Traction
                                                       *    endif
         tst   move_lock,u                             *  tst.w   move_lock(a0)
-        bne   Obj01_ResetScr                          *  bne.w   Obj01_ResetScr
+        lbne  Obj01_ResetScr                          *  bne.w   Obj01_ResetScr
         lda   Ctrl_1_Held_Logical
         anda  #button_left_mask                       *  btst    #button_left,(Ctrl_1_Held_Logical).w    ; is left being pressed?
         beq   Obj01_NotLeft                           *  beq.s   Obj01_NotLeft           ; if not, branch
@@ -555,9 +555,9 @@ Obj01_NotRight                                        *Obj01_NotRight:
         lda   angle,u                                 *  move.b  angle(a0),d0
         adda  #$20                                    *  addi.b  #$20,d0
         anda  #$C0                                    *  andi.b  #$C0,d0     ; is Sonic on a slope?
-        bne   Obj01_ResetScr                          *  bne.w   Obj01_ResetScr  ; if yes, branch
+        lbne  Obj01_ResetScr                          *  bne.w   Obj01_ResetScr  ; if yes, branch
         ldd   inertia,u                               *  tst.w   inertia(a0) ; is Sonic moving?
-        bne   Obj01_ResetScr                          *  bne.w   Obj01_ResetScr  ; if yes, branch
+        lbne  Obj01_ResetScr                          *  bne.w   Obj01_ResetScr  ; if yes, branch
         ldb   status,u
         andb  #^status_pushing 
         stb   status,u                                *  bclr    #5,status(a0)
@@ -565,6 +565,13 @@ Obj01_NotRight                                        *Obj01_NotRight:
         stx   anim,u
         bitb  #status_norgroundnorfall                *  btst    #3,status(a0)
         beq   Sonic_Balance                           *  beq.w   Sonic_Balance
+
+
+
+
+        ; TODO fix object size
+        bra   Sonic_Lookup
+        ; --------------------
         lda   interact,u                              *  moveq   #0,d0
                                                       *  move.b  interact(a0),d0
                                                       *    if object_size=$40
@@ -706,7 +713,7 @@ SuperSonic_Balance2                                   *SuperSonic_Balance2:
                                                       *; loc_1A566:
 SuperSonic_BalanceOnObjRight                          *SuperSonic_BalanceOnObjRight:
                                                       *  bclr    #0,status(a0)
-        bra   loc_1A57C                               *  bra.s   loc_1A57C
+                                                      *  bra.s   loc_1A57C
                                                       *; ---------------------------------------------------------------------------
 loc_1A56E                                             *loc_1A56E:
                                                       *  cmpi.b  #3,tilt(a0)
@@ -718,48 +725,74 @@ SuperSonic_BalanceOnObjLeft                           *SuperSonic_BalanceOnObjLe
                                                       *
 loc_1A57C                                             *loc_1A57C:
                                                       *  move.b  #AniIDSonAni_Balance,anim(a0)
-        bra   Obj01_ResetScr                          *  bra.s   Obj01_ResetScr
+                                                      *  bra.s   Obj01_ResetScr
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1A584:
 Sonic_Lookup                                          *Sonic_Lookup:
-                                                      *  btst    #button_up,(Ctrl_1_Held_Logical).w  ; is up being pressed?
-                                                      *  beq.s   Sonic_Duck          ; if not, branch
-                                                      *  move.b  #AniIDSonAni_LookUp,anim(a0)            ; use "looking up" animation
-                                                      *  addq.w  #1,(Sonic_Look_delay_counter).w
-                                                      *  cmpi.w  #$78,(Sonic_Look_delay_counter).w
-                                                      *  blo.s   Obj01_ResetScr_Part2
-                                                      *  move.w  #$78,(Sonic_Look_delay_counter).w
-                                                      *  cmpi.w  #$C8,(Camera_Y_pos_bias).w
-                                                      *  beq.s   Obj01_UpdateSpeedOnGround
-                                                      *  addq.w  #2,(Camera_Y_pos_bias).w
+        lda   Ctrl_1_Held_Logical
+        anda  #button_up_mask                         *  btst    #button_up,(Ctrl_1_Held_Logical).w  ; is up being pressed?
+        beq   Sonic_Duck                              *  beq.s   Sonic_Duck          ; if not, branch
+        ldd   #SonAni_LookUp                          *  move.b  #AniIDSonAni_LookUp,anim(a0)            ; use "looking up" animation
+        std   anim,u
+        lda   Sonic_Look_delay_counter
+        adda  Vint_Main_runcount                      *  addq.w  #1,(Sonic_Look_delay_counter).w
+        inca
+        sta   Sonic_Look_delay_counter
+        cmpa  #$78                                    *  cmpi.w  #$78,(Sonic_Look_delay_counter).w
+        blo   Obj01_ResetScr_Part2                    *  blo.s   Obj01_ResetScr_Part2
+        lda   #$78
+        sta   Sonic_Look_delay_counter                *  move.w  #$78,(Sonic_Look_delay_counter).w
+        ldd   Camera_Y_pos_bias
+        cmpd  #176                                    *  cmpi.w  #$C8,(Camera_Y_pos_bias).w
+        bhs   Obj01_UpdateSpeedOnGround               *  beq.s   Obj01_UpdateSpeedOnGround
+        addd  #4
+        std   Camera_Y_pos_bias                       *  addq.w  #2,(Camera_Y_pos_bias).w
         bra   Obj01_UpdateSpeedOnGround               *  bra.s   Obj01_UpdateSpeedOnGround
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1A5B2:
 Sonic_Duck                                            *Sonic_Duck:
-                                                      *  btst    #button_down,(Ctrl_1_Held_Logical).w    ; is down being pressed?
-                                                      *  beq.s   Obj01_ResetScr          ; if not, branch
-                                                      *  move.b  #AniIDSonAni_Duck,anim(a0)          ; use "ducking" animation
-                                                      *  addq.w  #1,(Sonic_Look_delay_counter).w
-                                                      *  cmpi.w  #$78,(Sonic_Look_delay_counter).w
-                                                      *  blo.s   Obj01_ResetScr_Part2
-                                                      *  move.w  #$78,(Sonic_Look_delay_counter).w
-                                                      *  cmpi.w  #8,(Camera_Y_pos_bias).w
-                                                      *  beq.s   Obj01_UpdateSpeedOnGround
-                                                      *  subq.w  #2,(Camera_Y_pos_bias).w
-                                                      *  bra.s   Obj01_UpdateSpeedOnGround
+        lda   Ctrl_1_Held_Logical
+        anda  #button_down_mask                       *  btst    #button_down,(Ctrl_1_Held_Logical).w    ; is down being pressed?
+        beq   Obj01_ResetScr                          *  beq.s   Obj01_ResetScr          ; if not, branch
+        ldd   #SonAni_Duck                            *  move.b  #AniIDSonAni_Duck,anim(a0)          ; use "ducking" animation
+        std   anim,u
+        lda   Sonic_Look_delay_counter
+        adda  Vint_Main_runcount                      *  addq.w  #1,(Sonic_Look_delay_counter).w
+        inca
+        sta   Sonic_Look_delay_counter
+        cmpa  #$78                                    *  cmpi.w  #$78,(Sonic_Look_delay_counter).w
+        blo   Obj01_ResetScr_Part2                    *  blo.s   Obj01_ResetScr_Part2
+        lda   #$78
+        sta   Sonic_Look_delay_counter                *  move.w  #$78,(Sonic_Look_delay_counter).w
+        ldd   Camera_Y_pos_bias
+        cmpd  #72                                     *  cmpi.w  #8,(Camera_Y_pos_bias).w
+        bls   Obj01_UpdateSpeedOnGround               *  beq.s   Obj01_UpdateSpeedOnGround
+        subd  #4
+        std   Camera_Y_pos_bias                       *  subq.w  #2,(Camera_Y_pos_bias).w
+        bra   Obj01_UpdateSpeedOnGround               *  bra.s   Obj01_UpdateSpeedOnGround
                                                       *
                                                       *; ===========================================================================
                                                       *; moves the screen back to its normal position after looking up or down
                                                       *; loc_1A5E0:
 Obj01_ResetScr                                        *Obj01_ResetScr:
-                                                      *  move.w  #0,(Sonic_Look_delay_counter).w
+        lda   #0
+        sta   Sonic_Look_delay_counter                *  move.w  #0,(Sonic_Look_delay_counter).w
                                                       *; loc_1A5E6:
 Obj01_ResetScr_Part2                                  *Obj01_ResetScr_Part2:
-                                                      *  cmpi.w  #(224/2)-16,(Camera_Y_pos_bias).w   ; is screen in its default position?
-                                                      *  beq.s   Obj01_UpdateSpeedOnGround   ; if yes, branch.
-                                                      *  bhs.s   +               ; depending on the sign of the difference,
-                                                      *  addq.w  #4,(Camera_Y_pos_bias).w    ; either add 2
-                                                      *+ subq.w  #2,(Camera_Y_pos_bias).w    ; or subtract 2
+        ldd   Camera_Y_pos_bias
+        cmpd  #camera_Y_pos_bias_default              *  cmpi.w  #(224/2)-16,(Camera_Y_pos_bias).w   ; is screen in its default position?
+        beq   Obj01_UpdateSpeedOnGround               *  beq.s   Obj01_UpdateSpeedOnGround   ; if yes, branch.
+        bhs   >                                       *  bhs.s   +               ; depending on the sign of the difference,
+        addd  #4                                      *  addq.w  #4,(Camera_Y_pos_bias).w    ; either add 2
+        cmpd  #camera_Y_pos_bias_default
+        bls   @exit
+        ldd   #camera_Y_pos_bias_default ; cap value
+        bra   @exit
+!       subd  #4                                      *+ subq.w  #2,(Camera_Y_pos_bias).w    ; or subtract 2
+        cmpd  #camera_Y_pos_bias_default
+        bhs   @exit
+        ldd   #camera_Y_pos_bias_default ; cap value
+@exit   std   Camera_Y_pos_bias
                                                       *
                                                       *; ---------------------------------------------------------------------------
                                                       *; updates Sonic's speed on the ground
