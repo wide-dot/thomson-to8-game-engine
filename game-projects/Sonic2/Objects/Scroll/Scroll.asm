@@ -116,26 +116,22 @@ ScrollHoriz                                           * ScrollHoriz:
                                                       *         bra.s   .checkIfShouldScroll    ; use that value for scrolling
                                                       * ; ===========================================================================
                                                       * ; loc_D72E:
-                                                      * .scrollNotDelayed:
-                                                      *         move.w  x_pos(a0),d0
+@scrollNotDelayed                                     * .scrollNotDelayed:
+        ldd   x_pos,u                                 *         move.w  x_pos(a0),d0
                                                       * ; loc_D732:
-                                                      * .checkIfShouldScroll:
-        ldd   x_pos,u                                 *         sub.w   (a1),d0
-        subd  glb_camera_x_pos
-        cmpd  #$80-8                                  *         subi.w  #(320/2)-16,d0          ; is the player less than 144 pixels from the screen edge?
+@checkIfShouldScroll                                  * .checkIfShouldScroll:
+        subd  glb_camera_x_pos                        *         sub.w   (a1),d0
+        subd  #$80-8                                  *         subi.w  #(320/2)-16,d0          ; is the player less than 144 pixels from the screen edge?
         blt   @scrollLeft                             *         blt.s   .scrollLeft     ; if he is, scroll left
-        cmpd  #$80                                    *         subi.w  #16,d0          ; is the player more than 159 pixels from the screen edge?
+        subd  #$8                                     *         subi.w  #16,d0          ; is the player more than 159 pixels from the screen edge?
         bge   @scrollRight                            *         bge.s   .scrollRight    ; if he is, scroll right
-                                                      *         clr.w   (a4)            ; otherwise, don't scroll
+        ;                                             *         clr.w   (a4)            ; otherwise, don't scroll
                                                       * ; return_D742:
                                                       * .return:
-        ;                                             *         rts
+        bra   ScrollVerti                             *         rts
                                                       * ; ===========================================================================
                                                       * ; loc_D744:
 @scrollLeft                                           * .scrollLeft:
-        ldd   x_pos,u
-        subd  glb_camera_x_pos
-        subd  #$80-8
         cmpd  #-8*5                                   *         cmpi.w  #-16,d0
         bgt   @maxNotReached                          *         bgt.s   .maxNotReached
         ldd   #-8*5                                   *         move.w  #-16,d0         ; limit scrolling to 16 pixels per frame
@@ -149,9 +145,6 @@ ScrollHoriz                                           * ScrollHoriz:
                                                       * ; ===========================================================================
                                                       * ; loc_D758:
 @scrollRight                                          * .scrollRight:
-        ldd   x_pos,u
-        subd  glb_camera_x_pos
-        subd  #$80
         cmpd  #8*5                                    *         cmpi.w  #16,d0
         blo   @maxNotReached2                         *         blo.s   .maxNotReached2
         ldd   #8*5                                    *         move.w  #16,d0
@@ -360,6 +353,7 @@ ScrollVerti                                           * ScrollVerti:
                                                       *         move.w  d3,(a4)         ; set difference between old and new positions
         ldd   #0
 @scval  equ   *-2
+        andb  #$FE
         std   glb_camera_y_pos                        *         move.l  d1,(a1)         ; set new camera Y pos
         rts                                           *         rts
                                                       * ; End of function ScrollVerti
