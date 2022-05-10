@@ -167,3 +167,4 @@ camera_Y_pos_bias_default     equ   screen_top+(200/2)-16 ; position of default 
 
 Camera_Y_pos_bias             fdb   0
 Camera_Max_Y_Pos_Changing     fcb   0
+Horiz_scroll_delay_val        fdb   0

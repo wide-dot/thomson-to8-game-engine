@@ -101,10 +101,10 @@ ScrollHoriz                                           * ScrollHoriz:
                                                       *         move.w  (a1),d4         ; get camera X pos
                                                       *         tst.b   (Teleport_flag).w
                                                       *         bne.s   .return         ; if a teleport is in progress, return
-                                                      *         move.w  (a5),d1         ; should scrolling be delayed?
-                                                      *         beq.s   .scrollNotDelayed       ; if not, branch
-                                                      *         subi.w  #$100,d1        ; reduce delay value
-                                                      *         move.w  d1,(a5)
+        ldd   Horiz_scroll_delay_val                  *         move.w  (a5),d1         ; should scrolling be delayed?
+        beq   @scrollNotDelayed                       *         beq.s   .scrollNotDelayed       ; if not, branch
+        ;subd  #$100                                   *         subi.w  #$100,d1        ; reduce delay value
+        ;todo ...                                         *         move.w  d1,(a5)
                                                       *         moveq   #0,d1
                                                       *         move.b  (a5),d1         ; get delay value
                                                       *         lsl.b   #2,d1           ; multiply by 4, the size of a position buffer entry

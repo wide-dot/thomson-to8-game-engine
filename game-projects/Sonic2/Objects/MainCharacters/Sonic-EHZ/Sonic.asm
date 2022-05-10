@@ -128,7 +128,7 @@ Obj01_Control                                         *  Obj01_Control:
         bita  #1                                      *  btst    #0,obj_control(a0)  ; is Sonic interacting with another object that holds him in place or controls his movement somehow?
         bne   >                                       *  bne.s   +           ; if yes, branch to skip Sonic's control
                                                       *  moveq   #0,d0
-        lda   status_flags,u                          *  move.b  status(a0),d0
+        lda   status,u                          *  move.b  status(a0),d0
         anda  #status_inair|status_jumporroll         *  andi.w  #6,d0   ; %0000 %0110
         ldx   #Obj01_Modes                            *  move.w  Obj01_Modes(pc,d0.w),d1
         jsr   [a,x]                                   *  jsr Obj01_Modes(pc,d1.w)    ; run Sonic's movement control code
@@ -432,7 +432,7 @@ Obj01_MdRoll                                          *Obj01_MdRoll:
 
 ObjectMoveAndFall
         ldb   #$38                                    
-        lda   status_flags,u
+        lda   status,u
         bita  #status_underwater                      
         beq   >             
         ldb   #$10
@@ -836,7 +836,7 @@ Obj01_Traction                                        *Obj01_Traction:
         ;                                             *  muls.w  inertia(a0),d1
         ;                                             *  asr.l   #8,d1
         ldd   inertia,u
-        ldx   Vint_Main_runcount_w     ; take number of elapsed frame since last render and multiply by inertia/2
+        ldx   Vint_Main_runcount_w
         beq   @end
 @loop
         addd  inertia,u
@@ -1045,63 +1045,81 @@ return_1A7C4                                          *return_1A7C4:
                                                       *
                                                       *; loc_1A7C6:
 Sonic_RollSpeed                                       *Sonic_RollSpeed:
-                                                      *  move.w  (Sonic_top_speed).w,d6
-                                                      *  asl.w   #1,d6
-                                                      *  move.w  (Sonic_acceleration).w,d5
-                                                      *  asr.w   #1,d5   ; natural roll deceleration = 1/2 normal acceleration
-                                                      *  move.w  #$20,d4 ; controlled roll deceleration... interestingly,
+        ldd   Sonic_top_speed                         *  move.w  (Sonic_top_speed).w,d6
+        _asld                                         *  asl.w   #1,d6
+        std   Sonic_top_speed_tmp                     
+        lda   Vint_Main_runcount
+        bne   >
+        lda   #1
+!       ldb   Sonic_acceleration+1                    *  move.w  (Sonic_acceleration).w,d5
+        mul
+        _asrd                                         *  asr.w   #1,d5   ; natural roll deceleration = 1/2 normal acceleration
+        std   Sonic_acceleration_tmp                  
+        lda   Vint_Main_runcount
+        bne   >
+        lda   #1
+!       ldb   #$20
+        mul
+        std   Sonic_deceleration_tmp                  *  move.w  #$20,d4 ; controlled roll deceleration... interestingly,
                                                       *          ; this should be Sonic_deceleration/4 according to Tails_RollSpeed,
                                                       *          ; which means Sonic is much better than Tails at slowing down his rolling when he's underwater
                                                       *    if status_sec_isSliding = 7
-                                                      *  tst.b   status_secondary(a0)
-                                                      *  bmi.w   Obj01_Roll_ResetScr
-                                                      *    else
-                                                      *  btst    #status_sec_isSliding,status_secondary(a0)
-                                                      *  bne.w   Obj01_Roll_ResetScr
-                                                      *    endif
-                                                      *  tst.w   move_lock(a0)
-                                                      *  bne.s   Sonic_ApplyRollSpeed
-                                                      *  btst    #button_left,(Ctrl_1_Held_Logical).w    ; is left being pressed?
-                                                      *  beq.s   +               ; if not, branch
-                                                      *  bsr.w   Sonic_RollLeft
-                                                      *+
-                                                      *  btst    #button_right,(Ctrl_1_Held_Logical).w   ; is right being pressed?
-                                                      *  beq.s   Sonic_ApplyRollSpeed        ; if not, branch
-                                                      *  bsr.w   Sonic_RollRight
+        tst   status_secondary,u                      *  tst.b   status_secondary(a0)
+        bmi   Obj01_Roll_ResetScr                     *  bmi.w   Obj01_Roll_ResetScr
+        ;                                              *    else
+        ;                                              *  btst    #status_sec_isSliding,status_secondary(a0)
+        ;                                              *  bne.w   Obj01_Roll_ResetScr
+        ;                                              *    endif
+        tst   move_lock,u                             *  tst.w   move_lock(a0)
+        bne   Sonic_ApplyRollSpeed                    *  bne.s   Sonic_ApplyRollSpeed
+        lda   Ctrl_1_Held_Logical
+        anda  #button_left_mask                       *  btst    #button_left,(Ctrl_1_Held_Logical).w    ; is left being pressed?
+        beq   >                                       *  beq.s   +               ; if not, branch
+        jsr   Sonic_RollLeft                          *  bsr.w   Sonic_RollLeft
+!                                                     *+
+        lda   Ctrl_1_Held_Logical                     
+        anda  #button_right_mask                      *  btst    #button_right,(Ctrl_1_Held_Logical).w   ; is right being pressed?
+        beq   Sonic_ApplyRollSpeed                    *  beq.s   Sonic_ApplyRollSpeed        ; if not, branch
+        jsr   Sonic_RollRight                         *  bsr.w   Sonic_RollRight
                                                       *
                                                       *; loc_1A7FC:
 Sonic_ApplyRollSpeed                                  *Sonic_ApplyRollSpeed:
-                                                      *  move.w  inertia(a0),d0
-                                                      *  beq.s   Sonic_CheckRollStop
-                                                      *  bmi.s   Sonic_ApplyRollSpeedLeft
+        ldd   inertia,u                               *  move.w  inertia(a0),d0
+        beq   Sonic_CheckRollStop                     *  beq.s   Sonic_CheckRollStop
+        bmi   Sonic_ApplyRollSpeedLeft                *  bmi.s   Sonic_ApplyRollSpeedLeft
                                                       *
-                                                      *; Sonic_ApplyRollSpeedRight:
-                                                      *  sub.w   d5,d0
-                                                      *  bcc.s   +
-                                                      *  move.w  #0,d0
-                                                      *+
-                                                      *  move.w  d0,inertia(a0)
+Sonic_ApplyRollSpeedRight                             *; Sonic_ApplyRollSpeedRight:
+        subd  Sonic_acceleration_tmp                  *  sub.w   d5,d0
+        bcc   >                                       *  bcc.s   +
+        ldd   #0                                      *  move.w  #0,d0
+!                                                     *+
+        std   inertia,u                               *  move.w  d0,inertia(a0)
         bra   Sonic_CheckRollStop                     *  bra.s   Sonic_CheckRollStop
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1A812:
 Sonic_ApplyRollSpeedLeft                              *Sonic_ApplyRollSpeedLeft:
-                                                      *  add.w   d5,d0
-                                                      *  bcc.s   +
-                                                      *  move.w  #0,d0
-                                                      *+
-                                                      *  move.w  d0,inertia(a0)
+        addd  Sonic_acceleration_tmp                  *  add.w   d5,d0
+        bcc   >                                       *  bcc.s   +
+        ldd   #0                                      *  move.w  #0,d0
+!                                                     *+
+        std   inertia,u                               *  move.w  d0,inertia(a0)
                                                       *
                                                       *; loc_1A81E:
 Sonic_CheckRollStop                                   *Sonic_CheckRollStop:
-                                                      *  tst.w   inertia(a0)
-                                                      *  bne.s   Obj01_Roll_ResetScr
-                                                      *  tst.b   pinball_mode(a0) ; note: the spindash flag has a different meaning when Sonic's already rolling -- it's used to mean he's not allowed to stop rolling
-                                                      *  bne.s   Sonic_KeepRolling
-                                                      *  bclr    #2,status(a0)
-                                                      *  move.b  #$13,y_radius(a0)
-                                                      *  move.b  #9,x_radius(a0)
-                                                      *  move.b  #AniIDSonAni_Wait,anim(a0)
-                                                      *  subq.w  #5,y_pos(a0)
+        ;                                             *  tst.w   inertia(a0)
+        bne   Obj01_Roll_ResetScr                     *  bne.s   Obj01_Roll_ResetScr
+        tst   pinball_mode,u                          *  tst.b   pinball_mode(a0) ; note: the spindash flag has a different meaning when Sonic's already rolling -- it's used to mean he's not allowed to stop rolling
+        bne   Sonic_KeepRolling                       *  bne.s   Sonic_KeepRolling
+        lda   status,u
+        anda  #^status_jumporroll                     *  bclr    #2,status(a0)
+        sta   status,u
+        ldd   #$1309                                  *  move.b  #$13,y_radius(a0)
+        std   y_radius,u                              *  move.b  #9,x_radius(a0)
+        ldd   #SonAni_Wait 
+        std   anim,u                                  *  move.b  #AniIDSonAni_Wait,anim(a0)
+        ldd   y_pos,u
+        subd  #5
+        std   y_pos,u                                 *  subq.w  #5,y_pos(a0)
         bra   Obj01_Roll_ResetScr                     *  bra.s   Obj01_Roll_ResetScr
                                                       *
                                                       *; ---------------------------------------------------------------------------
@@ -1109,62 +1127,78 @@ Sonic_CheckRollStop                                   *Sonic_CheckRollStop:
                                                       *; (such as in an S-curve in HTZ or a stopper chamber in CNZ)
                                                       *; loc_1A848:
 Sonic_KeepRolling                                     *Sonic_KeepRolling:
-                                                      *  move.w  #$400,inertia(a0)
-                                                      *  btst    #0,status(a0)
-                                                      *  beq.s   Obj01_Roll_ResetScr
-                                                      *  neg.w   inertia(a0)
-                                                      *
+        ldd   #$400
+        std   inertia,u                               *  move.w  #$400,inertia(a0)
+        lda   status,u                                *  btst    #0,status(a0)
+        anda  #status_x_orientation
+        beq   Obj01_Roll_ResetScr                     *  beq.s   Obj01_Roll_ResetScr
+        ldd   inertia,u
+        _negd                                         *  neg.w   inertia(a0)
+        std   inertia,u                               *
                                                       *; resets the screen to normal while rolling, like Obj01_ResetScr
                                                       *; loc_1A85A:
 Obj01_Roll_ResetScr                                   *Obj01_Roll_ResetScr:
-                                                      *  cmpi.w  #(224/2)-16,(Camera_Y_pos_bias).w   ; is screen in its default position?
-                                                      *  beq.s   Sonic_SetRollSpeeds     ; if yes, branch
-                                                      *  bhs.s   +               ; depending on the sign of the difference,
-                                                      *  addq.w  #4,(Camera_Y_pos_bias).w    ; either add 2
-                                                      *+ subq.w  #2,(Camera_Y_pos_bias).w    ; or subtract 2
+        ldd   Camera_Y_pos_bias
+        cmpd  #camera_Y_pos_bias_default              *  cmpi.w  #(224/2)-16,(Camera_Y_pos_bias).w   ; is screen in its default position?
+        beq   Sonic_SetRollSpeeds                     *  beq.s   Sonic_SetRollSpeeds    ; if yes, branch
+        bhs   >                                       *  bhs.s   +               ; depending on the sign of the difference,
+        addd  #4                                      *  addq.w  #4,(Camera_Y_pos_bias).w    ; either add 2
+!       subd  #2                                      *+ subq.w  #2,(Camera_Y_pos_bias).w    ; or subtract 2
+        std   Camera_Y_pos_bias
                                                       *
+
                                                       *; loc_1A86C:
 Sonic_SetRollSpeeds                                   *Sonic_SetRollSpeeds:
-                                                      *  move.b  angle(a0),d0
+        lda   angle,u                                 *  move.b  angle(a0),d0
                                                       *  jsr (CalcSine).l
                                                       *  muls.w  inertia(a0),d0
                                                       *  asr.l   #8,d0
                                                       *  move.w  d0,y_vel(a0)    ; set y velocity based on $14 and angle
-                                                      *  muls.w  inertia(a0),d1
+        ldd   inertia,u                               *  muls.w  inertia(a0),d1
                                                       *  asr.l   #8,d1
-                                                      *  cmpi.w  #$1000,d1
-                                                      *  ble.s   +
-                                                      *  move.w  #$1000,d1   ; limit Sonic's speed rolling right
-                                                      *+
-                                                      *  cmpi.w  #-$1000,d1
-                                                      *  bge.s   +
-                                                      *  move.w  #-$1000,d1  ; limit Sonic's speed rolling left
-                                                      *+
-                                                      *  move.w  d1,x_vel(a0)    ; set x velocity based on $14 and angle
+        cmpd  #$1000                                  *  cmpi.w  #$1000,d1
+        ble   >                                       *  ble.s   +
+        ldd   #$1000                                  *  move.w  #$1000,d1   ; limit Sonic's speed rolling right
+!                                                     *+
+        cmpd  #-$1000                                 *  cmpi.w  #-$1000,d1
+        bge   >                                       *  bge.s   +
+        ldd   #-$1000                                 *  move.w  #-$1000,d1  ; limit Sonic's speed rolling left
+!                                                     *+
+        ldx   Vint_Main_runcount_w
+        beq   @end
+@loop
+        addd  inertia,u
+        leax  -1,x
+        bne   @loop 
+@end    std   x_vel,u                                 *  move.w  d1,x_vel(a0)    ; set x velocity based on $14 and angle
         jmp   Obj01_CheckWallsOnGround                *  bra.w   Obj01_CheckWallsOnGround
                                                       *; End of function Sonic_RollSpeed
                                                       *
                                                       *
+
                                                       *; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       *
                                                       *
                                                       *; loc_1A8A2:
 Sonic_RollLeft                                        *Sonic_RollLeft:
-                                                      *  move.w  inertia(a0),d0
-                                                      *  beq.s   +
-                                                      *  bpl.s   Sonic_BrakeRollingRight
-                                                      *+
-                                                      *  bset    #0,status(a0)
-                                                      *  move.b  #AniIDSonAni_Roll,anim(a0)  ; use "rolling" animation
+        ldd   inertia,u                               *  move.w  inertia(a0),d0
+        beq   >                                       *  beq.s   +
+        bpl   Sonic_BrakeRollingRight                 *  bpl.s   Sonic_BrakeRollingRight
+!                                                     *+
+        lda   status,u
+        ora   #status_x_orientation                   *  bset    #0,status(a0)
+        sta   status,u
+        ldd   #SonAni_Roll
+        std   anim,u                                  *  move.b  #AniIDSonAni_Roll,anim(a0)  ; use "rolling" animation
         rts                                           *  rts
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1A8B8:
 Sonic_BrakeRollingRight                               *Sonic_BrakeRollingRight:
-                                                      *  sub.w   d4,d0   ; reduce rightward rolling speed
-                                                      *  bcc.s   +
-                                                      *  move.w  #-$80,d0
-                                                      *+
-                                                      *  move.w  d0,inertia(a0)
+        subd  Sonic_deceleration_tmp                  *  sub.w   d4,d0   ; reduce rightward rolling speed
+        bcc   >                                       *  bcc.s   +
+        ldd   #-$80                                   *  move.w  #-$80,d0
+!                                                     *+
+        std   inertia,u                               *  move.w  d0,inertia(a0)
         rts                                           *  rts
                                                       *; End of function Sonic_RollLeft
                                                       *
@@ -1174,19 +1208,22 @@ Sonic_BrakeRollingRight                               *Sonic_BrakeRollingRight:
                                                       *
                                                       *; loc_1A8C6:
 Sonic_RollRight                                       *Sonic_RollRight:
-                                                      *  move.w  inertia(a0),d0
-                                                      *  bmi.s   Sonic_BrakeRollingLeft
-                                                      *  bclr    #0,status(a0)
-                                                      *  move.b  #AniIDSonAni_Roll,anim(a0)  ; use "rolling" animation
+        ldd   inertia,u                               *  move.w  inertia(a0),d0
+        bmi   Sonic_BrakeRollingLeft                  *  bmi.s   Sonic_BrakeRollingLeft
+        lda   status,u
+        anda  #^status_x_orientation                  *  bclr    #0,status(a0)
+        sta   status,u
+        ldd   #SonAni_Roll                            *  move.b  #AniIDSonAni_Roll,anim(a0)  ; use "rolling" animation
+        std   anim,u
         rts                                           *  rts
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1A8DA:
 Sonic_BrakeRollingLeft                                *Sonic_BrakeRollingLeft:
-                                                      *  add.w   d4,d0   ; reduce leftward rolling speed
-                                                      *  bcc.s   +
-                                                      *  move.w  #$80,d0
-                                                      *+
-                                                      *  move.w  d0,inertia(a0)
+        addd  Sonic_deceleration_tmp                  *  add.w   d4,d0   ; reduce leftward rolling speed
+        bcc   >                                       *  bcc.s   +
+        ldd   #$80                                    *  move.w  #$80,d0
+!                                                     *+
+        std   inertia,u                               *  move.w  d0,inertia(a0)
         rts                                           *  rts
                                                       *; End of subroutine Sonic_RollRight
                                                       *
@@ -1355,20 +1392,23 @@ Sonic_Boundary_Sides                                  *Sonic_Boundary_Sides:
                                                       *; loc_1A9D2:
 Sonic_Roll                                            *Sonic_Roll:
                                                       *    if status_sec_isSliding = 7
-                                                      *  tst.b   status_secondary(a0)
-                                                      *  bmi.s   Obj01_NoRoll
+        tst   status_secondary,u                      *  tst.b   status_secondary(a0)
+        bmi   Obj01_NoRoll                            *  bmi.s   Obj01_NoRoll
                                                       *    else
                                                       *  btst    #status_sec_isSliding,status_secondary(a0)
                                                       *  bne.s   Obj01_NoRoll
                                                       *    endif
-                                                      *  mvabs.w inertia(a0),d0
-                                                      *  cmpi.w  #$80,d0     ; is Sonic moving at $80 speed or faster?
-                                                      *  blo.s   Obj01_NoRoll    ; if not, branch
-                                                      *  move.b  (Ctrl_1_Held_Logical).w,d0
-                                                      *  andi.b  #button_left_mask|button_right_mask,d0 ; is left/right being pressed?
-                                                      *  bne.s   Obj01_NoRoll    ; if yes, branch
-                                                      *  btst    #button_down,(Ctrl_1_Held_Logical).w ; is down being pressed?
-                                                      *  bne.s   Obj01_ChkRoll           ; if yes, branch
+        ldd   inertia,u                               *  mvabs.w inertia(a0),d0
+        bpl   >
+        _negd
+!                                              
+        cmpd  #$80                                    *  cmpi.w  #$80,d0     ; is Sonic moving at $80 speed or faster?
+        blo   Obj01_NoRoll                            *  blo.s   Obj01_NoRoll    ; if not, branch
+        lda   Ctrl_1_Held_Logical                     *  move.b  (Ctrl_1_Held_Logical).w,d0
+        bita  #button_left_mask|button_right_mask     *  andi.b  #button_left_mask|button_right_mask,d0 ; is left/right being pressed?
+        bne   Obj01_NoRoll                            *  bne.s   Obj01_NoRoll    ; if yes, branch
+        anda  #button_down_mask                       *  btst    #button_down,(Ctrl_1_Held_Logical).w ; is down being pressed?
+        bne   Obj01_ChkRoll                           *  bne.s   Obj01_ChkRoll           ; if yes, branch
                                                       *; return_1A9F8:
 Obj01_NoRoll                                          *Obj01_NoRoll:
         rts                                           *  rts
@@ -1376,7 +1416,7 @@ Obj01_NoRoll                                          *Obj01_NoRoll:
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1A9FA:
 Obj01_ChkRoll                                         *Obj01_ChkRoll:
-        lda   status_flags,u                           
+        lda   status,u                           
         bita  #status_jumporroll                      *  btst    #2,status(a0)   ; is Sonic already rolling?
         beq   Obj01_DoRoll                            *  beq.s   Obj01_DoRoll    ; if not, branch
         rts                                           *  rts
@@ -1385,14 +1425,14 @@ Obj01_ChkRoll                                         *Obj01_ChkRoll:
                                                       *; loc_1AA04:
 Obj01_DoRoll                                          *Obj01_DoRoll:
         ora   #status_jumporroll                       
-        sta   status_flags,u                          *  bset    #2,status(a0)
+        sta   status,u                                *  bset    #2,status(a0)
         ldd   #$0E07                                  *  move.b  #$E,y_radius(a0)
-        std   y_radius ; and x_radius                 *  move.b  #7,x_radius(a0)
+        std   y_radius,u ; and x_radius               *  move.b  #7,x_radius(a0)
         ldd   #SonAni_Roll                            *  move.b  #AniIDSonAni_Roll,anim(a0)  ; use "rolling" animation
         std   anim,u                                   
-        ldd   y_pos                                    
+        ldd   y_pos,u                                    
         addd  #5                                       
-        std   y_pos                                   *  addq.w  #5,y_pos(a0)
+        std   y_pos,u                                 *  addq.w  #5,y_pos(a0)
         ;                                              *  move.w  #SndID_Roll,d0
         ;                                              *  jsr (PlaySound).l   ; play rolling sound
         ldd   inertia,u                               *  tst.w   inertia(a0)
@@ -1427,7 +1467,7 @@ Sonic_Jump                                            *Sonic_Jump:
         ;                                             *  beq.s   +
         ;                                              *  move.w  #$800,d2    ; set higher jump speed if super
                                                       *+
-        lda   status_flags,u                          *  btst    #6,status(a0)   ; Test if underwater
+        lda   status,u                          *  btst    #6,status(a0)   ; Test if underwater
         bita  #status_underwater                      
         beq   >                                       *  beq.s   +       ; if not, branch
         ldx   #$380                                   *  move.w  #$380,d2    ; set lower jump speed if under
@@ -1441,6 +1481,9 @@ Sonic_Jump                                            *Sonic_Jump:
         ;                                             *  add.w   d1,x_vel(a0)    ; make Sonic jump (in X... this adds nothing on level ground)
         ;                                              *  muls.w  d2,d0
         ;                                              *  asr.l   #8,d0
+        ldd   inertia,u
+        std   x_vel,u
+
         tfr   x,d
         _negd
         addd  y_vel,u
@@ -1458,7 +1501,7 @@ Sonic_Jump                                            *Sonic_Jump:
         ldd   #$1309                                  *  move.b  #$13,y_radius(a0)
         std   y_radius,u ; and x_radius               *  move.b  #9,x_radius(a0)
         lda   status,u
-        anda  #status_jumporroll                      *  btst    #2,status(a0)
+        bita  #status_jumporroll                      *  btst    #2,status(a0)
         bne   Sonic_RollJump                          *  bne.s   Sonic_RollJump
         ldd   #$0E07                                  *  move.b  #$E,y_radius(a0)
         std   y_radius,u ; and x_radius               *  move.b  #7,x_radius(a0)
@@ -1470,9 +1513,6 @@ Sonic_Jump                                            *Sonic_Jump:
         ldd   y_pos,u 
         subd  #5
         std   y_pos,u                                 *  addq.w  #5,y_pos(a0)
-        ldd   inertia,u
-        std   x_vel,u
-        jsr   ObjectMove
                                                       *
 return_1AAE6                                          *return_1AAE6:
         rts                                           *  rts
@@ -1499,7 +1539,7 @@ Sonic_JumpHeight                                      *Sonic_JumpHeight:
         beq   Sonic_UpVelCap                          *  beq.s   Sonic_UpVelCap  ; if not, branch
                                                       *
         ldx   #-$400                                  *  move.w  #-$400,d1
-        lda   status_flags,u                          *  btst    #6,status(a0)   ; is Sonic underwater?
+        lda   status,u                          *  btst    #6,status(a0)   ; is Sonic underwater?
         bita  #status_underwater                      
         beq   >                                       *  beq.s   +       ; if not, branch
         ldx   #-$200                                  *  move.w  #-$200,d1
@@ -1569,7 +1609,7 @@ Sonic_CheckGoSuper                                    *Sonic_CheckGoSuper:
                                                       *
                                                       *; ---------------------------------------------------------------------------
 return_1ABA4                                          *return_1ABA4:
-        rts                                           *  rts
+        ;rts                                           *  rts
                                                       *; End of subroutine Sonic_CheckGoSuper
                                                       *
                                                       *
@@ -1612,10 +1652,10 @@ Sonic_Super                                           *Sonic_Super:
                                                       *  move.w  #$600,(Sonic_top_speed).w
                                                       *  move.w  #$C,(Sonic_acceleration).w
                                                       *  move.w  #$80,(Sonic_deceleration).w
-        lda   status_flags,u                          *  btst    #6,status(a0)   ; Check if underwater, return if not
-        bita  #status_underwater                       
-        beq   return_1AC3C                            *  beq.s   +       ; if not, branch
-        ldd   #-$200                                  *  beq.s   return_1AC3C
+        ;lda   status,u                          *  btst    #6,status(a0)   ; Check if underwater, return if not
+        ;bita  #status_underwater                       
+        ;beq   return_1AC3C                            *  beq.s   +       ; if not, branch
+        ;ldd   #-$200                                  *  beq.s   return_1AC3C
 @a                                                    *+
                                                        
                                                       *  move.w  #$300,(Sonic_top_speed).w
@@ -1623,7 +1663,7 @@ Sonic_Super                                           *Sonic_Super:
                                                       *  move.w  #$40,(Sonic_deceleration).w
                                                       *
 return_1AC3C                                          *return_1AC3C:
-        rts                                           *  rts
+        ;rts                                           *  rts
                                                       *; End of subroutine Sonic_Super
                                                       *
                                                       *; ---------------------------------------------------------------------------
@@ -1634,25 +1674,30 @@ return_1AC3C                                          *return_1AC3C:
                                                       *
                                                       *; loc_1AC3E:
 Sonic_CheckSpindash                                   *Sonic_CheckSpindash:
-                                                      *  tst.b   spindash_flag(a0)
-                                                      *  bne.s   Sonic_UpdateSpindash
-                                                      *  cmpi.b  #AniIDSonAni_Duck,anim(a0)
-                                                      *  bne.s   return_1AC8C
-                                                      *  move.b  (Ctrl_1_Press_Logical).w,d0
-                                                      *  andi.b  #button_B_mask|button_C_mask|button_A_mask,d0
-                                                      *  beq.w   return_1AC8C
-                                                      *  move.b  #AniIDSonAni_Spindash,anim(a0)
-                                                      *  move.w  #SndID_SpindashRev,d0
-                                                      *  jsr (PlaySound).l
-                                                      *  addq.l  #4,sp
-                                                      *  move.b  #1,spindash_flag(a0)
-                                                      *  move.w  #0,spindash_counter(a0)
-                                                      *  cmpi.b  #$C,air_left(a0)    ; if he's drowning, branch to not make dust
-                                                      *  blo.s   +
-                                                      *  move.b  #2,(Sonic_Dust+anim).w
-                                                      *+
-        ;jsr   Sonic_LevelBound                        *  bsr.w   Sonic_LevelBound
-        ;jsr   AnglePos                                *  bsr.w   AnglePos
+        tst   spindash_flag,u                         *  tst.b   spindash_flag(a0)
+        bne   Sonic_UpdateSpindash                    *  bne.s   Sonic_UpdateSpindash
+        ldd   anim,u
+        cmpd  #SonAni_Duck                            *  cmpi.b  #AniIDSonAni_Duck,anim(a0)
+        bne   return_1AC8C                            *  bne.s   return_1AC8C
+        lda   Ctrl_1_Press_Logical                    *  move.b  (Ctrl_1_Press_Logical).w,d0
+        anda  #button_B_mask|button_A_mask            *  andi.b  #button_B_mask|button_C_mask|button_A_mask,d0
+        beq   return_1AC8C                            *  beq.w   return_1AC8C
+        ldd   #SonAni_Spindash                        *  move.b  #AniIDSonAni_Spindash,anim(a0)
+        std   anim,u                                  
+        ;                                             *  move.w  #SndID_SpindashRev,d0
+        ;                                             *  jsr (PlaySound).l
+        leas  2,s                                     *  addq.l  #4,sp
+        lda   #1
+        sta   spindash_flag,u                         *  move.b  #1,spindash_flag(a0)
+        ldd   #0
+        std   spindash_counter,u                      *  move.w  #0,spindash_counter(a0)
+        lda   air_left,u
+        cmpa  #$C                                     *  cmpi.b  #$C,air_left(a0)    ; if he's drowning, branch to not make dust
+        blo   >                                       *  blo.s   +
+        ;                                             *  move.b  #2,(Sonic_Dust+anim).w
+!                                                     *+
+        jsr   Sonic_LevelBound                        *  bsr.w   Sonic_LevelBound
+        jsr   AnglePos                                *  bsr.w   AnglePos
                                                       *
 return_1AC8C                                          *return_1AC8C:
         rts                                           *  rts
@@ -1667,52 +1712,64 @@ return_1AC8C                                          *return_1AC8C:
                                                       *
                                                       *; loc_1AC8E:
 Sonic_UpdateSpindash                                  *Sonic_UpdateSpindash:
-                                                      *  move.b  (Ctrl_1_Held_Logical).w,d0
-                                                      *  btst    #button_down,d0
-                                                      *  bne.w   Sonic_ChargingSpindash
+        lda   Ctrl_1_Held_Logical                     *  move.b  (Ctrl_1_Held_Logical).w,d0
+        anda  #button_down_mask                       *  btst    #button_down,d0
+        bne   Sonic_ChargingSpindash                  *  bne.w   Sonic_ChargingSpindash
                                                       *
                                                       *  ; unleash the charged spindash and start rolling quickly:
-                                                      *  move.b  #$E,y_radius(a0)
-                                                      *  move.b  #7,x_radius(a0)
-                                                      *  move.b  #AniIDSonAni_Roll,anim(a0)
-                                                      *  addq.w  #5,y_pos(a0)    ; add the difference between Sonic's rolling and standing heights
-                                                      *  move.b  #0,spindash_flag(a0)
+        ldd   #$0E07                                  *  move.b  #$E,y_radius(a0)
+        std   y_radius,u                              *  move.b  #7,x_radius(a0)
+        ldd   #SonAni_Roll    
+        std   anim,u                                  *  move.b  #AniIDSonAni_Roll,anim(a0)
+        ldd   y_pos,u
+        addd  #5
+        std   y_pos,u                                 *  addq.w  #5,y_pos(a0)    ; add the difference between Sonic's rolling and standing heights
+        lda   #0
+        sta   spindash_flag,u                         *  move.b  #0,spindash_flag(a0)
                                                       *  moveq   #0,d0
-                                                      *  move.b  spindash_counter(a0),d0
-                                                      *  add.w   d0,d0
-                                                      *  move.w  SpindashSpeeds(pc,d0.w),inertia(a0)
-                                                      *  tst.b   (Super_Sonic_flag).w
-                                                      *  beq.s   +
-                                                      *  move.w  SpindashSpeedsSuper(pc,d0.w),inertia(a0)
-                                                      *+
+        ldb   spindash_counter,u                      *  move.b  spindash_counter(a0),d0
+        aslb                                          *  add.w   d0,d0
+        ldx   #SpindashSpeeds     
+        ldd   b,x                                     *  move.w  SpindashSpeeds(pc,d0.w),inertia(a0)
+        std   inertia,u
+        ;                                              *  tst.b   (Super_Sonic_flag).w
+        ;                                              *  beq.s   +
+        ;                                              *  move.w  SpindashSpeedsSuper(pc,d0.w),inertia(a0)
+        ;                                              *+
                                                       *  move.w  inertia(a0),d0
-                                                      *  subi.w  #$800,d0
-                                                      *  add.w   d0,d0
-                                                      *  andi.w  #$1F00,d0
-                                                      *  neg.w   d0
-                                                      *  addi.w  #$2000,d0
-                                                      *  move.w  d0,(Horiz_scroll_delay_val).w
-                                                      *  btst    #0,status(a0)
-                                                      *  beq.s   +
-                                                      *  neg.w   inertia(a0)
-                                                      *+
-                                                      *  bset    #2,status(a0)
-                                                      *  move.b  #0,(Sonic_Dust+anim).w
-                                                      *  move.w  #SndID_SpindashRelease,d0   ; spindash zoom sound
-                                                      *  jsr (PlaySound).l
-                                                      *  bra.s   Obj01_Spindash_ResetScr
+        subd   #$800                                  *  subi.w  #$800,d0
+        _asld                                         *  add.w   d0,d0
+        anda   #$1F                                   *  andi.w  #$1F00,d0
+        andb   #$00
+        _negd                                         *  neg.w   d0
+        addd  #$2000                                  *  addi.w  #$2000,d0
+        std   Horiz_scroll_delay_val                  *  move.w  d0,(Horiz_scroll_delay_val).w
+        lda   status,u                                *  btst    #0,status(a0)
+        anda  #status_x_orientation
+        beq   >                                       *  beq.s   +
+        ldd   inertia,u
+        _negd                                         *  neg.w   inertia(a0)
+        std   inertia,u
+!                                                     *+
+        lda   status,u
+        ora   #status_jumporroll
+        sta   status,u                                *  bset    #2,status(a0)
+        ;                                             *  move.b  #0,(Sonic_Dust+anim).w
+        ;                                             *  move.w  #SndID_SpindashRelease,d0   ; spindash zoom sound
+        ;                                             *  jsr (PlaySound).l
+        bra   Obj01_Spindash_ResetScr                 *  bra.s   Obj01_Spindash_ResetScr
                                                       *; ===========================================================================
                                                       *; word_1AD0C:
-                                                      *SpindashSpeeds:
-                                                      *  dc.w  $800  ; 0
-                                                      *  dc.w  $880  ; 1
-                                                      *  dc.w  $900  ; 2
-                                                      *  dc.w  $980  ; 3
-                                                      *  dc.w  $A00  ; 4
-                                                      *  dc.w  $A80  ; 5
-                                                      *  dc.w  $B00  ; 6
-                                                      *  dc.w  $B80  ; 7
-                                                      *  dc.w  $C00  ; 8
+SpindashSpeeds                                        *SpindashSpeeds:
+        fdb   $800                                    *  dc.w  $800  ; 0
+        fdb   $880                                    *  dc.w  $880  ; 1
+        fdb   $900                                    *  dc.w  $900  ; 2
+        fdb   $980                                    *  dc.w  $980  ; 3
+        fdb   $A00                                    *  dc.w  $A00  ; 4
+        fdb   $A80                                    *  dc.w  $A80  ; 5
+        fdb   $B00                                    *  dc.w  $B00  ; 6
+        fdb   $B80                                    *  dc.w  $B80  ; 7
+        fdb   $C00                                    *  dc.w  $C00  ; 8
                                                       *; word_1AD1E:
                                                       *SpindashSpeedsSuper:
                                                       *  dc.w  $B00  ; 0
@@ -1724,37 +1781,57 @@ Sonic_UpdateSpindash                                  *Sonic_UpdateSpindash:
                                                       *  dc.w  $E00  ; 6
                                                       *  dc.w  $E80  ; 7
                                                       *  dc.w  $F00  ; 8
+
                                                       *; ===========================================================================
                                                       *; loc_1AD30:
 Sonic_ChargingSpindash                                *Sonic_ChargingSpindash:           ; If still charging the dash...
-                                                      *  tst.w   spindash_counter(a0)
-                                                      *  beq.s   +
+        ldd   spindash_counter,u                      *  tst.w   spindash_counter(a0)
+        beq   >                                       *  beq.s   +
                                                       *  move.w  spindash_counter(a0),d0
-                                                      *  lsr.w   #5,d0
-                                                      *  sub.w   d0,spindash_counter(a0)
-                                                      *  bcc.s   +
-                                                      *  move.w  #0,spindash_counter(a0)
-                                                      *+
-                                                      *  move.b  (Ctrl_1_Press_Logical).w,d0
-                                                      *  andi.b  #button_B_mask|button_C_mask|button_A_mask,d0
-                                                      *  beq.w   Obj01_Spindash_ResetScr
-                                                      *  move.w  #(AniIDSonAni_Spindash<<8),anim(a0)
-                                                      *  move.w  #SndID_SpindashRev,d0
-                                                      *  jsr (PlaySound).l
-                                                      *  addi.w  #$200,spindash_counter(a0)
-                                                      *  cmpi.w  #$800,spindash_counter(a0)
-                                                      *  blo.s   Obj01_Spindash_ResetScr
-                                                      *  move.w  #$800,spindash_counter(a0)
+        _lsrd
+        _lsrd
+        _lsrd
+        _lsrd
+        _lsrd                                         *  lsr.w   #5,d0
+        std   @dec
+        ldx   Vint_Main_runcount_w
+        beq   @skip
+!       addd  @dec
+        leax  -1,x
+        bne   < 
+        std   @dec
+@skip   ldd   spindash_counter,u
+        subd  #0                                      *  sub.w   d0,spindash_counter(a0)
+@dec    equ   *-2
+        bcc   >                                       *  bcc.s   +
+        ldd   #0                                      *  move.w  #0,spindash_counter(a0)
+!       std   spindash_counter,u                      *+
+        lda   Ctrl_1_Press_Logical                    *  move.b  (Ctrl_1_Press_Logical).w,d0
+        anda  #button_B_mask|button_A_mask            *  andi.b  #button_B_mask|button_C_mask|button_A_mask,d0
+        beq   Obj01_Spindash_ResetScr                 *  beq.w   Obj01_Spindash_ResetScr
+        ldd   #SonAni_Spindash
+        std   anim,u                                  *  move.w  #(AniIDSonAni_Spindash<<8),anim(a0)
+        ;                                             *  move.w  #SndID_SpindashRev,d0
+        ;                                             *  jsr (PlaySound).l
+        ldd   spindash_counter,u
+        addd  #$200
+        std   spindash_counter,u                      *  addi.w  #$200,spindash_counter(a0)
+        cmpd  #$800                                   *  cmpi.w  #$800,spindash_counter(a0)
+        blo   Obj01_Spindash_ResetScr                 *  blo.s   Obj01_Spindash_ResetScr
+        ldd   #$800
+        std   spindash_counter,u                      *  move.w  #$800,spindash_counter(a0)
                                                       *
+
                                                       *; loc_1AD78:
 Obj01_Spindash_ResetScr                               *Obj01_Spindash_ResetScr:
-                                                      *  addq.l  #4,sp
-                                                      *  cmpi.w  #(224/2)-16,(Camera_Y_pos_bias).w
-                                                      *  beq.s   loc_1AD8C
-                                                      *  bhs.s   +
-                                                      *  addq.w  #4,(Camera_Y_pos_bias).w
-                                                      *+ subq.w  #2,(Camera_Y_pos_bias).w
-                                                      *
+        leas  2,s                                     *  addq.l  #4,sp
+        ldd   Camera_Y_pos_bias
+        cmpd  #camera_Y_pos_bias_default              *  cmpi.w  #(224/2)-16,(Camera_Y_pos_bias).w
+        beq   loc_1AD8C                               *  beq.s   loc_1AD8C
+        bhs   >                                       *  bhs.s   +
+        addd  #4                                      *  addq.w  #4,(Camera_Y_pos_bias).w
+!       subd  #2                                      *+ subq.w  #2,(Camera_Y_pos_bias).w
+        std   Camera_Y_pos_bias                       *
 loc_1AD8C                                             *loc_1AD8C:
         jsr   Sonic_LevelBound                        *  bsr.w   Sonic_LevelBound
         jsr   AnglePos                                *  bsr.w   AnglePos
@@ -2231,7 +2308,7 @@ Obj01_Hurt_Normal                                     *Obj01_Hurt_Normal:
                                                       *  bmi.w   Sonic_HurtInstantRecover
                                                       *  jsr (ObjectMove).l
                                                       *  addi.w  #$30,y_vel(a0)
-        lda   status_flags,u                          *  btst    #6,status(a0)
+        lda   status,u                                *  btst    #6,status(a0)
         bita  #status_underwater                       
         beq   @a                                      *  beq.s   +
         ldd   y_vel,u                                 *  subi.w  #$20,y_vel(a0)
@@ -5117,9 +5194,9 @@ loc_1B572                                             *loc_1B572:
                                                       *; ===========================================================================
                                                       *; loc_1B586:
 SAnim_Roll                                            *SAnim_Roll:
-        ldb   anim_frame_duration,u
-        subb  Vint_Main_runcount
-        stb   anim_frame_duration,u                   *  subq.b  #1,anim_frame_duration(a0)  ; subtract 1 from frame duration
+        lda   anim_frame_duration,u
+        suba  Vint_Main_runcount
+        sta   anim_frame_duration,u                   *  subq.b  #1,anim_frame_duration(a0)  ; subtract 1 from frame duration
         bmi   >                                       *  bpl.w   SAnim_Delay         ; if time remains, branch
         rts
 !       incb                                          *  addq.b  #1,d0       ; is the start flag = $FE ?
@@ -5141,6 +5218,7 @@ SAnim_Roll                                            *SAnim_Roll:
         sta   anim_frame_duration,u                   *  move.b  d2,anim_frame_duration(a0)
         lda   status,u                                *  move.b  status(a0),d1
         anda  #status_x_orientation                   *  andi.b  #1,d1
+        sta   @a
         ldb   render_flags,u
         andb  #^(render_xmirror_mask|render_ymirror_mask) *  andi.b  #$FC,render_flags(a0)
         orb   #0                                      *  or.b    d1,render_flags(a0)
@@ -5151,9 +5229,9 @@ SAnim_Roll                                            *SAnim_Roll:
                                                       *
 
 SAnim_Push                                            *SAnim_Push:
-        ldb   anim_frame_duration,u
-        subb  Vint_Main_runcount
-        stb   anim_frame_duration,u                   *  subq.b  #1,anim_frame_duration(a0)  ; subtract 1 from frame duration
+        lda   anim_frame_duration,u
+        suba  Vint_Main_runcount
+        sta   anim_frame_duration,u                   *  subq.b  #1,anim_frame_duration(a0)  ; subtract 1 from frame duration
         bmi   >                                       *  bpl.w   SAnim_Delay         ; if time remains, branch
         rts
 !       ldd   inertia,u                               *  move.w  inertia(a0),d2
@@ -5170,7 +5248,7 @@ SAnim_Push                                            *SAnim_Push:
         _lsrd
         _lsrd
         _lsrd                                         *  lsr.w   #6,d2
-        std   anim_frame_duration                     *  move.b  d2,anim_frame_duration(a0)
+        std   anim_frame_duration,u                   *  move.b  d2,anim_frame_duration(a0)
         ldd   #SonAni_Push                            *  lea (SonAni_Push).l,a1
         ; unimplemented                               *  tst.b   (Super_Sonic_flag).w
         ;                                             *  beq.s   +
@@ -5178,6 +5256,7 @@ SAnim_Push                                            *SAnim_Push:
         ;                                             *+
         lda   status,u                                *  move.b  status(a0),d1
         anda  #status_x_orientation                   *  andi.b  #1,d1
+        sta   @a
         ldb   render_flags,u
         andb  #^(render_xmirror_mask|render_ymirror_mask) *  andi.b  #$FC,render_flags(a0)
         orb   #0                                      *  or.b    d1,render_flags(a0)
