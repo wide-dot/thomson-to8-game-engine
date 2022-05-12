@@ -1,0 +1,713 @@
+	INCLUDE "./Engine/Constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+ERASE_Img_tails_3_0
+	STS glb_register_s
+
+	LEAS ,U
+ERASE_CODE_Img_tails_3_0
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X
+	STA 80,U
+	STX 40,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X
+	STA 5,U
+	STX 3,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D
+	STD 3,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X
+	STD 6,U
+	STX 4,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X
+	STD 4,U
+	STX 6,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X
+	STD 6,U
+	STX 4,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X
+	STD 6,U
+	STX 4,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,B,X,Y
+	STA -113,U
+	STB -117,U
+	STX -119,U
+	STY 4,U
+
+	PULS D,X,Y
+	STD -36,U
+	STX -41,U
+	STY -76,U
+
+	PULS D,X,Y
+	STD -81,U
+	STX -121,U
+	STY -74,U
+
+	PULS D,X,Y
+	STD -79,U
+	STX -39,U
+	STY 6,U
+
+	PULS D,X
+	STD -115,U
+	STX -34,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,B,X,Y
+	STA 119,U
+	STB 43,U
+	STX 115,U
+	STY 79,U
+
+	PULS D,X,Y
+	STD 75,U
+	STX 39,U
+	STY 35,U
+
+	PULS D,X,Y
+	STD 77,U
+	STX 37,U
+	STY 117,U
+
+	PULS D,X,Y
+	STD 41,U
+	STX 121,U
+	STY 81,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A
+	STA 3,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D
+	STD 4,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D
+	STD 4,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D
+	STD 38,U
+
+	PULS A,X
+	STA 3,U
+	STX 35,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D
+	STD 36,U
+
+	PULS A,X
+	STA 4,U
+	STX 39,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A,X
+	STA 5,U
+	STX 37,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X
+	STA 3,U
+	STX 35,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D
+	STD 39,U
+
+	PULS A,X
+	STA 4,U
+	STX 36,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D
+	STD 37,U
+
+	PULS A,X
+	STA 6,U
+	STX 4,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,B,X
+	STA 5,U
+	STB 3,U
+	STX 35,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D
+	STD 38,U
+
+	PULS A,X
+	STA 5,U
+	STX 35,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,X
+	STA 38,U
+	STX 35,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,B
+	STA 35,U
+	STB 38,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,B
+	STA 38,U
+	STB 4,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,B
+	STA 38,U
+	STB 4,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,X
+	STA 37,U
+	STX 4,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,B
+	STA 37,U
+	STB 4,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A,B
+	STA 37,U
+	STB 5,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A,B
+	STA 37,U
+	STB 5,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A
+	STA 4,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A
+	STA 4,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D
+	STD 3,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,X
+	STA 4,U
+	STX 38,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,X
+	STA 4,U
+	STX 38,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,X
+	STA 4,U
+	STX 38,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D
+	STD 38,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D
+	STD 38,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D
+	STD 38,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D
+	STD 38,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X
+	STA 3,U
+	STX 38,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X
+	STA 3,U
+	STX 38,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D
+	STD 38,U
+
+	PULS A,X,Y,U
+	PSHU X,Y
+	STA -80,U
+
+	PULS D,X,Y
+	STD 38,U
+	STX -2,U
+	STY -42,U
+
+	PULS D,X
+	STD -82,U
+	STX -122,U
+
+	PULS A,B,X
+	STA -77,U
+	STB -37,U
+	STX -40,U
+
+	PULS D,U
+	STD 120,U
+
+	PULS D,X
+	STD 80,U
+	STX 40,U
+
+	PULS A,B
+	STA -40,U
+	STB -80,U
+
+	PULS A,X
+	STA -120,U
+	STX ,U
+
+	PULS A,U
+	STA ,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D,X,Y
+	STD 120,U
+	STX 80,U
+	STY 40,U
+
+	PULS A,B,X
+	STA 5,U
+	STB 82,U
+	STX 42,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A
+	STA 3,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A
+	STA 3,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A
+	STA 3,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A
+	STA 3,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A
+	STA 3,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X
+	STA 7,U
+	STX 5,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X
+	STA 7,U
+	STX 5,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A
+	STA 4,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A
+	STA 4,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A,X
+	STA 38,U
+	STX 36,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS D,X
+	STD 37,U
+	STX 35,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS D,X
+	STD 37,U
+	STX 35,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A,X
+	STA 38,U
+	STX 36,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A,X
+	STA 38,U
+	STX 36,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS D
+	STD 36,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS D
+	STD 36,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,X
+	STA 4,U
+	STX 36,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D
+	STD 36,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D,X,Y
+	STD 117,U
+	STX 42,U
+	STY 82,U
+
+	PULS A,B
+	STA 78,U
+	STB 38,U
+
+	PULS A,B,X,Y
+	STA 36,U
+	STB 5,U
+	STX 115,U
+	STY 80,U
+
+	PULS D,X
+	STD 75,U
+	STX 40,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,B
+	STA 38,U
+	STB 5,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,B
+	STA 38,U
+	STB 4,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A
+	STA 4,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A
+	STA 4,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A
+	STA 4,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A
+	STA 4,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D
+	STD 4,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D
+	STD 4,U
+
+	PULS D,X,Y,U
+	PSHU D,X,Y
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A
+	STA 5,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A
+	STA 5,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A
+	STA 5,U
+
+	PULS D,X,Y,U
+	PSHU D,X,Y
+
+	PULS D,X,Y,U
+	PSHU D,X,Y
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A
+	STA 5,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X
+	STA 4,U
+	STX -40,U
+
+	PULS A,B,X,Y
+	STA -36,U
+	STB -38,U
+	STX -80,U
+	STY -120,U
+
+	PULS A,B,U
+	STA 60,U
+	STB -100,U
+
+	PULS A,B
+	STA -20,U
+	STB 20,U
+
+	PULS A,B
+	STA 100,U
+	STB -60,U
+
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+DataSize equ $0383

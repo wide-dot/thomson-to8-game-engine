@@ -1,0 +1,123 @@
+	INCLUDE "./Engine/Constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+DRAW_Tls_EHZ_flower2_0
+
+	stb   <glb_alphaTiles
+	LEAU 481,U
+
+	LDA #$dd
+	STA 40,U
+	STA -40,U
+	STA -120,U
+	LDA #$bb
+	STA 80,U
+	STA ,U
+	STA -80,U
+	LDA 120,U
+	ANDA #$0F
+	ORA #$d0
+	STA 120,U
+	LEAU -280,U
+
+	LDA ,U
+	ANDA #$0F
+	ORA #$d0
+	STA ,U
+	LDA -80,U
+	ANDA #$F0
+	ORA #$0d
+	STA -80,U
+	LDA -120,U
+	ANDA #$F0
+	ORA #$0b
+	STA -120,U
+	LDA #$dd
+	STA 80,U
+	LDA #$bb
+	STA 40,U
+	LDA #$cb
+	STA 120,U
+	LEAU -180,U
+
+	LDA 20,U
+	ANDA #$F0
+	ORA #$0d
+	STA 20,U
+	LDA -20,U
+	ANDA #$F0
+	ORA #$0b
+	STA -20,U
+
+	LDU <glb_screen_location_1
+	LEAU 480,U
+
+	LDA 120,U
+	ANDA #$F0
+	ORA #$0d
+	STA 120,U
+	LDA 80,U
+	ANDA #$F0
+	ORA #$0b
+	STA 80,U
+	LDA 40,U
+	ANDA #$F0
+	ORA #$0d
+	STA 40,U
+	LDA ,U
+	ANDA #$F0
+	ORA #$0b
+	STA ,U
+	LDA -40,U
+	ANDA #$F0
+	ORA #$0d
+	STA -40,U
+	LDA -80,U
+	ANDA #$F0
+	ORA #$0b
+	STA -80,U
+	LDA -120,U
+	ANDA #$F0
+	ORA #$0d
+	STA -120,U
+	LEAU -280,U
+
+	LDD -120,U
+	LDA #$bb
+	ANDB #$0F
+	ORB #$b0
+	STD -120,U
+	LDA 120,U
+	ANDA #$F0
+	ORA #$0b
+	STA 120,U
+	LDA 80,U
+	ANDA #$F0
+	ORA #$0d
+	STA 80,U
+	LDA 40,U
+	ANDA #$F0
+	ORA #$0b
+	STA 40,U
+	LDA ,U
+	ANDA #$F0
+	ORA #$0d
+	STA ,U
+	LDA -80,U
+	ANDA #$0F
+	ORA #$d0
+	STA -80,U
+	LEAU -180,U
+
+	LDD 20,U
+	LDA #$dd
+	ANDB #$0F
+	ORB #$d0
+	STD 20,U
+	LDA -20,U
+	ANDA #$0F
+	ORA #$b0
+	STA -20,U
+	RTS
+

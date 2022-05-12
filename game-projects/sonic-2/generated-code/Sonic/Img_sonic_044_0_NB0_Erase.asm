@@ -1,0 +1,249 @@
+	INCLUDE "./Engine/Constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+ERASE_Img_sonic_044_0
+	STS glb_register_s
+
+	LEAS ,U
+ERASE_CODE_Img_sonic_044_0
+	PULS A,U
+	STA 40,U
+
+	PULS A,B
+	STA -40,U
+	STB ,U
+
+	PULS A,U
+	STA -79,U
+
+	PULS A,X,Y
+	STA -119,U
+	STX -40,U
+	STY 80,U
+
+	PULS A,X,Y
+	STA 120,U
+	STX 40,U
+	STY ,U
+
+	PULS D,X
+	STD -81,U
+	STX -121,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D
+	STD 82,U
+
+	PULS A,X,Y
+	STA 42,U
+	STX 122,U
+	STY 120,U
+
+	PULS D,X
+	STD 80,U
+	STX 40,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X,Y
+	STD -38,U
+	STX -78,U
+	STY -40,U
+
+	PULS D
+	STD -80,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,B,X,Y
+	STA 43,U
+	STB 83,U
+	STX 121,U
+	STY 81,U
+
+	PULS D,X,Y
+	STD 119,U
+	STX 79,U
+	STY 39,U
+
+	PULS A
+	STA 41,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,B,X,Y
+	STA 42,U
+	STB 122,U
+	STX 119,U
+	STY 81,U
+
+	PULS D,X
+	STD 79,U
+	STX 40,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D
+	STD -40,U
+
+	PULS A,X,Y
+	STA -38,U
+	STX -119,U
+	STY -79,U
+
+	PULS D,U
+	STD 120,U
+
+	PULS D
+	STD 80,U
+
+	PULS A,B
+	STA ,U
+	STB -40,U
+
+	PULS A,B,X
+	STA -80,U
+	STB -120,U
+	STX 40,U
+
+	PULS A,U
+	STA ,U
+
+	PULS A,U
+	STA 120,U
+
+	PULS A,B
+	STA 80,U
+	STB 40,U
+
+	PULS A,B
+	STA -1,U
+	STB -39,U
+
+	PULS A,B,X,Y
+	STA -41,U
+	STB -79,U
+	STX -81,U
+	STY -121,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X,Y
+	STD 80,U
+	STX 40,U
+	STY 120,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X
+	STA 42,U
+	STX 40,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D
+	STD 3,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A
+	STA 4,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,B
+	STA 4,U
+	STB -36,U
+
+	PULS A,B,X
+	STA -76,U
+	STB -116,U
+	STX -78,U
+
+	PULS A,X,Y
+	STA -118,U
+	STX -38,U
+	STY -40,U
+
+	PULS D,X
+	STD -80,U
+	STX -120,U
+
+	PULS A,B,U
+	STA -21,U
+	STB 59,U
+
+	PULS D,X
+	STD 57,U
+	STX 18,U
+
+	PULS A,B
+	STA 61,U
+	STB 21,U
+
+	PULS A,B
+	STA -19,U
+	STB -61,U
+
+	PULS A
+	STA -59,U
+
+	PULS A,U
+	STA 121,U
+
+	PULS A,B
+	STA 119,U
+	STB 79,U
+
+	PULS A,B
+	STA 39,U
+	STB -1,U
+
+	PULS A,B
+	STA -41,U
+	STB -81,U
+
+	PULS A
+	STA -121,U
+
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+DataSize equ $00F4

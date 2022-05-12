@@ -1,0 +1,107 @@
+	INCLUDE "./Engine/Constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+BCKDRAW_Img_SSShadow_009_0
+	STS glb_register_s
+
+	LEAS ,Y
+	LEAU -1,U
+
+	LDD -120,U
+	PSHS D
+	ANDA #$F0
+	ORA #$02
+	LDB #$22
+	STD -120,U
+	LDX -80,U
+	LDY -40,U
+	PSHS Y,X
+	LDD ,U
+	LDX 40,U
+	PSHS X,D
+	LDA -38,U
+	PSHS A
+	ANDA #$0F
+	ORA #$20
+	STA -38,U
+	LDA 2,U
+	PSHS A
+	ANDA #$0F
+	ORA #$20
+	STA 2,U
+	LDA 42,U
+	PSHS A
+	ANDA #$0F
+	ORA #$20
+	STA 42,U
+	LDA 82,U
+	PSHS A
+	ANDA #$0F
+	ORA #$20
+	STA 82,U
+	LDX 80,U
+	LDY 120,U
+	PSHS U,Y,X
+	LDD #$2222
+	STD -80,U
+	STD -40,U
+	STD ,U
+	STD 40,U
+	STD 80,U
+	STD 120,U
+	LEAU 160,U
+
+	LDD ,U
+	PSHS U,D
+	ANDA #$F0
+	ORA #$02
+	LDB #$22
+	STD ,U
+
+	LDU <glb_screen_location_1
+	LEAU -2,U
+
+	LDA -119,U
+	LDB -38,U
+	LDX -79,U
+	PSHS X,B,A
+	LDD #$2222
+	STD -79,U
+	STA -119,U
+	STA -38,U
+	LDD -40,U
+	PSHS D
+	ANDA #$F0
+	ORA #$02
+	LDB #$22
+	STD -40,U
+	PULU A,X
+	PSHS U,X,A
+	LDX #$2222
+	PSHU B,X
+	LEAU 40,U
+
+	LDD 40,U
+	PSHS D
+	ANDA #$F0
+	ORA #$02
+	LDB #$22
+	STD 40,U
+	LDA 42,U
+	LDB 121,U
+	LDX 81,U
+	PSHS X,B,A
+	LDD #$2222
+	STD 81,U
+	STA 42,U
+	STA 121,U
+	PULU A,X
+	PSHS U,X,A
+	LDX #$2222
+	PSHU B,X
+	LEAU ,S
+SSAV_Img_SSShadow_009_0
+	LDS glb_register_s
+	RTS
+

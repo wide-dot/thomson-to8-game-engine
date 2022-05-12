@@ -1,0 +1,246 @@
+	INCLUDE "./Engine/Constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+ERASE_Img_sonic_018_0
+	STS glb_register_s
+
+	LEAS ,U
+ERASE_CODE_Img_sonic_018_0
+	PULS A,U
+	STA 40,U
+
+	PULS A,B,X
+	STA ,U
+	STB -37,U
+	STX -41,U
+
+	PULS D,U
+	STD 117,U
+
+	PULS D,X,Y
+	STD -80,U
+	STX -83,U
+	STY 77,U
+
+	PULS D,X,Y
+	STD 37,U
+	STX -3,U
+	STY -43,U
+
+	PULS D,X
+	STD -120,U
+	STX -122,U
+
+	PULS A,B,X
+	STA 81,U
+	STB 41,U
+	STX -40,U
+
+	PULS A,B
+	STA 121,U
+	STB 1,U
+
+	PULS D,U
+	STD 79,U
+
+	PULS D,X
+	STD -1,U
+	STX 119,U
+
+	PULS A,B
+	STA -39,U
+	STB -79,U
+
+	PULS A,B,X,Y
+	STA -119,U
+	STB 121,U
+	STX 40,U
+	STY -81,U
+
+	PULS A,B,X,Y
+	STA 1,U
+	STB 81,U
+	STX -41,U
+	STY -121,U
+
+	PULS D,U
+	STD 40,U
+
+	PULS D,X
+	STD 79,U
+	STX -1,U
+
+	PULS A,B
+	STA 121,U
+	STB -39,U
+
+	PULS A,B,X,Y
+	STA -79,U
+	STB -119,U
+	STX -121,U
+	STY 119,U
+
+	PULS A,B,X,Y
+	STA 81,U
+	STB 1,U
+	STX -41,U
+	STY -81,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X,Y
+	STD 120,U
+	STX 40,U
+	STY 80,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D
+	STD -40,U
+
+	PULS A,X,Y
+	STA -38,U
+	STX -120,U
+	STY -80,U
+
+	PULS D,U
+	STD -60,U
+
+	PULS D,X
+	STD 59,U
+	STX 99,U
+
+	PULS A,B,X,Y
+	STA 21,U
+	STB -100,U
+	STX -20,U
+	STY 19,U
+
+	PULS A,B,U
+	STA -20,U
+	STB 60,U
+
+	PULS A,B
+	STA 20,U
+	STB -60,U
+
+	PULS A,B,U
+	STA 40,U
+	STB 120,U
+
+	PULS D
+	STD -44,U
+
+	PULS A,B,X,Y
+	STA 117,U
+	STB 77,U
+	STX 36,U
+	STY -4,U
+
+	PULS D,X
+	STD -41,U
+	STX -81,U
+
+	PULS A,B,X
+	STA ,U
+	STB 80,U
+	STX -121,U
+
+	PULS A,B,U
+	STA -120,U
+	STB -80,U
+
+	PULS D,X,Y
+	STD 119,U
+	STX 38,U
+	STY -2,U
+
+	PULS D
+	STD -42,U
+
+	PULS A,B,X,Y
+	STA 81,U
+	STB ,U
+	STX -82,U
+	STY -122,U
+
+	PULS A,B,X
+	STA -40,U
+	STB 121,U
+	STX 79,U
+
+	PULS A,B,X,Y,U
+	STA -79,U
+	STB 121,U
+	STX -40,U
+	STY ,U
+
+	PULS A,X,Y
+	STA -119,U
+	STX 40,U
+	STY 119,U
+
+	PULS D,X,Y
+	STD 80,U
+	STX -81,U
+	STY -121,U
+
+	PULS A,B,U
+	STA -79,U
+	STB 121,U
+
+	PULS D
+	STD 41,U
+
+	PULS A,B
+	STA 81,U
+	STB -119,U
+
+	PULS A,B,X,Y
+	STA -39,U
+	STB 1,U
+	STX 119,U
+	STY 79,U
+
+	PULS D,X,Y
+	STD 39,U
+	STX -1,U
+	STY -41,U
+
+	PULS D,X
+	STD -81,U
+	STX -121,U
+
+	PULS A,B,U
+	STA -40,U
+	STB ,U
+
+	PULS D,X,Y
+	STD 118,U
+	STX 78,U
+	STY 38,U
+
+	PULS D,X,Y
+	STD -2,U
+	STX -42,U
+	STY -81,U
+
+	PULS A,B
+	STA 120,U
+	STB 80,U
+
+	PULS A,B
+	STA 40,U
+	STB -120,U
+
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+DataSize equ $00E6

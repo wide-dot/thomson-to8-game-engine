@@ -1,0 +1,104 @@
+	INCLUDE "./Engine/Constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+BCKDRAW_Img_SSRing_013_0
+	STS glb_register_s
+
+	LEAS ,Y
+	LEAU -40,U
+
+	LDA -120,U
+	PSHS A
+	ANDA #$0F
+	ORA #$10
+	STA -120,U
+	LDA -80,U
+	PSHS A
+	ANDA #$0F
+	ORA #$00
+	STA -80,U
+	LDA -40,U
+	PSHS A
+	ANDA #$0F
+	ORA #$a0
+	STA -40,U
+	LDA ,U
+	PSHS A
+	ANDA #$0F
+	ORA #$a0
+	STA ,U
+	LDA 40,U
+	PSHS A
+	ANDA #$0F
+	ORA #$a0
+	STA 40,U
+	LDA 80,U
+	PSHS A
+	ANDA #$0F
+	ORA #$a0
+	STA 80,U
+	LDA 120,U
+	PSHS U,A
+	ANDA #$0F
+	ORA #$a0
+	STA 120,U
+	LEAU 160,U
+
+	LDA ,U
+	PSHS U,A
+	ANDA #$0F
+	ORA #$30
+	STA ,U
+
+	LDU <glb_screen_location_1
+	LEAU -41,U
+
+	LDA -80,U
+	LDB -120,U
+	PSHS B,A
+	ANDB #$F0
+	ORB #$01
+	STB -120,U
+	LDA -40,U
+	PSHS A
+	ANDA #$0F
+	ORA #$10
+	STA -40,U
+	LDA ,U
+	PSHS A
+	ANDA #$0F
+	ORA #$10
+	STA ,U
+	LDA 40,U
+	PSHS A
+	ANDA #$0F
+	ORA #$10
+	STA 40,U
+	LDA 80,U
+	PSHS A
+	ANDA #$0F
+	ORA #$10
+	STA 80,U
+	LDA 120,U
+	PSHS U,A
+	ANDA #$0F
+	ORA #$10
+	STA 120,U
+	LDA #$a3
+	STA -80,U
+	LEAU 180,U
+
+	LDA -20,U
+	LDB 20,U
+	PSHS U,B,A
+	ANDB #$F0
+	ORB #$03
+	STB 20,U
+	LDA #$a1
+	STA -20,U
+	LEAU ,S
+SSAV_Img_SSRing_013_0
+	LDS glb_register_s
+	RTS
+

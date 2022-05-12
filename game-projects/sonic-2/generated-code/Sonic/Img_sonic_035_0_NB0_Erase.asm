@@ -1,0 +1,216 @@
+	INCLUDE "./Engine/Constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+ERASE_Img_sonic_035_0
+	STS glb_register_s
+
+	LEAS ,U
+ERASE_CODE_Img_sonic_035_0
+	PULS A,U
+	STA 20,U
+
+	PULS A
+	STA -20,U
+
+	PULS A,B,X,U
+	PSHU B,X
+	STA 121,U
+
+	PULS D
+	STD 81,U
+
+	PULS A,B,X
+	STA 42,U
+	STB 4,U
+	STX 40,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A
+	STA 4,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A
+	STA 4,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A
+	STA 4,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D
+	STD 3,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D
+	STD 3,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A
+	STA 4,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D
+	STD -38,U
+
+	PULS A,X,Y
+	STA -118,U
+	STX -78,U
+	STY -40,U
+
+	PULS D,X
+	STD -80,U
+	STX -120,U
+
+	PULS D,U
+	STD 78,U
+
+	PULS D,X
+	STD 38,U
+	STX -2,U
+
+	PULS A,B
+	STA 80,U
+	STB 40,U
+
+	PULS A,B
+	STA -41,U
+	STB ,U
+
+	PULS A
+	STA -81,U
+
+	PULS A,U
+	STA 22,U
+
+	PULS A,B
+	STA 20,U
+	STB -20,U
+
+	PULS A,X
+	STA -18,U
+	STX -22,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D,X,Y
+	STD 122,U
+	STX 82,U
+	STY 120,U
+
+	PULS D
+	STD 80,U
+
+	PULS A,B
+	STA 124,U
+	STB 84,U
+
+	PULS A,B,X,Y
+	STA 44,U
+	STB 4,U
+	STX 42,U
+	STY 40,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A
+	STA 4,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A
+	STA 4,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A
+	STA 4,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A
+	STA 4,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A
+	STA 4,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D
+	STD 3,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A
+	STA 4,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A
+	STA 4,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D
+	STD -40,U
+
+	PULS A,B
+	STA 4,U
+	STB -36,U
+
+	PULS A,X,Y
+	STA -38,U
+	STX -120,U
+	STY -80,U
+
+	PULS A,U
+	STA -60,U
+
+	PULS A,X,Y
+	STA -20,U
+	STX 59,U
+	STY 19,U
+
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+DataSize equ $00DB

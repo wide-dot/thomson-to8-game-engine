@@ -1,0 +1,112 @@
+	INCLUDE "./Engine/Constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+DRAW_Img_tailsHand_0
+	LEAU 841,U
+
+	LDA #$56
+	STA 120,U
+	LDD 80,U
+	LDA #$57
+	ANDB #$0F
+	ORB #$c0
+	STD 80,U
+	LDA #$cc
+	STA -39,U
+	STA -79,U
+	STA -119,U
+	LDD 40,U
+	ANDA #$F0
+	ANDB #$0F
+	ADDD #$07c0
+	STD 40,U
+	LDD ,U
+	ANDA #$F0
+	ANDB #$0F
+	ADDD #$05c0
+	STD ,U
+	LEAU -279,U
+
+	LDA #$cb
+	STA 120,U
+	STA 80,U
+	STA 40,U
+	LDA #$c0
+	STA ,U
+	LDA #$a0
+	STA -120,U
+	LDA #$0b
+	STA -80,U
+	LDA #$b0
+	STA -40,U
+	LEAU -240,U
+
+	LDA #$a0
+	STA 80,U
+	LDA #$cc
+	STA -80,U
+	LDA #$00
+	STA ,U
+	STA -40,U
+	LDA #$b0
+	STA 40,U
+
+	LDU <glb_screen_location_1
+	LEAU 841,U
+
+	LDA #$75
+	STA 120,U
+	LDA #$63
+	STA 80,U
+	LDA #$5c
+	STA 40,U
+	LDA #$cb
+	STA -40,U
+	LDA #$3b
+	STA ,U
+	LDD -80,U
+	LDA #$0b
+	ANDB #$0F
+	ORB #$c0
+	STD -80,U
+	LDD -120,U
+	LDA #$0c
+	ANDB #$0F
+	ORB #$c0
+	STD -120,U
+	LEAU -279,U
+
+	LDD #$bcbc
+	STD 119,U
+	LDD #$b00b
+	STD -41,U
+	STD -81,U
+	LDA #$cb
+	STD -1,U
+	LDD #$ccbc
+	STD 79,U
+	LDB #$bb
+	STD 39,U
+	LDD #$0c0b
+	STD -121,U
+	LEAU -221,U
+
+	LDD -20,U
+	ANDA #$F0
+	ANDB #$0F
+	ADDD #$00c0
+	STD -20,U
+	LDD 20,U
+	LDA #$c0
+	ANDB #$0F
+	ORB #$00
+	STD 20,U
+	LDD #$cc0c
+	STD 60,U
+	LDA -60,U
+	ANDA #$F0
+	ORA #$0c
+	STA -60,U
+	RTS
+

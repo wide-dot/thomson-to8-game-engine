@@ -1050,7 +1050,7 @@ PSGFlutter
                 
 PSGUpdateVol                
         lda   PlaybackControl,y
-        bita  #$02                     ; Is bit 1 (02h) "track is at rest" set on playback?
+        bita  #$06                     ; If either bit 1 ("track in rest") and 2 ("SFX overriding this track"), quit!
         bne   PSGDoModulation          ; If so, branch           
         bita  #$10                     ; Is bit 4 (10h) "do not attack next note" set on playback?
         bne   @b                       ; If so, branch

@@ -1,0 +1,407 @@
+	INCLUDE "./Engine/Constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+DRAW_Img_emblemBack02_0
+	LEAU -1444,U
+
+	LDD #$0000
+	STD -8,U
+	LDX #$0b78
+	LDY #$81dc
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDX #$0078
+	LDY #$8bbc
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDX #$00d6
+	LDY #$1b8d
+	PSHU D,X,Y
+	LEAU -34,U
+
+	LDD #$bbcb
+	STD -8,U
+	LDD #$0000
+	LDX #$00d7
+	LDY #$dd8d
+	PSHU D,X,Y
+	LEAU -34,U
+
+	LDD #$d1bb
+	STD -8,U
+	LDD #$0000
+	LDX #$00b7
+	LDY #$db8b
+	PSHU D,X,Y
+	LEAU -34,U
+
+	LDD #$1db0
+	STD -8,U
+	LDD #$0000
+	LDX #$00c7
+	LDY #$d888
+	PSHU D,X,Y
+	LEAU -34,U
+
+	LDA #$dc
+	STD -8,U
+	LDA #$00
+	LDX #$00cd
+	PSHU D,X,Y
+	LEAU -34,U
+
+	LDA #$cb
+	STD -8,U
+	LDA #$00
+	LDY #$b888
+	PSHU D,X,Y
+	LEAU -34,U
+
+	LDA #$bb
+	STD -8,U
+	LDA #$00
+	LDX #$00cb
+	LDY #$8888
+	PSHU D,X,Y
+	LEAU -34,U
+
+	LDA #$b0
+	STD -8,U
+	LDA #$00
+	LDX #$00dc
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDX #$00bc
+	LDY #$6888
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDY #$7888
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDX #$000d
+	LDY #$7688
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDX #$000b
+	LDY #$7788
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDX #$0000
+	LDY #$d788
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDY #$b788
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDY #$bd88
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDY #$cd88
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDY #$cb68
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDD -44,U
+	LDA #$0b
+	ANDB #$0F
+	ORB #$10
+	STD -44,U
+	LDD #$bc77
+	STD -42,U
+	LDD #$0000
+	LDX #$00bb
+	LDY #$dc76
+	PSHU D,X,Y
+	LEAU -38,U
+
+	LDD #$cd77
+	STD -38,U
+	LDD #$0000
+	LDX #$0000
+	PSHU D,X
+	LEAU -35,U
+
+	LDD #$dbd7
+	STD -39,U
+	LDA #$00
+	LDY #$00bd
+	PSHU A,X,Y
+	LEAU -36,U
+
+	LDD -38,U
+	ANDA #$F0
+	ORA #$0c
+	LDB #$bc
+	STD -38,U
+	LDY #$000b
+	PSHU X,Y
+	LEAU -36,U
+
+	LDD -38,U
+	ANDA #$F0
+	ORA #$0d
+	LDB #$cd
+	STD -38,U
+	LDY #$00bd
+	PSHU X,Y
+	LEAU -37,U
+
+	LDA #$cb
+	STA -36,U
+	LDA #$00
+	LDX #$000b
+	PSHU A,X
+	LEAU -37,U
+
+	LDA #$dc
+	STA -36,U
+	STX -43,U
+	STB -116,U
+	STY -83,U
+	LDA #$bc
+	STA -76,U
+	LDD -123,U
+	LDA #$00
+	ANDB #$0F
+	ORB #$10
+	STD -123,U
+	PSHU A,Y
+	LEAU -177,U
+
+	LDA #$db
+	STA 24,U
+	LDA -16,U
+	ANDA #$F0
+	ORA #$0d
+	STA -16,U
+	LDA #$bb
+	STA 17,U
+	LDA #$c1
+	STA -23,U
+
+	LDU <glb_screen_location_1
+	LEAU -1444,U
+
+	LDD #$0000
+	STD -8,U
+	LDX #$cc81
+	LDY #$88d9
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDX #$dc8b
+	LDY #$88b9
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	LDD #$1db0
+	STD -8,U
+	LDD #$0000
+	LDX #$bc8d
+	LDY #$88cd
+	PSHU D,X,Y
+	LEAU -34,U
+
+	LDA #$dc
+	STD -8,U
+	LDA #$00
+	LDX #$bc1b
+	LDY #$18cb
+	PSHU D,X,Y
+	LEAU -34,U
+
+	LDA #$cb
+	STD -8,U
+	LDA #$00
+	LDX #$0d68
+	LDY #$88dc
+	PSHU D,X,Y
+	LEAU -34,U
+
+	LDA #$bb
+	STD -8,U
+	LDA #$00
+	LDX #$0d78
+	LDY #$88bc
+	PSHU D,X,Y
+	LEAU -34,U
+
+	LDA #$b0
+	STD -8,U
+	LDA #$00
+	LDX #$0b78
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDX #$0b76
+	LDY #$888d
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDX #$00d7
+	LDY #$888b
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDY #$8888
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDX #$00b7
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDX #$00cd
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDX #$00cb
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDX #$00dc
+	LDY #$6818
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDX #$00bc
+	LDY #$78b8
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDY #$76b1
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDX #$000d
+	LDY #$778d
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	LDX #$00bb
+	LDY #$d71d
+	PSHU D,X,Y
+	LEAU -34,U
+
+	LDD #$bd8d
+	STD -42,U
+	LDD #$0000
+	STD -8,U
+	LDD -44,U
+	LDA #$bc
+	ANDB #$F0
+	ORB #$0d
+	STD -44,U
+	LDD #$0000
+	LDX #$0bdc
+	LDY #$d7bb
+	PSHU D,X,Y
+	LEAU -38,U
+
+	LDD #$cb6b
+	STD -38,U
+	LDD #$0000
+	LDX #$0000
+	PSHU D,X
+	LEAU -36,U
+
+	LDD #$cc76
+	STD -38,U
+	LDY #$000b
+	PSHU X,Y
+	LEAU -36,U
+
+	LDD #$dc77
+	STD -38,U
+	LDY #$00bd
+	PSHU X,Y
+	LEAU -37,U
+
+	LDA #$bc
+	STD -37,U
+	LDA #$00
+	LDX #$000b
+	PSHU A,X
+	LEAU -37,U
+
+	LDD #$cdd7
+	STD -37,U
+	STY -83,U
+	LDD #$dbbd
+	STD -77,U
+	STX -43,U
+	LDD -117,U
+	ANDA #$F0
+	ORA #$0d
+	LDB #$cb
+	STD -117,U
+	LDA #$0b
+	STA -123,U
+	LDA #$00
+	PSHU A,Y
+	LEAU -193,U
+
+	LDA -7,U
+	ANDA #$0F
+	ORA #$d0
+	STA -7,U
+	LDA #$bc
+	STA 33,U
+	LDA #$bd
+	STA -40,U
+	LDA #$dc
+	STA ,U
+	LDA #$cc
+	STA 40,U
+	RTS
+

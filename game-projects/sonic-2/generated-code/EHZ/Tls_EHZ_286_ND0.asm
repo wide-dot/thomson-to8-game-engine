@@ -1,0 +1,87 @@
+	INCLUDE "./Engine/Constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+DRAW_Tls_EHZ_286
+
+	stb   <glb_alphaTiles
+	LEAU 481,U
+
+	LDD #$dddd
+	STD 119,U
+	STD 39,U
+	STD -41,U
+	STD -121,U
+	LDD #$4334
+	STD -1,U
+	LDD #$3333
+	STD 79,U
+	LDD #$4444
+	STD -81,U
+	LEAU -280,U
+
+	STD 119,U
+	LDD #$dddd
+	STD 79,U
+	STD -1,U
+	LDD #$4434
+	STD 39,U
+	LDD -81,U
+	LDA #$dd
+	ANDB #$0F
+	ORB #$d0
+	STD -81,U
+	LDD -121,U
+	LDA #$43
+	ANDB #$0F
+	ORB #$30
+	STD -121,U
+	LDD #$4333
+	STD -41,U
+	LEAU -181,U
+
+	LDA #$dd
+	STA 20,U
+	LDA #$44
+	STA -20,U
+
+	LDU <glb_screen_location_1
+	LEAU 481,U
+
+	LDD #$dddd
+	STD 119,U
+	STD 39,U
+	STD -41,U
+	STD -121,U
+	LDD #$3343
+	STD 79,U
+	LDB #$44
+	STD -1,U
+	STD -81,U
+	LEAU -281,U
+
+	LDA #$dd
+	STA ,U
+	STA -80,U
+	LDD 80,U
+	LDA #$dd
+	ANDB #$0F
+	ORB #$d0
+	STD 80,U
+	LDD 40,U
+	LDA #$33
+	ANDB #$0F
+	ORB #$40
+	STD 40,U
+	LDD #$4444
+	STD 120,U
+	LDA #$33
+	STA -40,U
+	STA -120,U
+	LEAU -180,U
+
+	STA -20,U
+	LDA #$dd
+	STA 20,U
+	RTS
+

@@ -1,0 +1,447 @@
+                      (C:\Users\bhrou\gi):00001         ********************************************************************************
+                      (C:\Users\bhrou\gi):00002         * Chargement de donnees en RAM (TO8 Thomson) - Benoit Rousseau 26/04/2021
+                      (C:\Users\bhrou\gi):00003         * ------------------------------------------------------------------------------
+                      (C:\Users\bhrou\gi):00004         *
+                      (C:\Users\bhrou\gi):00005         * Charge les donnees d'un mode de jeu depuis la Megarom T.2
+                      (C:\Users\bhrou\gi):00006         * decompresse les donnees avec exomizer et copie ces donnees en RAM
+                      (C:\Users\bhrou\gi):00007         *
+                      (C:\Users\bhrou\gi):00008         * Les index de donnees sont stockees par groupe de 6 octets:
+                      (C:\Users\bhrou\gi):00009         * ----------------------------------------------------------
+                      (C:\Users\bhrou\gi):00010         * b: page T.2
+                      (C:\Users\bhrou\gi):00011         * b: page RAM
+                      (C:\Users\bhrou\gi):00012         * w: adresse T.2
+                      (C:\Users\bhrou\gi):00013         * w: adresse RAM
+                      (C:\Users\bhrou\gi):00014         *
+                      (C:\Users\bhrou\gi):00015         * la derniere ligne contient comme premier octet une valeur negative (exemple $FF)
+                      (C:\Users\bhrou\gi):00016         * en lieu et place de la page T.2
+                      (C:\Users\bhrou\gi):00017         ********************************************************************************
+                      (C:\Users\bhrou\gi):00018         
+                      (C:\Users\bhrou\gi):00019                 INCLUDE "./Engine/Constants.asm"
+                      (./Engine/Constant):00001         * ---------------------------------------------------------------------------
+                      (./Engine/Constant):00002         * Constants
+                      (./Engine/Constant):00003         *
+                      (./Engine/Constant):00004         * Naming convention
+                      (./Engine/Constant):00005         * -----------------
+                      (./Engine/Constant):00006         * - lower case
+                      (./Engine/Constant):00007         * - underscore-separated names
+                      (./Engine/Constant):00008         *
+                      (./Engine/Constant):00009         * ---------------------------------------------------------------------------
+                      (./Engine/Constant):00010         
+                      (./Engine/Constant):00011         * ===========================================================================
+                      (./Engine/Constant):00012         * TO8 Registers
+                      (./Engine/Constant):00013         * ===========================================================================
+                      (./Engine/Constant):00014         
+                      (./Engine/Constant):00015         ; Disk routine registers (ROM)
+                      (./Engine/Constant):00016         
+     6049             (./Engine/Constant):00017         dk_drive                      equ $6049
+     604A             (./Engine/Constant):00018         dk_track                      equ $604A
+     604B             (./Engine/Constant):00019         dk_track_lsb                  equ $604B
+     604C             (./Engine/Constant):00020         dk_sector                     equ $604C
+     604F             (./Engine/Constant):00021         dk_write_location             equ $604F
+                      (./Engine/Constant):00022         
+                      (./Engine/Constant):00023         * ===========================================================================
+                      (./Engine/Constant):00024         * Globals
+                      (./Engine/Constant):00025         * ===========================================================================
+                      (./Engine/Constant):00026         
+     009F             (./Engine/Constant):00027         glb_direct_page               equ $9F    ; direct page for globals
+                      (./Engine/Constant):00028         
+                      (./Engine/Constant):00029         ; compilated sprite
+     9FFE             (./Engine/Constant):00030         glb_register_s                equ $9FFE  ; reverved space to store S from ROM routines
+                      (./Engine/Constant):00031         
+                      (./Engine/Constant):00032         ; DrawSprites
+     9FFC             (./Engine/Constant):00033         glb_screen_location_1         equ $9FFC  ; start address for rendering of current sprite Part1     
+     9FFA             (./Engine/Constant):00034         glb_screen_location_2         equ $9FFA  ; start address for rendering of current sprite Part2 (Must follow Part1)
+                      (./Engine/Constant):00035         
+                      (./Engine/Constant):00036         ; CheckSpritesRefresh
+     9FF9             (./Engine/Constant):00037         glb_cur_priority              equ $9FF9
+     9FF7             (./Engine/Constant):00038         glb_cur_ptr_sub_obj_erase     equ $9FF7
+     9FF5             (./Engine/Constant):00039         glb_cur_ptr_sub_obj_draw      equ $9FF5
+     9FF3             (./Engine/Constant):00040         glb_camera_x_pos              equ $9FF3 ; camera x position in palyfield coordinates
+     9FF1             (./Engine/Constant):00041         glb_camera_y_pos              equ $9FF1 ; camera y position in palyfield coordinates
+     9FEF             (./Engine/Constant):00042         glb_camera_x_min_pos          equ $9FEF
+     9FED             (./Engine/Constant):00043         glb_camera_y_min_pos          equ $9FED
+     9FEB             (./Engine/Constant):00044         glb_camera_x_max_pos          equ $9FEB
+     9FE9             (./Engine/Constant):00045         glb_camera_y_max_pos          equ $9FE9
+     9FE8             (./Engine/Constant):00046         glb_force_sprite_refresh      equ $9FE8
+     9FE7             (./Engine/Constant):00047         glb_camera_move               equ $9FE7
+     9FE6             (./Engine/Constant):00048         glb_alphaTiles                equ $9FE6
+     9F00             (./Engine/Constant):00049         glb_tmp_var                   equ $9F00 ; custom tmp var space for routine
+     9F00             (./Engine/Constant):00050         glb_system_stack              equ $9F00
+                      (./Engine/Constant):00051         
+                      (./Engine/Constant):00052         * ===========================================================================
+                      (./Engine/Constant):00053         * Display Constants
+                      (./Engine/Constant):00054         * ===========================================================================
+                      (./Engine/Constant):00055         
+     00A0             (./Engine/Constant):00056         screen_width                  equ 160    ; in pixel
+     001C             (./Engine/Constant):00057         screen_top                    equ 28     ; in pixel
+     00E3             (./Engine/Constant):00058         screen_bottom                 equ 28+199 ; in pixel
+     0030             (./Engine/Constant):00059         screen_left                   equ 48     ; in pixel
+     00CF             (./Engine/Constant):00060         screen_right                  equ 48+159 ; in pixel
+     0008             (./Engine/Constant):00061         nb_priority_levels            equ 8      ; number of priority levels (need code change if modified)
+                      (./Engine/Constant):00062         
+                      (./Engine/Constant):00063         * ===========================================================================
+                      (./Engine/Constant):00064         * Images Constants
+                      (./Engine/Constant):00065         * ===========================================================================
+                      (./Engine/Constant):00066         
+     0004             (./Engine/Constant):00067         image_x_size                  equ 4
+     0005             (./Engine/Constant):00068         image_y_size                  equ 5
+     0006             (./Engine/Constant):00069         image_center_offset           equ 6
+                      (./Engine/Constant):00070         
+     0004             (./Engine/Constant):00071         image_subset_x1_offset        equ 4
+     0005             (./Engine/Constant):00072         image_subset_y1_offset        equ 5
+                      (./Engine/Constant):00073         
+     0000             (./Engine/Constant):00074         page_draw_routine             equ 0
+     0001             (./Engine/Constant):00075         draw_routine                  equ 1
+     0003             (./Engine/Constant):00076         page_erase_routine            equ 3
+     0004             (./Engine/Constant):00077         erase_routine                 equ 4
+     0006             (./Engine/Constant):00078         erase_nb_cell                 equ 6
+                      (./Engine/Constant):00079         
+                      (./Engine/Constant):00080         * ===========================================================================
+                      (./Engine/Constant):00081         * Sound Constants
+                      (./Engine/Constant):00082         * ===========================================================================
+                      (./Engine/Constant):00083         
+     0000             (./Engine/Constant):00084         sound_page        equ 0
+     0001             (./Engine/Constant):00085         sound_start_addr  equ 1
+     0003             (./Engine/Constant):00086         sound_end_addr    equ 3
+     0005             (./Engine/Constant):00087         sound_meta_size   equ 5
+                      (./Engine/Constant):00088         
+                      (./Engine/Constant):00089         * ===========================================================================
+                      (./Engine/Constant):00090         * Object Constants
+                      (./Engine/Constant):00091         * ===========================================================================
+                      (./Engine/Constant):00092         
+     005D             (./Engine/Constant):00093         object_core_size              equ 93  ; the size of an object without ext_vars - DEPENDENCY ClearObj routine
+     ????             (./Engine/Constant):00094         object_size                   equ object_core_size+ext_variables_size ; the size of a dynamic object
+     ????             (./Engine/Constant):00095         next_object                   equ object_size
+     005D             (./Engine/Constant):00096         ext_variables                 equ object_core_size ; start of reserved space for additionnal variables
+                      (./Engine/Constant):00097         
+     0000             (./Engine/Constant):00098         id                            equ 0           ; reference to object model id (ObjID_) (0: free slot)
+     0001             (./Engine/Constant):00099         subtype                       equ 1           ; reference to object subtype (Sub_)
+     0002             (./Engine/Constant):00100         render_flags                  equ 2
+                      (./Engine/Constant):00101         
+                      (./Engine/Constant):00102         * --- render_flags bitfield variables ---
+     0001             (./Engine/Constant):00103         render_xmirror_mask           equ $01 ; (bit 0) DEPENDENCY should be bit 0 - tell display engine to mirror sprite on horizontal axis
+     0002             (./Engine/Constant):00104         render_ymirror_mask           equ $02 ; (bit 1) DEPENDENCY should be bit 1 - tell display engine to mirror sprite on vertical axis
+     0004             (./Engine/Constant):00105         render_overlay_mask           equ $04 ; (bit 2) DEPENDENCY should be bit 2 - compilated sprite with no background save
+     0008             (./Engine/Constant):00106         render_motionless_mask        equ $08 ; (bit 3) tell display engine to compute sub image and position check only once until the flag is removed  
+     0010             (./Engine/Constant):00107         render_playfieldcoord_mask    equ $10 ; (bit 4) tell display engine to use playfield (1) or screen (0) coordinates
+     0020             (./Engine/Constant):00108         render_hide_mask              equ $20 ; (bit 5) tell display engine to hide sprite (keep priority and mapping_frame)
+     0040             (./Engine/Constant):00109         render_todelete_mask          equ $40 ; (bit 6) tell display engine to delete sprite and clear OST for this object
+     0080             (./Engine/Constant):00110         render_xloop_mask             equ $80 ; (bit 7) (screen coordinate) tell display engine to hide sprite when x is out of screen (0) or to display (1)  
+                      (./Engine/Constant):00111          
+     0003             (./Engine/Constant):00112         priority                      equ 3           ; display priority (0: nothing to display, 1:front, ..., 8:back)
+     0004             (./Engine/Constant):00113         anim                          equ 4  ; and 5  ; reference to current animation (Ani_)
+     0006             (./Engine/Constant):00114         prev_anim                     equ 6  ; and 7  ; reference to previous animation (Ani_)
+     0008             (./Engine/Constant):00115         anim_frame                    equ 8           ; index of current frame in animation
+     0009             (./Engine/Constant):00116         anim_frame_duration           equ 9           ; number of frames for each image in animation, range: 00-7F (0-127), 0 means display only during one frame
+     000A             (./Engine/Constant):00117         anim_flags                    equ 10          ; byte offset to reference an anim_flags LUT (adv) / store a link flag (non adv)
+                      (./Engine/Constant):00118         
+                      (./Engine/Constant):00119         * --- anim_flags bitfield variables ---
+     0001             (./Engine/Constant):00120         anim_link_mask                equ $01 ; (bit 0) if set, allow the load of a new animation without reseting anim_frame and anim_frame_duration
+                      (./Engine/Constant):00121         
+     000B             (./Engine/Constant):00122         status_flags                  equ 11          ; orientation of sprite, is applied to animation xmirror flag during AnimateSprite
+                      (./Engine/Constant):00123         
+                      (./Engine/Constant):00124         * --- status_flags bitfield variables ---
+     0001             (./Engine/Constant):00125         status_xflip_mask             equ $01 ; (bit 0) X Flip
+     0002             (./Engine/Constant):00126         status_yflip_mask             equ $02 ; (bit 1) Y Flip
+                      (./Engine/Constant):00127         
+     000C             (./Engine/Constant):00128         image_set                     equ 12 ; and 13 ; reference to current image (Img_) (0000 if no image)
+     000E             (./Engine/Constant):00129         x_pos                         equ 14 ; and 15 ; x playfield coordinate
+     0010             (./Engine/Constant):00130         x_sub                         equ 16          ; x subpixel (1/256 of a pixel), must follow x_pos in data structure
+     0011             (./Engine/Constant):00131         y_pos                         equ 17 ; and 18 ; y playfield coordinate
+     0013             (./Engine/Constant):00132         y_sub                         equ 19          ; y subpixel (1/256 of a pixel), must follow y_pos in data structure
+     0014             (./Engine/Constant):00133         xy_pixel                      equ 20          ; x and y screen coordinate
+     0014             (./Engine/Constant):00134         x_pixel                       equ 20          ; x screen coordinate
+     0015             (./Engine/Constant):00135         y_pixel                       equ 21          ; y screen coordinate, must follow x_pixel
+                      (./Engine/Constant):00136         ;x_offset                      equ 93          ; x screen coordinate offset that is applied at rendering
+                      (./Engine/Constant):00137         ;y_offset                      equ 94          ; x screen coordinate offset that is applied at rendering
+     0016             (./Engine/Constant):00138         x_vel                         equ 22 ; and 23 ; horizontal velocity
+     0018             (./Engine/Constant):00139         y_vel                         equ 24 ; and 25 ; vertical velocity
+     001A             (./Engine/Constant):00140         x_acl                         equ 26 ; and 27 ; horizontal gravity
+     001C             (./Engine/Constant):00141         y_acl                         equ 28 ; and 29 ; vertical gravity
+     001E             (./Engine/Constant):00142         routine                       equ 30          ; index of current object routine
+     001F             (./Engine/Constant):00143         routine_secondary             equ 31          ; index of current secondary routine
+     0020             (./Engine/Constant):00144         routine_tertiary              equ 32          ; index of current tertiary routine
+     0021             (./Engine/Constant):00145         routine_quaternary            equ 33          ; index of current quaternary routine
+                      (./Engine/Constant):00146         
+                      (./Engine/Constant):00147         * ---------------------------------------------------------------------------
+                      (./Engine/Constant):00148         * reserved variables (update by engine)
+                      (./Engine/Constant):00149         
+     0022             (./Engine/Constant):00150         rsv_render_flags              equ 34
+                      (./Engine/Constant):00151         
+                      (./Engine/Constant):00152         * --- rsv_render_flags bitfield variables ---
+     0001             (./Engine/Constant):00153         rsv_render_checkrefresh_mask  equ $01 ; (bit 0) if erasesprite and display sprite flag are processed for this frame
+     0002             (./Engine/Constant):00154         rsv_render_erasesprite_mask   equ $02 ; (bit 1) if a sprite need to be cleared on screen
+     0004             (./Engine/Constant):00155         rsv_render_displaysprite_mask equ $04 ; (bit 2) if a sprite need to be rendered on screen
+     0008             (./Engine/Constant):00156         rsv_render_outofrange_mask    equ $08 ; (bit 3) if a sprite is out of range for full rendering in screen
+     0080             (./Engine/Constant):00157         rsv_render_onscreen_mask      equ $80 ; (bit 7) DEPENDENCY should be bit 7 - has been rendered on last screen buffer (may be 0 or 1)
+                      (./Engine/Constant):00158         
+     0023             (./Engine/Constant):00159         rsv_prev_anim                 equ 35 ; and 36 ; reference to previous animation (Ani_) w * UTILE ?
+     0025             (./Engine/Constant):00160         rsv_image_center_offset       equ 37 ; 0 or 1 offset that indicate if image center is even or odd (DRS_XYToAddress)
+     0026             (./Engine/Constant):00161         rsv_image_subset              equ 38 ; and 39 ; reference to current image regarding mirror flags w
+     0028             (./Engine/Constant):00162         rsv_mapping_frame             equ 40 ; and 41 ; reference to current image regarding mirror flags, overlay flag and x precision w
+     002A             (./Engine/Constant):00163         rsv_erase_nb_cell             equ 42 ; b 
+     002B             (./Engine/Constant):00164         rsv_page_draw_routine         equ 43 ; b
+     002C             (./Engine/Constant):00165         rsv_draw_routine              equ 44 ; and 45 ; w
+     002E             (./Engine/Constant):00166         rsv_page_erase_routine        equ 46 ; b
+     002F             (./Engine/Constant):00167         rsv_erase_routine             equ 47 ; and 48 ; w 
+     0031             (./Engine/Constant):00168         rsv_xy1_pixel                 equ 49 ;
+     0031             (./Engine/Constant):00169         rsv_x1_pixel                  equ 49 ; x+x_offset-(x_size/2) screen coordinate
+     0032             (./Engine/Constant):00170         rsv_y1_pixel                  equ 50 ; y+y_offset-(y_size/2) screen coordinate, must follow rsv_x1_pixel
+     0033             (./Engine/Constant):00171         rsv_xy2_pixel                 equ 51 ;
+     0033             (./Engine/Constant):00172         rsv_x2_pixel                  equ 51 ; x+x_offset+(x_size/2) screen coordinate
+     0034             (./Engine/Constant):00173         rsv_y2_pixel                  equ 52 ; y+y_offset+(y_size/2) screen coordinate, must follow rsv_x2_pixel
+                      (./Engine/Constant):00174         
+                      (./Engine/Constant):00175         * ---------------------------------------------------------------------------
+                      (./Engine/Constant):00176         * reserved variables (engine) - buffer specific
+                      (./Engine/Constant):00177         
+     0035             (./Engine/Constant):00178         rsv_buffer_0                  equ 53 ; Start index of buffer 0 variables
+     0035             (./Engine/Constant):00179         rsv_priority_0                equ 53 ; internal value that hold priority in video buffer 0
+     0036             (./Engine/Constant):00180         rsv_priority_prev_obj_0       equ 54 ; and 55 ; previous object (OST address) in display priority list for video buffer 0 (0000 if none) w
+     0038             (./Engine/Constant):00181         rsv_priority_next_obj_0       equ 56 ; and 57 ; next object (OST address) in display priority list for video buffer 0 (0000 if none) w
+     003A             (./Engine/Constant):00182         rsv_prev_mapping_frame_0      equ 58 ; and 59 ; reference to previous image in video buffer 0 w
+     003C             (./Engine/Constant):00183         rsv_prev_erase_nb_cell_0      equ 60 : b
+     003D             (./Engine/Constant):00184         rsv_prev_page_erase_routine_0 equ 61 ; b
+     003E             (./Engine/Constant):00185         rsv_prev_erase_routine_0      equ 62 ; and 63 ; w
+     0040             (./Engine/Constant):00186         rsv_bgdata_0                  equ 64 ; and 65 ; address of background data in screen 0 w
+     0042             (./Engine/Constant):00187         rsv_prev_xy_pixel_0           equ 66 ;
+     0042             (./Engine/Constant):00188         rsv_prev_x_pixel_0            equ 66 ; previous x screen coordinate b
+     0043             (./Engine/Constant):00189         rsv_prev_y_pixel_0            equ 67 ; previous y screen coordinate b, must follow x_pixel
+     0044             (./Engine/Constant):00190         rsv_prev_xy1_pixel_0          equ 68 ;
+     0044             (./Engine/Constant):00191         rsv_prev_x1_pixel_0           equ 68 ; previous x+x_offset-(x_size/2) screen coordinate b
+     0045             (./Engine/Constant):00192         rsv_prev_y1_pixel_0           equ 69 ; previous y+y_offset-(y_size/2) screen coordinate b, must follow x1_pixel
+     0046             (./Engine/Constant):00193         rsv_prev_xy2_pixel_0          equ 70 ;
+     0046             (./Engine/Constant):00194         rsv_prev_x2_pixel_0           equ 70 ; previous x+x_offset+(x_size/2) screen coordinate b
+     0047             (./Engine/Constant):00195         rsv_prev_y2_pixel_0           equ 71 ; previous y+y_offset+(y_size/2) screen coordinate b, must follow x2_pixel
+     0048             (./Engine/Constant):00196         rsv_prev_render_flags_0       equ 72 ;
+                      (./Engine/Constant):00197         * --- rsv_prev_render_flags_0 bitfield variables ---
+     0001             (./Engine/Constant):00198         rsv_prev_render_overlay_mask  equ $01 ; (bit 0) if a sprite has been rendered with compilated sprite and no background save on screen buffer 0/1
+     0080             (./Engine/Constant):00199         rsv_prev_render_onscreen_mask equ $80 ; (bit 7) DEPENDENCY should be bit 7 - has been rendered on screen buffer 0/1
+                      (./Engine/Constant):00200         
+     0049             (./Engine/Constant):00201         rsv_buffer_1                  equ 73 ; Start index of buffer 1 variables
+     0049             (./Engine/Constant):00202         rsv_priority_1                equ 73 ; internal value that hold priority in video buffer 1
+     004A             (./Engine/Constant):00203         rsv_priority_prev_obj_1       equ 74 ; and 75 ; previous object (OST address) in display priority list for video buffer 1 (0000 if none) w
+     004C             (./Engine/Constant):00204         rsv_priority_next_obj_1       equ 76 ; and 77 ; next object (OST address) in display priority list for video buffer 1 (0000 if none) w
+     004E             (./Engine/Constant):00205         rsv_prev_mapping_frame_1      equ 78 ; and 79 ; reference to previous image in video buffer 1 w
+     0050             (./Engine/Constant):00206         rsv_prev_erase_nb_cell_1      equ 80 ; b
+     0051             (./Engine/Constant):00207         rsv_prev_page_erase_routine_1 equ 81 ; b
+     0052             (./Engine/Constant):00208         rsv_prev_erase_routine_1      equ 82 ; and 83 ; w
+     0054             (./Engine/Constant):00209         rsv_bgdata_1                  equ 84 ; and 85 ; address of background data in screen 1 w
+     0056             (./Engine/Constant):00210         rsv_prev_xy_pixel_1           equ 86 ;
+     0056             (./Engine/Constant):00211         rsv_prev_x_pixel_1            equ 86 ; previous x screen coordinate b
+     0057             (./Engine/Constant):00212         rsv_prev_y_pixel_1            equ 87 ; previous y screen coordinate b, must follow x_pixel
+     0058             (./Engine/Constant):00213         rsv_prev_xy1_pixel_1          equ 88 ;
+     0058             (./Engine/Constant):00214         rsv_prev_x1_pixel_1           equ 88 ; previous x+x_size screen coordinate b
+     0059             (./Engine/Constant):00215         rsv_prev_y1_pixel_1           equ 89 ; previous y+y_size screen coordinate b, must follow x_pixel
+     005A             (./Engine/Constant):00216         rsv_prev_xy2_pixel_1          equ 90 ;
+     005A             (./Engine/Constant):00217         rsv_prev_x2_pixel_1           equ 90 ; previous x+x_size screen coordinate b
+     005B             (./Engine/Constant):00218         rsv_prev_y2_pixel_1           equ 91 ; previous y+y_size screen coordinate b, must follow x_pixel
+     005C             (./Engine/Constant):00219         rsv_prev_render_flags_1       equ 92 ;
+                      (./Engine/Constant):00220         
+     0000             (./Engine/Constant):00221         buf_priority                  equ 0  ; offset for each rsv_buffer variables
+     0001             (./Engine/Constant):00222         buf_priority_prev_obj         equ 1  ;
+     0003             (./Engine/Constant):00223         buf_priority_next_obj         equ 3  ;
+     0005             (./Engine/Constant):00224         buf_prev_mapping_frame        equ 5  ;
+     0007             (./Engine/Constant):00225         buf_erase_nb_cell             equ 7  ;
+     0008             (./Engine/Constant):00226         buf_page_erase_routine        equ 8 ;
+     0009             (./Engine/Constant):00227         buf_erase_routine             equ 9 ;
+     000B             (./Engine/Constant):00228         buf_bgdata                    equ 11 ;
+     000D             (./Engine/Constant):00229         buf_prev_xy_pixel             equ 13 ;
+     000D             (./Engine/Constant):00230         buf_prev_x_pixel              equ 13 ;
+     000E             (./Engine/Constant):00231         buf_prev_y_pixel              equ 14 ;
+     000F             (./Engine/Constant):00232         buf_prev_xy1_pixel            equ 15 ;
+     000F             (./Engine/Constant):00233         buf_prev_x1_pixel             equ 15 ;
+     0010             (./Engine/Constant):00234         buf_prev_y1_pixel             equ 16 ;
+     0011             (./Engine/Constant):00235         buf_prev_xy2_pixel            equ 17 ;
+     0011             (./Engine/Constant):00236         buf_prev_x2_pixel             equ 17 ;
+     0012             (./Engine/Constant):00237         buf_prev_y2_pixel             equ 18 ;
+     0013             (./Engine/Constant):00238         buf_prev_render_flags         equ 19 ;
+                      (C:\Users\bhrou\gi):00020                 
+                      (C:\Users\bhrou\gi):00021                 org   $4000
+                      (C:\Users\bhrou\gi):00022                 opt   c,ct
+     40               (C:\Users\bhrou\gi):00023                         setdp $40                      ; dp for exomizer
+4000                  (C:\Users\bhrou\gi):00024                 start        
+                      (C:\Users\bhrou\gi):00025                         INCLUDE "./Engine/Compression/Exomizer.asm"  
+                      (./Engine/Compress):00001                 * Exomizer2 algorithm, backward with litterals for 6809
+                      (./Engine/Compress):00002                 * by Fool-DupleX, PrehisTO and Sam from PULS (www.pulsdemos.com)
+                      (./Engine/Compress):00003                 *
+                      (./Engine/Compress):00004                 * This routine decrunches data compressed with Exomizer2 in raw mode,
+                      (./Engine/Compress):00005                 * backward with litterals.
+                      (./Engine/Compress):00006                 * This routine was developed and tested on a Thomson MO5 in July 2011.
+                      (./Engine/Compress):00007                 
+                      (./Engine/Compress):00008                    
+                      (./Engine/Compress):00009                 * The Exomizer2 decruncher starts here.
+                      (./Engine/Compress):00010                 * call with a JSR exo2 or equivalent.
+                      (./Engine/Compress):00011                 *
+                      (./Engine/Compress):00012                 * Input    : U = pointer to end of compressed data
+                      (./Engine/Compress):00013                 *            Y = pointer to end of output buffer
+                      (./Engine/Compress):00014                 * Output   : Y = pointer to first byte of decompressed data
+                      (./Engine/Compress):00015                 * Modifies : Y.
+                      (./Engine/Compress):00016                 *
+                      (./Engine/Compress):00017                 * All registers are preserved except Y.
+                      (./Engine/Compress):00018                 * This code self modifies and cannot be run in ROM.
+                      (./Engine/Compress):00019                 * This code must be contained within a single page (makes use of DP), but may
+                      (./Engine/Compress):00020                 * be located anywhere in RAM.
+                      (./Engine/Compress):00021                 
+4000 347F             (./Engine/Compress):00022 [15]    15      exo2    pshs    u,y,x,dp,d,cc           * Save context
+4002 1F50             (./Engine/Compress):00023 [6]     21              tfr     pc,d                    * Set direct page
+4004 1F8B             (./Engine/Compress):00024 [6]     27              tfr     a,dp
+4006 108E40B2         (./Engine/Compress):00025 [4]     31              ldy     #biba                   * Set ptr to bits and base table
+400A 5F               (./Engine/Compress):00026 [2]     33              clrb
+400B D78D             (./Engine/Compress):00027 [4]     37              stb     <bitbuf+1               * Init bit buffer
+                      (./Engine/Compress):00028                 
+400D 4F               (./Engine/Compress):00029 [2]     39      nxt     clra
+400E 3406             (./Engine/Compress):00030 [7]     46              pshs    a,b
+4010 C50F             (./Engine/Compress):00031 [2]     48              bitb    #$0f                    * if (i&15==0)
+4012 2603             (./Engine/Compress):00032 [3]     51              bne     skp
+4014 8E0001           (./Engine/Compress):00033 [3]     54              ldx     #$0001                  * b2 = 1
+4017 C604             (./Engine/Compress):00034 [2]     56      skp     ldb     #4                      * Fetch 4 bits
+4019 8D6D             (./Engine/Compress):00035 [7]     63              bsr     getbits
+401B E7A0             (./Engine/Compress):00036 [6]     69              stb     ,y+                     * bits[i] = b1
+401D 53               (./Engine/Compress):00037 [2]     71              comb                            * CC=1
+401E 69E4             (./Engine/Compress):00038 [6]     77      roll    rol     ,s
+4020 49               (./Engine/Compress):00039 [2]     79              rola
+4021 5C               (./Engine/Compress):00040 [2]     81              incb
+4022 2BFA             (./Engine/Compress):00041 [3]     84              bmi     roll
+4024 E6E4             (./Engine/Compress):00042 [4]     88              ldb     ,s         
+4026 AFA1             (./Engine/Compress):00043 [8]     96              stx     ,y++                    * base[i] = b2
+4028 308B             (./Engine/Compress):00044 [8]     104             leax    d,x                     * b2 += accu1
+402A 3506             (./Engine/Compress):00045 [7]     111             puls    a,b
+402C 5C               (./Engine/Compress):00046 [2]     113             incb   
+402D C134             (./Engine/Compress):00047 [2]     115             cmpb    #52                     * 52 times ?
+402F 26DC             (./Engine/Compress):00048 [3]     118             bne     nxt
+                      (./Engine/Compress):00049                    
+4031 10AE66           (./Engine/Compress):00050 [7]     125     go      ldy     6,s                     * Y = ptr to output
+4034 C601             (./Engine/Compress):00051 [2]     127     mloop   ldb     #1                      * for(**)
+4036 8D50             (./Engine/Compress):00052 [7]     134             bsr     getbits                 * Fetch 1 bit
+4038 2615             (./Engine/Compress):00053 [3]     137             bne     cpy                     * is 1 ?
+403A D745             (./Engine/Compress):00054 [4]     141             stb     <idx+1                  * B always 0 here
+403C 8C               (./Engine/Compress):00055                         fcb     $8c                     * (CMPX) to skip first iteration
+403D 0C45             (./Engine/Compress):00056 [6]     147     rbl     inc     <idx+1                  * Compute index
+403F 5C               (./Engine/Compress):00057 [2]     149             incb
+4040 8D46             (./Engine/Compress):00058 [7]     156             bsr     getbits
+4042 27F9             (./Engine/Compress):00059 [3]     159             beq     rbl
+                      (./Engine/Compress):00060                 
+4044 C600             (./Engine/Compress):00061 [2]     161     idx     ldb     #$00                    * Self-modified code
+4046 C110             (./Engine/Compress):00062 [2]     163             cmpb    #$10                    * index = 16 ?
+4048 2737             (./Engine/Compress):00063 [3]     166             beq     endr
+404A 250F             (./Engine/Compress):00064 [3]     169             blo     coffs                   * index < 16 ?
+404C 5A               (./Engine/Compress):00065 [2]     171             decb                            * index = 17
+404D 8D39             (./Engine/Compress):00066 [7]     178             bsr     getbits                 * Get size
+                      (./Engine/Compress):00067                 
+404F 1F01             (./Engine/Compress):00068 [6]     184     cpy     tfr     d,x                     * Copy litteral
+4051 A6C2             (./Engine/Compress):00069 [6]     190     cpyl    lda     ,-u
+4053 A7A2             (./Engine/Compress):00070 [6]     196             sta     ,-y
+4055 301F             (./Engine/Compress):00071 [5]     201             leax    -1,x
+4057 26F8             (./Engine/Compress):00072 [3]     204             bne     cpyl
+4059 20D9             (./Engine/Compress):00073 [3]     207             bra     mloop
+                      (./Engine/Compress):00074                 
+405B 8D44             (./Engine/Compress):00075 [7]     214     coffs   bsr     cook                    * Compute length
+405D 3406             (./Engine/Compress):00076 [7]     221             pshs    d
+405F 8E40AC           (./Engine/Compress):00077 [3]     224             ldx     #tab1
+4062 10830003         (./Engine/Compress):00078 [5]     229             cmpd    #$03
+4066 2401             (./Engine/Compress):00079 [3]     232             bhs     scof
+4068 3A               (./Engine/Compress):00080 [3]     235             abx
+4069 8D1B             (./Engine/Compress):00081 [7]     242     scof    bsr     getbix
+406B EB03             (./Engine/Compress):00082 [5]     247             addb    3,x
+406D 8D32             (./Engine/Compress):00083 [7]     254             bsr     cook
+406F DD77             (./Engine/Compress):00084 [5]     259             std     <offs+2
+4071 3510             (./Engine/Compress):00085 [7]     266             puls    x
+                      (./Engine/Compress):00086                 
+4073 313F             (./Engine/Compress):00087 [5]     271     cpy2    leay    -1,y                    * Copy non litteral
+4075 A6A91234         (./Engine/Compress):00088 [8]     279     offs    lda     $1234,y                 * Self-modified code
+4079 A7A4             (./Engine/Compress):00089 [4]     283             sta     ,y
+407B 301F             (./Engine/Compress):00090 [5]     288             leax    -1,x
+407D 26F4             (./Engine/Compress):00091 [3]     291             bne     cpy2
+407F 20B3             (./Engine/Compress):00092 [3]     294             bra     mloop
+                      (./Engine/Compress):00093                 
+4081 10AF66           (./Engine/Compress):00094 [7]     301     endr    sty     6,s                     * End
+4084 35FF             (./Engine/Compress):00095 [17]    318             puls    cc,d,dp,x,y,u,pc        * Restore context and set Y
+                      (./Engine/Compress):00096                 
+                      (./Engine/Compress):00097                 * getbits  : get 0 to 16 bits from input stream
+                      (./Engine/Compress):00098                 * Input    : B = bit count, U points to input buffer
+                      (./Engine/Compress):00099                 * Output   : D = bits
+                      (./Engine/Compress):00100                 * Modifies : D,U.
+                      (./Engine/Compress):00101                 
+4086 E684             (./Engine/Compress):00102 [4]     322     getbix  ldb     ,x
+4088 6FE2             (./Engine/Compress):00103 [8]     330     getbits clr     ,-s                     * Clear local bits
+408A 6FE2             (./Engine/Compress):00104 [8]     338             clr     ,-s         
+408C 8612             (./Engine/Compress):00105 [2]     340     bitbuf  lda     #$12                    * Self-modified code
+408E 2009             (./Engine/Compress):00106 [3]     343             bra     get3
+4090 A6C2             (./Engine/Compress):00107 [6]     349     get1    lda     ,-u
+4092 46               (./Engine/Compress):00108 [2]     351     get2    rora
+4093 27FB             (./Engine/Compress):00109 [3]     354             beq     get1                    * Bit buffer = 1 ?
+4095 6961             (./Engine/Compress):00110 [7]     361             rol     1,s
+4097 69E4             (./Engine/Compress):00111 [6]     367             rol     ,s
+4099 5A               (./Engine/Compress):00112 [2]     369     get3    decb
+409A 2AF6             (./Engine/Compress):00113 [3]     372             bpl     get2
+409C 978D             (./Engine/Compress):00114 [4]     376             sta     <bitbuf+1               * Save buffer
+409E ECE1             (./Engine/Compress):00115 [8]     384             ldd     ,s++
+40A0 39               (./Engine/Compress):00116 [5]     389             rts                             * Retrieve bits and return
+                      (./Engine/Compress):00117                    
+                      (./Engine/Compress):00118                 * cook     : computes base[index] + readbits(&in, bits[index])
+                      (./Engine/Compress):00119                 * Input    : B = index
+                      (./Engine/Compress):00120                 * Output   : D = base[index] + readbits(&in, bits[index])
+                      (./Engine/Compress):00121                 * Modifies : D,X,U.
+                      (./Engine/Compress):00122                 
+40A1 8E40B2           (./Engine/Compress):00123 [3]     392     cook    ldx     #biba
+40A4 3A               (./Engine/Compress):00124 [3]     395             abx                             * bits+base = 3 bytes
+40A5 58               (./Engine/Compress):00125 [2]     397             aslb                            * times 2
+40A6 3A               (./Engine/Compress):00126 [3]     400             abx
+40A7 8DDD             (./Engine/Compress):00127 [7]     407             bsr     getbix                  * fetch base[index] and read bits
+40A9 E301             (./Engine/Compress):00128 [7]     414             addd    1,x                     * add base[index]
+40AB 39               (./Engine/Compress):00129 [5]     419             rts
+                      (./Engine/Compress):00130                 
+                      (./Engine/Compress):00131                 * Values used in the switch (index)   
+40AC 040204           (./Engine/Compress):00132                 tab1    fcb     4,2,4
+40AF 103020           (./Engine/Compress):00133                         fcb     16,48,32
+                      (./Engine/Compress):00134                 
+40B2 0000000000000000 (./Engine/Compress):00135                 biba    fill    0,156                   * Bits and base are interleaved
+     0000000000000000
+     0000000000000000
+     0000000000000000
+     0000000000000000
+     0000000000000000
+     0000000000000000
+     0000000000000000
+     0000000000000000
+     0000000000000000
+     0000000000000000
+     0000000000000000
+     0000000000000000
+     0000000000000000
+     0000000000000000
+     0000000000000000
+     0000000000000000
+     0000000000000000
+     0000000000000000
+     00000000
+                      (C:\Users\bhrou\gi):00026                 
+414E                  (C:\Users\bhrou\gi):00027                 RAMLoader
+414E 8E4181           (C:\Users\bhrou\gi):00028 [3]     422             ldx   #RL_RAM_index          
+                      (C:\Users\bhrou\gi):00029                         
+4151                  (C:\Users\bhrou\gi):00030                 RL_While
+4151 EC81             (C:\Users\bhrou\gi):00031 [8]     430             ldd   ,x++                     ; A: T2 src page, B: Dest RAM page
+4153 2A07             (C:\Users\bhrou\gi):00032 [3]     433             bpl   RL_LoadData              ; valeur negative de secteur signifie fin du tableau de donnee
+4155 869F             (C:\Users\bhrou\gi):00033 [2]     435             lda   #glb_direct_page         ; set direct page to access globals
+4157 1F8B             (C:\Users\bhrou\gi):00034 [6]     441             tfr   a,dp
+4159 7E6100           (C:\Users\bhrou\gi):00035 [4]     445             jmp   $6100                    ; on lance le mode de jeu en page 1
+                      (C:\Users\bhrou\gi):00036                         
+415C                  (C:\Users\bhrou\gi):00037                 RL_LoadData
+415C F7E7E5           (C:\Users\bhrou\gi):00038 [5]     450             stb   $E7E5                    ; selection de la page en RAM Donnees (A000-DFFF)
+                      (C:\Users\bhrou\gi):00039                       
+415F C6AA             (C:\Users\bhrou\gi):00040 [2]     452             ldb   #$AA                     ; sequence pour commutation de page T.2
+4161 F70555           (C:\Users\bhrou\gi):00041 [5]     457             stb   $0555
+4164 C655             (C:\Users\bhrou\gi):00042 [2]     459             ldb   #$55
+4166 F702AA           (C:\Users\bhrou\gi):00043 [5]     464             stb   $02AA
+4169 C6C0             (C:\Users\bhrou\gi):00044 [2]     466             ldb   #$C0
+416B F70555           (C:\Users\bhrou\gi):00045 [5]     471             stb   $0555
+416E B70555           (C:\Users\bhrou\gi):00046 [5]     476             sta   $0555                    ; selection de la page T.2
+                      (C:\Users\bhrou\gi):00047                 
+4171 EE81             (C:\Users\bhrou\gi):00048 [8]     484             ldu   ,x++                     ; source ROM (fin des donnees)
+4173 10AE81           (C:\Users\bhrou\gi):00049 [9]     493             ldy   ,x++                     ; destination RAM (fin des donnees)
+4176 BD4000           (C:\Users\bhrou\gi):00050 [8]     501             jsr   >exo2                    ; decompresse les donnees        
+4179 20D6             (C:\Users\bhrou\gi):00051 [3]     504             bra   RL_While
+417B                  (C:\Users\bhrou\gi):00052                 fill        
+417B 000000000000     (C:\Users\bhrou\gi):00053                         fill  0,7-((fill-start)%7)      ; le code est un multilpe de 7 octets (pour la copie)
+                      (C:\Users\bhrou\gi):00054                         
+4181                  (C:\Users\bhrou\gi):00055                 RL_RAM_index 

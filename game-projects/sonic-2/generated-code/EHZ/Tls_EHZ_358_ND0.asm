@@ -1,0 +1,47 @@
+	INCLUDE "./Engine/Constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+DRAW_Tls_EHZ_358
+	LEAU 441,U
+
+	LDD #$44d4
+	STD 119,U
+	LDB #$dd
+	STD 39,U
+	LDA #$34
+	STD -41,U
+	LDB #$3d
+	STD -121,U
+	LEAU -320,U
+
+	LDD #$4433
+	STD 119,U
+	STD -41,U
+	LDB #$44
+	STD 39,U
+	LDD #$3433
+	STD -121,U
+
+	LDU <glb_screen_location_1
+	LEAU 441,U
+
+	LDD #$4444
+	STD 119,U
+	LDD #$33d4
+	STD -121,U
+	LDA #$dd
+	STD -41,U
+	LDD #$4d44
+	STD 39,U
+	LEAU -320,U
+
+	LDA #$44
+	STD 39,U
+	LDA #$43
+	STD 119,U
+	STD -41,U
+	LDD #$3334
+	STD -121,U
+	RTS
+

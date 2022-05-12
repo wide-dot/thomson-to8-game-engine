@@ -1,0 +1,82 @@
+	INCLUDE "./Engine/Constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+DRAW_Img_emblemFront01_0
+	LEAU -152,U
+
+	LDD #$2222
+	LDX #$2222
+	LDY #$2222
+	PSHU D,X,Y
+	PSHU D,X,Y
+	LDA -4,U
+	ANDA #$F0
+	ORA #$02
+	STA -4,U
+	PSHU B,X
+	LEAU -26,U
+
+	LDD #$2222
+	PSHU D,X,Y
+	STA -7,U
+	PSHU D,X,Y
+	LEAU -29,U
+
+	LDY #$2233
+	PSHU D,X,Y
+	LDD -38,U
+	LDA #$33
+	ANDB #$0F
+	ORB #$30
+	STD -38,U
+	LDA #$32
+	LDY #$2222
+	PSHU A,X,Y
+	LEAU -33,U
+
+	LDA #$33
+	LDX #$3222
+	PSHU A,X,Y
+
+	LDU <glb_screen_location_1
+	LEAU -154,U
+
+	LDD ,U
+	LDA #$22
+	ANDB #$0F
+	ORB #$20
+	STD ,U
+	LDD #$2222
+	LDX #$2222
+	LDY #$2222
+	PSHU D,X,Y
+	LDD -35,U
+	LDA #$22
+	ANDB #$0F
+	ORB #$20
+	STD -35,U
+	STX -8,U
+	LDD #$2222
+	PSHU D,X,Y
+	LEAU -29,U
+
+	PSHU D,X,Y
+	LDD -35,U
+	LDA #$22
+	ANDB #$0F
+	ORB #$30
+	STD -35,U
+	LDD #$2222
+	PSHU D,X,Y
+	LEAU -29,U
+
+	PSHU D,X,Y
+	LDA #$33
+	PSHU D,X
+	LEAU -31,U
+
+	LDY #$2233
+	PSHU D,X,Y
+	RTS
+

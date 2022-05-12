@@ -1,0 +1,846 @@
+                      (./generated-code/):00001                 INCLUDE "./Engine/Constants.asm"
+                      (./Engine/Constant):00001         * ---------------------------------------------------------------------------
+                      (./Engine/Constant):00002         * Constants
+                      (./Engine/Constant):00003         *
+                      (./Engine/Constant):00004         * Naming convention
+                      (./Engine/Constant):00005         * -----------------
+                      (./Engine/Constant):00006         * - lower case
+                      (./Engine/Constant):00007         * - underscore-separated names
+                      (./Engine/Constant):00008         *
+                      (./Engine/Constant):00009         * ---------------------------------------------------------------------------
+                      (./Engine/Constant):00010         
+                      (./Engine/Constant):00011         * ===========================================================================
+                      (./Engine/Constant):00012         * TO8 Registers
+                      (./Engine/Constant):00013         * ===========================================================================
+                      (./Engine/Constant):00014         
+                      (./Engine/Constant):00015         ; Disk routine registers (ROM)
+                      (./Engine/Constant):00016         
+     6049             (./Engine/Constant):00017         dk_drive                      equ $6049
+     604A             (./Engine/Constant):00018         dk_track                      equ $604A
+     604B             (./Engine/Constant):00019         dk_track_lsb                  equ $604B
+     604C             (./Engine/Constant):00020         dk_sector                     equ $604C
+     604F             (./Engine/Constant):00021         dk_write_location             equ $604F
+                      (./Engine/Constant):00022         
+                      (./Engine/Constant):00023         * ===========================================================================
+                      (./Engine/Constant):00024         * Globals
+                      (./Engine/Constant):00025         * ===========================================================================
+                      (./Engine/Constant):00026         
+     009F             (./Engine/Constant):00027         glb_direct_page               equ $9F    ; direct page for globals
+                      (./Engine/Constant):00028         
+                      (./Engine/Constant):00029         ; compilated sprite
+     9FFE             (./Engine/Constant):00030         glb_register_s                equ $9FFE  ; reverved space to store S from ROM routines
+                      (./Engine/Constant):00031         
+                      (./Engine/Constant):00032         ; DrawSprites
+     9FFC             (./Engine/Constant):00033         glb_screen_location_1         equ $9FFC  ; start address for rendering of current sprite Part1     
+     9FFA             (./Engine/Constant):00034         glb_screen_location_2         equ $9FFA  ; start address for rendering of current sprite Part2 (Must follow Part1)
+                      (./Engine/Constant):00035         
+                      (./Engine/Constant):00036         ; CheckSpritesRefresh
+     9FF9             (./Engine/Constant):00037         glb_cur_priority              equ $9FF9
+     9FF7             (./Engine/Constant):00038         glb_cur_ptr_sub_obj_erase     equ $9FF7
+     9FF5             (./Engine/Constant):00039         glb_cur_ptr_sub_obj_draw      equ $9FF5
+     9FF3             (./Engine/Constant):00040         glb_camera_x_pos              equ $9FF3 ; camera x position in palyfield coordinates
+     9FF1             (./Engine/Constant):00041         glb_camera_y_pos              equ $9FF1 ; camera y position in palyfield coordinates
+     9FEF             (./Engine/Constant):00042         glb_camera_x_min_pos          equ $9FEF
+     9FED             (./Engine/Constant):00043         glb_camera_y_min_pos          equ $9FED
+     9FEB             (./Engine/Constant):00044         glb_camera_x_max_pos          equ $9FEB
+     9FE9             (./Engine/Constant):00045         glb_camera_y_max_pos          equ $9FE9
+     9FE8             (./Engine/Constant):00046         glb_force_sprite_refresh      equ $9FE8
+     9FE7             (./Engine/Constant):00047         glb_camera_move               equ $9FE7
+     9FE6             (./Engine/Constant):00048         glb_alphaTiles                equ $9FE6
+     9F00             (./Engine/Constant):00049         glb_tmp_var                   equ $9F00 ; custom tmp var space for routine
+     9F00             (./Engine/Constant):00050         glb_system_stack              equ $9F00
+                      (./Engine/Constant):00051         
+                      (./Engine/Constant):00052         * ===========================================================================
+                      (./Engine/Constant):00053         * Display Constants
+                      (./Engine/Constant):00054         * ===========================================================================
+                      (./Engine/Constant):00055         
+     00A0             (./Engine/Constant):00056         screen_width                  equ 160    ; in pixel
+     001C             (./Engine/Constant):00057         screen_top                    equ 28     ; in pixel
+     00E3             (./Engine/Constant):00058         screen_bottom                 equ 28+199 ; in pixel
+     0030             (./Engine/Constant):00059         screen_left                   equ 48     ; in pixel
+     00CF             (./Engine/Constant):00060         screen_right                  equ 48+159 ; in pixel
+     0008             (./Engine/Constant):00061         nb_priority_levels            equ 8      ; number of priority levels (need code change if modified)
+                      (./Engine/Constant):00062         
+                      (./Engine/Constant):00063         * ===========================================================================
+                      (./Engine/Constant):00064         * Images Constants
+                      (./Engine/Constant):00065         * ===========================================================================
+                      (./Engine/Constant):00066         
+     0004             (./Engine/Constant):00067         image_x_size                  equ 4
+     0005             (./Engine/Constant):00068         image_y_size                  equ 5
+     0006             (./Engine/Constant):00069         image_center_offset           equ 6
+                      (./Engine/Constant):00070         
+     0004             (./Engine/Constant):00071         image_subset_x1_offset        equ 4
+     0005             (./Engine/Constant):00072         image_subset_y1_offset        equ 5
+                      (./Engine/Constant):00073         
+     0000             (./Engine/Constant):00074         page_draw_routine             equ 0
+     0001             (./Engine/Constant):00075         draw_routine                  equ 1
+     0003             (./Engine/Constant):00076         page_erase_routine            equ 3
+     0004             (./Engine/Constant):00077         erase_routine                 equ 4
+     0006             (./Engine/Constant):00078         erase_nb_cell                 equ 6
+                      (./Engine/Constant):00079         
+                      (./Engine/Constant):00080         * ===========================================================================
+                      (./Engine/Constant):00081         * Sound Constants
+                      (./Engine/Constant):00082         * ===========================================================================
+                      (./Engine/Constant):00083         
+     0000             (./Engine/Constant):00084         sound_page        equ 0
+     0001             (./Engine/Constant):00085         sound_start_addr  equ 1
+     0003             (./Engine/Constant):00086         sound_end_addr    equ 3
+     0005             (./Engine/Constant):00087         sound_meta_size   equ 5
+                      (./Engine/Constant):00088         
+                      (./Engine/Constant):00089         * ===========================================================================
+                      (./Engine/Constant):00090         * Object Constants
+                      (./Engine/Constant):00091         * ===========================================================================
+                      (./Engine/Constant):00092         
+     005D             (./Engine/Constant):00093         object_core_size              equ 93  ; the size of an object without ext_vars - DEPENDENCY ClearObj routine
+     ????             (./Engine/Constant):00094         object_size                   equ object_core_size+ext_variables_size ; the size of a dynamic object
+     ????             (./Engine/Constant):00095         next_object                   equ object_size
+     005D             (./Engine/Constant):00096         ext_variables                 equ object_core_size ; start of reserved space for additionnal variables
+                      (./Engine/Constant):00097         
+     0000             (./Engine/Constant):00098         id                            equ 0           ; reference to object model id (ObjID_) (0: free slot)
+     0001             (./Engine/Constant):00099         subtype                       equ 1           ; reference to object subtype (Sub_)
+     0002             (./Engine/Constant):00100         render_flags                  equ 2
+                      (./Engine/Constant):00101         
+                      (./Engine/Constant):00102         * --- render_flags bitfield variables ---
+     0001             (./Engine/Constant):00103         render_xmirror_mask           equ $01 ; (bit 0) DEPENDENCY should be bit 0 - tell display engine to mirror sprite on horizontal axis
+     0002             (./Engine/Constant):00104         render_ymirror_mask           equ $02 ; (bit 1) DEPENDENCY should be bit 1 - tell display engine to mirror sprite on vertical axis
+     0004             (./Engine/Constant):00105         render_overlay_mask           equ $04 ; (bit 2) DEPENDENCY should be bit 2 - compilated sprite with no background save
+     0008             (./Engine/Constant):00106         render_motionless_mask        equ $08 ; (bit 3) tell display engine to compute sub image and position check only once until the flag is removed  
+     0010             (./Engine/Constant):00107         render_playfieldcoord_mask    equ $10 ; (bit 4) tell display engine to use playfield (1) or screen (0) coordinates
+     0020             (./Engine/Constant):00108         render_hide_mask              equ $20 ; (bit 5) tell display engine to hide sprite (keep priority and mapping_frame)
+     0040             (./Engine/Constant):00109         render_todelete_mask          equ $40 ; (bit 6) tell display engine to delete sprite and clear OST for this object
+     0080             (./Engine/Constant):00110         render_xloop_mask             equ $80 ; (bit 7) (screen coordinate) tell display engine to hide sprite when x is out of screen (0) or to display (1)  
+                      (./Engine/Constant):00111          
+     0003             (./Engine/Constant):00112         priority                      equ 3           ; display priority (0: nothing to display, 1:front, ..., 8:back)
+     0004             (./Engine/Constant):00113         anim                          equ 4  ; and 5  ; reference to current animation (Ani_)
+     0006             (./Engine/Constant):00114         prev_anim                     equ 6  ; and 7  ; reference to previous animation (Ani_)
+     0008             (./Engine/Constant):00115         anim_frame                    equ 8           ; index of current frame in animation
+     0009             (./Engine/Constant):00116         anim_frame_duration           equ 9           ; number of frames for each image in animation, range: 00-7F (0-127), 0 means display only during one frame
+     000A             (./Engine/Constant):00117         anim_flags                    equ 10          ; byte offset to reference an anim_flags LUT (adv) / store a link flag (non adv)
+                      (./Engine/Constant):00118         
+                      (./Engine/Constant):00119         * --- anim_flags bitfield variables ---
+     0001             (./Engine/Constant):00120         anim_link_mask                equ $01 ; (bit 0) if set, allow the load of a new animation without reseting anim_frame and anim_frame_duration
+                      (./Engine/Constant):00121         
+     000B             (./Engine/Constant):00122         status_flags                  equ 11          ; orientation of sprite, is applied to animation xmirror flag during AnimateSprite
+                      (./Engine/Constant):00123         
+                      (./Engine/Constant):00124         * --- status_flags bitfield variables ---
+     0001             (./Engine/Constant):00125         status_xflip_mask             equ $01 ; (bit 0) X Flip
+     0002             (./Engine/Constant):00126         status_yflip_mask             equ $02 ; (bit 1) Y Flip
+                      (./Engine/Constant):00127         
+     000C             (./Engine/Constant):00128         image_set                     equ 12 ; and 13 ; reference to current image (Img_) (0000 if no image)
+     000E             (./Engine/Constant):00129         x_pos                         equ 14 ; and 15 ; x playfield coordinate
+     0010             (./Engine/Constant):00130         x_sub                         equ 16          ; x subpixel (1/256 of a pixel), must follow x_pos in data structure
+     0011             (./Engine/Constant):00131         y_pos                         equ 17 ; and 18 ; y playfield coordinate
+     0013             (./Engine/Constant):00132         y_sub                         equ 19          ; y subpixel (1/256 of a pixel), must follow y_pos in data structure
+     0014             (./Engine/Constant):00133         xy_pixel                      equ 20          ; x and y screen coordinate
+     0014             (./Engine/Constant):00134         x_pixel                       equ 20          ; x screen coordinate
+     0015             (./Engine/Constant):00135         y_pixel                       equ 21          ; y screen coordinate, must follow x_pixel
+                      (./Engine/Constant):00136         ;x_offset                      equ 93          ; x screen coordinate offset that is applied at rendering
+                      (./Engine/Constant):00137         ;y_offset                      equ 94          ; x screen coordinate offset that is applied at rendering
+     0016             (./Engine/Constant):00138         x_vel                         equ 22 ; and 23 ; horizontal velocity
+     0018             (./Engine/Constant):00139         y_vel                         equ 24 ; and 25 ; vertical velocity
+     001A             (./Engine/Constant):00140         x_acl                         equ 26 ; and 27 ; horizontal gravity
+     001C             (./Engine/Constant):00141         y_acl                         equ 28 ; and 29 ; vertical gravity
+     001E             (./Engine/Constant):00142         routine                       equ 30          ; index of current object routine
+     001F             (./Engine/Constant):00143         routine_secondary             equ 31          ; index of current secondary routine
+     0020             (./Engine/Constant):00144         routine_tertiary              equ 32          ; index of current tertiary routine
+     0021             (./Engine/Constant):00145         routine_quaternary            equ 33          ; index of current quaternary routine
+                      (./Engine/Constant):00146         
+                      (./Engine/Constant):00147         * ---------------------------------------------------------------------------
+                      (./Engine/Constant):00148         * reserved variables (update by engine)
+                      (./Engine/Constant):00149         
+     0022             (./Engine/Constant):00150         rsv_render_flags              equ 34
+                      (./Engine/Constant):00151         
+                      (./Engine/Constant):00152         * --- rsv_render_flags bitfield variables ---
+     0001             (./Engine/Constant):00153         rsv_render_checkrefresh_mask  equ $01 ; (bit 0) if erasesprite and display sprite flag are processed for this frame
+     0002             (./Engine/Constant):00154         rsv_render_erasesprite_mask   equ $02 ; (bit 1) if a sprite need to be cleared on screen
+     0004             (./Engine/Constant):00155         rsv_render_displaysprite_mask equ $04 ; (bit 2) if a sprite need to be rendered on screen
+     0008             (./Engine/Constant):00156         rsv_render_outofrange_mask    equ $08 ; (bit 3) if a sprite is out of range for full rendering in screen
+     0080             (./Engine/Constant):00157         rsv_render_onscreen_mask      equ $80 ; (bit 7) DEPENDENCY should be bit 7 - has been rendered on last screen buffer (may be 0 or 1)
+                      (./Engine/Constant):00158         
+     0023             (./Engine/Constant):00159         rsv_prev_anim                 equ 35 ; and 36 ; reference to previous animation (Ani_) w * UTILE ?
+     0025             (./Engine/Constant):00160         rsv_image_center_offset       equ 37 ; 0 or 1 offset that indicate if image center is even or odd (DRS_XYToAddress)
+     0026             (./Engine/Constant):00161         rsv_image_subset              equ 38 ; and 39 ; reference to current image regarding mirror flags w
+     0028             (./Engine/Constant):00162         rsv_mapping_frame             equ 40 ; and 41 ; reference to current image regarding mirror flags, overlay flag and x precision w
+     002A             (./Engine/Constant):00163         rsv_erase_nb_cell             equ 42 ; b 
+     002B             (./Engine/Constant):00164         rsv_page_draw_routine         equ 43 ; b
+     002C             (./Engine/Constant):00165         rsv_draw_routine              equ 44 ; and 45 ; w
+     002E             (./Engine/Constant):00166         rsv_page_erase_routine        equ 46 ; b
+     002F             (./Engine/Constant):00167         rsv_erase_routine             equ 47 ; and 48 ; w 
+     0031             (./Engine/Constant):00168         rsv_xy1_pixel                 equ 49 ;
+     0031             (./Engine/Constant):00169         rsv_x1_pixel                  equ 49 ; x+x_offset-(x_size/2) screen coordinate
+     0032             (./Engine/Constant):00170         rsv_y1_pixel                  equ 50 ; y+y_offset-(y_size/2) screen coordinate, must follow rsv_x1_pixel
+     0033             (./Engine/Constant):00171         rsv_xy2_pixel                 equ 51 ;
+     0033             (./Engine/Constant):00172         rsv_x2_pixel                  equ 51 ; x+x_offset+(x_size/2) screen coordinate
+     0034             (./Engine/Constant):00173         rsv_y2_pixel                  equ 52 ; y+y_offset+(y_size/2) screen coordinate, must follow rsv_x2_pixel
+                      (./Engine/Constant):00174         
+                      (./Engine/Constant):00175         * ---------------------------------------------------------------------------
+                      (./Engine/Constant):00176         * reserved variables (engine) - buffer specific
+                      (./Engine/Constant):00177         
+     0035             (./Engine/Constant):00178         rsv_buffer_0                  equ 53 ; Start index of buffer 0 variables
+     0035             (./Engine/Constant):00179         rsv_priority_0                equ 53 ; internal value that hold priority in video buffer 0
+     0036             (./Engine/Constant):00180         rsv_priority_prev_obj_0       equ 54 ; and 55 ; previous object (OST address) in display priority list for video buffer 0 (0000 if none) w
+     0038             (./Engine/Constant):00181         rsv_priority_next_obj_0       equ 56 ; and 57 ; next object (OST address) in display priority list for video buffer 0 (0000 if none) w
+     003A             (./Engine/Constant):00182         rsv_prev_mapping_frame_0      equ 58 ; and 59 ; reference to previous image in video buffer 0 w
+     003C             (./Engine/Constant):00183         rsv_prev_erase_nb_cell_0      equ 60 : b
+     003D             (./Engine/Constant):00184         rsv_prev_page_erase_routine_0 equ 61 ; b
+     003E             (./Engine/Constant):00185         rsv_prev_erase_routine_0      equ 62 ; and 63 ; w
+     0040             (./Engine/Constant):00186         rsv_bgdata_0                  equ 64 ; and 65 ; address of background data in screen 0 w
+     0042             (./Engine/Constant):00187         rsv_prev_xy_pixel_0           equ 66 ;
+     0042             (./Engine/Constant):00188         rsv_prev_x_pixel_0            equ 66 ; previous x screen coordinate b
+     0043             (./Engine/Constant):00189         rsv_prev_y_pixel_0            equ 67 ; previous y screen coordinate b, must follow x_pixel
+     0044             (./Engine/Constant):00190         rsv_prev_xy1_pixel_0          equ 68 ;
+     0044             (./Engine/Constant):00191         rsv_prev_x1_pixel_0           equ 68 ; previous x+x_offset-(x_size/2) screen coordinate b
+     0045             (./Engine/Constant):00192         rsv_prev_y1_pixel_0           equ 69 ; previous y+y_offset-(y_size/2) screen coordinate b, must follow x1_pixel
+     0046             (./Engine/Constant):00193         rsv_prev_xy2_pixel_0          equ 70 ;
+     0046             (./Engine/Constant):00194         rsv_prev_x2_pixel_0           equ 70 ; previous x+x_offset+(x_size/2) screen coordinate b
+     0047             (./Engine/Constant):00195         rsv_prev_y2_pixel_0           equ 71 ; previous y+y_offset+(y_size/2) screen coordinate b, must follow x2_pixel
+     0048             (./Engine/Constant):00196         rsv_prev_render_flags_0       equ 72 ;
+                      (./Engine/Constant):00197         * --- rsv_prev_render_flags_0 bitfield variables ---
+     0001             (./Engine/Constant):00198         rsv_prev_render_overlay_mask  equ $01 ; (bit 0) if a sprite has been rendered with compilated sprite and no background save on screen buffer 0/1
+     0080             (./Engine/Constant):00199         rsv_prev_render_onscreen_mask equ $80 ; (bit 7) DEPENDENCY should be bit 7 - has been rendered on screen buffer 0/1
+                      (./Engine/Constant):00200         
+     0049             (./Engine/Constant):00201         rsv_buffer_1                  equ 73 ; Start index of buffer 1 variables
+     0049             (./Engine/Constant):00202         rsv_priority_1                equ 73 ; internal value that hold priority in video buffer 1
+     004A             (./Engine/Constant):00203         rsv_priority_prev_obj_1       equ 74 ; and 75 ; previous object (OST address) in display priority list for video buffer 1 (0000 if none) w
+     004C             (./Engine/Constant):00204         rsv_priority_next_obj_1       equ 76 ; and 77 ; next object (OST address) in display priority list for video buffer 1 (0000 if none) w
+     004E             (./Engine/Constant):00205         rsv_prev_mapping_frame_1      equ 78 ; and 79 ; reference to previous image in video buffer 1 w
+     0050             (./Engine/Constant):00206         rsv_prev_erase_nb_cell_1      equ 80 ; b
+     0051             (./Engine/Constant):00207         rsv_prev_page_erase_routine_1 equ 81 ; b
+     0052             (./Engine/Constant):00208         rsv_prev_erase_routine_1      equ 82 ; and 83 ; w
+     0054             (./Engine/Constant):00209         rsv_bgdata_1                  equ 84 ; and 85 ; address of background data in screen 1 w
+     0056             (./Engine/Constant):00210         rsv_prev_xy_pixel_1           equ 86 ;
+     0056             (./Engine/Constant):00211         rsv_prev_x_pixel_1            equ 86 ; previous x screen coordinate b
+     0057             (./Engine/Constant):00212         rsv_prev_y_pixel_1            equ 87 ; previous y screen coordinate b, must follow x_pixel
+     0058             (./Engine/Constant):00213         rsv_prev_xy1_pixel_1          equ 88 ;
+     0058             (./Engine/Constant):00214         rsv_prev_x1_pixel_1           equ 88 ; previous x+x_size screen coordinate b
+     0059             (./Engine/Constant):00215         rsv_prev_y1_pixel_1           equ 89 ; previous y+y_size screen coordinate b, must follow x_pixel
+     005A             (./Engine/Constant):00216         rsv_prev_xy2_pixel_1          equ 90 ;
+     005A             (./Engine/Constant):00217         rsv_prev_x2_pixel_1           equ 90 ; previous x+x_size screen coordinate b
+     005B             (./Engine/Constant):00218         rsv_prev_y2_pixel_1           equ 91 ; previous y+y_size screen coordinate b, must follow x_pixel
+     005C             (./Engine/Constant):00219         rsv_prev_render_flags_1       equ 92 ;
+                      (./Engine/Constant):00220         
+     0000             (./Engine/Constant):00221         buf_priority                  equ 0  ; offset for each rsv_buffer variables
+     0001             (./Engine/Constant):00222         buf_priority_prev_obj         equ 1  ;
+     0003             (./Engine/Constant):00223         buf_priority_next_obj         equ 3  ;
+     0005             (./Engine/Constant):00224         buf_prev_mapping_frame        equ 5  ;
+     0007             (./Engine/Constant):00225         buf_erase_nb_cell             equ 7  ;
+     0008             (./Engine/Constant):00226         buf_page_erase_routine        equ 8 ;
+     0009             (./Engine/Constant):00227         buf_erase_routine             equ 9 ;
+     000B             (./Engine/Constant):00228         buf_bgdata                    equ 11 ;
+     000D             (./Engine/Constant):00229         buf_prev_xy_pixel             equ 13 ;
+     000D             (./Engine/Constant):00230         buf_prev_x_pixel              equ 13 ;
+     000E             (./Engine/Constant):00231         buf_prev_y_pixel              equ 14 ;
+     000F             (./Engine/Constant):00232         buf_prev_xy1_pixel            equ 15 ;
+     000F             (./Engine/Constant):00233         buf_prev_x1_pixel             equ 15 ;
+     0010             (./Engine/Constant):00234         buf_prev_y1_pixel             equ 16 ;
+     0011             (./Engine/Constant):00235         buf_prev_xy2_pixel            equ 17 ;
+     0011             (./Engine/Constant):00236         buf_prev_x2_pixel             equ 17 ;
+     0012             (./Engine/Constant):00237         buf_prev_y2_pixel             equ 18 ;
+     0013             (./Engine/Constant):00238         buf_prev_render_flags         equ 19 ;
+                      (./generated-code/):00002                 ORG $A000
+     FF               (./generated-code/):00003                 SETDP $FF
+                      (./generated-code/):00004                 OPT C,CT
+A000                  (./generated-code/):00005                 BCKDRAW_Img_sonic_050_0
+A000 10FF9FFE         (./generated-code/):00006 [7]     7               STS glb_register_s
+                      (./generated-code/):00007                 
+A004 32A4             (./generated-code/):00008 [4]     11              LEAS ,Y
+A006 33C9FDA8         (./generated-code/):00009 [8]     19              LEAU -600,U
+                      (./generated-code/):00010                 
+A00A ECC4             (./generated-code/):00011 [5]     24              LDD ,U
+A00C 3406             (./generated-code/):00012 [7]     31              PSHS D
+A00E 86AA             (./generated-code/):00013 [2]     33              LDA #$aa
+A010 C40F             (./generated-code/):00014 [2]     35              ANDB #$0F
+A012 CAA0             (./generated-code/):00015 [2]     37              ORB #$a0
+A014 EDC4             (./generated-code/):00016 [5]     42              STD ,U
+A016 AEC828           (./generated-code/):00017 [6]     48              LDX 40,U
+A019 3410             (./generated-code/):00018 [7]     55              PSHS X
+A01B A6C8D8           (./generated-code/):00019 [5]     60              LDA -40,U
+A01E 3442             (./generated-code/):00020 [8]     68              PSHS U,A
+A020 84F0             (./generated-code/):00021 [2]     70              ANDA #$F0
+A022 8A0A             (./generated-code/):00022 [2]     72              ORA #$0a
+A024 A7C8D8           (./generated-code/):00023 [5]     77              STA -40,U
+A027 CCAAAD           (./generated-code/):00024 [3]     80              LDD #$aaad
+A02A EDC828           (./generated-code/):00025 [6]     86              STD 40,U
+A02D 33C900C7         (./generated-code/):00026 [8]     94              LEAU 199,U
+                      (./generated-code/):00027                 
+A031 ECC8B0           (./generated-code/):00028 [6]     100             LDD -80,U
+A034 3406             (./generated-code/):00029 [7]     107             PSHS D
+A036 84F0             (./generated-code/):00030 [2]     109             ANDA #$F0
+A038 8A0A             (./generated-code/):00031 [2]     111             ORA #$0a
+A03A C69A             (./generated-code/):00032 [2]     113             LDB #$9a
+A03C EDC8B0           (./generated-code/):00033 [6]     119             STD -80,U
+A03F ECC8D8           (./generated-code/):00034 [6]     125             LDD -40,U
+A042 3406             (./generated-code/):00035 [7]     132             PSHS D
+A044 84F0             (./generated-code/):00036 [2]     134             ANDA #$F0
+A046 8A0A             (./generated-code/):00037 [2]     136             ORA #$0a
+A048 C6CA             (./generated-code/):00038 [2]     138             LDB #$ca
+A04A EDC8D8           (./generated-code/):00039 [6]     144             STD -40,U
+A04D A6C8B2           (./generated-code/):00040 [5]     149             LDA -78,U
+A050 E6C8DA           (./generated-code/):00041 [5]     154             LDB -38,U
+A053 AEC889           (./generated-code/):00042 [6]     160             LDX -119,U
+A056 3416             (./generated-code/):00043 [9]     169             PSHS X,B,A
+A058 CCAAAA           (./generated-code/):00044 [3]     172             LDD #$aaaa
+A05B EDC889           (./generated-code/):00045 [6]     178             STD -119,U
+A05E A7C8B2           (./generated-code/):00046 [5]     183             STA -78,U
+A061 86DA             (./generated-code/):00047 [2]     185             LDA #$da
+A063 A7C8DA           (./generated-code/):00048 [5]     190             STA -38,U
+A066 3712             (./generated-code/):00049 [8]     198             PULU A,X
+A068 3452             (./generated-code/):00050 [10]    208             PSHS U,X,A
+A06A 8EAADD           (./generated-code/):00051 [3]     211             LDX #$aadd
+A06D 3614             (./generated-code/):00052 [8]     219             PSHU B,X
+A06F 33C828           (./generated-code/):00053 [5]     224             LEAU 40,U
+                      (./generated-code/):00054                 
+A072 3712             (./generated-code/):00055 [8]     232             PULU A,X
+A074 3452             (./generated-code/):00056 [10]    242             PSHS U,X,A
+A076 8EEAFD           (./generated-code/):00057 [3]     245             LDX #$eafd
+A079 3614             (./generated-code/):00058 [8]     253             PSHU B,X
+A07B 33C828           (./generated-code/):00059 [5]     258             LEAU 40,U
+                      (./generated-code/):00060                 
+A07E 3712             (./generated-code/):00061 [8]     266             PULU A,X
+A080 3452             (./generated-code/):00062 [10]    276             PSHS U,X,A
+A082 86A9             (./generated-code/):00063 [2]     278             LDA #$a9
+A084 8EAAFF           (./generated-code/):00064 [3]     281             LDX #$aaff
+A087 3612             (./generated-code/):00065 [8]     289             PSHU A,X
+A089 33C828           (./generated-code/):00066 [5]     294             LEAU 40,U
+                      (./generated-code/):00067                 
+A08C A6C82A           (./generated-code/):00068 [5]     299             LDA 42,U
+A08F AEC851           (./generated-code/):00069 [6]     305             LDX 81,U
+A092 10AEC879         (./generated-code/):00070 [7]     312             LDY 121,U
+A096 3432             (./generated-code/):00071 [10]    322             PSHS Y,X,A
+A098 ECC828           (./generated-code/):00072 [6]     328             LDD 40,U
+A09B 3406             (./generated-code/):00073 [7]     335             PSHS D
+A09D 840F             (./generated-code/):00074 [2]     337             ANDA #$0F
+A09F 8A90             (./generated-code/):00075 [2]     339             ORA #$90
+A0A1 C6AA             (./generated-code/):00076 [2]     341             LDB #$aa
+A0A3 EDC828           (./generated-code/):00077 [6]     347             STD 40,U
+A0A6 86FF             (./generated-code/):00078 [2]     349             LDA #$ff
+A0A8 A7C82A           (./generated-code/):00079 [5]     354             STA 42,U
+A0AB CCAAFC           (./generated-code/):00080 [3]     357             LDD #$aafc
+A0AE EDC851           (./generated-code/):00081 [6]     363             STD 81,U
+A0B1 C6CC             (./generated-code/):00082 [2]     365             LDB #$cc
+A0B3 EDC879           (./generated-code/):00083 [6]     371             STD 121,U
+A0B6 3712             (./generated-code/):00084 [8]     379             PULU A,X
+A0B8 3452             (./generated-code/):00085 [10]    389             PSHS U,X,A
+A0BA 8699             (./generated-code/):00086 [2]     391             LDA #$99
+A0BC 8EAAFF           (./generated-code/):00087 [3]     394             LDX #$aaff
+A0BF 3612             (./generated-code/):00088 [8]     402             PSHU A,X
+A0C1 33C9011B         (./generated-code/):00089 [8]     410             LEAU 283,U
+                      (./generated-code/):00090                 
+A0C5 AEC886           (./generated-code/):00091 [6]     416             LDX -122,U
+A0C8 869A             (./generated-code/):00092 [2]     418             LDA #$9a
+A0CA EDC886           (./generated-code/):00093 [6]     424             STD -122,U
+A0CD 10AEC8AE         (./generated-code/):00094 [7]     431             LDY -82,U
+A0D1 3430             (./generated-code/):00095 [9]     440             PSHS Y,X
+A0D3 ECC8D6           (./generated-code/):00096 [6]     446             LDD -42,U
+A0D6 AE5E             (./generated-code/):00097 [6]     452             LDX -2,U
+A0D8 3416             (./generated-code/):00098 [9]     461             PSHS X,D
+A0DA CC99BD           (./generated-code/):00099 [3]     464             LDD #$99bd
+A0DD EDC8AE           (./generated-code/):00100 [6]     470             STD -82,U
+A0E0 EDC8D6           (./generated-code/):00101 [6]     476             STD -42,U
+A0E3 ED5E             (./generated-code/):00102 [6]     482             STD -2,U
+A0E5 ECC4             (./generated-code/):00103 [5]     487             LDD ,U
+A0E7 3406             (./generated-code/):00104 [7]     494             PSHS D
+A0E9 840F             (./generated-code/):00105 [2]     496             ANDA #$0F
+A0EB C40F             (./generated-code/):00106 [2]     498             ANDB #$0F
+A0ED C3E030           (./generated-code/):00107 [4]     502             ADDD #$e030
+A0F0 EDC4             (./generated-code/):00108 [5]     507             STD ,U
+A0F2 ECC826           (./generated-code/):00109 [6]     513             LDD 38,U
+A0F5 3406             (./generated-code/):00110 [7]     520             PSHS D
+A0F7 84F0             (./generated-code/):00111 [2]     522             ANDA #$F0
+A0F9 8A09             (./generated-code/):00112 [2]     524             ORA #$09
+A0FB C6BD             (./generated-code/):00113 [2]     526             LDB #$bd
+A0FD EDC826           (./generated-code/):00114 [6]     532             STD 38,U
+A100 ECC84E           (./generated-code/):00115 [6]     538             LDD 78,U
+A103 3406             (./generated-code/):00116 [7]     545             PSHS D
+A105 84F0             (./generated-code/):00117 [2]     547             ANDA #$F0
+A107 8A09             (./generated-code/):00118 [2]     549             ORA #$09
+A109 C6BE             (./generated-code/):00119 [2]     551             LDB #$be
+A10B EDC84E           (./generated-code/):00120 [6]     557             STD 78,U
+A10E ECC876           (./generated-code/):00121 [6]     563             LDD 118,U
+A111 3406             (./generated-code/):00122 [7]     570             PSHS D
+A113 84F0             (./generated-code/):00123 [2]     572             ANDA #$F0
+A115 8A09             (./generated-code/):00124 [2]     574             ORA #$09
+A117 C6BE             (./generated-code/):00125 [2]     576             LDB #$be
+A119 EDC876           (./generated-code/):00126 [6]     582             STD 118,U
+A11C A6C829           (./generated-code/):00127 [5]     587             LDA 41,U
+A11F 3402             (./generated-code/):00128 [6]     593             PSHS A
+A121 840F             (./generated-code/):00129 [2]     595             ANDA #$0F
+A123 8A30             (./generated-code/):00130 [2]     597             ORA #$30
+A125 A7C829           (./generated-code/):00131 [5]     602             STA 41,U
+A128 A6C851           (./generated-code/):00132 [5]     607             LDA 81,U
+A12B 3402             (./generated-code/):00133 [6]     613             PSHS A
+A12D 840F             (./generated-code/):00134 [2]     615             ANDA #$0F
+A12F 8A30             (./generated-code/):00135 [2]     617             ORA #$30
+A131 A7C851           (./generated-code/):00136 [5]     622             STA 81,U
+A134 A6C879           (./generated-code/):00137 [5]     627             LDA 121,U
+A137 3442             (./generated-code/):00138 [8]     635             PSHS U,A
+A139 840F             (./generated-code/):00139 [2]     637             ANDA #$0F
+A13B 8A30             (./generated-code/):00140 [2]     639             ORA #$30
+A13D A7C879           (./generated-code/):00141 [5]     644             STA 121,U
+A140 33C90117         (./generated-code/):00142 [8]     652             LEAU 279,U
+                      (./generated-code/):00143                 
+A144 ECC887           (./generated-code/):00144 [6]     658             LDD -121,U
+A147 3406             (./generated-code/):00145 [7]     665             PSHS D
+A149 84F0             (./generated-code/):00146 [2]     667             ANDA #$F0
+A14B 8A0C             (./generated-code/):00147 [2]     669             ORA #$0c
+A14D C6BE             (./generated-code/):00148 [2]     671             LDB #$be
+A14F EDC887           (./generated-code/):00149 [6]     677             STD -121,U
+A152 ECC8AF           (./generated-code/):00150 [6]     683             LDD -81,U
+A155 3406             (./generated-code/):00151 [7]     690             PSHS D
+A157 84F0             (./generated-code/):00152 [2]     692             ANDA #$F0
+A159 8A03             (./generated-code/):00153 [2]     694             ORA #$03
+A15B C6DE             (./generated-code/):00154 [2]     696             LDB #$de
+A15D EDC8AF           (./generated-code/):00155 [6]     702             STD -81,U
+A160 ECC827           (./generated-code/):00156 [6]     708             LDD 39,U
+A163 3406             (./generated-code/):00157 [7]     715             PSHS D
+A165 84F0             (./generated-code/):00158 [2]     717             ANDA #$F0
+A167 8A0B             (./generated-code/):00159 [2]     719             ORA #$0b
+A169 C6AA             (./generated-code/):00160 [2]     721             LDB #$aa
+A16B EDC827           (./generated-code/):00161 [6]     727             STD 39,U
+A16E ECC84F           (./generated-code/):00162 [6]     733             LDD 79,U
+A171 3406             (./generated-code/):00163 [7]     740             PSHS D
+A173 84F0             (./generated-code/):00164 [2]     742             ANDA #$F0
+A175 8A0B             (./generated-code/):00165 [2]     744             ORA #$0b
+A177 C6AA             (./generated-code/):00166 [2]     746             LDB #$aa
+A179 EDC84F           (./generated-code/):00167 [6]     752             STD 79,U
+A17C A6C88A           (./generated-code/):00168 [5]     757             LDA -118,U
+A17F 3402             (./generated-code/):00169 [6]     763             PSHS A
+A181 840F             (./generated-code/):00170 [2]     765             ANDA #$0F
+A183 8A30             (./generated-code/):00171 [2]     767             ORA #$30
+A185 A7C88A           (./generated-code/):00172 [5]     772             STA -118,U
+A188 A6C8B2           (./generated-code/):00173 [5]     777             LDA -78,U
+A18B 3402             (./generated-code/):00174 [6]     783             PSHS A
+A18D 840F             (./generated-code/):00175 [2]     785             ANDA #$0F
+A18F 8A30             (./generated-code/):00176 [2]     787             ORA #$30
+A191 A7C8B2           (./generated-code/):00177 [5]     792             STA -78,U
+A194 A6C8DA           (./generated-code/):00178 [5]     797             LDA -38,U
+A197 3402             (./generated-code/):00179 [6]     803             PSHS A
+A199 840F             (./generated-code/):00180 [2]     805             ANDA #$0F
+A19B 8A30             (./generated-code/):00181 [2]     807             ORA #$30
+A19D A7C8DA           (./generated-code/):00182 [5]     812             STA -38,U
+A1A0 A6C879           (./generated-code/):00183 [5]     817             LDA 121,U
+A1A3 3402             (./generated-code/):00184 [6]     823             PSHS A
+A1A5 840F             (./generated-code/):00185 [2]     825             ANDA #$0F
+A1A7 8A90             (./generated-code/):00186 [2]     827             ORA #$90
+A1A9 A7C879           (./generated-code/):00187 [5]     832             STA 121,U
+A1AC AEC8D7           (./generated-code/):00188 [6]     838             LDX -41,U
+A1AF CCEBDE           (./generated-code/):00189 [3]     841             LDD #$ebde
+A1B2 EDC8D7           (./generated-code/):00190 [6]     847             STD -41,U
+A1B5 10AE5F           (./generated-code/):00191 [7]     854             LDY -1,U
+A1B8 3430             (./generated-code/):00192 [9]     863             PSHS Y,X
+A1BA C69A             (./generated-code/):00193 [2]     865             LDB #$9a
+A1BC ED5F             (./generated-code/):00194 [6]     871             STD -1,U
+A1BE EC41             (./generated-code/):00195 [6]     877             LDD 1,U
+A1C0 3406             (./generated-code/):00196 [7]     884             PSHS D
+A1C2 840F             (./generated-code/):00197 [2]     886             ANDA #$0F
+A1C4 C40F             (./generated-code/):00198 [2]     888             ANDB #$0F
+A1C6 C39030           (./generated-code/):00199 [4]     892             ADDD #$9030
+A1C9 ED41             (./generated-code/):00200 [6]     898             STD 1,U
+A1CB ECC829           (./generated-code/):00201 [6]     904             LDD 41,U
+A1CE 3406             (./generated-code/):00202 [7]     911             PSHS D
+A1D0 840F             (./generated-code/):00203 [2]     913             ANDA #$0F
+A1D2 C40F             (./generated-code/):00204 [2]     915             ANDB #$0F
+A1D4 C39030           (./generated-code/):00205 [4]     919             ADDD #$9030
+A1D7 EDC829           (./generated-code/):00206 [6]     925             STD 41,U
+A1DA ECC851           (./generated-code/):00207 [6]     931             LDD 81,U
+A1DD 3406             (./generated-code/):00208 [7]     938             PSHS D
+A1DF 840F             (./generated-code/):00209 [2]     940             ANDA #$0F
+A1E1 C40F             (./generated-code/):00210 [2]     942             ANDB #$0F
+A1E3 C39030           (./generated-code/):00211 [4]     946             ADDD #$9030
+A1E6 EDC851           (./generated-code/):00212 [6]     952             STD 81,U
+A1E9 ECC877           (./generated-code/):00213 [6]     958             LDD 119,U
+A1EC 3446             (./generated-code/):00214 [9]     967             PSHS U,D
+A1EE 8633             (./generated-code/):00215 [2]     969             LDA #$33
+A1F0 C40F             (./generated-code/):00216 [2]     971             ANDB #$0F
+A1F2 CAD0             (./generated-code/):00217 [2]     973             ORB #$d0
+A1F4 EDC877           (./generated-code/):00218 [6]     979             STD 119,U
+A1F7 33C90118         (./generated-code/):00219 [8]     987             LEAU 280,U
+                      (./generated-code/):00220                 
+A1FB A6C851           (./generated-code/):00221 [5]     992             LDA 81,U
+A1FE E6C8B1           (./generated-code/):00222 [5]     997             LDB -79,U
+A201 3406             (./generated-code/):00223 [7]     1004            PSHS B,A
+A203 A6C829           (./generated-code/):00224 [5]     1009            LDA 41,U
+A206 E6C8D7           (./generated-code/):00225 [5]     1014            LDB -41,U
+A209 3406             (./generated-code/):00226 [7]     1021            PSHS B,A
+A20B 863D             (./generated-code/):00227 [2]     1023            LDA #$3d
+A20D A7C851           (./generated-code/):00228 [5]     1028            STA 81,U
+A210 A6C8D9           (./generated-code/):00229 [5]     1033            LDA -39,U
+A213 E6C889           (./generated-code/):00230 [5]     1038            LDB -119,U
+A216 3406             (./generated-code/):00231 [7]     1045            PSHS B,A
+A218 C40F             (./generated-code/):00232 [2]     1047            ANDB #$0F
+A21A CAE0             (./generated-code/):00233 [2]     1049            ORB #$e0
+A21C E7C889           (./generated-code/):00234 [5]     1054            STB -119,U
+A21F A6C827           (./generated-code/):00235 [5]     1059            LDA 39,U
+A222 3402             (./generated-code/):00236 [6]     1065            PSHS A
+A224 84F0             (./generated-code/):00237 [2]     1067            ANDA #$F0
+A226 8A03             (./generated-code/):00238 [2]     1069            ORA #$03
+A228 A7C827           (./generated-code/):00239 [5]     1074            STA 39,U
+A22B A6C84F           (./generated-code/):00240 [5]     1079            LDA 79,U
+A22E 3402             (./generated-code/):00241 [6]     1085            PSHS A
+A230 84F0             (./generated-code/):00242 [2]     1087            ANDA #$F0
+A232 8A03             (./generated-code/):00243 [2]     1089            ORA #$03
+A234 A7C84F           (./generated-code/):00244 [5]     1094            STA 79,U
+A237 A6C877           (./generated-code/):00245 [5]     1099            LDA 119,U
+A23A 3402             (./generated-code/):00246 [6]     1105            PSHS A
+A23C 84F0             (./generated-code/):00247 [2]     1107            ANDA #$F0
+A23E 8A03             (./generated-code/):00248 [2]     1109            ORA #$03
+A240 A7C877           (./generated-code/):00249 [5]     1114            STA 119,U
+A243 A6C879           (./generated-code/):00250 [5]     1119            LDA 121,U
+A246 3402             (./generated-code/):00251 [6]     1125            PSHS A
+A248 840F             (./generated-code/):00252 [2]     1127            ANDA #$0F
+A24A 8A30             (./generated-code/):00253 [2]     1129            ORA #$30
+A24C A7C879           (./generated-code/):00254 [5]     1134            STA 121,U
+A24F A6C8AF           (./generated-code/):00255 [5]     1139            LDA -81,U
+A252 E65F             (./generated-code/):00256 [5]     1144            LDB -1,U
+A254 3406             (./generated-code/):00257 [7]     1151            PSHS B,A
+A256 86E3             (./generated-code/):00258 [2]     1153            LDA #$e3
+A258 A7C8B1           (./generated-code/):00259 [5]     1158            STA -79,U
+A25B A641             (./generated-code/):00260 [5]     1163            LDA 1,U
+A25D E6C887           (./generated-code/):00261 [5]     1168            LDB -121,U
+A260 3446             (./generated-code/):00262 [9]     1177            PSHS U,B,A
+A262 8633             (./generated-code/):00263 [2]     1179            LDA #$33
+A264 A7C887           (./generated-code/):00264 [5]     1184            STA -121,U
+A267 A7C8AF           (./generated-code/):00265 [5]     1189            STA -81,U
+A26A A7C8D7           (./generated-code/):00266 [5]     1194            STA -41,U
+A26D A75F             (./generated-code/):00267 [5]     1199            STA -1,U
+A26F 863E             (./generated-code/):00268 [2]     1201            LDA #$3e
+A271 A7C8D9           (./generated-code/):00269 [5]     1206            STA -39,U
+A274 A741             (./generated-code/):00270 [5]     1211            STA 1,U
+A276 A7C829           (./generated-code/):00271 [5]     1216            STA 41,U
+A279 33C900A0         (./generated-code/):00272 [8]     1224            LEAU 160,U
+                      (./generated-code/):00273                 
+A27D A65F             (./generated-code/):00274 [5]     1229            LDA -1,U
+A27F 3402             (./generated-code/):00275 [6]     1235            PSHS A
+A281 84F0             (./generated-code/):00276 [2]     1237            ANDA #$F0
+A283 8A03             (./generated-code/):00277 [2]     1239            ORA #$03
+A285 A75F             (./generated-code/):00278 [5]     1244            STA -1,U
+A287 A641             (./generated-code/):00279 [5]     1249            LDA 1,U
+A289 3442             (./generated-code/):00280 [8]     1257            PSHS U,A
+A28B 840F             (./generated-code/):00281 [2]     1259            ANDA #$0F
+A28D 8AD0             (./generated-code/):00282 [2]     1261            ORA #$d0
+A28F A741             (./generated-code/):00283 [5]     1266            STA 1,U
+                      (./generated-code/):00284                 
+A291 DEFC             (./generated-code/):00285 [5]     1271            LDU <glb_screen_location_1
+A293 33C9FD6C         (./generated-code/):00286 [8]     1279            LEAU -660,U
+                      (./generated-code/):00287                 
+A297 A6C8EC           (./generated-code/):00288 [5]     1284            LDA -20,U
+A29A E6C814           (./generated-code/):00289 [5]     1289            LDB 20,U
+A29D AEC863           (./generated-code/):00290 [6]     1295            LDX 99,U
+A2A0 3416             (./generated-code/):00291 [9]     1304            PSHS X,B,A
+A2A2 ECC83B           (./generated-code/):00292 [6]     1310            LDD 59,U
+A2A5 3406             (./generated-code/):00293 [7]     1317            PSHS D
+A2A7 84F0             (./generated-code/):00294 [2]     1319            ANDA #$F0
+A2A9 8A0A             (./generated-code/):00295 [2]     1321            ORA #$0a
+A2AB C6AA             (./generated-code/):00296 [2]     1323            LDB #$aa
+A2AD EDC83B           (./generated-code/):00297 [6]     1329            STD 59,U
+A2B0 A6C89C           (./generated-code/):00298 [5]     1334            LDA -100,U
+A2B3 3402             (./generated-code/):00299 [6]     1340            PSHS A
+A2B5 840F             (./generated-code/):00300 [2]     1342            ANDA #$0F
+A2B7 8A90             (./generated-code/):00301 [2]     1344            ORA #$90
+A2B9 A7C89C           (./generated-code/):00302 [5]     1349            STA -100,U
+A2BC A6C8C4           (./generated-code/):00303 [5]     1354            LDA -60,U
+A2BF 3442             (./generated-code/):00304 [8]     1362            PSHS U,A
+A2C1 840F             (./generated-code/):00305 [2]     1364            ANDA #$0F
+A2C3 8A90             (./generated-code/):00306 [2]     1366            ORA #$90
+A2C5 A7C8C4           (./generated-code/):00307 [5]     1371            STA -60,U
+A2C8 8699             (./generated-code/):00308 [2]     1373            LDA #$99
+A2CA A7C8EC           (./generated-code/):00309 [5]     1378            STA -20,U
+A2CD E7C814           (./generated-code/):00310 [5]     1383            STB 20,U
+A2D0 86AA             (./generated-code/):00311 [2]     1385            LDA #$aa
+A2D2 EDC863           (./generated-code/):00312 [6]     1391            STD 99,U
+A2D5 33C90103         (./generated-code/):00313 [8]     1399            LEAU 259,U
+                      (./generated-code/):00314                 
+A2D9 AEC888           (./generated-code/):00315 [6]     1405            LDX -120,U
+A2DC 10AEC8B0         (./generated-code/):00316 [7]     1412            LDY -80,U
+A2E0 3430             (./generated-code/):00317 [9]     1421            PSHS Y,X
+A2E2 EDC888           (./generated-code/):00318 [6]     1427            STD -120,U
+A2E5 86A9             (./generated-code/):00319 [2]     1429            LDA #$a9
+A2E7 EDC8B0           (./generated-code/):00320 [6]     1435            STD -80,U
+A2EA A6C8B2           (./generated-code/):00321 [5]     1440            LDA -78,U
+A2ED 3402             (./generated-code/):00322 [6]     1446            PSHS A
+A2EF 840F             (./generated-code/):00323 [2]     1448            ANDA #$0F
+A2F1 8AD0             (./generated-code/):00324 [2]     1450            ORA #$d0
+A2F3 A7C8B2           (./generated-code/):00325 [5]     1455            STA -78,U
+A2F6 A6C8DA           (./generated-code/):00326 [5]     1460            LDA -38,U
+A2F9 3402             (./generated-code/):00327 [6]     1466            PSHS A
+A2FB 840F             (./generated-code/):00328 [2]     1468            ANDA #$0F
+A2FD 8AD0             (./generated-code/):00329 [2]     1470            ORA #$d0
+A2FF A7C8DA           (./generated-code/):00330 [5]     1475            STA -38,U
+A302 A6C82A           (./generated-code/):00331 [5]     1480            LDA 42,U
+A305 3402             (./generated-code/):00332 [6]     1486            PSHS A
+A307 840F             (./generated-code/):00333 [2]     1488            ANDA #$0F
+A309 8AD0             (./generated-code/):00334 [2]     1490            ORA #$d0
+A30B A7C82A           (./generated-code/):00335 [5]     1495            STA 42,U
+A30E A6C852           (./generated-code/):00336 [5]     1500            LDA 82,U
+A311 3402             (./generated-code/):00337 [6]     1506            PSHS A
+A313 840F             (./generated-code/):00338 [2]     1508            ANDA #$0F
+A315 8AC0             (./generated-code/):00339 [2]     1510            ORA #$c0
+A317 A7C852           (./generated-code/):00340 [5]     1515            STA 82,U
+A31A A6C87A           (./generated-code/):00341 [5]     1520            LDA 122,U
+A31D 3402             (./generated-code/):00342 [6]     1526            PSHS A
+A31F 840F             (./generated-code/):00343 [2]     1528            ANDA #$0F
+A321 8AC0             (./generated-code/):00344 [2]     1530            ORA #$c0
+A323 A7C87A           (./generated-code/):00345 [5]     1535            STA 122,U
+A326 AEC828           (./generated-code/):00346 [6]     1541            LDX 40,U
+A329 10AEC8D8         (./generated-code/):00347 [7]     1548            LDY -40,U
+A32D 3430             (./generated-code/):00348 [9]     1557            PSHS Y,X
+A32F ECC878           (./generated-code/):00349 [6]     1563            LDD 120,U
+A332 AEC850           (./generated-code/):00350 [6]     1569            LDX 80,U
+A335 3416             (./generated-code/):00351 [9]     1578            PSHS X,D
+A337 CC9CEE           (./generated-code/):00352 [3]     1581            LDD #$9cee
+A33A EDC8D8           (./generated-code/):00353 [6]     1587            STD -40,U
+A33D CCAEFF           (./generated-code/):00354 [3]     1590            LDD #$aeff
+A340 EDC828           (./generated-code/):00355 [6]     1596            STD 40,U
+A343 CC9AAF           (./generated-code/):00356 [3]     1599            LDD #$9aaf
+A346 EDC878           (./generated-code/):00357 [6]     1605            STD 120,U
+A349 8699             (./generated-code/):00358 [2]     1607            LDA #$99
+A34B EDC850           (./generated-code/):00359 [6]     1613            STD 80,U
+A34E 3712             (./generated-code/):00360 [8]     1621            PULU A,X
+A350 3452             (./generated-code/):00361 [10]    1631            PSHS U,X,A
+A352 86AE             (./generated-code/):00362 [2]     1633            LDA #$ae
+A354 8EFFED           (./generated-code/):00363 [3]     1636            LDX #$ffed
+A357 3612             (./generated-code/):00364 [8]     1644            PSHU A,X
+A359 33C90118         (./generated-code/):00365 [8]     1652            LEAU 280,U
+                      (./generated-code/):00366                 
+A35D AEC888           (./generated-code/):00367 [6]     1658            LDX -120,U
+A360 10AEC8B0         (./generated-code/):00368 [7]     1665            LDY -80,U
+A364 3430             (./generated-code/):00369 [9]     1674            PSHS Y,X
+A366 A6C88A           (./generated-code/):00370 [5]     1679            LDA -118,U
+A369 3402             (./generated-code/):00371 [6]     1685            PSHS A
+A36B 840F             (./generated-code/):00372 [2]     1687            ANDA #$0F
+A36D 8AC0             (./generated-code/):00373 [2]     1689            ORA #$c0
+A36F A7C88A           (./generated-code/):00374 [5]     1694            STA -118,U
+A372 A6C8B2           (./generated-code/):00375 [5]     1699            LDA -78,U
+A375 3402             (./generated-code/):00376 [6]     1705            PSHS A
+A377 840F             (./generated-code/):00377 [2]     1707            ANDA #$0F
+A379 8AC0             (./generated-code/):00378 [2]     1709            ORA #$c0
+A37B A7C8B2           (./generated-code/):00379 [5]     1714            STA -78,U
+A37E A6C8DA           (./generated-code/):00380 [5]     1719            LDA -38,U
+A381 3402             (./generated-code/):00381 [6]     1725            PSHS A
+A383 840F             (./generated-code/):00382 [2]     1727            ANDA #$0F
+A385 8AE0             (./generated-code/):00383 [2]     1729            ORA #$e0
+A387 A7C8DA           (./generated-code/):00384 [5]     1734            STA -38,U
+A38A AEC8D8           (./generated-code/):00385 [6]     1740            LDX -40,U
+A38D 3410             (./generated-code/):00386 [7]     1747            PSHS X
+A38F CCAAAE           (./generated-code/):00387 [3]     1750            LDD #$aaae
+A392 EDC8D8           (./generated-code/):00388 [6]     1756            STD -40,U
+A395 C6AA             (./generated-code/):00389 [2]     1758            LDB #$aa
+A397 EDC888           (./generated-code/):00390 [6]     1764            STD -120,U
+A39A EDC8B0           (./generated-code/):00391 [6]     1770            STD -80,U
+A39D 3712             (./generated-code/):00392 [8]     1778            PULU A,X
+A39F 3452             (./generated-code/):00393 [10]    1788            PSHS U,X,A
+A3A1 8EAEEE           (./generated-code/):00394 [3]     1791            LDX #$aeee
+A3A4 3614             (./generated-code/):00395 [8]     1799            PSHU B,X
+A3A6 33C828           (./generated-code/):00396 [5]     1804            LEAU 40,U
+                      (./generated-code/):00397                 
+A3A9 A643             (./generated-code/):00398 [5]     1809            LDA 3,U
+A3AB 3402             (./generated-code/):00399 [6]     1815            PSHS A
+A3AD 84F0             (./generated-code/):00400 [2]     1817            ANDA #$F0
+A3AF 8A03             (./generated-code/):00401 [2]     1819            ORA #$03
+A3B1 A743             (./generated-code/):00402 [5]     1824            STA 3,U
+A3B3 3712             (./generated-code/):00403 [8]     1832            PULU A,X
+A3B5 3452             (./generated-code/):00404 [10]    1842            PSHS U,X,A
+A3B7 8E99EE           (./generated-code/):00405 [3]     1845            LDX #$99ee
+A3BA 3614             (./generated-code/):00406 [8]     1853            PSHU B,X
+A3BC 33C828           (./generated-code/):00407 [5]     1858            LEAU 40,U
+                      (./generated-code/):00408                 
+A3BF A643             (./generated-code/):00409 [5]     1863            LDA 3,U
+A3C1 3402             (./generated-code/):00410 [6]     1869            PSHS A
+A3C3 84F0             (./generated-code/):00411 [2]     1871            ANDA #$F0
+A3C5 8A03             (./generated-code/):00412 [2]     1873            ORA #$03
+A3C7 A743             (./generated-code/):00413 [5]     1878            STA 3,U
+A3C9 3712             (./generated-code/):00414 [8]     1886            PULU A,X
+A3CB 3452             (./generated-code/):00415 [10]    1896            PSHS U,X,A
+A3CD 86A9             (./generated-code/):00416 [2]     1898            LDA #$a9
+A3CF 8E99EE           (./generated-code/):00417 [3]     1901            LDX #$99ee
+A3D2 3612             (./generated-code/):00418 [8]     1909            PSHU A,X
+A3D4 33C828           (./generated-code/):00419 [5]     1914            LEAU 40,U
+                      (./generated-code/):00420                 
+A3D7 A643             (./generated-code/):00421 [5]     1919            LDA 3,U
+A3D9 3402             (./generated-code/):00422 [6]     1925            PSHS A
+A3DB 840F             (./generated-code/):00423 [2]     1927            ANDA #$0F
+A3DD 8A30             (./generated-code/):00424 [2]     1929            ORA #$30
+A3DF A743             (./generated-code/):00425 [5]     1934            STA 3,U
+A3E1 3712             (./generated-code/):00426 [8]     1942            PULU A,X
+A3E3 3452             (./generated-code/):00427 [10]    1952            PSHS U,X,A
+A3E5 86A9             (./generated-code/):00428 [2]     1954            LDA #$a9
+A3E7 8E9BEE           (./generated-code/):00429 [3]     1957            LDX #$9bee
+A3EA 3612             (./generated-code/):00430 [8]     1965            PSHU A,X
+A3EC 33C828           (./generated-code/):00431 [5]     1970            LEAU 40,U
+                      (./generated-code/):00432                 
+A3EF ECC851           (./generated-code/):00433 [6]     1976            LDD 81,U
+A3F2 3406             (./generated-code/):00434 [7]     1983            PSHS D
+A3F4 86BB             (./generated-code/):00435 [2]     1985            LDA #$bb
+A3F6 C40F             (./generated-code/):00436 [2]     1987            ANDB #$0F
+A3F8 CAC0             (./generated-code/):00437 [2]     1989            ORB #$c0
+A3FA EDC851           (./generated-code/):00438 [6]     1995            STD 81,U
+A3FD ECC879           (./generated-code/):00439 [6]     2001            LDD 121,U
+A400 3406             (./generated-code/):00440 [7]     2008            PSHS D
+A402 86BB             (./generated-code/):00441 [2]     2010            LDA #$bb
+A404 C40F             (./generated-code/):00442 [2]     2012            ANDB #$0F
+A406 CAC0             (./generated-code/):00443 [2]     2014            ORB #$c0
+A408 EDC879           (./generated-code/):00444 [6]     2020            STD 121,U
+A40B A6C82B           (./generated-code/):00445 [5]     2025            LDA 43,U
+A40E 3402             (./generated-code/):00446 [6]     2031            PSHS A
+A410 84F0             (./generated-code/):00447 [2]     2033            ANDA #$F0
+A412 8A03             (./generated-code/):00448 [2]     2035            ORA #$03
+A414 A7C82B           (./generated-code/):00449 [5]     2040            STA 43,U
+A417 A6C853           (./generated-code/):00450 [5]     2045            LDA 83,U
+A41A 3402             (./generated-code/):00451 [6]     2051            PSHS A
+A41C 84F0             (./generated-code/):00452 [2]     2053            ANDA #$F0
+A41E 8A03             (./generated-code/):00453 [2]     2055            ORA #$03
+A420 A7C853           (./generated-code/):00454 [5]     2060            STA 83,U
+A423 A6C87B           (./generated-code/):00455 [5]     2065            LDA 123,U
+A426 3402             (./generated-code/):00456 [6]     2071            PSHS A
+A428 84F0             (./generated-code/):00457 [2]     2073            ANDA #$F0
+A42A 8A03             (./generated-code/):00458 [2]     2075            ORA #$03
+A42C A7C87B           (./generated-code/):00459 [5]     2080            STA 123,U
+A42F ECC828           (./generated-code/):00460 [6]     2086            LDD 40,U
+A432 3406             (./generated-code/):00461 [7]     2093            PSHS D
+A434 840F             (./generated-code/):00462 [2]     2095            ANDA #$0F
+A436 8A90             (./generated-code/):00463 [2]     2097            ORA #$90
+A438 C69B             (./generated-code/):00464 [2]     2099            LDB #$9b
+A43A EDC828           (./generated-code/):00465 [6]     2105            STD 40,U
+A43D 3712             (./generated-code/):00466 [8]     2113            PULU A,X
+A43F 3452             (./generated-code/):00467 [10]    2123            PSHS U,X,A
+A441 8699             (./generated-code/):00468 [2]     2125            LDA #$99
+A443 8E9BEE           (./generated-code/):00469 [3]     2128            LDX #$9bee
+A446 3612             (./generated-code/):00470 [8]     2136            PSHU A,X
+A448 33C9011A         (./generated-code/):00471 [8]     2144            LEAU 282,U
+                      (./generated-code/):00472                 
+A44C ECC877           (./generated-code/):00473 [6]     2150            LDD 119,U
+A44F 3406             (./generated-code/):00474 [7]     2157            PSHS D
+A451 840F             (./generated-code/):00475 [2]     2159            ANDA #$0F
+A453 C4F0             (./generated-code/):00476 [2]     2161            ANDB #$F0
+A455 C3D00E           (./generated-code/):00477 [4]     2165            ADDD #$d00e
+A458 EDC877           (./generated-code/):00478 [6]     2171            STD 119,U
+A45B A6C889           (./generated-code/):00479 [5]     2176            LDA -119,U
+A45E 3402             (./generated-code/):00480 [6]     2182            PSHS A
+A460 84F0             (./generated-code/):00481 [2]     2184            ANDA #$F0
+A462 8A03             (./generated-code/):00482 [2]     2186            ORA #$03
+A464 A7C889           (./generated-code/):00483 [5]     2191            STA -119,U
+A467 A6C8B1           (./generated-code/):00484 [5]     2196            LDA -79,U
+A46A 3402             (./generated-code/):00485 [6]     2202            PSHS A
+A46C 84F0             (./generated-code/):00486 [2]     2204            ANDA #$F0
+A46E 8A03             (./generated-code/):00487 [2]     2206            ORA #$03
+A470 A7C8B1           (./generated-code/):00488 [5]     2211            STA -79,U
+A473 A6C8D9           (./generated-code/):00489 [5]     2216            LDA -39,U
+A476 3402             (./generated-code/):00490 [6]     2222            PSHS A
+A478 84F0             (./generated-code/):00491 [2]     2224            ANDA #$F0
+A47A 8A03             (./generated-code/):00492 [2]     2226            ORA #$03
+A47C A7C8D9           (./generated-code/):00493 [5]     2231            STA -39,U
+A47F A641             (./generated-code/):00494 [5]     2236            LDA 1,U
+A481 3402             (./generated-code/):00495 [6]     2242            PSHS A
+A483 84F0             (./generated-code/):00496 [2]     2244            ANDA #$F0
+A485 8A03             (./generated-code/):00497 [2]     2246            ORA #$03
+A487 A741             (./generated-code/):00498 [5]     2251            STA 1,U
+A489 A6C829           (./generated-code/):00499 [5]     2256            LDA 41,U
+A48C E6C879           (./generated-code/):00500 [5]     2261            LDB 121,U
+A48F AE5F             (./generated-code/):00501 [6]     2267            LDX -1,U
+A491 3416             (./generated-code/):00502 [9]     2276            PSHS X,B,A
+A493 A6C851           (./generated-code/):00503 [5]     2281            LDA 81,U
+A496 AEC8AF           (./generated-code/):00504 [6]     2287            LDX -81,U
+A499 10AEC8D7         (./generated-code/):00505 [7]     2294            LDY -41,U
+A49D 3432             (./generated-code/):00506 [10]    2304            PSHS Y,X,A
+A49F CCBBE9           (./generated-code/):00507 [3]     2307            LDD #$bbe9
+A4A2 EDC8AF           (./generated-code/):00508 [6]     2313            STD -81,U
+A4A5 EDC8D7           (./generated-code/):00509 [6]     2319            STD -41,U
+A4A8 8633             (./generated-code/):00510 [2]     2321            LDA #$33
+A4AA A7C829           (./generated-code/):00511 [5]     2326            STA 41,U
+A4AD A7C851           (./generated-code/):00512 [5]     2331            STA 81,U
+A4B0 ECC887           (./generated-code/):00513 [6]     2337            LDD -121,U
+A4B3 3406             (./generated-code/):00514 [7]     2344            PSHS D
+A4B5 86BB             (./generated-code/):00515 [2]     2346            LDA #$bb
+A4B7 C40F             (./generated-code/):00516 [2]     2348            ANDB #$0F
+A4B9 CAC0             (./generated-code/):00517 [2]     2350            ORB #$c0
+A4BB EDC887           (./generated-code/):00518 [6]     2356            STD -121,U
+A4BE ECC827           (./generated-code/):00519 [6]     2362            LDD 39,U
+A4C1 3406             (./generated-code/):00520 [7]     2369            PSHS D
+A4C3 86BD             (./generated-code/):00521 [2]     2371            LDA #$bd
+A4C5 C4F0             (./generated-code/):00522 [2]     2373            ANDB #$F0
+A4C7 CA09             (./generated-code/):00523 [2]     2375            ORB #$09
+A4C9 EDC827           (./generated-code/):00524 [6]     2381            STD 39,U
+A4CC ECC84F           (./generated-code/):00525 [6]     2387            LDD 79,U
+A4CF 3446             (./generated-code/):00526 [9]     2396            PSHS U,D
+A4D1 86BD             (./generated-code/):00527 [2]     2398            LDA #$bd
+A4D3 C4F0             (./generated-code/):00528 [2]     2400            ANDB #$F0
+A4D5 CA09             (./generated-code/):00529 [2]     2402            ORB #$09
+A4D7 EDC84F           (./generated-code/):00530 [6]     2408            STD 79,U
+A4DA CCBDDD           (./generated-code/):00531 [3]     2411            LDD #$bddd
+A4DD ED5F             (./generated-code/):00532 [6]     2417            STD -1,U
+A4DF 863D             (./generated-code/):00533 [2]     2419            LDA #$3d
+A4E1 A7C879           (./generated-code/):00534 [5]     2424            STA 121,U
+A4E4 33C90117         (./generated-code/):00535 [8]     2432            LEAU 279,U
+                      (./generated-code/):00536                 
+A4E8 ECC888           (./generated-code/):00537 [6]     2438            LDD -120,U
+A4EB 3406             (./generated-code/):00538 [7]     2445            PSHS D
+A4ED 840F             (./generated-code/):00539 [2]     2447            ANDA #$0F
+A4EF 8A30             (./generated-code/):00540 [2]     2449            ORA #$30
+A4F1 C6EE             (./generated-code/):00541 [2]     2451            LDB #$ee
+A4F3 EDC888           (./generated-code/):00542 [6]     2457            STD -120,U
+A4F6 ECC8B0           (./generated-code/):00543 [6]     2463            LDD -80,U
+A4F9 3406             (./generated-code/):00544 [7]     2470            PSHS D
+A4FB 840F             (./generated-code/):00545 [2]     2472            ANDA #$0F
+A4FD 8A30             (./generated-code/):00546 [2]     2474            ORA #$30
+A4FF C6EE             (./generated-code/):00547 [2]     2476            LDB #$ee
+A501 EDC8B0           (./generated-code/):00548 [6]     2482            STD -80,U
+A504 ECC8D8           (./generated-code/):00549 [6]     2488            LDD -40,U
+A507 3406             (./generated-code/):00550 [7]     2495            PSHS D
+A509 840F             (./generated-code/):00551 [2]     2497            ANDA #$0F
+A50B 8A30             (./generated-code/):00552 [2]     2499            ORA #$30
+A50D C6E3             (./generated-code/):00553 [2]     2501            LDB #$e3
+A50F EDC8D8           (./generated-code/):00554 [6]     2507            STD -40,U
+A512 ECC4             (./generated-code/):00555 [5]     2512            LDD ,U
+A514 3406             (./generated-code/):00556 [7]     2519            PSHS D
+A516 840F             (./generated-code/):00557 [2]     2521            ANDA #$0F
+A518 8A30             (./generated-code/):00558 [2]     2523            ORA #$30
+A51A C633             (./generated-code/):00559 [2]     2525            LDB #$33
+A51C EDC4             (./generated-code/):00560 [5]     2530            STD ,U
+A51E ECC828           (./generated-code/):00561 [6]     2536            LDD 40,U
+A521 3406             (./generated-code/):00562 [7]     2543            PSHS D
+A523 840F             (./generated-code/):00563 [2]     2545            ANDA #$0F
+A525 8A30             (./generated-code/):00564 [2]     2547            ORA #$30
+A527 C6D3             (./generated-code/):00565 [2]     2549            LDB #$d3
+A529 EDC828           (./generated-code/):00566 [6]     2555            STD 40,U
+A52C ECC850           (./generated-code/):00567 [6]     2561            LDD 80,U
+A52F 3406             (./generated-code/):00568 [7]     2568            PSHS D
+A531 840F             (./generated-code/):00569 [2]     2570            ANDA #$0F
+A533 8A30             (./generated-code/):00570 [2]     2572            ORA #$30
+A535 C6D3             (./generated-code/):00571 [2]     2574            LDB #$d3
+A537 EDC850           (./generated-code/):00572 [6]     2580            STD 80,U
+A53A ECC878           (./generated-code/):00573 [6]     2586            LDD 120,U
+A53D 3406             (./generated-code/):00574 [7]     2593            PSHS D
+A53F 840F             (./generated-code/):00575 [2]     2595            ANDA #$0F
+A541 8A30             (./generated-code/):00576 [2]     2597            ORA #$30
+A543 C6D3             (./generated-code/):00577 [2]     2599            LDB #$d3
+A545 EDC878           (./generated-code/):00578 [6]     2605            STD 120,U
+A548 A6C88A           (./generated-code/):00579 [5]     2610            LDA -118,U
+A54B E6C8B2           (./generated-code/):00580 [5]     2615            LDB -78,U
+A54E 3406             (./generated-code/):00581 [7]     2622            PSHS B,A
+A550 C40F             (./generated-code/):00582 [2]     2624            ANDB #$0F
+A552 CA30             (./generated-code/):00583 [2]     2626            ORB #$30
+A554 E7C8B2           (./generated-code/):00584 [5]     2631            STB -78,U
+A557 A6C8DA           (./generated-code/):00585 [5]     2636            LDA -38,U
+A55A 3442             (./generated-code/):00586 [8]     2644            PSHS U,A
+A55C 840F             (./generated-code/):00587 [2]     2646            ANDA #$0F
+A55E 8AD0             (./generated-code/):00588 [2]     2648            ORA #$d0
+A560 A7C8DA           (./generated-code/):00589 [5]     2653            STA -38,U
+A563 863D             (./generated-code/):00590 [2]     2655            LDA #$3d
+A565 A7C88A           (./generated-code/):00591 [5]     2660            STA -118,U
+A568 33C900B4         (./generated-code/):00592 [8]     2668            LEAU 180,U
+                      (./generated-code/):00593                 
+A56C ECC8EC           (./generated-code/):00594 [6]     2674            LDD -20,U
+A56F 3406             (./generated-code/):00595 [7]     2681            PSHS D
+A571 8633             (./generated-code/):00596 [2]     2683            LDA #$33
+A573 C4F0             (./generated-code/):00597 [2]     2685            ANDB #$F0
+A575 CA0D             (./generated-code/):00598 [2]     2687            ORB #$0d
+A577 EDC8EC           (./generated-code/):00599 [6]     2693            STD -20,U
+A57A A6C814           (./generated-code/):00600 [5]     2698            LDA 20,U
+A57D 3442             (./generated-code/):00601 [8]     2706            PSHS U,A
+A57F 8633             (./generated-code/):00602 [2]     2708            LDA #$33
+A581 A7C814           (./generated-code/):00603 [5]     2713            STA 20,U
+A584 33E4             (./generated-code/):00604 [4]     2717            LEAU ,S
+A586                  (./generated-code/):00605                 SSAV_Img_sonic_050_0
+A586 10FE9FFE         (./generated-code/):00606 [7]     2724            LDS glb_register_s
+A58A 39               (./generated-code/):00607 [5]     2729            RTS
+                      (./generated-code/):00608                 
