@@ -1,0 +1,79 @@
+	INCLUDE "./Engine/Constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+BCKDRAW_Img_SSBomb_002_0
+	STS glb_register_s
+
+	LEAS ,Y
+	LDA -40,U
+	LDB 80,U
+	PSHS B,A
+	LDA ,U
+	LDB 40,U
+	PSHS B,A
+	LDA #$33
+	STA -40,U
+	STA 80,U
+	LDA 120,U
+	LDB -80,U
+	PSHS B,A
+	LDA #$23
+	STA -80,U
+	LDA -120,U
+	PSHS U,A
+	ANDA #$0F
+	ORA #$30
+	STA -120,U
+	LDA #$53
+	STA ,U
+	STA 40,U
+	LDA #$3f
+	STA 120,U
+	LEAU 160,U
+
+	LDA ,U
+	PSHS U,A
+	ANDA #$0F
+	ORA #$f0
+	STA ,U
+
+	LDU <glb_screen_location_1
+	LEAU -1,U
+
+	LDA -80,U
+	LDB 80,U
+	PSHS B,A
+	LDA ,U
+	PSHS A
+	LDA #$32
+	STA -80,U
+	LDA 40,U
+	LDB 120,U
+	PSHS B,A
+	LDA #$f3
+	STA 120,U
+	LDA #$35
+	STA ,U
+	STA 40,U
+	LDA -40,U
+	LDB -120,U
+	PSHS U,B,A
+	ANDB #$F0
+	ORB #$03
+	STB -120,U
+	LDA #$33
+	STA -40,U
+	STA 80,U
+	LEAU 160,U
+
+	LDA ,U
+	PSHS U,A
+	ANDA #$F0
+	ORA #$0f
+	STA ,U
+	LEAU ,S
+SSAV_Img_SSBomb_002_0
+	LDS glb_register_s
+	RTS
+

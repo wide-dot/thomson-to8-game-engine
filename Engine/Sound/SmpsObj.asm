@@ -208,7 +208,8 @@ SmpsObj
 SmpsObj_Routines
         fdb   YM2413_DrumModeOn
         fdb   PlayMusic
-	fdb   MusicFrame
+        fdb   MusicFrame
+        fdb   PlaySound
 
 ******************************************************************************
 
@@ -310,12 +311,15 @@ PSGSilenceAll
 * destroys X
 ******************************************************************************
 
+@rts    puls  d,y,u,pc
 PlayMusic
 BGMLoad
         pshs  d,y,u
-	ldx   #Song_Index
-        ldx   b,x                      ; get ptr to track data
+        ldx   #Song_Index
+        abx
+        ldx   ,x
         stx   MusicData
+        beq   @rts
 
         jsr   InitMusicPlayback
         ldd   SMPS_VOICE,x
@@ -350,13 +354,13 @@ BGMLoad
         lda   #$C0                     ; set back Tone channel for PSG3 (can be switched to noise by cfSetPSGNoise)
         sta   SongPSG3.VoiceControl
         lda   SMPS_NB_PSG,x
-        sta   >*+4
-@dyn    lda   #$00                     ; (dynamic) nb of PSG tracks to init
+        sta   @var                     ; nb of PSG tracks to init
         ldy   #SongPSG1                ; Init all PSG tracks
-@psglp  dec   @dyn+1
+@psglp  dec   @var
         bmi   BGMLoad_end     
         jsr   InitTrackPSG
         bra   @psglp
+@var    fcb   0
 
 BGMLoad_end
         puls  d,y,u,pc
@@ -422,17 +426,17 @@ MusicFrame
         
         ; simple sound fx implementation with no priority
         ; TODO upgrade to a queue system like original code
-        ldx   Smps.SFXToPlay           ; get last requested sound effect to play
+        ldb   Smps.SFXToPlay           ; get last requested sound effect to play
         beq   @a                       ; 0 means no sound effect to play
         jsr   PlaySound
-        ldd   #0                       ; reset to be able to play another effect from now
-        std   Smps.SFXToPlay
+        ldb   #0                       ; reset to be able to play another effect from now
+        stb   Smps.SFXToPlay
 @a       
         ldd   MusicData
         lbeq  UpdateSound              ; no music to play
         clr   DoSFXFlag
 
-UpdateEverything        
+UpdateEverything     
         lda   Smps.60HzData            ; TODO use SMPS relocate to convert timings
         beq   @a                       ; to play 60hz songs at 50hz at normal speed
         dec   PALUpdTick               ; this will allow to throw away this code
@@ -449,34 +453,41 @@ UpdateMusic
         adda  Smps.TempoTimeout        ; Adds previous value to
         sta   Smps.TempoTimeout        ; Store this as new
         bcc   @rts                     ; skip update if tempo need more waits
-        _UpdateTrack SongDAC,DACUpdateTrack
-        _UpdateTrack SongFM1,FMUpdateTrack
-        _UpdateTrack SongFM2,FMUpdateTrack
-        _UpdateTrack SongFM3,FMUpdateTrack
-        _UpdateTrack SongFM4,FMUpdateTrack
-        _UpdateTrack SongFM5,FMUpdateTrack
+       ;_UpdateTrack SongDAC,DACUpdateTrack
+       ;_UpdateTrack SongFM1,FMUpdateTrack
+       ;_UpdateTrack SongFM2,FMUpdateTrack
+       ;_UpdateTrack SongFM3,FMUpdateTrack
+       ;_UpdateTrack SongFM4,FMUpdateTrack
+       ;_UpdateTrack SongFM5,FMUpdateTrack
         ;_UpdateTrack SongFM6,FMUpdateTrack      ; uncomment to use this channel
         ;_UpdateTrack SongFM7,FMUpdateTrack      ; uncomment to use tone channel instead of drum kit
         ;_UpdateTrack SongFM8,FMUpdateTrack      ; uncomment to use tone channel instead of drum kit
         ;_UpdateTrack SongFM9,FMUpdateTrack      ; uncomment to use tone channel instead of drum kit        
         ;_UpdateTrack SongPSG4,PSGUpdateTrack    ; uncomment to use noise channel as an independent channel from tone 3
-        _UpdateTrack SongPSG1,PSGUpdateTrack
-        _UpdateTrack SongPSG2,PSGUpdateTrack        
-        _UpdateTrack SongPSG3,PSGUpdateTrack
+       ;_UpdateTrack SongPSG1,PSGUpdateTrack
+       ;_UpdateTrack SongPSG2,PSGUpdateTrack        
+       ;_UpdateTrack SongPSG3,PSGUpdateTrack
 @rts    rts
 
 UpdateSound        
         ldd   SoundData
         bne   @a
         rts
-@a      lda   #$80
+@a      
+        ; Spindash update
+        lda   zSpindashPlayingCounter
+        beq   >                        ; if the spindash counter is already 0, branch
+        deca                           ; decrease the spindash sound playing counter
+        sta   zSpindashPlayingCounter
+!
+        lda   #$80
         sta   DoSFXFlag                ; Set zDoSFXFlag = 80h (updating sound effects)
-        _UpdateTrack SFXFM3,FMUpdateTrack
-        _UpdateTrack SFXFM4,FMUpdateTrack
-        _UpdateTrack SFXFM5,FMUpdateTrack
-        _UpdateTrack SFXPSG1,PSGUpdateTrack
-        _UpdateTrack SFXPSG2,PSGUpdateTrack        
-        _UpdateTrack SFXPSG3,PSGUpdateTrack
+       ;_UpdateTrack SFXFM3,FMUpdateTrack
+       ;_UpdateTrack SFXFM4,FMUpdateTrack
+       _UpdateTrack SFXFM5,FMUpdateTrack
+       ;_UpdateTrack SFXPSG1,PSGUpdateTrack
+       ;_UpdateTrack SFXPSG2,PSGUpdateTrack        
+       ;_UpdateTrack SFXPSG3,PSGUpdateTrack
 @rts    rts
 
 * * ************************************************************************************
@@ -635,10 +646,7 @@ FMSetFreq
 @a      addb  #$0B                     ; Add FMFrequencies offet for C0 Note, access lower notes with transpose
         addb  Transpose,y              ; Add current channel transpose (coord flag E9)
         addb  InstrTranspose,y         ; Add Instrument (Voice) offset (coord flag EF)
-        cmpb  #95                      ; array bound check
-        blo   @c
-        ldb   #94         
-@c      aslb                           ; Transform note into an index...
+        aslb                           ; Transform note into an index...
         ldu   #FMFrequencies
         lda   #0    
         ldd   d,u
@@ -757,6 +765,7 @@ FMUpdateFreq
         addd  #1                       ; negative value need +1 when div 
 @b      addd  NextData,y               ; apply detune but don't update stored frequency
 @dyna   addd  #0                       ; (dynamic) apply detune        
+        anda  #$0F
         sta   @dynb+1
         lda   #$10                     ; set LSB Frequency Command
         adda  VoiceControl,y           ; get channel number
@@ -883,7 +892,7 @@ PSGFinishTrackUpdate
         
 PSGDoNoteOn
         lda   PlaybackControl,y
-        bita  #$02                     ; Is bit 1 (02h) "track is at rest" set on playback?
+        bita  #$06                     ; If either bit 1 ("track in rest") and 2 ("SFX overriding this track"), quit!
         beq   PSGUpdateFreq                       
         rts                            ; If so, quit
 PSGUpdateFreq
@@ -935,13 +944,14 @@ PSGFlutter
         bpl   @a
         cmpa  #$80
         beq   VolEnvHold
-@a      sta   >*+4
+@a      sta   @b
         addb  #0
+@b      equ   *-1
         stb   DynVol+1
                 
 PSGUpdateVol                
         lda   PlaybackControl,y
-        bita  #$02                     ; Is bit 1 (02h) "track is at rest" set on playback?
+        bita  #$06                     ; If either bit 1 ("track in rest") and 2 ("SFX overriding this track"), quit!
         bne   PSGDoModulation          ; If so, branch           
         bita  #$10                     ; Is bit 4 (10h) "do not attack next note" set on playback?
         bne   @b                       ; If so, branch
@@ -1098,7 +1108,7 @@ SFXTrackOffs
         fdb   SFXPSG3                  ; identified by Track id 80E0 in smps sfx file
 
 MusicTrackOffs
-        fdb   SongFM3
+        fdb   SongFM2
         fdb   SongFM3        
         fdb   SongFM4        
         fdb   SongFM5
@@ -1107,13 +1117,37 @@ MusicTrackOffs
         fdb   SongPSG3
         fdb   SongPSG3
 
+@rts    puls  d,x,y,u,pc
 PlaySound
-        pshs  d,y,u
-
-	ldx   #Sound_Index
-        ldx   b,x                      ; get ptr to track data
+        pshs  d,x,y,u
+        ldx   #Sound_Index
+        abx
+        ldx   ,x
         stx   SoundData
-        
+        beq   @rts
+
+        ; Check Spin Dash
+        lda   #0
+        sta   zSpindashActiveFlag
+        cmpb  #SndID_SpindashRev ; is this the spindash rev sound playing?
+        bne   PlaySound_main     ; if not, branch
+
+        lda   zSpindashExtraFrequencyIndex
+        tst   zSpindashPlayingCounter
+        bne   >                  ; if the spindash sound is already playing, branch
+        lda   #-1                ; reset the extra frequency (becomes 0 on the next line)
+!
+        inca                     ; increase the frequency
+        cmpa  #$0C
+        bhs   >
+        sta   zSpindashExtraFrequencyIndex
+!
+        lda   #$3C
+        sta   zSpindashPlayingCounter
+        lda   #-1
+        sta   zSpindashActiveFlag
+
+PlaySound_main
         ldd   SMPS_SFX_VOICE,x
         addd  SoundData   
         std   Smps.SFXVoiceTblPtr
@@ -1181,12 +1215,16 @@ PlaySound
         addd  SoundData
         std   DataPointer,u
         ldd   SMPS_SFX_TRK_TR_VOL_PTR,x
-        std   TranspAndVolume,u        
+        ; If spindash active, the following block updates its frequency specially:
+        tst   zSpindashActiveFlag
+        beq   >                                  ; If spindash not last sound played, skip this
+        adda  zSpindashExtraFrequencyIndex       ; Add spindash key offset!
+!       std   TranspAndVolume,u        
         leax  SMPS_SFX_TRK_HDR_LEN,x
         dec   PS_cnt    
         lbne  @a  
 
-        puls  d,y,u,pc
+        puls  d,x,y,u,pc
 
 PS_cnt  fcb   0
         
@@ -1636,9 +1674,9 @@ StructEnd
         fill  0,sizeof{Track}-2
         fdb   $00C0
         fill  0,sizeof{Track}-2
-        fdb   $00E0
-        fill  0,sizeof{Track}-2
-        fdb   $0003
+        ;fdb   $00E0
+        ;fill  0,sizeof{Track}-2
+        fdb   $0002
         fill  0,sizeof{Track}-2
         fdb   $0004
         fill  0,sizeof{Track}-2
@@ -1648,8 +1686,12 @@ StructEnd
         fill  0,sizeof{Track}-2
         fdb   $00A0
         fill  0,sizeof{Track}-2
-        ;fdb   $00C0
-        ;fill  0,sizeof{Track}-2
+        fdb   $00C0
+        fill  0,sizeof{Track}-2
+
+zSpindashPlayingCounter      fcb 0
+zSpindashExtraFrequencyIndex fcb 0
+zSpindashActiveFlag          fcb 0 ; -1 if spindash charge was the last sound that played
 
 * YM2413 Instrument presets
 * -------------------------

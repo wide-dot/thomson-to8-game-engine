@@ -1,0 +1,365 @@
+                      (C:\Users\bhrou\gi):00001         ********************************************************************************
+                      (C:\Users\bhrou\gi):00002         * Boot loader T2Loader - Benoit Rousseau 29/04/2021
+                      (C:\Users\bhrou\gi):00003         * ------------------------------------------------------------------------------
+                      (C:\Users\bhrou\gi):00004         * 
+                      (C:\Users\bhrou\gi):00005         * Description
+                      (C:\Users\bhrou\gi):00006         * -----------
+                      (C:\Users\bhrou\gi):00007         * Permet de programmer une MEGAROM T.2 depuis SDDRIVE avec un seul fichier SD
+                      (C:\Users\bhrou\gi):00008         *
+                      (C:\Users\bhrou\gi):00009         ********************************************************************************
+                      (C:\Users\bhrou\gi):00010                 INCLUDE "./Engine/Macros.asm"          
+0000                  (./Engine/Macros.a):00001         _ldd MACRO
+                      (./Engine/Macros.a):00002                 ldd   #((\1)*256)+\2
+                      (./Engine/Macros.a):00003          ENDM
+                      (./Engine/Macros.a):00004          
+0000                  (./Engine/Macros.a):00005         _ldx MACRO
+                      (./Engine/Macros.a):00006                 ldx   #((\1)*256)+\2
+                      (./Engine/Macros.a):00007          ENDM
+                      (./Engine/Macros.a):00008          
+0000                  (./Engine/Macros.a):00009         _ldy MACRO
+                      (./Engine/Macros.a):00010                 ldy   #((\1)*256)+\2
+                      (./Engine/Macros.a):00011          ENDM
+                      (./Engine/Macros.a):00012          
+0000                  (./Engine/Macros.a):00013         _ldu MACRO
+                      (./Engine/Macros.a):00014                 ldu   #((\1)*256)+\2
+                      (./Engine/Macros.a):00015          ENDM  
+                      (./Engine/Macros.a):00016          
+0000                  (./Engine/Macros.a):00017         _lds MACRO
+                      (./Engine/Macros.a):00018                 lds   #((\1)*256)+\2
+                      (./Engine/Macros.a):00019          ENDM   
+                      (./Engine/Macros.a):00020          
+0000                  (./Engine/Macros.a):00021         _SetCartPageA MACRO
+                      (./Engine/Macros.a):00022          IFDEF T2
+                      (./Engine/Macros.a):00023                 jsr   SetCartPageA
+                      (./Engine/Macros.a):00024          ELSE
+                      (./Engine/Macros.a):00025                 sta   $E7E6                    ; selection de la page RAM en zone cartouche
+                      (./Engine/Macros.a):00026          ENDC
+                      (./Engine/Macros.a):00027          ENDM      
+                      (./Engine/Macros.a):00028          
+0000                  (./Engine/Macros.a):00029         _GetCartPageA MACRO
+                      (./Engine/Macros.a):00030          IFDEF T2
+                      (./Engine/Macros.a):00031                 jsr   GetCartPageA
+                      (./Engine/Macros.a):00032          ELSE
+                      (./Engine/Macros.a):00033                 lda   $E7E6
+                      (./Engine/Macros.a):00034          ENDC
+                      (./Engine/Macros.a):00035          ENDM
+                      (./Engine/Macros.a):00036         
+0000                  (./Engine/Macros.a):00037         _SetCartPageB MACRO
+                      (./Engine/Macros.a):00038          IFDEF T2
+                      (./Engine/Macros.a):00039                 jsr   SetCartPageB
+                      (./Engine/Macros.a):00040          ELSE
+                      (./Engine/Macros.a):00041                 stb   $E7E6                    ; selection de la page RAM en zone cartouche
+                      (./Engine/Macros.a):00042          ENDC
+                      (./Engine/Macros.a):00043          ENDM      
+                      (./Engine/Macros.a):00044          
+0000                  (./Engine/Macros.a):00045         _GetCartPageB MACRO
+                      (./Engine/Macros.a):00046          IFDEF T2
+                      (./Engine/Macros.a):00047                 jsr   GetCartPageB
+                      (./Engine/Macros.a):00048          ELSE
+                      (./Engine/Macros.a):00049                 ldb   $E7E6
+                      (./Engine/Macros.a):00050          ENDC
+                      (./Engine/Macros.a):00051          ENDM     
+                      (./Engine/Macros.a):00052         
+0000                  (./Engine/Macros.a):00053         _RunObjectSwap MACRO
+                      (./Engine/Macros.a):00054                 ; param 1 : ObjID_
+                      (./Engine/Macros.a):00055                 ; param 2 : Object data RAM address
+                      (./Engine/Macros.a):00056                 ; manual launch of an object from a different dynamic memory page and not from the resident page 1
+                      (./Engine/Macros.a):00057                 lda   Obj_Index_Page+\1   
+                      (./Engine/Macros.a):00058                 ldu   Obj_Index_Address+2*\1
+                      (./Engine/Macros.a):00059                 stu   glb_Address       
+                      (./Engine/Macros.a):00060                 ldu   \2             
+                      (./Engine/Macros.a):00061                 jsr   RunPgSubRoutine
+                      (./Engine/Macros.a):00062          ENDM    
+                      (./Engine/Macros.a):00063         
+0000                  (./Engine/Macros.a):00064         _RunObjectSwapRoutine MACRO
+                      (./Engine/Macros.a):00065                 ; param 1 : ObjID_
+                      (./Engine/Macros.a):00066                 ; param 2 : Object routine
+                      (./Engine/Macros.a):00067                 ; manual launch of an object from a different dynamic memory page and not from the resident page 1
+                      (./Engine/Macros.a):00068                 lda   Obj_Index_Page+\1   
+                      (./Engine/Macros.a):00069                 ldu   Obj_Index_Address+2*\1
+                      (./Engine/Macros.a):00070                 stu   glb_Address       
+                      (./Engine/Macros.a):00071                 lda   \2        
+                      (./Engine/Macros.a):00072                 jsr   RunPgSubRoutine
+                      (./Engine/Macros.a):00073          ENDM 
+                      (./Engine/Macros.a):00074          
+0000                  (./Engine/Macros.a):00075         _MountObject MACRO 
+                      (./Engine/Macros.a):00076                 ; param 1 : ObjID_
+                      (./Engine/Macros.a):00077                 ; manual mount of an object from the resident page 1
+                      (./Engine/Macros.a):00078                 lda   Obj_Index_Page+\1
+                      (./Engine/Macros.a):00079                 _SetCartPageA
+                      (./Engine/Macros.a):00080                 ldx   Obj_Index_Address+2*\1
+                      (./Engine/Macros.a):00081          ENDM
+                      (./Engine/Macros.a):00082         
+0000                  (./Engine/Macros.a):00083         _RunObject MACRO 
+                      (./Engine/Macros.a):00084                 ; param 1 : ObjID_
+                      (./Engine/Macros.a):00085                 ; param 2 : Object data RAM address
+                      (./Engine/Macros.a):00086                 ; manual launch of an object from the resident page 1
+                      (./Engine/Macros.a):00087                 _MountObject \1
+                      (./Engine/Macros.a):00088                 ldu   \2        
+                      (./Engine/Macros.a):00089                 jsr   ,x
+                      (./Engine/Macros.a):00090          ENDM
+                      (./Engine/Macros.a):00091         
+0000                  (./Engine/Macros.a):00092         _RunObjectRoutine MACRO 
+                      (./Engine/Macros.a):00093                 ; param 1 : ObjID_
+                      (./Engine/Macros.a):00094                 ; param 2 : Object routine
+                      (./Engine/Macros.a):00095                 ; manual launch of an object from the resident page 1
+                      (./Engine/Macros.a):00096                 ; this object does not need or have a data structure for this routine
+                      (./Engine/Macros.a):00097                 _MountObject \1
+                      (./Engine/Macros.a):00098                 lda   \2        
+                      (./Engine/Macros.a):00099                 jsr   ,x
+                      (./Engine/Macros.a):00100          ENDM
+                      (./Engine/Macros.a):00101         
+0000                  (./Engine/Macros.a):00102         _asld MACRO
+                      (./Engine/Macros.a):00103                 aslb
+                      (./Engine/Macros.a):00104                 rola
+                      (./Engine/Macros.a):00105          ENDM        
+                      (./Engine/Macros.a):00106          
+0000                  (./Engine/Macros.a):00107         _asrd MACRO
+                      (./Engine/Macros.a):00108                 asra
+                      (./Engine/Macros.a):00109                 rorb
+                      (./Engine/Macros.a):00110          ENDM      
+                      (./Engine/Macros.a):00111          
+0000                  (./Engine/Macros.a):00112         _lsld MACRO
+                      (./Engine/Macros.a):00113                 lslb
+                      (./Engine/Macros.a):00114                 rola
+                      (./Engine/Macros.a):00115          ENDM        
+                      (./Engine/Macros.a):00116          
+0000                  (./Engine/Macros.a):00117         _lsrd MACRO
+                      (./Engine/Macros.a):00118                 lsra
+                      (./Engine/Macros.a):00119                 rorb
+                      (./Engine/Macros.a):00120          ENDM
+                      (./Engine/Macros.a):00121          
+0000                  (./Engine/Macros.a):00122         _rold MACRO
+                      (./Engine/Macros.a):00123                 rolb
+                      (./Engine/Macros.a):00124                 rola
+                      (./Engine/Macros.a):00125          ENDM    
+                      (./Engine/Macros.a):00126          
+0000                  (./Engine/Macros.a):00127         _rord MACRO
+                      (./Engine/Macros.a):00128                 rora
+                      (./Engine/Macros.a):00129                 rorb
+                      (./Engine/Macros.a):00130          ENDM
+                      (./Engine/Macros.a):00131         
+0000                  (./Engine/Macros.a):00132         _negd MACRO
+                      (./Engine/Macros.a):00133                 nega
+                      (./Engine/Macros.a):00134                 negb
+                      (./Engine/Macros.a):00135                 sbca  #0
+                      (./Engine/Macros.a):00136          ENDM
+                      (./Engine/Macros.a):00137         
+0000                  (./Engine/Macros.a):00138         _cba MACRO
+                      (./Engine/Macros.a):00139                 pshs  b
+                      (./Engine/Macros.a):00140                 cmpa  ,s+
+                      (./Engine/Macros.a):00141          ENDM
+                      (./Engine/Macros.a):00142         
+0000                  (./Engine/Macros.a):00143         _aba MACRO
+                      (./Engine/Macros.a):00144                 pshs  b
+                      (./Engine/Macros.a):00145                 adda  ,s+
+                      (./Engine/Macros.a):00146          ENDM
+                      (./Engine/Macros.a):00147         
+0000                  (./Engine/Macros.a):00148         _sba MACRO
+                      (./Engine/Macros.a):00149                 pshs  b
+                      (./Engine/Macros.a):00150                 suba  ,s+
+                      (./Engine/Macros.a):00151          ENDM
+                      (./Engine/Macros.a):00152         
+0000                  (./Engine/Macros.a):00153         _cab MACRO
+                      (./Engine/Macros.a):00154                 pshs  a
+                      (./Engine/Macros.a):00155                 cmpb  ,s+
+                      (./Engine/Macros.a):00156          ENDM
+                      (./Engine/Macros.a):00157         
+0000                  (./Engine/Macros.a):00158         _aab MACRO
+                      (./Engine/Macros.a):00159                 pshs  a
+                      (./Engine/Macros.a):00160                 addb  ,s+
+                      (./Engine/Macros.a):00161          ENDM
+                      (./Engine/Macros.a):00162         
+0000                  (./Engine/Macros.a):00163         _sab MACRO
+                      (./Engine/Macros.a):00164                 pshs  a
+                      (./Engine/Macros.a):00165                 subb  ,s+
+                      (./Engine/Macros.a):00166          ENDM
+                      (C:\Users\bhrou\gi):00011                 
+                      (C:\Users\bhrou\gi):00012                 org   $6200
+                      (C:\Users\bhrou\gi):00013         
+6200                  (C:\Users\bhrou\gi):00014         PalInit
+     62               (C:\Users\bhrou\gi):00015                 setdp $62
+6200 8662             (C:\Users\bhrou\gi):00016                 lda   #$62
+6202 1F8B             (C:\Users\bhrou\gi):00017                 tfr   a,dp                     * positionne la direct page a 62
+                      (C:\Users\bhrou\gi):00018                 
+6204                  (C:\Users\bhrou\gi):00019         PalFade        
+6204 0F7E             (C:\Users\bhrou\gi):00020                 clr   <pal_idx
+6206 8E62EA           (C:\Users\bhrou\gi):00021                 ldx   #pal_len                 * index limite de chargement pour couleur courante 
+6209 CE62DE           (C:\Users\bhrou\gi):00022                 ldu   #pal_from                * chargement pointeur valeur des couleurs actuelles
+                      (C:\Users\bhrou\gi):00023                 
+620C                  (C:\Users\bhrou\gi):00024         Vsync_1                                
+620C 7DE7E7           (C:\Users\bhrou\gi):00025                 tst   $E7E7                    * le faisceau n'est pas dans l'ecran utile
+620F 2AFB             (C:\Users\bhrou\gi):00026                 bpl   Vsync_1                  * tant que le bit est a 0 on boucle
+6211                  (C:\Users\bhrou\gi):00027         Vsync_2                                 
+6211 7DE7E7           (C:\Users\bhrou\gi):00028                 tst   $E7E7                    * le faisceau est dans l'ecran utile
+6214 2BFB             (C:\Users\bhrou\gi):00029                 bmi   Vsync_2                  * tant que le bit est a 1 on boucle
+                      (C:\Users\bhrou\gi):00030                 
+6216 108E0140         (C:\Users\bhrou\gi):00031                 ldy   #0320                    * 40 lignes * 8 cycles
+621A                  (C:\Users\bhrou\gi):00032         Tempo        
+621A 313F             (C:\Users\bhrou\gi):00033                 leay  -1,y
+621C 26FC             (C:\Users\bhrou\gi):00034                 bne   Tempo                    * tempo pour etre dans la bordure invisible   
+                      (C:\Users\bhrou\gi):00035                                                                                 
+621E 0AF0             (C:\Users\bhrou\gi):00036                 dec   <pal_cycles              * decremente le compteur du nombre de frame
+6220 275E             (C:\Users\bhrou\gi):00037                 beq   InitVideo                * si termine
+                      (C:\Users\bhrou\gi):00038                 
+6222                  (C:\Users\bhrou\gi):00039         PalRun
+6222 A6C4             (C:\Users\bhrou\gi):00040                 lda   ,u                                   * chargement de la composante verte et rouge
+6224 94F1             (C:\Users\bhrou\gi):00041                 anda  <pal_mask                * on efface la valeur vert ou rouge par masque
+6226 C6FF             (C:\Users\bhrou\gi):00042                 ldb   #$FF                     * composante verte et rouge couleur cible
+6228 D4F1             (C:\Users\bhrou\gi):00043                 andb  <pal_mask                * on efface la valeur vert ou rouge par masque
+622A D778             (C:\Users\bhrou\gi):00044                 stb   <pal_buffer              * on stocke la valeur cible pour comparaison
+622C C611             (C:\Users\bhrou\gi):00045                 ldb   #$11                     * preparation de la valeur d'increment de couleur
+622E D4F1             (C:\Users\bhrou\gi):00046                 andb  <pal_mask                * on efface la valeur non utile par masque
+6230 D779             (C:\Users\bhrou\gi):00047                 stb   <pal_buffer+1            * on stocke la valeur pour ADD ou SUB ulterieur
+6232 9178             (C:\Users\bhrou\gi):00048                 cmpa  <pal_buffer              * comparaison de la composante courante et cible
+6234 270E             (C:\Users\bhrou\gi):00049                 beq   PalVRSuivante            * si composante est egale a la cible on passe
+6236 2206             (C:\Users\bhrou\gi):00050                 bhi   PalVRDec                 * si la composante est superieure on branche
+6238 A6C4             (C:\Users\bhrou\gi):00051                 lda   ,u                       * on recharge la valeur avec vert et rouge
+623A 9B79             (C:\Users\bhrou\gi):00052                 adda  <pal_buffer+1            * on incremente la composante verte ou rouge
+623C 2004             (C:\Users\bhrou\gi):00053                 bra   PalVRSave                * on branche pour sauvegarder
+623E                  (C:\Users\bhrou\gi):00054         PalVRDec
+623E A6C4             (C:\Users\bhrou\gi):00055                 lda   ,u                       * on recharge la valeur avec vert et rouge
+6240 9079             (C:\Users\bhrou\gi):00056                 suba  <pal_buffer+1            * on decremente la composante verte ou rouge
+6242                  (C:\Users\bhrou\gi):00057         PalVRSave                             
+6242 A7C4             (C:\Users\bhrou\gi):00058                 sta   ,u                       * sauvegarde de la nouvelle valeur vert ou rouge
+6244                  (C:\Users\bhrou\gi):00059         PalVRSuivante                         
+6244 03F1             (C:\Users\bhrou\gi):00060                 com   <pal_mask                * inversion du masque pour traiter l'autre semioctet
+6246 2BDA             (C:\Users\bhrou\gi):00061                 bmi   PalRun                   * si on traite $F0 on branche sinon on continue
+                      (C:\Users\bhrou\gi):00062                     
+6248                  (C:\Users\bhrou\gi):00063         SetPalBleu
+6248 E641             (C:\Users\bhrou\gi):00064                 ldb   1,u                                   * chargement composante bleue courante
+624A C10F             (C:\Users\bhrou\gi):00065                 cmpb  #$0F                     * comparaison composante courante et cible
+624C 2708             (C:\Users\bhrou\gi):00066                 beq   SetPalNext               * si composante est egale a la cible on passe
+624E 2203             (C:\Users\bhrou\gi):00067                 bhi   SetPalBleudec            * si la composante est superieure on branche
+6250 5C               (C:\Users\bhrou\gi):00068                 incb                           * on incremente la composante bleue
+6251 2001             (C:\Users\bhrou\gi):00069                 bra   SetPalSaveBleu           * on branche pour sauvegarder
+6253                  (C:\Users\bhrou\gi):00070         SetPalBleudec                       
+6253 5A               (C:\Users\bhrou\gi):00071                 decb                           * on decremente la composante bleue
+6254                  (C:\Users\bhrou\gi):00072         SetPalSaveBleu                         
+6254 E741             (C:\Users\bhrou\gi):00073                 stb   1,u                      * sauvegarde de la nouvelle valeur bleue
+                      (C:\Users\bhrou\gi):00074                                                                                
+6256                  (C:\Users\bhrou\gi):00075         SetPalNext                             
+6256 967E             (C:\Users\bhrou\gi):00076                 lda   <pal_idx                 * Lecture index couleur
+6258 B7E7DB           (C:\Users\bhrou\gi):00077                 sta   $E7DB                    * selectionne l'indice de couleur a ecrire
+625B 8B02             (C:\Users\bhrou\gi):00078                 adda  #$02                     * increment de l'indice de couleur (x2)
+625D 977E             (C:\Users\bhrou\gi):00079                 sta   <pal_idx                 * stockage du nouvel index
+625F A6C4             (C:\Users\bhrou\gi):00080                 lda   ,u                       * chargement de la nouvelle couleur courante
+6261 B7E7DA           (C:\Users\bhrou\gi):00081                 sta   $E7DA                    * positionne la nouvelle couleur (Vert et Rouge)
+6264 F7E7DA           (C:\Users\bhrou\gi):00082                 stb   $E7DA                    * positionne la nouvelle couleur (Bleu)
+6267 967E             (C:\Users\bhrou\gi):00083                 lda   <pal_idx                 * rechargement de l'index couleur
+6269 A184             (C:\Users\bhrou\gi):00084                 cmpa  ,x                       * comparaison avec l'index limite pour cette couleur
+626B 26E9             (C:\Users\bhrou\gi):00085                 bne   SetPalNext               * si inferieur on continue avec la meme couleur
+626D 3342             (C:\Users\bhrou\gi):00086                 leau  2,u                      * on avance le pointeur vers la nouvelle couleur
+626F 3001             (C:\Users\bhrou\gi):00087                 leax  1,x                      * on avance le pointeur vers la nouvelle limite
+6271 8C62F0           (C:\Users\bhrou\gi):00088                 cmpx  #end_pal_len             * test de fin de liste
+6274 26AC             (C:\Users\bhrou\gi):00089                 bne   PalRun                   * on reboucle si fin de liste pas atteinte
+6276 208C             (C:\Users\bhrou\gi):00090                 bra   PalFade
+                      (C:\Users\bhrou\gi):00091                 
+6278                  (C:\Users\bhrou\gi):00092         pal_buffer                             
+6278 42               (C:\Users\bhrou\gi):00093                 fcb   $42                      * B et buffer de comparaison
+6279 41               (C:\Users\bhrou\gi):00094                 fcb   $41                      * A et buffer de comparaison
+627A 53               (C:\Users\bhrou\gi):00095                 fcb   $53                      * S
+627B 49               (C:\Users\bhrou\gi):00096                 fcb   $49                      * I
+627C 43               (C:\Users\bhrou\gi):00097                 fcb   $43                      * C
+627D 32               (C:\Users\bhrou\gi):00098                 fcb   $32                      * 2
+                      (C:\Users\bhrou\gi):00099                                                                                
+627E                  (C:\Users\bhrou\gi):00100         pal_idx                                
+627E 00               (C:\Users\bhrou\gi):00101                 fcb   $00                      * index de la couleur courante dans le traitement
+627F 00               (C:\Users\bhrou\gi):00102                 fcb   $00                      * espace reserve pour somme de controle
+                      (C:\Users\bhrou\gi):00103            
+                      (C:\Users\bhrou\gi):00104         *-------------------------------------------------------------------------------
+                      (C:\Users\bhrou\gi):00105         * A partir de ce point le code doit commencer a l'adresse $6280
+                      (C:\Users\bhrou\gi):00106         *-------------------------------------------------------------------------------
+                      (C:\Users\bhrou\gi):00107         
+                      (C:\Users\bhrou\gi):00108         ********************************************************************************  
+                      (C:\Users\bhrou\gi):00109         * Initialisation du mode video
+                      (C:\Users\bhrou\gi):00110         ********************************************************************************
+6280                  (C:\Users\bhrou\gi):00111         InitVideo
+6280 1A50             (C:\Users\bhrou\gi):00112                 orcc  #$50                     * desactive les interruptions
+6282 867B             (C:\Users\bhrou\gi):00113                 lda   #$7B                     * passage en mode 160x200x16c
+6284 B7E7DC           (C:\Users\bhrou\gi):00114                 sta   $E7DC
+                      (C:\Users\bhrou\gi):00115           
+                      (C:\Users\bhrou\gi):00116         ********************************************************************************
+                      (C:\Users\bhrou\gi):00117         * Initialisation de la commutation de page pour l espace Donnees (Mode registre)
+                      (C:\Users\bhrou\gi):00118         ********************************************************************************
+6287 F66081           (C:\Users\bhrou\gi):00119                 ldb   $6081                    * $6081 est l'image "lisible" de $E7E7
+628A CA10             (C:\Users\bhrou\gi):00120                 orb   #$10                     * positionne le bit d4 a 1
+628C F76081           (C:\Users\bhrou\gi):00121                 stb   $6081                    * maintient une image coherente de $E7E7
+628F F7E7E7           (C:\Users\bhrou\gi):00122                 stb   $E7E7                    * bit d4 a 1 pour pages donnees en mode registre
+                      (C:\Users\bhrou\gi):00123          
+                      (C:\Users\bhrou\gi):00124         ********************************************************************************
+                      (C:\Users\bhrou\gi):00125         * Lecture des donnees depuis la disquette et decompression par exomizer
+                      (C:\Users\bhrou\gi):00126         ********************************************************************************
+6292                  (C:\Users\bhrou\gi):00127         DKLecture
+     60               (C:\Users\bhrou\gi):00128                 setdp $60
+6292 8660             (C:\Users\bhrou\gi):00129                 lda   #$60
+6294 1F8B             (C:\Users\bhrou\gi):00130                 tfr   a,dp                     * positionne la direct page a 60
+                      (C:\Users\bhrou\gi):00131                 
+6296 CC6300           (C:\Users\bhrou\gi):00132                 ldd   #$6300
+6299 DD4F             (C:\Users\bhrou\gi):00133                 std   <$604F                   * DK.BUF Destination des donnees lues
+629B 8600             (C:\Users\bhrou\gi):00134                 lda   #$00
+629D 9749             (C:\Users\bhrou\gi):00135                 sta   <$6049                   * DK.DRV Lecteur        
+629F DD4A             (C:\Users\bhrou\gi):00136                 std   <$604A                   * DK.TRK Piste
+62A1 8602             (C:\Users\bhrou\gi):00137                 lda   #$02
+62A3 974C             (C:\Users\bhrou\gi):00138                 sta   <$604C                   * DK.SEC $02 Secteur
+62A5 9748             (C:\Users\bhrou\gi):00139                 sta   <$6048                   * DK.OPC $02 Operation - lecture d'un secteur
+62A7                  (C:\Users\bhrou\gi):00140         DKCO
+62A7 BDE82A           (C:\Users\bhrou\gi):00141                 jsr   $E82A                    * DKCO Appel Moniteur - lecture d'un secteur
+62AA 0C4C             (C:\Users\bhrou\gi):00142                 inc   <$604C                   * increment du registre Moniteur DK.SEC
+62AC 964C             (C:\Users\bhrou\gi):00143                 lda   <$604C                   * chargement de DK.SEC
+62AE 8110             (C:\Users\bhrou\gi):00144                 cmpa  #$10                     * si DK.SEC est inferieur ou egal a 16
+62B0 2310             (C:\Users\bhrou\gi):00145                 bls   DKContinue               * on continue le traitement
+62B2 8601             (C:\Users\bhrou\gi):00146                 lda   #$01                     * sinon on a depasse le secteur 16
+62B4 974C             (C:\Users\bhrou\gi):00147                 sta   <$604C                   * positionnement du secteur a 1
+62B6 0C4B             (C:\Users\bhrou\gi):00148                 inc   <$604B                   * increment du registre Moniteur DK.TRK
+62B8 964B             (C:\Users\bhrou\gi):00149                 lda   <$604B
+62BA 814F             (C:\Users\bhrou\gi):00150                 cmpa  #$4F                     * si DK.SEC est inferieur ou egal a 79
+62BC 2304             (C:\Users\bhrou\gi):00151                 bls   DKContinue               * on continue le traitement
+62BE 0F4B             (C:\Users\bhrou\gi):00152                 clr   <$604B                   * positionnement de la piste a 0
+62C0 0C49             (C:\Users\bhrou\gi):00153                 inc   <$6049                   * increment du registre Moniteur DK.DRV
+62C2                  (C:\Users\bhrou\gi):00154         DKContinue                            
+62C2 0C4F             (C:\Users\bhrou\gi):00155                 inc   <$604F                   * increment de 256 octets de la zone a ecrire DK.BUF
+62C4 DC4F             (C:\Users\bhrou\gi):00156                 ldd   <$604F                   * chargement de la zone a ecrire DK.BUF
+62C6                  (C:\Users\bhrou\gi):00157         dk_dernier_bloc                        
+62C6 10839E00         (C:\Users\bhrou\gi):00158                 cmpd  #$9E00                   * test debut du dernier bloc de 256 octets a ecrire
+62CA 23DB             (C:\Users\bhrou\gi):00159                 bls   DKCO                     * si DK.BUF inferieur ou egal a la limite alors DKCO
+                      (C:\Users\bhrou\gi):00160         
+62CC                  (C:\Users\bhrou\gi):00161         BOO_WaitVBL
+62CC 7DE7E7           (C:\Users\bhrou\gi):00162                 tst   $E7E7                    ; le faisceau n'est pas dans l'ecran
+62CF 2AFB             (C:\Users\bhrou\gi):00163                 bpl   BOO_WaitVBL              ; tant que le bit est a 0 on boucle
+62D1                  (C:\Users\bhrou\gi):00164         BOO_WaitVBL1
+62D1 7DE7E7           (C:\Users\bhrou\gi):00165                 tst   $E7E7                    ; le faisceau est dans l'ecran
+62D4 2BFB             (C:\Users\bhrou\gi):00166                 bmi   BOO_WaitVBL1             ; tant que le bit est a 1 on boucle
+                      (C:\Users\bhrou\gi):00167         
+                      (C:\Users\bhrou\gi):00168         * Positionnement de la page 3 a l'ecran
+                      (C:\Users\bhrou\gi):00169         ***************************************
+62D6 86C0             (C:\Users\bhrou\gi):00170                 lda   #$C0
+62D8 B7E7DD           (C:\Users\bhrou\gi):00171                 sta   $E7DD                    ; affiche la page a l'ecran
+                      (C:\Users\bhrou\gi):00172                 
+62DB 7E6300           (C:\Users\bhrou\gi):00173                 jmp   $6300
+                      (C:\Users\bhrou\gi):00174         
+                      (C:\Users\bhrou\gi):00175         * donnees pour le fondu de palette
+                      (C:\Users\bhrou\gi):00176         ********************************************************************************
+                      (C:\Users\bhrou\gi):00177         
+62DE                  (C:\Users\bhrou\gi):00178         pal_from
+62DE 0000             (C:\Users\bhrou\gi):00179                 fdb   $0000                    * couleur $00 Noir (Thomson) => 06 change bordure
+62E0 F00F             (C:\Users\bhrou\gi):00180                 fdb   $F00F                    * couleur $0C Turquoise (Bordure ecran)
+62E2 FF0F             (C:\Users\bhrou\gi):00181                 fdb   $FF0F                    * couleur $0E Blanc (TO8)
+62E4 7707             (C:\Users\bhrou\gi):00182                 fdb   $7707                    * couleur $10 Gris (Fond Bas)
+62E6 AA03             (C:\Users\bhrou\gi):00183                 fdb   $AA03                    * couleur $16 Jaune (Interieur case)
+62E8 330A             (C:\Users\bhrou\gi):00184                 fdb   $330A                    * couleur $18 Mauve (Fond TO8)
+                      (C:\Users\bhrou\gi):00185                                                                                
+62EA                  (C:\Users\bhrou\gi):00186         pal_len                                
+62EA 0C               (C:\Users\bhrou\gi):00187                 fcb   $0C                      * pour chaque couleur on defini un index limite
+62EB 0E               (C:\Users\bhrou\gi):00188                 fcb   $0E                      * (exclu) de chargement. ex: 0C, 0E, ... 
+62EC 10               (C:\Users\bhrou\gi):00189                 fcb   $10                      * la premiere couleur de PAL_FROM est chargee
+62ED 16               (C:\Users\bhrou\gi):00190                 fcb   $16                      * pour les couleurs 0(00) a 5(0A)
+62EE 18               (C:\Users\bhrou\gi):00191                 fcb   $18                      * la seconde couleur de PAL_FORM  est chargee
+62EF 20               (C:\Users\bhrou\gi):00192                 fcb   $20                      * pour la couleur 6(0C)
+62F0                  (C:\Users\bhrou\gi):00193         end_pal_len
+                      (C:\Users\bhrou\gi):00194            
+62F0                  (C:\Users\bhrou\gi):00195         pal_cycles
+62F0 10               (C:\Users\bhrou\gi):00196                 fcb   $10                      * nombre de frames de la transition (VSYNC)
+                      (C:\Users\bhrou\gi):00197                                                                                
+62F1                  (C:\Users\bhrou\gi):00198         pal_mask                               
+62F1 0F               (C:\Users\bhrou\gi):00199                 fcb   $0F                      * masque pour l'aternance du traitemet vert/rouge

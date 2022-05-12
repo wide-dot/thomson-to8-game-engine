@@ -1,0 +1,84 @@
+	INCLUDE "./Engine/Constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+BCKDRAW_Img_SSRing_025_0
+	STS glb_register_s
+
+	LEAS ,Y
+	LEAU -80,U
+
+	LDA -120,U
+	PSHS A
+	ANDA #$0F
+	ORA #$a0
+	STA -120,U
+	LDA -80,U
+	PSHS A
+	ANDA #$0F
+	ORA #$00
+	STA -80,U
+	LDA -40,U
+	PSHS A
+	ANDA #$0F
+	ORA #$00
+	STA -40,U
+	LDA ,U
+	PSHS A
+	ANDA #$0F
+	ORA #$00
+	STA ,U
+	LDA 40,U
+	PSHS A
+	ANDA #$0F
+	ORA #$a0
+	STA 40,U
+	LDA 80,U
+	PSHS A
+	ANDA #$0F
+	ORA #$a0
+	STA 80,U
+	LDA 120,U
+	PSHS U,A
+	ANDA #$0F
+	ORA #$a0
+	STA 120,U
+	LEAU 260,U
+
+	LDA -100,U
+	PSHS A
+	ANDA #$0F
+	ORA #$a0
+	STA -100,U
+	LDA -60,U
+	PSHS A
+	ANDA #$0F
+	ORA #$10
+	STA -60,U
+	LDA -20,U
+	PSHS A
+	ANDA #$0F
+	ORA #$10
+	STA -20,U
+	LDA 20,U
+	PSHS A
+	ANDA #$0F
+	ORA #$10
+	STA 20,U
+	LDA 60,U
+	PSHS A
+	ANDA #$0F
+	ORA #$10
+	STA 60,U
+	LDA 100,U
+	PSHS U,A
+	ANDA #$0F
+	ORA #$30
+	STA 100,U
+
+	LDU <glb_screen_location_1
+	LEAU ,S
+SSAV_Img_SSRing_025_0
+	LDS glb_register_s
+	RTS
+

@@ -1,0 +1,225 @@
+	INCLUDE "./Engine/Constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+ERASE_Img_sonic_060_0
+	STS glb_register_s
+
+	LEAS ,U
+ERASE_CODE_Img_sonic_060_0
+	PULS A,B,X,Y,U
+	STA 40,U
+	STB ,U
+	STX -41,U
+	STY -121,U
+
+	PULS A,B,X
+	STA 120,U
+	STB 80,U
+	STX -81,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D,X,Y
+	STD 82,U
+	STX 122,U
+	STY 43,U
+
+	PULS A,B
+	STA 124,U
+	STB 84,U
+
+	PULS A,X
+	STA 4,U
+	STX 41,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A
+	STA 4,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A
+	STA 4,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D
+	STD 39,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A
+	STA 3,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A
+	STA 3,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A
+	STA 3,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,B,X
+	STA -120,U
+	STB -118,U
+	STX -40,U
+
+	PULS A,B,X
+	STA -80,U
+	STB -78,U
+	STX -38,U
+
+	PULS A,B,U
+	STA -20,U
+	STB 20,U
+
+	PULS A,U
+	STA 119,U
+
+	PULS A,B
+	STA 79,U
+	STB -40,U
+
+	PULS A,X,Y
+	STA 40,U
+	STX ,U
+	STY -80,U
+
+	PULS D
+	STD -120,U
+
+	PULS D,X,U
+	STD -120,U
+	STX -80,U
+
+	PULS A,B
+	STA 120,U
+	STB 41,U
+
+	PULS A,B,X
+	STA -39,U
+	STB 1,U
+	STX -41,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D
+	STD 122,U
+
+	PULS A,X,Y
+	STA 40,U
+	STX 42,U
+	STY 82,U
+
+	PULS D,X,U
+	PSHU D,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X
+	STA 3,U
+	STX 38,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A
+	STA 38,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A
+	STA 38,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A
+	STA 38,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X,Y
+	STD 42,U
+	STX -38,U
+	STY 40,U
+
+	PULS D
+	STD -41,U
+
+	PULS A,B
+	STA 3,U
+	STB -78,U
+
+	PULS A,X
+	STA -120,U
+	STX -81,U
+
+	PULS A,U
+	STA 40,U
+
+	PULS A,B
+	STA -40,U
+	STB ,U
+
+	PULS A,B,U
+	STA 39,U
+	STB 41,U
+
+	PULS A,B,X,Y
+	STA 119,U
+	STB 79,U
+	STX -1,U
+	STY -41,U
+
+	PULS A,B
+	STA -120,U
+	STB -80,U
+
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+DataSize equ $00E9

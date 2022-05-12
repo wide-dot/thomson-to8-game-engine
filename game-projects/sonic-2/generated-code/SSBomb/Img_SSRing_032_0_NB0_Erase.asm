@@ -1,0 +1,102 @@
+	INCLUDE "./Engine/Constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+ERASE_Img_SSRing_032_0
+	STS glb_register_s
+
+	LEAS ,U
+ERASE_CODE_Img_SSRing_032_0
+	PULS A,U
+	STA 80,U
+
+	PULS A,B
+	STA ,U
+	STB -40,U
+
+	PULS A
+	STA -80,U
+
+	PULS A,U
+	STA -80,U
+
+	PULS D
+	STD -1,U
+
+	PULS A,B
+	STA -120,U
+	STB 1,U
+
+	PULS A,B
+	STA 40,U
+	STB -40,U
+
+	PULS A,B
+	STA 120,U
+	STB 80,U
+
+	PULS A,U
+	STA 119,U
+
+	PULS A,B
+	STA 79,U
+	STB 39,U
+
+	PULS A,X
+	STA ,U
+	STX -41,U
+
+	PULS A,B
+	STA -120,U
+	STB -80,U
+
+	PULS A,B,U
+	STA 81,U
+	STB 121,U
+
+	PULS A,B
+	STA 41,U
+	STB 39,U
+
+	PULS A,B
+	STA -1,U
+	STB -81,U
+
+	PULS A,B
+	STA -41,U
+	STB -121,U
+
+	PULS A,U
+	STA 80,U
+
+	PULS A,X,Y
+	STA 40,U
+	STX ,U
+	STY -40,U
+
+	PULS D
+	STD -80,U
+
+	PULS A,U
+	STA 119,U
+
+	PULS A,B
+	STA 79,U
+	STB -119,U
+
+	PULS A,U
+	STA 121,U
+
+	PULS A,B
+	STA 41,U
+	STB 1,U
+
+	PULS A,X
+	STA -121,U
+	STX 80,U
+
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+DataSize equ $003C

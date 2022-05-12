@@ -31,7 +31,7 @@ StopMusic                      rmb   1                ; Set to 7Fh to pause musi
 FadeOutCounter                 rmb   1        
 FadeOutDelay                   rmb   1        
 QueueToPlay                    rmb   1                ; if NOT set to 80h, means new index was requested by 68K
-SFXToPlay                      rmb   2                ; When Genesis wants to play "normal" sound, it writes it here *** moved to IrqSmpsObj.asm
+SFXToPlay                      rmb   1                ; When Genesis wants to play "normal" sound, it writes it here
 VoiceTblPtr                    rmb   2                ; address of the voices
 SFXVoiceTblPtr                 rmb   2                ; address of the SFX voices
 FadeInFlag                     rmb   1        

@@ -1,0 +1,145 @@
+	INCLUDE "./Engine/Constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+ERASE_Img_pressStart_0
+	STS glb_register_s
+
+	LEAS ,U
+ERASE_CODE_Img_pressStart_0
+	PULS D,X,U
+	PSHU D,X
+
+	PULS D,X,Y
+	STD 45,U
+	STX 42,U
+	STY 40,U
+
+	PULS D
+	STD 47,U
+
+	PULS A,B,X,Y
+	STA 49,U
+	STB 9,U
+	STX 7,U
+	STY 5,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS D,X,Y
+	STD 120,U
+	STX 82,U
+	STY 80,U
+
+	PULS D,X
+	STD 40,U
+	STX 74,U
+
+	PULS A,B
+	STA 124,U
+	STB 84,U
+
+	PULS A,B,X,Y
+	STA 38,U
+	STB 44,U
+	STX 114,U
+	STY 36,U
+
+	PULS D,X,Y
+	STD 42,U
+	STX 122,U
+	STY 34,U
+
+	PULS D,X
+	STD 77,U
+	STX 117,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X,Y
+	STA 8,U
+	STX 4,U
+	STY 6,U
+
+	PULS D
+	STD -2,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A,X,Y
+	STA 8,U
+	STX 6,U
+	STY 4,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS D,X
+	STD 40,U
+	STX 6,U
+
+	PULS A,X
+	STA 10,U
+	STX 8,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A
+	STA 3,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D
+	STD 4,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS A
+	STA 3,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X
+	STD 5,U
+	STX 3,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A,X,Y
+	STA 10,U
+	STX 8,U
+	STY 6,U
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A,X,Y,U
+	PSHU A,X,Y
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D,X,Y
+	STD 9,U
+	STX 7,U
+	STY 5,U
+
+	PULS D
+	STD 3,U
+
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+DataSize equ $00A5

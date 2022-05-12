@@ -1,0 +1,460 @@
+	INCLUDE "./Engine/Constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+BCKDRAW_Img_sonic_065_0
+	STS glb_register_s
+
+	LEAS ,Y
+	LEAU -479,U
+
+	LDD -81,U
+	PSHS D
+	ANDA #$F0
+	ANDB #$0F
+	ADDD #$0aa0
+	STD -81,U
+	LDX -41,U
+	LDY -1,U
+	PSHS Y,X
+	LDD 39,U
+	LDX 79,U
+	PSHS X,D
+	LDD #$aaaa
+	STD -41,U
+	STD -1,U
+	STD 39,U
+	STD 79,U
+	LDA 81,U
+	PSHS U,A
+	ANDA #$0F
+	ORA #$a0
+	STA 81,U
+	LEAU 238,U
+
+	LDD -120,U
+	PSHS D
+	ANDA #$F0
+	ORA #$09
+	LDB #$aa
+	STD -120,U
+	LDD -80,U
+	PSHS D
+	ANDA #$F0
+	ORA #$09
+	LDB #$aa
+	STD -80,U
+	LDD -40,U
+	PSHS D
+	ANDA #$F0
+	ORA #$09
+	LDB #$aa
+	STD -40,U
+	LDX -38,U
+	PSHS X
+	LDD -118,U
+	PSHS D
+	LDA #$aa
+	ANDB #$0F
+	ORB #$a0
+	STD -118,U
+	LDD -78,U
+	PSHS D
+	LDA #$aa
+	ANDB #$0F
+	ORB #$a0
+	STD -78,U
+	LDD #$aaaa
+	STD -38,U
+	PULU X,Y
+	PSHS U,Y,X
+	LDA #$9a
+	LDX #$aaaa
+	PSHU D,X
+	LEAU 40,U
+
+	PULU X,Y
+	PSHS U,Y,X
+	LDA #$99
+	LDX #$aaaa
+	PSHU D,X
+	LEAU 40,U
+
+	PULU X,Y
+	PSHS U,Y,X
+	LDX #$afaa
+	PSHU D,X
+	LEAU 40,U
+
+	PULU X,Y
+	PSHS U,Y,X
+	LDA #$9a
+	LDX #$afaa
+	PSHU D,X
+	LEAU 40,U
+
+	PULU X,Y
+	PSHS U,Y,X
+	LDA #$99
+	LDX #$aaaa
+	PSHU D,X
+	LEAU 40,U
+
+	PULU X,Y
+	PSHS U,Y,X
+	LDA #$9a
+	LDX #$aaaa
+	PSHU D,X
+	LEAU 40,U
+
+	PULU X,Y
+	PSHS U,Y,X
+	LDA #$99
+	LDX #$aaaa
+	PSHU D,X
+	LEAU 40,U
+
+	PULU X,Y
+	PSHS U,Y,X
+	LDX #$aaaa
+	PSHU D,X
+	LEAU 40,U
+
+	PULU X,Y
+	PSHS U,Y,X
+	LDX #$aaaa
+	PSHU D,X
+	LEAU 40,U
+
+	PULU X,Y
+	PSHS U,Y,X
+	LDX #$aaaa
+	PSHU D,X
+	LEAU 40,U
+
+	PULU X,Y
+	PSHS U,Y,X
+	LDX #$aaaa
+	PSHU D,X
+	LEAU 40,U
+
+	PULU X,Y
+	PSHS U,Y,X
+	LDA #$a9
+	LDX #$aaaa
+	PSHU D,X
+	LEAU 40,U
+
+	PULU X,Y
+	PSHS U,Y,X
+	LDB #$9a
+	LDX #$aaaa
+	PSHU D,X
+	LEAU 40,U
+
+	LDD 40,U
+	PSHS D
+	ANDA #$F0
+	ORA #$09
+	LDB #$aa
+	STD 40,U
+	LDD 80,U
+	PSHS D
+	ANDA #$F0
+	ORA #$0a
+	LDB #$aa
+	STD 80,U
+	LDD 120,U
+	PSHS D
+	ANDA #$F0
+	ORA #$0a
+	LDB #$aa
+	STD 120,U
+	LDX 42,U
+	LDY 82,U
+	PSHS Y,X
+	LDD 122,U
+	PSHS D
+	LDA #$99
+	ANDB #$0F
+	ORB #$a0
+	STD 122,U
+	LDD #$aaaa
+	STD 42,U
+	STD 82,U
+	PULU X,Y
+	PSHS U,Y,X
+	LDA #$a9
+	LDX #$aaaa
+	PSHU D,X
+	LEAU 241,U
+
+	LDX -80,U
+	LDA #$99
+	STD -80,U
+	LDY -40,U
+	PSHS Y,X
+	LDD ,U
+	LDX 40,U
+	PSHS X,D
+	LDD #$9999
+	STD -40,U
+	STD ,U
+	LDA #$a9
+	STD 40,U
+	LDD 80,U
+	PSHS D
+	ANDA #$F0
+	ANDB #$0F
+	ADDD #$0a90
+	STD 80,U
+	LDA -78,U
+	PSHS U,A
+	ANDA #$0F
+	ORA #$90
+	STA -78,U
+
+	LDU <glb_screen_location_1
+	LEAU -441,U
+
+	LDD -79,U
+	PSHS D
+	LDA #$aa
+	ANDB #$0F
+	ORB #$a0
+	STD -79,U
+	LDA -119,U
+	LDB -38,U
+	PSHS B,A
+	ANDB #$0F
+	ORB #$a0
+	STB -38,U
+	LDD -40,U
+	PSHS D
+	ANDA #$F0
+	ORA #$0a
+	LDB #$aa
+	STD -40,U
+	STB -119,U
+	PULU A,X
+	PSHS U,X,A
+	LDX #$aaaa
+	PSHU B,X
+	LEAU 40,U
+
+	PULU A,X
+	PSHS U,X,A
+	LDX #$aaaa
+	PSHU B,X
+	LEAU 40,U
+
+	PULU A,X
+	PSHS U,X,A
+	LDA #$9a
+	LDX #$aaaa
+	PSHU A,X
+	LEAU 40,U
+
+	PULU A,X
+	PSHS U,X,A
+	LDX #$aaaa
+	PSHU B,X
+	LEAU 40,U
+
+	PULU A,X
+	PSHS U,X,A
+	LDA #$9a
+	LDX #$aaaa
+	PSHU A,X
+	LEAU 40,U
+
+	PULU A,X
+	PSHS U,X,A
+	LDX #$aaaa
+	PSHU B,X
+	LEAU 40,U
+
+	PULU A,X
+	PSHS U,X,A
+	LDX #$aafa
+	PSHU B,X
+	LEAU 40,U
+
+	PULU A,X
+	PSHS U,X,A
+	LDA #$9a
+	LDX #$aafa
+	PSHU A,X
+	LEAU 40,U
+
+	LDA 3,U
+	PSHS A
+	ANDA #$0F
+	ORA #$a0
+	STA 3,U
+	PULU A,X
+	PSHS U,X,A
+	LDX #$aafa
+	PSHU B,X
+	LEAU 40,U
+
+	LDA 3,U
+	PSHS A
+	ANDA #$0F
+	ORA #$a0
+	STA 3,U
+	PULU A,X
+	PSHS U,X,A
+	LDA #$9a
+	LDX #$aafa
+	PSHU A,X
+	LEAU 40,U
+
+	LDA 3,U
+	PSHS A
+	ANDA #$0F
+	ORA #$a0
+	STA 3,U
+	PULU A,X
+	PSHS U,X,A
+	LDX #$aaaa
+	PSHU B,X
+	LEAU 40,U
+
+	LDA 3,U
+	PSHS A
+	ANDA #$0F
+	ORA #$a0
+	STA 3,U
+	PULU A,X
+	PSHS U,X,A
+	LDA #$9a
+	LDX #$aaaa
+	PSHU A,X
+	LEAU 40,U
+
+	LDA 3,U
+	PSHS A
+	ANDA #$0F
+	ORA #$a0
+	STA 3,U
+	PULU A,X
+	PSHS U,X,A
+	LDX #$aaaa
+	PSHU B,X
+	LEAU 40,U
+
+	LDA 3,U
+	PSHS A
+	ANDA #$0F
+	ORA #$a0
+	STA 3,U
+	PULU A,X
+	PSHS U,X,A
+	LDX #$aaaa
+	PSHU B,X
+	LEAU 40,U
+
+	LDA 3,U
+	PSHS A
+	ANDA #$0F
+	ORA #$a0
+	STA 3,U
+	PULU A,X
+	PSHS U,X,A
+	LDA #$9a
+	LDX #$aaaa
+	PSHU A,X
+	LEAU 40,U
+
+	LDA 3,U
+	PSHS A
+	ANDA #$0F
+	ORA #$a0
+	STA 3,U
+	PULU A,X
+	PSHS U,X,A
+	LDA #$a9
+	LDX #$aaaa
+	PSHU A,X
+	LEAU 40,U
+
+	PULU A,X
+	PSHS U,X,A
+	LDA #$9a
+	LDX #$aaaa
+	PSHU A,X
+	LEAU 40,U
+
+	PULU A,X
+	PSHS U,X,A
+	LDA #$a9
+	LDX #$aaaa
+	PSHU A,X
+	LEAU 40,U
+
+	PULU A,X
+	PSHS U,X,A
+	LDA #$9a
+	LDX #$aaaa
+	PSHU A,X
+	LEAU 40,U
+
+	PULU A,X
+	PSHS U,X,A
+	LDA #$99
+	LDX #$aaaa
+	PSHU A,X
+	LEAU 40,U
+
+	PULU A,X
+	PSHS U,X,A
+	LDA #$99
+	LDX #$9aaa
+	PSHU A,X
+	LEAU 40,U
+
+	PULU A,X
+	PSHS U,X,A
+	LDA #$99
+	LDX #$a9aa
+	PSHU A,X
+	LEAU 40,U
+
+	PULU A,X
+	PSHS U,X,A
+	LDA #$99
+	LDX #$9a99
+	PSHU A,X
+	LEAU 40,U
+
+	LDD 40,U
+	PSHS D
+	ANDA #$F0
+	ORA #$0a
+	LDB #$99
+	STD 40,U
+	LDD 81,U
+	PSHS D
+	LDA #$99
+	ANDB #$0F
+	ORB #$90
+	STD 81,U
+	LDA 121,U
+	LDB 42,U
+	PSHS B,A
+	ANDB #$0F
+	ORB #$90
+	STB 42,U
+	LDA #$a9
+	STA 121,U
+	PULU A,X
+	PSHS U,X,A
+	LDA #$a9
+	LDX #$99aa
+	PSHU A,X
+	LEAU ,S
+SSAV_Img_sonic_065_0
+	LDS glb_register_s
+	RTS
+

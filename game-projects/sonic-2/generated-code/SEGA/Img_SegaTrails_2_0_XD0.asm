@@ -1,0 +1,260 @@
+	INCLUDE "./Engine/Constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+DRAW_Img_SegaTrails_2_0
+	LEAU 1360,U
+
+	LDA #$88
+	LDX #$99aa
+	PSHU A,X
+	LEAU -77,U
+
+	LDD #$8899
+	LDX #$aabb
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	LDD #$899a
+	LDX #$abbb
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	LDD #$99aa
+	LDX #$bbbb
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	LDD #$899a
+	LDX #$abbb
+	PSHU D,X
+	LEAU -76,U
+
+	LDD #$99aa
+	LDX #$bbbb
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	LDD #$aabb
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	LDD #$9aab
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	LDD #$99aa
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	LDA -4,U
+	ANDA #$F0
+	ORA #$08
+	STA -4,U
+	LDA #$89
+	LDX #$9aab
+	PSHU A,X
+
+	LDU <glb_screen_location_1
+	LEAU 1360,U
+
+	LDA -4,U
+	ANDA #$F0
+	ORA #$08
+	STA -4,U
+	LDA #$89
+	LDX #$9aab
+	PSHU A,X
+	LEAU -77,U
+
+	LDD #$8899
+	LDX #$aabb
+	PSHU D,X
+	LEAU -76,U
+
+	LDD #$899a
+	LDX #$abbb
+	PSHU D,X
+	LEAU -76,U
+
+	LDD #$99aa
+	LDX #$bbbb
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	LDD #$9aab
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	LDD #$aabb
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	LDD #$9aab
+	PSHU D,X
+	LEAU -76,U
+
+	LDD #$99aa
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	LDD #$9aab
+	PSHU D,X
+	LEAU -76,U
+
+	LDD #$aabb
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	PSHU D,X
+	LEAU -76,U
+
+	LDD #$8899
+	LDX #$aabb
+	PSHU D,X
+	RTS
+
