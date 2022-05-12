@@ -756,7 +756,7 @@ ssamp5F         fcb   $FD,$09,$00,$03,$00,$1F,$1F,$1F,$1F,$10,$0C,$0C
                 fcb   $05,$03,$03,$03,$05,$1F,$6F,$8F,$5F,$1F,$22,$1F,$80
 
 ; spindash charge
-Sound60         fdb   ssamp60-Sound60,$0101
+Sound60         fdb   ssamp60-Sound60,$0101 
                 fdb   $8005,@a-Sound60,$FE00
 @a              fcb   $EF,$00,$F0,$00,$01,$22,$F6,$C4,$16,$E7,$F4,$D0,$18,$E7
 @b              fcb   $04,$E7,$E6
