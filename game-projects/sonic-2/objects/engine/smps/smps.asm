@@ -403,7 +403,7 @@ Sound3E         fdb   ssamp3E-Sound3E,$0101
                 fdb   $02F7,$002A
 @lb1            fdb   @b-@lb1 ; loopback
                 fcb   $F2
-ssamp3E         fcb   $11,$0C
+ssamp3E         fcb   $10,$0C
 ;ssamp3E         fcb   $3C,$00,$02,$44,$02,$1F,$1F,$1F,$15,$00,$00,$1F
 ;                fcb   $00,$00,$00,$00,$00,$0F,$0F,$0F,$0F,$0D,$28,$00,$00
 
@@ -763,7 +763,7 @@ Sound60         fdb   ssamp60-Sound60,$0101
                 fdb   $03F7,$0010
 @lb1            fdb   @b-@lb1 ; loopback
                 fcb   $F2
-ssamp60         fcb   $62,$0C
+ssamp60         fcb   $10,$0E
 ;ssamp60         fcb   $34,$00,$03,$0C,$09,$9F,$8C,$8F,$95,$00,$00,$00
 ;                fcb   $00,$00,$00,$00,$00,$0F,$0F,$0F,$0F,$00,$1D,$00,$00
 

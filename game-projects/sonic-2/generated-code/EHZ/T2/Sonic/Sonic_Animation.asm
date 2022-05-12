@@ -1,6 +1,6 @@
 	INCLUDE "./Engine/Graphics/ConstantsAnimation.asm"
 	INCLUDE "./generated-code/EHZ/T2/Sonic/Sonic_ImageSet.glb"
-	org   $3270
+	org   $3318
 	setdp $FF
 
 * Generated Code

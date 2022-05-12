@@ -28,10 +28,10 @@ Obj_Index_Page
         fcb   $64
 Obj_Index_Address
         fcb   $00,$00
-        fcb   $3B,$FB
-        fcb   $36,$85
-        fcb   $35,$1D
-        fcb   $28,$53
+        fcb   $3C,$A3
+        fcb   $37,$2D
+        fcb   $35,$C5
+        fcb   $28,$FB
         fcb   $02,$18
         fcb   $02,$03
 Map_EHZ 
@@ -61,7 +61,7 @@ Ani_Asd_Index
         fdb   $0000
         fdb   $0000
         fdb   $0000
-        fdb   $3270
+        fdb   $3318
         fdb   $0000
         fdb   $0000
 LoadAct
