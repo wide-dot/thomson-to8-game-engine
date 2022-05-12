@@ -1,6 +1,6 @@
 	opt   c,ct
 	INCLUDE "./generated-code/EHZ/T2/main-engine.glb"
-	org   $351D
+	org   $35C5
 	setdp $FF
 
         INCLUDE "./Engine/Macros.asm"  

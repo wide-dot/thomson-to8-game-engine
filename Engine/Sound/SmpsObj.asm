@@ -453,20 +453,20 @@ UpdateMusic
         adda  Smps.TempoTimeout        ; Adds previous value to
         sta   Smps.TempoTimeout        ; Store this as new
         bcc   @rts                     ; skip update if tempo need more waits
-       ;_UpdateTrack SongDAC,DACUpdateTrack
-       ;_UpdateTrack SongFM1,FMUpdateTrack
-       ;_UpdateTrack SongFM2,FMUpdateTrack
-       ;_UpdateTrack SongFM3,FMUpdateTrack
-       ;_UpdateTrack SongFM4,FMUpdateTrack
-       ;_UpdateTrack SongFM5,FMUpdateTrack
+        _UpdateTrack SongDAC,DACUpdateTrack
+        _UpdateTrack SongFM1,FMUpdateTrack
+        _UpdateTrack SongFM2,FMUpdateTrack
+        _UpdateTrack SongFM3,FMUpdateTrack
+        _UpdateTrack SongFM4,FMUpdateTrack
+        _UpdateTrack SongFM5,FMUpdateTrack
         ;_UpdateTrack SongFM6,FMUpdateTrack      ; uncomment to use this channel
         ;_UpdateTrack SongFM7,FMUpdateTrack      ; uncomment to use tone channel instead of drum kit
         ;_UpdateTrack SongFM8,FMUpdateTrack      ; uncomment to use tone channel instead of drum kit
         ;_UpdateTrack SongFM9,FMUpdateTrack      ; uncomment to use tone channel instead of drum kit        
         ;_UpdateTrack SongPSG4,PSGUpdateTrack    ; uncomment to use noise channel as an independent channel from tone 3
-       ;_UpdateTrack SongPSG1,PSGUpdateTrack
-       ;_UpdateTrack SongPSG2,PSGUpdateTrack        
-       ;_UpdateTrack SongPSG3,PSGUpdateTrack
+        _UpdateTrack SongPSG1,PSGUpdateTrack
+        _UpdateTrack SongPSG2,PSGUpdateTrack        
+        _UpdateTrack SongPSG3,PSGUpdateTrack
 @rts    rts
 
 UpdateSound        
@@ -482,12 +482,12 @@ UpdateSound
 !
         lda   #$80
         sta   DoSFXFlag                ; Set zDoSFXFlag = 80h (updating sound effects)
-       ;_UpdateTrack SFXFM3,FMUpdateTrack
-       ;_UpdateTrack SFXFM4,FMUpdateTrack
-       _UpdateTrack SFXFM5,FMUpdateTrack
-       ;_UpdateTrack SFXPSG1,PSGUpdateTrack
-       ;_UpdateTrack SFXPSG2,PSGUpdateTrack        
-       ;_UpdateTrack SFXPSG3,PSGUpdateTrack
+        _UpdateTrack SFXFM3,FMUpdateTrack
+        _UpdateTrack SFXFM4,FMUpdateTrack
+        _UpdateTrack SFXFM5,FMUpdateTrack
+        _UpdateTrack SFXPSG1,PSGUpdateTrack
+        _UpdateTrack SFXPSG2,PSGUpdateTrack        
+        _UpdateTrack SFXPSG3,PSGUpdateTrack
 @rts    rts
 
 * * ************************************************************************************
@@ -1138,7 +1138,7 @@ PlaySound
         lda   #-1                ; reset the extra frequency (becomes 0 on the next line)
 !
         inca                     ; increase the frequency
-        cmpa  #$0C
+        cmpa  #$05
         bhs   >
         sta   zSpindashExtraFrequencyIndex
 !

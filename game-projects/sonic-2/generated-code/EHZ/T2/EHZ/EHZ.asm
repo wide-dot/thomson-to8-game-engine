@@ -1,6 +1,6 @@
 	opt   c,ct
 	INCLUDE "./generated-code/EHZ/T2/main-engine.glb"
-	org   $3685
+	org   $372D
 	setdp $FF
 
 ; ---------------------------------------------------------------------------

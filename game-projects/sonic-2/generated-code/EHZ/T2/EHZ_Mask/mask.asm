@@ -1,7 +1,7 @@
 	opt   c,ct
 	INCLUDE "./generated-code/EHZ/T2/main-engine.glb"
 	INCLUDE "./generated-code/EHZ/T2/EHZ_Mask/EHZ_Mask_ImageSet.glb"
-	org   $3BFB
+	org   $3CA3
 	setdp $FF
 
 ; ---------------------------------------------------------------------------

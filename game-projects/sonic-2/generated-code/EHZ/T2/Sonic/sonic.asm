@@ -1,7 +1,7 @@
 	opt   c,ct
 	INCLUDE "./generated-code/EHZ/T2/main-engine.glb"
 	INCLUDE "./generated-code/EHZ/T2/Sonic/Sonic_Animation.glb"
-	org   $2853
+	org   $28FB
 	setdp $FF
 
 ; ---------------------------------------------------------------------------
