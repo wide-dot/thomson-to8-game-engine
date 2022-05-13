@@ -106,6 +106,13 @@ Obj01_Init_Continued                                  *  Obj01_Init_Continued:
         ;ldd   y_pos,u
         ;subd  #4
         ;std   y_pos,u                                 *  subi_.w #4,y_pos(a0)
+
+        ; todo replace this, will need to be able to compile dust object with a ref. to sonic anim
+        ; not possible at this time, have to fix the builder
+        ldx   #Sonic_Dust
+        ldd   #SonAni_Stop
+        std   ext_variables_obj+1,x        
+
                                                       *; ---------------------------------------------------------------------------
                                                       *; Normal state for Sonic
                                                       *; ---------------------------------------------------------------------------
@@ -961,11 +968,10 @@ Sonic_TurnLeft                                        *Sonic_TurnLeft:
         lda   air_left,u                              *  cmpi.b  #$C,air_left(a0)
         cmpa  #$C
         blo   return_1A744                            *  blo.s   return_1A744    ; if he's drowning, branch to not make dust
-        ;ldx   #Sonic_Dust
-        ;lda   #6
-        ;sta   routine,x                               *  move.b  #6,(Sonic_Dust+routine).w
-        ;ldd   #Imgxxx
-        ;std   image_set,x                            *  move.b  #$15,(Sonic_Dust+mapping_frame).w
+        ldx   #Sonic_Dust
+        lda   #3
+        sta   routine,x                               *  move.b  #6,(Sonic_Dust+routine).w
+        ;                                             *  move.b  #$15,(Sonic_Dust+mapping_frame).w
                                                       *
 return_1A744                                          *return_1A744:
         rts                                           *  rts
@@ -1027,11 +1033,10 @@ Sonic_TurnRight                                       *Sonic_TurnRight:
         lda   air_left,u                              *  cmpi.b  #$C,air_left(a0)
         cmpa  #$C
         blo   return_1A7C4                            *  blo.s   return_1A7C4    ; if he's drowning, branch to not make dust
-        ;ldx   #Sonic_Dust
-        ;lda   #6
-        ;sta   routine,x                               *  move.b  #6,(Sonic_Dust+routine).w
-        ;ldd   #Imgxxx
-        ;std   image_set,x                            *  move.b  #$15,(Sonic_Dust+mapping_frame).w
+        ldx   #Sonic_Dust
+        lda   #3
+        sta   routine,x                               *  move.b  #6,(Sonic_Dust+routine).w
+        ;                                             *  move.b  #$15,(Sonic_Dust+mapping_frame).w
                                                       *
 return_1A7C4                                          *return_1A7C4:
         rts                                           *  rts
@@ -1694,7 +1699,10 @@ Sonic_CheckSpindash                                   *Sonic_CheckSpindash:
         lda   air_left,u
         cmpa  #$C                                     *  cmpi.b  #$C,air_left(a0)    ; if he's drowning, branch to not make dust
         blo   >                                       *  blo.s   +
-        ;                                             *  move.b  #2,(Sonic_Dust+anim).w
+        ldx   #Sonic_Dust
+        ldd   #$0203
+        sta   routine_secondary,x                     *  move.b  #2,(Sonic_Dust+anim).w
+        stb   routine,x                               *  move.b  #6,(Sonic_Dust+routine).w
 !                                                     *+
         jsr   Sonic_LevelBound                        *  bsr.w   Sonic_LevelBound
         jsr   AnglePos                                *  bsr.w   AnglePos
@@ -1754,7 +1762,9 @@ Sonic_UpdateSpindash                                  *Sonic_UpdateSpindash:
         lda   status,u
         ora   #status_jumporroll
         sta   status,u                                *  bset    #2,status(a0)
-        ;                                             *  move.b  #0,(Sonic_Dust+anim).w
+        ldx   #Sonic_Dust
+        lda   #0
+        sta   routine_secondary,x                     *  move.b  #0,(Sonic_Dust+anim).w
         ldb   #SndID_SpindashRelease                  *  move.w  #SndID_SpindashRelease,d0   ; spindash zoom sound
         stb   Smps.SFXToPlay                          *  jsr (PlaySound).l
         bra   Obj01_Spindash_ResetScr                 *  bra.s   Obj01_Spindash_ResetScr

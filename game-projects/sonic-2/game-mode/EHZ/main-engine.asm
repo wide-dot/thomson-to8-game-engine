@@ -257,6 +257,7 @@ TlsAni_EHZ_pulseball3_imgs
         INCLUDE "./Engine/Graphics/BgBufferAlloc.asm"	
         INCLUDE "./Engine/Joypad/ReadJoypads2.asm"
         INCLUDE "./Engine/ObjectManagement/RunObjects.asm"
+        INCLUDE "./Engine/ObjectManagement/SingleObjLoad.asm"
         INCLUDE "./Engine/ObjectManagement/DeleteObject.asm"
         INCLUDE "./engine/object-management/clear-obj-107.asm"	
         INCLUDE "./Engine/Ram/ClearDataMemory.asm"
