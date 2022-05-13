@@ -3,8 +3,8 @@
 * ===========================================================================
 
 nb_reserved_objects               equ 1
-nb_dynamic_objects                equ 29
-nb_level_objects                  equ 0
+nb_dynamic_objects                equ 28
+nb_level_objects                  equ 1
 nb_graphical_objects              equ 30 * max 64 total
 
 * ===========================================================================
@@ -14,16 +14,14 @@ nb_graphical_objects              equ 30 * max 64 total
 Reserved_Object_RAM
 MainCharacter                 fcb   ObjID_Sonic
                               fill  0,main_object_size-1
-;Sidekick                      fill  0,main_object_size
 Reserved_Object_RAM_End
 Object_RAM
 Dynamic_Object_RAM            fill  0,nb_dynamic_objects*object_size
 Dynamic_Object_RAM_End
 
-LevelOnly_Object_RAM                              * faire comme pour Dynamic_Object_RAM
-;Obj_TailsTails                fill  0,object_size * Positionnement et nommage a mettre dans objet Tails
-;Obj_SonicDust                 fill  0,object_size * Positionnement et nommage a mettre dans objet Tails
-;Obj_TailsDust                 fill  0,object_size * Positionnement et nommage a mettre dans objet Tails
+LevelOnly_Object_RAM
+Sonic_Dust                    fcb   ObjID_SplashDust
+                              fill  0,object_size-1
 LevelOnly_Object_RAM_End
 Object_RAM_End
 
@@ -32,7 +30,7 @@ Object_RAM_End
 * ===========================================================================
 
 ; ext_variables_size is for dynamic objects
-ext_variables_size            equ 7
+ext_variables_size            equ   14
 
 status                        equ   status_flags   ; note  exact meaning depends on the object... for sonic/tails  bit 0  leftfacing. bit 1  inair. bit 2  spinning. bit 3  onobject. bit 4  rolljumping. bit 5  pushing. bit 6  underwater.
 width_pixels                  equ   ext_variables
@@ -42,38 +40,41 @@ angle                         equ   ext_variables+3 ; angle about the z axis (36
 collision_flags               equ   ext_variables+4
 collision_property            equ   ext_variables+5
 respawn_index                 equ   ext_variables+6
+parent                        equ   ext_variables+7
+ext_variables_obj             equ   object_core_size+9
+ext_variables_main            equ   object_core_size+ext_variables_size
 
 * ===========================================================================
 * Main characters object structure
 * ===========================================================================
 
-main_ext_variables_size       equ   34
+main_ext_variables_size       equ   ext_variables_size+27
 main_object_size              equ   object_core_size+main_ext_variables_size ; the size of a main character object
 next_main_object              equ   main_object_size
 
-inertia            equ   ext_variables+7  ; and +8 ; directionless representation of speed... not updated in the air
-flip_angle         equ   ext_variables+9  ; angle about the x axis (360 degrees  equ  256) (twist/tumble)
-air_left           equ   ext_variables+10
-flip_turned        equ   ext_variables+11 ; 0 for normal, 1 to invert flipping (it's a 180 degree rotation about the axis of Sonic's spine, so he stays in the same position but looks turned around)
-obj_control        equ   ext_variables+12 ; 0 for normal, 1 for hanging or for resting on a flipper, $81 for going through CNZ/OOZ/MTZ tubes or stopped in CNZ cages or stoppers or flying if Tails
-status_secondary   equ   ext_variables+13
-flips_remaining    equ   ext_variables+14 ; number of flip revolutions remaining
-flip_speed         equ   ext_variables+15 ; number of flip revolutions per frame / 256
-move_lock          equ   ext_variables+16 ; and +17 ; horizontal control lock, counts down to 0
-invulnerable_time  equ   ext_variables+18 ; and +19 ; time remaining until you stop blinking
-invincibility_time equ   ext_variables+20 ; and +21 ; remaining
-speedshoes_time    equ   ext_variables+22 ; and +23 ; remaining
-next_tilt          equ   ext_variables+24 ; angle on ground in front of sprite
-tilt               equ   ext_variables+25 ; angle on ground
-stick_to_convex    equ   ext_variables+26 ; 0 for normal, 1 to make Sonic stick to convex surfaces like the rotating discs in Sonic 1 and 3 (unused in Sonic 2 but fully functional)
-spindash_flag      equ   ext_variables+27 ; 0 for normal, 1 for charging a spindash or forced rolling
+inertia            equ   ext_variables_main    ; and +1 ; directionless representation of speed... not updated in the air
+flip_angle         equ   ext_variables_main+2  ; angle about the x axis (360 degrees  equ  256) (twist/tumble)
+air_left           equ   ext_variables_main+3
+flip_turned        equ   ext_variables_main+4  ; 0 for normal, 1 to invert flipping (it's a 180 degree rotation about the axis of Sonic's spine, so he stays in the same position but looks turned around)
+obj_control        equ   ext_variables_main+5  ; 0 for normal, 1 for hanging or for resting on a flipper, $81 for going through CNZ/OOZ/MTZ tubes or stopped in CNZ cages or stoppers or flying if Tails
+status_secondary   equ   ext_variables_main+6
+flips_remaining    equ   ext_variables_main+7  ; number of flip revolutions remaining
+flip_speed         equ   ext_variables_main+8  ; number of flip revolutions per frame / 256
+move_lock          equ   ext_variables_main+9  ; and +10 ; horizontal control lock, counts down to 0
+invulnerable_time  equ   ext_variables_main+11 ; and +12 ; time remaining until you stop blinking
+invincibility_time equ   ext_variables_main+13 ; and +14 ; remaining
+speedshoes_time    equ   ext_variables_main+15 ; and +16 ; remaining
+next_tilt          equ   ext_variables_main+17 ; angle on ground in front of sprite
+tilt               equ   ext_variables_main+18 ; angle on ground
+stick_to_convex    equ   ext_variables_main+19 ; 0 for normal, 1 to make Sonic stick to convex surfaces like the rotating discs in Sonic 1 and 3 (unused in Sonic 2 but fully functional)
+spindash_flag      equ   ext_variables_main+20 ; 0 for normal, 1 for charging a spindash or forced rolling
 pinball_mode       equ   spindash_flag
-spindash_counter   equ   ext_variables+28 ; and +29
-restart_countdown  equ   spindash_counter ; and 1+spindash_counter
-jumping            equ   ext_variables+30
-interact           equ   ext_variables+31 ; RAM address of the last object Sonic stood on, minus $FFFFB000 and divided by $40
-top_solid_bit      equ   ext_variables+32 ; the bit to check for top solidity (either $C or $E)
-lrb_solid_bit      equ   ext_variables+33 ; the bit to check for left/right/bottom solidity (either $D or $F)
+spindash_counter   equ   ext_variables_main+21 ; and +22
+restart_countdown  equ   spindash_counter
+jumping            equ   ext_variables_main+23
+interact           equ   ext_variables_main+24 ; RAM address of the last object Sonic stood on, minus $FFFFB000 and divided by $40
+top_solid_bit      equ   ext_variables_main+25 ; the bit to check for top solidity (either $C or $E)
+lrb_solid_bit      equ   ext_variables_main+26 ; the bit to check for left/right/bottom solidity (either $D or $F)
 
 ; ---------------------------------------------------------------------------
 ; Bits 3-6 of an object's status after a SolidObject call is a
@@ -168,3 +169,9 @@ camera_Y_pos_bias_default     equ   screen_top+(200/2)-16 ; position of default 
 Camera_Y_pos_bias             fdb   0
 Camera_Max_Y_Pos_Changing     fcb   0
 Horiz_scroll_delay_val        fdb   0
+
+* ---------------------------------------------------------------------------
+* Level Globals
+* ---------------------------------------------------------------------------
+   
+Water_Level_1                 fdb   0
