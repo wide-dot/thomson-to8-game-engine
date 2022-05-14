@@ -3368,7 +3368,7 @@ loc_1E86A                                             * loc_1E86A:
                                                       *         rts
                                                       * ; End of function FindWall2
                                                       * 
-                                                      * ; ---------------------------------------------------------------------------
+        ; START OF DEAD CODE                          * ; ---------------------------------------------------------------------------
                                                       * ; The subroutine appears to convert the collision array from an unknown
                                                       * ; 'raw' format to its current format, and write it to ROM, overwritting
                                                       * ; the original. This doesn't work on standard read-only cartridges, and
@@ -3474,7 +3474,7 @@ loc_1E86A                                             * loc_1E86A:
                                                       * 
                                                       *     if gameRevision<2
                                                       *         nop
-                                                      *     endif
+        ; END OF DEAD CODE                            *     endif
                                                       * 
                                                       * 
                                                       * 

@@ -402,11 +402,11 @@ DrawTile
         jmp   NextCol
 @a      stu   @dyn2
         sta   @dyn0
-        anda  #%10000000
+        anda  #%11111000                              ; save priority and solidity on first byte
         sta   ,y
         lda   #0
 @dyn0   equ   *-1
-        anda  #%01111111
+        anda  #%00000111                              ; remove priority and solidity to get tile index
         std   @dyn1                                   ; multiply tile index by 3 to load tile page and addr
         _lsld
         addd  #0                                      ; (dynamic)
