@@ -556,16 +556,54 @@ public class BuildDisk
 			for (tileId = 0; tileId < tileset.nbTiles; tileId++) {
 				logger.debug("\t\t"+object.name+" Compile tile: " + tileId);
 
-					sasm = new SimpleAssemblyGenerator(ss, Game.generatedCodeDirName + object.name, tileId, SimpleAssemblyGenerator._ODD_ALPHA);
-					sasm.compileCode("A000");						
+					// search for an identical tile
+					boolean isSame = false;
+					int s;
+					
+					for (s = 0; s < tileId; s++) {
+						isSame = true;
+						if ((ss.getSubImagePixels(tileId, 0).length != tileset.tiles.get(s).pixels0.length) ||
+							(ss.getSubImagePixels(tileId, 1).length != tileset.tiles.get(s).pixels1.length)){
+							isSame = false;
+						} else {
+							for (int b = 0; b < ss.getSubImagePixels(tileId, 0).length; b++) {
+								if ((ss.getSubImagePixels(tileId, 0)[b] != tileset.tiles.get(s).pixels0[b]) ||
+									(ss.getSubImagePixels(tileId, 1)[b] != tileset.tiles.get(s).pixels1[b])){
+									isSame = false;
+									break;
+								}
+							}
+						}
+						if (isSame) {
+							break;
+						}
+					}
+					
+					if (isSame) {
+						// for this tile index, use an identical tile
+						// at index construction, the same page/addr will be referenced
+						// tile will not be added to object thus no duplicate compilated sprite							
+						tileset.tiles.add(tileset.tiles.get(s));	
+						logger.info("Found duplicate tile for index: "+tileId+", will use index: "+s);
+//						logger.debug("Tile: "+tileId);
+//						logger.debug(SimpleAssemblyGenerator.debug80Col(ss.getSubImagePixels(tileId, 0)));
+//						logger.debug("Index: "+s);
+//						logger.debug(SimpleAssemblyGenerator.debug80Col(tileset.tiles.get(s).pixels));						
+						
+					} else {
+						sasm = new SimpleAssemblyGenerator(ss, Game.generatedCodeDirName + object.name, tileId, SimpleAssemblyGenerator._ODD_ALPHA);
+						sasm.compileCode("A000");						
 
-					TileBin tileBin = new TileBin(tileset);
-					tileBin.setName(tileset.name + "-" + tileId);
-					tileBin.bin = Files.readAllBytes(Paths.get(sasm.getDrawBINFile()));
-					tileBin.uncompressedSize = sasm.getDSize();
-					tileBin.inRAM = tileset.inRAM;							
-					tileset.tiles.add(tileBin);
-					object.tilesBin.add(tileBin);				
+						TileBin tileBin = new TileBin(tileset);
+						tileBin.setName(tileset.name + "-" + tileId);
+						tileBin.bin = Files.readAllBytes(Paths.get(sasm.getDrawBINFile()));
+						tileBin.uncompressedSize = sasm.getDSize();
+						tileBin.inRAM = tileset.inRAM;
+						tileBin.pixels0 = ss.getSubImagePixels(tileId, 0);						
+						tileBin.pixels1 = ss.getSubImagePixels(tileId, 1);
+						tileset.tiles.add(tileBin);
+						object.tilesBin.add(tileBin);
+					}
 			}
 
 			object.tilesets.put(tileset.name, tileset);

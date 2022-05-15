@@ -9,6 +9,8 @@ public class TileBin extends ItemBin{
 	public Tileset parent;
 	public String name = "";
 	public boolean inRAM = false;
+	public byte[] pixels0;
+	public byte[] pixels1;
 
 	public TileBin(Tileset p) {
 		parent = p;
