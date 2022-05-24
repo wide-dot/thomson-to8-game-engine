@@ -7,11 +7,12 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./Engine/Macros.asm"   
+        SETDP   direct_page/256
 
 WIDTH_FACTOR equ 1/2 ; BM16 is wide dot
-Sonic_top_speed_tmp    equ glb_tmp_var
-Sonic_acceleration_tmp equ glb_tmp_var+2
-Sonic_deceleration_tmp equ glb_tmp_var+4
+Sonic_top_speed_tmp    equ direct_page
+Sonic_acceleration_tmp equ direct_page+2
+Sonic_deceleration_tmp equ direct_page+4
 
                                                       *; ===========================================================================
                                                       *; ----------------------------------------------------------------------------
@@ -65,7 +66,7 @@ Obj01_Init                                            *  Obj01_Init:
                                                       *  ; only happens when not starting at a checkpoint:
         ; unused                                      *  move.w  #make_art_tile(ArtTile_ArtUnc_Sonic,0,0),art_tile(a0)
         ; unused                                      *  bsr.w   Adjust2PArtPointer
-        ldd   #$0C0D
+        ldd   #$0810
         sta   top_solid_bit,u                         *  move.b  #$C,top_solid_bit(a0)
         sta   Saved_Solid_bits
         stb   lrb_solid_bit,u                         *  move.b  #$D,lrb_solid_bit(a0)
@@ -468,7 +469,7 @@ ObjectMoveAndFall
         sty   @y_vel
         ;
         ldd   x_vel,u
-        ldx   Vint_Main_runcount_w     ; take number of elapsed frame since last render and multiply by inertia/2
+        ldx   Vint_Main_runcount_w     ; take number of elapsed frame since last render and multiply
         beq   @ObjMv
 !       addd  x_vel,u
         leax  -1,x
@@ -838,15 +839,17 @@ Obj01_SettleLeft                                      *Obj01_SettleLeft:
                                                       *; increase or decrease speed on the ground
                                                       *; loc_1A630:
 Obj01_Traction                                        *Obj01_Traction:
-        lda   angle,u                                 *  move.b  angle(a0),d0
-        ;jsr  CalcSine                                *  jsr (CalcSine).l
-        ;                                             *  muls.w  inertia(a0),d1
+        ldb   angle,u                                 *  move.b  angle(a0),d0
+        jsr   CalcSine                                *  jsr (CalcSine).l
+        tfr   x,d
+        ldx   inertia,u
+        jsr   Mul9x16                                 *  muls.w  inertia(a0),d1
         ;                                             *  asr.l   #8,d1
-        ldd   inertia,u
+        std   glb_d1
         ldx   Vint_Main_runcount_w
         beq   @end
 @loop
-        addd  inertia,u
+        addd  glb_d1
         leax  -1,x
         bne   @loop 
 @end    std   x_vel,u                                  *  move.w  d1,x_vel(a0)
@@ -1154,13 +1157,18 @@ Obj01_Roll_ResetScr                                   *Obj01_Roll_ResetScr:
 
                                                       *; loc_1A86C:
 Sonic_SetRollSpeeds                                   *Sonic_SetRollSpeeds:
-        lda   angle,u                                 *  move.b  angle(a0),d0
-                                                      *  jsr (CalcSine).l
-                                                      *  muls.w  inertia(a0),d0
-                                                      *  asr.l   #8,d0
-                                                      *  move.w  d0,y_vel(a0)    ; set y velocity based on $14 and angle
-        ldd   inertia,u                               *  muls.w  inertia(a0),d1
-                                                      *  asr.l   #8,d1
+        ldb   angle,u                                 *  move.b  angle(a0),d0
+        jsr   CalcSine                                *  jsr (CalcSine).l
+        stx   glb_d1
+        ldx   inertia,u
+        jsr   Mul9x16                                 *  muls.w  inertia(a0),d0
+        ;                                             *  asr.l   #8,d0
+        std   y_vel,u                                 *  move.w  d0,y_vel(a0)    ; set y velocity based on $14 and angle
+        ldd   glb_d1
+        ldx   inertia,u
+        jsr   Mul9x16                                 *  muls.w  inertia(a0),d1
+        ;                                             *  asr.l   #8,d1
+        std   glb_d1
         cmpd  #$1000                                  *  cmpi.w  #$1000,d1
         ble   >                                       *  ble.s   +
         ldd   #$1000                                  *  move.w  #$1000,d1   ; limit Sonic's speed rolling right
@@ -1172,7 +1180,7 @@ Sonic_SetRollSpeeds                                   *Sonic_SetRollSpeeds:
         ldx   Vint_Main_runcount_w
         beq   @end
 @loop
-        addd  inertia,u
+        addd  glb_d1
         leax  -1,x
         bne   @loop 
 @end    std   x_vel,u                                 *  move.w  d1,x_vel(a0)    ; set x velocity based on $14 and angle
@@ -1460,37 +1468,41 @@ return_1AA36                                          *return_1AA36:
 Sonic_Jump                                            *Sonic_Jump:
         lda   Ctrl_1_Press_Logical                    *  move.b  (Ctrl_1_Press_Logical).w,d0
         anda  #button_B_mask|button_A_mask            *  andi.b  #button_B_mask|button_C_mask|button_A_mask,d0 ; is A, B or C pressed?
-        beq   return_1AAE6                            *  beq.w   return_1AAE6    ; if not, return
-        ;lda   #0                                      *  moveq   #0,d0
-        ;ldb   angle,u                                 *  move.b  angle(a0),d0
-        ;addb  #$80                                    *  addi.b  #$80,d0
-        ;bsr   CalcRoomOverHead                        *  bsr.w   CalcRoomOverHead
-        ;cmpd  #6                                      *  cmpi.w  #6,d1           ; does Sonic have enough room to jump?
-        ;blt   return_1AAE6                            *  blt.w   return_1AAE6        ; if not, branch
+        lbeq  return_1AAE6                            *  beq.w   return_1AAE6    ; if not, return
+        ;lda   #0                                     *  moveq   #0,d0
+        ldb   angle,u                                 *  move.b  angle(a0),d0
+        addb  #$80                                    *  addi.b  #$80,d0
+        std   glb_d0
+        jsr   CalcRoomOverHead                        *  bsr.w   CalcRoomOverHead
+        ldd   glb_d1
+        cmpd  #6                                      *  cmpi.w  #6,d1           ; does Sonic have enough room to jump?
+        blt   return_1AAE6                            *  blt.w   return_1AAE6        ; if not, branch
         ldx   #$680                                   *  move.w  #$680,d2
         ; unimplemented                               *  tst.b   (Super_Sonic_flag).w
         ;                                             *  beq.s   +
-        ;                                              *  move.w  #$800,d2    ; set higher jump speed if super
+        ;                                             *  move.w  #$800,d2    ; set higher jump speed if super
                                                       *+
-        lda   status,u                          *  btst    #6,status(a0)   ; Test if underwater
+        lda   status,u                                *  btst    #6,status(a0)   ; Test if underwater
         bita  #status_underwater                      
         beq   >                                       *  beq.s   +       ; if not, branch
         ldx   #$380                                   *  move.w  #$380,d2    ; set lower jump speed if under
 !                                                     *+
-        ;lda   #0                                      *  moveq   #0,d0
-        ;ldb   angle,u                                 *  move.b  angle(a0),d0
-        ;subb  #$40                                    *  subi.b  #$40,d0
-        ;jsr   CalcSine                                *  jsr (CalcSine).l
-        ;                                              *  muls.w  d2,d1
-        ;                                              *  asr.l   #8,d1
-        ;                                             *  add.w   d1,x_vel(a0)    ; make Sonic jump (in X... this adds nothing on level ground)
-        ;                                              *  muls.w  d2,d0
-        ;                                              *  asr.l   #8,d0
-        ldd   inertia,u
-        std   x_vel,u
-
+        ;lda   #0                                     *  moveq   #0,d0
+        ldb   angle,u                                 *  move.b  angle(a0),d0
+        subb  #$40                                    *  subi.b  #$40,d0
+        stx   glb_d2
+        jsr   CalcSine                                *  jsr (CalcSine).l
+        std   glb_d0
         tfr   x,d
-        _negd
+        ldx   glb_d2
+        jsr   Mul9x16                                 *  muls.w  d2,d1
+        ;                                             *  asr.l   #8,d1
+        addd  x_vel,u                                 *  add.w   d1,x_vel(a0)    ; make Sonic jump (in X... this adds nothing on level ground)
+        std   x_vel,u
+        ldd   glb_d0
+        ldx   glb_d2
+        jsr   Mul9x16                                 *  muls.w  d2,d0
+        ;                                             *  asr.l   #8,d0
         addd  y_vel,u
         std   y_vel,u                                 *  add.w   d0,y_vel(a0)    ; make Sonic jump (in Y)
         ldb   status,u
@@ -2043,62 +2055,78 @@ return_1AEA8                                          *return_1AEA8:
                                                       *
                                                       *; loc_1AEAA: Sonic_Floor:
 Sonic_DoLevelCollision                                *Sonic_DoLevelCollision:
-                                                      *  move.l  #Primary_Collision,(Collision_addr).w
-                                                      *  cmpi.b  #$C,top_solid_bit(a0)
-                                                      *  beq.s   +
-                                                      *  move.l  #Secondary_Collision,(Collision_addr).w
-                                                      *+
-                                                      *  move.b  lrb_solid_bit(a0),d5
-                                                      *  move.w  x_vel(a0),d1
-                                                      *  move.w  y_vel(a0),d2
-                                                      *  jsr (CalcAngle).l
-                                                      *  subi.b  #$20,d0
-                                                      *  andi.b  #$C0,d0
-                                                      *  cmpi.b  #$40,d0
-                                                      *  beq.w   Sonic_HitLeftWall
-                                                      *  cmpi.b  #$80,d0
-                                                      *  beq.w   Sonic_HitCeilingAndWalls
-                                                      *  cmpi.b  #$C0,d0
-                                                      *  beq.w   Sonic_HitRightWall
-                                                      *  bsr.w   CheckLeftWallDist
-                                                      *  tst.w   d1
-                                                      *  bpl.s   +
-                                                      *  sub.w   d1,x_pos(a0)
-                                                      *  move.w  #0,x_vel(a0) ; stop Sonic since he hit a wall
-                                                      *+
-                                                      *  bsr.w   CheckRightWallDist
-                                                      *  tst.w   d1
-                                                      *  bpl.s   +
-                                                      *  add.w   d1,x_pos(a0)
-                                                      *  move.w  #0,x_vel(a0) ; stop Sonic since he hit a wall
-                                                      *+
-                                                      *  bsr.w   Sonic_CheckFloor
-                                                      *  tst.w   d1
-                                                      *  bpl.s   return_1AF8A
-                                                      *  move.b  y_vel(a0),d2
-                                                      *  addq.b  #8,d2
-                                                      *  neg.b   d2
-        ldd   y_pos,u
-        cmpd  #screen_top+20+$028F+5                  *  cmp.b   d2,d1
-        bge   >                                       *  bge.s   +
-                                                      *  cmp.b   d2,d0
-        rts                                           *  blt.s   return_1AF8A
+        ldx   Primary_Collision                       *         move.l  #Primary_Collision,(Collision_addr).w
+        lda   top_solid_bit,u
+        cmpa  #$8                                     *         cmpi.b  #$C,top_solid_bit(a0)
+        beq   >                                       *         beq.s   +
+        ldx   Secondary_Collision                     *         move.l  #Secondary_Collision,(Collision_addr).w
+!       stx   Collision_addr                          * +
+        lda   lrb_solid_bit,u
+        sta   glb_d5_b                                *  move.b  lrb_solid_bit(a0),d5
+        ldx   x_vel,u                                 *  move.w  x_vel(a0),d1
+        ldd   y_vel,u                                 *  move.w  y_vel(a0),d2
+        jsr   CalcAngle                               *  jsr (CalcAngle).l
+        suba  #$20                                    *  subi.b  #$20,d0
+        anda  #$C0                                    *  andi.b  #$C0,d0
+        cmpa  #$40                                    *  cmpi.b  #$40,d0
+        lbeq   Sonic_HitLeftWall                      *  beq.w   Sonic_HitLeftWall
+        cmpa  #$80                                    *  cmpi.b  #$80,d0
+        lbeq   Sonic_HitCeilingAndWalls               *  beq.w   Sonic_HitCeilingAndWalls
+        cmpa  #$C0                                    *  cmpi.b  #$C0,d0
+        lbeq   Sonic_HitRightWall                     *  beq.w   Sonic_HitRightWall
+        jsr   CheckLeftWallDist                       *  bsr.w   CheckLeftWallDist
+        ldd   glb_d1                                  *  tst.w   d1
+        bpl   >                                       *  bpl.s   +
+        _negd
+        addd  x_pos,u                                 *  sub.w   d1,x_pos(a0)
+        std   x_pos,u
+        ldd   #0
+        std   x_vel,u                                 *  move.w  #0,x_vel(a0) ; stop Sonic since he hit a wall
 !                                                     *+
-        ldd   #screen_top+20+$028F+5
+        jsr   CheckRightWallDist                      *  bsr.w   CheckRightWallDist
+        ldd   glb_d1                                  *  tst.w   d1
+        bpl   >                                       *  bpl.s   +
+        addd  x_pos,u                                 *  add.w   d1,x_pos(a0)
+        std   x_pos,u
+        ldd   #0
+        std   x_pos,u                                 *  move.w  #0,x_vel(a0) ; stop Sonic since he hit a wall
+!                                                     *+
+        jsr   Sonic_CheckFloor                        *  bsr.w   Sonic_CheckFloor
+        ldd   glb_d1                                  *  tst.w   d1
+        bpl   return_1AF8A                            *  bpl.s   return_1AF8A
+        lda   y_vel+1,u                               *  move.b  y_vel(a0),d2
+        adda  #8                                      *  addq.b  #8,d2
+        nega                                          *  neg.b   d2
+        sta   glb_d2_b
+        lda   glb_d1_b
+        cmpa  glb_d2_b                                *  cmp.b   d2,d1
+        bge   >                                       *  bge.s   +
+        lda   glb_d0_b
+        cmpa  glb_d2_b                                *  cmp.b   d2,d0
+        blt   return_1AF8A                            *  blt.s   return_1AF8A
+!           
+        ldd   y_pos,u                                 *+
+        addd  glb_d1                                  *  add.w   d1,y_pos(a0)
         std   y_pos,u
-                                                      *  add.w   d1,y_pos(a0)
-                                                      *  move.b  d3,angle(a0)
+        lda   glb_d3_b
+        sta   angle,u                                 *  move.b  d3,angle(a0)
         jsr   Sonic_ResetOnFloor                      *  bsr.w   Sonic_ResetOnFloor
-                                                      *  move.b  d3,d0
-                                                      *  addi.b  #$20,d0
-                                                      *  andi.b  #$40,d0
-                                                      *  bne.s   loc_1AF68
-                                                      *  move.b  d3,d0
-                                                      *  addi.b  #$10,d0
-                                                      *  andi.b  #$20,d0
-                                                      *  beq.s   loc_1AF5A
-                                                      *  asr y_vel(a0)
-        ;bra   loc_1AF7C                               *  bra.s   loc_1AF7C
+        lda   glb_d3_b
+        sta   glb_d0_b                                *  move.b  d3,d0
+        adda  #$20                                    *  addi.b  #$20,d0
+        anda  #$40                                    *  andi.b  #$40,d0
+        sta   glb_d0_b
+        bne   loc_1AF68                               *  bne.s   loc_1AF68
+        lda   glb_d3_b
+        sta   glb_d0_b                                *  move.b  d3,d0
+        adda  #$10                                    *  addi.b  #$10,d0
+        anda  #$20                                    *  andi.b  #$20,d0
+        sta   glb_d0_b
+        beq   loc_1AF5A                               *  beq.s   loc_1AF5A
+        ldd   y_vel,u
+        _asrd
+        std   y_vel,u                                 *  asr y_vel(a0)
+        bra   loc_1AF7C                               *  bra.s   loc_1AF7C
                                                       *; ===========================================================================
                                                       *
 loc_1AF5A                                             *loc_1AF5A:
@@ -2110,116 +2138,150 @@ loc_1AF5A                                             *loc_1AF5A:
                                                       *; ===========================================================================
                                                       *
 loc_1AF68                                             *loc_1AF68:
-                                                      *  move.w  #0,x_vel(a0) ; stop Sonic since he hit a wall
-                                                      *  cmpi.w  #$FC0,y_vel(a0)
-                                                      *  ble.s   loc_1AF7C
-                                                      *  move.w  #$FC0,y_vel(a0)
+        ldd   #0
+        std   x_vel,u                                 *  move.w  #0,x_vel(a0) ; stop Sonic since he hit a wall
+        ldd   y_vel,u
+        cmpd  #$FC0                                   *  cmpi.w  #$FC0,y_vel(a0)
+        ble   loc_1AF7C                               *  ble.s   loc_1AF7C
+        ldd   #$FC0
+        std   y_vel,u                                 *  move.w  #$FC0,y_vel(a0)
                                                       *
 loc_1AF7C                                             *loc_1AF7C:
-                                                      *  move.w  y_vel(a0),inertia(a0)
-                                                      *  tst.b   d3
-                                                      *  bpl.s   return_1AF8A
-                                                      *  neg.w   inertia(a0)
+        ldd   y_vel,u
+        std   inertia,u                               *  move.w  y_vel(a0),inertia(a0)
+        tst   glb_d3_b                                *  tst.b   d3
+        bpl   return_1AF8A                            *  bpl.s   return_1AF8A
+        neg   inertia,u                               *  neg.w   inertia(a0)
+        neg   inertia+1,u
                                                       *
 return_1AF8A                                          *return_1AF8A:
         rts                                           *  rts
                                                       *; ===========================================================================
                                                       *; loc_1AF8C:
 Sonic_HitLeftWall                                     *Sonic_HitLeftWall:
-                                                      *  bsr.w   CheckLeftWallDist
-                                                      *  tst.w   d1
-                                                      *  bpl.s   Sonic_HitCeiling ; branch if distance is positive (not inside wall)
-                                                      *  sub.w   d1,x_pos(a0)
-                                                      *  move.w  #0,x_vel(a0) ; stop Sonic since he hit a wall
-                                                      *  move.w  y_vel(a0),inertia(a0)
+        jsr   CheckLeftWallDist                       *  bsr.w   CheckLeftWallDist
+        ldd   glb_d1                                  *  tst.w   d1
+        bpl   Sonic_HitCeiling                        *  bpl.s   Sonic_HitCeiling ; branch if distance is positive (not inside wall)
+        ldd   x_pos,u
+        subd  glb_d1
+        std   x_pos,u                                 *  sub.w   d1,x_pos(a0)
+        ldd   #0
+        std   x_vel,u                                 *  move.w  #0,x_vel(a0) ; stop Sonic since he hit a wall
+        ldd   y_vel,u
+        std   inertia,u                               *  move.w  y_vel(a0),inertia(a0)
         rts                                           *  rts
                                                       *; ===========================================================================
                                                       *; loc_1AFA6:
 Sonic_HitCeiling                                      *Sonic_HitCeiling:
-                                                      *  bsr.w   Sonic_CheckCeiling
-                                                      *  tst.w   d1
-                                                      *  bpl.s   Sonic_HitFloor ; branch if distance is positive (not inside ceiling)
-                                                      *  sub.w   d1,y_pos(a0)
-                                                      *  tst.w   y_vel(a0)
-                                                      *  bpl.s   return_1AFBE
-                                                      *  move.w  #0,y_vel(a0) ; stop Sonic in y since he hit a ceiling
+        jsr   Sonic_CheckCeiling                      *  bsr.w   Sonic_CheckCeiling
+        ldd   glb_d1                                  *  tst.w   d1
+        bpl   Sonic_HitFloor                          *  bpl.s   Sonic_HitFloor ; branch if distance is positive (not inside ceiling)
+        ldd   y_pos,u
+        subd  glb_d1
+        std   y_pos,u                                 *  sub.w   d1,y_pos(a0)
+        ldd   y_vel,u                                 *  tst.w   y_vel(a0)
+        bpl   return_1AFBE                            *  bpl.s   return_1AFBE
+        ldd   #0
+        std   y_vel,u                                 *  move.w  #0,y_vel(a0) ; stop Sonic in y since he hit a ceiling
                                                       *
 return_1AFBE                                          *return_1AFBE:
         rts                                           *  rts
                                                       *; ===========================================================================
                                                       *; loc_1AFC0:
 Sonic_HitFloor                                        *Sonic_HitFloor:
-                                                      *  tst.w   y_vel(a0)
-                                                      *  bmi.s   return_1AFE6
-                                                      *  bsr.w   Sonic_CheckFloor
-                                                      *  tst.w   d1
-                                                      *  bpl.s   return_1AFE6
-                                                      *  add.w   d1,y_pos(a0)
-                                                      *  move.b  d3,angle(a0)
-                                                      *  bsr.w   Sonic_ResetOnFloor
-                                                      *  move.w  #0,y_vel(a0)
-                                                      *  move.w  x_vel(a0),inertia(a0)
+        ldd   y_vel,u                                 *  tst.w   y_vel(a0)
+        bmi   return_1AFE6                            *  bmi.s   return_1AFE6
+        jsr   Sonic_CheckFloor                        *  bsr.w   Sonic_CheckFloor
+        ldd   glb_d1                                  *  tst.w   d1
+        bpl   return_1AFE6                            *  bpl.s   return_1AFE6
+        ldd   y_pos,u
+        addd  glb_d1
+        std   y_pos,u                                 *  add.w   d1,y_pos(a0)
+        lda   glb_d3_b
+        sta   angle,u                                 *  move.b  d3,angle(a0)
+        jsr   Sonic_ResetOnFloor                      *  bsr.w   Sonic_ResetOnFloor
+        ldd   #0
+        std   y_vel,u                                 *  move.w  #0,y_vel(a0)
+        ldd   x_vel,u
+        std   inertia,u                               *  move.w  x_vel(a0),inertia(a0)
                                                       *
 return_1AFE6                                          *return_1AFE6:
         rts                                           *  rts
                                                       *; ===========================================================================
                                                       *; loc_1AFE8:
 Sonic_HitCeilingAndWalls                              *Sonic_HitCeilingAndWalls:
-                                                      *  bsr.w   CheckLeftWallDist
-                                                      *  tst.w   d1
-                                                      *  bpl.s   +
+        jsr   CheckLeftWallDist                       *  bsr.w   CheckLeftWallDist
+        ldd   glb_d1                                  *  tst.w   d1
+        bpl   >                                       *  bpl.s   +
                                                       *  sub.w   d1,x_pos(a0)
                                                       *  move.w  #0,x_vel(a0)    ; stop Sonic since he hit a wall
-                                                      *+
-                                                      *  bsr.w   CheckRightWallDist
-                                                      *  tst.w   d1
-                                                      *  bpl.s   +
-                                                      *  add.w   d1,x_pos(a0)
-                                                      *  move.w  #0,x_vel(a0)    ; stop Sonic since he hit a wall
-                                                      *+
-                                                      *  bsr.w   Sonic_CheckCeiling
-                                                      *  tst.w   d1
-                                                      *  bpl.s   return_1B042
-                                                      *  sub.w   d1,y_pos(a0)
-                                                      *  move.b  d3,d0
-                                                      *  addi.b  #$20,d0
-                                                      *  andi.b  #$40,d0
-                                                      *  bne.s   loc_1B02C
-                                                      *  move.w  #0,y_vel(a0) ; stop Sonic in y since he hit a ceiling
+!                                                     *+
+        jsr   CheckRightWallDist                      *  bsr.w   CheckRightWallDist
+        ldd   glb_d1                                  *  tst.w   d1
+        bpl   >                                       *  bpl.s   +
+        ldd   x_pos,u
+        addd  glb_d1                                  *  add.w   d1,x_pos(a0)
+        std   x_pos,u
+        ldd   #0
+        std   x_vel,u                                 *  move.w  #0,x_vel(a0)    ; stop Sonic since he hit a wall
+!                                                     *+
+        jsr   Sonic_CheckCeiling                      *  bsr.w   Sonic_CheckCeiling
+        ldd   glb_d1                                  *  tst.w   d1
+        bpl   return_1B042                            *  bpl.s   return_1B042
+        ldd   y_pos,u
+        subd  glb_d1                                  *  sub.w   d1,y_pos(a0)
+        lda   glb_d3_b
+        sta   glb_d0_b                                *  move.b  d3,d0
+        adda  #$20                                    *  addi.b  #$20,d0
+        anda  #$40                                    *  andi.b  #$40,d0
+        sta   glb_d0_b
+        bne   loc_1B02C                               *  bne.s   loc_1B02C
+        ldd   #0
+        std   y_vel,u                                 *  move.w  #0,y_vel(a0) ; stop Sonic in y since he hit a ceiling
         rts                                           *  rts
                                                       *; ===========================================================================
                                                       *
 loc_1B02C                                             *loc_1B02C:
-                                                      *  move.b  d3,angle(a0)
-                                                      *  bsr.w   Sonic_ResetOnFloor
-                                                      *  move.w  y_vel(a0),inertia(a0)
-                                                      *  tst.b   d3
-                                                      *  bpl.s   return_1B042
-                                                      *  neg.w   inertia(a0)
+        lda   glb_d3_b
+        sta   angle,u                                 *  move.b  d3,angle(a0)
+        jsr   Sonic_ResetOnFloor                      *  bsr.w   Sonic_ResetOnFloor
+        ldd   y_vel,u
+        std   inertia,u                               *  move.w  y_vel(a0),inertia(a0)
+        tst   glb_d3_b                                *  tst.b   d3
+        bpl   return_1B042                            *  bpl.s   return_1B042
+        ldd   inertia,u
+        _negd                                         *  neg.w   inertia(a0)
+        std   inertia,u
                                                       *
 return_1B042                                          *return_1B042:
         rts                                           *  rts
                                                       *; ===========================================================================
                                                       *; loc_1B044:
 Sonic_HitRightWall                                    *Sonic_HitRightWall:
-                                                      *  bsr.w   CheckRightWallDist
-                                                      *  tst.w   d1
-                                                      *  bpl.s   Sonic_HitCeiling2
-                                                      *  add.w   d1,x_pos(a0)
-                                                      *  move.w  #0,x_vel(a0) ; stop Sonic since he hit a wall
-                                                      *  move.w  y_vel(a0),inertia(a0)
+        jsr   CheckRightWallDist                      *  bsr.w   CheckRightWallDist
+        ldd   glb_d1                                  *  tst.w   d1
+        bpl   Sonic_HitCeiling2                       *  bpl.s   Sonic_HitCeiling2
+        ldd   x_pos,u
+        addd  glb_d1                                  *  add.w   d1,x_pos(a0)
+        std   x_pos,u
+        ldd   #0
+        std   x_vel,u                                 *  move.w  #0,x_vel(a0) ; stop Sonic since he hit a wall
+        ldd   y_vel,u
+        std   inertia,u                               *  move.w  y_vel(a0),inertia(a0)
         rts                                           *  rts
                                                       *; ===========================================================================
                                                       *; identical to Sonic_HitCeiling...
                                                       *; loc_1B05E:
 Sonic_HitCeiling2                                     *Sonic_HitCeiling2:
-                                                      *  bsr.w   Sonic_CheckCeiling
-                                                      *  tst.w   d1
-                                                      *  bpl.s   Sonic_HitFloor2
-                                                      *  sub.w   d1,y_pos(a0)
-                                                      *  tst.w   y_vel(a0)
-                                                      *  bpl.s   return_1B076
-                                                      *  move.w  #0,y_vel(a0) ; stop Sonic in y since he hit a ceiling
+        jsr   Sonic_CheckCeiling                      *  bsr.w   Sonic_CheckCeiling
+        ldd   glb_d1                                  *  tst.w   d1
+        bpl   Sonic_HitFloor2                         *  bpl.s   Sonic_HitFloor2
+        ldd   y_pos,u
+        subd  glb_d1                                  *  sub.w   d1,y_pos(a0)
+        ldd   y_vel,u                                 *  tst.w   y_vel(a0)
+        bpl   return_1B076                            *  bpl.s   return_1B076
+        ldd   #0
+        std   y_vel,u                                 *  move.w  #0,y_vel(a0) ; stop Sonic in y since he hit a ceiling
                                                       *
 return_1B076                                          *return_1B076:
         rts                                           *  rts
@@ -2227,16 +2289,21 @@ return_1B076                                          *return_1B076:
                                                       *; identical to Sonic_HitFloor...
                                                       *; loc_1B078:
 Sonic_HitFloor2                                       *Sonic_HitFloor2:
-                                                      *  tst.w   y_vel(a0)
-                                                      *  bmi.s   return_1B09E
-                                                      *  bsr.w   Sonic_CheckFloor
-                                                      *  tst.w   d1
-                                                      *  bpl.s   return_1B09E
-                                                      *  add.w   d1,y_pos(a0)
-                                                      *  move.b  d3,angle(a0)
-                                                      *  bsr.w   Sonic_ResetOnFloor
-                                                      *  move.w  #0,y_vel(a0)
-                                                      *  move.w  x_vel(a0),inertia(a0)
+        ldd   y_vel,u                                 *  tst.w   y_vel(a0)
+        bmi   return_1B09E                            *  bmi.s   return_1B09E
+        jsr   Sonic_CheckFloor                        *  bsr.w   Sonic_CheckFloor
+        ldd   glb_d1                                  *  tst.w   d1
+        bpl   return_1B09E                            *  bpl.s   return_1B09E
+        ldd   y_pos,u
+        addd  glb_d1                                  *  add.w   d1,y_pos(a0)
+        std   y_pos,u
+        lda   glb_d3_b
+        sta   angle,u                                 *  move.b  d3,angle(a0)
+        jsr   Sonic_ResetOnFloor                      *  bsr.w   Sonic_ResetOnFloor
+        ldd   #0
+        std   y_vel,u                                 *  move.w  #0,y_vel(a0)
+        ldd   x_vel,u
+        std   inertia,u                               *  move.w  x_vel(a0),inertia(a0)
                                                       *
 return_1B09E                                          *return_1B09E:
         rts                                           *  rts
@@ -2292,8 +2359,8 @@ Sonic_ResetOnFloor_Part3                              *Sonic_ResetOnFloor_Part3:
         ;ldd   anim,u       
         ;cmpd  #SonAni_Hang2                          *  cmpi.b  #AniIDSonAni_Hang2,anim(a0)
         ;bne   return_1B11E                           *  bne.s   return_1B11E
-        ;ldd   #SonAni_Walk
-        ;std   anim,u                                 *  move.b  #AniIDSonAni_Walk,anim(a0)
+        ldd   #SonAni_Walk
+        std   anim,u                                 *  move.b  #AniIDSonAni_Walk,anim(a0)
                                                       *
 return_1B11E                                          *return_1B11E:
         rts                                           *  rts
@@ -2544,1561 +2611,7 @@ Obj01_Respawning                                      *  Obj01_Respawning:
                                                       *  align 4
                                                       *    endif
                                                        
-; ***************************************************************************************************************************************************
-
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * ; Subroutine to change Sonic's angle & position as he walks along the floor
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; loc_1E234: Sonic_AnglePos:
-AnglePos                                              * AnglePos:
-                                                      *         move.l  #Primary_Collision,(Collision_addr).w
-                                                      *         cmpi.b  #$C,top_solid_bit(a0)
-                                                      *         beq.s   +
-                                                      *         move.l  #Secondary_Collision,(Collision_addr).w
-                                                      * +
-                                                      *         move.b  top_solid_bit(a0),d5
-                                                      *         btst    #3,status(a0)
-                                                      *         beq.s   +
-                                                      *         moveq   #0,d0
-                                                      *         move.b  d0,(Primary_Angle).w
-                                                      *         move.b  d0,(Secondary_Angle).w
-        rts                                           *         rts
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * +       moveq   #3,d0
-                                                      *         move.b  d0,(Primary_Angle).w
-                                                      *         move.b  d0,(Secondary_Angle).w
-                                                      *         move.b  angle(a0),d0
-                                                      *         addi.b  #$20,d0
-                                                      *         bpl.s   loc_1E286
-                                                      *         move.b  angle(a0),d0
-                                                      *         bpl.s   +
-                                                      *         subq.b  #1,d0
-                                                      * +
-                                                      *         addi.b  #$20,d0
-                                                      *         bra.s   loc_1E292
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * loc_1E286:
-                                                      *         move.b  angle(a0),d0
-                                                      *         bpl.s   loc_1E28E
-                                                      *         addq.b  #1,d0
-                                                      * 
-                                                      * loc_1E28E:
-                                                      *         addi.b  #$1F,d0
-                                                      * 
-                                                      * loc_1E292:
-                                                      *         andi.b  #$C0,d0
-                                                      *         cmpi.b  #$40,d0
-                                                      *         beq.w   Sonic_WalkVertL
-                                                      *         cmpi.b  #$80,d0
-                                                      *         beq.w   Sonic_WalkCeiling
-                                                      *         cmpi.b  #$C0,d0
-                                                      *         beq.w   Sonic_WalkVertR
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.w  x_pos(a0),d3
-                                                      *         moveq   #0,d0
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d2
-                                                      *         move.b  x_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d3
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         movea.w #$10,a3
-                                                      *         move.w  #0,d6
-                                                      *         bsr.w   FindFloor
-                                                      *         move.w  d1,-(sp)
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.w  x_pos(a0),d3
-                                                      *         moveq   #0,d0
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d2
-                                                      *         move.b  x_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         neg.w   d0
-                                                      *         add.w   d0,d3
-                                                      *         lea     (Secondary_Angle).w,a4
-                                                      *         movea.w #$10,a3
-                                                      *         move.w  #0,d6
-                                                      *         bsr.w   FindFloor
-                                                      *         move.w  (sp)+,d0
-                                                      *         bsr.w   Sonic_Angle
-                                                      *         tst.w   d1
-                                                      *         beq.s   return_1E31C
-                                                      *         bpl.s   loc_1E31E
-                                                      *         cmpi.w  #-$E,d1
-                                                      *         blt.s   return_1E31C
-                                                      *         add.w   d1,y_pos(a0)
-                                                      * 
-                                                      * return_1E31C:
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * loc_1E31E:
-                                                      *         mvabs.b x_vel(a0),d0
-                                                      *         addq.b  #4,d0
-                                                      *         cmpi.b  #$E,d0
-                                                      *         blo.s   +
-                                                      *         move.b  #$E,d0
-                                                      * +
-                                                      *         cmp.b   d0,d1
-                                                      *         bgt.s   loc_1E33C
-                                                      * 
-                                                      * loc_1E336:
-                                                      *         add.w   d1,y_pos(a0)
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * loc_1E33C:
-                                                      *         tst.b   stick_to_convex(a0)
-                                                      *         bne.s   loc_1E336
-                                                      *         bset    #1,status(a0)
-                                                      *         bclr    #5,status(a0)
-                                                      *         move.b  #AniIDSonAni_Run,prev_anim(a0)  ; Force character's animation to restart
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * ; Subroutine to change Sonic's angle as he walks along the floor
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; loc_1E356:
-                                                      * Sonic_Angle:
-                                                      *         move.b  (Secondary_Angle).w,d2
-                                                      *         cmp.w   d0,d1
-                                                      *         ble.s   +
-                                                      *         move.b  (Primary_Angle).w,d2
-                                                      *         move.w  d0,d1
-                                                      * +
-                                                      *         btst    #0,d2
-                                                      *         bne.s   loc_1E380
-                                                      *         move.b  d2,d0
-                                                      *         sub.b   angle(a0),d0
-                                                      *         bpl.s   +
-                                                      *         neg.b   d0
-                                                      * +
-                                                      *         cmpi.b  #$20,d0
-                                                      *         bhs.s   loc_1E380
-                                                      *         move.b  d2,angle(a0)
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * loc_1E380:
-                                                      *         move.b  angle(a0),d2
-                                                      *         addi.b  #$20,d2
-                                                      *         andi.b  #$C0,d2
-                                                      *         move.b  d2,angle(a0)
-                                                      *         rts
-                                                      * ; End of function Sonic_Angle
-                                                      * 
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * ; Subroutine allowing Sonic to walk up a vertical slope/wall to his right
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; loc_1E392:
-                                                      * Sonic_WalkVertR:
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.w  x_pos(a0),d3
-                                                      *         moveq   #0,d0
-                                                      *         move.b  x_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         neg.w   d0
-                                                      *         add.w   d0,d2
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d3
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         movea.w #$10,a3
-                                                      *         move.w  #0,d6
-                                                      *         bsr.w   FindWall
-                                                      *         move.w  d1,-(sp)
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.w  x_pos(a0),d3
-                                                      *         moveq   #0,d0
-                                                      *         move.b  x_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d2
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d3
-                                                      *         lea     (Secondary_Angle).w,a4
-                                                      *         movea.w #$10,a3
-                                                      *         move.w  #0,d6
-                                                      *         bsr.w   FindWall
-                                                      *         move.w  (sp)+,d0
-                                                      *         bsr.w   Sonic_Angle
-                                                      *         tst.w   d1
-                                                      *         beq.s   return_1E400
-                                                      *         bpl.s   loc_1E402
-                                                      *         cmpi.w  #-$E,d1
-                                                      *         blt.s   return_1E400
-                                                      *         add.w   d1,x_pos(a0)
-                                                      * 
-                                                      * return_1E400:
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * loc_1E402:
-                                                      *         mvabs.b y_vel(a0),d0
-                                                      *         addq.b  #4,d0
-                                                      *         cmpi.b  #$E,d0
-                                                      *         blo.s   +
-                                                      *         move.b  #$E,d0
-                                                      * +
-                                                      *         cmp.b   d0,d1
-                                                      *         bgt.s   loc_1E420
-                                                      * 
-                                                      * loc_1E41A:
-                                                      *         add.w   d1,x_pos(a0)
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * loc_1E420:
-                                                      *         tst.b   stick_to_convex(a0)
-                                                      *         bne.s   loc_1E41A
-                                                      *         bset    #1,status(a0)
-                                                      *         bclr    #5,status(a0)
-                                                      *         move.b  #AniIDSonAni_Run,prev_anim(a0)  ; Force character's animation to restart
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * ;loc_1E43A
-                                                      * Sonic_WalkCeiling:
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.w  x_pos(a0),d3
-                                                      *         moveq   #0,d0
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         sub.w   d0,d2
-                                                      *         eori.w  #$F,d2
-                                                      *         move.b  x_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d3
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         movea.w #-$10,a3
-                                                      *         move.w  #$800,d6
-                                                      *         bsr.w   FindFloor
-                                                      *         move.w  d1,-(sp)
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.w  x_pos(a0),d3
-                                                      *         moveq   #0,d0
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         sub.w   d0,d2
-                                                      *         eori.w  #$F,d2
-                                                      *         move.b  x_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         sub.w   d0,d3
-                                                      *         lea     (Secondary_Angle).w,a4
-                                                      *         movea.w #-$10,a3
-                                                      *         move.w  #$800,d6
-                                                      *         bsr.w   FindFloor
-                                                      *         move.w  (sp)+,d0
-                                                      *         bsr.w   Sonic_Angle
-                                                      *         tst.w   d1
-                                                      *         beq.s   return_1E4AE
-                                                      *         bpl.s   loc_1E4B0
-                                                      *         cmpi.w  #-$E,d1
-                                                      *         blt.s   return_1E4AE
-                                                      *         sub.w   d1,y_pos(a0)
-                                                      * 
-                                                      * return_1E4AE:
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * loc_1E4B0:
-                                                      *         mvabs.b x_vel(a0),d0
-                                                      *         addq.b  #4,d0
-                                                      *         cmpi.b  #$E,d0
-                                                      *         blo.s   +
-                                                      *         move.b  #$E,d0
-                                                      * +
-                                                      *         cmp.b   d0,d1
-                                                      *         bgt.s   loc_1E4CE
-                                                      * 
-                                                      * loc_1E4C8:
-                                                      *         sub.w   d1,y_pos(a0)
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * loc_1E4CE:
-                                                      *         tst.b   stick_to_convex(a0)
-                                                      *         bne.s   loc_1E4C8
-                                                      *         bset    #1,status(a0)
-                                                      *         bclr    #5,status(a0)
-                                                      *         move.b  #AniIDSonAni_Run,prev_anim(a0)  ; Force character's animation to restart
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * ;loc_1E4E8
-                                                      * Sonic_WalkVertL:
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.w  x_pos(a0),d3
-                                                      *         moveq   #0,d0
-                                                      *         move.b  x_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         sub.w   d0,d2
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         sub.w   d0,d3
-                                                      *         eori.w  #$F,d3
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         movea.w #-$10,a3
-                                                      *         move.w  #$400,d6
-                                                      *         bsr.w   FindWall
-                                                      *         move.w  d1,-(sp)
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.w  x_pos(a0),d3
-                                                      *         moveq   #0,d0
-                                                      *         move.b  x_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d2
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         sub.w   d0,d3
-                                                      *         eori.w  #$F,d3
-                                                      *         lea     (Secondary_Angle).w,a4
-                                                      *         movea.w #-$10,a3
-                                                      *         move.w  #$400,d6
-                                                      *         bsr.w   FindWall
-                                                      *         move.w  (sp)+,d0
-                                                      *         bsr.w   Sonic_Angle
-                                                      *         tst.w   d1
-                                                      *         beq.s   return_1E55C
-                                                      *         bpl.s   loc_1E55E
-                                                      *         cmpi.w  #-$E,d1
-                                                      *         blt.s   return_1E55C
-                                                      *         sub.w   d1,x_pos(a0)
-                                                      * 
-                                                      * return_1E55C:
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * loc_1E55E:
-                                                      *         mvabs.b y_vel(a0),d0
-                                                      *         addq.b  #4,d0
-                                                      *         cmpi.b  #$E,d0
-                                                      *         blo.s   +
-                                                      *         move.b  #$E,d0
-                                                      * +
-                                                      *         cmp.b   d0,d1
-                                                      *         bgt.s   loc_1E57C
-                                                      * 
-                                                      * loc_1E576:
-                                                      *         sub.w   d1,x_pos(a0)
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * loc_1E57C:
-                                                      *         tst.b   stick_to_convex(a0)
-                                                      *         bne.s   loc_1E576
-                                                      *         bset    #1,status(a0)
-                                                      *         bclr    #5,status(a0)
-                                                      *         move.b  #AniIDSonAni_Run,prev_anim(a0)  ; Force character's animation to restart
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * ; Subroutine to find which tile is in the specified location
-                                                      * ; d2 = y_pos
-                                                      * ; d3 = x_pos
-                                                      * ; returns relevant block ID in (a1)
-                                                      * ; a1 is pointer to block in chunk table
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; loc_1E596: Floor_ChkTile:
-                                                      * Find_Tile:
-                                                      *         move.w  d2,d0   ; y_pos
-                                                      *         add.w   d0,d0
-                                                      *         andi.w  #$F00,d0        ; rounded 2*y_pos
-                                                      *         move.w  d3,d1   ; x_pos
-                                                      *         lsr.w   #3,d1
-                                                      *         move.w  d1,d4
-                                                      *         lsr.w   #4,d1   ; x_pos/128 = x_of_chunk
-                                                      *         andi.w  #$7F,d1
-                                                      *         add.w   d1,d0   ; d0 is relevant chunk ID now
-                                                      *         moveq   #-1,d1
-                                                      *         clr.w   d1              ; d1 is now $FFFF0000 = Chunk_Table
-                                                      *         lea     (Level_Layout).w,a1
-                                                      *         move.b  (a1,d0.w),d1    ; move 128*128 chunk ID to d1
-                                                      *         add.w   d1,d1
-                                                      *         move.w  word_1E5D0(pc,d1.w),d1
-                                                      *         move.w  d2,d0   ; y_pos
-                                                      *         andi.w  #$70,d0
-                                                      *         add.w   d0,d1
-                                                      *         andi.w  #$E,d4  ; x_pos/8
-                                                      *         add.w   d4,d1
-                                                      *         movea.l d1,a1   ; address of block ID
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * ; precalculated values for Find_Tile
-                                                      * ; (Sonic 1 calculated it every time instead of using a table)
-                                                      * word_1E5D0:
-                                                      * c := 0
-                                                      *         rept 256
-                                                      *                 dc.w    c
-                                                      * c := c+$80
-                                                      *         endm
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; Scans vertically for up to 2 16x16 blocks to find solid ground or ceiling.
-                                                      * ; d2 = y_pos
-                                                      * ; d3 = x_pos
-                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
-                                                      * ; d6 = $0000 for no flip, $0800 for vertical flip
-                                                      * ; a3 = delta-y for next location to check if current one is empty
-                                                      * ; a4 = pointer to angle buffer
-                                                      * ; returns relevant block ID in (a1)
-                                                      * ; returns distance in d1
-                                                      * ; returns angle in (a4)
-                                                      * 
-                                                      * ; loc_1E7D0:
-FindFloor                                             * FindFloor:
-                                                      *         bsr.w   Find_Tile
-                                                      *         move.w  (a1),d0
-                                                      *         move.w  d0,d4
-                                                      *         andi.w  #$3FF,d0
-                                                      *         beq.s   loc_1E7E2
-                                                      *         btst    d5,d4
-                                                      *         bne.s   loc_1E7F0
-                                                      * 
-loc_1E7E2                                             * loc_1E7E2:
-                                                      *         add.w   a3,d2
-                                                      *         bsr.w   FindFloor2
-                                                      *         sub.w   a3,d2
-                                                      *         addi.w  #$10,d1
-        rts                                           *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-loc_1E7F0                                             * loc_1E7F0:      ; block has some solidity
-                                                      *         movea.l (Collision_addr).w,a2   ; pointer to collision data, i.e. blockID -> collisionID array
-                                                      *         move.b  (a2,d0.w),d0    ; get collisionID
-                                                      *         andi.w  #$FF,d0
-                                                      *         beq.s   loc_1E7E2
-                                                      *         lea     (ColCurveMap).l,a2
-                                                      *         move.b  (a2,d0.w),(a4)  ; get angle from AngleMap --> (a4)
-                                                      *         lsl.w   #4,d0
-                                                      *         move.w  d3,d1   ; x_pos
-                                                      *         btst    #$A,d4  ; adv.blockID in d4 - X flipping
-                                                      *         beq.s   +
-                                                      *         not.w   d1
-                                                      *         neg.b   (a4)
-                                                      * +
-                                                      *         btst    #$B,d4  ; Y flipping
-                                                      *         beq.s   +
-                                                      *         addi.b  #$40,(a4)
-                                                      *         neg.b   (a4)
-                                                      *         subi.b  #$40,(a4)
-                                                      * +
-                                                      *         andi.w  #$F,d1  ; x_pos (mod 16)
-                                                      *         add.w   d0,d1   ; d0 = 16*blockID -> offset in ColArray to look up
-                                                      *         lea     (ColArray).l,a2
-                                                      *         move.b  (a2,d1.w),d0    ; heigth from ColArray
-                                                      *         ext.w   d0
-                                                      *         eor.w   d6,d4
-                                                      *         btst    #$B,d4  ; Y flipping
-                                                      *         beq.s   +
-                                                      *         neg.w   d0
-                                                      * +
-                                                      *         tst.w   d0
-                                                      *         beq.s   loc_1E7E2       ; no collision
-                                                      *         bmi.s   loc_1E85E
-                                                      *         cmpi.b  #$10,d0
-                                                      *         beq.s   loc_1E86A
-                                                      *         move.w  d2,d1
-                                                      *         andi.w  #$F,d1
-                                                      *         add.w   d1,d0
-                                                      *         move.w  #$F,d1
-                                                      *         sub.w   d0,d1
-        rts                                           *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-loc_1E85E                                             * loc_1E85E:
-                                                      *         move.w  d2,d1
-                                                      *         andi.w  #$F,d1
-                                                      *         add.w   d1,d0
-                                                      *         bpl.w   loc_1E7E2
-                                                      * 
-loc_1E86A                                             * loc_1E86A:
-                                                      *         sub.w   a3,d2
-                                                      *         bsr.w   FindFloor2
-                                                      *         add.w   a3,d2
-                                                      *         subi.w  #$10,d1
-        rts                                           *         rts
-                                                      * ; End of function FindFloor
-                                                      * 
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; Checks a 16x16 block to find solid ground or ceiling.
-                                                      * ; d2 = y_pos
-                                                      * ; d3 = x_pos
-                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
-                                                      * ; d6 = $0000 for no flip, $0800 for vertical flip
-                                                      * ; a4 = pointer to angle buffer
-                                                      * ; returns relevant block ID in (a1)
-                                                      * ; returns distance in d1
-                                                      * ; returns angle in (a4)
-                                                      * 
-                                                      * ; loc_1E878:
-                                                      * FindFloor2:
-                                                      *         bsr.w   Find_Tile
-                                                      *         move.w  (a1),d0
-                                                      *         move.w  d0,d4
-                                                      *         andi.w  #$3FF,d0
-                                                      *         beq.s   loc_1E88A
-                                                      *         btst    d5,d4
-                                                      *         bne.s   loc_1E898
-                                                      * 
-                                                      * loc_1E88A:
-                                                      *         move.w  #$F,d1
-                                                      *         move.w  d2,d0
-                                                      *         andi.w  #$F,d0
-                                                      *         sub.w   d0,d1
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * loc_1E898:
-                                                      *         movea.l (Collision_addr).w,a2
-                                                      *         move.b  (a2,d0.w),d0
-                                                      *         andi.w  #$FF,d0
-                                                      *         beq.s   loc_1E88A
-                                                      *         lea     (ColCurveMap).l,a2
-                                                      *         move.b  (a2,d0.w),(a4)
-                                                      *         lsl.w   #4,d0
-                                                      *         move.w  d3,d1
-                                                      *         btst    #$A,d4
-                                                      *         beq.s   +
-                                                      *         not.w   d1
-                                                      *         neg.b   (a4)
-                                                      * +
-                                                      *         btst    #$B,d4
-                                                      *         beq.s   +
-                                                      *         addi.b  #$40,(a4)
-                                                      *         neg.b   (a4)
-                                                      *         subi.b  #$40,(a4)
-                                                      * +
-                                                      *         andi.w  #$F,d1
-                                                      *         add.w   d0,d1
-                                                      *         lea     (ColArray).l,a2
-                                                      *         move.b  (a2,d1.w),d0
-                                                      *         ext.w   d0
-                                                      *         eor.w   d6,d4
-                                                      *         btst    #$B,d4
-                                                      *         beq.s   +
-                                                      *         neg.w   d0
-                                                      * +
-                                                      *         tst.w   d0
-                                                      *         beq.s   loc_1E88A
-                                                      *         bmi.s   loc_1E900
-                                                      *         move.w  d2,d1
-                                                      *         andi.w  #$F,d1
-                                                      *         add.w   d1,d0
-                                                      *         move.w  #$F,d1
-                                                      *         sub.w   d0,d1
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * loc_1E900:
-                                                      *         move.w  d2,d1
-                                                      *         andi.w  #$F,d1
-                                                      *         add.w   d1,d0
-                                                      *         bpl.w   loc_1E88A
-                                                      *         not.w   d1
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * ; Checks a 16x16 block to find solid ground or ceiling. May check an additional
-                                                      * ; 16x16 block up for ceilings.
-                                                      * ; d2 = y_pos
-                                                      * ; d3 = x_pos
-                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
-                                                      * ; d6 = $0000 for no flip, $0800 for vertical flip
-                                                      * ; a4 = pointer to angle buffer
-                                                      * ; returns relevant block ID in (a1)
-                                                      * ; returns distance in d1
-                                                      * ; returns angle in (a4)
-                                                      * 
-                                                      * ; loc_1E910: Obj_CheckInFloor:
-                                                      * Ring_FindFloor:
-                                                      *         bsr.w   Find_Tile
-                                                      *         move.w  (a1),d0
-                                                      *         move.w  d0,d4
-                                                      *         andi.w  #$3FF,d0
-                                                      *         beq.s   loc_1E922
-                                                      *         btst    d5,d4
-                                                      *         bne.s   loc_1E928
-                                                      * 
-                                                      * loc_1E922:
-                                                      *         move.w  #$10,d1
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * loc_1E928:
-                                                      *         movea.l (Collision_addr).w,a2
-                                                      *         move.b  (a2,d0.w),d0
-                                                      *         andi.w  #$FF,d0
-                                                      *         beq.s   loc_1E922
-                                                      *         lea     (ColCurveMap).l,a2
-                                                      *         move.b  (a2,d0.w),(a4)
-                                                      *         lsl.w   #4,d0
-                                                      *         move.w  d3,d1
-                                                      *         btst    #$A,d4
-                                                      *         beq.s   +
-                                                      *         not.w   d1
-                                                      *         neg.b   (a4)
-                                                      * +
-                                                      *         btst    #$B,d4
-                                                      *         beq.s   +
-                                                      *         addi.b  #$40,(a4)
-                                                      *         neg.b   (a4)
-                                                      *         subi.b  #$40,(a4)
-                                                      * +
-                                                      *         andi.w  #$F,d1
-                                                      *         add.w   d0,d1
-                                                      *         lea     (ColArray).l,a2
-                                                      *         move.b  (a2,d1.w),d0
-                                                      *         ext.w   d0
-                                                      *         eor.w   d6,d4
-                                                      *         btst    #$B,d4
-                                                      *         beq.s   +
-                                                      *         neg.w   d0
-                                                      * +
-                                                      *         tst.w   d0
-                                                      *         beq.s   loc_1E922
-                                                      *         bmi.s   loc_1E996
-                                                      *         cmpi.b  #$10,d0
-                                                      *         beq.s   loc_1E9A2
-                                                      *         move.w  d2,d1
-                                                      *         andi.w  #$F,d1
-                                                      *         add.w   d1,d0
-                                                      *         move.w  #$F,d1
-                                                      *         sub.w   d0,d1
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * loc_1E996:
-                                                      *         move.w  d2,d1
-                                                      *         andi.w  #$F,d1
-                                                      *         add.w   d1,d0
-                                                      *         bpl.w   loc_1E922
-                                                      * 
-                                                      * loc_1E9A2:
-                                                      *         sub.w   a3,d2
-                                                      *         bsr.w   FindFloor2
-                                                      *         add.w   a3,d2
-                                                      *         subi.w  #$10,d1
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; Scans horizontally for up to 2 16x16 blocks to find solid walls.
-                                                      * ; d2 = y_pos
-                                                      * ; d3 = x_pos
-                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
-                                                      * ; d6 = $0000 for no flip, $0400 for horizontal flip
-                                                      * ; a3 = delta-x for next location to check if current one is empty
-                                                      * ; a4 = pointer to angle buffer
-                                                      * ; returns relevant block ID in (a1)
-                                                      * ; returns distance to left/right in d1
-                                                      * ; returns angle in (a4)
-                                                      * 
-                                                      * ; loc_1E9B0:
-                                                      * FindWall:
-                                                      *         bsr.w   Find_Tile
-                                                      *         move.w  (a1),d0
-                                                      *         move.w  d0,d4
-                                                      *         andi.w  #$3FF,d0        ; plain blockID
-                                                      *         beq.s   loc_1E9C2       ; no collision
-                                                      *         btst    d5,d4
-                                                      *         bne.s   loc_1E9D0
-                                                      * 
-                                                      * loc_1E9C2:
-                                                      *         add.w   a3,d3
-                                                      *         bsr.w   FindWall2
-                                                      *         sub.w   a3,d3
-                                                      *         addi.w  #$10,d1
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * loc_1E9D0:
-                                                      *         movea.l (Collision_addr).w,a2
-                                                      *         move.b  (a2,d0.w),d0
-                                                      *         andi.w  #$FF,d0 ; relevant collisionArrayEntry
-                                                      *         beq.s   loc_1E9C2
-                                                      *         lea     (ColCurveMap).l,a2
-                                                      *         move.b  (a2,d0.w),(a4)
-                                                      *         lsl.w   #4,d0   ; offset in collision array
-                                                      *         move.w  d2,d1   ; y
-                                                      *         btst    #$B,d4  ; y-mirror?
-                                                      *         beq.s   +
-                                                      *         not.w   d1
-                                                      *         addi.b  #$40,(a4)
-                                                      *         neg.b   (a4)
-                                                      *         subi.b  #$40,(a4)
-                                                      * +
-                                                      *         btst    #$A,d4  ; x-mirror?
-                                                      *         beq.s   +
-                                                      *         neg.b   (a4)
-                                                      * +
-                                                      *         andi.w  #$F,d1  ; y
-                                                      *         add.w   d0,d1   ; line to look up
-                                                      *         lea     (ColArray2).l,a2        ; rotated collision array
-                                                      *         move.b  (a2,d1.w),d0    ; collision value
-                                                      *         ext.w   d0
-                                                      *         eor.w   d6,d4   ; set x-flip flag if from the right
-                                                      *         btst    #$A,d4  ; x-mirror?
-                                                      *         beq.s   +
-                                                      *         neg.w   d0
-                                                      * +
-                                                      *         tst.w   d0
-                                                      *         beq.s   loc_1E9C2
-                                                      *         bmi.s   loc_1EA3E
-                                                      *         cmpi.b  #$10,d0
-                                                      *         beq.s   loc_1EA4A
-                                                      *         move.w  d3,d1   ; x
-                                                      *         andi.w  #$F,d1
-                                                      *         add.w   d1,d0
-                                                      *         move.w  #$F,d1
-                                                      *         sub.w   d0,d1
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * loc_1EA3E:
-                                                      *         move.w  d3,d1
-                                                      *         andi.w  #$F,d1
-                                                      *         add.w   d1,d0
-                                                      *         bpl.w   loc_1E9C2       ; no collision
-                                                      * 
-                                                      * loc_1EA4A:
-                                                      *         sub.w   a3,d3
-                                                      *         bsr.w   FindWall2
-                                                      *         add.w   a3,d3
-                                                      *         subi.w  #$10,d1
-                                                      *         rts
-                                                      * ; End of function FindWall
-                                                      * 
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; Checks a 16x16 blocks to find solid walls.
-                                                      * ; d2 = y_pos
-                                                      * ; d3 = x_pos
-                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
-                                                      * ; d6 = $0000 for no flip, $0400 for horizontal flip
-                                                      * ; a4 = pointer to angle buffer
-                                                      * ; returns relevant block ID in (a1)
-                                                      * ; returns distance to left/right in d1
-                                                      * ; returns angle in (a4)
-                                                      * 
-                                                      * ; loc_1EA58:
-                                                      * FindWall2:
-                                                      *         bsr.w   Find_Tile
-                                                      *         move.w  (a1),d0
-                                                      *         move.w  d0,d4
-                                                      *         andi.w  #$3FF,d0
-                                                      *         beq.s   loc_1EA6A
-                                                      *         btst    d5,d4
-                                                      *         bne.s   loc_1EA78
-                                                      * 
-                                                      * loc_1EA6A:
-                                                      *         move.w  #$F,d1
-                                                      *         move.w  d3,d0
-                                                      *         andi.w  #$F,d0
-                                                      *         sub.w   d0,d1
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * loc_1EA78:
-                                                      *         movea.l (Collision_addr).w,a2
-                                                      *         move.b  (a2,d0.w),d0
-                                                      *         andi.w  #$FF,d0
-                                                      *         beq.s   loc_1EA6A
-                                                      *         lea     (ColCurveMap).l,a2
-                                                      *         move.b  (a2,d0.w),(a4)
-                                                      *         lsl.w   #4,d0
-                                                      *         move.w  d2,d1
-                                                      *         btst    #$B,d4
-                                                      *         beq.s   +
-                                                      *         not.w   d1
-                                                      *         addi.b  #$40,(a4)
-                                                      *         neg.b   (a4)
-                                                      *         subi.b  #$40,(a4)
-                                                      * +
-                                                      *         btst    #$A,d4
-                                                      *         beq.s   +
-                                                      *         neg.b   (a4)
-                                                      * +
-                                                      *         andi.w  #$F,d1
-                                                      *         add.w   d0,d1
-                                                      *         lea     (ColArray2).l,a2
-                                                      *         move.b  (a2,d1.w),d0
-                                                      *         ext.w   d0
-                                                      *         eor.w   d6,d4
-                                                      *         btst    #$A,d4
-                                                      *         beq.s   +
-                                                      *         neg.w   d0
-                                                      * +
-                                                      *         tst.w   d0
-                                                      *         beq.s   loc_1EA6A
-                                                      *         bmi.s   loc_1EAE0
-                                                      *         move.w  d3,d1
-                                                      *         andi.w  #$F,d1
-                                                      *         add.w   d1,d0
-                                                      *         move.w  #$F,d1
-                                                      *         sub.w   d0,d1
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * loc_1EAE0:
-                                                      *         move.w  d3,d1
-                                                      *         andi.w  #$F,d1
-                                                      *         add.w   d1,d0
-                                                      *         bpl.w   loc_1EA6A
-                                                      *         not.w   d1
-                                                      *         rts
-                                                      * ; End of function FindWall2
-                                                      * 
-        ; START OF DEAD CODE                          * ; ---------------------------------------------------------------------------
-                                                      * ; The subroutine appears to convert the collision array from an unknown
-                                                      * ; 'raw' format to its current format, and write it to ROM, overwritting
-                                                      * ; the original. This doesn't work on standard read-only cartridges, and
-                                                      * ; would instead require a special dev cartridge.
-                                                      * ; This subroutine exists in Sonic 1 as well, but was oddly changed in
-                                                      * ; the S2 Nick Arcade prototype to just handle loading GHZ's collision
-                                                      * ; instead (though it too is dummied out, hence collision being broken).
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; return_1EAF0: FloorLog_Unk:
-                                                      * ConvertCollisionArray:
-                                                      *         rts
-                                                      * ; ---------------------------------------------------------------------------
-                                                      *         lea     (ColArray).l,a1 ; Source location of 'raw' collision array
-                                                      *         lea     (ColArray).l,a2 ; Destinatation of converted collision array (overwrites the original)
-                                                      * 
-                                                      *         move.w  #$100-1,d3      ; Number of blocks in collision array
-                                                      * .blockLoop:
-                                                      *         moveq   #16,d5          ; Start on the 16th bit (the leftmost pixel)
-                                                      * 
-                                                      *         move.w  #16-1,d2        ; Width of a block in pixels
-                                                      * .columnLoop:
-                                                      *         moveq   #0,d4
-                                                      * 
-                                                      *         ; It seems the 'raw' format stored the collision of each pixel in rows.
-                                                      *         ; This block of code changes it from rows to columns, so each word contains
-                                                      *         ; a bit for each pixel in a column.
-                                                      *         move.w  #16-1,d1        ; Height of a block in pixels
-                                                      * .rowLoop:
-                                                      *         move.w  (a1)+,d0        ; Get row of collision bits
-                                                      *         lsr.l   d5,d0           ; Push the selected bit of this row into the 'eXtend' flag
-                                                      *         addx.w  d4,d4           ; Shift d4 to the left, and insert the selected bit into bit 0
-                                                      *         dbf     d1,.rowLoop     ; Loop for each row of pixels in a block
-                                                      * 
-                                                      *         move.w  d4,(a2)+        ; Store column of collision bits
-                                                      *         suba.w  #2*16,a1        ; Back to the start of the block
-                                                      *         subq.w  #1,d5           ; Get next bit in the row
-                                                      *         dbf     d2,.columnLoop  ; Loop for each column of pixels in a block
-                                                      * 
-                                                      *         adda.w  #2*16,a1        ; Next block
-                                                      *         dbf     d3,.blockLoop   ; Loop for each block in the collision array
-                                                      * 
-                                                      *         lea     (ColArray).l,a1
-                                                      *         lea     (ColArray2).l,a2        ; Write converted collision array to location of rotated collison array
-                                                      *         bsr.s   .convertArrayToStandardFormat
-                                                      *         lea     (ColArray).l,a1
-                                                      *         lea     (ColArray).l,a2         ; Write converted collision array to location of normal collison array
-                                                      * 
-                                                      * ; loc_1EB46: FloorLog_Unk2:
-                                                      * .convertArrayToStandardFormat:
-                                                      *         move.w  #$1000-1,d3     ; Size of the collision array
-                                                      * 
-                                                      * .processCollisionArrayLoop:
-                                                      *         moveq   #0,d2
-                                                      *         move.w  #$F,d1
-                                                      *         move.w  (a1)+,d0        ; Get current column of collision pixels
-                                                      *         beq.s   .noCollision    ; Branch if there's no collision in this column
-                                                      *         bmi.s   .topPixelSolid  ; Branch if top pixel of collision is solid
-                                                      * 
-                                                      *         ; Here we count, starting from the bottom, how many pixels tall
-                                                      *         ; the collision in this column is.
-                                                      * .processColumnLoop1:
-                                                      *         lsr.w   #1,d0
-                                                      *         bcc.s   .pixelNotSolid1
-                                                      *         addq.b  #1,d2
-                                                      * .pixelNotSolid1:
-                                                      *         dbf     d1,.processColumnLoop1
-                                                      * 
-                                                      *         bra.s   .columnProcessed
-                                                      * ; ===========================================================================
-                                                      * .topPixelSolid:
-                                                      *         cmpi.w  #$FFFF,d0               ; Is entire column solid?
-                                                      *         beq.s   .entireColumnSolid      ; Branch if so
-                                                      * 
-                                                      *         ; Here we count, starting from the top, how many pixels tall
-                                                      *         ; the collision in this column is (the resulting number is negative).
-                                                      * .processColumnLoop2:
-                                                      *         lsl.w   #1,d0
-                                                      *         bcc.s   .pixelNotSolid2
-                                                      *         subq.b  #1,d2
-                                                      * .pixelNotSolid2:
-                                                      *         dbf     d1,.processColumnLoop2
-                                                      * 
-                                                      *         bra.s   .columnProcessed
-                                                      * ; ===========================================================================
-                                                      * .entireColumnSolid:
-                                                      *         move.w  #16,d0
-                                                      * 
-                                                      * ; loc_1EB78:
-                                                      * .noCollision:
-                                                      *         move.w  d0,d2
-                                                      * 
-                                                      * ; loc_1EB7A:
-                                                      * .columnProcessed:
-                                                      *         move.b  d2,(a2)+        ; Store column collision height to ROM
-                                                      *         dbf     d3,.processCollisionArrayLoop
-                                                      * 
-                                                      *         rts
-                                                      * 
-                                                      * ; End of function ConvertCollisionArray
-                                                      * 
-                                                      *     if gameRevision<2
-                                                      *         nop
-        ; END OF DEAD CODE                            *     endif
-                                                      * 
-                                                      * 
-                                                      * 
-                                                      * 
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * ; Subroutine to calculate how much space is in front of Sonic or Tails on the ground
-                                                      * ; d0 = some input angle
-                                                      * ; d1 = output about how many pixels (up to some high enough amount)
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; loc_1EB84: Sonic_WalkSpeed:
-                                                      * CalcRoomInFront:
-                                                      *         move.l  #Primary_Collision,(Collision_addr).w
-                                                      *         cmpi.b  #$C,top_solid_bit(a0)
-                                                      *         beq.s   +
-                                                      *         move.l  #Secondary_Collision,(Collision_addr).w
-                                                      * +
-                                                      *         move.b  lrb_solid_bit(a0),d5                    ; Want walls or ceilings
-                                                      *         move.l  x_pos(a0),d3
-                                                      *         move.l  y_pos(a0),d2
-                                                      *         move.w  x_vel(a0),d1
-                                                      *         ext.l   d1
-                                                      *         asl.l   #8,d1
-                                                      *         add.l   d1,d3
-                                                      *         move.w  y_vel(a0),d1
-                                                      *         ext.l   d1
-                                                      *         asl.l   #8,d1
-                                                      *         add.l   d1,d2
-                                                      *         swap    d2
-                                                      *         swap    d3
-                                                      *         move.b  d0,(Primary_Angle).w
-                                                      *         move.b  d0,(Secondary_Angle).w
-                                                      *         move.b  d0,d1
-                                                      *         addi.b  #$20,d0
-                                                      *         bpl.s   loc_1EBDC
-                                                      * 
-                                                      *         move.b  d1,d0
-                                                      *         bpl.s   +
-                                                      *         subq.b  #1,d0
-                                                      * +
-                                                      *         addi.b  #$20,d0
-                                                      *         bra.s   loc_1EBE6
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * loc_1EBDC:
-                                                      *         move.b  d1,d0
-                                                      *         bpl.s   +
-                                                      *         addq.b  #1,d0
-                                                      * +
-                                                      *         addi.b  #$1F,d0
-                                                      * 
-                                                      * loc_1EBE6:
-                                                      *         andi.b  #$C0,d0
-                                                      *         beq.w   CheckFloorDist_Part2            ; Player is going mostly down
-                                                      *         cmpi.b  #$80,d0
-                                                      *         beq.w   CheckCeilingDist_Part2          ; Player is going mostly up
-                                                      *         andi.b  #$38,d1
-                                                      *         bne.s   +
-                                                      *         addq.w  #8,d2
-                                                      * +
-                                                      *         cmpi.b  #$40,d0
-                                                      *         beq.w   CheckLeftWallDist_Part2         ; Player is going mostly left
-                                                      *         bra.w   CheckRightWallDist_Part2        ; Player is going mostly right
-                                                      * 
-                                                      * ; End of function CalcRoomInFront
-                                                      * 
-                                                      * 
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * ; Subroutine to calculate how much space is empty above Sonic's/Tails' head
-                                                      * ; d0 = input angle perpendicular to the spine
-                                                      * ; d1 = output about how many pixels are overhead (up to some high enough amount)
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; sub_1EC0A:
-CalcRoomOverHead                                      * CalcRoomOverHead:
-                                                      *         move.l  #Primary_Collision,(Collision_addr).w
-                                                      *         cmpi.b  #$C,top_solid_bit(a0)
-                                                      *         beq.s   +
-                                                      *         move.l  #Secondary_Collision,(Collision_addr).w
-                                                      * +
-                                                      *         move.b  lrb_solid_bit(a0),d5
-                                                      *         move.b  d0,(Primary_Angle).w
-                                                      *         move.b  d0,(Secondary_Angle).w
-                                                      *         addi.b  #$20,d0
-                                                      *         andi.b  #$C0,d0
-                                                      *         cmpi.b  #$40,d0
-                                                      *         beq.w   CheckLeftCeilingDist
-                                                      *         cmpi.b  #$80,d0
-                                                      *         beq.w   Sonic_CheckCeiling
-                                                      *         cmpi.b  #$C0,d0
-                                                      *         beq.w   CheckRightCeilingDist
-                                                      * 
-                                                      * ; End of function CalcRoomOverHead
-                                                      * 
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * ; Subroutine to check if Sonic/Tails is near the floor
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; loc_1EC4E: Sonic_HitFloor:
-Sonic_CheckFloor                                      * Sonic_CheckFloor:
-                                                      *         move.l  #Primary_Collision,(Collision_addr).w
-                                                      *         cmpi.b  #$C,top_solid_bit(a0)
-                                                      *         beq.s   +
-                                                      *         move.l  #Secondary_Collision,(Collision_addr).w
-                                                      * +
-                                                      *         move.b  top_solid_bit(a0),d5
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.w  x_pos(a0),d3
-                                                      *         moveq   #0,d0
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d2
-                                                      *         move.b  x_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d3
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         movea.w #$10,a3
-                                                      *         move.w  #0,d6
-                                                      *         bsr.w   FindFloor
-                                                      *         move.w  d1,-(sp)
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.w  x_pos(a0),d3
-                                                      *         moveq   #0,d0
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d2
-                                                      *         move.b  x_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         sub.w   d0,d3
-                                                      *         lea     (Secondary_Angle).w,a4
-                                                      *         movea.w #$10,a3
-                                                      *         move.w  #0,d6
-                                                      *         bsr.w   FindFloor
-                                                      *         move.w  (sp)+,d0
-                                                      *         move.b  #0,d2
-                                                      * 
-loc_1ECC6                                             * loc_1ECC6:
-                                                      *         move.b  (Secondary_Angle).w,d3
-                                                      *         cmp.w   d0,d1
-                                                      *         ble.s   loc_1ECD4
-                                                      *         move.b  (Primary_Angle).w,d3
-                                                      *         exg     d0,d1
-                                                      * 
-loc_1ECD4                                             * loc_1ECD4:
-                                                      *         btst    #0,d3
-                                                      *         beq.s   +
-                                                      *         move.b  d2,d3
-                                                      * +
-        rts                                           *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      *         ; a bit of unused/dead code here
-                                                      * ;CheckFloorDist:
-                                                      *         move.w  y_pos(a0),d2 ; a0=character
-                                                      *         move.w  x_pos(a0),d3
-                                                      * 
-                                                      * ; Checks a 16x16 block to find solid ground. May check an additional
-                                                      * ; 16x16 block up for ceilings.
-                                                      * ; d2 = y_pos
-                                                      * ; d3 = x_pos
-                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
-                                                      * ; returns relevant block ID in (a1)
-                                                      * ; returns distance in d1
-                                                      * ; returns angle in d3, or zero if angle was odd
-                                                      * ;loc_1ECE6:
-CheckFloorDist_Part2                                  * CheckFloorDist_Part2:
-                                                      *         addi.w  #$A,d2
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         movea.w #$10,a3
-                                                      *         move.w  #0,d6
-                                                      *         bsr.w   FindFloor
-                                                      *         move.b  #0,d2
-                                                      * 
-                                                      * ; d2 what to use as angle if (Primary_Angle).w is odd
-                                                      * ; returns angle in d3, or value in d2 if angle was odd
-loc_1ECFE                                             * loc_1ECFE:
-                                                      *         move.b  (Primary_Angle).w,d3
-                                                      *         btst    #0,d3
-                                                      *         beq.s   +
-                                                      *         move.b  d2,d3
-                                                      * +
-        rts                                           *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      *         ; Unused collision checking subroutine
-                                                      * 
-                                                      *         move.w  x_pos(a0),d3 ; a0=character
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         subq.w  #4,d2
-                                                      *         move.l  #Primary_Collision,(Collision_addr).w
-                                                      *         cmpi.b  #$D,lrb_solid_bit(a0)
-                                                      *         beq.s   +
-                                                      *         move.l  #Secondary_Collision,(Collision_addr).w
-                                                      * +
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         move.b  #0,(a4)
-                                                      *         movea.w #$10,a3
-                                                      *         move.w  #0,d6
-                                                      *         move.b  lrb_solid_bit(a0),d5
-                                                      *         bsr.w   FindFloor
-                                                      *         move.b  (Primary_Angle).w,d3
-                                                      *         btst    #0,d3
-                                                      *         beq.s   +
-                                                      *         move.b  #0,d3
-                                                      * +
-                                                      *         rts
-                                                      * 
-                                                      * ; ===========================================================================
-                                                      * ; loc_1ED56:
-ChkFloorEdge                                          * ChkFloorEdge:
-                                                      *         move.w  x_pos(a0),d3
-                                                      * ; loc_1ED5A:
-ChkFloorEdge_Part2                                    * ChkFloorEdge_Part2:
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         moveq   #0,d0
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d2
-                                                      *         move.l  #Primary_Collision,(Collision_addr).w
-                                                      *         cmpi.b  #$C,top_solid_bit(a0)
-                                                      *         beq.s   +
-                                                      *         move.l  #Secondary_Collision,(Collision_addr).w
-                                                      * +
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         move.b  #0,(a4)
-                                                      *         movea.w #$10,a3
-                                                      *         move.w  #0,d6
-                                                      *         move.b  top_solid_bit(a0),d5
-                                                      *         bsr.w   FindFloor
-                                                      *         move.b  (Primary_Angle).w,d3
-                                                      *         btst    #0,d3
-                                                      *         beq.s   +
-                                                      *         move.b  #0,d3
-                                                      * +
-        rts                                           *         rts
-                                                      * ; ===========================================================================
-                                                      * ; Identical to ChkFloorEdge except that this uses a1 instead of a0
-                                                      * ;loc_1EDA8:
-ChkFloorEdge2                                         * ChkFloorEdge2:
-                                                      *         move.w  x_pos(a1),d3
-                                                      *         move.w  y_pos(a1),d2
-                                                      *         moveq   #0,d0
-                                                      *         move.b  y_radius(a1),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d2
-                                                      *         move.l  #Primary_Collision,(Collision_addr).w
-                                                      *         cmpi.b  #$C,top_solid_bit(a1)
-                                                      *         beq.s   +
-                                                      *         move.l  #Secondary_Collision,(Collision_addr).w
-                                                      * +
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         move.b  #0,(a4)
-                                                      *         movea.w #$10,a3
-                                                      *         move.w  #0,d6
-                                                      *         move.b  top_solid_bit(a1),d5
-                                                      *         bsr.w   FindFloor
-                                                      *         move.b  (Primary_Angle).w,d3
-                                                      *         btst    #0,d3
-                                                      *         beq.s   return_1EDF8
-                                                      *         move.b  #0,d3
-                                                      * 
-return_1EDF8                                          * return_1EDF8:
-        rts                                           *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * ; Subroutine checking if an object should interact with the floor
-                                                      * ; (objects such as a monitor Sonic bumps from underneath)
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; loc_1EDFA: ObjHitFloor:
-ObjCheckFloorDist                                     * ObjCheckFloorDist:
-                                                      *         move.w  x_pos(a0),d3
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d2
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         move.b  #0,(a4)
-                                                      *         movea.w #$10,a3
-                                                      *         move.w  #0,d6
-                                                      *         moveq   #$C,d5
-                                                      *         bsr.w   FindFloor
-                                                      *         move.b  (Primary_Angle).w,d3
-                                                      *         btst    #0,d3
-                                                      *         beq.s   +
-                                                      *         move.b  #0,d3
-                                                      * +
-                                                      *         rts
-                                                      * ; ===========================================================================
-                                                      * 
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * ; Collision check used to let the HTZ boss fire attack to hit the ground
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; loc_1EE30:
-                                                      * FireCheckFloorDist:
-                                                      *         move.w  x_pos(a1),d3
-                                                      *         move.w  y_pos(a1),d2
-                                                      *         move.b  y_radius(a1),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d2
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         move.b  #0,(a4)
-                                                      *         movea.w #$10,a3
-                                                      *         move.w  #0,d6
-                                                      *         moveq   #$C,d5
-                                                      *         bra.w   FindFloor
-                                                      * ; End of function FireCheckFloorDist
-                                                      * 
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * ; Collision check used to let scattered rings bounce on the ground
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; loc_1EE56:
-                                                      * RingCheckFloorDist:
-                                                      *         move.w  x_pos(a0),d3
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d2
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         move.b  #0,(a4)
-                                                      *         movea.w #$10,a3
-                                                      *         move.w  #0,d6
-                                                      *         moveq   #$C,d5
-                                                      *         bra.w   Ring_FindFloor
-                                                      * ; End of function RingCheckFloorDist
-                                                      * 
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * ; Stores a distance to the nearest wall above Sonic/Tails,
-                                                      * ; where "above" = right, into d1
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; loc_1EE7C:
-CheckRightCeilingDist                                 * CheckRightCeilingDist:
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.w  x_pos(a0),d3
-                                                      *         moveq   #0,d0
-                                                      *         move.b  x_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         sub.w   d0,d2
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d3
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         movea.w #$10,a3
-                                                      *         move.w  #0,d6
-                                                      *         bsr.w   FindWall
-                                                      *         move.w  d1,-(sp)
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.w  x_pos(a0),d3
-                                                      *         moveq   #0,d0
-                                                      *         move.b  x_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d2
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d3
-                                                      *         lea     (Secondary_Angle).w,a4
-                                                      *         movea.w #$10,a3
-                                                      *         move.w  #0,d6
-                                                      *         bsr.w   FindWall
-                                                      *         move.w  (sp)+,d0
-                                                      *         move.b  #-$40,d2
-                                                      *         bra.w   loc_1ECC6
-                                                      * ; End of function CheckRightCeilingDist
-                                                      * 
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * ; Stores a distance to the nearest wall on the right of Sonic/Tails into d1
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; Checks a 16x16 block to find solid walls. May check an additional
-                                                      * ; 16x16 block up for walls.
-                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
-                                                      * ; returns relevant block ID in (a1)
-                                                      * ; returns distance in d1
-                                                      * ; returns angle in d3, or zero if angle was odd
-                                                      * ; sub_1EEDC:
-                                                      * CheckRightWallDist:
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.w  x_pos(a0),d3
-                                                      * ; loc_1EEE4:
-                                                      * CheckRightWallDist_Part2:
-                                                      *         addi.w  #$A,d3
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         movea.w #$10,a3
-                                                      *         move.w  #0,d6
-                                                      *         bsr.w   FindWall
-                                                      *         move.b  #$C0,d2
-                                                      *         bra.w   loc_1ECFE
-                                                      * ; End of function CheckRightWallDist
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; loc_1EF00: ObjCheckLeftWallDist:
-                                                      * ObjCheckRightWallDist:
-                                                      *         add.w   x_pos(a0),d3
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         move.b  #0,(a4)
-                                                      *         movea.w #$10,a3
-                                                      *         move.w  #0,d6
-                                                      *         moveq   #$D,d5
-                                                      *         bsr.w   FindWall
-                                                      *         move.b  (Primary_Angle).w,d3
-                                                      *         btst    #0,d3
-                                                      *         beq.s   +
-                                                      *         move.b  #-$40,d3
-                                                      * +
-                                                      *         rts
-                                                      * ; End of function ObjCheckRightWallDist
-                                                      * 
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * ; Stores a distance from Sonic/Tails to the nearest ceiling into d1
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; loc_1EF2E: Sonic_DontRunOnWalls: CheckCeilingDist:
-Sonic_CheckCeiling                                    * Sonic_CheckCeiling:
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.w  x_pos(a0),d3
-                                                      *         moveq   #0,d0
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         sub.w   d0,d2
-                                                      *         eori.w  #$F,d2 ; flip position upside-down within the current 16x16 block?
-                                                      *         move.b  x_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d3
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         movea.w #-$10,a3
-                                                      *         move.w  #$800,d6
-                                                      *         bsr.w   FindFloor
-                                                      *         move.w  d1,-(sp)
-                                                      * 
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.w  x_pos(a0),d3
-                                                      *         moveq   #0,d0
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         sub.w   d0,d2
-                                                      *         eori.w  #$F,d2
-                                                      *         move.b  x_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         sub.w   d0,d3
-                                                      *         lea     (Secondary_Angle).w,a4
-                                                      *         movea.w #-$10,a3
-                                                      *         move.w  #$800,d6
-                                                      *         bsr.w   FindFloor
-                                                      *         move.w  (sp)+,d0
-                                                      * 
-                                                      *         move.b  #$80,d2
-                                                      *         bra.w   loc_1ECC6
-                                                      * ; End of function Sonic_CheckCeiling
-                                                      * 
-                                                      * ; ===========================================================================
-                                                      *         ; a bit of unused/dead code here
-                                                      * ;CheckCeilingDist:
-                                                      *         move.w  y_pos(a0),d2 ; a0=character
-                                                      *         move.w  x_pos(a0),d3
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; Checks a 16x16 block to find solid ceiling. May check an additional
-                                                      * ; 16x16 block up for ceilings.
-                                                      * ; d2 = y_pos
-                                                      * ; d3 = x_pos
-                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
-                                                      * ; returns relevant block ID in (a1)
-                                                      * ; returns distance in d1
-                                                      * ; returns angle in d3, or zero if angle was odd
-                                                      * ; loc_1EF9E: CheckSlopeDist:
-                                                      * CheckCeilingDist_Part2:
-                                                      *         subi.w  #$A,d2
-                                                      *         eori.w  #$F,d2
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         movea.w #-$10,a3
-                                                      *         move.w  #$800,d6
-                                                      *         bsr.w   FindFloor
-                                                      *         move.b  #$80,d2
-                                                      *         bra.w   loc_1ECFE
-                                                      * ; End of function CheckCeilingDist
-                                                      * 
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * ; Stores a distance to the nearest wall above the object into d1
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; loc_1EFBE: ObjHitCeiling:
-                                                      * ObjCheckCeilingDist:
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.w  x_pos(a0),d3
-                                                      *         moveq   #0,d0
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         sub.w   d0,d2
-                                                      *         eori.w  #$F,d2
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         movea.w #-$10,a3
-                                                      *         move.w  #$800,d6
-                                                      *         moveq   #$D,d5
-                                                      *         bsr.w   FindFloor
-                                                      *         move.b  (Primary_Angle).w,d3
-                                                      *         btst    #0,d3
-                                                      *         beq.s   +
-                                                      *         move.b  #$80,d3
-                                                      * +
-                                                      *         rts
-                                                      * ; End of function ObjCheckCeilingDist
-                                                      * 
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * ; Stores a distance to the nearest wall above Sonic/Tails,
-                                                      * ; where "above" = left, into d1
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; loc_1EFF6:
-CheckLeftCeilingDist:                                 * CheckLeftCeilingDist:
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.w  x_pos(a0),d3
-                                                      *         moveq   #0,d0
-                                                      *         move.b  x_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         sub.w   d0,d2
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         sub.w   d0,d3
-                                                      *         eori.w  #$F,d3
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         movea.w #-$10,a3
-                                                      *         move.w  #$400,d6
-                                                      *         bsr.w   FindWall
-                                                      *         move.w  d1,-(sp)
-                                                      * 
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.w  x_pos(a0),d3
-                                                      *         moveq   #0,d0
-                                                      *         move.b  x_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         add.w   d0,d2
-                                                      *         move.b  y_radius(a0),d0
-                                                      *         ext.w   d0
-                                                      *         sub.w   d0,d3
-                                                      *         eori.w  #$F,d3
-                                                      *         lea     (Secondary_Angle).w,a4
-                                                      *         movea.w #-$10,a3
-                                                      *         move.w  #$400,d6
-                                                      *         bsr.w   FindWall
-                                                      *         move.w  (sp)+,d0
-                                                      *         move.b  #$40,d2
-                                                      *         bra.w   loc_1ECC6
-                                                      * ; End of function CheckLeftCeilingDist
-                                                      * 
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * ; Stores a distance to the nearest wall on the left of Sonic/Tails into d1
-                                                      * ; ---------------------------------------------------------------------------
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; Checks a 16x16 block to find solid walls. May check an additional
-                                                      * ; 16x16 block up for walls.
-                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
-                                                      * ; returns relevant block ID in (a1)
-                                                      * ; returns distance in d1
-                                                      * ; returns angle in d3, or zero if angle was odd
-                                                      * ; loc_1F05E: Sonic_HitWall:
-                                                      * CheckLeftWallDist:
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         move.w  x_pos(a0),d3
-                                                      * ; loc_1F066:
-                                                      * CheckLeftWallDist_Part2:
-                                                      *         subi.w  #$A,d3
-                                                      *         eori.w  #$F,d3
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         movea.w #-$10,a3
-                                                      *         move.w  #$400,d6
-                                                      *         bsr.w   FindWall
-                                                      *         move.b  #$40,d2
-                                                      *         bra.w   loc_1ECFE
-                                                      * ; End of function CheckLeftWallDist
-                                                      * 
-                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
-                                                      * ; loc_1F086: ObjCheckRightWallDist:
-                                                      * ObjCheckLeftWallDist:
-                                                      *         add.w   x_pos(a0),d3
-                                                      *         move.w  y_pos(a0),d2
-                                                      *         ; Engine bug: colliding with left walls is erratic with this function.
-                                                      *         ; The cause is this: a missing instruction to flip collision on the found
-                                                      *         ; 16x16 block; this one:
-                                                      *         ;eori.w #$F,d3
-                                                      *         lea     (Primary_Angle).w,a4
-                                                      *         move.b  #0,(a4)
-                                                      *         movea.w #-$10,a3
-                                                      *         move.w  #$400,d6
-                                                      *         moveq   #$D,d5
-                                                      *         bsr.w   FindWall
-                                                      *         move.b  (Primary_Angle).w,d3
-                                                      *         btst    #0,d3
-                                                      *         beq.s   +
-                                                      *         move.b  #$40,d3
-                                                      * +
-                                                      *         rts
-
-; ***************************************************************************************************************************************************
+*************************************************************************************************************************************
 
                                                       * ; ---------------------------------------------------------------------------
                                                       * ; Object touch response subroutine - $20(a0) in the object RAM
@@ -5448,13 +3961,1277 @@ SAnim_Push                                            *SAnim_Push:
                                                       *
         rts
 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Subroutine to change Sonic's angle & position as he walks along the floor
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1E234: Sonic_AnglePos:
+AnglePos                                              * AnglePos:
+        ldx   Primary_Collision                       *         move.l  #Primary_Collision,(Collision_addr).w
+        lda   top_solid_bit,u
+        cmpa  #$8                                     *         cmpi.b  #$C,top_solid_bit(a0)
+        beq   >                                       *         beq.s   +
+        ldx   Secondary_Collision                     *         move.l  #Secondary_Collision,(Collision_addr).w
+!       stx   Collision_addr                          * +
+        sta   glb_d5_b                                *         move.b  top_solid_bit(a0),d5
+        lda   status,u
+        bita  #status_norgroundnorfall                *         btst    #3,status(a0)
+        beq   >                                       *         beq.s   +
+        lda   #0                                      *         moveq   #0,d0
+        sta   Primary_Angle                           *         move.b  d0,(Primary_Angle).w
+        sta   Secondary_Angle                         *         move.b  d0,(Secondary_Angle).w
+        rts                                           *         rts
+                                                      * ; ---------------------------------------------------------------------------
+!       lda   #3                                      * +       moveq   #3,d0
+        sta   Primary_Angle                           *         move.b  d0,(Primary_Angle).w
+        sta   Secondary_Angle                         *         move.b  d0,(Secondary_Angle).w
+        lda   angle,u                                 *         move.b  angle(a0),d0
+        adda   #$20                                   *         addi.b  #$20,d0
+        bpl   loc_1E286                               *         bpl.s   loc_1E286
+        lda   angle,u                                 *         move.b  angle(a0),d0
+        bpl   >                                       *         bpl.s   +
+        suba  #1                                      *         subq.b  #1,d0
+!                                                     * +
+        adda  #$20                                    *         addi.b  #$20,d0
+        bra   loc_1E292                               *         bra.s   loc_1E292
+                                                      * ; ---------------------------------------------------------------------------
+loc_1E286                                             * loc_1E286:
+        lda   angle,u                                 *         move.b  angle(a0),d0
+        bpl   loc_1E28E                               *         bpl.s   loc_1E28E
+        adda  #1                                      *         addq.b  #1,d0
+                                                      * 
+loc_1E28E                                             * loc_1E28E:
+        adda  #$1F                                    *         addi.b  #$1F,d0
+                                                      * 
+loc_1E292                                             * loc_1E292:
+        anda  #$C0                                    *         andi.b  #$C0,d0
+        cmpa  #$40                                    *         cmpi.b  #$40,d0
+        lbeq   Sonic_WalkVertL                         *         beq.w   Sonic_WalkVertL
+        cmpa  #$80                                    *         cmpi.b  #$80,d0
+        lbeq   Sonic_WalkCeiling                       *         beq.w   Sonic_WalkCeiling
+        cmpa  #$C0                                    *         cmpi.b  #$C0,d0
+        lbeq   Sonic_WalkVertR                         *         beq.w   Sonic_WalkVertR
+        ;                                             *         move.w  y_pos(a0),d2
+        ;                                             *         move.w  x_pos(a0),d3
+        ;                                             *         moveq   #0,d0
+        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        sex                                           *         ext.w   d0
+        addd  y_pos,u                                 *         add.w   d0,d2
+        std   glb_d2
+        ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        sex                                           *         ext.w   d0
+        addd  x_pos,u                                 *         add.w   d0,d3
+        std   glb_d3 
+        ldd   #Primary_Angle
+        std   glb_a4                                  *         lea     (Primary_Angle).w,a4
+        ldd   #$10
+        std   glb_a3                                  *         movea.w #$10,a3
+        ldb   #0
+        std   glb_d6                                  *         move.w  #0,d6
+        jsr   FindFloor                               *         bsr.w   FindFloor
+        ldd   glb_d1
+        pshs  d                                       *         move.w  d1,-(sp)
+        ldd   y_pos,u
+        ;                                             *         move.w  y_pos(a0),d2
+        ;                                             *         move.w  x_pos(a0),d3
+        ;                                             *         moveq   #0,d0
+        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        sex                                           *         ext.w   d0
+        addd  y_pos,u                                 *         add.w   d0,d2
+        std   glb_d2
+        ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        negb
+        sex                                           *         ext.w   d0
+        ;                                             *         neg.w   d0
+        addd  x_pos,u                                 *         add.w   d0,d3
+        std   glb_d3
+        ldd   #Secondary_Angle
+        std   glb_a4                                  *         lea     (Secondary_Angle).w,a4
+        ldd   #$10
+        std   glb_a3                                  *         movea.w #$10,a3
+        ldb   #0
+        std   glb_d6                                  *         move.w  #0,d6
+        jsr   FindFloor                               *         bsr.w   FindFloor
+        puls  d                                       *         move.w  (sp)+,d0
+        std   glb_d0
+        jsr   Sonic_Angle                             *         bsr.w   Sonic_Angle
+        ldd   glb_d1                                  *         tst.w   d1
+        beq   return_1E31C                            *         beq.s   return_1E31C
+        bpl   loc_1E31E                               *         bpl.s   loc_1E31E
+        ldd   glb_d1
+        cmpd  #-$E                                    *         cmpi.w  #-$E,d1
+        blt   return_1E31C                            *         blt.s   return_1E31C
+        addd  y_pos,u
+        std   y_pos,u                                 *         add.w   d1,y_pos(a0)
+                                                      * 
+return_1E31C                                          * return_1E31C:
+        rts                                           *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+loc_1E31E                                             * loc_1E31E:
+        ldb   x_vel,u                                 *         mvabs.b x_vel(a0),d0
+        bpl   >
+        negb
+!       addb  #4                                      *         addq.b  #4,d0
+        cmpb  #$E                                     *         cmpi.b  #$E,d0
+        blo   >                                       *         blo.s   +
+        ldb   #$E                                     *         move.b  #$E,d0
+!                                                     * +
+        stb   glb_d0_b
+        ldb   glb_d1_b   
+        cmpb  glb_d0_b                                *         cmp.b   d0,d1
+        bgt   loc_1E33C                               *         bgt.s   loc_1E33C
+                                                      * 
+loc_1E336                                             * loc_1E336:
+        ldd   y_pos,u
+        addd  glb_d1
+        std   y_pos,u                                 *         add.w   d1,y_pos(a0)
+        rts                                           *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+loc_1E33C                                             * loc_1E33C:
+        tst   stick_to_convex,u                       *         tst.b   stick_to_convex(a0)
+        bne   loc_1E336                               *         bne.s   loc_1E336
+        lda   status,u
+        ora   #status_x_orientation                   *         bset    #1,status(a0)
+        anda  #^status_pushing                        *         bclr    #5,status(a0)
+        sta   status,u
+        ldd   #SonAni_Run
+        std   prev_anim,u                             *         move.b  #AniIDSonAni_Run,prev_anim(a0)  ; Force character's animation to restart
+        rts                                           *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Subroutine to change Sonic's angle as he walks along the floor
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1E356:
+Sonic_Angle                                           * Sonic_Angle:
+        lda   Secondary_Angle                         *         move.b  (Secondary_Angle).w,d2
+        ldx   glb_d1
+        cmpx  glb_d0                                  *         cmp.w   d0,d1
+        ble   >                                       *         ble.s   +
+        lda   Primary_Angle                           *         move.b  (Primary_Angle).w,d2
+        ldx   glb_d0                                  *         move.w  d0,d1
+!       sta   glb_d2_b                                * +
+        bita  #1                                      *         btst    #0,d2
+        bne   loc_1E380                               *         bne.s   loc_1E380
+        ;                                             *         move.b  d2,d0
+        suba  angle,u                                 *         sub.b   angle(a0),d0
+        bpl   >                                       *         bpl.s   +
+        nega                                          *         neg.b   d0
+!       sta   glb_d0_b                                * +
+        cmpa  #$20                                    *         cmpi.b  #$20,d0
+        bhs   loc_1E380                               *         bhs.s   loc_1E380
+        lda   glb_d2_b
+        sta   angle,u                                 *         move.b  d2,angle(a0)
+        rts                                           *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+loc_1E380                                             * loc_1E380:
+        lda   angle,u                                 *         move.b  angle(a0),d2
+        adda  #$20                                    *         addi.b  #$20,d2
+        anda  #$C0                                    *         andi.b  #$C0,d2
+        sta   angle,u                                 *         move.b  d2,angle(a0)
+        rts                                           *         rts
+                                                      * ; End of function Sonic_Angle
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Subroutine allowing Sonic to walk up a vertical slope/wall to his right
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1E392:
+Sonic_WalkVertR                                       * Sonic_WalkVertR:
+        ;                                             *         move.w  y_pos(a0),d2
+        ;                                             *         move.w  x_pos(a0),d3
+        ;                                             *         moveq   #0,d0
+        ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        negb                                          *         ext.w   d0
+        sex                                           *         neg.w   d0
+        addd  y_pos,u                                 *         add.w   d0,d2
+        std   glb_d2
+        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        sex                                           *         ext.w   d0
+        addd  x_pos,u                                 *         add.w   d0,d3
+        std   glb_d3
+        ldd   #Primary_Angle
+        std   glb_a4                                  *         lea     (Primary_Angle).w,a4
+        ldd   #$10
+        std   glb_a3                                  *         movea.w #$10,a3
+        ldb   #0
+        std   glb_d6                                  *         move.w  #0,d6
+        jsr   FindWall                                *         bsr.w   FindWall
+        ldd   glb_d1
+        pshs  d                                       *         move.w  d1,-\(sp\)        
+        ;                                             *         move.w  y_pos(a0),d2
+        ;                                             *         move.w  x_pos(a0),d3
+        ;                                             *         moveq   #0,d0
+        lda   x_radius,u                              *         move.b  x_radius(a0),d0
+        sex                                           *         ext.w   d0
+        adda  y_pos,u                                 *         add.w   d0,d2
+        std   glb_d2
+        lda   y_radius,u                              *         move.b  y_radius(a0),d0
+        sex                                           *         ext.w   d0
+        addd  x_pos,u                                 *         add.w   d0,d3
+        std   glb_d3
+        ldd   #Secondary_Angle
+        std   glb_a4                                  *         lea     (Secondary_Angle).w,a4
+        ldd   #$10
+        std   glb_a3                                  *         movea.w #$10,a3
+        ldb   #0
+        std   glb_d6                                  *         move.w  #0,d6
+        jsr   FindWall                                *         bsr.w   FindWall
+        puls  d                                       *         move.w  (sp)+,d0
+        std   glb_d0
+        jsr   Sonic_Angle                             *         bsr.w   Sonic_Angle
+        ldd   glb_d1                                  *         tst.w   d1
+        beq   return_1E400                            *         beq.s   return_1E400
+        bpl   loc_1E402                               *         bpl.s   loc_1E402
+        cmpd  #-$E                                    *         cmpi.w  #-$E,d1
+        blt   return_1E400                            *         blt.s   return_1E400
+        addd  x_pos,u
+        std   x_pos,u                                 *         add.w   d1,x_pos(a0)
+                                                      * 
+return_1E400                                          * return_1E400:
+        rts                                           *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+loc_1E402                                             * loc_1E402:
+        ldb   y_vel,u                                 *         mvabs.b y_vel(a0),d0
+        bpl   >
+        negb
+!       addb  #4                                      *         addq.b  #4,d0
+        cmpb  #$E                                     *         cmpi.b  #$E,d0
+        blo   >                                       *         blo.s   +
+        ldb   #$E                                     *         move.b  #$E,d0
+!                                                     * +
+        stb   glb_d0_b
+        lda   glb_d1_b
+        cmpa  glb_d0_b                                *         cmp.b   d0,d1
+        bgt   loc_1E420                               *         bgt.s   loc_1E420
+                                                      * 
+loc_1E41A                                             * loc_1E41A:
+        ldd   x_pos,u
+        addd  glb_d1
+        std   x_pos,u                                 *         add.w   d1,x_pos(a0)
+        rts                                           *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+loc_1E420                                             * loc_1E420:
+        tst   stick_to_convex,u                       *         tst.b   stick_to_convex(a0)
+        bne   loc_1E41A                               *         bne.s   loc_1E41A
+        lda   status,u
+        ora   #status_x_orientation                   *         bset    #1,status(a0)
+        anda  #^status_pushing                        *         bclr    #5,status(a0)
+        sta   status,u
+        ldd   #SonAni_Run
+        std   prev_anim,u                             *         move.b  #AniIDSonAni_Run,prev_anim(a0)  ; Force character's animation to restart
+        rts                                           *         rts
+                                                      * ; ===========================================================================
+                                                      * ;loc_1E43A
+Sonic_WalkCeiling                                     * Sonic_WalkCeiling:
+        ;                                             *         move.w  y_pos(a0),d2
+        ;                                             *         move.w  x_pos(a0),d3
+        ;                                             *         moveq   #0,d0
+        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        sex                                           *         ext.w   d0
+        std   glb_d0
+        ldd   y_pos,u
+        subd  glb_d0                                  *         sub.w   d0,d2
+        eorb  #$F                                     *         eori.w  #$F,d2
+        std   glb_d2
+        ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        sex                                           *         ext.w   d0
+        addd  x_pos,u                                 *         add.w   d0,d3
+        std   glb_d3
+        ldd   #Primary_Angle
+        std   glb_a4                                  *         lea     (Primary_Angle).w,a4
+        ldd   #-$10
+        std   glb_a3                                  *         movea.w #-$10,a3
+        ldb   #$2
+        stb   glb_d6_b                                *         movea.w #$800,d6
+        jsr   FindFloor                               *         bsr.w   FindFloor
+        ldd   glb_d1
+        pshs  d                                       *         move.w  d1,-\(sp\)        
+        ;                                             *         move.w  y_pos(a0),d2
+        ;                                             *         move.w  x_pos(a0),d3
+        ;                                             *         moveq   #0,d0
+        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        sex                                           *         ext.w   d0
+        std   glb_d0
+        ldd   y_pos,u
+        subd  glb_d0                                  *         sub.w   d0,d2
+        eorb  #$F                                     *         eori.w  #$F,d2
+        std   glb_d2
+        ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        sex                                           *         ext.w   d0
+        std   glb_d0
+        ldd   x_pos,u
+        subd  glb_d0                                  *         sub.w   d0,d3
+        ldd   #Secondary_Angle
+        std   glb_a4                                  *         lea     (Secondary_Angle).w,a4
+        ldd   #-$10
+        std   glb_a3                                  *         movea.w #-$10,a3
+        ldb   #$2
+        stb   glb_d6_b                                *         movea.w #$800,d6
+        jsr   FindFloor                               *         bsr.w   FindFloor
+        puls  d                                       *         move.w  (sp)+,d0
+        std   glb_d0
+        jsr   Sonic_Angle                             *         bsr.w   Sonic_Angle
+        ldd   glb_d1                                  *         tst.w   d1
+        beq   return_1E4AE                            *         beq.s   return_1E4AE
+        bpl   loc_1E4B0                               *         bpl.s   loc_1E4B0
+        cmpd  #-$E                                    *         cmpi.w  #-$E,d1
+        blt   return_1E4AE                            *         blt.s   return_1E4AE
+        std   glb_d1
+        ldd   y_pos,u
+        subd  glb_d1                                  *         sub.w   d1,y_pos(a0)
+        std   y_pos,u
+                                                      * 
+return_1E4AE                                          * return_1E4AE:
+        rts                                           *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+loc_1E4B0                                             * loc_1E4B0:
+        ldb   x_vel,u                                 *         mvabs.b x_vel(a0),d0
+        bpl   >
+        negb
+!       addb  #4                                      *         addq.b  #4,d0
+        cmpb  #$E                                     *         cmpi.b  #$E,d0
+        blo   >                                       *         blo.s   +
+        ldb   #$E                                     *         move.b  #$E,d0
+!       stb   glb_d0_b                                * +
+        ldb   glb_d1_b
+        cmpb  glb_d0_b                                *         cmp.b   d0,d1
+        bgt   loc_1E4CE                               *         bgt.s   loc_1E4CE
+                                                      * 
+loc_1E4C8                                             * loc_1E4C8:
+        ldd   y_pos,u
+        subd  glb_d1                                  *         sub.w   d1,y_pos(a0)
+        std   y_pos,u
+        rts                                           *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+loc_1E4CE                                             * loc_1E4CE:
+        tst   stick_to_convex,u                       *         tst.b   stick_to_convex(a0)
+        bne   loc_1E4C8                               *         bne.s   loc_1E4C8
+        lda   status,u
+        ora   #status_x_orientation                   *         bset    #1,status(a0)
+        anda  #^status_pushing                        *         bclr    #5,status(a0)
+        sta   status,u
+        ldd   #SonAni_Run
+        std   prev_anim,u                             *         move.b  #AniIDSonAni_Run,prev_anim(a0)  ; Force character's animation to restart
+        rts                                           *         rts
+                                                      * ; ===========================================================================
+                                                      * ;loc_1E4E8
+Sonic_WalkVertL                                       * Sonic_WalkVertL:
+        ;                                             *         move.w  y_pos(a0),d2
+        ;                                             *         move.w  x_pos(a0),d3
+        ;                                             *         moveq   #0,d0
+        ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        sex                                           *         ext.w   d0
+        std   glb_d0
+        ldd   y_pos,u                                 
+        subd  glb_d0                                  *         sub.w   d0,d2
+        lda   y_radius,u                              *         move.b  y_radius(a0),d0
+        sex                                           *         ext.w   d0
+        std   glb_d0
+        ldd   x_pos,u
+        subd  glb_d0                                  *         sub.w   d0,d3
+        eorb  #$F                                     *         eori.w  #$F,d3
+        std   glb_d3
+        ldd   #Primary_Angle
+        std   glb_a4                                  *         lea     (Primary_Angle).w,a4
+        ldd   #-$10
+        std   glb_a3                                  *         movea.w #-$10,a3
+        ldb   #$1
+        stb   glb_d6_b                                *         movea.w #$400,d6
+        jsr   FindWall                                *         bsr.w   FindWall
+        ldd   glb_d1
+        pshs  d                                       *         move.w  d1,-\(sp\)        
+        ;                                             *         move.w  y_pos(a0),d2
+        ;                                             *         move.w  x_pos(a0),d3
+        ;                                             *         moveq   #0,d0
+        ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        sex                                           *         ext.w   d0
+        addd  y_pos,u                                 *         add.w   d0,d2
+        std   glb_d2
+        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        sex                                           *         ext.w   d0
+        std   glb_d0
+        ldd   x_pos,u
+        subd  glb_d0                                  *         sub.w   d0,d3
+        eorb  #$F                                     *         eori.w  #$F,d3
+        std   glb_d3
+        ldd   #Secondary_Angle
+        std   glb_a4                                  *         lea     (Secondary_Angle).w,a4
+        ldd   #-$10
+        std   glb_a3                                  *         movea.w #-$10,a3
+        ldb   #$1
+        stb   glb_d6_b                                *         movea.w #$400,d6
+        jsr   FindWall                                *         bsr.w   FindWall
+        puls  d                                       *         move.w  (sp)+,d0
+        std   glb_d0
+        jsr   Sonic_Angle                             *         bsr.w   Sonic_Angle
+        ldd   glb_d1                                  *         tst.w   d1
+        beq   return_1E55C                            *         beq.s   return_1E55C
+        bpl   loc_1E55E                               *         bpl.s   loc_1E55E
+        cmpd  #-$E                                    *         cmpi.w  #-$E,d1
+        blt   return_1E55C                            *         blt.s   return_1E55C
+        ldd   x_pos,u
+        subd  glb_d1                                  *         sub.w   d1,x_pos(a0)
+        std   x_pos,u
+                                                      * 
+return_1E55C                                          * return_1E55C:
+        rts                                           *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+loc_1E55E                                             * loc_1E55E:
+        ldb   y_vel,u                                 *         mvabs.b y_vel(a0),d0
+        bpl   >
+        negb
+!       addb  #4                                      *         addq.b  #4,d0
+        cmpb  #$E                                     *         cmpi.b  #$E,d0
+        blo   >                                       *         blo.s   +
+        ldb   #$E                                     *         move.b  #$E,d0
+!       stb   glb_d0_b                                * +
+        ldb   glb_d1_b
+        cmpb  glb_d0_b                                *         cmp.b   d0,d1
+        bgt   loc_1E57C                               *         bgt.s   loc_1E57C
+                                                      * 
+loc_1E576                                             * loc_1E576:
+        ldd   x_pos,u
+        subd  glb_d1                                  *         sub.w   d1,x_pos(a0)
+        std   x_pos,u
+        rts                                           *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+loc_1E57C                                             * loc_1E57C:
+        tst   stick_to_convex,u                       *         tst.b   stick_to_convex(a0)
+        bne   loc_1E576                               *         bne.s   loc_1E576
+        lda   status,u
+        ora   #status_x_orientation                   *         bset    #1,status(a0)
+        anda  #^status_pushing                        *         bclr    #5,status(a0)
+        sta   status,u
+        ldd   #SonAni_Run
+        std   prev_anim,u                             *         move.b  #AniIDSonAni_Run,prev_anim(a0)  ; Force character's animation to restart
+        rts                                           *         rts
+
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Subroutine to calculate how much space is in front of Sonic or Tails on the ground
+                                                      * ; d0 = some input angle
+                                                      * ; d1 = output about how many pixels (up to some high enough amount)
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EB84: Sonic_WalkSpeed:
+CalcRoomInFront                                       * CalcRoomInFront:
+        ldx   Primary_Collision                       *         move.l  #Primary_Collision,(Collision_addr).w
+        lda   top_solid_bit,u
+        cmpa  #$8                                     *         cmpi.b  #$C,top_solid_bit(a0)
+        beq   >                                       *         beq.s   +
+        ldx   Secondary_Collision                     *         move.l  #Secondary_Collision,(Collision_addr).w
+!       stx   Collision_addr                          * +
+        lda   lrb_solid_bit,u
+        sta   glb_d5_b                                *         move.b  lrb_solid_bit(a0),d5                    ; Want walls or ceilings
+        ldd   x_pos,u                                 *         move.l  x_pos(a0),d3
+        std   glb_d3
+        ldd   y_pos,u                                 *         move.l  y_pos(a0),d2
+        std   glb_d2
+        ;                                             *         move.w  x_vel(a0),d1
+        ;                                             *         ext.l   d1
+        ;                                             *         asl.l   #8,d1
+        ;                                             *         add.l   d1,d3
+        ldb   x_vel,u
+        sex                            ; velocity is positive or negative, take care of that
+        sta   @a
+        ldd   x_vel,u
+        addd  glb_d3_b                 ; glb_d3 is 24bit
+        std   glb_d3_b
+        lda   glb_d3
+        adca  #$00                     ; parameter is modified by the result of sign extend
+@a      equ   *-1
+        sta   glb_d3_b                 ; update high byte of x_pos and prepare swap
+
+        ;                                             *         move.w  y_vel(a0),d1
+        ;                                             *         ext.l   d1
+        ;                                             *         asl.l   #8,d1
+        ;                                             *         add.l   d1,d2
+
+        ldb   y_vel,u
+        sex                            ; velocity is positive or negative, take care of that
+        sta   @b
+        ldd   y_vel,u
+        addd  glb_d2_b                 ; glb_d3 is 24bit
+        std   glb_d2_b
+        lda   glb_d2
+        adca  #$00                     ; parameter is modified by the result of sign extend
+@b      equ   *-1
+        sta   glb_d2_b                 ; update high byte of y_pos and prepare swap
+        lda   #0
+        sta   glb_d3                                  *         swap    d2
+        sta   glb_d2                                  *         swap    d3
+        ldb   glb_d0_b
+        stb   Primary_Angle                           *         move.b  d0,(Primary_Angle).w
+        stb   Secondary_Angle                         *         move.b  d0,(Secondary_Angle).w
+        stb   glb_d1_b                                *         move.b  d0,d1
+        addb  #$20                                    *         addi.b  #$20,d0
+        bpl   loc_1EBDC                               *         bpl.s   loc_1EBDC
+                                                      * 
+        ldb   glb_d0_b                                *         move.b  d1,d0
+        bpl   >                                       *         bpl.s   +
+        subb  #1                                      *         subq.b  #1,d0
+!                                                     * +
+        addd  #$20                                    *         addi.b  #$20,d0
+        bra   loc_1EBE6                               *         bra.s   loc_1EBE6
+                                                      * ; ---------------------------------------------------------------------------
+loc_1EBDC                                             * loc_1EBDC:
+        ldb   glb_d0_b                                *         move.b  d1,d0
+        bpl   >                                       *         bpl.s   +
+                                                      *         addq.b  #1,d0
+!                                                     * +
+                                                      *         addi.b  #$1F,d0
+                                                      * 
+loc_1EBE6                                             * loc_1EBE6:
+        addb  #$C0                                    *         andi.b  #$C0,d0
+        stb   glb_d0_b
+        lbeq   CheckFloorDist_Part2                    *         beq.w   CheckFloorDist_Part2            ; Player is going mostly down
+        cmpb  #$80                                    *         cmpi.b  #$80,d0
+        lbeq   CheckCeilingDist_Part2                  *         beq.w   CheckCeilingDist_Part2          ; Player is going mostly up
+        ldb   glb_d1_b
+        andb  #$38                                    *         andi.b  #$38,d1
+        bne   >                                       *         bne.s   +
+        ldd   glb_d2
+        addd  #8
+        std   glb_d2                                  *         addq.w  #8,d2
+!           
+        ldb   glb_d0_b                                * +
+        cmpb  #$40                                    *         cmpi.b  #$40,d0
+        lbeq   CheckLeftWallDist_Part2                 *         beq.w   CheckLeftWallDist_Part2         ; Player is going mostly left
+        jmp   CheckRightWallDist_Part2                *         bra.w   CheckRightWallDist_Part2        ; Player is going mostly right
+                                                      * 
+                                                      * ; End of function CalcRoomInFront
+                                                      * 
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Subroutine to calculate how much space is empty above Sonic's/Tails' head
+                                                      * ; d0 = input angle perpendicular to the spine
+                                                      * ; d1 = output about how many pixels are overhead (up to some high enough amount)
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; sub_1EC0A:
+CalcRoomOverHead                                      * CalcRoomOverHead:
+        ldx   Primary_Collision                       *         move.l  #Primary_Collision,(Collision_addr).w
+        lda   top_solid_bit,u
+        cmpa  #$8                                     *         cmpi.b  #$C,top_solid_bit(a0)
+        beq   >                                       *         beq.s   +
+        ldx   Secondary_Collision                     *         move.l  #Secondary_Collision,(Collision_addr).w
+!                                                     * +
+        stx   Collision_addr
+        lda   lrb_solid_bit,u                         *         move.b  lrb_solid_bit(a0),d5
+        lda   glb_d0_b
+        sta   Primary_Angle                           *         move.b  d0,(Primary_Angle).w
+        sta   Secondary_Angle                         *         move.b  d0,(Secondary_Angle).w
+        adda  #$20                                    *         addi.b  #$20,d0
+        anda  #$C0                                    *         andi.b  #$C0,d0
+        sta   glb_d0_b
+        cmpa  #$40                                    *         cmpi.b  #$40,d0
+        lbeq   CheckLeftCeilingDist                    *         beq.w   CheckLeftCeilingDist
+        cmpa  #$80                                    *         cmpi.b  #$80,d0
+        lbeq   Sonic_CheckCeiling                      *         beq.w   Sonic_CheckCeiling
+        cmpa  #$C0                                    *         cmpi.b  #$C0,d0
+        lbeq   CheckRightCeilingDist                   *         beq.w   CheckRightCeilingDist
+                                                      * 
+                                                      * ; End of function CalcRoomOverHead
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Subroutine to check if Sonic/Tails is near the floor
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EC4E: Sonic_HitFloor:
+Sonic_CheckFloor                                      * Sonic_CheckFloor:
+        ldx   Primary_Collision                       *         move.l  #Primary_Collision,(Collision_addr).w
+        lda   top_solid_bit,u
+        cmpa  #$8                                     *         cmpi.b  #$C,top_solid_bit(a0)
+        beq   >                                       *         beq.s   +
+        ldx   Secondary_Collision                     *         move.l  #Secondary_Collision,(Collision_addr).w
+!                                                     * +
+        stx   Collision_addr
+        lda   top_solid_bit,u                         *         move.b  top_solid_bit(a0),d5
+        sta   glb_d5_b
+        ldd   y_pos,u                                 *         move.w  y_pos(a0),d2
+        std   glb_d2
+        ldd   x_pos,u                                 *         move.w  x_pos(a0),d3
+        std   glb_d3
+        ;                                             *         moveq   #0,d0
+        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        sex                                           *         ext.w   d0
+        addd  glb_d0                                  *         add.w   d0,d2
+        std   glb_d2
+        ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        sex                                           *         ext.w   d0
+        addd  glb_d0                                  *         add.w   d0,d3
+        std   glb_d3
+        ldd   #Primary_Angle
+        std   glb_a4                                  *         lea     (Primary_Angle).w,a4
+        ldd   #$10
+        std   glb_a3                                  *         movea.w #$10,a3
+        ldb   #0
+        std   glb_d6                                  *         move.w  #0,d6
+        jsr   FindFloor                               *         bsr.w   FindFloor
+        ldd   glb_d1
+        pshs  d                                       *         move.w  d1,-\(sp\)        
+        ;                                             *         move.w  y_pos(a0),d2
+        ;                                             *         move.w  x_pos(a0),d3
+        ;                                             *         moveq   #0,d0
+        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        sex                                           *         ext.w   d0
+        addd  y_pos,u                                 *         add.w   d0,d2
+        std   glb_d2
+        ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        negb
+        sex                                           *         ext.w   d0
+        addd  x_pos,u                                 *         sub.w   d0,d3
+        std   glb_d3
+        ldd   #Secondary_Angle
+        std   glb_a4                                  *         lea     (Secondary_Angle).w,a4
+        ldd   #$10
+        std   glb_a3                                  *         movea.w #$10,a3
+        ldd   #0
+        std   glb_d6                                  *         move.w  #0,d6
+        jsr   FindFloor                               *         bsr.w   FindFloor
+        puls  d                                       *         move.w  (sp)+,d0
+        std   glb_d0
+        ldb   #0
+        stb   glb_d2_b                                *         move.b  #0,d2
+                                                      * 
+loc_1ECC6                                             * loc_1ECC6:
+        lda   Secondary_Angle                         *         move.b  (Secondary_Angle).w,d3
+        ldx   glb_d1
+        cmpx  glb_d0                                  *         cmp.w   d0,d1
+        ble   loc_1ECD4                               *         ble.s   loc_1ECD4
+        ;                                             *         move.b  (Primary_Angle).w,d3
+        ;                                             *         exg     d0,d1
+        ldd   glb_d0
+        stx   glb_d0
+        std   glb_d1
+        lda   Primary_Angle
+                                                      * 
+loc_1ECD4                                             * loc_1ECD4:
+        bita  #1                                      *         btst    #0,d3
+        beq   >                                       *         beq.s   +
+        lda   glb_d2_b                                *         move.b  d2,d3
+!                                                     * +
+        sta   glb_d3_b
+        rts                                           *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      *         ; a bit of unused/dead code here
+                                                      * ;CheckFloorDist:
+                                                      *         move.w  y_pos(a0),d2 ; a0=character
+                                                      *         move.w  x_pos(a0),d3
+                                                      * 
+                                                      * ; Checks a 16x16 block to find solid ground. May check an additional
+                                                      * ; 16x16 block up for ceilings.
+                                                      * ; d2 = y_pos
+                                                      * ; d3 = x_pos
+                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
+                                                      * ; returns relevant block ID in (a1)
+                                                      * ; returns distance in d1
+                                                      * ; returns angle in d3, or zero if angle was odd
+                                                      * ;loc_1ECE6:
+CheckFloorDist_Part2                                  * CheckFloorDist_Part2:
+        ldd   glb_d2
+        addd  #$A
+        std   glb_d2                                  *         addi.w  #$A,d2
+        ldd   #Primary_Angle
+        std   glb_a4                                  *         lea     (Primary_Angle).w,a4
+        ldd   #$10
+        std   glb_a3                                  *         movea.w #$10,a3
+        ldb   #0
+        std   glb_d6                                  *         move.w  #0,d6
+        jsr   FindFloor                               *         bsr.w   FindFloor
+                                                      *         move.b  #0,d2
+                                                      * 
+                                                      * ; d2 what to use as angle if (Primary_Angle).w is odd
+                                                      * ; returns angle in d3, or value in d2 if angle was odd
+loc_1ECFE                                             * loc_1ECFE:
+        ldb   Primary_Angle                           *         move.b  (Primary_Angle).w,d3
+        bitb  #1                                      *         btst    #0,d3
+        beq   >                                       *         beq.s   +
+        ldd   glb_d2_b                                *         move.b  d2,d3
+!       stb   glb_d3_b                                * +
+        rts                                           *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      *         ; Unused collision checking subroutine
+                                                      * 
+                                                      *         move.w  x_pos(a0),d3 ; a0=character
+                                                      *         move.w  y_pos(a0),d2
+                                                      *         subq.w  #4,d2
+                                                      *         move.l  #Primary_Collision,(Collision_addr).w
+                                                      *         cmpi.b  #$D,lrb_solid_bit(a0)
+                                                      *         beq.s   +
+                                                      *         move.l  #Secondary_Collision,(Collision_addr).w
+                                                      * +
+                              
+                                                      *         lea     (Primary_Angle).w,a4
+                              
+                                                      *         move.b  #0,(a4)
+                                                      *         movea.w #$10,a3
+                              
+                                                      *         move.w  #0,d6
+                                                      *         move.b  lrb_solid_bit(a0),d5
+                                                      *         bsr.w   FindFloor
+                                                      *         move.b  (Primary_Angle).w,d3
+                                                      *         btst    #0,d3
+                                                      *         beq.s   +
+                                                      *         move.b  #0,d3
+                                                      * +
+                                                      *         rts
+                                                      * 
+                                                      * ; ===========================================================================
+                                                      * ; loc_1ED56:
+ChkFloorEdge                                          * ChkFloorEdge:
+        ldd   x_pos,u                                 
+        std   glb_d3                                  *         move.w  x_pos(a0),d3
+                                                      * ; loc_1ED5A:
+ChkFloorEdge_Part2                                    * ChkFloorEdge_Part2:
+        ;                                             *         move.w  y_pos(a0),d2
+        lda   #0                                      *         moveq   #0,d0
+        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        sex                                           *         ext.w   d0
+        addd  y_pos,u                                 *         add.w   d0,d2
+        std   glb_d2
+        ldx   #Primary_Collision                      *         move.l  #Primary_Collision,(Collision_addr).w
+        lda   top_solid_bit,u
+        cmpa  #$8                                     *         cmpi.b  #$C,top_solid_bit(a0)
+        beq   >                                       *         beq.s   +
+        ldx   #Secondary_Collision                    *         move.l  #Secondary_Collision,(Collision_addr).w
+!       stx   Collision_addr                          * +
+        ldd   #Primary_Angle
+        std   glb_a4                                  *         lea     (Primary_Angle).w,a4
+        ldd   #$10
+        sta   Primary_Angle                           *         move.b  #0,(a4)
+        std   glb_a3                                  *         movea.w #$10,a3
+        ldb   #0
+        std   glb_d6                                  *         move.w  #0,d6
+        lda   top_solid_bit,u
+        sta   glb_d5_b                                *         move.b  top_solid_bit(a0),d5
+        jsr   FindFloor                               *         bsr.w   FindFloor
+        lda   Primary_Angle                           *         move.b  (Primary_Angle).w,d3
+        bita  #1                                      *         btst    #0,d3
+        beq   >                                       *         beq.s   +
+        lda   #0                                      *         move.b  #0,d3
+!       sta   glb_d3_b                                * +
+        rts                                           *         rts
+                                                      * ; ===========================================================================
+                                                      * ; Identical to ChkFloorEdge except that this uses a1 instead of a0
+                                                      * ;loc_1EDA8:
+                                                      * ChkFloorEdge2:
+                                                      *         move.w  x_pos(a1),d3
+                                                      *         move.w  y_pos(a1),d2
+                                                      *         moveq   #0,d0
+                                                      *         move.b  y_radius(a1),d0
+                                                      *         ext.w   d0
+                                                      *         add.w   d0,d2
+                                                      *         move.l  #Primary_Collision,(Collision_addr).w
+                                                      *         cmpi.b  #$C,top_solid_bit(a1)
+                                                      *         beq.s   +
+                                                      *         move.l  #Secondary_Collision,(Collision_addr).w
+                                                      * +
+                                                      *         lea     (Primary_Angle).w,a4
+                                                      *         move.b  #0,(a4)
+                                                      *         movea.w #$10,a3
+                                                      *         move.w  #0,d6
+                                                      *         move.b  top_solid_bit(a1),d5
+                                                      *         bsr.w   FindFloor
+                                                      *         move.b  (Primary_Angle).w,d3
+                                                      *         btst    #0,d3
+                                                      *         beq.s   return_1EDF8
+                                                      *         move.b  #0,d3
+                                                      * 
+                                                      * return_1EDF8:
+                                                      *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Subroutine checking if an object should interact with the floor
+                                                      * ; (objects such as a monitor Sonic bumps from underneath)
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EDFA: ObjHitFloor:
+ObjCheckFloorDist                                     * ObjCheckFloorDist:
+        ldd   x_pos,u                                 *         move.w  x_pos(a0),d3
+        std   glb_d3
+        ;                                             *         move.w  y_pos(a0),d2
+        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        sex                                           *         ext.w   d0
+        addd  y_pos,u                                 *         add.w   d0,d2
+        std   glb_d2
+        ldd   #Primary_Angle
+        std   glb_a4                                  *         lea     (Primary_Angle).w,a4
+        ldd   #$10
+        sta   Primary_Angle                           *         move.b  #0,(a4)
+        std   glb_a3                                  *         movea.w #$10,a3
+        ldb   #0
+        std   glb_d6                                  *         move.w  #0,d6
+        ldb   #$C                                     *         moveq   #$C,d5
+        std   glb_d5
+        jsr   FindFloor                               *         bsr.w   FindFloor
+        lda   Primary_Angle                           *         move.b  (Primary_Angle).w,d3
+        bita  #1                                      *         btst    #0,d3
+        beq   >                                       *         beq.s   +
+        lda   #0                                      *         move.b  #0,d3
+!       sta   glb_d3_b                                  * +
+        rts                                           *         rts
+                                                      * ; ===========================================================================
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Collision check used to let the HTZ boss fire attack to hit the ground
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EE30:
+FireCheckFloorDist                                    * FireCheckFloorDist:
+        ldd   x_pos,x                                 *         move.w  x_pos(a1),d3
+        std   glb_d3
+        ;                                             *         move.w  y_pos(a1),d2
+        ldb   y_radius,x                              *         move.b  y_radius(a1),d0
+        sex                                           *         ext.w   d0
+        addd  y_pos,x                                 *         add.w   d0,d2
+        std   glb_d2
+        ldd   #Primary_Angle
+        std   glb_a4                                  *         lea     (Primary_Angle).w,a4
+        ldd   #$10
+        sta   Primary_Angle                           *         move.b  #0,(a4)
+        std   glb_a3                                  *         movea.w #$10,a3
+        ldb   #0
+        std   glb_d6                                  *         move.w  #0,d6
+        ldd   #$C
+        std   glb_d5                                  *         moveq   #$C,d5
+        jmp   FindFloor                               *         bra.w   FindFloor
+                                                      * ; End of function FireCheckFloorDist
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Collision check used to let scattered rings bounce on the ground
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EE56:
+RingCheckFloorDist                                    * RingCheckFloorDist:
+        ldd   x_pos,u                                 *         move.w  x_pos(a0),d3
+        std   glb_d3
+        ;                                             *         move.w  y_pos(a0),d2
+        lda   y_radius,u                              *         move.b  y_radius(a0),d0
+        sex                                           *         ext.w   d0
+        addd  y_pos,u                                 *         add.w   d0,d2
+        std   glb_d2
+        ldd   #Primary_Angle
+        std   glb_a4                                  *         lea     (Primary_Angle).w,a4
+        ldd   #$10
+        sta   Primary_Angle                           *         move.b  #0,(a4)
+        std   glb_a3                                  *         movea.w #$10,a3
+        ldb   #0
+        stb   glb_d6                                  *         move.w  #0,d6
+        ldd   #$C     
+        std   glb_d5                                  *         moveq   #$C,d5
+        jmp   Ring_FindFloor                          *         bra.w   Ring_FindFloor
+                                                      * ; End of function RingCheckFloorDist
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Stores a distance to the nearest wall above Sonic/Tails,
+                                                      * ; where "above" = right, into d1
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EE7C:
+CheckRightCeilingDist                                 * CheckRightCeilingDist:
+        ;                                             *         move.w  y_pos(a0),d2
+        ;                                             *         move.w  x_pos(a0),d3
+        ;                                             *         moveq   #0,d0
+        ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        negb
+        sex                                           *         ext.w   d0
+        addd  y_pos,u                                 *         sub.w   d0,d2
+        std   glb_d2
+        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        sex                                           *         ext.w   d0
+        addd  x_pos,u                                 *         add.w   d0,d3
+        std   glb_d3
+        ldd   #Primary_Angle
+        std   glb_a4                                  *         lea     (Primary_Angle).w,a4
+        ldd   #$10
+        std   glb_a3                                  *         movea.w #$10,a3
+        ldb   #0
+        std   glb_d6                                  *         move.w  #0,d6
+        jsr   FindWall                                *         bsr.w   FindWall
+        ldd   glb_d1
+        pshs  d                                       *         move.w  d1,-\(sp\)        
+        ;                                             *         move.w  y_pos(a0),d2
+        ;                                             *         move.w  x_pos(a0),d3
+        ;                                             *         moveq   #0,d0
+        ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        sex                                           *         ext.w   d0
+        addd  y_pos,u                                 *         add.w   d0,d2
+        std   glb_d2
+        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        sex                                           *         ext.w   d0
+        addd  x_pos,u                                 *         add.w   d0,d3
+        std   glb_d3
+        ldd   #Secondary_Angle
+        std   glb_a4                                  *         lea     (Secondary_Angle).w,a4
+        ldd   #$10
+        std   glb_a3                                  *         movea.w #$10,a3
+        ldb   #0
+        std   glb_d6                                  *         move.w  #0,d6
+        jsr   FindWall                                *         bsr.w   FindWall
+        puls  d                                       *         move.w  (sp)+,d0
+        std   glb_d0
+        ldb   #-$40
+        stb   glb_d2                                  *         move.b  #-$40,d2
+        jmp   loc_1ECC6                               *         bra.w   loc_1ECC6
+                                                      * ; End of function CheckRightCeilingDist
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Stores a distance to the nearest wall on the right of Sonic/Tails into d1
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; Checks a 16x16 block to find solid walls. May check an additional
+                                                      * ; 16x16 block up for walls.
+                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
+                                                      * ; returns relevant block ID in (a1)
+                                                      * ; returns distance in d1
+                                                      * ; returns angle in d3, or zero if angle was odd
+                                                      * ; sub_1EEDC:
+CheckRightWallDist                                    * CheckRightWallDist:
+        ldd   y_pos,u                                 *         move.w  y_pos(a0),d2
+        std   glb_d2
+        ldd   x_pos,u                                 *         move.w  x_pos(a0),d3
+        std   glb_d3
+                                                      * ; loc_1EEE4:
+CheckRightWallDist_Part2                              * CheckRightWallDist_Part2:
+        ldd   glb_d3
+        addd  #$A                                     *         addi.w  #$A,d3
+        std   glb_d3
+        ldd   #Primary_Angle
+        std   glb_a4                                  *         lea     (Primary_Angle).w,a4
+        ldd   #$10
+        std   glb_a3                                  *         movea.w #$10,a3
+        ldb   #0
+        std   glb_d6                                  *         move.w  #0,d6
+        jsr   FindWall                                *         bsr.w   FindWall
+        ldb   #$C0
+        stb   glb_d2_b                                *         move.b  #$C0,d2
+        jmp   loc_1ECFE                               *         bra.w   loc_1ECFE
+                                                      * ; End of function CheckRightWallDist
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EF00: ObjCheckLeftWallDist:
+ObjCheckRightWallDist                                 * ObjCheckRightWallDist:
+        ldd   glb_d3
+        addd  x_pos,u
+        std   glb_d3                                  *         add.w   x_pos(a0),d3
+        ldd   y_pos,u                                 *         move.w  y_pos(a0),d2
+        std   glb_d2
+        ldd   #Primary_Angle
+        std   glb_a4                                  *         lea     (Primary_Angle).w,a4
+        ldd   #$10
+        sta   Primary_Angle                           *         move.b  #0,(a4)
+        std   glb_a3                                  *         movea.w #$10,a3
+        ldb   #0
+        std   glb_d6                                  *         move.w  #0,d6
+        ldd   #$D
+        std   glb_d5                                  *         moveq   #$D,d5
+        jsr   FindWall                                *         bsr.w   FindWall
+        ldb   Primary_Angle
+        stb   glb_d3_b                                *         move.b  (Primary_Angle).w,d3
+        bitb  #1                                      *         btst    #0,d3
+        beq   >                                       *         beq.s   +
+        ldb   #-$40
+        stb   glb_d3                                  *         move.b  #-$40,d3
+!                                                     * +
+        rts                                           *         rts
+                                                      * ; End of function ObjCheckRightWallDist
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Stores a distance from Sonic/Tails to the nearest ceiling into d1
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EF2E: Sonic_DontRunOnWalls: CheckCeilingDist:
+Sonic_CheckCeiling                                    * Sonic_CheckCeiling:
+        ;                                             *         move.w  y_pos(a0),d2
+        ;                                             *         move.w  x_pos(a0),d3
+        ;                                             *         moveq   #0,d0
+        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        negb
+        sex                                           *         ext.w   d0
+        addd  y_pos,u                                 *         sub.w   d0,d2
+        eorb  #$F                                     *         eori.w  #$F,d2 ; flip position upside-down within the current 16x16 block?
+        std   glb_d2
+        lda   x_radius,u                              *         move.b  x_radius(a0),d0
+        sex                                           *         ext.w   d0
+        addd  glb_d3                                  *         add.w   d0,d3
+        std   glb_d3
+        ldd   #Primary_Angle
+        std   glb_a4                                  *         lea     (Primary_Angle).w,a4
+        ldd   #-$10                                   *         movea.w #-$10,a3
+        std   glb_d3
+        ldb   #$2
+        stb   glb_d6_b                                *         movea.w #$800,d6
+        jsr   FindFloor                               *         bsr.w   FindFloor
+        ldd   glb_d1
+        pshs  d                                       *         move.w  d1,-\(sp\)        
+        ;                                             * 
+        ;                                             *         move.w  y_pos(a0),d2
+        ;                                             *         move.w  x_pos(a0),d3
+        ;                                             *         moveq   #0,d0
+        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        negb
+        sex                                           *         ext.w   d0
+        addd  y_pos,u                                 *         sub.w   d0,d2
+        eorb  #$F                                     *         eori.w  #$F,d2
+        std   glb_d2
+        ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        negb
+        sex                                           *         ext.w   d0
+        addd  x_pos,u                                 *         sub.w   d0,d3
+        std   glb_d3
+        ldd   #Secondary_Angle
+        std   glb_a4                                  *         lea     (Secondary_Angle).w,a4
+        ldd   #-$10                                   *         movea.w #-$10,a3
+        std   glb_a3
+        ldb   #$2
+        stb   glb_d6_b                                *         movea.w #$800,d6
+        jsr   FindFloor                               *         bsr.w   FindFloor
+        puls  d                                       *         move.w  (sp)+,d0
+        std   glb_d0
+        ;                                             * 
+        ldb   #$80
+        stb   glb_d2                                  *         move.b  #$80,d2
+        jmp   loc_1ECC6                               *         bra.w   loc_1ECC6
+                                                      * ; End of function Sonic_CheckCeiling
+                                                      * 
+                                                      * ; ===========================================================================
+                                                      *         ; a bit of unused/dead code here
+                                                      * ;CheckCeilingDist:
+                                                      *         move.w  y_pos(a0),d2 ; a0=character
+                                                      *         move.w  x_pos(a0),d3
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; Checks a 16x16 block to find solid ceiling. May check an additional
+                                                      * ; 16x16 block up for ceilings.
+                                                      * ; d2 = y_pos
+                                                      * ; d3 = x_pos
+                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
+                                                      * ; returns relevant block ID in (a1)
+                                                      * ; returns distance in d1
+                                                      * ; returns angle in d3, or zero if angle was odd
+                                                      * ; loc_1EF9E: CheckSlopeDist:
+CheckCeilingDist_Part2                                * CheckCeilingDist_Part2:
+        ldd   glb_d2
+        subd  #$A                                     *         subi.w  #$A,d2
+        eorb  #$F                                     *         eori.w  #$F,d2
+        std   glb_d2
+        ldd   #Primary_Angle
+        std   glb_a4                                  *         lea     (Primary_Angle).w,a4
+        ldd   #-$10
+        std   glb_a3                                  *         movea.w #-$10,a3
+        ldb   #$2
+        stb   glb_d6_b                                *         movea.w #$800,d6
+        jsr   FindFloor                               *         bsr.w   FindFloor
+        ldb   #$80
+        stb   glb_d2                                  *         move.b  #$80,d2
+        jmp   loc_1ECFE                               *         bra.w   loc_1ECFE
+                                                      * ; End of function CheckCeilingDist
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Stores a distance to the nearest wall above the object into d1
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EFBE: ObjHitCeiling:
+ObjCheckCeilingDist                                   * ObjCheckCeilingDist:
+        ;                                             *         move.w  y_pos(a0),d2
+        ldd   x_pos,u                                 *         move.w  x_pos(a0),d3
+        std   glb_d3
+        ;                                             *         moveq   #0,d0
+        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        negb
+        sex                                           *         ext.w   d0
+        addd  y_pos,u                                 *         sub.w   d0,d2
+        eorb  #$F                                     *         eori.w  #$F,d2
+        std   glb_d2
+        ldd   #Primary_Angle
+        std   glb_a4                                  *         lea     (Primary_Angle).w,a4
+        ldd   #-$10                                   *         movea.w #-$10,a3
+        std   glb_a3
+        ldb   #$2
+        stb   glb_d6_b                                *         movea.w #$800,d6
+        ldd   #$D
+        std   glb_d5                                  *         moveq   #$D,d5
+        jsr   FindFloor                               *         bsr.w   FindFloor
+        ldb   Primary_Angle                           *         move.b  (Primary_Angle).w,d3
+        bitb  #1                                      *         btst    #0,d3
+        beq   >                                       *         beq.s   +
+        ldb   #$80                                    *         move.b  #$80,d3
+!       stb   glb_d3_b                                * +
+        rts                                           *         rts
+                                                      * ; End of function ObjCheckCeilingDist
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Stores a distance to the nearest wall above Sonic/Tails,
+                                                      * ; where "above" = left, into d1
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1EFF6:
+CheckLeftCeilingDist:                                 * CheckLeftCeilingDist:
+        ;                                             *         move.w  y_pos(a0),d2
+        ;                                             *         move.w  x_pos(a0),d3
+        ;                                             *         moveq   #0,d0
+        ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        negb
+        sex                                           *         ext.w   d0
+        addd  y_pos,u                                 *         sub.w   d0,d2
+        std   glb_d2
+        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        negb
+        sex                                           *         ext.w   d0
+        addd  x_pos,u                                 *         sub.w   d0,d3
+        eorb  #$F                                     *         eori.w  #$F,d3
+        std   glb_d3
+        ldd   #Primary_Angle
+        std   glb_a4                                  *         lea     (Primary_Angle).w,a4
+        ldd   #-$10
+        std   glb_a3                                  *         movea.w #-$10,a3
+        ldb   #$1
+        stb   glb_d6_b                                *         movea.w #$400,d6
+        jsr   FindWall                                *         bsr.w   FindWall
+        ldd   glb_d1
+        pshs  d                                       *         move.w  d1,-\(sp\)        
+        ;                                             * 
+        ;                                             *         move.w  y_pos(a0),d2
+        ;                                             *         move.w  x_pos(a0),d3
+        ;                                             *         moveq   #0,d0
+        ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        sex                                           *         ext.w   d0
+        addd  y_pos,u                                 *         add.w   d0,d2
+        std   glb_d2
+        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        negb
+        sex                                           *         ext.w   d0
+        addd  glb_d3                                  *         sub.w   d0,d3
+        eorb  #$F                                     *         eori.w  #$F,d3
+        ldd   #Secondary_Angle
+        std   glb_a4                                  *         lea     (Secondary_Angle).w,a4
+        ldd   #-$10                                   *         movea.w #-$10,a3
+        std   glb_a3
+        ldb   #$1
+        stb   glb_d6_b                                *         movea.w #$400,d6
+        jsr   FindWall                                *         bsr.w   FindWall
+        puls  d                                       *         move.w  (sp)+,d0
+        std   glb_d0
+        ldb   #$40
+        stb   glb_d2_b                                *         move.b  #$40,d2
+        jmp   loc_1ECC6                               *         bra.w   loc_1ECC6
+                                                      * ; End of function CheckLeftCeilingDist
+                                                      * 
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * ; Stores a distance to the nearest wall on the left of Sonic/Tails into d1
+                                                      * ; ---------------------------------------------------------------------------
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; Checks a 16x16 block to find solid walls. May check an additional
+                                                      * ; 16x16 block up for walls.
+                                                      * ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
+                                                      * ; returns relevant block ID in (a1)
+                                                      * ; returns distance in d1
+                                                      * ; returns angle in d3, or zero if angle was odd
+                                                      * ; loc_1F05E: Sonic_HitWall:
+CheckLeftWallDist                                     * CheckLeftWallDist:
+        ldd   y_pos,u                                 *         move.w  y_pos(a0),d2
+        std   glb_d2
+        ldd   x_pos,u                                 *         move.w  x_pos(a0),d3
+        std   glb_d3
+                                                      * ; loc_1F066:
+CheckLeftWallDist_Part2                               * CheckLeftWallDist_Part2:
+        subd  #$A                                     *         subi.w  #$A,d3
+        eorb  #$F                                     *         eori.w  #$F,d3
+        std   glb_d3
+        ldd   #Primary_Angle
+        std   glb_a4                                  *         lea     (Primary_Angle).w,a4
+        ldd   #-$10
+        std   glb_a3                                  *         movea.w #-$10,a3
+        ldb   #$1
+        stb   glb_d6_b                                *         movea.w #$400,d6
+        jsr   FindWall                                *         bsr.w   FindWall
+        ldb   #$40
+        stb   glb_d2                                  *         move.b  #$40,d2
+        jmp   loc_1ECFE                               *         bra.w   loc_1ECFE
+                                                      * ; End of function CheckLeftWallDist
+                                                      * 
+                                                      * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+                                                      * 
+                                                      * ; loc_1F086: ObjCheckRightWallDist:
+ObjCheckLeftWallDist                                  * ObjCheckLeftWallDist:
+        ldd   glb_d3
+        addd  x_pos,u                                 *         add.w   x_pos(a0),d3
+        eorb  #$F ; original engine bug fix
+        std   glb_d3
+        ldd   y_pos,u                                 *         move.w  y_pos(a0),d2
+        std   glb_d2
+                                                      *         ; Engine bug: colliding with left walls is erratic with this function.
+                                                      *         ; The cause is this: a missing instruction to flip collision on the found
+                                                      *         ; 16x16 block; this one:
+                                                      *         ;eori.w #$F,d3
+        ldd   #Primary_Angle
+        std   glb_a4                                  *         lea     (Primary_Angle).w,a4
+        lda   #0
+        sta   Primary_Angle                           *         move.b  #0,(a4)
+                                                      *         movea.w #-$10,a3
+        ldb   #$1
+        stb   glb_d6_b                                *         movea.w #$400,d6
+        ldd   #$D
+        std   glb_d5                                  *         moveq   #$D,d5
+        jsr   FindWall                                *         bsr.w   FindWall
+        ldb   Primary_Angle                           *         move.b  (Primary_Angle).w,d3
+        bitb  #1                                      *         btst    #0,d3
+        beq   >                                       *         beq.s   +
+        ldb   #$40                                    *         move.b  #$40,d3
+!       stb   glb_d3_b                                * +
+        rts                                           *         rts
+
 Sonic_top_speed                 fdb   0
 Sonic_acceleration              fdb   0
 Sonic_deceleration              fdb   0
 ;Sonic_Pos_Record_Index         fdb   0 ; into Sonic_Pos_Record_Buf and Sonic_Stat_Record_Buf
 
-Primary_Angle                   fcb   0
-Secondary_Angle                 fcb   0
 Water_flag                      fcb   0
 
 Last_star_pole_hit              fcb   0 ; 1 byte -- max activated starpole ID in this act
@@ -5467,3 +5244,7 @@ Control_Locked                  fcb   0
 
 Chain_Bonus_counter             fcb   0
 Sonic_Look_delay_counter        fcb   0
+
+        INCLUDE "./Engine/Math/CalcAngle.asm"
+        INCLUDE "./Engine/Math/CalcSine.asm"
+        INCLUDE "./Engine/Math/Mul9x16.asm"

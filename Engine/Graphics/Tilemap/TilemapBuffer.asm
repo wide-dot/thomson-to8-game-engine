@@ -7,39 +7,39 @@
 
 ; data structure for current loaded map
 ; -------------------------------------
-glb_map_pge           fcb   0
-glb_map_adr           fdb   0
-glb_map_chunk_pge     fcb   0 ; map data to chunk tiles (8x8 tiles group)
-glb_map_chunk_adr     fdb   0 ; map data to chunk tiles (8x8 tiles group)
-glb_map_defchunk0_pge fcb   0 ; chunk data to tiles (8x16 px)
-glb_map_defchunk0_adr fdb   0 ; chunk data to tiles (8x16 px)
-glb_map_defchunk1_pge fcb   0 ; chunk data to tiles (8x16 px)
-glb_map_defchunk1_adr fdb   0 ; chunk data to tiles (8x16 px)
-glb_map_tiles_pge     fcb   0 ; tile index
-glb_map_tiles_adr     fdb   0 ; tile index
-glb_map_width         fcb   0
+glb_map_pge             fcb   0
+glb_map_adr             fdb   0
+glb_map_chunk_pge       fcb   0 ; map data to chunk tiles (8x8 tiles group)
+glb_map_chunk_adr       fdb   0 ; map data to chunk tiles (8x8 tiles group)
+glb_map_defchunk0_pge   fcb   0 ; chunk data to tiles (8x16 px)
+glb_map_defchunk0_adr   fdb   0 ; chunk data to tiles (8x16 px)
+glb_map_defchunk1_pge   fcb   0 ; chunk data to tiles (8x16 px)
+glb_map_defchunk1_adr   fdb   0 ; chunk data to tiles (8x16 px)
+glb_map_tiles_pge       fcb   0 ; tile index
+glb_map_tiles_adr       fdb   0 ; tile index
+glb_map_width           fcb   0
 
 ; tmp variables
-h_tl                  equ   glb_tmp_var    ; nb of full sized (middle) horizontal chunks
-h_tl_bck              equ   glb_tmp_var+1
-v_tl                  equ   glb_tmp_var+2  ; nb of full sized (middle) vertical chunks
-c_h_tl                equ   glb_tmp_var+3  ; variable that stores current left, middle or right width of chunks
-l_h_tl                equ   glb_tmp_var+4 
-r_h_tl                equ   glb_tmp_var+5 
-r_h_tl_bck            equ   glb_tmp_var+6 
-c_v_tl                equ   glb_tmp_var+7  ; variable that stores current up, middle or bottom height of chunks
-u_v_tl                equ   glb_tmp_var+8 
-b_v_tl                equ   glb_tmp_var+9 
-c_h_tl_bck            equ   glb_tmp_var+10 ; backup value of horizontal width of chunks
-c_v_tl_bck            equ   glb_tmp_var+11 ; backup value of vertical height of chunks
-cur_c                 equ   glb_tmp_var+12 ; current chunk id
-x_off                 equ   glb_tmp_var+13 ; x start position in top left chunk
-y_off                 equ   glb_tmp_var+15 ; y start position in top left chunk
-b_loc                 equ   glb_tmp_var+17 ; location in buffer
-tmb_x                 equ   glb_tmp_var+19
-tmb_y                 equ   glb_tmp_var+21
-DBT_lcpt              equ   glb_tmp_var+23
-DBT_ccpt              equ   glb_tmp_var+24
+h_tl                  equ   direct_page    ; nb of full sized (middle) horizontal chunks
+h_tl_bck              equ   direct_page+1
+v_tl                  equ   direct_page+2  ; nb of full sized (middle) vertical chunks
+c_h_tl                equ   direct_page+3  ; variable that stores current left, middle or right width of chunks
+l_h_tl                equ   direct_page+4 
+r_h_tl                equ   direct_page+5 
+r_h_tl_bck            equ   direct_page+6 
+c_v_tl                equ   direct_page+7  ; variable that stores current up, middle or bottom height of chunks
+u_v_tl                equ   direct_page+8 
+b_v_tl                equ   direct_page+9 
+c_h_tl_bck            equ   direct_page+10 ; backup value of horizontal width of chunks
+c_v_tl_bck            equ   direct_page+11 ; backup value of vertical height of chunks
+cur_c                 equ   direct_page+12 ; current chunk id
+x_off                 equ   direct_page+13 ; x start position in top left chunk
+y_off                 equ   direct_page+15 ; y start position in top left chunk
+b_loc                 equ   direct_page+17 ; location in buffer
+tmb_x                 equ   direct_page+19
+tmb_y                 equ   direct_page+21
+DBT_lcpt              equ   direct_page+23
+DBT_ccpt              equ   direct_page+24
 
 ; persistant variables
 tmb_old_camera_x      fdb   0 ; last camera position (x axis)
@@ -699,10 +699,10 @@ DrawHighPriorityBufferedTile
         bne   @loop
         rts
 
-tmb_hprio_tiles
-        fill  0,tmb_vp_h_tiles*tmb_vp_v_tiles*7 ; all tiles in high priority ... that's crazy
-        fcb   0 ; end marker
-
         align 2048
 tile_buffer
         fill  0,16*128
+
+tmb_hprio_tiles
+        fill  0,tmb_vp_h_tiles*tmb_vp_v_tiles*7 ; all tiles in high priority ... that's crazy
+        fcb   0 ; end marker
