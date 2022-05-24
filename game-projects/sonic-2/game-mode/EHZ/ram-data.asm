@@ -175,3 +175,7 @@ Horiz_scroll_delay_val        fdb   0
 * ---------------------------------------------------------------------------
    
 Water_Level_1                 fdb   0
+ColData_page                  fcb   0
+ColCurveMap                   fdb   0
+ColArray                      fdb   0
+ColArray2                     fdb   0

@@ -10,7 +10,7 @@
 
 TileMapRegister
 	; register map to engine
-        ldx   #EHZ_map
+        ldx   #CPZ_map
         stx   glb_map_adr
 
         lda   $E7E6
@@ -45,13 +45,10 @@ TileMapRegister
         lda   layer_map_width,x
 	sta   glb_map_width
 
-        ; TODO clearly need to make some evolutions to Builder
-        ldd   #_Primary_Collision
-        std   Primary_Collision
-        ldd   #_Secondary_Collision
-        std   Secondary_Collision
-        ldd   #_Flip_Collision
-        std   Flip_Collision
+        ldd   #Primary_Collision
+        std   glb_primary_collision
+        ldd   #Secondary_Collision
+        std   glb_secondary_collision
 
         ldd   submap_camera_x_min,x
         std   glb_camera_x_min_pos
@@ -64,56 +61,53 @@ TileMapRegister
 
         rts  
 
-EHZ_map
+CPZ_map
         fdb   0                   ; submap_camera_x_min - camera position limit
         fdb   0                   ; submap_camera_y_min - camera position limit
         fdb   5480+16             ; submap_camera_x_max - camera position limit
         fdb   848+16              ; submap_camera_y_max - camera position limit   
-EHZ_width equ 128
-        fcb   EHZ_width           ; layer_map_width     - Width (byte) nb of chunks in this layer map rows
+CPZ_width equ 128
+        fcb   CPZ_width           ; layer_map_width     - Width (byte) nb of chunks in this layer map rows
         fcb   8                   ; layer_map_height    - Height (byte) nb of chunks in this layer map columns 
-        fdb   Map_EHZ             ; layer_map           - map made of 64x128 chunks
-        fdb   Chunk_EHZ_0         ; layer_chunk0        - index to chunk definition (subset of 8x16 tiles) id 0-127
+        fdb   Map_CPZ             ; layer_map           - map made of 64x128 chunks
+        fdb   Chunk_CPZ_0         ; layer_chunk0        - index to chunk definition (subset of 8x16 tiles) id 0-127
 	fdb   0                   ; layer_chunk1        - index to chunk definition (subset of 8x16 tiles) id 128-255
-        fdb   Tls_EHZ             ; layer_tiles         - location of tiles index (page and adress for each tiles)
-	fdb   EHZ_width*0         ; layer_mul_ref       - table of precalculated values for y position in map
-        fdb   EHZ_width*1
-        fdb   EHZ_width*2
-        fdb   EHZ_width*3
-        fdb   EHZ_width*4
-        fdb   EHZ_width*5
-        fdb   EHZ_width*6
-        fdb   EHZ_width*7
+        fdb   Tls_CPZ             ; layer_tiles         - location of tiles index (page and adress for each tiles)
+	fdb   CPZ_width*0         ; layer_mul_ref       - table of precalculated values for y position in map
+        fdb   CPZ_width*1
+        fdb   CPZ_width*2
+        fdb   CPZ_width*3
+        fdb   CPZ_width*4
+        fdb   CPZ_width*5
+        fdb   CPZ_width*6
+        fdb   CPZ_width*7
 	; only 8 lines of chunks in map, no need to go further
         
-Tls_EHZ  
-        INCLUDEGEN Tls_EHZ index
+Tls_CPZ  
+        INCLUDEGEN Tls_CPZ index
         ; page    (byte) page number of compilated tile routine
         ; address (word) absolute address of compilated tile routine
         ; [repeated for each tile]
 
-        ; Animated tileset (must directly follow Tile index)
-TlsAni_EHZ
-	fcb   $61
-        fdb   TlsAni_EHZ_pulseball1
-	fcb   $61
-        fdb   TlsAni_EHZ_pulseball2
-	fcb   $61
-        fdb   TlsAni_EHZ_pulseball3
-	fcb   $61
-        fdb   TlsAni_EHZ_flower1
-	fcb   $61
-        fdb   TlsAni_EHZ_flower2
-	fcb   $61
-        fdb   TlsAni_EHZ_flower3
-	fcb   $61
-        fdb   TlsAni_EHZ_flower4
+Primary_Collision
+        INCLUDEBIN "./objects/levels/CPZ/map/primary-collision.bin"
 
-_Primary_Collision
-        INCLUDEBIN "./objects/levels/EHZ/map/primary-collision.bin"
+Secondary_Collision
+        INCLUDEBIN "./objects/levels/CPZ/map/secondary-collision.bin"
 
-_Secondary_Collision
-        INCLUDEBIN "./objects/levels/EHZ/map/secondary-collision.bin"
-
-_Flip_Collision
-        INCLUDEBIN "./objects/levels/EHZ/map/flip-collision.bin"
+        ; Animated tileset
+TlsAni_CPZ
+	fcb   $61
+        fdb   TlsAni_CPZ_pulseball1
+	fcb   $61
+        fdb   TlsAni_CPZ_pulseball2
+	fcb   $61
+        fdb   TlsAni_CPZ_pulseball3
+	fcb   $61
+        fdb   TlsAni_CPZ_flower1
+	fcb   $61
+        fdb   TlsAni_CPZ_flower2
+	fcb   $61
+        fdb   TlsAni_CPZ_flower3
+	fcb   $61
+        fdb   TlsAni_CPZ_flower4

@@ -21,7 +21,7 @@ LevelSizeLoad ; todo move to an object
         ldu   #MainCharacter
         ldd   #screen_left+$60/2
         std   x_pos,u
-        ldd   #screen_top+20+$028F
+        ldd   #screen_top+$028F
         std   y_pos,u
 
 	ldd   #camera_Y_pos_bias_default
@@ -46,6 +46,17 @@ LevelSizeLoad ; todo move to an object
 	ldx   #Animated_EHZ_script
         jsr   TileAnimScriptInit
 
+        ; init collision data
+        lda   Obj_Index_Page+ObjID_Collision
+        ldd   Obj_Index_Address+2*ObjID_Collision
+        sta   ColData_page
+        std   ColCurveMap
+        addd  #256
+        std   ColArray
+        addd  #2048+256
+        std   ColArray2
+
+        ; init music
         lda   #$01                     ; 1: play 60hz track at 50hz, 0: do not skip frames
         sta   Smps.60HzData 
         _RunObjectRoutine ObjID_Smps,#0 ; YM2413_DrumModeOn
@@ -113,7 +124,7 @@ EHZ_Back
         jmp   ,x
 
 EHZ_Mask
-        _RunObjectRoutine ObjID_EHZ_Mask,#0
+        _RunObjectRoutine ObjID_Mask,#0
         _SetCartPageA        
 
 	; get image location, this code works for a ND0 only image
@@ -262,4 +273,5 @@ TlsAni_EHZ_pulseball3_imgs
         INCLUDE "./engine/object-management/clear-obj-107.asm"	
         INCLUDE "./Engine/Ram/ClearDataMemory.asm"
         INCLUDE "./Engine/Irq/IrqSmpsObj.asm"      
+        INCLUDE "./objects/levels/collision/collision.asm"
         INCLUDE "./Engine/Graphics/Tilemap/TilemapBuffer.asm"

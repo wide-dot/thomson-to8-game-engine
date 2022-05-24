@@ -1,5 +1,5 @@
 ; ---------------------------------------------------------------------------
-; Object - 
+; Object - black side mask for tiles
 ;
 ; ---------------------------------------------------------------------------
 
@@ -11,7 +11,7 @@
 
 	; set image metadata page
 	ldu   #Img_Page_Index
-	lda   #ObjID_EHZ_Mask
+	lda   #ObjID_Mask
 	lda   a,u
-	ldx   #Img_EHZ_Mask
+	ldx   #Img_Mask
 	rts

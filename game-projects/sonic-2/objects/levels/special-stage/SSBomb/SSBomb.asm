@@ -632,7 +632,7 @@ SSB_CC_ProcessYCenter                                                     *loc_3
                                                                           *    move.w  d0,y_pos(a0)
         ; Compute X coordinate
         ; --------------------                                                                                                                                            
-        ; signed mul of a value (range FF00-1000) with an non null unsigned byte (01-FF)
+        ; signed mul of a value (range FF00-0100) with an non null unsigned byte (01-FF)
         ; next the value is divided by 256
         
         tsta
@@ -678,7 +678,7 @@ xCenter addd  #$0000                   ; (dynamic) add x center of ellipse
           
         ; Compute Y coordinate
         ; --------------------          
-        ; signed mul of a value (range FF00-1000) with an non null unsigned byte (01-FF)
+        ; signed mul of a value (range FF00-0100) with an non null unsigned byte (01-FF)
         ; next the value is divided by 256
         
 ysin    ldd   #$0000                   ; (dynamic) get sin
