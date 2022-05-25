@@ -1,5 +1,7 @@
         INCLUDE "./Engine/Macros.asm"  
 
+camera_x_center equ 68
+
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       * ; sub_C3D0:
                                                       * DeformBgLayer:
@@ -121,7 +123,7 @@ ScrollHoriz                                           * ScrollHoriz:
                                                       * ; loc_D732:
 @checkIfShouldScroll                                  * .checkIfShouldScroll:
         subd  glb_camera_x_pos                        *         sub.w   (a1),d0
-        subd  #$80-8                                  *         subi.w  #(320/2)-16,d0          ; is the player less than 144 pixels from the screen edge?
+        subd  #camera_x_center-8                      *         subi.w  #(320/2)-16,d0          ; is the player less than 144 pixels from the screen edge?
         blt   @scrollLeft                             *         blt.s   .scrollLeft     ; if he is, scroll left
         subd  #$8                                     *         subi.w  #16,d0          ; is the player more than 159 pixels from the screen edge?
         bge   @scrollRight                            *         bge.s   .scrollRight    ; if he is, scroll right
@@ -178,11 +180,11 @@ ScrollVerti                                           * ScrollVerti:
                                                       *         moveq   #0,d1
         ldd   y_pos,u                                 *         move.w  y_pos(a0),d0
         subd  glb_camera_y_pos                        *         sub.w   (a1),d0         ; subtract camera Y pos
-        ;ldx   glb_camera_y_min_pos                    *         cmpi.w  #-$100,(Camera_Min_Y_pos).w ; does the level wrap vertically?
+        ;ldx   glb_camera_y_min_pos                   *         cmpi.w  #-$100,(Camera_Min_Y_pos).w ; does the level wrap vertically?
         ;cmpx  #-$100
-        ;bne   @noWrap                                 *         bne.s   .noWrap         ; if not, branch
+        ;bne   @noWrap                                *         bne.s   .noWrap         ; if not, branch
         ;anda  #$07 
-        ;andb  #$FF                                    *         andi.w  #$7FF,d0
+        ;andb  #$FF                                   *         andi.w  #$7FF,d0
                                                       * ; loc_D78E:
 @noWrap                                               * .noWrap:
         std   @d

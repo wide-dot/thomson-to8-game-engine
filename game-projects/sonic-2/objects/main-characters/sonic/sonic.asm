@@ -841,6 +841,7 @@ Obj01_SettleLeft                                      *Obj01_SettleLeft:
 Obj01_Traction                                        *Obj01_Traction:
         ldb   angle,u                                 *  move.b  angle(a0),d0
         jsr   CalcSine                                *  jsr (CalcSine).l
+        std   glb_d0
         tfr   x,d
         ldx   inertia,u
         jsr   Mul9x16                                 *  muls.w  inertia(a0),d1
@@ -852,10 +853,12 @@ Obj01_Traction                                        *Obj01_Traction:
         addd  glb_d1
         leax  -1,x
         bne   @loop 
-@end    std   x_vel,u                                  *  move.w  d1,x_vel(a0)
-        ;                                              *  muls.w  inertia(a0),d0
-        ;                                              *  asr.l   #8,d0
-        ;                                              *  move.w  d0,y_vel(a0)
+@end    std   x_vel,u                                 *  move.w  d1,x_vel(a0)
+        ldx   inertia,u
+        ldd   glb_d0
+        jsr   Mul9x16                                 *  muls.w  inertia(a0),d0
+        ;                                             *  asr.l   #8,d0
+        std   y_vel,u                                 *  move.w  d0,y_vel(a0)
                                                       *
                                                       *; stops Sonic from running through walls that meet the ground
                                                       *; loc_1A64E:
@@ -4033,7 +4036,6 @@ loc_1E292                                             * loc_1E292:
         jsr   FindFloor                               *         bsr.w   FindFloor
         ldd   glb_d1
         pshs  d                                       *         move.w  d1,-(sp)
-        ldd   y_pos,u
         ;                                             *         move.w  y_pos(a0),d2
         ;                                             *         move.w  x_pos(a0),d3
         ;                                             *         moveq   #0,d0

@@ -45,7 +45,7 @@ Find_Tile                                             * Find_Tile:
         ; and foreground in tilemap                   *         add.w   d0,d0
         anda  #$0F
         andb  #$80                                    *         andi.w  #$F00,d0        ; rounded 2*y_pos
-        std   @d0
+        std   glb_d0
         ; chunks are 64px wide instead of 128px
         ldd   glb_d3                                  *         movea.w d3,d1   ; x_pos
         _lsrd
@@ -57,8 +57,7 @@ Find_Tile                                             * Find_Tile:
         _lsrd                                         *         lsr.w   #4,d1   ; x_pos/128 = x_of_chunk
         anda  #0
         andb  #$3F ; chunk is 64px wide not 128px     *         andi.w  #$7F,d1
-        addd  #0                                      *         add.w   d1,d0   ; d0 is relevant chunk ID now
-@d0     equ   *-2
+        addd  glb_d0                                  *         add.w   d1,d0   ; d0 is relevant chunk ID now
                                                       *         moveq   #-1,d1
         ldx   glb_map_chunk_adr                       *         clr.w   d1              ; d1 is now $FFFF0000 = Chunk_Table
         leax  d,x                                     *         lea     (Level_Layout).w,a1
@@ -72,8 +71,8 @@ Find_Tile                                             * Find_Tile:
         ldb   glb_map_defchunk0_pge
 @b      stb   chk_idx_pge
         _SetCartPageB
-        ldb   #0 ; no need of precalc. A is chunk id
-        _asrd    ; x256 just shift right to have x128 *         add.w   d1,d1
+        andb  #0 ; shift right to get x128
+        _asrd    ; instead of using a LUT             *         add.w   d1,d1
         leax  d,x                                     *         move.w  word_1E5D0(pc,d1.w),d1
         ldb   glb_d2_b                                *         movea.w d2,d0   ; y_pos
         andb  #$70                                    *         andi.w  #$70,d0
@@ -151,28 +150,28 @@ loc_1E7E2                                             * loc_1E7E2:
                                                       * ; ===========================================================================
                                                       * 
 loc_1E7F0                                             * loc_1E7F0:      ; block has some solidity
-        lda   ColData_page
+        lda   glb_map_pge
         _SetCartPageA    
+        ldx   Flip_Collision
+        ldd   glb_d0 ; get tile id
+        lda   d,x    ; get flip bits for this tile
+        sta   glb_d4 ; store flip bits
         ldx   Collision_addr                          *         movea.l (Collision_addr).w,a2   ; pointer to collision data, i.e. blockID -> collisionID array
         ldd   glb_d0
-        ldb   d,x                                     *         move.b  (a2,d0.w),d0    ; get collisionID
+        ldb   d,x    ; get collision id               *         move.b  (a2,d0.w),d0    ; get collisionID
         anda  #0
         std   glb_d0                                  *         andi.w  #$FF,d0
-        beq   loc_1E7E2                               *         beq.s   loc_1E7E2
+        beq   loc_1E7E2 ; no collision data           *         beq.s   loc_1E7E2
+        lda   ColData_page
+        _SetCartPageA   
         ldx   ColCurveMap                             *         lea     (ColCurveMap).l,a2
         abx
-        lda   ,x                                      *         move.b  (a2,d0.w),(a4)  ; get angle from AngleMap --> (a4)
+        lda   ,x     ; get angle for this tile        *         move.b  (a2,d0.w),(a4)  ; get angle from AngleMap --> (a4)
         sta   [glb_a4]
-        ldx   Flip_Collision
-        ldd   glb_d0
-        lda   d,x
-        anda  glb_d4
-        sta   glb_d4
-        ; only 8 values (tile is 8px wide instead of 16px)
-        anda  #0
-        _lsld
-        _lsld
-        _lsld
+        ldd   glb_d0 ; load collision id
+        _lsld        ; height index store 8 values
+        _lsld        ; for each tiles (8px wide)
+        _lsld        ; scale id x8
         std   glb_d0                                  *         lsl.w   #4,d0
         ldd   glb_d3
         std   glb_d1                                  *         movea.w d3,d1   ; x_pos
@@ -181,7 +180,7 @@ loc_1E7F0                                             * loc_1E7F0:      ; block 
         beq   >                                       *         beq.s   +
         com   glb_d1                                  *         not.w   d1
         com   glb_d1_b
-        neg   glb_a4_b                                *         neg.b   (a4)
+        neg   [glb_a4]                                *         neg.b   (a4)
 !                                                     * +
         bita  #2                                      *         btst    #$B,d4  ; Y flipping
         beq   >                                       *         beq.s   +
@@ -199,8 +198,8 @@ loc_1E7F0                                             * loc_1E7F0:      ; block 
         ldb   d,x                                     *         move.b  (a2,d1.w),d0    ; heigth from ColArray
         sex                                           *         ext.w   d0
         std   glb_d0
-        lda   glb_d6_b
-        eora  glb_d4                                  *         eor.w   d6,d4
+        lda   glb_d4
+        eora  glb_d6_b                                *         eor.w   d6,d4
         bita  #2                                      *         btst    #$B,d4  ; Y flipping
         beq   >                                       *         beq.s   +
         ldd   glb_d0
@@ -208,7 +207,7 @@ loc_1E7F0                                             * loc_1E7F0:      ; block 
         std   glb_d0
 !                                                     * +
         ldd   glb_d0                                  *         tst.w   d0
-        lbeq   loc_1E7E2                               *         beq.s   loc_1E7E2       ; no collision
+        lbeq  loc_1E7E2                               *         beq.s   loc_1E7E2       ; no collision
         bmi   loc_1E85E                               *         bmi.s   loc_1E85E
         cmpb  #$10                                    *         cmpi.b  #$10,d0
         beq   loc_1E86A                               *         beq.s   loc_1E86A
@@ -286,28 +285,28 @@ loc_1E88A                                             * loc_1E88A:
                                                       * ; ===========================================================================
                                                       * 
 loc_1E898                                             * loc_1E898:
-        lda   ColData_page
+        lda   glb_map_pge
         _SetCartPageA    
+        ldx   Flip_Collision
+        ldd   glb_d0 ; get tile id
+        lda   d,x    ; get flip bits for this tile
+        sta   glb_d4 ; store flip bits
         ldx   Collision_addr                          *         movea.l (Collision_addr).w,a2
         ldd   glb_d0
-        ldb   d,x                                     *         move.b  (a2,d0.w),d0
+        ldb   d,x    ; get collision id               *         move.b  (a2,d0.w),d0
         anda  #0                                      *         andi.w  #$FF,d0
         std   glb_d0
-        beq   loc_1E88A                               *         beq.s   loc_1E88A
+        beq   loc_1E88A ; no collision data           *         beq.s   loc_1E88A
+        lda   ColData_page
+        _SetCartPageA    
         ldx   ColCurveMap                             *         lea     (ColCurveMap).l,a2
         abx        
-        lda   ,x                                      *         move.b  (a2,d0.w),(a4)
+        lda   ,x     ; get angle for this tile        *         move.b  (a2,d0.w),(a4)
         sta   [glb_a4]
-        ldx   Flip_Collision
-        ldd   glb_d0
-        lda   d,x
-        anda  glb_d4
-        sta   glb_d4
-        ; only 8 values (tile is 8px wide instead of 16px)
-        anda  #0
-        _lsld
-        _lsld
-        _lsld
+        ldd   glb_d0 ; load collision id
+        _lsld        ; height index store 8 values
+        _lsld        ; for each tiles (8px wide)
+        _lsld        ; scale id x8
         std   glb_d0                                  *         lsl.w   #4,d0
         ldd   glb_d3
         std   glb_d1                                  *         movea.w d3,d1
@@ -316,7 +315,7 @@ loc_1E898                                             * loc_1E898:
         beq   >                                       *         beq.s   +
         com   glb_d1                                  *         not.w   d1
         com   glb_d1_b
-        neg   glb_a4_b                                *         neg.b   (a4)
+        neg   [glb_a4]                                *         neg.b   (a4)
 !                                                     * +
         bita  #2                                      *         btst    #$B,d4
         beq   >                                       *         beq.s   +
@@ -334,8 +333,8 @@ loc_1E898                                             * loc_1E898:
         ldb   d,x                                     *         move.b  (a2,d1.w),d0
         sex                                           *         ext.w   d0
         std   glb_d0
-        lda   glb_d6_b
-        eora  glb_d4                                  *         eor.w   d6,d4
+        lda   glb_d4
+        eora  glb_d6_b                                *         eor.w   d6,d4
         bita  #2                                      *         btst    #$B,d4
         beq   >                                       *         beq.s   +
         ldd   glb_d0
@@ -343,7 +342,7 @@ loc_1E898                                             * loc_1E898:
         std   glb_d0
 !                                                     * +
         ldd   glb_d0                                  *         tst.w   d0
-        lbeq   loc_1E88A                               *         beq.s   loc_1E88A
+        lbeq  loc_1E88A                               *         beq.s   loc_1E88A
         bmi   loc_1E900                               *         bmi.s   loc_1E900
         ldd   glb_d2                                  *         movea.w d2,d1
         anda  #0
@@ -363,10 +362,9 @@ loc_1E900                                             * loc_1E900:
         std   glb_d1
         addd  glb_d0                                  *         add.w   d1,d0
         std   glb_d0
-        lbpl   loc_1E88A                               *         bpl.w   loc_1E88A
-        ldd   glb_d1
-        comb                                          *         not.w   d1
-        std   glb_d1
+        lbpl  loc_1E88A                               *         bpl.w   loc_1E88A
+        com   glb_d1                                  *         not.w   d1
+        com   glb_d1_b
         rts                                           *         rts
                                                       * ; ===========================================================================
                                                       * 
@@ -497,28 +495,28 @@ loc_1E9C2                                             * loc_1E9C2:
                                                       * ; ===========================================================================
                                                       * 
 loc_1E9D0                                             * loc_1E9D0:
-        lda   ColData_page
+        lda   glb_map_pge
         _SetCartPageA    
+        ldx   Flip_Collision
+        ldd   glb_d0 ; get tile id
+        lda   d,x    ; get flip bits for this tile
+        sta   glb_d4 ; store flip bits
         ldx   Collision_addr                          *         movea.l (Collision_addr).w,a2
         ldd   glb_d0
-        ldb   d,x                                     *         move.b  (a2,d0.w),d0
+        ldb   d,x    ; get collision id               *         move.b  (a2,d0.w),d0
         anda  #0
         std   glb_d0                                  *         andi.w  #$FF,d0 ; relevant collisionArrayEntry
-        beq   loc_1E9C2                               *         beq.s   loc_1E9C2
+        beq   loc_1E9C2 ; no collision data           *         beq.s   loc_1E9C2
+        lda   ColData_page
+        _SetCartPageA    
         ldx   ColCurveMap                             *         lea     (ColCurveMap).l,a2
         abx
-        lda   ,x                                      *         move.b  (a2,d0.w),(a4)
+        lda   ,x     ; get angle for this tile        *         move.b  (a2,d0.w),(a4)
         sta   [glb_a4]
-        ldx   Flip_Collision
-        ldd   glb_d0
-        lda   d,x
-        anda  glb_d4
-        sta   glb_d4
-        ; only 8 values (tile is 8px wide instead of 16px)
-        anda  #0
-        _lsld
-        _lsld
-        _lsld
+        ldd   glb_d0 ; load collision id
+        _lsld        ; height index store 8 values
+        _lsld        ; for each tiles (8px wide)
+        _lsld        ; scale id x8
         std   glb_d0                                  *         lsl.w   #4,d0   ; offset in collision array
         ldd   glb_d2
         std   glb_d1                                  *         movea.w d2,d1   ; y
@@ -546,8 +544,8 @@ loc_1E9D0                                             * loc_1E9D0:
         ldb   d,x                                     *         move.b  (a2,d1.w),d0    ; collision value
         sex                                           *         ext.w   d0
         std   glb_d0
-        lda   glb_d6_b
-        eora  glb_d4                                  *         eor.w   d6,d4   ; set x-flip flag if from the right
+        lda   glb_d4
+        eora  glb_d6_b                                *         eor.w   d6,d4   ; set x-flip flag if from the right
         bita  #1                                      *         btst    #$A,d4  ; x-mirror?
         beq   >                                       *         beq.s   +
         ldd   glb_d0
@@ -633,27 +631,28 @@ loc_1EA6A                                            * loc_1EA6A:
                                                       * ; ===========================================================================
                                                       * 
 loc_1EA78                                             * loc_1EA78:
-        lda   ColData_page
-        _SetCartPageA                                 *         movea.l (Collision_addr).w,a2
+        lda   glb_map_pge
+        _SetCartPageA    
+        ldx   Flip_Collision
+        ldd   glb_d0 ; get tile id
+        lda   d,x    ; get flip bits for this tile
+        sta   glb_d4 ; store flip bits
+        ldx   Collision_addr                          *         movea.l (Collision_addr).w,a2
         ldd   glb_d0
-        ldb   d,x                                     *         move.b  (a2,d0.w),d0
+        ldb   d,x    ; get collision id               *         move.b  (a2,d0.w),d0
         anda  #0
         std   glb_d0                                  *         andi.w  #$FF,d0
-        beq   loc_1EA6A                               *         beq.s   loc_1EA6A
+        beq   loc_1EA6A ; no collision data           *         beq.s   loc_1EA6A
+        lda   ColData_page
+        _SetCartPageA    
         ldx   ColCurveMap                             *         lea     (ColCurveMap).l,a2
         abx
-        lda   ,x                                      *         move.b  (a2,d0.w),(a4)
+        lda   ,x     ; get angle for this tile        *         move.b  (a2,d0.w),(a4)
         sta   [glb_a4]
-        ldx   Flip_Collision
-        ldd   glb_d0
-        lda   d,x
-        anda  glb_d4
-        sta   glb_d4
-        ; only 8 values (tile is 8px wide instead of 16px)
-        anda  #0
-        _lsld
-        _lsld
-        _lsld
+        ldd   glb_d0 ; load collision id
+        _lsld        ; height index store 8 values
+        _lsld        ; for each tiles (8px wide)
+        _lsld        ; scale id x8
         std   glb_d0                                  *         lsl.w   #4,d0
         ldd   glb_d2
         std   glb_d1                                  *         movea.w d2,d1
@@ -681,8 +680,8 @@ loc_1EA78                                             * loc_1EA78:
         ldb   d,x                                     *         move.b  (a2,d1.w),d0
         sex                                           *         ext.w   d0
         std   glb_d0
-        lda   glb_d6_b
-        eora  glb_d4                                  *         eor.w   d6,d4
+        lda   glb_d4
+        eora  glb_d6_b                                *         eor.w   d6,d4
         bita  #1                                      *         btst    #$A,d4
         beq   >                                       *         beq.s   +
         ldd   glb_d0
@@ -710,10 +709,9 @@ loc_1EAE0                                             * loc_1EAE0:
         std   glb_d1
         addd  glb_d0                                  *         add.w   d1,d0
         std   glb_d0
-        lbpl   loc_1EA6A                               *         bpl.w   loc_1EA6A
-        ldd   glb_d1
-        comb                                          *         not.w   d1
-        std   glb_d1
+        lbpl  loc_1EA6A                               *         bpl.w   loc_1EA6A
+        com   glb_d1                                  *         not.w   d1
+        com   glb_d1_b
         rts                                           *         rts
                                                       * ; End of function FindWall2
                                                       * 
