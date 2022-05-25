@@ -19,13 +19,18 @@
 LevelSizeLoad ; todo move to an object
 
         ldu   #MainCharacter
-        ldd   #screen_left+$60/2
+        ldd   #$60/2
         std   x_pos,u
-        ldd   #screen_top+$028F
+        ldd   #$028F
         std   y_pos,u
 
 	ldd   #camera_Y_pos_bias_default
         std   Camera_Y_pos_bias
+
+        lda   #12+screen_left
+        sta   glb_camera_x_offset
+        lda   #20+screen_top
+        sta   glb_camera_y_offset
 
         ldd   #0
         std   <glb_camera_x_pos
@@ -48,8 +53,8 @@ LevelSizeLoad ; todo move to an object
 
         ; init collision data
         lda   Obj_Index_Page+ObjID_Collision
-        ldd   Obj_Index_Address+2*ObjID_Collision
         sta   ColData_page
+        ldd   Obj_Index_Address+2*ObjID_Collision
         std   ColCurveMap
         addd  #256
         std   ColArray

@@ -186,6 +186,7 @@ CSR_CheckPlayFieldCoord
         lblo  CSR_SetOutOfRange             ; out of range if x_pos < glb_camera_x_pos
         tsta 
         lbne  CSR_SetOutOfRange             ; out of range if x_pos + 256 > glb_camera_x_pos
+        addb  glb_camera_x_offset
         stb   x_pixel,u
 
         ldd   y_pos,u
@@ -193,6 +194,7 @@ CSR_CheckPlayFieldCoord
         lblo  CSR_SetOutOfRange             ; out of range if y_pos < glb_camera_y_pos
         tsta 
         lbne  CSR_SetOutOfRange             ; out of range if y_pos + 256 > glb_camera_y_pos
+        addb  glb_camera_y_offset
         stb   y_pixel,u
         bra   CSR_ComputeMappingFrame
         
