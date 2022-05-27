@@ -10,8 +10,8 @@
         INCLUDE "./Engine/Constants.asm"
         INCLUDE "./Engine/Macros.asm"        
         org   $6100
-	INCLUDE "./Engine/InitGlobals.asm"	
-
+	
+        jsr   InitGlobals	
         jsr   LoadAct
 
         jsr   YM2413_DrumModeOn
@@ -111,6 +111,7 @@ LevelMainLoop
 * ==============================================================================
 * Routines
 * ==============================================================================
+        INCLUDE "./Engine/InitGlobals.asm"	
         INCLUDE "./Engine/Ram/BankSwitch.asm"
         INCLUDE "./Engine/Graphics/WaitVBL.asm"
         INCLUDE "./Engine/Graphics/AnimateSprite.asm"	
@@ -127,7 +128,7 @@ LevelMainLoop
         INCLUDE "./Engine/ObjectManagement/DeleteObject.asm"
         INCLUDE "./Engine/ObjectManagement/ClearObj.asm"
         INCLUDE "./Engine/ObjectManagement/RunPgSubRoutine.asm"
-	INCLUDE "./Engine/ObjectManagement/SingleObjLoad.asm"
+        INCLUDE "./Engine/ObjectManagement/SingleObjLoad.asm"
         INCLUDE "./Engine/Ram/ClearDataMemory.asm"
         INCLUDE "./Engine/Palette/UpdatePalette.asm"
         INCLUDE "./Engine/Graphics/Camera/AutoScroll.asm"
