@@ -276,6 +276,7 @@ FindFloor2                                            * FindFloor2:
 loc_1E88A                                             * loc_1E88A:
         ;                                             *         movea.w #$F,d1
         ldd   glb_d2                                  *         movea.w d2,d0
+        anda  #0
         andb  #$F                                     *         andi.w  #$F,d0
         std   glb_d0
         ldd   #$F
@@ -619,9 +620,10 @@ FindWall2                                             * FindWall2:
         bita  glb_d5_b                                *         btst    d5,d4
         bne   loc_1EA78                               *         bne.s   loc_1EA78
                                                       * 
-loc_1EA6A                                            * loc_1EA6A:
+loc_1EA6A                                             * loc_1EA6A:
         ;                                             *         movea.w #$F,d1
         ldd   glb_d3                                  *         movea.w d3,d0
+        anda  #0
         andb  #$F                                     *         andi.w  #$F,d0
         std   glb_d0
         ldd   #$F

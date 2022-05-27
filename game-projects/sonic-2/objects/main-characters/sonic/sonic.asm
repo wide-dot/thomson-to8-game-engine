@@ -452,9 +452,9 @@ ObjectMoveAndFall
 !       ldd   #0
         std   @y_vel
         ldy   #0
-@y_vel  equ   -2
+@y_vel  equ   *-2
         ldd   y_vel,u
-@loop   addd  #0
+@loop   addd  #0                       ; ensure that sonic will be displayed at max jump height
 @gravity equ  *-2
         bcs   >
         leay  d,y
@@ -469,7 +469,7 @@ ObjectMoveAndFall
         sty   @y_vel
         ;
         ldd   x_vel,u
-        ldx   Vint_Main_runcount_w     ; take number of elapsed frame since last render and multiply
+        ldx   Vint_Main_runcount_w     ; take number of elapsed frame since last render and multiply by inertia/2
         beq   @ObjMv
 !       addd  x_vel,u
         leax  -1,x
@@ -801,6 +801,7 @@ Obj01_ResetScr_Part2                                  *Obj01_ResetScr_Part2:
         bhs   @exit
         ldd   #camera_Y_pos_bias_default ; cap value
 @exit   std   Camera_Y_pos_bias
+
                                                       *
                                                       *; ---------------------------------------------------------------------------
                                                       *; updates Sonic's speed on the ground
@@ -841,7 +842,7 @@ Obj01_SettleLeft                                      *Obj01_SettleLeft:
 Obj01_Traction                                        *Obj01_Traction:
         ldb   angle,u                                 *  move.b  angle(a0),d0
         jsr   CalcSine                                *  jsr (CalcSine).l
-        std   glb_d0
+        std   @d0
         tfr   x,d
         ldx   inertia,u
         jsr   Mul9x16                                 *  muls.w  inertia(a0),d1
@@ -854,56 +855,85 @@ Obj01_Traction                                        *Obj01_Traction:
         leax  -1,x
         bne   @loop 
 @end    std   x_vel,u                                 *  move.w  d1,x_vel(a0)
+        ldd   #0
+@d0     equ   *-2
         ldx   inertia,u
-        ldd   glb_d0
         jsr   Mul9x16                                 *  muls.w  inertia(a0),d0
         ;                                             *  asr.l   #8,d0
-        std   y_vel,u                                 *  move.w  d0,y_vel(a0)
+        std   glb_d0
+        ldx   Vint_Main_runcount_w
+        beq   @endy
+@loopy
+        addd  glb_d0
+        leax  -1,x
+        bne   @loopy 
+@endy   std   y_vel,u                                 *  move.w  d0,y_vel(a0)
+       
+
                                                       *
                                                       *; stops Sonic from running through walls that meet the ground
                                                       *; loc_1A64E:
 Obj01_CheckWallsOnGround                              *Obj01_CheckWallsOnGround:
-                                                      *  move.b  angle(a0),d0
-                                                      *  addi.b  #$40,d0
-                                                      *  bmi.s   return_1A6BE
-                                                      *  move.b  #$40,d1         ; Rotate 90 degrees clockwise
-                                                      *  tst.w   inertia(a0)     ; Check inertia
-                                                      *  beq.s   return_1A6BE    ; If not moving, don't do anything
-                                                      *  bmi.s   +               ; If negative, branch
-                                                      *  neg.w   d1              ; Otherwise, we want to rotate counterclockwise
-                                                      *+
-                                                      *  move.b  angle(a0),d0
-                                                      *  add.b   d1,d0
-                                                      *  move.w  d0,-(sp)
-                                                      *  bsr.w   CalcRoomInFront
-                                                      *  move.w  (sp)+,d0
-                                                      *  tst.w   d1
-                                                      *  bpl.s   return_1A6BE
-                                                      *  asl.w   #8,d1
-                                                      *  addi.b  #$20,d0
-                                                      *  andi.b  #$C0,d0
-                                                      *  beq.s   loc_1A6BA
-                                                      *  cmpi.b  #$40,d0
-                                                      *  beq.s   loc_1A6A8
-                                                      *  cmpi.b  #$80,d0
-                                                      *  beq.s   loc_1A6A2
-                                                      *  add.w   d1,x_vel(a0)
-                                                      *  bset    #5,status(a0)
-                                                      *  move.w  #0,inertia(a0)
+        ldb   angle,u                                 *  move.b  angle(a0),d0
+        addb  #$40                                    *  addi.b  #$40,d0
+        bmi   return_1A6BE                            *  bmi.s   return_1A6BE
+        ldb   #$40                                    *  move.b  #$40,d1         ; Rotate 90 degrees clockwise
+        ldx   inertia,u                               *  tst.w   inertia(a0)     ; Check inertia
+        beq   return_1A6BE                            *  beq.s   return_1A6BE    ; If not moving, don't do anything
+        bmi   >                                       *  bmi.s   +               ; If negative, branch
+        negb                                          *  neg.w   d1              ; Otherwise, we want to rotate counterclockwise
+!                                                     *+
+        ;                                             *  move.b  angle(a0),d0
+        addb  angle,u                                 *  add.b   d1,d0
+        stb   @d0                                     *  move.w  d0,-(sp)
+        ;
+        jsr   CalcRoomInFront                         *  bsr.w   CalcRoomInFront
+        ;                                             *  move.w  (sp)+,d0
+        tst   glb_d1                                  *  tst.w   d1
+        bpl   return_1A6BE                            *  bpl.s   return_1A6BE
+        ldb   #0
+        lda   glb_d1_b                                *  asl.w   #8,d1
+        std   glb_d1
+        ldb   #0
+@d0     equ   *-1
+        addb  #$20                                    *  addi.b  #$20,d0
+        andb  #$C0                                    *  andi.b  #$C0,d0
+        beq   loc_1A6BA                               *  beq.s   loc_1A6BA
+        cmpb  #$40                                    *  cmpi.b  #$40,d0
+        beq   loc_1A6A8                               *  beq.s   loc_1A6A8
+        cmpb  #$80                                    *  cmpi.b  #$80,d0
+        beq   loc_1A6A2                               *  beq.s   loc_1A6A2
+        ldd   x_vel,u
+        addd  glb_d1
+        std   x_vel,u                                 *  add.w   d1,x_vel(a0)
+        ldb   status,u
+        orb   #status_pushing                         *  bset    #5,status(a0)
+        stb   status,u
+        ldd   #0
+        std   inertia,u                               *  move.w  #0,inertia(a0)
         rts                                           *  rts
                                                       *; ---------------------------------------------------------------------------
 loc_1A6A2                                             *loc_1A6A2:
-                                                      *  sub.w   d1,y_vel(a0)
+        ldd   y_vel,u
+        subd  glb_d1
+        std   y_vel,u                                 *  sub.w   d1,y_vel(a0)
         rts                                           *  rts
                                                       *; ---------------------------------------------------------------------------
 loc_1A6A8                                             *loc_1A6A8:
-                                                      *  sub.w   d1,x_vel(a0)
-                                                      *  bset    #5,status(a0)
-                                                      *  move.w  #0,inertia(a0)
+        ldd   x_vel,u
+        subd  glb_d1                                  *  sub.w   d1,x_vel(a0)
+        std   x_vel,u
+        ldb   status,u
+        orb   #status_pushing                         *  bset    #5,status(a0)
+        stb   status,u
+        ldd   #0
+        std   inertia,u                               *  move.w  #0,inertia(a0)
         rts                                           *  rts
                                                       *; ---------------------------------------------------------------------------
 loc_1A6BA                                             *loc_1A6BA:
-                                                      *  add.w   d1,y_vel(a0)
+        ldd   y_vel,u
+        addd  glb_d1
+        std   y_vel,u                                 *  add.w   d1,y_vel(a0)
                                                       *
 return_1A6BE                                          *return_1A6BE:
         rts                                           *  rts
@@ -959,7 +989,7 @@ Sonic_TurnLeft                                        *Sonic_TurnLeft:
         addb  #$20                                    *  addi.b  #$20,d0
         andb  #$C0                                    *  andi.b  #$C0,d0
         bne   return_1A744                            *  bne.s   return_1A744
-        ldd   inertia,u
+        ldd   inertia,u              ; TODO check
         addd  Sonic_deceleration_tmp
         subd  Sonic_deceleration
         cmpd  #$400                                   *  cmpi.w  #$400,d0
@@ -1024,7 +1054,7 @@ Sonic_TurnRight                                       *Sonic_TurnRight:
         addb  #$20                                    *  addi.b  #$20,d0
         andb  #$C0                                    *  andi.b  #$C0,d0
         bne   return_1A7C4                            *  bne.s   return_1A7C4
-        ldd   inertia,u
+        ldd   inertia,u              ; TODO check
         subd  Sonic_deceleration_tmp
         addd  Sonic_deceleration
         cmpd  #-$400                                  *  cmpi.w  #-$400,d0
@@ -1872,26 +1902,31 @@ loc_1AD8C                                             *loc_1AD8C:
                                                       *
                                                       *; loc_1AD96:
 Sonic_SlopeResist                                     *Sonic_SlopeResist:
-                                                      *  move.b  angle(a0),d0
-                                                      *  addi.b  #$60,d0
-                                                      *  cmpi.b  #$C0,d0
-                                                      *  bhs.s   return_1ADCA
-                                                      *  move.b  angle(a0),d0
-                                                      *  jsr (CalcSine).l
-                                                      *  muls.w  #$20,d0
-                                                      *  asr.l   #8,d0
-                                                      *  tst.w   inertia(a0)
-                                                      *  beq.s   return_1ADCA
-                                                      *  bmi.s   loc_1ADC6
-                                                      *  tst.w   d0
-                                                      *  beq.s   +
-                                                      *  add.w   d0,inertia(a0)  ; change Sonic's $14
-                                                      *+
+        ldb   angle,u                                 *  move.b  angle(a0),d0
+        addb  #$60                                    *  addi.b  #$60,d0
+        cmpb  #$C0                                    *  cmpi.b  #$C0,d0
+        bhs   return_1ADCA                            *  bhs.s   return_1ADCA
+        ldb   angle,u                                 *  move.b  angle(a0),d0
+        jsr   CalcSine                                *  jsr (CalcSine).l
+        tfr   d,x
+        ldd   #$20
+        jsr   Mul9x16                                 *  muls.w  #$20,d0
+        ;                                             *  asr.l   #8,d0
+        ldx   inertia,u                               *  tst.w   inertia(a0)
+        beq   return_1ADCA                            *  beq.s   return_1ADCA
+        bmi   loc_1ADC6                               *  bmi.s   loc_1ADC6
+        ldd   glb_d0                                  *  tst.w   d0
+        beq   >                                       *  beq.s   +
+        leax  d,x                                     *  add.w   d0,inertia(a0)  ; change Sonic's $14
+        stx   inertia,u
+!                                                     *+
         rts                                           *  rts
                                                       *; ---------------------------------------------------------------------------
                                                       *
 loc_1ADC6                                             *loc_1ADC6:
-                                                      *  add.w   d0,inertia(a0)
+        ldd   glb_d0
+        leax  d,x
+        stx   inertia,u                               *  add.w   d0,inertia(a0)
                                                       *
 return_1ADCA                                          *return_1ADCA:
         rts                                           *  rts
@@ -1905,32 +1940,37 @@ return_1ADCA                                          *return_1ADCA:
                                                       *
                                                       *; loc_1ADCC:
 Sonic_RollRepel                                       *Sonic_RollRepel:
-                                                      *  move.b  angle(a0),d0
-                                                      *  addi.b  #$60,d0
-                                                      *  cmpi.b  #$C0,d0
-                                                      *  bhs.s   return_1AE06
-                                                      *  move.b  angle(a0),d0
-                                                      *  jsr (CalcSine).l
-                                                      *  muls.w  #$50,d0
-                                                      *  asr.l   #8,d0
-                                                      *  tst.w   inertia(a0)
-                                                      *  bmi.s   loc_1ADFC
-                                                      *  tst.w   d0
-                                                      *  bpl.s   loc_1ADF6
-                                                      *  asr.l   #2,d0
+        ldb   angle,u                                 *  move.b  angle(a0),d0
+        addb  $60                                     *  addi.b  #$60,d0
+        cmpb  #$C0                                    *  cmpi.b  #$C0,d0
+        bhs   return_1AE06                            *  bhs.s   return_1AE06
+        ldb   angle,u                                 *  move.b  angle(a0),d0
+        jsr   CalcSine                                *  jsr (CalcSine).l
+        tfr   d,x
+        jsr   Mul9x16                                 *  muls.w  #$50,d0
+        ;                                             *  asr.l   #8,d0
+        ldx   inertia,u                               *  tst.w   inertia(a0)
+        bmi   loc_1ADFC                               *  bmi.s   loc_1ADFC
+        ldd   glb_d0                                  *  tst.w   d0
+        bpl   loc_1ADF6                               *  bpl.s   loc_1ADF6
+        _asrd                                         *  asr.l   #2,d0
+        _asrd
                                                       *
 loc_1ADF6                                             *loc_1ADF6:
-                                                      *  add.w   d0,inertia(a0)
+        leax  d,x                                     *  add.w   d0,inertia(a0)
+        stx   inertia,u
         rts                                           *  rts
                                                       *; ===========================================================================
                                                       *
 loc_1ADFC                                             *loc_1ADFC:
-                                                      *  tst.w   d0
-                                                      *  bmi.s   loc_1AE02
-                                                      *  asr.l   #2,d0
+        ldd   glb_d0                                  *  tst.w   d0
+        bmi   loc_1AE02                               *  bmi.s   loc_1AE02
+        _asrd                                         *  asr.l   #2,d0
+        _asrd
                                                       *
 loc_1AE02                                             *loc_1AE02:
-                                                      *  add.w   d0,inertia(a0)
+        leax  d,x                                     *  add.w   d0,inertia(a0)
+        stx   inertia,u
                                                       *
 return_1AE06                                          *return_1AE06:
         rts                                           *  rts
@@ -1944,28 +1984,35 @@ return_1AE06                                          *return_1AE06:
                                                       *
                                                       *; loc_1AE08:
 Sonic_SlopeRepel                                      *Sonic_SlopeRepel:
-                                                      *  nop
-                                                      *  tst.b   stick_to_convex(a0)
-                                                      *  bne.s   return_1AE42
-                                                      *  tst.w   move_lock(a0)
-                                                      *  bne.s   loc_1AE44
-                                                      *  move.b  angle(a0),d0
-                                                      *  addi.b  #$20,d0
-                                                      *  andi.b  #$C0,d0
-                                                      *  beq.s   return_1AE42
-                                                      *  mvabs.w inertia(a0),d0
-                                                      *  cmpi.w  #$280,d0
-                                                      *  bhs.s   return_1AE42
-                                                      *  clr.w   inertia(a0)
-                                                      *  bset    #1,status(a0)
-                                                      *  move.w  #$1E,move_lock(a0)
+        ;                                             *  nop
+        tst   stick_to_convex,u                       *  tst.b   stick_to_convex(a0)
+        bne   return_1AE42                            *  bne.s   return_1AE42
+        ldd   move_lock,u                             *  tst.w   move_lock(a0)
+        bne   loc_1AE44                               *  bne.s   loc_1AE44
+        ldb   angle,u                                 *  move.b  angle(a0),d0
+        addb  #$20                                    *  addi.b  #$20,d0
+        andb  #$C0                                    *  andi.b  #$C0,d0
+        beq   return_1AE42                            *  beq.s   return_1AE42
+        ldd   inertia,u                               *  mvabs.w inertia(a0),d0
+        bpl   >
+        _negd
+!       cmpd  #$280                                   *  cmpi.w  #$280,d0
+        bhs   return_1AE42                            *  bhs.s   return_1AE42
+        ldx   #0
+        stx   inertia,u                               *  clr.w   inertia(a0)
+        lda   status,u
+        ora   #status_x_orientation                   *  bset    #1,status(a0)
+        sta   status,u
+        ldd   #$1E
+        std   move_lock,u                             *  move.w  #$1E,move_lock(a0)
                                                       *
 return_1AE42                                          *return_1AE42:
         rts                                           *  rts
                                                       *; ===========================================================================
                                                       *
 loc_1AE44                                             *loc_1AE44:
-                                                      *  subq.w  #1,move_lock(a0)
+        subd  #1                                      *  subq.w  #1,move_lock(a0)
+        std   move_lock,u
         rts                                           *  rts
                                                       *; End of function Sonic_SlopeRepel
                                                       *
@@ -1982,10 +2029,10 @@ Sonic_JumpAngle                                       *Sonic_JumpAngle:
         bpl   loc_1AE5A                               *  bpl.s   loc_1AE5A   ; if higher than 0, branch
                                                       *
         adda  #2                                      *  addq.b  #2,d0       ; increase angle
-        bcc   BranchTo_Sonic_JumpAngleSet             *  bcc.s   BranchTo_Sonic_JumpAngleSet
+        bcc   Sonic_JumpAngleSet                      *  bcc.s   BranchTo_Sonic_JumpAngleSet
         lda   #0                                      *  moveq   #0,d0
                                                       *
-BranchTo_Sonic_JumpAngleSet                           *BranchTo_Sonic_JumpAngleSet ; BranchTo
+                                                      *BranchTo_Sonic_JumpAngleSet ; BranchTo
         bra   Sonic_JumpAngleSet                      *  bra.s   Sonic_JumpAngleSet
                                                       *; ===========================================================================
                                                       *
@@ -2092,7 +2139,7 @@ Sonic_DoLevelCollision                                *Sonic_DoLevelCollision:
         addd  x_pos,u                                 *  add.w   d1,x_pos(a0)
         std   x_pos,u
         ldd   #0
-        std   x_pos,u                                 *  move.w  #0,x_vel(a0) ; stop Sonic since he hit a wall
+        std   x_vel,u                                 *  move.w  #0,x_vel(a0) ; stop Sonic since he hit a wall
 !                                                     *+
         jsr   Sonic_CheckFloor                        *  bsr.w   Sonic_CheckFloor
         ldd   glb_d1                                  *  tst.w   d1
@@ -4509,6 +4556,7 @@ loc_1EBE6                                             * loc_1EBE6:
         lbeq   CheckCeilingDist_Part2                  *         beq.w   CheckCeilingDist_Part2          ; Player is going mostly up
         ldb   glb_d1_b
         andb  #$38                                    *         andi.b  #$38,d1
+        stb   glb_d1_b
         bne   >                                       *         bne.s   +
         ldd   glb_d2
         addd  #8
@@ -4672,7 +4720,7 @@ loc_1ECFE                                             * loc_1ECFE:
         ldb   Primary_Angle                           *         move.b  (Primary_Angle).w,d3
         bitb  #1                                      *         btst    #0,d3
         beq   >                                       *         beq.s   +
-        ldd   glb_d2_b                                *         move.b  d2,d3
+        ldb   glb_d2_b                                *         move.b  d2,d3
 !       stb   glb_d3_b                                * +
         rts                                           *         rts
                                                       * ; ===========================================================================
@@ -4716,11 +4764,11 @@ ChkFloorEdge_Part2                                    * ChkFloorEdge_Part2:
         sex                                           *         ext.w   d0
         addd  y_pos,u                                 *         add.w   d0,d2
         std   glb_d2
-        ldx   #Primary_Collision                      *         move.l  #Primary_Collision,(Collision_addr).w
+        ldx   Primary_Collision                       *         move.l  #Primary_Collision,(Collision_addr).w
         lda   top_solid_bit,u
         cmpa  #$8                                     *         cmpi.b  #$C,top_solid_bit(a0)
         beq   >                                       *         beq.s   +
-        ldx   #Secondary_Collision                    *         move.l  #Secondary_Collision,(Collision_addr).w
+        ldx   Secondary_Collision                     *         move.l  #Secondary_Collision,(Collision_addr).w
 !       stx   Collision_addr                          * +
         ldd   #Primary_Angle
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
@@ -4999,7 +5047,7 @@ Sonic_CheckCeiling                                    * Sonic_CheckCeiling:
         ldd   #Primary_Angle
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
         ldd   #-$10                                   *         movea.w #-$10,a3
-        std   glb_d3
+        std   glb_a3
         ldb   #$2
         stb   glb_d6_b                                *         movea.w #$800,d6
         jsr   FindFloor                               *         bsr.w   FindFloor
@@ -5216,7 +5264,8 @@ ObjCheckLeftWallDist                                  * ObjCheckLeftWallDist:
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
         lda   #0
         sta   Primary_Angle                           *         move.b  #0,(a4)
-                                                      *         movea.w #-$10,a3
+        ldd   #-$10
+        std   glb_a3                                  *         movea.w #-$10,a3
         ldb   #$1
         stb   glb_d6_b                                *         movea.w #$400,d6
         ldd   #$D
