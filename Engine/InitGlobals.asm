@@ -1,4 +1,5 @@
 
+InitGlobals
         ldd   #0
 
 ; compilated sprite
@@ -21,3 +22,5 @@
         sta   glb_camera_x_offset
         lda   #screen_top
         sta   glb_camera_y_offset
+
+        rts

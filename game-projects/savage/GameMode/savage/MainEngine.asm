@@ -10,60 +10,61 @@
         INCLUDE "./Engine/Constants.asm"
         INCLUDE "./Engine/Macros.asm"        
         org   $6100
+	INCLUDE "./Engine/InitGlobals.asm"	
 
         jsr   LoadAct
 
 	; objects init
 	ldu   #Obj_Axe1
-        ldd   #$004A
+        ldd   #$004A-screen_left
         std   x_pos,u
-        ldd   #$0050
+        ldd   #$0050-screen_top
         std   y_pos,u
 	ldu   #Obj_Axe2
-        ldd   #$0062
+        ldd   #$0062-screen_left
         std   x_pos,u
-        ldd   #$0050
+        ldd   #$0050-screen_top
         std   y_pos,u
 	ldu   #Obj_Axe3
-        ldd   #$007A
+        ldd   #$007A-screen_left
         std   x_pos,u
-        ldd   #$0050
+        ldd   #$0050-screen_top
         std   y_pos,u
 	ldu   #Obj_Axe4
-        ldd   #$0092
+        ldd   #$0092-screen_left
         std   x_pos,u
-        ldd   #$0050
+        ldd   #$0050-screen_top
         std   y_pos,u
 	ldu   #Obj_Axe5
-        ldd   #$00AA
+        ldd   #$00AA-screen_left
         std   x_pos,u
-        ldd   #$0050
+        ldd   #$0050-screen_top
         std   y_pos,u
 
 	ldu   #Obj_Bat1
-        ldd   #$004A
+        ldd   #$004A-screen_left
         std   x_pos,u
-        ldd   #$0035
+        ldd   #$0035-screen_top
         std   y_pos,u
 	ldu   #Obj_Bat2
-        ldd   #$0062
+        ldd   #$0062-screen_left
         std   x_pos,u
-        ldd   #$0035
+        ldd   #$0035-screen_top
         std   y_pos,u
 	ldu   #Obj_Bat3
-        ldd   #$007A
+        ldd   #$007A-screen_left
         std   x_pos,u
-        ldd   #$0035
+        ldd   #$0035-screen_top
         std   y_pos,u
 	ldu   #Obj_Bat4
-        ldd   #$0092
+        ldd   #$0092-screen_left
         std   x_pos,u
-        ldd   #$0035
+        ldd   #$0035-screen_top
         std   y_pos,u
 	ldu   #Obj_Bat5
-        ldd   #$00AA
+        ldd   #$00AA-screen_left
         std   x_pos,u
-        ldd   #$0035
+        ldd   #$0035-screen_top
         std   y_pos,u
 
 

@@ -10,6 +10,7 @@
         INCLUDE "./Engine/Constants.asm"
         INCLUDE "./Engine/Macros.asm"        
         org   $6100
+	INCLUDE "./Engine/InitGlobals.asm"	
 
         jsr   LoadAct
 

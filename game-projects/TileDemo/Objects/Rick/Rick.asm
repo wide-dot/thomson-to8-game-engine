@@ -23,9 +23,9 @@ Init
         std   anim,u
         ldb   #$04
         stb   priority,u
-        ldd   #$0080
+        ldd   #$0050
         std   x_pos,u
-        ldd   #$007F
+        ldd   #$0063
         std   y_pos,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask        
@@ -71,7 +71,7 @@ TestBtn
         ;sta   ChangeGameMode
 SetAutoScroll
         ldd   <glb_camera_y_pos
-        addd  #screen_top+8+32+10   ; rick sprite height is supposed 21, sprite is centered, so add 21/2
+        addd  #32+10   ; rick sprite height is supposed 21, sprite is centered, so add 21/2
         cmpd  y_pos,u
         blo   @a
 	    lda   #scroll_state_up
