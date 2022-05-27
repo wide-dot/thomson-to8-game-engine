@@ -40,21 +40,21 @@ TilemapReturn
 Tilemap01
         ldx   #RickData
         ldd   x_pos,x
-        cmpd  #screen_left+24+120
+        cmpd  #24+120
         blo   TilemapReturn
-        cmpd  #screen_left+24+128
+        cmpd  #24+128
         bhi   TilemapReturn
         ldd   y_pos,x
-        cmpd  #screen_top+8+320
+        cmpd  #8+320
         blo   TilemapReturn
-        cmpd  #screen_top+8+352
+        cmpd  #8+352
         bhi   TilemapReturn
         inc   glb_current_submap
         ldd   #128
         std   <glb_camera_x_pos
         ldd   #256
         std   <glb_camera_y_pos
-        ldd   #screen_left+28+128  
+        ldd   #28+128  
         std   x_pos,x
         ldx   #SouthAmerica_submap002
         bra   TilemapLoad  ; exit position 120,320 128,352

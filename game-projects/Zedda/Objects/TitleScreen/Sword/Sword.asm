@@ -58,7 +58,7 @@ Sword_Init
         std   w_Sword_timer,u
         lda   #8
 	sta   b_Sword_nb_sub_tile,u	
-        ldd   #$00BD
+        ldd   #$00BD-screen_top
 	std   w_Sword_sub_init_ypos,u
 	lda   #0
 	sta   b_Sword_flash_idx,u
@@ -106,7 +106,7 @@ Sword_Wait
         lda   render_flags,x
         ora   #render_playfieldcoord_mask        
         sta   render_flags,x   	
-        ldd   #$005E
+        ldd   #$005E-screen_left
 	std   x_pos,x	
 	ldd   w_Sword_sub_init_ypos,u
 	subd  #16

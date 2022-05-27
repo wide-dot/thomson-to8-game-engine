@@ -23,9 +23,9 @@ Init
         std   anim,u
         ldb   #$04
         stb   priority,u
-        ldd   #$01A7
+        ldd   #$01A7-screen_left
         std   x_pos,u
-        ldd   #$0236
+        ldd   #$0236-screen_top
         std   y_pos,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask        
@@ -103,7 +103,7 @@ TestBtn
 
 SetAutoScroll
         ldd   <glb_camera_y_pos
-        addd  #screen_top+8+16+12   ; Link sprite height is supposed 25, sprite is centered, so add 25/2
+        addd  #8+16+12   ; Link sprite height is supposed 25, sprite is centered, so add 25/2
         cmpd  y_pos,u
         blo   @a
         ldd   #Ani_link_walk_up
@@ -124,7 +124,7 @@ SetAutoScroll
         ldy   #$1000                ; auto scroll nb pixels by frame                
         bra   @scrl
 @b      ldd   <glb_camera_x_pos
-        addd  #screen_left+16+8+5  ; Link sprite width is supposed 11, sprite is centered, so add 11/2
+        addd  #16+8+5  ; Link sprite width is supposed 11, sprite is centered, so add 11/2
         cmpd  x_pos,u
         blo   @c
         ldd   #Ani_link_walk_side

@@ -35,12 +35,12 @@ Tilemap01
         ; submap 1 to 2
         ldx   #LinkData
         ldd   x_pos,x
-        cmpd  #screen_left+16+511-5                   ; exit position
+        cmpd  #16+511-5                   ; exit position
         bne   @a
         ldd   y_pos,x
-        cmpd  #screen_top+8+105                       ; exit position
+        cmpd  #8+105                       ; exit position
         blo   @a
-        cmpd  #screen_top+8+183                       ; exit position
+        cmpd  #8+183                       ; exit position
         bhi   @a
         ldd   #Ani_link_walk_side
         cmpd  anim,x
@@ -61,12 +61,12 @@ Tilemap02
         ; submap 2 to 3
         ldx   #LinkData
         ldd   x_pos,x
-        cmpd  #screen_left+16+550                     ; exit position
+        cmpd  #16+550                     ; exit position
         blo   @a
-        cmpd  #screen_left+16+684                     ; exit position
+        cmpd  #16+684                     ; exit position
         bhi   @a
         ldd   y_pos,x
-        cmpd  #screen_top+8+511-11                    ; exit position
+        cmpd  #8+511-11                    ; exit position
         bne   @a
         ldd   #Ani_link_walk_down
         cmpd  anim,x
@@ -85,12 +85,12 @@ Tilemap02
         ; submap 2 to 1
         ldx   #LinkData
         ldd   x_pos,x
-        cmpd  #screen_left+16+512+5                   ; exit position
+        cmpd  #16+512+5                   ; exit position
         bne   @b
         ldd   y_pos,x
-        cmpd  #screen_top+8+105                       ; exit position
+        cmpd  #8+105                       ; exit position
         blo   @b
-        cmpd  #screen_top+8+183                       ; exit position
+        cmpd  #8+183                       ; exit position
         bhi   @b
         ldd   #Ani_link_walk_side
         cmpd  anim,x
@@ -111,12 +111,12 @@ Tilemap03
         ; submap 3 to 2
         ldx   #LinkData
         ldd   x_pos,x
-        cmpd  #screen_left+16+550                     ; exit position
+        cmpd  #16+550                     ; exit position
         blo   @a
-        cmpd  #screen_left+16+684                     ; exit position
+        cmpd  #16+684                     ; exit position
         bhi   @a
         ldd   y_pos,x
-        cmpd  #screen_top+8+512+12                    ; exit position
+        cmpd  #8+512+12                    ; exit position
         bne   @a
         ldd   #Ani_link_walk_up
         cmpd  anim,x
@@ -141,22 +141,22 @@ TilemapLoad
         ; set camera limits
         ldd   submap_camera_y_min,x 
         std   glb_camera_y_min
-        addd  #screen_top+8+11
+        addd  #8+11
         std   glb_vp_y_min
 
         ldd   submap_camera_y_max,x
         std   glb_camera_y_max
-        addd  #screen_top+8+192-11
+        addd  #8+192-11
         std   glb_vp_y_max        
 
         ldd   submap_camera_x_min,x 
         std   glb_camera_x_min
-        addd  #screen_left+16+4
+        addd  #16+4
         std   glb_vp_x_min
         
         ldd   submap_camera_x_max,x
         std   glb_camera_x_max
-        addd  #screen_left+16+128-5
+        addd  #16+128-5
         std   glb_vp_x_max        
 
         ; this will force the refresh of the screen buffers        
