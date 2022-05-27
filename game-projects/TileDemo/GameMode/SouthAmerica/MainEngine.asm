@@ -10,8 +10,8 @@
         INCLUDE "./Engine/Constants.asm"
         INCLUDE "./Engine/Macros.asm"        
         org   $6100
-	INCLUDE "./Engine/InitGlobals.asm"	
 			
+        jsr   InitGlobals
         jsr   LoadAct
         _RunObjectRoutine ObjID_Tilemap,glb_current_submap       
 
@@ -41,6 +41,7 @@ LevelMainLoop
 * ==============================================================================
 * Routines
 * ==============================================================================
+        INCLUDE "./Engine/InitGlobals.asm"
 		INCLUDE "./Engine/Ram/BankSwitch.asm"
         INCLUDE "./Engine/Graphics/WaitVBL.asm"
         INCLUDE "./Engine/Graphics/AnimateSprite.asm"	

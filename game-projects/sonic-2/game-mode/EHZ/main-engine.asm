@@ -11,8 +11,8 @@
         INCLUDE "./Engine/Macros.asm"        
         INCLUDE "./objects/engine/smps/SndID.equ"	
         org   $6100
-	INCLUDE "./Engine/InitGlobals.asm"	
 
+        jsr   InitGlobals
         jsr   LoadAct       
         jsr   ReadJoypads
 
@@ -261,7 +261,8 @@ TlsAni_EHZ_pulseball3_imgs
 * ==============================================================================
 * Routines
 * ==============================================================================
-	INCLUDE "./Engine/Ram/BankSwitch.asm"
+        INCLUDE "./Engine/InitGlobals.asm"
+        INCLUDE "./Engine/Ram/BankSwitch.asm"
         INCLUDE "./Engine/Graphics/WaitVBL.asm"
         INCLUDE "./Engine/Graphics/AnimateSpriteSync.asm"	
         INCLUDE "./objects/main-characters/sonic/sonic-animate.asm"
