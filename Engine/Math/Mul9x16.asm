@@ -54,6 +54,7 @@ Mul9x16
         sbca  #0
         rts
 @mul    
+        stb   @m
         lda   @m_l  ; get lsb's of multiplicand
         mul         ; multiply lsb's
         sta   @r_l  ; save partial product
@@ -62,6 +63,5 @@ Mul9x16
         mul         ; multiply msb's
         addb  @r_l  ; add lsb's to msb's of previous partial product
         adca  #0    ; add carry to msb's
-        stb   @r_h  ; save sum of partial products 
-        ldd   @r_h
+        std   @r_h  ; save sum of partial products 
         rts

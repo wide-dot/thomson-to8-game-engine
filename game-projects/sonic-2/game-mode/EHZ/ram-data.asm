@@ -48,7 +48,7 @@ ext_variables_main            equ   object_core_size+ext_variables_size
 * Main characters object structure
 * ===========================================================================
 
-main_ext_variables_size       equ   ext_variables_size+27
+main_ext_variables_size       equ   ext_variables_size+26
 main_object_size              equ   object_core_size+main_ext_variables_size ; the size of a main character object
 next_main_object              equ   main_object_size
 
@@ -60,21 +60,21 @@ obj_control        equ   ext_variables_main+5  ; 0 for normal, 1 for hanging or 
 status_secondary   equ   ext_variables_main+6
 flips_remaining    equ   ext_variables_main+7  ; number of flip revolutions remaining
 flip_speed         equ   ext_variables_main+8  ; number of flip revolutions per frame / 256
-move_lock          equ   ext_variables_main+9  ; and +10 ; horizontal control lock, counts down to 0
-invulnerable_time  equ   ext_variables_main+11 ; and +12 ; time remaining until you stop blinking
-invincibility_time equ   ext_variables_main+13 ; and +14 ; remaining
-speedshoes_time    equ   ext_variables_main+15 ; and +16 ; remaining
-next_tilt          equ   ext_variables_main+17 ; angle on ground in front of sprite
-tilt               equ   ext_variables_main+18 ; angle on ground
-stick_to_convex    equ   ext_variables_main+19 ; 0 for normal, 1 to make Sonic stick to convex surfaces like the rotating discs in Sonic 1 and 3 (unused in Sonic 2 but fully functional)
-spindash_flag      equ   ext_variables_main+20 ; 0 for normal, 1 for charging a spindash or forced rolling
+move_lock          equ   ext_variables_main+9  ; horizontal control lock, counts down to 0
+invulnerable_time  equ   ext_variables_main+10 ; and +11 ; time remaining until you stop blinking
+invincibility_time equ   ext_variables_main+12 ; and +13 ; remaining
+speedshoes_time    equ   ext_variables_main+14 ; and +15 ; remaining
+next_tilt          equ   ext_variables_main+16 ; angle on ground in front of sprite
+tilt               equ   ext_variables_main+17 ; angle on ground
+stick_to_convex    equ   ext_variables_main+18 ; 0 for normal, 1 to make Sonic stick to convex surfaces like the rotating discs in Sonic 1 and 3 (unused in Sonic 2 but fully functional)
+spindash_flag      equ   ext_variables_main+19 ; 0 for normal, 1 for charging a spindash or forced rolling
 pinball_mode       equ   spindash_flag
-spindash_counter   equ   ext_variables_main+21 ; and +22
+spindash_counter   equ   ext_variables_main+20 ; and +21
 restart_countdown  equ   spindash_counter
-jumping            equ   ext_variables_main+23
-interact           equ   ext_variables_main+24 ; RAM address of the last object Sonic stood on, minus $FFFFB000 and divided by $40
-top_solid_bit      equ   ext_variables_main+25 ; the bit to check for top solidity (either $C or $E)
-lrb_solid_bit      equ   ext_variables_main+26 ; the bit to check for left/right/bottom solidity (either $D or $F)
+jumping            equ   ext_variables_main+22
+interact           equ   ext_variables_main+23 ; RAM address of the last object Sonic stood on, minus $FFFFB000 and divided by $40
+top_solid_bit      equ   ext_variables_main+24 ; the bit to check for top solidity (either $C or $E)
+lrb_solid_bit      equ   ext_variables_main+25 ; the bit to check for left/right/bottom solidity (either $D or $F)
 
 ; ---------------------------------------------------------------------------
 ; Bits 3-6 of an object's status after a SolidObject call is a

@@ -9,7 +9,7 @@
         INCLUDE "./Engine/Macros.asm"   
         SETDP   direct_page/256
 
-WIDTH_FACTOR equ 1/2 ; BM16 is wide dot
+WIDTH_FACTOR equ 10/20 ; BM16 is wide dot
 Sonic_top_speed_tmp    equ direct_page
 Sonic_acceleration_tmp equ direct_page+2
 Sonic_deceleration_tmp equ direct_page+4
@@ -1154,7 +1154,7 @@ Sonic_CheckRollStop                                   *Sonic_CheckRollStop:
         lda   status,u
         anda  #^status_jumporroll                     *  bclr    #2,status(a0)
         sta   status,u
-        ldd   #$1309                                  *  move.b  #$13,y_radius(a0)
+        _ldd  $13,9*WIDTH_FACTOR                      *  move.b  #$13,y_radius(a0)
         std   y_radius,u                              *  move.b  #9,x_radius(a0)
         ldd   #SonAni_Wait 
         std   anim,u                                  *  move.b  #AniIDSonAni_Wait,anim(a0)
@@ -1472,7 +1472,7 @@ Obj01_ChkRoll                                         *Obj01_ChkRoll:
 Obj01_DoRoll                                          *Obj01_DoRoll:
         ora   #status_jumporroll                       
         sta   status,u                                *  bset    #2,status(a0)
-        ldd   #$0E07                                  *  move.b  #$E,y_radius(a0)
+        _ldd  $0E,7*WIDTH_FACTOR                      *  move.b  #$E,y_radius(a0)
         std   y_radius,u ; and x_radius               *  move.b  #7,x_radius(a0)
         ldd   #SonAni_Roll                            *  move.b  #AniIDSonAni_Roll,anim(a0)  ; use "rolling" animation
         std   anim,u                                   
@@ -1548,12 +1548,12 @@ Sonic_Jump                                            *Sonic_Jump:
         clr   stick_to_convex,u                       *  clr.b   stick_to_convex(a0)
         lda   #SndID_Jump                             *  move.w  #SndID_Jump,d0
         sta   Smps.SFXToPlay                          *  jsr (PlaySound).l   ; play jumping sound
-        ldd   #$1309                                  *  move.b  #$13,y_radius(a0)
+        _ldd  $13,9*WIDTH_FACTOR                      *  move.b  #$13,y_radius(a0)
         std   y_radius,u ; and x_radius               *  move.b  #9,x_radius(a0)
         lda   status,u
         bita  #status_jumporroll                      *  btst    #2,status(a0)
         bne   Sonic_RollJump                          *  bne.s   Sonic_RollJump
-        ldd   #$0E07                                  *  move.b  #$E,y_radius(a0)
+        _ldd  $0E,7*WIDTH_FACTOR                      *  move.b  #$E,y_radius(a0)
         std   y_radius,u ; and x_radius               *  move.b  #7,x_radius(a0)
         ldd   #SonAni_Roll                            *  move.b  #AniIDSonAni_Roll,anim(a0)  ; use "jumping" animation
         std   anim,u
@@ -1770,7 +1770,7 @@ Sonic_UpdateSpindash                                  *Sonic_UpdateSpindash:
         bne   Sonic_ChargingSpindash                  *  bne.w   Sonic_ChargingSpindash
                                                       *
                                                       *  ; unleash the charged spindash and start rolling quickly:
-        ldd   #$0E07                                  *  move.b  #$E,y_radius(a0)
+        _ldd  $0E,7*WIDTH_FACTOR                      *  move.b  #$E,y_radius(a0)
         std   y_radius,u                              *  move.b  #7,x_radius(a0)
         ldd   #SonAni_Roll    
         std   anim,u                                  *  move.b  #AniIDSonAni_Roll,anim(a0)
@@ -1987,7 +1987,7 @@ Sonic_SlopeRepel                                      *Sonic_SlopeRepel:
         ;                                             *  nop
         tst   stick_to_convex,u                       *  tst.b   stick_to_convex(a0)
         bne   return_1AE42                            *  bne.s   return_1AE42
-        ldd   move_lock,u                             *  tst.w   move_lock(a0)
+        tst   move_lock,u                             *  tst.w   move_lock(a0)
         bne   loc_1AE44                               *  bne.s   loc_1AE44
         ldb   angle,u                                 *  move.b  angle(a0),d0
         addb  #$20                                    *  addi.b  #$20,d0
@@ -2001,18 +2001,20 @@ Sonic_SlopeRepel                                      *Sonic_SlopeRepel:
         ldx   #0
         stx   inertia,u                               *  clr.w   inertia(a0)
         lda   status,u
-        ora   #status_x_orientation                   *  bset    #1,status(a0)
+        ora   #status_inair                           *  bset    #1,status(a0)
         sta   status,u
-        ldd   #$1E
-        std   move_lock,u                             *  move.w  #$1E,move_lock(a0)
+        lda   #$1E
+        sta   move_lock,u                             *  move.w  #$1E,move_lock(a0)
                                                       *
 return_1AE42                                          *return_1AE42:
         rts                                           *  rts
                                                       *; ===========================================================================
                                                       *
 loc_1AE44                                             *loc_1AE44:
-        subd  #1                                      *  subq.w  #1,move_lock(a0)
-        std   move_lock,u
+        suba  Vint_Main_runcount                      *  subq.w  #1,move_lock(a0)
+        bpl   >
+        lda   #0
+!       sta   move_lock,u
         rts                                           *  rts
                                                       *; End of function Sonic_SlopeRepel
                                                       *
@@ -2386,7 +2388,7 @@ Sonic_ResetOnFloor_Part2                              *Sonic_ResetOnFloor_Part2:
         lda   status,u
         anda  #^status_jumporroll
         sta   status,u                                *  bclr    #2,status(a0)
-        ldd   #$1309                                  *  move.b  #$13,y_radius(a0) ; this increases Sonic's collision height to standing
+        _ldd  $13,9*WIDTH_FACTOR                      *  move.b  #$13,y_radius(a0) ; this increases Sonic's collision height to standing
         std   y_radius,u ; and x_radius               *  move.b  #9,x_radius(a0)
         ldd   #SonAni_Walk
         std   anim,u                                  *  move.b  #AniIDSonAni_Walk,anim(a0)  ; use running/walking/standing animation
@@ -4058,11 +4060,11 @@ loc_1E28E                                             * loc_1E28E:
 loc_1E292                                             * loc_1E292:
         anda  #$C0                                    *         andi.b  #$C0,d0
         cmpa  #$40                                    *         cmpi.b  #$40,d0
-        lbeq   Sonic_WalkVertL                         *         beq.w   Sonic_WalkVertL
+        lbeq  Sonic_WalkVertL                         *         beq.w   Sonic_WalkVertL
         cmpa  #$80                                    *         cmpi.b  #$80,d0
-        lbeq   Sonic_WalkCeiling                       *         beq.w   Sonic_WalkCeiling
+        lbeq  Sonic_WalkCeiling                       *         beq.w   Sonic_WalkCeiling
         cmpa  #$C0                                    *         cmpi.b  #$C0,d0
-        lbeq   Sonic_WalkVertR                         *         beq.w   Sonic_WalkVertR
+        lbeq  Sonic_WalkVertR                         *         beq.w   Sonic_WalkVertR
         ;                                             *         move.w  y_pos(a0),d2
         ;                                             *         move.w  x_pos(a0),d3
         ;                                             *         moveq   #0,d0
@@ -4144,7 +4146,7 @@ loc_1E33C                                             * loc_1E33C:
         tst   stick_to_convex,u                       *         tst.b   stick_to_convex(a0)
         bne   loc_1E336                               *         bne.s   loc_1E336
         lda   status,u
-        ora   #status_x_orientation                   *         bset    #1,status(a0)
+        ora   #status_inair                           *         bset    #1,status(a0)
         anda  #^status_pushing                        *         bclr    #5,status(a0)
         sta   status,u
         ldd   #SonAni_Run
@@ -4276,7 +4278,7 @@ loc_1E420                                             * loc_1E420:
         tst   stick_to_convex,u                       *         tst.b   stick_to_convex(a0)
         bne   loc_1E41A                               *         bne.s   loc_1E41A
         lda   status,u
-        ora   #status_x_orientation                   *         bset    #1,status(a0)
+        ora   #status_inair                           *         bset    #1,status(a0)
         anda  #^status_pushing                        *         bclr    #5,status(a0)
         sta   status,u
         ldd   #SonAni_Run
@@ -4371,7 +4373,7 @@ loc_1E4CE                                             * loc_1E4CE:
         tst   stick_to_convex,u                       *         tst.b   stick_to_convex(a0)
         bne   loc_1E4C8                               *         bne.s   loc_1E4C8
         lda   status,u
-        ora   #status_x_orientation                   *         bset    #1,status(a0)
+        ora   #status_inair                           *         bset    #1,status(a0)
         anda  #^status_pushing                        *         bclr    #5,status(a0)
         sta   status,u
         ldd   #SonAni_Run
@@ -4465,7 +4467,7 @@ loc_1E57C                                             * loc_1E57C:
         tst   stick_to_convex,u                       *         tst.b   stick_to_convex(a0)
         bne   loc_1E576                               *         bne.s   loc_1E576
         lda   status,u
-        ora   #status_x_orientation                   *         bset    #1,status(a0)
+        ora   #status_inair                           *         bset    #1,status(a0)
         anda  #^status_pushing                        *         bclr    #5,status(a0)
         sta   status,u
         ldd   #SonAni_Run
