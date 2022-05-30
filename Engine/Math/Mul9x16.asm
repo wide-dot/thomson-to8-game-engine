@@ -15,16 +15,17 @@
 ; (@m_l) 00 } multiplicand (16 bit)
 ;
 ; Result:
-; (@r0)  20 }
-; (@r1)  00 } 2000 is product
+; (a)  20 }
+; (b)  00 } 2000 is product/256
 
         SETDP   direct_page/256
 
-@m      equ direct_page+116
-@m_h    equ direct_page+117
-@m_l    equ direct_page+118
-@r_h    equ direct_page+119
-@r_l    equ direct_page+120
+@m      equ direct_page+115
+@m_h    equ direct_page+116
+@m_l    equ direct_page+117
+@r_h    equ direct_page+118
+@r_l    equ direct_page+119
+@r      equ direct_page+120
 ;
 Mul9x16
         tsta
@@ -35,33 +36,47 @@ Mul9x16
 @n256   tfr   x,d   ; d = $FF00
         nega
         negb
-        sbca  #0
+        sbca  #0    ; *-1
         rts
 @p256
-        tfr   x,d
+        tfr   x,d   ; *1
         rts
-@pos    
+@pos                
+        stb   @m    ; positive multiplier
         stx   @m_h
-        bmi   @neg2 ; multiplicand is negative
-        bra   @mul
-@neg    
-        stx   @m_h
-        bmi   @mul  ; multiplicand is negative
-@neg2   negb        ; get multiplier in b
-        jsr   @mul
+        bpl   @mul  ; positive result
+        ldd   @m_h  ; negative multiplicand
         nega
         negb
         sbca  #0
-        rts
-@mul    
+        std   @m_h
+        ldb   @m
+@neg1   bsr   @mul
+        coma        ; negative result
+        comb
+        neg   @r
+        bne   >
+        addd  #1
+!       rts
+@neg    
+        negb        ; negative multiplier
         stb   @m
+        stx   @m_h
+        bpl   @neg1 ; positive multiplicand
+        ldd   @m_h  ; negative multiplicand and positive result
+        nega
+        negb
+        sbca  #0
+        std   @m_h
+        ldb   @m
+@mul 
         lda   @m_l  ; get lsb's of multiplicand
         mul         ; multiply lsb's
-        sta   @r_l  ; save partial product
+        std   @r_l  ; save partial product
         lda   @m    ; get multiplier
         ldb   @m_h  ; get msb's of multiplicand
         mul         ; multiply msb's
         addb  @r_l  ; add lsb's to msb's of previous partial product
         adca  #0    ; add carry to msb's
-        std   @r_h  ; save sum of partial products 
+        ;std   @r_h  ; save sum of partial products 
         rts

@@ -13,7 +13,6 @@
         SETDP $9F
 
 CalcAngleUnitTest
-
         ldu   #CalcAngleUnitTestData ; read test data
         ldy   #CalcAngleUnitTestData ; write debug 
 @a      pulu  d,x
@@ -21,6 +20,17 @@ CalcAngleUnitTest
         sta   ,y+                    ; write angle
         cmpu  #CalcAngleUnitTestData+1024+32+4
         bne   @a
+
+Mul9x16UnitTest
+        ldu   #Mul9x16UnitTestData ; read test data
+        ldy   #Mul9x16UnitTestData ; write debug 
+@a      pulu  d,x
+        jsr   Mul9x16
+        std   ,y++                 ; write result
+        cmpu  #Mul9x16UnitTestData+8*4
+        bne   @a
+
+InfiniteLoop
 @b      bra   @b
 
 CalcAngleUnitTestData
@@ -295,4 +305,15 @@ CalcAngleUnitTestData
         fdb   $FFF4,$00FE
         fdb   $FFFA,$00FE
 
+Mul9x16UnitTestData
+        fdb   $0031,$FFDC ; $FFF9
+        fdb   $FF23,$00AB ; $FF6C
+        fdb   $0031,$0ADC ; $0214
+        fdb   $FF23,$FFDC ; $001F
+        fdb   $FF00,$FFDC ; $0024
+        fdb   $0100,$FFDC ; $FFDC
+        fdb   $FF00,$DEDC ; $2124
+        fdb   $0100,$DEDC ; $DEDC
+
         INCLUDE "./Engine/Math/CalcAngle.asm"
+        INCLUDE "./Engine/Math/Mul9x16.asm"
