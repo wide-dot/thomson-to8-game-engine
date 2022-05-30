@@ -2,25 +2,27 @@
 ; --------------------------
 glb_d0   equ   direct_page+128
 glb_d0_b equ   direct_page+129
-glb_d1   equ   direct_page+130
-glb_d1_b equ   direct_page+131
-glb_d2   equ   direct_page+132
-glb_d2_b equ   direct_page+133
 ; must be a free byte here for 24bits computation
-glb_d3   equ   direct_page+135
-glb_d3_b equ   direct_page+136
+glb_d1   equ   direct_page+131
+glb_d1_b equ   direct_page+132
 ; must be a free byte here for 24bits computation
-glb_d4   equ   direct_page+138
-glb_d4_b equ   direct_page+139
-glb_d5   equ   direct_page+140
-glb_d5_b equ   direct_page+141
-glb_d6   equ   direct_page+142
-glb_d6_b equ   direct_page+143
-glb_a3   equ   direct_page+144
-glb_a3_b equ   direct_page+145
-glb_a4   equ   direct_page+146
-glb_a4_b equ   direct_page+147
-glb_page equ   direct_page+148
+glb_d2   equ   direct_page+134
+glb_d2_b equ   direct_page+135
+; must be a free byte here for 24bits computation
+glb_d3   equ   direct_page+137
+glb_d3_b equ   direct_page+138
+; must be a free byte here for 24bits computation
+glb_d4   equ   direct_page+140
+glb_d4_b equ   direct_page+141
+glb_d5   equ   direct_page+142
+glb_d5_b equ   direct_page+143
+glb_d6   equ   direct_page+144
+glb_d6_b equ   direct_page+145
+glb_a3   equ   direct_page+146
+glb_a3_b equ   direct_page+147
+glb_a4   equ   direct_page+148
+glb_a4_b equ   direct_page+149
+glb_page equ   direct_page+150
 
                                                       * ; ===========================================================================
                                                       * ; ---------------------------------------------------------------------------
