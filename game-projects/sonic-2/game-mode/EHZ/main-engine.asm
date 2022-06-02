@@ -78,7 +78,19 @@ LevelMainLoop
         jsr   WaitVBL    
         jsr   TileAnimScript
         jsr   ReadJoypads  
+
+        ;lda   Vint_Main_runcount
+        lda   #1
+        bne   >
+        lda   #1
+!
+        sta   @a
         _RunObject ObjID_Sonic,#MainCharacter 
+        lda   #0
+@a      equ   *-1
+        deca
+        bne   <
+
         _RunObject ObjID_Scroll,#MainCharacter   
         jsr   RunObjects
 	jsr   ForceRefresh

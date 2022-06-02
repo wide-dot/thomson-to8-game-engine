@@ -198,28 +198,24 @@ loc_1E7F0                                             * loc_1E7F0:      ; block 
         addd  glb_d0                                  *         add.w   d0,d1   ; d0 = 16*blockID -> offset in ColArray to look up
         ldx   ColArray                                *         lea     (ColArray).l,a2
         ldb   d,x                                     *         move.b  (a2,d1.w),d0    ; heigth from ColArray
-        sex                                           *         ext.w   d0
-        std   glb_d0
+        ; moved                                       *         ext.w   d0
         lda   glb_d4
         eora  glb_d6_b                                *         eor.w   d6,d4
         bita  #2                                      *         btst    #$B,d4  ; Y flipping
         beq   >                                       *         beq.s   +
-        ldd   glb_d0
-        _negd                                         *         neg.w   d0
-        std   glb_d0
+        negb                                          *         neg.w   d0
 !                                                     * +
-        ldd   glb_d0                                  *         tst.w   d0
+        stb   glb_d0_b                                *         tst.w   d0
         lbeq  loc_1E7E2                               *         beq.s   loc_1E7E2       ; no collision
         bmi   loc_1E85E                               *         bmi.s   loc_1E85E
         cmpb  #$10                                    *         cmpi.b  #$10,d0
         beq   loc_1E86A                               *         beq.s   loc_1E86A
-        ldd   glb_d2                                  *         movea.w d2,d1
-        anda  #0
+        ldb   glb_d2_b                                *         movea.w d2,d1
         andb  #$F                                     *         andi.w  #$F,d1
-        addd  glb_d0                                  *         add.w   d1,d0
-        std   glb_d0
-        ldd   #$F                                     *         movea.w #$F,d1
-        subd  glb_d0                                  *         sub.w   d0,d1
+        addb  glb_d0_b                                *         add.w   d1,d0
+        negb                                          *         movea.w #$F,d1
+        addb  #$F                                     *         sub.w   d0,d1
+        sex
         std   glb_d1
         lda   glb_page
         _SetCartPageA
@@ -233,7 +229,7 @@ loc_1E85E                                             * loc_1E85E:
         std   glb_d1
         addd  glb_d0                                  *         add.w   d1,d0
         std   glb_d0
-        lbpl   loc_1E7E2                               *         bpl.w   loc_1E7E2
+        lbpl  loc_1E7E2                               *         bpl.w   loc_1E7E2
                                                       * 
 loc_1E86A                                             * loc_1E86A:
         ldd   glb_d2
@@ -277,12 +273,11 @@ FindFloor2                                            * FindFloor2:
                                                       * 
 loc_1E88A                                             * loc_1E88A:
         ;                                             *         movea.w #$F,d1
-        ldd   glb_d2                                  *         movea.w d2,d0
-        anda  #0
+        ldb   glb_d2_b                                *         movea.w d2,d0
         andb  #$F                                     *         andi.w  #$F,d0
-        std   glb_d0
-        ldd   #$F
-        subd  glb_d0                                  *         sub.w   d0,d1
+        negb
+        addb  #$F                                     *         sub.w   d0,d1
+        sex
         std   glb_d1
         rts                                           *         rts
                                                       * ; ===========================================================================
@@ -334,40 +329,36 @@ loc_1E898                                             * loc_1E898:
         addd  glb_d0                                  *         add.w   d0,d1
         ldx   ColArray                                *         lea     (ColArray).l,a2
         ldb   d,x                                     *         move.b  (a2,d1.w),d0
-        sex                                           *         ext.w   d0
-        std   glb_d0
+        ; moved                                       *         ext.w   d0
         lda   glb_d4
         eora  glb_d6_b                                *         eor.w   d6,d4
         bita  #2                                      *         btst    #$B,d4
         beq   >                                       *         beq.s   +
-        ldd   glb_d0
-        _negd                                         *         neg.w   d0
-        std   glb_d0
+        negb                                          *         neg.w   d0
 !                                                     * +
-        ldd   glb_d0                                  *         tst.w   d0
+        stb   glb_d0_b                                *         tst.w   d0
         lbeq  loc_1E88A                               *         beq.s   loc_1E88A
         bmi   loc_1E900                               *         bmi.s   loc_1E900
-        ldd   glb_d2                                  *         movea.w d2,d1
-        anda  #0
+        ldb   glb_d2_b                                *         movea.w d2,d1
         andb  #$F                                     *         andi.w  #$F,d1
-        addd  glb_d0                                  *         add.w   d1,d0
-        std   glb_d0
-        ldd   #$F                                     *         movea.w #$F,d1
-        subd  glb_d0                                  *         sub.w   d0,d1
+        addb  glb_d0_b                                *         add.w   d1,d0
+        negb                                          *         movea.w #$F,d1
+        addb  #$F                                     *         sub.w   d0,d1
+        sex
         std   glb_d1
         rts                                           *         rts
                                                       * ; ===========================================================================
                                                       * 
 loc_1E900                                             * loc_1E900:
-        ldd   glb_d2                                  *         movea.w d2,d1
-        anda  #0    
+        ldb   glb_d2_b                                *         movea.w d2,d1
         andb  #$F                                     *         andi.w  #$F,d1
-        std   glb_d1
-        addd  glb_d0                                  *         add.w   d1,d0
-        std   glb_d0
+        stb   glb_d1_b
+        addb  glb_d0_b                                *         add.w   d1,d0
         lbpl  loc_1E88A                               *         bpl.w   loc_1E88A
-        com   glb_d1                                  *         not.w   d1
-        com   glb_d1_b
+        ldb   glb_d1_b
+        comb                                          *         not.w   d1
+        sex
+        std   glb_d1
         rts                                           *         rts
                                                       * ; ===========================================================================
                                                       * 
@@ -490,7 +481,7 @@ loc_1E9C2                                             * loc_1E9C2:
         subd  glb_a3                                  *         sub.w   a3,d3
         std   glb_d3
         ldd   glb_d1
-        addd  #$10
+        addd  #8
         std   glb_d1                                  *         addi.w  #$10,d1
         lda   glb_page
         _SetCartPageA
@@ -539,34 +530,31 @@ loc_1E9D0                                             * loc_1E9D0:
         neg   [glb_a4]                                *         neg.b   (a4)
 !                                                     * +
         ldd   glb_d1
-        _asrd    ; lower resolution of y axis to 8px
+        _asrd    ; lower index on y axis to 8px
         anda  #0
         andb  #7 ; (mod 8)                            *         andi.w  #$F,d1  ; y
         addd  glb_d0                                  *         add.w   d0,d1   ; line to look up
         ldx   ColArray2                               *         lea     (ColArray2).l,a2        ; rotated collision array
         ldb   d,x                                     *         move.b  (a2,d1.w),d0    ; collision value
-        sex                                           *         ext.w   d0
-        std   glb_d0
+        asrb            ; lower value (wide-dot)
+        ; moved                                       *         ext.w   d0
         lda   glb_d4
         eora  glb_d6_b                                *         eor.w   d6,d4   ; set x-flip flag if from the right
         bita  #1                                      *         btst    #$A,d4  ; x-mirror?
         beq   >                                       *         beq.s   +
-        ldd   glb_d0
-        _negd                                         *         neg.w   d0
-        std   glb_d0
+        negb                                          *         neg.w   d0
 !                                                     * +
-        ldd   glb_d0                                  *         tst.w   d0
-        lbeq   loc_1E9C2                               *         beq.s   loc_1E9C2
+        stb   glb_d0_b                                *         tst.w   d0
+        lbeq  loc_1E9C2                               *         beq.s   loc_1E9C2
         bmi   loc_1EA3E                               *         bmi.s   loc_1EA3E
-        cmpb  #$10                                    *         cmpi.b  #$10,d0
+        cmpb  #8                                      *         cmpi.b  #$10,d0
         beq   loc_1EA4A                               *         beq.s   loc_1EA4A
-        ldd   glb_d3                                  *         movea.w d3,d1   ; x
-        anda  #0
-        andb  #$F                                     *         andi.w  #$F,d1
-        addd  glb_d0                                  *         add.w   d1,d0
-        std   glb_d0
-        ldd   #$F                                     *         movea.w #$F,d1
-        subd  glb_d0                                  *         sub.w   d0,d1
+        ldb   glb_d3_b                                *         movea.w d3,d1   ; x
+        andb  #7                                      *         andi.w  #$F,d1
+        addb  glb_d0_b                                *         add.w   d1,d0
+        negb                                          *         movea.w #$F,d1
+        addb  #7                                      *         sub.w   d0,d1
+        sex
         std   glb_d1
         lda   glb_page
         _SetCartPageA
@@ -574,13 +562,10 @@ loc_1E9D0                                             * loc_1E9D0:
                                                       * ; ===========================================================================
                                                       * 
 loc_1EA3E                                             * loc_1EA3E:
-        ldd   glb_d3                                  *         movea.w d3,d1
-        anda  #0
-        andb  #$F                                     *         andi.w  #$F,d1
-        std   glb_d1
-        addd  glb_d0                                  *         add.w   d1,d0
-        std   glb_d0
-        lbpl   loc_1E9C2                               *         bpl.w   loc_1E9C2       ; no collision
+        ldb   glb_d3_b                                *         movea.w d3,d1
+        andb  #7                                      *         andi.w  #$F,d1
+        addb  glb_d0_b                                *         add.w   d1,d0
+        lbpl  loc_1E9C2                               *         bpl.w   loc_1E9C2       ; no collision
                                                       * 
 loc_1EA4A                                             * loc_1EA4A:
         ldd   glb_d3
@@ -590,7 +575,7 @@ loc_1EA4A                                             * loc_1EA4A:
         addd  glb_a3                                  *         add.w   a3,d3
         std   glb_d3
         ldd   glb_d1
-        subd  #$10
+        subd  #8
         std   glb_d1                                  *         subi.w  #$10,d1
         lda   glb_page
         _SetCartPageA
@@ -624,12 +609,11 @@ FindWall2                                             * FindWall2:
                                                       * 
 loc_1EA6A                                             * loc_1EA6A:
         ;                                             *         movea.w #$F,d1
-        ldd   glb_d3                                  *         movea.w d3,d0
-        anda  #0
-        andb  #$F                                     *         andi.w  #$F,d0
-        std   glb_d0
-        ldd   #$F
-        subd  glb_d0                                  *         sub.w   d0,d1
+        ldb   glb_d3_b                                *         movea.w d3,d0
+        andb  #7                                      *         andi.w  #$F,d0
+        negb
+        addd  #7                                      *         sub.w   d0,d1
+        sex
         std   glb_d1
         rts                                           *         rts
                                                       * ; ===========================================================================
@@ -676,46 +660,44 @@ loc_1EA78                                             * loc_1EA78:
         neg   [glb_a4]                                *         neg.b   (a4)
 !                                                     * +
         ldd   glb_d1
-        _asrd    ; lower resolution of y axis to 8px
+        _asrd    ; lower index on y axis to 8px
         anda  #0
         andb  #7 ; (mod 8)                            *         andi.w  #$F,d1
         addd  glb_d0                                  *         add.w   d0,d1
         ldx   ColArray2                               *         lea     (ColArray2).l,a2
         ldb   d,x                                     *         move.b  (a2,d1.w),d0
-        sex                                           *         ext.w   d0
-        std   glb_d0
+        asrb            ; lower value (wide-dot)
+        ; moved                                       *         ext.w   d0
         lda   glb_d4
         eora  glb_d6_b                                *         eor.w   d6,d4
         bita  #1                                      *         btst    #$A,d4
         beq   >                                       *         beq.s   +
-        ldd   glb_d0
-        _negd                                         *         neg.w   d0
-        std   glb_d0
+        negb                                          *         neg.w   d0
 !                                                     * +
-        ldd   glb_d0                                  *         tst.w   d0
-        lbeq   loc_1EA6A                               *         beq.s   loc_1EA6A
+        stb   glb_d0_b                                *         tst.w   d0
+        lbeq  loc_1EA6A                               *         beq.s   loc_1EA6A
         bmi   loc_1EAE0                               *         bmi.s   loc_1EAE0
-        ldd   glb_d3                                  *         movea.w d3,d1   ; x
-        anda  #0
-        andb  #$F                                     *         andi.w  #$F,d1
-        addd  glb_d0                                  *         add.w   d1,d0
-        std   glb_d0
-        ldd   #$F                                     *         movea.w #$F,d1
-        subd  glb_d0                                  *         sub.w   d0,d1
+        ldb   glb_d3_b                                *         movea.w d3,d1   ; x
+        andb  #7                                      *         andi.w  #$F,d1
+        addb  glb_d0_b                                *         add.w   d1,d0
+        negb                                          *         movea.w #$F,d1
+        addb  #7                                      *         sub.w   d0,d1
+        sex
         std   glb_d1
         rts                                           *         rts
+
                                                       * ; ===========================================================================
                                                       * 
 loc_1EAE0                                             * loc_1EAE0:
-        ldd   glb_d3                                  *         movea.w d3,d1
-        anda  #0
-        andb  #$F                                     *         andi.w  #$F,d1
-        std   glb_d1
-        addd  glb_d0                                  *         add.w   d1,d0
-        std   glb_d0
+        ldd   glb_d3_b                                *         movea.w d3,d1
+        andb  #7                                      *         andi.w  #$F,d1
+        stb   glb_d1_b
+        addb  glb_d0_b                                *         add.w   d1,d0
         lbpl  loc_1EA6A                               *         bpl.w   loc_1EA6A
-        com   glb_d1                                  *         not.w   d1
-        com   glb_d1_b
+        ldb   glb_d1_b                                *         not.w   d1
+        comb
+        sex
+        std   glb_d1
         rts                                           *         rts
                                                       * ; End of function FindWall2
                                                       * 

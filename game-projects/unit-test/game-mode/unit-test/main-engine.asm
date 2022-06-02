@@ -34,23 +34,24 @@ InfiniteLoop
 @b      bra   @b
 
 CalcAngleUnitTestData
+
         ;     Y,X - Circle R=1
-        fdb   $0000,$0001 ; 40
+        fdb   $0000,$0001 ; 80
         fdb   $0001,$0001 ; 60
-        fdb   $0001,$0000 ; 80
-        fdb   $0001,$FFFF ; A0
-        fdb   $0000,$FFFF ; C0
+        fdb   $0001,$0000 ; 40
+        fdb   $0001,$FFFF ; 20
+        fdb   $0000,$FFFF ; 00
         fdb   $FFFF,$FFFF ; E0
-        fdb   $FFFF,$0000 ; 00
-        fdb   $FFFF,$0001 ; 20
+        fdb   $FFFF,$0000 ; C0
+        fdb   $FFFF,$0001 ; A0
 
         ;     Y,X - special case 0
         fdb   $0000,$0000 ; 40
 
         ;     Y,X - Circle R=255
-        fdb   $0000,$00FF
-        fdb   $0006,$00FE
-        fdb   $000C,$00FE
+        fdb   $0000,$00FF ; 80
+        fdb   $0006,$00FE ; 7F
+        fdb   $000C,$00FE ; ...
         fdb   $0012,$00FE
         fdb   $0018,$00FD
         fdb   $001F,$00FD
@@ -79,9 +80,9 @@ CalcAngleUnitTestData
         fdb   $00A1,$00C5
         fdb   $00A6,$00C1
         fdb   $00AB,$00BC
-        fdb   $00AF,$00B8
-        fdb   $00B4,$00B4
-        fdb   $00B8,$00AF
+        fdb   $00AF,$00B8 ; 61
+        fdb   $00B4,$00B4 ; 60
+        fdb   $00B8,$00AF ; 5F
         fdb   $00BC,$00AB
         fdb   $00C1,$00A6
         fdb   $00C5,$00A1
@@ -111,9 +112,9 @@ CalcAngleUnitTestData
         fdb   $00FD,$0018
         fdb   $00FE,$0012
         fdb   $00FE,$000C
-        fdb   $00FE,$0006
-        fdb   $00FF,$0000
-        fdb   $00FE,$FFFA
+        fdb   $00FE,$0006 ; 41
+        fdb   $00FF,$0000 ; 40
+        fdb   $00FE,$FFFA ; 3F
         fdb   $00FE,$FFF4
         fdb   $00FE,$FFEE
         fdb   $00FD,$FFE8
