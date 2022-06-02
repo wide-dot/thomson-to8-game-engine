@@ -1499,10 +1499,10 @@ Sonic_Jump                                            *Sonic_Jump:
         lda   Ctrl_1_Press_Logical                    *  move.b  (Ctrl_1_Press_Logical).w,d0
         anda  #button_B_mask|button_A_mask            *  andi.b  #button_B_mask|button_C_mask|button_A_mask,d0 ; is A, B or C pressed?
         lbeq  return_1AAE6                            *  beq.w   return_1AAE6    ; if not, return
-        ;lda   #0                                     *  moveq   #0,d0
+        ;                                             *  moveq   #0,d0
         ldb   angle,u                                 *  move.b  angle(a0),d0
         addb  #$80                                    *  addi.b  #$80,d0
-        std   glb_d0
+        stb   glb_d0_b
         jsr   CalcRoomOverHead                        *  bsr.w   CalcRoomOverHead
         ldd   glb_d1
         cmpd  #6                                      *  cmpi.w  #6,d1           ; does Sonic have enough room to jump?
@@ -2206,7 +2206,7 @@ return_1AF8A                                          *return_1AF8A:
                                                       *; loc_1AF8C:
 Sonic_HitLeftWall                                     *Sonic_HitLeftWall:
         jsr   CheckLeftWallDist                       *  bsr.w   CheckLeftWallDist
-        ldd   glb_d1                                  *  tst.w   d1
+        tst   glb_d1                                  *  tst.w   d1
         bpl   Sonic_HitCeiling                        *  bpl.s   Sonic_HitCeiling ; branch if distance is positive (not inside wall)
         ldd   x_pos,u
         subd  glb_d1
@@ -2220,12 +2220,12 @@ Sonic_HitLeftWall                                     *Sonic_HitLeftWall:
                                                       *; loc_1AFA6:
 Sonic_HitCeiling                                      *Sonic_HitCeiling:
         jsr   Sonic_CheckCeiling                      *  bsr.w   Sonic_CheckCeiling
-        ldd   glb_d1                                  *  tst.w   d1
+        tst   glb_d1                                  *  tst.w   d1
         bpl   Sonic_HitFloor                          *  bpl.s   Sonic_HitFloor ; branch if distance is positive (not inside ceiling)
         ldd   y_pos,u
         subd  glb_d1
         std   y_pos,u                                 *  sub.w   d1,y_pos(a0)
-        ldd   y_vel,u                                 *  tst.w   y_vel(a0)
+        tst   y_vel,u                                 *  tst.w   y_vel(a0)
         bpl   return_1AFBE                            *  bpl.s   return_1AFBE
         ldd   #0
         std   y_vel,u                                 *  move.w  #0,y_vel(a0) ; stop Sonic in y since he hit a ceiling
@@ -2235,10 +2235,10 @@ return_1AFBE                                          *return_1AFBE:
                                                       *; ===========================================================================
                                                       *; loc_1AFC0:
 Sonic_HitFloor                                        *Sonic_HitFloor:
-        ldd   y_vel,u                                 *  tst.w   y_vel(a0)
+        tst   y_vel,u                                 *  tst.w   y_vel(a0)
         bmi   return_1AFE6                            *  bmi.s   return_1AFE6
         jsr   Sonic_CheckFloor                        *  bsr.w   Sonic_CheckFloor
-        ldd   glb_d1                                  *  tst.w   d1
+        tst   glb_d1                                  *  tst.w   d1
         bpl   return_1AFE6                            *  bpl.s   return_1AFE6
         ldd   y_pos,u
         addd  glb_d1
@@ -2257,13 +2257,16 @@ return_1AFE6                                          *return_1AFE6:
                                                       *; loc_1AFE8:
 Sonic_HitCeilingAndWalls                              *Sonic_HitCeilingAndWalls:
         jsr   CheckLeftWallDist                       *  bsr.w   CheckLeftWallDist
-        ldd   glb_d1                                  *  tst.w   d1
+        tst   glb_d1                                  *  tst.w   d1
         bpl   >                                       *  bpl.s   +
-                                                      *  sub.w   d1,x_pos(a0)
-                                                      *  move.w  #0,x_vel(a0)    ; stop Sonic since he hit a wall
+        ldd   x_pos,u
+        subd  glb_d1                                  *  sub.w   d1,x_pos(a0)
+        std   x_pos,u                                 *  move.w  #0,x_vel(a0)    ; stop Sonic since he hit a wall
+        ldd   #0
+        std   x_vel,u
 !                                                     *+
         jsr   CheckRightWallDist                      *  bsr.w   CheckRightWallDist
-        ldd   glb_d1                                  *  tst.w   d1
+        tst   glb_d1                                  *  tst.w   d1
         bpl   >                                       *  bpl.s   +
         ldd   x_pos,u
         addd  glb_d1                                  *  add.w   d1,x_pos(a0)
@@ -2401,7 +2404,7 @@ Sonic_ResetOnFloor_Part3                              *Sonic_ResetOnFloor_Part3:
         sta   flip_angle,u                            *  move.b  #0,flip_angle(a0)
         sta   flip_turned,u                           *  move.b  #0,flip_turned(a0)
         sta   flips_remaining,u                       *  move.b  #0,flips_remaining(a0)
-        std   Sonic_Look_delay_counter                *  move.w  #0,(Sonic_Look_delay_counter).w
+        sta   Sonic_Look_delay_counter                *  move.w  #0,(Sonic_Look_delay_counter).w
         ;ldd   anim,u       
         ;cmpd  #SonAni_Hang2                          *  cmpi.b  #AniIDSonAni_Hang2,anim(a0)
         ;bne   return_1B11E                           *  bne.s   return_1B11E
@@ -3803,6 +3806,7 @@ SAnim_Roll                                            *SAnim_Roll:
         orb   #0                                      *  or.b    d1,render_flags(a0)
 @a      equ   *-1
         stb   render_flags,u
+        stx   anim,u
         jmp   Call_SAnim_Do2                          *  bra.w   SAnim_Do2
                                                       *; ===========================================================================
                                                       *
@@ -3839,6 +3843,7 @@ SAnim_Push                                            *SAnim_Push:
         orb   #0                                      *  or.b    d1,render_flags(a0)
 @a      equ   *-1
         stb   render_flags,u
+        stx   anim,u
         jmp   Call_SAnim_Do2                          *  bra.w   SAnim_Do2
 
                                                       *; ===========================================================================
@@ -4326,6 +4331,7 @@ Sonic_WalkCeiling                                     * Sonic_WalkCeiling:
         std   glb_d0
         ldd   x_pos,u
         subd  glb_d0                                  *         sub.w   d0,d3
+        std   glb_d3
         ldd   #Secondary_Angle
         std   glb_a4                                  *         lea     (Secondary_Angle).w,a4
         ldd   #-$10
@@ -4391,6 +4397,7 @@ Sonic_WalkVertL                                       * Sonic_WalkVertL:
         std   glb_d0
         ldd   y_pos,u                                 
         subd  glb_d0                                  *         sub.w   d0,d2
+        std   glb_d2
         lda   y_radius,u                              *         move.b  y_radius(a0),d0
         sex                                           *         ext.w   d0
         std   glb_d0
@@ -4400,7 +4407,7 @@ Sonic_WalkVertL                                       * Sonic_WalkVertL:
         std   glb_d3
         ldd   #Primary_Angle
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
-        ldd   #-$10
+        ldd   #-8
         std   glb_a3                                  *         movea.w #-$10,a3
         ldb   #$1
         stb   glb_d6_b                                *         movea.w #$400,d6
@@ -4423,7 +4430,7 @@ Sonic_WalkVertL                                       * Sonic_WalkVertL:
         std   glb_d3
         ldd   #Secondary_Angle
         std   glb_a4                                  *         lea     (Secondary_Angle).w,a4
-        ldd   #-$10
+        ldd   #-8
         std   glb_a3                                  *         movea.w #-$10,a3
         ldb   #$1
         stb   glb_d6_b                                *         movea.w #$400,d6
@@ -4590,7 +4597,8 @@ CalcRoomOverHead                                      * CalcRoomOverHead:
         ldx   Secondary_Collision                     *         move.l  #Secondary_Collision,(Collision_addr).w
 !                                                     * +
         stx   Collision_addr
-        lda   lrb_solid_bit,u                         *         move.b  lrb_solid_bit(a0),d5
+        lda   lrb_solid_bit,u
+        sta   glb_d5_b                                *         move.b  lrb_solid_bit(a0),d5
         lda   glb_d0_b
         sta   Primary_Angle                           *         move.b  d0,(Primary_Angle).w
         sta   Secondary_Angle                         *         move.b  d0,(Secondary_Angle).w
@@ -4670,12 +4678,12 @@ Sonic_CheckFloor                                      * Sonic_CheckFloor:
         stb   glb_d2_b                                *         move.b  #0,d2
                                                       * 
 loc_1ECC6                                             * loc_1ECC6:
-        lda   Secondary_Angle                         *         move.b  (Secondary_Angle).w,d3
-        ldx   glb_d1
-        cmpx  glb_d0                                  *         cmp.w   d0,d1
-        ble   loc_1ECD4                               *         ble.s   loc_1ECD4
-        ;                                             *         move.b  (Primary_Angle).w,d3
-        ;                                             *         exg     d0,d1
+        lda   Secondary_Angle ; based on angles       *         move.b  (Secondary_Angle).w,d3
+        ldx   glb_d1          ; invert distance
+        cmpx  glb_d0          ; of left and right     *         cmp.w   d0,d1
+        ble   loc_1ECD4       ; sensors               *         ble.s   loc_1ECD4
+        ;                     ; this code is common   *         move.b  (Primary_Angle).w,d3
+        ;                     ; to floor and ceiling  *         exg     d0,d1
         ldd   glb_d0
         stx   glb_d0
         std   glb_d1
@@ -5030,22 +5038,25 @@ ObjCheckRightWallDist                                 * ObjCheckRightWallDist:
                                                       * ; Stores a distance from Sonic/Tails to the nearest ceiling into d1
                                                       * ; ---------------------------------------------------------------------------
                                                       * 
+
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       * 
                                                       * ; loc_1EF2E: Sonic_DontRunOnWalls: CheckCeilingDist:
 Sonic_CheckCeiling                                    * Sonic_CheckCeiling:
+        ; Top right sensor check
+        ; **********************
         ;                                             *         move.w  y_pos(a0),d2
         ;                                             *         move.w  x_pos(a0),d3
         ;                                             *         moveq   #0,d0
-        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
-        negb
+        ldb   y_radius,u ; top sensor is set          *         move.b  y_radius(a0),d0
+        negb             ; by y_pos-y_radius
         sex                                           *         ext.w   d0
         addd  y_pos,u                                 *         sub.w   d0,d2
         eorb  #$F                                     *         eori.w  #$F,d2 ; flip position upside-down within the current 16x16 block?
         std   glb_d2
-        lda   x_radius,u                              *         move.b  x_radius(a0),d0
+        ldb   x_radius,u                              *         move.b  x_radius(a0),d0
         sex                                           *         ext.w   d0
-        addd  glb_d3                                  *         add.w   d0,d3
+        addd  x_pos,u                                 *         add.w   d0,d3
         std   glb_d3
         ldd   #Primary_Angle
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
@@ -5055,8 +5066,10 @@ Sonic_CheckCeiling                                    * Sonic_CheckCeiling:
         stb   glb_d6_b                                *         movea.w #$800,d6
         jsr   FindFloor                               *         bsr.w   FindFloor
         ldd   glb_d1
-        pshs  d                                       *         move.w  d1,-\(sp\)        
-        ;                                             * 
+        std   @d0                                     *         move.w  d1,-\(sp\)        
+        ;
+        ; Top left sensor check
+        ; **********************
         ;                                             *         move.w  y_pos(a0),d2
         ;                                             *         move.w  x_pos(a0),d3
         ;                                             *         moveq   #0,d0
@@ -5078,7 +5091,8 @@ Sonic_CheckCeiling                                    * Sonic_CheckCeiling:
         ldb   #$2
         stb   glb_d6_b                                *         movea.w #$800,d6
         jsr   FindFloor                               *         bsr.w   FindFloor
-        puls  d                                       *         move.w  (sp)+,d0
+        ldd   #0                                      *         move.w  (sp)+,d0
+@d0     equ   *-2
         std   glb_d0
         ;                                             * 
         ldb   #$80
@@ -5086,6 +5100,7 @@ Sonic_CheckCeiling                                    * Sonic_CheckCeiling:
         jmp   loc_1ECC6                               *         bra.w   loc_1ECC6
                                                       * ; End of function Sonic_CheckCeiling
                                                       * 
+
                                                       * ; ===========================================================================
                                                       *         ; a bit of unused/dead code here
                                                       * ;CheckCeilingDist:
@@ -5180,7 +5195,7 @@ CheckLeftCeilingDist:                                 * CheckLeftCeilingDist:
         std   glb_d3
         ldd   #Primary_Angle
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
-        ldd   #-$10
+        ldd   #-8
         std   glb_a3                                  *         movea.w #-$10,a3
         ldb   #$1
         stb   glb_d6_b                                *         movea.w #$400,d6
@@ -5198,11 +5213,12 @@ CheckLeftCeilingDist:                                 * CheckLeftCeilingDist:
         ldb   y_radius,u                              *         move.b  y_radius(a0),d0
         negb
         sex                                           *         ext.w   d0
-        addd  glb_d3                                  *         sub.w   d0,d3
+        addd  x_pos,u                                 *         sub.w   d0,d3
         eorb  #7                                      *         eori.w  #$F,d3
+        std   glb_d3
         ldd   #Secondary_Angle
         std   glb_a4                                  *         lea     (Secondary_Angle).w,a4
-        ldd   #-$10                                   *         movea.w #-$10,a3
+        ldd   #-8                                     *         movea.w #-$10,a3
         std   glb_a3
         ldb   #$1
         stb   glb_d6_b                                *         movea.w #$400,d6
@@ -5234,12 +5250,13 @@ CheckLeftWallDist                                     * CheckLeftWallDist:
         std   glb_d3
                                                       * ; loc_1F066:
 CheckLeftWallDist_Part2                               * CheckLeftWallDist_Part2:
+        ldd   glb_d3
         subd  #5                                      *         subi.w  #$A,d3
         eorb  #7                                      *         eori.w  #$F,d3
         std   glb_d3
         ldd   #Primary_Angle
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
-        ldd   #-$10
+        ldd   #-8
         std   glb_a3                                  *         movea.w #-$10,a3
         ldb   #$1
         stb   glb_d6_b                                *         movea.w #$400,d6
@@ -5267,7 +5284,7 @@ ObjCheckLeftWallDist                                  * ObjCheckLeftWallDist:
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
         lda   #0
         sta   Primary_Angle                           *         move.b  #0,(a4)
-        ldd   #-$10
+        ldd   #-8 
         std   glb_a3                                  *         movea.w #-$10,a3
         ldb   #$1
         stb   glb_d6_b                                *         movea.w #$400,d6

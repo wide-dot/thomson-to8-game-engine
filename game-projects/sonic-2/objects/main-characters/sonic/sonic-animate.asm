@@ -48,9 +48,7 @@ SAnim_Do                                              *SAnim_Do:
         orb   #0                                      *  or.b    d1,render_flags(a0)
 @b      equ   *-1
         stb   render_flags,u
-        ldb   anim_frame_duration,u
-        subb  Vint_Main_runcount
-        stb   anim_frame_duration,u                   *  subq.b  #1,anim_frame_duration(a0)  ; subtract 1 from frame duration
+        dec   anim_frame_duration,u                   *  subq.b  #1,anim_frame_duration(a0)  ; subtract 1 from frame duration
         bpl   SAnim_Delay                             *  bpl.s   SAnim_Delay         ; if time remains, branch
         ldb   #0
 @a      equ   *-1
