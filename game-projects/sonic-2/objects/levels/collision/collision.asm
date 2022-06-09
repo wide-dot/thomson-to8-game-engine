@@ -135,17 +135,17 @@ FindFloor                                             * FindFloor:
         bita  glb_d5_b                                *         btst    d5,d4
         bne   loc_1E7F0                               *         bne.s   loc_1E7F0
                                                       * 
-loc_1E7E2                                             * loc_1E7E2:
+loc_1E7E2                ; tile is null or not solid  * loc_1E7E2:
         ldd   glb_d2
         addd  glb_a3                                  *         add.w   a3,d2
-        std   glb_d2
-        jsr   FindFloor2                              *         bsr.w   FindFloor2
+        std   glb_d2     ; add delta-y to y_pos
+        jsr   FindFloor2 ; search up or down          *         bsr.w   FindFloor2
         ldd   glb_d2
         subd  glb_a3                                  *         sub.w   a3,d2
-        std   glb_d2
+        std   glb_d2     ; remove delta-y to y_pos
         ldd   glb_d1
         addd  #$10
-        std   glb_d1                                  *         addi.w  #$10,d1
+        std   glb_d1     ; add 16px to distance       *         addi.w  #$10,d1
         lda   glb_page
         _SetCartPageA
         rts                                           *         rts
@@ -223,12 +223,11 @@ loc_1E7F0                                             * loc_1E7F0:      ; block 
                                                       * ; ===========================================================================
                                                       * 
 loc_1E85E                                             * loc_1E85E:
-        ldd   glb_d2                                  *         movea.w d2,d1
-        anda  #0
+        ldb   glb_d2_b                                *         movea.w d2,d1
         andb  #$F                                     *         andi.w  #$F,d1
+        anda  #0
         std   glb_d1
-        addd  glb_d0                                  *         add.w   d1,d0
-        std   glb_d0
+        addb  glb_d0_b                                *         add.w   d1,d0
         lbpl  loc_1E7E2                               *         bpl.w   loc_1E7E2
                                                       * 
 loc_1E86A                                             * loc_1E86A:
@@ -339,7 +338,7 @@ loc_1E898                                             * loc_1E898:
         stb   glb_d0_b                                *         tst.w   d0
         lbeq  loc_1E88A                               *         beq.s   loc_1E88A
         bmi   loc_1E900                               *         bmi.s   loc_1E900
-        ldb   glb_d2_b                                *         movea.w d2,d1
+        ldb   glb_d2_b          ; positive height     *         movea.w d2,d1
         andb  #$F                                     *         andi.w  #$F,d1
         addb  glb_d0_b                                *         add.w   d1,d0
         negb                                          *         movea.w #$F,d1
@@ -349,16 +348,16 @@ loc_1E898                                             * loc_1E898:
         rts                                           *         rts
                                                       * ; ===========================================================================
                                                       * 
-loc_1E900                                             * loc_1E900:
-        ldb   glb_d2_b                                *         movea.w d2,d1
-        andb  #$F                                     *         andi.w  #$F,d1
+loc_1E900                       ; negative height     * loc_1E900:
+        ldb   glb_d2_b          ; sensor y pos        *         movea.w d2,d1
+        andb  #$F               ; in 16px tile        *         andi.w  #$F,d1
         stb   glb_d1_b
-        addb  glb_d0_b                                *         add.w   d1,d0
-        lbpl  loc_1E88A                               *         bpl.w   loc_1E88A
+        addb  glb_d0_b          ; add tile height     *         add.w   d1,d0
+        lbpl  loc_1E88A         ;                     *         bpl.w   loc_1E88A
         ldb   glb_d1_b
         comb                                          *         not.w   d1
         sex
-        std   glb_d1
+        std   glb_d1            ; return dist in tile
         rts                                           *         rts
                                                       * ; ===========================================================================
                                                       * 

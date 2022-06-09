@@ -79,8 +79,9 @@ LevelMainLoop
         jsr   TileAnimScript
         jsr   ReadJoypads  
 
-        ;lda   Vint_Main_runcount
-        lda   #1
+        lda   Vint_Main_runcount
+        deca
+        ;lda   #1
         bne   >
         lda   #1
 !
