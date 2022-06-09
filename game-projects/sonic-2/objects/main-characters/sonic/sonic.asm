@@ -3135,6 +3135,9 @@ KillCharacter                                         * KillCharacter:
                                                       *         moveq   #-1,d0
 
         ; temporary reinit istead of kill
+        ldd   #0
+        std   x_vel,u
+        std   y_vel,u
         ldd   #$60/2
         std   x_pos,u
         ldd   #$028F
