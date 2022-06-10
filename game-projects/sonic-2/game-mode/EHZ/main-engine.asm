@@ -19,9 +19,11 @@
 LevelSizeLoad ; todo move to an object
 
         ldu   #MainCharacter
-        ldd   #$60/2
+        ;ldd   #$60/2 ; init
+        ldd   #$03C2 ; cave
         std   x_pos,u
-        ldd   #$028F
+        ;ldd   #$028F ; intit
+        ldd   #$02F0 ; cave
         std   y_pos,u
 
 	ldd   #camera_Y_pos_bias_default
@@ -58,7 +60,7 @@ LevelSizeLoad ; todo move to an object
         std   ColCurveMap
         addd  #256
         std   ColArray
-        addd  #2048+256
+        addd  #2048
         std   ColArray2
 
         ; init music
@@ -77,20 +79,18 @@ LevelSizeLoad ; todo move to an object
 LevelMainLoop
         jsr   WaitVBL    
         jsr   TileAnimScript
-        jsr   ReadJoypads  
 
         lda   Vint_Main_runcount
-        deca
-        ;lda   #1
-        bne   >
-        lda   #1
-!
-        sta   @a
+        suba  #2
+        bpl   >
+        anda  #0
+!       sta   @a
+        jsr   ReadJoypads  
         _RunObject ObjID_Sonic,#MainCharacter 
         lda   #0
 @a      equ   *-1
         deca
-        bne   <
+        bpl   <
 
         _RunObject ObjID_Scroll,#MainCharacter   
         jsr   RunObjects
