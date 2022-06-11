@@ -24,6 +24,8 @@ glb_a4   equ   direct_page+148
 glb_a4_b equ   direct_page+149
 glb_page equ   direct_page+150
 
+        SETDP   direct_page/256
+
                                                       * ; ===========================================================================
                                                       * ; ---------------------------------------------------------------------------
                                                       * ; Subroutine to find which tile is in the specified location
@@ -571,6 +573,7 @@ loc_1EA4A                                             * loc_1EA4A:
         subd  glb_a3                                  *         sub.w   a3,d3
         std   glb_d3
         jsr   FindWall2                               *         bsr.w   FindWall2
+        ldd   glb_d3
         addd  glb_a3                                  *         add.w   a3,d3
         std   glb_d3
         ldd   glb_d1
@@ -611,7 +614,7 @@ loc_1EA6A                                             * loc_1EA6A:
         ldb   glb_d3_b                                *         movea.w d3,d0
         andb  #7                                      *         andi.w  #$F,d0
         negb
-        addd  #7                                      *         sub.w   d0,d1
+        addb  #7                                      *         sub.w   d0,d1
         sex
         std   glb_d1
         rts                                           *         rts

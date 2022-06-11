@@ -894,9 +894,9 @@ Obj01_CheckWallsOnGround                              *Obj01_CheckWallsOnGround:
         ;                                             *  move.w  (sp)+,d0
         tst   glb_d1                                  *  tst.w   d1
         bpl   return_1A6BE                            *  bpl.s   return_1A6BE
-        ;ldb   #0
-        ;lda   glb_d1_b                                *  asl.w   #8,d1
-        ;std   glb_d1
+        ldb   #0
+        lda   glb_d1_b                                *  asl.w   #8,d1
+        std   glb_d1
         ldb   #0
 @d0     equ   *-1
         addb  #$20                                    *  addi.b  #$20,d0

@@ -17,8 +17,8 @@
 ; X = x (16 bit signed value)
 ;
 ; output register :
-; A = angle 0-255 (0 = 0 deg, $40 = 90 deg, $80 = 180 deg, $C0 = 270 deg)
-;     angle 0 start at (x<0, y=0), counter clockwise
+; A = angle 0-255 (255 = 360 deg, 192 = 90 deg, 128 = 180 deg, 64 = 270 deg)
+;     angle 0 start at (x=0, y>0), clockwise
 ;     special case (0,0) return $40
 
         SETDP   direct_page/256
@@ -66,17 +66,17 @@ CalcAngle
         bne   @y0
         tst   y_h 
         bmi   >
-        lda   #$40      ; x=0,y>0
+        lda   #$00      ; x=0,y>0
         rts
-!       lda   #$C0      ; x=0,y<0
+!       lda   #$80      ; x=0,y<0
         rts
 @y0     tstb
         bne   @run
         tst   x_h
         bmi   >
-        lda   #$80      ; x>0,y=0
+        lda   #$C0      ; x>0,y=0
         rts
-!       lda   #$00      ; x<0,y=0
+!       lda   #$40      ; x<0,y=0
         rts         
 @run
         ; set x
@@ -117,24 +117,24 @@ CalcAngle
         rts                  
 
 octant_adjust
-                fcb %01111111           ;; x+,y+,|x|>|y| 60-7F
-                fcb %01000000           ;; x+,y+,|x|<|y| 40-5F
-                fcb %10000000           ;; x+,y-,|x|>|y| A0-BF
-                fcb %10111111           ;; x+,y-,|x|<|y| 80-9F
-                fcb %00000000           ;; x-,y+,|x|>|y| 20-3F
-                fcb %00111111           ;; x-,y+,|x|<|y| 00-1F
-                fcb %11111111           ;; x-,y-,|x|>|y| C0-DF
-                fcb %11000000           ;; x-,y-,|x|<|y| E0-FF
+                fcb %11000000           ;; x+,y+,|x|>|y|
+                fcb %11111111           ;; x+,y+,|x|<|y|
+                fcb %10111111           ;; x+,y-,|x|>|y|
+                fcb %10000000           ;; x+,y-,|x|<|y|
+                fcb %00111111           ;; x-,y+,|x|>|y|
+                fcb %00000000           ;; x-,y+,|x|<|y|
+                fcb %01000000           ;; x-,y-,|x|>|y|
+                fcb %01111111           ;; x-,y-,|x|<|y|
 
 octant_adjust2
-                fcb 1
-                fcb 1
-                fcb 0
-                fcb 0
                 fcb 0
                 fcb 0
                 fcb 1
                 fcb 1
+                fcb 1
+                fcb 1
+                fcb 0
+                fcb 0
 
                 ;;;;;;;; atan(2^(x/32))*128/pi ;;;;;;;;
                 fcb $02,$02,$02,$02,$02,$02,$02,$02 ; 80
