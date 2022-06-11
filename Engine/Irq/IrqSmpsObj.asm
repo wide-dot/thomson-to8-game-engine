@@ -98,6 +98,8 @@ IrqSync_3
         stx   irq_timer                               ; spot is at the end of desired line
         rts     
 
+        SETDP   $E7
+
 IrqSmps 
         sts   @bcks                                   ; backup system stack
         lds   #IRQSysStack                            ; set tmp system stack for IRQ 
@@ -123,7 +125,7 @@ PaletteCycling
 	std   2,x
 	stu   ,x
 @a
-        jsr   UpdatePalette
+        jsr   UpdatePaletteNow
         _RunObjectRoutine ObjID_Smps,#4               ; MusicFrame
 IrqSmps_end        
         lda   #$00                                    ; (dynamic)
@@ -139,4 +141,4 @@ IrqSmps_end
 IRQSysStack
 
 glb_pal_elapsed_frames fcb 0
-	INCLUDE "./Engine/Palette/UpdatePalette.asm"
+	INCLUDE "./Engine/Palette/UpdatePaletteNow.asm"

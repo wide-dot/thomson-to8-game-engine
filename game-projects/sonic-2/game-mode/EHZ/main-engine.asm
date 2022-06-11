@@ -20,10 +20,12 @@ LevelSizeLoad ; todo move to an object
 
         ldu   #MainCharacter
         ;ldd   #$60/2 ; init
-        ldd   #$03C2 ; cave
+        ;ldd   #$03C2 ; cave
+        ldd   #$0A42 ; left wall flat
         std   x_pos,u
         ;ldd   #$028F ; intit
-        ldd   #$02F0 ; cave
+        ;ldd   #$02F0 ; cave
+        ldd   #$03AC ; left wall flat
         std   y_pos,u
 
 	ldd   #camera_Y_pos_bias_default
