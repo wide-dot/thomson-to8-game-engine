@@ -461,6 +461,7 @@ ObjectMoveAndFall                                     * ObjectMoveAndFall:
         sex                            ; velocity is positive or negative, take care of that
         sta   @a+1
         ldd   x_vel,u
+        _asrd ; wide-dot factor
         addd  x_pos+1,u                ; x_pos must be followed by x_sub in memory
         std   x_pos+1,u                ; update low byte of x_pos and x_sub byte
         lda   x_pos,u
@@ -515,6 +516,7 @@ ObjectMove                                            * ObjectMove:
         sex                            ; velocity is positive or negative, take care of that
         sta   @a+1
         ldd   x_vel,u
+        _asrd ; wide-dot factor
         addd  x_pos+1,u                ; x_pos must be followed by x_sub in memory
         std   x_pos+1,u                ; update low byte of x_pos and x_sub byte
         lda   x_pos,u
@@ -888,15 +890,14 @@ Obj01_CheckWallsOnGround                              *Obj01_CheckWallsOnGround:
 !                                                     *+
         ;                                             *  move.b  angle(a0),d0
         addb  angle,u                                 *  add.b   d1,d0
+        stb   glb_d0_b
         stb   @d0                                     *  move.w  d0,-(sp)
         ;
         jsr   CalcRoomInFront                         *  bsr.w   CalcRoomInFront
         ;                                             *  move.w  (sp)+,d0
         tst   glb_d1                                  *  tst.w   d1
         bpl   return_1A6BE                            *  bpl.s   return_1A6BE
-        ldb   #0
-        lda   glb_d1_b                                *  asl.w   #8,d1
-        std   glb_d1
+        ;                                             *  asl.w   #8,d1
         ldb   #0
 @d0     equ   *-1
         addb  #$20                                    *  addi.b  #$20,d0
@@ -1384,6 +1385,7 @@ Sonic_LevelBound                                      *Sonic_LevelBound:
         sex                            ; velocity is positive or negative, take care of that
         sta   @a+1
         ldd   x_vel,u
+        _asrd ; wide-dot factor
         addd  x_pos+1,u                ; x_pos must be followed by x_sub in memory
         std   glb_d1_b                 ; update low byte of x_pos and x_sub byte
         lda   x_pos,u
@@ -1992,8 +1994,8 @@ Sonic_SlopeRepel                                      *Sonic_SlopeRepel:
         _negd
 !       cmpd  #$280                                   *  cmpi.w  #$280,d0
         bhs   return_1AE42                            *  bhs.s   return_1AE42
-        ldx   #0
-        stx   inertia,u                               *  clr.w   inertia(a0)
+        ldd   #0
+        std   inertia,u                               *  clr.w   inertia(a0)
         lda   status,u
         ora   #status_inair                           *  bset    #1,status(a0)
         sta   status,u
@@ -3833,8 +3835,8 @@ SAnim_Push                                            *SAnim_Push:
         _lsrd
         _lsrd
         _lsrd                                         *  lsr.w   #6,d2
-        std   anim_frame_duration,u                   *  move.b  d2,anim_frame_duration(a0)
-        ldd   #SonAni_Push                            *  lea (SonAni_Push).l,a1
+        stb   anim_frame_duration,u                   *  move.b  d2,anim_frame_duration(a0)
+        ldx   #SonAni_Push                            *  lea (SonAni_Push).l,a1
         ; unimplemented                               *  tst.b   (Super_Sonic_flag).w
         ;                                             *  beq.s   +
         ;                                             *  lea (SupSonAni_Push).l,a1
@@ -4055,7 +4057,7 @@ AnglePos                                              * AnglePos:
         bpl   loc_1E286                               *         bpl.s   loc_1E286
         lda   angle,u                                 *         move.b  angle(a0),d0
         bpl   >                                       *         bpl.s   +
-        suba  #1                                      *         subq.b  #1,d0
+        suba                                          *         subq.b  #1,d0
 !                                                     * +
         adda  #$20                                    *         addi.b  #$20,d0
         bra   loc_1E292                               *         bra.s   loc_1E292
@@ -4063,7 +4065,7 @@ AnglePos                                              * AnglePos:
 loc_1E286                                             * loc_1E286:
         lda   angle,u                                 *         move.b  angle(a0),d0
         bpl   loc_1E28E                               *         bpl.s   loc_1E28E
-        adda  #1                                      *         addq.b  #1,d0
+        inca                                          *         addq.b  #1,d0
                                                       * 
 loc_1E28E                                             * loc_1E28E:
         adda  #$1F                                    *         addi.b  #$1F,d0
@@ -4091,8 +4093,7 @@ loc_1E292                                             * loc_1E292:
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
         ldd   #$10
         std   glb_a3                                  *         movea.w #$10,a3
-        ldb   #0
-        std   glb_d6                                  *         move.w  #0,d6
+        sta   glb_d6_b                                *         move.w  #0,d6
         jsr   FindFloor                               *         bsr.w   FindFloor
         ldd   glb_d1
         pshs  d                                       *         move.w  d1,-(sp)
@@ -4113,8 +4114,7 @@ loc_1E292                                             * loc_1E292:
         std   glb_a4                                  *         lea     (Secondary_Angle).w,a4
         ldd   #$10
         std   glb_a3                                  *         movea.w #$10,a3
-        ldb   #0
-        std   glb_d6                                  *         move.w  #0,d6
+        sta   glb_d6_b                                *         move.w  #0,d6
         jsr   FindFloor                               *         bsr.w   FindFloor
         puls  d                                       *         move.w  (sp)+,d0
         std   glb_d0
@@ -4178,7 +4178,8 @@ Sonic_Angle                                           * Sonic_Angle:
         ble   >                                       *         ble.s   +
         lda   Primary_Angle                           *         move.b  (Primary_Angle).w,d2
         ldx   glb_d0                                  *         move.w  d0,d1
-!       sta   glb_d2_b                                * +
+!       stx   glb_d1                                  * +
+        sta   glb_d2_b
         bita  #1                                      *         btst    #0,d2
         bne   loc_1E380                               *         bne.s   loc_1E380
         ;                                             *         move.b  d2,d0
@@ -4200,6 +4201,7 @@ loc_1E380                                             * loc_1E380:
         sta   angle,u                                 *         move.b  d2,angle(a0)
         rts                                           *         rts
                                                       * ; End of function Sonic_Angle
+
                                                       * 
                                                       * ; ---------------------------------------------------------------------------
                                                       * ; Subroutine allowing Sonic to walk up a vertical slope/wall to his right
@@ -4213,11 +4215,13 @@ Sonic_WalkVertR                                       * Sonic_WalkVertR:
         ;                                             *         move.w  x_pos(a0),d3
         ;                                             *         moveq   #0,d0
         ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        aslb ; wide-dot factor
         negb                                          *         ext.w   d0
         sex                                           *         neg.w   d0
         addd  y_pos,u                                 *         add.w   d0,d2
         std   glb_d2
         ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        asrb ; wide-dot factor
         sex                                           *         ext.w   d0
         addd  x_pos,u                                 *         add.w   d0,d3
         std   glb_d3
@@ -4225,19 +4229,20 @@ Sonic_WalkVertR                                       * Sonic_WalkVertR:
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
         ldd   #8
         std   glb_a3                                  *         movea.w #$10,a3
-        ldb   #0
-        std   glb_d6                                  *         move.w  #0,d6
+        sta   glb_d6_b                                *         move.w  #0,d6
         jsr   FindWall                                *         bsr.w   FindWall
         ldd   glb_d1
-        pshs  d                                       *         move.w  d1,-\(sp\)        
+        std   @d1                                     *         move.w  d1,-\(sp\)        
         ;                                             *         move.w  y_pos(a0),d2
         ;                                             *         move.w  x_pos(a0),d3
         ;                                             *         moveq   #0,d0
-        lda   x_radius,u                              *         move.b  x_radius(a0),d0
+        ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        aslb ; wide-dot factor
         sex                                           *         ext.w   d0
         adda  y_pos,u                                 *         add.w   d0,d2
         std   glb_d2
-        lda   y_radius,u                              *         move.b  y_radius(a0),d0
+        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        asrb ; wide-dot factor
         sex                                           *         ext.w   d0
         addd  x_pos,u                                 *         add.w   d0,d3
         std   glb_d3
@@ -4245,10 +4250,10 @@ Sonic_WalkVertR                                       * Sonic_WalkVertR:
         std   glb_a4                                  *         lea     (Secondary_Angle).w,a4
         ldd   #8
         std   glb_a3                                  *         movea.w #$10,a3
-        ldb   #0
-        std   glb_d6                                  *         move.w  #0,d6
+        sta   glb_d6_b                                *         move.w  #0,d6
         jsr   FindWall                                *         bsr.w   FindWall
-        puls  d                                       *         move.w  (sp)+,d0
+        ldd   #0                                      *         move.w  (sp)+,d0
+@d1     equ   *-2
         std   glb_d0
         jsr   Sonic_Angle                             *         bsr.w   Sonic_Angle
         ldd   glb_d1                                  *         tst.w   d1
@@ -4295,6 +4300,7 @@ loc_1E420                                             * loc_1E420:
         std   prev_anim,u                             *         move.b  #AniIDSonAni_Run,prev_anim(a0)  ; Force character's animation to restart
         rts                                           *         rts
                                                       * ; ===========================================================================
+
                                                       * ;loc_1E43A
 Sonic_WalkCeiling                                     * Sonic_WalkCeiling:
         ;                                             *         move.w  y_pos(a0),d2
@@ -4397,12 +4403,14 @@ Sonic_WalkVertL                                       * Sonic_WalkVertL:
         ;                                             *         move.w  x_pos(a0),d3
         ;                                             *         moveq   #0,d0
         ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        aslb ; wide-dot factor
         sex                                           *         ext.w   d0
         std   glb_d0
         ldd   y_pos,u                                 
         subd  glb_d0                                  *         sub.w   d0,d2
         std   glb_d2
-        lda   y_radius,u                              *         move.b  y_radius(a0),d0
+        ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        asrb ; wide-dot factor
         sex                                           *         ext.w   d0
         std   glb_d0
         ldd   x_pos,u
@@ -4422,10 +4430,12 @@ Sonic_WalkVertL                                       * Sonic_WalkVertL:
         ;                                             *         move.w  x_pos(a0),d3
         ;                                             *         moveq   #0,d0
         ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        aslb ; wide-dot factor
         sex                                           *         ext.w   d0
         addd  y_pos,u                                 *         add.w   d0,d2
         std   glb_d2
         ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        asrb ; wide-dot factor
         sex                                           *         ext.w   d0
         std   glb_d0
         ldd   x_pos,u
@@ -4514,6 +4524,7 @@ CalcRoomInFront                                       * CalcRoomInFront:
         sex                            ; velocity is positive or negative, take care of that
         sta   @a
         ldd   x_vel,u
+        _asrd ; wide-dot factor
         addd  x_pos+1,u                  
         std   glb_d3_b                 ; glb_d3 is 24bit
         lda   x_pos,u
@@ -4650,8 +4661,7 @@ Sonic_CheckFloor                                      * Sonic_CheckFloor:
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
         ldd   #$10
         std   glb_a3                                  *         movea.w #$10,a3
-        ldb   #0
-        std   glb_d6                                  *         move.w  #0,d6
+        sta   glb_d6_b                                *         move.w  #0,d6
         jsr   FindFloor                               *         bsr.w   FindFloor
         ldd   glb_d1
         pshs  d                                       *         move.w  d1,-\(sp\)        
@@ -4671,8 +4681,7 @@ Sonic_CheckFloor                                      * Sonic_CheckFloor:
         std   glb_a4                                  *         lea     (Secondary_Angle).w,a4
         ldd   #$10
         std   glb_a3                                  *         movea.w #$10,a3
-        ldd   #0
-        std   glb_d6                                  *         move.w  #0,d6
+        sta   glb_d6_b                                *         move.w  #0,d6
         jsr   FindFloor                               *         bsr.w   FindFloor
         puls  d                                       *         move.w  (sp)+,d0
         std   glb_d0
@@ -4722,8 +4731,7 @@ CheckFloorDist_Part2                                  * CheckFloorDist_Part2:
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
         ldd   #$10
         std   glb_a3                                  *         movea.w #$10,a3
-        ldb   #0
-        std   glb_d6                                  *         move.w  #0,d6
+        sta   glb_d6_b                                *         move.w  #0,d6
         jsr   FindFloor                               *         bsr.w   FindFloor
                                                       *         move.b  #0,d2
                                                       * 
@@ -4788,8 +4796,7 @@ ChkFloorEdge_Part2                                    * ChkFloorEdge_Part2:
         ldd   #$10
         sta   Primary_Angle                           *         move.b  #0,(a4)
         std   glb_a3                                  *         movea.w #$10,a3
-        ldb   #0
-        std   glb_d6                                  *         move.w  #0,d6
+        sta   glb_d6_b                                *         move.w  #0,d6
         lda   top_solid_bit,u
         sta   glb_d5_b                                *         move.b  top_solid_bit(a0),d5
         jsr   FindFloor                               *         bsr.w   FindFloor
@@ -4850,8 +4857,7 @@ ObjCheckFloorDist                                     * ObjCheckFloorDist:
         ldd   #$10
         sta   Primary_Angle                           *         move.b  #0,(a4)
         std   glb_a3                                  *         movea.w #$10,a3
-        ldb   #0
-        std   glb_d6                                  *         move.w  #0,d6
+        sta   glb_d6_b                                *         move.w  #0,d6
         ldb   #$8                                     *         moveq   #$C,d5
         stb   glb_d5_b
         jsr   FindFloor                               *         bsr.w   FindFloor
@@ -4883,8 +4889,7 @@ FireCheckFloorDist                                    * FireCheckFloorDist:
         ldd   #$10
         sta   Primary_Angle                           *         move.b  #0,(a4)
         std   glb_a3                                  *         movea.w #$10,a3
-        ldb   #0
-        std   glb_d6                                  *         move.w  #0,d6
+        sta   glb_d6_b                                *         move.w  #0,d6
         ldb   #$8
         stb   glb_d5_b                                *         moveq   #$C,d5
         jmp   FindFloor                               *         bra.w   FindFloor
@@ -4930,11 +4935,13 @@ CheckRightCeilingDist                                 * CheckRightCeilingDist:
         ;                                             *         move.w  x_pos(a0),d3
         ;                                             *         moveq   #0,d0
         ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        aslb ; wide-dot factor
         negb
         sex                                           *         ext.w   d0
         addd  y_pos,u                                 *         sub.w   d0,d2
         std   glb_d2
         ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        asrb ; wide-dot factor
         sex                                           *         ext.w   d0
         addd  x_pos,u                                 *         add.w   d0,d3
         std   glb_d3
@@ -4942,19 +4949,20 @@ CheckRightCeilingDist                                 * CheckRightCeilingDist:
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
         ldd   #8
         std   glb_a3                                  *         movea.w #$10,a3
-        ldb   #0
-        std   glb_d6                                  *         move.w  #0,d6
+        sta   glb_d6_b                                *         move.w  #0,d6
         jsr   FindWall                                *         bsr.w   FindWall
         ldd   glb_d1
-        pshs  d                                       *         move.w  d1,-\(sp\)        
+        std   @d1                                     *         move.w  d1,-\(sp\)        
         ;                                             *         move.w  y_pos(a0),d2
         ;                                             *         move.w  x_pos(a0),d3
         ;                                             *         moveq   #0,d0
         ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        aslb ; wide-dot factor
         sex                                           *         ext.w   d0
         addd  y_pos,u                                 *         add.w   d0,d2
         std   glb_d2
         ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        asrb ; wide-dot factor
         sex                                           *         ext.w   d0
         addd  x_pos,u                                 *         add.w   d0,d3
         std   glb_d3
@@ -4962,13 +4970,13 @@ CheckRightCeilingDist                                 * CheckRightCeilingDist:
         std   glb_a4                                  *         lea     (Secondary_Angle).w,a4
         ldd   #8
         std   glb_a3                                  *         movea.w #$10,a3
-        ldb   #0
-        std   glb_d6                                  *         move.w  #0,d6
+        sta   glb_d6_b                                *         move.w  #0,d6
         jsr   FindWall                                *         bsr.w   FindWall
-        puls  d                                       *         move.w  (sp)+,d0
+        ldd   #0                                      *         move.w  (sp)+,d0
+@d1     equ   *-2
         std   glb_d0
         ldb   #-$40
-        stb   glb_d2                                  *         move.b  #-$40,d2
+        stb   glb_d2_b                                *         move.b  #-$40,d2
         jmp   loc_1ECC6                               *         bra.w   loc_1ECC6
                                                       * ; End of function CheckRightCeilingDist
                                                       * 
@@ -4999,8 +5007,7 @@ CheckRightWallDist_Part2                              * CheckRightWallDist_Part2
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
         ldd   #8
         std   glb_a3                                  *         movea.w #$10,a3
-        ldb   #0
-        std   glb_d6                                  *         move.w  #0,d6
+        sta   glb_d6_b                                *         move.w  #0,d6
         jsr   FindWall                                *         bsr.w   FindWall
         ldb   #$C0
         stb   glb_d2_b                                *         move.b  #$C0,d2
@@ -5021,8 +5028,7 @@ ObjCheckRightWallDist                                 * ObjCheckRightWallDist:
         ldd   #8
         sta   Primary_Angle                           *         move.b  #0,(a4)
         std   glb_a3                                  *         movea.w #$10,a3
-        ldb   #0
-        std   glb_d6                                  *         move.w  #0,d6
+        sta   glb_d6_b                                *         move.w  #0,d6
         ldb   #$10
         stb   glb_d5_b                                *         moveq   #$D,d5
         jsr   FindWall                                *         bsr.w   FindWall
@@ -5031,7 +5037,7 @@ ObjCheckRightWallDist                                 * ObjCheckRightWallDist:
         bitb  #1                                      *         btst    #0,d3
         beq   >                                       *         beq.s   +
         ldb   #-$40
-        stb   glb_d3                                  *         move.b  #-$40,d3
+        stb   glb_d3_b                                *         move.b  #-$40,d3
 !                                                     * +
         rts                                           *         rts
                                                       * ; End of function ObjCheckRightWallDist
@@ -5098,7 +5104,7 @@ Sonic_CheckCeiling                                    * Sonic_CheckCeiling:
         std   glb_d0
         ;                                             * 
         ldb   #$80
-        stb   glb_d2                                  *         move.b  #$80,d2
+        stb   glb_d2_b                                *         move.b  #$80,d2
         jmp   loc_1ECC6                               *         bra.w   loc_1ECC6
                                                       * ; End of function Sonic_CheckCeiling
                                                       * 
@@ -5133,7 +5139,7 @@ CheckCeilingDist_Part2                                * CheckCeilingDist_Part2:
         stb   glb_d6_b                                *         movea.w #$800,d6
         jsr   FindFloor                               *         bsr.w   FindFloor
         ldb   #$80
-        stb   glb_d2                                  *         move.b  #$80,d2
+        stb   glb_d2_b                                *         move.b  #$80,d2
         jmp   loc_1ECFE                               *         bra.w   loc_1ECFE
                                                       * ; End of function CheckCeilingDist
                                                       * 
@@ -5185,11 +5191,13 @@ CheckLeftCeilingDist:                                 * CheckLeftCeilingDist:
         ;                                             *         move.w  x_pos(a0),d3
         ;                                             *         moveq   #0,d0
         ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        aslb ; wide-dot factor
         negb
         sex                                           *         ext.w   d0
         addd  y_pos,u                                 *         sub.w   d0,d2
         std   glb_d2
         ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        asrb ; wide-dot factor
         negb
         sex                                           *         ext.w   d0
         addd  x_pos,u                                 *         sub.w   d0,d3
@@ -5209,10 +5217,12 @@ CheckLeftCeilingDist:                                 * CheckLeftCeilingDist:
         ;                                             *         move.w  x_pos(a0),d3
         ;                                             *         moveq   #0,d0
         ldb   x_radius,u                              *         move.b  x_radius(a0),d0
+        aslb ; wide-dot factor
         sex                                           *         ext.w   d0
         addd  y_pos,u                                 *         add.w   d0,d2
         std   glb_d2
         ldb   y_radius,u                              *         move.b  y_radius(a0),d0
+        asrb ; wide-dot factor
         negb
         sex                                           *         ext.w   d0
         addd  x_pos,u                                 *         sub.w   d0,d3
@@ -5264,7 +5274,7 @@ CheckLeftWallDist_Part2                               * CheckLeftWallDist_Part2:
         stb   glb_d6_b                                *         movea.w #$400,d6
         jsr   FindWall                                *         bsr.w   FindWall
         ldb   #$40
-        stb   glb_d2                                  *         move.b  #$40,d2
+        stb   glb_d2_b                                *         move.b  #$40,d2
         jmp   loc_1ECFE                               *         bra.w   loc_1ECFE
                                                       * ; End of function CheckLeftWallDist
                                                       * 

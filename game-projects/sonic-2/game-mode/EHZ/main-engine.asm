@@ -83,9 +83,6 @@ LevelMainLoop
         jsr   TileAnimScript
 
         lda   Vint_Main_runcount
-        suba  #2
-        bpl   >
-        anda  #0
 !       sta   @a
         jsr   ReadJoypads  
         _RunObject ObjID_Sonic,#MainCharacter 
