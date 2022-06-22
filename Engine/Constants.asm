@@ -24,8 +24,6 @@ dk_write_location             equ $604F
 * Globals
 * ===========================================================================
 
-glb_direct_page               equ $9F    ; direct page for globals
-
 ; compilated sprite
 glb_register_s                equ $9FFE  ; reverved space to store S from ROM routines
 
@@ -37,6 +35,7 @@ glb_screen_location_2         equ $9FFA  ; start address for rendering of curren
 glb_cur_priority              equ $9FF9
 glb_cur_ptr_sub_obj_erase     equ $9FF7
 glb_cur_ptr_sub_obj_draw      equ $9FF5
+
 glb_camera_x_pos              equ $9FF3 ; camera x position in palyfield coordinates
 glb_camera_y_pos              equ $9FF1 ; camera y position in palyfield coordinates
 glb_camera_x_min_pos          equ $9FEF
@@ -48,6 +47,10 @@ glb_camera_y_offset           equ $9FE7
 glb_force_sprite_refresh      equ $9FE6
 glb_camera_move               equ $9FE5
 glb_alphaTiles                equ $9FE4
+
+; BankSwitch
+glb_Page                      equ $9FE3
+
 direct_page                   equ $9F00 ; custom tmp var space for routine
 glb_system_stack              equ $9F00
 

@@ -22,7 +22,7 @@ glb_a3   equ   direct_page+146
 glb_a3_b equ   direct_page+147
 glb_a4   equ   direct_page+148
 glb_a4_b equ   direct_page+149
-glb_page equ   direct_page+150
+glb_b_pg equ   direct_page+150
 
         SETDP   direct_page/256
 
@@ -115,7 +115,7 @@ Find_Tile                                             * Find_Tile:
                                                       * ; loc_1E7D0:
 FindFloor                                             * FindFloor:
         _GetCartPageA
-        sta   glb_page
+        sta   glb_b_pg
         jsr   Find_Tile                               *         bsr.w   Find_Tile
         ldd   ,x                                      *         move.w  (a1),d0
         std   glb_d4                                  *         movea.w d0,d4
@@ -148,7 +148,7 @@ loc_1E7E2                ; tile is null or not solid  * loc_1E7E2:
         ldd   glb_d1
         addd  #$10
         std   glb_d1     ; add 16px to distance       *         addi.w  #$10,d1
-        lda   glb_page
+        lda   glb_b_pg
         _SetCartPageA
         rts                                           *         rts
                                                       * ; ===========================================================================
@@ -219,7 +219,7 @@ loc_1E7F0                                             * loc_1E7F0:      ; block 
         addb  #$F                                     *         sub.w   d0,d1
         sex
         std   glb_d1
-        lda   glb_page
+        lda   glb_b_pg
         _SetCartPageA
         rts                                           *         rts
                                                       * ; ===========================================================================
@@ -242,7 +242,7 @@ loc_1E86A                                             * loc_1E86A:
         ldd   glb_d1
         subd  #$10
         std   glb_d1                                  *         subi.w  #$10,d1
-        lda   glb_page
+        lda   glb_b_pg
         _SetCartPageA
         rts                                           *         rts
                                                       * ; End of function FindFloor
@@ -462,7 +462,7 @@ Ring_FindFloor                                        * Ring_FindFloor:
                                                       * ; loc_1E9B0:
 FindWall                                              * FindWall:
         _GetCartPageA
-        sta   glb_page
+        sta   glb_b_pg
         jsr   Find_Tile                               *         bsr.w   Find_Tile
         ldd   ,x                                      *         move.w  (a1),d0
         std   glb_d4                                  *         movea.w d0,d4
@@ -484,7 +484,7 @@ loc_1E9C2                                             * loc_1E9C2:
         ldd   glb_d1
         addd  #8
         std   glb_d1                                  *         addi.w  #$10,d1
-        lda   glb_page
+        lda   glb_b_pg
         _SetCartPageA
         rts                                           *         rts
                                                       * ; ===========================================================================
@@ -557,7 +557,7 @@ loc_1E9D0                                             * loc_1E9D0:
         addb  #7                                      *         sub.w   d0,d1
         sex
         std   glb_d1
-        lda   glb_page
+        lda   glb_b_pg
         _SetCartPageA
         rts                                           *         rts
                                                       * ; ===========================================================================
@@ -579,7 +579,7 @@ loc_1EA4A                                             * loc_1EA4A:
         ldd   glb_d1
         subd  #8
         std   glb_d1                                  *         subi.w  #$10,d1
-        lda   glb_page
+        lda   glb_b_pg
         _SetCartPageA
         rts                                           *         rts
                                                       * ; End of function FindWall

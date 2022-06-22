@@ -1,4 +1,4 @@
-glb_Page                      fcb   $00
+        SETDP   direct_page/256
 
 SetCartPageA
         sta   glb_Page

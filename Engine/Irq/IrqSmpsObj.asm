@@ -101,15 +101,13 @@ IrqSync_3
         SETDP   $E7
 
 IrqSmps 
+        ;jmp   $E830 ; debug - skip IRQ
         sts   @bcks                                   ; backup system stack
         lds   #IRQSysStack                            ; set tmp system stack for IRQ 
-        _GetCartPageA
-        sta   IrqSmps_end+1                           ; backup data page
         ldd   Vint_runcount
         addd  #1
-        std   Vint_runcount
-PaletteCycling
-	lda   glb_pal_elapsed_frames
+        std   Vint_runcount                           ; frame drop count
+ 	lda   glb_pal_elapsed_frames                  ; PaletteCycling
         inca
 	sta   glb_pal_elapsed_frames
 	cmpa  #8
@@ -124,16 +122,35 @@ PaletteCycling
 	ldd   ,x
 	std   2,x
 	stu   ,x
-@a
-        jsr   UpdatePaletteNow
-        _RunObjectRoutine ObjID_Smps,#4               ; MusicFrame
-IrqSmps_end        
-        lda   #$00                                    ; (dynamic)
+@a      jsr   UpdatePaletteNow
+        lda   Obj_Index_Page+ObjID_Smps
+        ldx   Obj_Index_Address+2*ObjID_Smps          ; load page and addr of sound routine
+        tst   glb_Page                                ; test special mode (glb_Page==0)
+        beq   @part2                                  ; branch if rendering tiles - force RAM use instead of testing ROM or RAM
+        _GetCartPageB
+        stb   @page                                   ; backup data page normally
+        ;sta   $E7E6                                   ; mount Smps page in RAM
+        lda   #4                                      ; Smps MusicFrame routine id
+        ;jsr   ,x                                      ; Call Smps sound driver
+        lda   #0                                      ; (dynamic)
+@page   equ   *-1
         _SetCartPageA                                 ; restore data page
-        lds   #0                                      ; (dynamic) restore system stack   
+@end    lds   #0                                      ; (dynamic) restore system stack   
 @bcks   equ   *-2
         jmp   $E830                                   ; return to caller
-
+@part2
+        ldb   $E7E6
+        stb   @page2                                  ; backup data page
+        ;sta   $E7E6                                   ; mount Smps page in RAM
+        lda   #4                                      ; Smps MusicFrame routine id
+        ;jsr   ,x                                      ; Call Smps sound driver
+        anda  #0
+        sta   glb_Page                                ; restore special mode
+        lda   #0                                      ; (dynamic)
+@page2  equ   *-1
+        sta   $E7E6                                   ; restore data page
+        bra   @end                                    ; branch to restore system stack
+ 
 ; This space allow the use of system stack inside IRQ calls
 ; otherwise the writes in sys stack will erase data when S is in use
 ; (outside of IRQ) for another task than sys stack, ex: stack blast copy 
@@ -142,3 +159,5 @@ IRQSysStack
 
 glb_pal_elapsed_frames fcb 0
 	INCLUDE "./Engine/Palette/UpdatePaletteNow.asm"
+
+        SETDP   direct_page/256

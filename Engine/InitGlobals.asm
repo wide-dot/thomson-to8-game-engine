@@ -17,10 +17,11 @@ InitGlobals
         std   glb_camera_y_pos         
 	sta   glb_force_sprite_refresh
 	sta   glb_camera_move
-        sta   glb_alphaTiles
         lda   #screen_left
         sta   glb_camera_x_offset
         lda   #screen_top
         sta   glb_camera_y_offset
 
+        lda   #1
+        sta   glb_alphaTiles
         rts

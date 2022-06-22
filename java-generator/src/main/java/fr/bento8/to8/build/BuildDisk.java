@@ -546,8 +546,9 @@ public class BuildDisk
 			tileset.nbColumns = Integer.parseInt(tilesetProperties.getValue()[1].split(",")[1]);
 			tileset.nbRows = Integer.parseInt(tilesetProperties.getValue()[1].split(",")[2]);
 
-			if (tilesetProperties.getValue().length > 2 && tilesetProperties.getValue()[2].equalsIgnoreCase(BuildDisk.RAM))
-				tileset.inRAM = true;					
+			//if (tilesetProperties.getValue().length > 2 && tilesetProperties.getValue()[2].equalsIgnoreCase(BuildDisk.RAM))
+			// tileset should always be in RAM for rendering speed
+			tileset.inRAM = true;					
 
 			// Parcours des différents tiles du tileset
 			logger.debug("\t"+object.name+" tileset: " + tileset.name);
@@ -1483,11 +1484,13 @@ public class BuildDisk
 			// MEGAROM T2
 			data = new byte[tileset.getValue().tiles.size()*3];
 			i = 0;
+			logger.debug("TILESET: " + tileset.getValue().name);
 			if (tileset.getValue().inRAM) {
 				for (TileBin tile : tileset.getValue().tiles) {
 					data[i++] = (byte)(tile.dataIndex.get(gm).t2_ram_page + 0x60);
 					data[i++] = (byte)(tile.dataIndex.get(gm).t2_ram_address >> 8);		
 					data[i++] = (byte)(tile.dataIndex.get(gm).t2_ram_address & 0xFF);	
+					logger.debug("DATA: " + String.format("$%1$02X $%2$04X", data[i-3], tile.dataIndex.get(gm).t2_ram_address));
 				}
 			} else {
 				for (TileBin tile : tileset.getValue().tiles) {

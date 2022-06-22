@@ -21,8 +21,13 @@ Buzzer_Init
         std   image_set,u
         ldb   #$01
         stb   priority,u
-        ldd   #$9560
-        std   xy_pixel,u
+        ldd   #$A0/2
+        std   x_pos,u
+        ldd   #$024F
+        std   y_pos,u
+        lda   render_flags,u
+        ora   #render_playfieldcoord_mask|render_overlay_mask        
+        sta   render_flags,u
         inc   routine,u   
         
 Buzzer_Display

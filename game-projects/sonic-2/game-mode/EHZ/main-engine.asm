@@ -19,13 +19,15 @@
 LevelSizeLoad ; todo move to an object
 
         ldu   #MainCharacter
-        ;ldd   #$60/2 ; init
+        ldd   #$60/2 ; init
         ;ldd   #$03C2 ; cave
-        ldd   #$0A42 ; left wall flat
+        ;ldd   #$0A42 ; left wall flat
+        ;ldd   #$0827 ; loop
         std   x_pos,u
-        ;ldd   #$028F ; intit
+        ldd   #$028F ; intit
         ;ldd   #$02F0 ; cave
-        ldd   #$03AC ; left wall flat
+        ;ldd   #$03AC ; left wall flat
+        ;ldd   #$022B ; loop
         std   y_pos,u
 
 	ldd   #camera_Y_pos_bias_default
@@ -73,7 +75,12 @@ LevelSizeLoad ; todo move to an object
         _RunObjectRoutine ObjID_Smps,#2 ; PlayMusic 
 
 	; start music
-        jsr   IrqSet50Hz 
+        jsr   IrqSet50Hz
+        pshs  dp
+        lda   #$E7
+        tfr   a,dp
+        jsr   UpdatePaletteNow
+        puls  dp
 
 * ==============================================================================
 * Main Loop
@@ -82,19 +89,21 @@ LevelMainLoop
         jsr   WaitVBL    
         jsr   TileAnimScript
 
+
         lda   Vint_Main_runcount
 !       sta   @a
         jsr   ReadJoypads  
         _RunObject ObjID_Sonic,#MainCharacter 
+        _RunObject ObjID_Scroll,#MainCharacter   
         lda   #0
 @a      equ   *-1
         deca
         bpl   <
 
-        _RunObject ObjID_Scroll,#MainCharacter   
         jsr   RunObjects
 	jsr   ForceRefresh
         jsr   CheckSpritesRefresh
+	jsr   EHZ_Mask
         jsr   EraseSprites
         jsr   UnsetDisplayPriority
 	jsr   EHZ_Back
@@ -102,7 +111,6 @@ LevelMainLoop
 	jsr   DrawBufferedTile
         jsr   DrawSprites
         jsr   DrawHighPriorityBufferedTile    
-	jsr   EHZ_Mask
         bra   LevelMainLoop
 
 ForceRefresh
