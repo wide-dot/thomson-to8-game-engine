@@ -3,7 +3,7 @@
 * ---------------------------------------------------------------------------
 
         INCLUDE "./Engine/Graphics/Tilemap/DataTypes/map16bits.equ"
-        SETDP $9F
+        SETDP   direct_page/256
 
 ; data structure for current loaded map
 ; -------------------------------------
@@ -499,6 +499,11 @@ DrawBufferedTile
         rts
 @a
 
+        ; disable page backup (page swap macros) 
+        ; mandatory if using T2 and direct access to E7E6 
+        anda  #0
+        sta   glb_Page
+
         ; compute number of tiles to render
         ; saves one tile row or col when camera pos is a multiple of tile size
         ; ---------------------------------------------------------------------
@@ -685,6 +690,11 @@ ls_pos  equ   *-2              ; line start pos
 ; ****************************************************************************************************************************
 
 DrawHighPriorityBufferedTile
+        ; disable page backup (page swap macros) 
+        ; mandatory if using T2 and direct access to E7E6 
+        anda  #0
+        sta   glb_Page
+
         ldy   #tmb_hprio_tiles
         bra   @entry
 @loop
@@ -704,5 +714,5 @@ tile_buffer
         fill  0,16*128
 
 tmb_hprio_tiles
-        fill  0,tmb_vp_h_tiles*tmb_vp_v_tiles*7 ; all tiles in high priority ... that's crazy
+        fill  0,tmb_vp_h_tiles*tmb_vp_v_tiles*7 ; in case all tiles are in high priority ... that's crazy ... you can lower that if you know what you are doing
         fcb   0 ; end marker

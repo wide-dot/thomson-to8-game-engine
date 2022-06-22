@@ -41,7 +41,7 @@ RAMLoader_continue
         bpl   RL_Continue              ; valeur negative de secteur signifie fin du tableau de donnee
         lds   #glb_system_stack         ; reinit de la pile systeme
 		
-	lda   #glb_direct_page         ; set direct page to access globals
+	lda   #direct_page/256             ; set direct page to access globals
 	tfr   a,dp
 		        
         jmp   $6100                    ; on lance le mode de jeu en page 1

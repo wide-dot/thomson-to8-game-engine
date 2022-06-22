@@ -3,9 +3,9 @@
 * ===========================================================================
 
 nb_reserved_objects               equ 1
-nb_dynamic_objects                equ 28
+nb_dynamic_objects                equ 18
 nb_level_objects                  equ 1
-nb_graphical_objects              equ 30 * max 64 total
+nb_graphical_objects              equ 20 * max 64 total
 
 * ===========================================================================
 * Object Status Table - OST
@@ -16,7 +16,9 @@ MainCharacter                 fcb   ObjID_Sonic
                               fill  0,main_object_size-1
 Reserved_Object_RAM_End
 Object_RAM
-Dynamic_Object_RAM            fill  0,nb_dynamic_objects*object_size
+Dynamic_Object_RAM            fcb   ObjID_Buzzer
+                              fill  0,object_size-1
+                              fill  0,(nb_dynamic_objects-1)*object_size
 Dynamic_Object_RAM_End
 
 LevelOnly_Object_RAM

@@ -52,7 +52,7 @@ Obj01_Init                                            *  Obj01_Init:
         lda   #9                         
         sta   width_pixels,u                          *  move.b  #$18,width_pixels(a0)
         lda   render_flags,u
-        ora   #render_playfieldcoord_mask        
+        ora   #render_playfieldcoord_mask|render_overlay_mask        
         sta   render_flags,u                          *  move.b  #4,render_flags(a0)
         ldd   #$600                                   *
         std   Sonic_top_speed                         *  move.w  #$600,(Sonic_top_speed).w   ; set Sonic's top speed
@@ -771,7 +771,7 @@ Sonic_Lookup                                          *Sonic_Lookup:
         lda   #$78
         sta   Sonic_Look_delay_counter                *  move.w  #$78,(Sonic_Look_delay_counter).w
         ldd   Camera_Y_pos_bias
-        cmpd  #176                                    *  cmpi.w  #$C8,(Camera_Y_pos_bias).w
+        cmpd  #136                                    *  cmpi.w  #$C8,(Camera_Y_pos_bias).w
         bhs   Obj01_UpdateSpeedOnGround               *  beq.s   Obj01_UpdateSpeedOnGround
         addd  #4
         std   Camera_Y_pos_bias                       *  addq.w  #2,(Camera_Y_pos_bias).w
@@ -792,7 +792,7 @@ Sonic_Duck                                            *Sonic_Duck:
         lda   #$78
         sta   Sonic_Look_delay_counter                *  move.w  #$78,(Sonic_Look_delay_counter).w
         ldd   Camera_Y_pos_bias
-        cmpd  #72                                     *  cmpi.w  #8,(Camera_Y_pos_bias).w
+        cmpd  #8                                      *  cmpi.w  #8,(Camera_Y_pos_bias).w
         bls   Obj01_UpdateSpeedOnGround               *  beq.s   Obj01_UpdateSpeedOnGround
         subd  #4
         std   Camera_Y_pos_bias                       *  subq.w  #2,(Camera_Y_pos_bias).w
@@ -897,7 +897,9 @@ Obj01_CheckWallsOnGround                              *Obj01_CheckWallsOnGround:
         ;                                             *  move.w  (sp)+,d0
         tst   glb_d1                                  *  tst.w   d1
         bpl   return_1A6BE                            *  bpl.s   return_1A6BE
-        ;                                             *  asl.w   #8,d1
+        lda   glb_d1+1                                *  asl.w   #8,d1
+        andb  #0
+        std   glb_d1
         ldb   #0
 @d0     equ   *-1
         addb  #$20                                    *  addi.b  #$20,d0
@@ -993,9 +995,7 @@ Sonic_TurnLeft                                        *Sonic_TurnLeft:
         addb  #$20                                    *  addi.b  #$20,d0
         andb  #$C0                                    *  andi.b  #$C0,d0
         bne   return_1A744                            *  bne.s   return_1A744
-        ldd   inertia,u              ; TODO check
-        addd  Sonic_deceleration_tmp
-        subd  Sonic_deceleration
+        ldd   inertia,u
         cmpd  #$400                                   *  cmpi.w  #$400,d0
         blt   return_1A744                            *  blt.s   return_1A744
         ldd   #SonAni_Stop
@@ -1058,9 +1058,7 @@ Sonic_TurnRight                                       *Sonic_TurnRight:
         addb  #$20                                    *  addi.b  #$20,d0
         andb  #$C0                                    *  andi.b  #$C0,d0
         bne   return_1A7C4                            *  bne.s   return_1A7C4
-        ldd   inertia,u              ; TODO check
-        subd  Sonic_deceleration_tmp
-        addd  Sonic_deceleration
+        ldd   inertia,u
         cmpd  #-$400                                  *  cmpi.w  #-$400,d0
         bgt   return_1A7C4                            *  bgt.s   return_1A7C4
         ldd   #SonAni_Stop
@@ -1811,7 +1809,6 @@ Sonic_UpdateSpindash                                  *Sonic_UpdateSpindash:
         sta   routine_secondary,x                     *  move.b  #0,(Sonic_Dust+anim).w
         ldb   #SndID_SpindashRelease                  *  move.w  #SndID_SpindashRelease,d0   ; spindash zoom sound
         stb   Smps.SFXToPlay                          *  jsr (PlaySound).l
-        ;clr   Vint_Main_runcount ; framerate fix
         bra   Obj01_Spindash_ResetScr                 *  bra.s   Obj01_Spindash_ResetScr
                                                       *; ===========================================================================
                                                       *; word_1AD0C:
@@ -2196,12 +2193,11 @@ loc_1AF68                                             *loc_1AF68:
                                                       *
 loc_1AF7C                                             *loc_1AF7C:
         ldd   y_vel,u
-        std   inertia,u                               *  move.w  y_vel(a0),inertia(a0)
+        ;                                             *  move.w  y_vel(a0),inertia(a0)
         tst   glb_d3_b                                *  tst.b   d3
-        bpl   return_1AF8A                            *  bpl.s   return_1AF8A
-        ldd   inertia,u
+        bpl   >                                       *  bpl.s   return_1AF8A
         _negd
-        std   inertia,u                               *  neg.w   inertia(a0)
+!       std   inertia,u                               *  neg.w   inertia(a0)
                                                       *
 return_1AF8A                                          *return_1AF8A:
         rts                                           *  rts
@@ -2298,12 +2294,11 @@ loc_1B02C                                             *loc_1B02C:
         sta   angle,u                                 *  move.b  d3,angle(a0)
         jsr   Sonic_ResetOnFloor                      *  bsr.w   Sonic_ResetOnFloor
         ldd   y_vel,u
-        std   inertia,u                               *  move.w  y_vel(a0),inertia(a0)
+        ;                                             *  move.w  y_vel(a0),inertia(a0)
         tst   glb_d3_b                                *  tst.b   d3
-        bpl   return_1B042                            *  bpl.s   return_1B042
-        ldd   inertia,u
+        bpl   >                                       *  bpl.s   return_1B042
         _negd                                         *  neg.w   inertia(a0)
-        std   inertia,u
+!       std   inertia,u
                                                       *
 return_1B042                                          *return_1B042:
         rts                                           *  rts
@@ -4057,7 +4052,7 @@ AnglePos                                              * AnglePos:
         bpl   loc_1E286                               *         bpl.s   loc_1E286
         lda   angle,u                                 *         move.b  angle(a0),d0
         bpl   >                                       *         bpl.s   +
-        suba                                          *         subq.b  #1,d0
+        deca                                          *         subq.b  #1,d0
 !                                                     * +
         adda  #$20                                    *         addi.b  #$20,d0
         bra   loc_1E292                               *         bra.s   loc_1E292
@@ -4140,6 +4135,7 @@ loc_1E31E                                             * loc_1E31E:
         blo   >                                       *         blo.s   +
         ldb   #$E                                     *         move.b  #$E,d0
 !                                                     * +
+        asrb ; wide-dot factor
         stb   glb_d0_b
         ldb   glb_d1_b   
         cmpb  glb_d0_b                                *         cmp.b   d0,d1
@@ -4277,6 +4273,7 @@ loc_1E402                                             * loc_1E402:
         blo   >                                       *         blo.s   +
         ldb   #$E                                     *         move.b  #$E,d0
 !                                                     * +
+        asrb ; wide-dot factor
         stb   glb_d0_b
         lda   glb_d1_b
         cmpa  glb_d0_b                                *         cmp.b   d0,d1
@@ -4374,7 +4371,9 @@ loc_1E4B0                                             * loc_1E4B0:
         cmpb  #$E                                     *         cmpi.b  #$E,d0
         blo   >                                       *         blo.s   +
         ldb   #$E                                     *         move.b  #$E,d0
-!       stb   glb_d0_b                                * +
+!                                                     * +
+        asrb ; wide-dot factor
+        stb   glb_d0_b                                
         ldb   glb_d1_b
         cmpb  glb_d0_b                                *         cmp.b   d0,d1
         bgt   loc_1E4CE                               *         bgt.s   loc_1E4CE
@@ -4473,7 +4472,9 @@ loc_1E55E                                             * loc_1E55E:
         cmpb  #$E                                     *         cmpi.b  #$E,d0
         blo   >                                       *         blo.s   +
         ldb   #$E                                     *         move.b  #$E,d0
-!       stb   glb_d0_b                                * +
+!                                                     * +
+        asrb ; wide-dot factor
+        stb   glb_d0_b                                
         ldb   glb_d1_b
         cmpb  glb_d0_b                                *         cmp.b   d0,d1
         bgt   loc_1E57C                               *         bgt.s   loc_1E57C
