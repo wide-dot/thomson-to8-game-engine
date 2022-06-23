@@ -1,6 +1,13 @@
         INCLUDE "./Engine/Macros.asm"  
 
-camera_x_center equ 68
+camera_x_center           equ 68
+scroll_h_free_radius      equ 8
+scroll_h_speed_cap        equ (16/2)*4
+scroll_v_free_radius      equ 32
+scroll_v_speed_slow       equ 2*4
+scroll_v_speed_medium     equ 6*4
+scroll_v_speed_fast       equ 16*4
+scroll_v_fast_mode_step   equ $800
 
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       * ; sub_C3D0:
@@ -103,10 +110,10 @@ ScrollHoriz                                           * ScrollHoriz:
                                                       *         move.w  (a1),d4         ; get camera X pos
                                                       *         tst.b   (Teleport_flag).w
                                                       *         bne.s   .return         ; if a teleport is in progress, return
-        ldd   Horiz_scroll_delay_val                  *         move.w  (a5),d1         ; should scrolling be delayed?
-        beq   @scrollNotDelayed                       *         beq.s   .scrollNotDelayed       ; if not, branch
-        ;subd  #$100                                   *         subi.w  #$100,d1        ; reduce delay value
-        ;todo ...                                         *         move.w  d1,(a5)
+        ;ldd   Horiz_scroll_delay_val                 *         move.w  (a5),d1         ; should scrolling be delayed?
+        ;beq   @scrollNotDelayed                      *         beq.s   .scrollNotDelayed       ; if not, branch
+        ;subd  #$100                                  *         subi.w  #$100,d1        ; reduce delay value
+        ;todo ...                                     *         move.w  d1,(a5)
                                                       *         moveq   #0,d1
                                                       *         move.b  (a5),d1         ; get delay value
                                                       *         lsl.b   #2,d1           ; multiply by 4, the size of a position buffer entry
@@ -123,9 +130,9 @@ ScrollHoriz                                           * ScrollHoriz:
                                                       * ; loc_D732:
 @checkIfShouldScroll                                  * .checkIfShouldScroll:
         subd  glb_camera_x_pos                        *         sub.w   (a1),d0
-        subd  #camera_x_center-8                      *         subi.w  #(320/2)-16,d0          ; is the player less than 144 pixels from the screen edge?
+        subd  #camera_x_center-scroll_h_free_radius   *         subi.w  #(320/2)-16,d0          ; is the player less than 144 pixels from the screen edge?
         blt   @scrollLeft                             *         blt.s   .scrollLeft     ; if he is, scroll left
-        subd  #$8                                     *         subi.w  #16,d0          ; is the player more than 159 pixels from the screen edge?
+        subd  #scroll_h_free_radius                   *         subi.w  #16,d0          ; is the player more than 159 pixels from the screen edge?
         bge   @scrollRight                            *         bge.s   .scrollRight    ; if he is, scroll right
         ;                                             *         clr.w   (a4)            ; otherwise, don't scroll
                                                       * ; return_D742:
@@ -134,9 +141,9 @@ ScrollHoriz                                           * ScrollHoriz:
                                                       * ; ===========================================================================
                                                       * ; loc_D744:
 @scrollLeft                                           * .scrollLeft:
-        cmpd  #-8*5                                   *         cmpi.w  #-16,d0
+        cmpd  #-scroll_h_speed_cap                    *         cmpi.w  #-16,d0
         bgt   @maxNotReached                          *         bgt.s   .maxNotReached
-        ldd   #-8*5                                   *         move.w  #-16,d0         ; limit scrolling to 16 pixels per frame
+        ldd   #-scroll_h_speed_cap                    *         move.w  #-16,d0         ; limit scrolling to 16 pixels per frame
                                                       * ; loc_D74E:
 @maxNotReached                                        * .maxNotReached:
         addd  glb_camera_x_pos                        *         add.w   (a1),d0         ; get new camera position
@@ -147,9 +154,9 @@ ScrollHoriz                                           * ScrollHoriz:
                                                       * ; ===========================================================================
                                                       * ; loc_D758:
 @scrollRight                                          * .scrollRight:
-        cmpd  #8*5                                    *         cmpi.w  #16,d0
+        cmpd  #scroll_h_speed_cap                     *         cmpi.w  #16,d0
         blo   @maxNotReached2                         *         blo.s   .maxNotReached2
-        ldd   #8*5                                    *         move.w  #16,d0
+        ldd   #scroll_h_speed_cap                     *         move.w  #16,d0
                                                       * ; loc_D762:
 @maxNotReached2                                       * .maxNotReached2:
         addd  glb_camera_x_pos                        *         add.w   (a1),d0         ; get new camera position
@@ -160,7 +167,7 @@ ScrollHoriz                                           * ScrollHoriz:
 @doScroll                                             * .doScroll:
                                                       *         move.w  d0,d1
                                                       *         sub.w   (a1),d1         ; subtract old camera position
-        andb  #$FE                                    *         asl.w   #8,d1           ; shift up by a byte
+                                                      *         asl.w   #8,d1           ; shift up by a byte
         std   glb_camera_x_pos                        *         move.w  d0,(a1)         ; set new camera position
                                                       *         move.w  d1,(a4)         ; set difference between old and new positions
                                                       *         rts
@@ -203,10 +210,10 @@ ScrollVerti                                           * ScrollVerti:
                                                       *         ; If Sonic's in the air, he has $20 pixels above and below him to move without disturbing the camera.
                                                       *         ; The camera movement is also only capped at $10 pixels.
         ldd   @d
-        addd  #$20                                    *         addi.w  #$20,d0
+        addd  #scroll_v_free_radius                   *         addi.w  #$20,d0
         subd  Camera_Y_pos_bias                       *         sub.w   d3,d0
         bcs   @doScroll_fast                          *         bcs.s   .doScroll_fast  ; If Sonic is above the boundary, scroll to catch up to him
-        subd  #$40                                    *         subi.w  #$40,d0
+        subd  #scroll_v_free_radius*2                 *         subi.w  #$40,d0
         bcc   @doScroll_fast                          *         bcc.s   .doScroll_fast  ; If Sonic is below the boundary, scroll to catch up to him
         tst   Camera_Max_Y_Pos_Changing               *         tst.b   (Camera_Max_Y_Pos_Changing).w   ; is the max Y pos changing?
         bne   @scrollUpOrDown_maxYPosChanging         *         bne.s   .scrollUpOrDown_maxYPosChanging ; if it is, branch
@@ -237,23 +244,23 @@ ScrollVerti                                           * ScrollVerti:
 !       tfr   d,x
         ldd   #0
 @d      equ   *-2
-        cmpx  #$800                                   *         cmpi.w  #$800,d1        ; is the player travelling very fast?
+        cmpx  #scroll_v_fast_mode_step                *         cmpi.w  #$800,d1        ; is the player travelling very fast?
         bhs   @doScroll_fast                          *         bhs.s   .doScroll_fast  ; if he is, branch
 @doScroll_medium                                      * ;.doScroll_medium:
-        ldx   #12                                      *         move.w  #6<<8,d1        ; If player is going too fast, cap camera movement to 6 pixels per frame
-        cmpd  #12                                      *         cmpi.w  #6,d0           ; is player going down too fast?
-        lbgt   @scrollDown_max                         *         bgt.s   .scrollDown_max ; if so, move camera at capped speed
-        cmpd  #-12                                     *         cmpi.w  #-6,d0          ; is player going up too fast?
+        ldx   #scroll_v_speed_medium                  *         move.w  #6<<8,d1        ; If player is going too fast, cap camera movement to 6 pixels per frame
+        cmpd  #scroll_v_speed_medium                  *         cmpi.w  #6,d0           ; is player going down too fast?
+        lbgt   @scrollDown_max                        *         bgt.s   .scrollDown_max ; if so, move camera at capped speed
+        cmpd  #-scroll_v_speed_medium                 *         cmpi.w  #-6,d0          ; is player going up too fast?
         blt   @scrollUp_max                           *         blt.s   .scrollUp_max   ; if so, move camera at capped speed
         bra   @scrollUpOrDown                         *         bra.s   .scrollUpOrDown ; otherwise, move camera at player's speed
                                                       * ; ===========================================================================
                                                       * ; loc_D7EA:
 @doScroll_slow                                        * .doScroll_slow:
         ldd   @d
-        ldx   #4                                      *         move.w  #2<<8,d1        ; If player is going too fast, cap camera movement to 2 pixels per frame
-        cmpd  #4                                      *         cmpi.w  #2,d0           ; is player going down too fast?
+        ldx   #scroll_v_speed_slow                    *         move.w  #2<<8,d1        ; If player is going too fast, cap camera movement to 2 pixels per frame
+        cmpd  #scroll_v_speed_slow                    *         cmpi.w  #2,d0           ; is player going down too fast?
         bgt   @scrollDown_max                         *         bgt.s   .scrollDown_max ; if so, move camera at capped speed
-        cmpd  #-4                                     *         cmpi.w  #-2,d0          ; is player going up too fast?
+        cmpd  #-scroll_v_speed_slow                   *         cmpi.w  #-2,d0          ; is player going up too fast?
         blt   @scrollUp_max                           *         blt.s   .scrollUp_max   ; if so, move camera at capped speed
         bra   @scrollUpOrDown                         *         bra.s   .scrollUpOrDown ; otherwise, move camera at player's speed
                                                       * ; ===========================================================================
@@ -261,10 +268,10 @@ ScrollVerti                                           * ScrollVerti:
 @doScroll_fast                                        * .doScroll_fast:
                                                       *         ; related code appears in ScrollBG
                                                       *         ; S3K uses 24 instead of 16
-        ldx   #32                                     *         move.w  #16<<8,d1       ; If player is going too fast, cap camera movement to $10 pixels per frame
-        cmpd  #32                                     *         cmpi.w  #16,d0          ; is player going down too fast?
+        ldx   #scroll_v_speed_fast                    *         move.w  #16<<8,d1       ; If player is going too fast, cap camera movement to $10 pixels per frame
+        cmpd  #scroll_v_speed_fast                    *         cmpi.w  #16,d0          ; is player going down too fast?
         bgt   @scrollDown_max                         *         bgt.s   .scrollDown_max ; if so, move camera at capped speed
-        cmpd  #-32                                    *         cmpi.w  #-16,d0         ; is player going up too fast?
+        cmpd  #-scroll_v_speed_fast                   *         cmpi.w  #-16,d0         ; is player going up too fast?
         blt   @scrollUp_max                           *         blt.s   .scrollUp_max   ; if so, move camera at capped speed
         bra   @scrollUpOrDown                         *         bra.s   .scrollUpOrDown ; otherwise, move camera at player's speed
                                                       * ; ===========================================================================
@@ -301,17 +308,17 @@ ScrollVerti                                           * ScrollVerti:
 @scrollUp                                             * .scrollUp:
         cmpx  glb_camera_y_min_pos                    *         cmp.w   Camera_Min_Y_pos-Camera_Min_X_pos(a2),d1        ; is the new position less than the minimum Y pos?
         bgt   @doScroll                               *         bgt.s   .doScroll       ; if not, branch
-        cmpx  #-$100                                  *         cmpi.w  #-$100,d1
-        bgt   @minYPosReached                         *         bgt.s   .minYPosReached
-        tfr   x,d
-        anda  #$07                                    *         andi.w  #$7FF,d1
-        andb  #$FF
-        std   @scval
-        ldd   glb_camera_y_pos
-        anda  #$07 
-        andb  #$FF
-        std   glb_camera_y_pos                        *         andi.w  #$7FF,(a1)
-        bra   @doScroll                               *         bra.s   .doScroll
+        ;cmpx  #-$100                                 *         cmpi.w  #-$100,d1
+        ;bgt   @minYPosReached                        *         bgt.s   .minYPosReached
+        ;tfr   x,d ; vertical level wrap
+        ;anda  #$07                                   *         andi.w  #$7FF,d1
+        ;andb  #$FF
+        ;std   @scval
+        ;ldd   glb_camera_y_pos
+        ;anda  #$07 
+        ;andb  #$FF
+        ;std   glb_camera_y_pos                        *         andi.w  #$7FF,(a1)
+        ;bra   @doScroll                               *         bra.s   .doScroll
                                                       * ; ===========================================================================
                                                       * ; loc_D844:
 @minYPosReached                                       * .minYPosReached:
@@ -332,14 +339,14 @@ ScrollVerti                                           * ScrollVerti:
 @scrollDown                                           * .scrollDown:
         cmpx  glb_camera_y_max_pos                    *         cmp.w   Camera_Max_Y_pos_now-Camera_Min_X_pos(a2),d1    ; is the new position greater than the maximum Y pos?
         blt   @doScroll                               *         blt.s   .doScroll       ; if not, branch
-        tfr   x,d
-        subd  #$800                                   *         subi.w  #$800,d1
-        std   @scval
-        bcs   @maxYPosReached                         *         bcs.s   .maxYPosReached
-        ldd   glb_camera_y_pos
-        subd  #$800                                   *         subi.w  #$800,(a1)
-        std   glb_camera_y_pos
-        bra   @doScroll                               *         bra.s   .doScroll
+        ;tfr   x,d  ; vertical level wrap
+        ;subd  #$800                                  *         subi.w  #$800,d1
+        ;std   @scval
+        ;bcs   @maxYPosReached                        *         bcs.s   .maxYPosReached
+        ;ldd   glb_camera_y_pos
+        ;subd  #$800                                  *         subi.w  #$800,(a1)
+        ;std   glb_camera_y_pos
+        ;bra   @doScroll                              *         bra.s   .doScroll
                                                       * ; ===========================================================================
                                                       * ; loc_D864:
 @maxYPosReached                                       * .maxYPosReached:
@@ -355,7 +362,6 @@ ScrollVerti                                           * ScrollVerti:
                                                       *         move.w  d3,(a4)         ; set difference between old and new positions
         ldd   #0
 @scval  equ   *-2
-        andb  #$FE
         std   glb_camera_y_pos                        *         move.l  d1,(a1)         ; set new camera Y pos
         rts                                           *         rts
                                                       * ; End of function ScrollVerti
