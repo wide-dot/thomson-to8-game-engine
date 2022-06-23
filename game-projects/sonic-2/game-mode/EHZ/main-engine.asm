@@ -94,16 +94,20 @@ LevelMainLoop
 !       sta   @a
         jsr   ReadJoypads  
         _RunObject ObjID_Sonic,#MainCharacter 
-        _RunObject ObjID_Scroll,#MainCharacter   
         lda   #0
 @a      equ   *-1
         deca
         bpl   <
 
+        _RunObject ObjID_Scroll,#MainCharacter   
+
         jsr   RunObjects
 	jsr   ForceRefresh
         jsr   CheckSpritesRefresh
+
+        ldb   #0 ; sprite mask
 	jsr   EHZ_Mask
+
         jsr   EraseSprites
         jsr   UnsetDisplayPriority
 	jsr   EHZ_Back
@@ -111,6 +115,10 @@ LevelMainLoop
 	jsr   DrawBufferedTile
         jsr   DrawSprites
         jsr   DrawHighPriorityBufferedTile    
+
+        ldb   #2 ; frame mask
+	jsr   EHZ_Mask
+
         bra   LevelMainLoop
 
 ForceRefresh
@@ -149,7 +157,8 @@ EHZ_Back
         jmp   ,x
 
 EHZ_Mask
-        _RunObjectRoutine ObjID_Mask,#0
+        _MountObject ObjID_Mask
+        jsr   ,x
         _SetCartPageA        
 
 	; get image location, this code works for a ND0 only image
