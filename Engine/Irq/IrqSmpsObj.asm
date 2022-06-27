@@ -160,4 +160,4 @@ IRQSysStack
 glb_pal_elapsed_frames fcb 0
 	INCLUDE "./Engine/Palette/UpdatePaletteNow.asm"
 
-        SETDP   direct_page/256
+        SETDP   dp/256

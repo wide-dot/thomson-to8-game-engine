@@ -1,4 +1,4 @@
-        SETDP   direct_page/256
+        SETDP   dp/256
 
 SetCartPageA
         sta   glb_Page

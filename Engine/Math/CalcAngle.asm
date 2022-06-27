@@ -21,14 +21,14 @@
 ;     angle 0 start at (x=0, y>0), clockwise
 ;     special case (0,0) return $40
 
-        SETDP   direct_page/256
+        SETDP   dp/256
 
-tstd            equ direct_page+121
-x_h             equ direct_page+123
-y_h             equ direct_page+124
-x_l             equ direct_page+125
-y_l             equ direct_page+126
-octant          equ direct_page+127
+tstd            equ dp_engine+25
+x_h             equ dp_engine+27
+y_h             equ dp_engine+28
+x_l             equ dp_engine+29
+y_l             equ dp_engine+30
+octant          equ dp_engine+31
 
 CalcAngle
         ; scale down 16 bit value to 9 bit
