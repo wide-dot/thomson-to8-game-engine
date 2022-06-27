@@ -3,7 +3,7 @@
 * ---------------------------------------------------------------------------
 
         INCLUDE "./Engine/Graphics/Tilemap/DataTypes/map16bits.equ"
-        SETDP   direct_page/256
+        SETDP   dp/256
 
 ; data structure for current loaded map
 ; -------------------------------------
@@ -20,26 +20,26 @@ glb_map_tiles_adr       fdb   0 ; tile index
 glb_map_width           fcb   0
 
 ; tmp variables
-h_tl                  equ   direct_page    ; nb of full sized (middle) horizontal chunks
-h_tl_bck              equ   direct_page+1
-v_tl                  equ   direct_page+2  ; nb of full sized (middle) vertical chunks
-c_h_tl                equ   direct_page+3  ; variable that stores current left, middle or right width of chunks
-l_h_tl                equ   direct_page+4 
-r_h_tl                equ   direct_page+5 
-r_h_tl_bck            equ   direct_page+6 
-c_v_tl                equ   direct_page+7  ; variable that stores current up, middle or bottom height of chunks
-u_v_tl                equ   direct_page+8 
-b_v_tl                equ   direct_page+9 
-c_h_tl_bck            equ   direct_page+10 ; backup value of horizontal width of chunks
-c_v_tl_bck            equ   direct_page+11 ; backup value of vertical height of chunks
-cur_c                 equ   direct_page+12 ; current chunk id
-x_off                 equ   direct_page+13 ; x start position in top left chunk
-y_off                 equ   direct_page+15 ; y start position in top left chunk
-b_loc                 equ   direct_page+17 ; location in buffer
-tmb_x                 equ   direct_page+19
-tmb_y                 equ   direct_page+21
-DBT_lcpt              equ   direct_page+23
-DBT_ccpt              equ   direct_page+24
+h_tl                  equ   dp_engine    ; nb of full sized (middle) horizontal chunks
+h_tl_bck              equ   dp_engine+1
+v_tl                  equ   dp_engine+2  ; nb of full sized (middle) vertical chunks
+c_h_tl                equ   dp_engine+3  ; variable that stores current left, middle or right width of chunks
+l_h_tl                equ   dp_engine+4 
+r_h_tl                equ   dp_engine+5 
+r_h_tl_bck            equ   dp_engine+6 
+c_v_tl                equ   dp_engine+7  ; variable that stores current up, middle or bottom height of chunks
+u_v_tl                equ   dp_engine+8 
+b_v_tl                equ   dp_engine+9 
+c_h_tl_bck            equ   dp_engine+10 ; backup value of horizontal width of chunks
+c_v_tl_bck            equ   dp_engine+11 ; backup value of vertical height of chunks
+cur_c                 equ   dp_engine+12 ; current chunk id
+x_off                 equ   dp_engine+13 ; x start position in top left chunk
+y_off                 equ   dp_engine+15 ; y start position in top left chunk
+b_loc                 equ   dp_engine+17 ; location in buffer
+tmb_x                 equ   dp_engine+19
+tmb_y                 equ   dp_engine+21
+DBT_lcpt              equ   dp_engine+23
+DBT_ccpt              equ   dp_engine+24
 
 ; persistant variables
 tmb_old_camera_x      fdb   0 ; last camera position (x axis)

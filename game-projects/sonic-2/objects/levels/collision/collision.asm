@@ -1,30 +1,30 @@
 ; DIRECT PAGE TEMP VARIABLES
 ; --------------------------
-glb_d0   equ   direct_page+128
-glb_d0_b equ   direct_page+129
+glb_d0   equ   dp+main_object_size
+glb_d0_b equ   dp+main_object_size+1
 ; must be a free byte here for 24bits computation
-glb_d1   equ   direct_page+131
-glb_d1_b equ   direct_page+132
+glb_d1   equ   dp+main_object_size+3
+glb_d1_b equ   dp+main_object_size+4
 ; must be a free byte here for 24bits computation
-glb_d2   equ   direct_page+134
-glb_d2_b equ   direct_page+135
+glb_d2   equ   dp+main_object_size+6
+glb_d2_b equ   dp+main_object_size+7
 ; must be a free byte here for 24bits computation
-glb_d3   equ   direct_page+137
-glb_d3_b equ   direct_page+138
+glb_d3   equ   dp+main_object_size+9
+glb_d3_b equ   dp+main_object_size+10
 ; must be a free byte here for 24bits computation
-glb_d4   equ   direct_page+140
-glb_d4_b equ   direct_page+141
-glb_d5   equ   direct_page+142
-glb_d5_b equ   direct_page+143
-glb_d6   equ   direct_page+144
-glb_d6_b equ   direct_page+145
-glb_a3   equ   direct_page+146
-glb_a3_b equ   direct_page+147
-glb_a4   equ   direct_page+148
-glb_a4_b equ   direct_page+149
-glb_b_pg equ   direct_page+150
+glb_d4   equ   dp+main_object_size+12
+glb_d4_b equ   dp+main_object_size+13
+glb_d5   equ   dp+main_object_size+14
+glb_d5_b equ   dp+main_object_size+15
+glb_d6   equ   dp+main_object_size+16
+glb_d6_b equ   dp+main_object_size+17
+glb_a3   equ   dp+main_object_size+18
+glb_a3_b equ   dp+main_object_size+19
+glb_a4   equ   dp+main_object_size+20
+glb_a4_b equ   dp+main_object_size+21
+glb_b_pg equ   dp+main_object_size+22
 
-        SETDP   direct_page/256
+        SETDP   dp/256
 
                                                       * ; ===========================================================================
                                                       * ; ---------------------------------------------------------------------------

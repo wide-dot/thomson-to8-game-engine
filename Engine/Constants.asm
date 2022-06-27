@@ -50,8 +50,8 @@ glb_alphaTiles                equ $9FE4
 
 ; BankSwitch
 glb_Page                      equ $9FE3
-
-direct_page                   equ $9F00 ; custom tmp var space for routine
+dp_engine                     equ $9FC0 ; engine tmp var space for routine
+dp                            equ $9F00 ; custom tmp var space for routine
 glb_system_stack              equ $9F00
 
 * ===========================================================================

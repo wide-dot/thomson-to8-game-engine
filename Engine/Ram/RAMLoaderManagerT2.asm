@@ -74,7 +74,7 @@ RLM_CopyCode
 ************************************************************
         lds   #glb_system_stack        ; reinit de la pile systeme
 		
-        lda   #direct_page/256         ; set direct page to access globals
+        lda   #dp/256         ; set direct page to access globals
         tfr   a,dp
         jmp   RAMLoader     
 

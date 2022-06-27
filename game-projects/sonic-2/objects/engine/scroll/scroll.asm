@@ -1,13 +1,15 @@
         INCLUDE "./Engine/Macros.asm"  
 
+framerate_adjust          equ 4
+
 camera_x_center           equ 68
 scroll_h_free_radius      equ 8
-scroll_h_speed_cap        equ (16/2)*4
+scroll_h_speed_cap        equ (16/2)*framerate_adjust
 scroll_v_free_radius      equ 32
-scroll_v_speed_slow       equ 2*4
-scroll_v_speed_medium     equ 6*4
-scroll_v_speed_fast       equ 16*4
-scroll_v_fast_mode_step   equ $800
+scroll_v_speed_slow       equ 2*framerate_adjust
+scroll_v_speed_medium     equ 6*framerate_adjust
+scroll_v_speed_fast       equ 16*framerate_adjust
+scroll_v_fast_mode_step   equ $800*framerate_adjust
 
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       * ; sub_C3D0:
@@ -110,19 +112,22 @@ ScrollHoriz                                           * ScrollHoriz:
                                                       *         move.w  (a1),d4         ; get camera X pos
                                                       *         tst.b   (Teleport_flag).w
                                                       *         bne.s   .return         ; if a teleport is in progress, return
-        ;ldd   Horiz_scroll_delay_val                 *         move.w  (a5),d1         ; should scrolling be delayed?
-        ;beq   @scrollNotDelayed                      *         beq.s   .scrollNotDelayed       ; if not, branch
-        ;subd  #$100                                  *         subi.w  #$100,d1        ; reduce delay value
-        ;todo ...                                     *         move.w  d1,(a5)
-                                                      *         moveq   #0,d1
-                                                      *         move.b  (a5),d1         ; get delay value
-                                                      *         lsl.b   #2,d1           ; multiply by 4, the size of a position buffer entry
-                                                      *         addq.b  #4,d1
-                                                      *         move.w  2(a5),d0        ; get current position buffer index
-                                                      *         sub.b   d1,d0
-                                                      *         move.w  (a6,d0.w),d0    ; get Sonic's position a certain number of frames ago
-                                                      *         andi.w  #$3FFF,d0
-                                                      *         bra.s   .checkIfShouldScroll    ; use that value for scrolling
+        lda   Horiz_scroll_delay_val                  *         move.w  (a5),d1         ; should scrolling be delayed?
+        beq   @scrollNotDelayed                       *         beq.s   .scrollNotDelayed       ; if not, branch
+        suba  #4 ; see spindash code                  *         subi.w  #$100,d1        ; reduce delay value
+        sta   Horiz_scroll_delay_val                  *         move.w  d1,(a5)
+        ;                                             *         move.b  (a5),d1         ; get delay value
+        ; moved to spindash code                      *         lsl.b   #2,d1           ; multiply by 4, the size of a position buffer entry
+        adda  #4                                      *         addq.b  #4,d1
+        sta   @pos
+        ldb   Sonic_Pos_Record_Index                  *         move.w  2(a5),d0        ; get current position buffer index
+        subb  #0                                      *         sub.b   d1,d0
+@pos    equ   *-1
+        ldx   #Sonic_Pos_Record_Buf
+        abx
+        ldd   ,x                                      *         move.w  (a6,d0.w),d0    ; get Sonic's position a certain number of frames ago
+        anda  #$3F                                    *         andi.w  #$3FFF,d0
+        bra   @checkIfShouldScroll                    *         bra.s   .checkIfShouldScroll    ; use that value for scrolling
                                                       * ; ===========================================================================
                                                       * ; loc_D72E:
 @scrollNotDelayed                                     * .scrollNotDelayed:
@@ -186,6 +191,7 @@ ScrollHoriz                                           * ScrollHoriz:
 ScrollVerti                                           * ScrollVerti:
                                                       *         moveq   #0,d1
         ldd   y_pos,u                                 *         move.w  y_pos(a0),d0
+        andb  #$FE
         subd  glb_camera_y_pos                        *         sub.w   (a1),d0         ; subtract camera Y pos
         ;ldx   glb_camera_y_min_pos                   *         cmpi.w  #-$100,(Camera_Min_Y_pos).w ; does the level wrap vertically?
         ;cmpx  #-$100

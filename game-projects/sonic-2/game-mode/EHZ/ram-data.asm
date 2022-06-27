@@ -2,7 +2,7 @@
 * Object Constants
 * ===========================================================================
 
-nb_reserved_objects               equ 1
+nb_reserved_objects               equ 0
 nb_dynamic_objects                equ 18
 nb_level_objects                  equ 1
 nb_graphical_objects              equ 20 * max 64 total
@@ -10,10 +10,9 @@ nb_graphical_objects              equ 20 * max 64 total
 * ===========================================================================
 * Object Status Table - OST
 * ===========================================================================
- 
+MainCharacter                     equ dp 
+
 Reserved_Object_RAM
-MainCharacter                 fcb   ObjID_Sonic
-                              fill  0,main_object_size-1
 Reserved_Object_RAM_End
 Object_RAM
 Dynamic_Object_RAM            fcb   ObjID_Buzzer
@@ -170,7 +169,10 @@ camera_Y_pos_bias_default     equ   (200/2)-16 ; position of default camera cent
 
 Camera_Y_pos_bias             fdb   0
 Camera_Max_Y_Pos_Changing     fcb   0
-Horiz_scroll_delay_val        fdb   0
+Horiz_scroll_delay_val        fcb   0
+Sonic_Pos_Record_Index        fcb   0 ; index in Sonic_Pos_Record_Buf and Sonic_Stat_Record_Buf
+Sonic_Stat_Record_Buf         fill 0,$100
+Sonic_Pos_Record_Buf          fill 0,$100
 
 * ---------------------------------------------------------------------------
 * Level Globals
