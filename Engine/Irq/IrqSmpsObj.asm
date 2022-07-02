@@ -129,9 +129,9 @@ IrqSmps
         beq   @part2                                  ; branch if rendering tiles - force RAM use instead of testing ROM or RAM
         _GetCartPageB
         stb   @page                                   ; backup data page normally
-        ;sta   $E7E6                                   ; mount Smps page in RAM
+        sta   $E7E6                                   ; mount Smps page in RAM
         lda   #4                                      ; Smps MusicFrame routine id
-        ;jsr   ,x                                      ; Call Smps sound driver
+        jsr   ,x                                      ; Call Smps sound driver
         lda   #0                                      ; (dynamic)
 @page   equ   *-1
         _SetCartPageA                                 ; restore data page
@@ -141,9 +141,9 @@ IrqSmps
 @part2
         ldb   $E7E6
         stb   @page2                                  ; backup data page
-        ;sta   $E7E6                                   ; mount Smps page in RAM
+        sta   $E7E6                                   ; mount Smps page in RAM
         lda   #4                                      ; Smps MusicFrame routine id
-        ;jsr   ,x                                      ; Call Smps sound driver
+        jsr   ,x                                      ; Call Smps sound driver
         anda  #0
         sta   glb_Page                                ; restore special mode
         lda   #0                                      ; (dynamic)

@@ -169,6 +169,10 @@ FeedTileBuffer
         _SetCartPageA        
         ldu   glb_map_adr
 
+        anda  #0
+        sta   x_off                         ; init MSB to 0
+        sta   y_off                         ; init MSB to 0
+
         ; compute position in cycling buffer
         ; ---------------------------------------------------------------------
  
@@ -177,7 +181,7 @@ FeedTileBuffer
         lsrb                                ; col size 4 bytes (<<2)
         stb   @dyn
         ldb   tmb_y+1                       
-        anda  #%00000000
+        ;anda  #%00000000                   ; already initialized
         andb  #%11110000                    ; line mask (0-16)
         _lsld                               ; tile height 16px (>>4) 
         _lsld                               ; line skip 128 bytes (<<7)
