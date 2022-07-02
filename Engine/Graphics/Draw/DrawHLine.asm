@@ -48,8 +48,8 @@ DHL_Left
         cmpx  #0
 DHL_lnl equ   *-1
         bls   DHL_Left_Only
-                                       ; keep max len in chunk
         ldx   #left_px
+        asla
         ldx   a,x                      ; load table for a len of px
         lda   b,x                      ; load pixel pattern from pos
         sta   @patrn
@@ -66,6 +66,7 @@ DHL_lnl equ   *-1
        
 DHL_Left_Only
         lda   p4                       ; need to draw only one Chunk
+        asla
         ldx   #left_px
         ldx   a,x                      ; load table for a len of px
         lda   b,x                      ; load pixel pattern from pos
@@ -83,6 +84,7 @@ DHL_Left_Only
         rts
         
 left_px
+        fdb   0                        ; unused
         fdb   left_px_1
         fdb   left_px_2
         fdb   left_px_3
@@ -178,6 +180,7 @@ DHL_Center
         ; draw right chunk
 DHL_Right
         ldb   p4
+        subb  DHL_lnl
         andb  #%00000111
         beq   @end
         ldx   #right_px
