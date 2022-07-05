@@ -10,6 +10,7 @@ public class Tileset {
 	public int nbTiles;
 	public int nbColumns;
 	public int nbRows;
+	public int centerMode;
 	public boolean inRAM = false;
 
 	public List<TileBin> tiles;

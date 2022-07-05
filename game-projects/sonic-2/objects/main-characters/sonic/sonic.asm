@@ -424,7 +424,9 @@ Obj01_MdNormal                                        *Obj01_MdNormal:
         beq   @cont
         ldx   #Obj01_Modes
         jmp   [a,x] ; move to another mode
-@cont   jsr   Sonic_SlopeResist
+@cont   jsr   Sonic_CheckSpindash
+        jsr   Sonic_Jump
+        jsr   Sonic_SlopeResist
         jsr   Sonic_Move
         jsr   ObjectMove
         jsr   AnglePos

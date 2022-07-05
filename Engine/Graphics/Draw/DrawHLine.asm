@@ -23,14 +23,14 @@ DrawHLine
         ldb   p2                       ; load y pos
         lda   #40
         mul
-        ldu   #$C000                   ; set u at RAMA line (pixel def)
-        leau  d,u
+        addd  #$A000                   ; set u at RAMA line (pixel def)
+        tfr   d,u
+
         ldd   p0                       ; load x pos / 8
         _asrd
         _asrd
         _asrd
-        leau  d,u                      ; u point to first byte to write in RAMA (pixel)
-        leay  $-2000,u                 ; y point to first byte to write in RAMB (color)
+        leau  d,u                      ; u point to first byte to write in RAMB (color)
 
         anda  #0
         sta   DHL_lnl
@@ -52,17 +52,63 @@ DHL_lnl equ   *-1
         asla
         ldx   a,x                      ; load table for a len of px
         lda   b,x                      ; load pixel pattern from pos
-        sta   @patrn
-        ldb   ,u                       ; update pixels on screen
-        orb   #0                       ; set new pixels to 1
-@patrn  equ   *-1
-        stb   ,u+
+        sta   $2000,u                  ; update pixels on screen
 
-        ldb   ,y
+        ldb   ,u
         andb  #%10000111               ; clear color 1
         orb   p6                       ; apply color 1
-        stb   ,y+        
-        bra   DHL_Center               ; continue to draw
+        stb   ,u+        
+
+DHL_Center
+        ldd   p3
+        subd  DHL_lnl-1                ; compute nb of remaining pixels to draw
+        _asrd
+        asrb
+        asrb                           ; number of 8px groups
+        beq   DHL_Right
+        cmpb  #1
+        bne   @fast
+        lda   #0
+        ldb   p5
+        sta   $2000,u                  ; draw one plain chunk
+        stb   ,u+
+        bra   DHL_Right
+@fast   leau  b,u
+        stu   @u
+        leau  $2000,u
+        aslb
+        ldx   #DHL_pshu
+        ldx   b,x                      ; load compiled draw routine
+        stx   dhl_routine
+        ldd   #0
+        ldx   #0
+        leay  ,x
+        jsr   [dhl_routine]
+        ldu   #0
+@u      equ   *-2
+        lda   p5
+        ldb   p5
+        tfr   d,x
+        leay  ,x
+        jsr   [dhl_routine]
+        ldu   @u
+
+        ; draw right chunk
+DHL_Right
+        ldb   p4
+        subb  DHL_lnl
+        andb  #%00000111
+        beq   @end
+        ;
+        ldx   #right_px
+        lda   b,x                      ; load pixel pattern from len
+        sta   $2000,u                  ; update pixels on screen
+        ;
+        ldb   ,u
+        andb  #%10000111               ; clear color 1
+        orb   p6                       ; apply color 1
+        stb   ,u        
+@end    rts
        
 DHL_Left_Only
         lda   p4                       ; need to draw only one Chunk
@@ -70,17 +116,12 @@ DHL_Left_Only
         ldx   #left_px
         ldx   a,x                      ; load table for a len of px
         lda   b,x                      ; load pixel pattern from pos
-        sta   @patrn
+        sta   $2000,u                  ; update pixels on screen
         ;
-        ldb   ,u                       ; update pixels on screen
-        orb   #0                       ; set new pixels to 1
-@patrn  equ   *-1
-        stb   ,u
-        ;
-        ldb   ,y
+        ldb   ,u
         andb  #%10000111               ; clear color 1
         orb   p6                       ; apply color 1
-        stb   ,y        
+        stb   ,u        
         rts
         
 left_px
@@ -141,62 +182,6 @@ left_px_6
 left_px_7
         fcb   %11111110
         fcb   %01111111
-
-DHL_Center
-        ldd   p3
-        subd  DHL_lnl-1                ; compute nb of remaining pixels to draw
-        _asrd
-        asrb
-        asrb                           ; number of 8px groups
-        beq   DHL_Right
-        cmpb  #1
-        bne   @fast
-        lda   #0
-        ldb   p5
-        sta   ,u+                      ; draw one plain chunk
-        stb   ,y+
-        bra   DHL_Right
-@fast   leau  b,u
-        stu   @u
-        aslb
-        ldx   #DHL_pshu
-        ldx   b,x                      ; load compiled draw routine
-        stx   dhl_routine
-        ldd   #0
-        ldx   #0
-        leay  ,x
-        jsr   [dhl_routine]
-        ldu   #0
-@u      equ   *-2
-        leau  $-2000,u
-        lda   p5
-        ldb   p5
-        tfr   d,x
-        leay  ,x
-        jsr   [dhl_routine]
-        ldu   @u
-        leay  $-2000,u
-
-        ; draw right chunk
-DHL_Right
-        ldb   p4
-        subb  DHL_lnl
-        andb  #%00000111
-        beq   @end
-        ldx   #right_px
-        lda   b,x                      ; load pixel pattern from len
-        sta   @patrn
-        ;
-        ldb   ,u                       ; update pixels on screen
-        orb   #0                       ; set new pixels to 1
-@patrn  equ   *-1
-        stb   ,u
-        ;
-        ldb   ,y
-        andb  #%10000111               ; clear color 1
-        orb   p6                       ; apply color 1
-        stb   ,y        
-@end    rts
 
 right_px
         fcb   %00000000                ; unused

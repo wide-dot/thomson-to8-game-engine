@@ -15,7 +15,7 @@ MainCharacter                     equ dp
 Reserved_Object_RAM
 Reserved_Object_RAM_End
 Object_RAM
-Dynamic_Object_RAM            fcb   ObjID_Buzzer
+Dynamic_Object_RAM            fcb   0
                               fill  0,object_size-1
                               fill  0,(nb_dynamic_objects-1)*object_size
 Dynamic_Object_RAM_End
