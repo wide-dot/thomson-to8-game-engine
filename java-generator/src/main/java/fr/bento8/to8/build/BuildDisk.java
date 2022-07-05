@@ -442,7 +442,7 @@ public class BuildDisk
 				
 				if (cur_variant.contains("B")) {
 					logger.debug("\t\t- BackupBackground/Draw/Erase");
-					SpriteSheet ss = new SpriteSheet(sprite, associatedIdx, imgCumulative, 1, 1, 1, cur_variant, interlaced);
+					SpriteSheet ss = new SpriteSheet(sprite, associatedIdx, imgCumulative, 1, 1, 1, cur_variant, interlaced, SpriteSheet.CENTER);
 					asm = new AssemblyGenerator(ss, Game.generatedCodeDirName + object.name, 0);
 					asm.compileCode("A000");
 					// La valeur 64 doit être ajustée dans MainEngine.asm si modifiée TODO : rendre paramétrable
@@ -475,18 +475,18 @@ public class BuildDisk
 					if (cur_variant.contains("DMAP")) {
 						logger.debug("\t\t- Draw MAP RLE");
 						cur_variant = cur_variant.replace("DMAP", "D");						
-						ss = new SpriteSheet(sprite, associatedIdx, imgCumulative, 1, 1, 1, cur_variant, interlaced, spriteFileRef);
+						ss = new SpriteSheet(sprite, associatedIdx, imgCumulative, 1, 1, 1, cur_variant, interlaced, SpriteSheet.CENTER, spriteFileRef);
 						easm = new MapRleEncoder(ss, Game.generatedCodeDirName + object.name, 0);
 
 					} else if (cur_variant.contains("DZX0")) {
 						logger.debug("\t\t- Draw ZX0");
 						cur_variant = cur_variant.replace("DZX0", "D");						
-						ss = new SpriteSheet(sprite, associatedIdx, imgCumulative, 1, 1, 1, cur_variant, interlaced, spriteFileRef);
+						ss = new SpriteSheet(sprite, associatedIdx, imgCumulative, 1, 1, 1, cur_variant, interlaced, SpriteSheet.CENTER, spriteFileRef);
 						easm = new ZX0Encoder(ss, Game.generatedCodeDirName + object.name, 0);
 
 					} else {
 						logger.debug("\t\t- Draw");
-						ss = new SpriteSheet(sprite, associatedIdx, imgCumulative, 1, 1, 1, cur_variant, interlaced, spriteFileRef);
+						ss = new SpriteSheet(sprite, associatedIdx, imgCumulative, 1, 1, 1, cur_variant, interlaced, SpriteSheet.CENTER, spriteFileRef);
 						easm = new SimpleAssemblyGenerator(ss, Game.generatedCodeDirName + object.name, 0, SimpleAssemblyGenerator._NO_ALPHA);
 					}
 					easm.compileCode("A000");
@@ -545,6 +545,11 @@ public class BuildDisk
 			tileset.nbTiles = Integer.parseInt(tilesetProperties.getValue()[1].split(",")[0]);
 			tileset.nbColumns = Integer.parseInt(tilesetProperties.getValue()[1].split(",")[1]);
 			tileset.nbRows = Integer.parseInt(tilesetProperties.getValue()[1].split(",")[2]);
+			if (tilesetProperties.getValue()[1].split(",").length==3) {
+				tileset.centerMode = SpriteSheet.TOP_LEFT;
+			} else {
+				tileset.centerMode=SpriteSheet.colorModes.get(tilesetProperties.getValue()[1].split(",")[3]);
+			}
 
 			//if (tilesetProperties.getValue().length > 2 && tilesetProperties.getValue()[2].equalsIgnoreCase(BuildDisk.RAM))
 			// tileset should always be in RAM for rendering speed
@@ -552,7 +557,7 @@ public class BuildDisk
 
 			// Parcours des différents tiles du tileset
 			logger.debug("\t"+object.name+" tileset: " + tileset.name);
-			SpriteSheet ss = new SpriteSheet(tileset.name, tileset.fileName, tileset.nbTiles, tileset.nbColumns, tileset.nbRows);
+			SpriteSheet ss = new SpriteSheet(tileset.name, tileset.fileName, tileset.nbTiles, tileset.nbColumns, tileset.nbRows, tileset.centerMode);
 			int tileId;
 			for (tileId = 0; tileId < tileset.nbTiles; tileId++) {
 				logger.debug("\t\t"+object.name+" Compile tile: " + tileId);

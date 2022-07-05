@@ -549,6 +549,7 @@ DrawBufferedTile
         mul
         addd  #$C000                        ; (dynamic)
 @dyn1   equ   *-1        
+        addd  #441 ; tileset should be declared with TILE8x16 center parameter in properties
         std   <glb_screen_location_2
         pshs  d
         std   s_loc2
@@ -561,6 +562,7 @@ DrawBufferedTile
         mul
         addd  #$A000                        ; (dynamic)
 @dyn2   equ   *-1        
+        addd  #441 ; tileset should be declared with TILE8x16 center parameter in properties
         std   <glb_screen_location_2
         pshs  d
         std   s_loc2

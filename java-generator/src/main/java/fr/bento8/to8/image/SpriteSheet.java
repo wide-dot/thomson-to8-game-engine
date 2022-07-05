@@ -8,6 +8,8 @@ import java.awt.image.ColorModel;
 import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 
@@ -55,10 +57,18 @@ public class SpriteSheet {
 	public int center_offset; // est ce que le centre est pair (0) ou impair (1)
 	
 	public static final int CENTER = 0;
-	public static final int TOP_LEFT = 1;	
+	public static final int TOP_LEFT = 1;
+	public static final int TILE8x16 = 2;	
+	public static final HashMap<String, Integer> colorModes= new HashMap<String, Integer>(){
+		private static final long serialVersionUID = 1L;
+	{
+			put("CENTER",CENTER);
+			put("TOP_LEFT",TOP_LEFT);
+			put("TILE8x16",TILE8x16);
+			}};
 
 	// TODO mutualiser les deux constructeurs
-	public SpriteSheet(Sprite sprite, String associatedIdx, BufferedImage imgCumulative, int nbTiles, int nbColumns, int nbRows, String variant, boolean interlaced, String... fileRef) {
+	public SpriteSheet(Sprite sprite, String associatedIdx, BufferedImage imgCumulative, int nbTiles, int nbColumns, int nbRows, String variant, boolean interlaced, int centerMode, String... fileRef) {
 		try {
 			this.variant = variant;
 			subImageNb = nbTiles;
@@ -372,7 +382,7 @@ public class SpriteSheet {
 					}
 
 					checkPixelRange();
-					prepareImages(variant.contains("1"), CENTER);
+					prepareImages(variant.contains("1"), centerMode);
 
 				} else {
 					logger.info("Le format de fichier de " + sprite.spriteFile + " n'est pas supporté.");
@@ -396,7 +406,7 @@ public class SpriteSheet {
 		}
 	}
 	
-	public SpriteSheet(String tag, String file, int nbTiles, int nbColumns, int nbRows) {
+	public SpriteSheet(String tag, String file, int nbTiles, int nbColumns, int nbRows, int centerMode) {
 		try {
 			this.variant = "ND0"; // default variant
 			subImageNb = nbTiles;
@@ -418,7 +428,7 @@ public class SpriteSheet {
 
 				if (subImageWidth <= 160 && subImageHeight <= 200 && pixelSize == 8) { // Contrôle du format d'image
 					checkPixelRange();
-					prepareImages(false, TOP_LEFT);
+					prepareImages(false, centerMode);
 
 				} else {
 					logger.info("Le format de fichier de " + file + " n'est pas supporté.");
@@ -472,6 +482,7 @@ public class SpriteSheet {
 		switch (locationRef) {
 			case CENTER   : center = (int)((Math.ceil(subImageHeight/2.0)-1)*40) +  subImageWidth/8; break;
 			case TOP_LEFT : center = 0; break;
+			case TILE8x16 : center = (int)((Math.ceil(subImageHeight*3.0/4.0)-1)*40) +  subImageWidth/8; break; 
 		}
 		
 		// Correction positionnement sprite en fonction de la largeur d'image
@@ -535,8 +546,9 @@ public class SpriteSheet {
 					if (firstPixel) {
 						firstPixel = false;
 						switch (locationRef) {
-							case CENTER   : y1_offset[position] = curLine-((subImageHeight-1)/2); break;
+							case CENTER   : y1_offset[position] = curLine-subImageHeight/2-1; break;
 							case TOP_LEFT : y1_offset[position] = 0; break;
+							case TILE8x16 : y1_offset[position] = curLine-subImageHeight*3/4-1; break;
 						}						
 					}
 					if (indexDest*2+page*2-(160*curLine) < x_Min) {
@@ -544,6 +556,7 @@ public class SpriteSheet {
 						switch (locationRef) {
 							case CENTER   : x1_offset[position] = x_Min-(subImageWidth/2); break;
 							case TOP_LEFT : x1_offset[position] = 0; break;
+							case TILE8x16 : x1_offset[position] = 0; break;
 						}						
 					}
 					if (indexDest*2+page*2-(160*curLine) > x_Max) {
@@ -590,8 +603,9 @@ public class SpriteSheet {
 						if (firstPixel) {
 							firstPixel = false;
 							switch (locationRef) {
-								case CENTER   : y1_offset[position] = curLine-((subImageHeight-1)/2); break;
+								case CENTER   : y1_offset[position] = curLine-subImageHeight/2-1; break;
 								case TOP_LEFT : y1_offset[position] = 0; break;
+								case TILE8x16 : y1_offset[position] = curLine-subImageHeight*3/4-1; break;
 							}							
 						}
 						if (indexDest*2+page*2+1-(160*curLine) < x_Min) {
@@ -599,6 +613,7 @@ public class SpriteSheet {
 							switch (locationRef) {
 								case CENTER   : x1_offset[position] = x_Min-(subImageWidth/2); break;
 								case TOP_LEFT : x1_offset[position] = 0; break;
+								case TILE8x16 : x1_offset[position] = 0; break;
 							}					
 						}
 						if (indexDest*2+page*2+1-(160*curLine) > x_Max) {

@@ -91,7 +91,7 @@ public class PatternCluster{
 					}
 				}
 
-				// s'il n'y a pas de pattern avant le noeud imposé, on utilisé le noeud imposé comme noeud de départ
+				// s'il n'y a pas de pattern avant le noeud imposé, on utilise le noeud imposé comme noeud de départ
 				if (nodeStart == -1 || i < nodeStart) {
 					nodeStart = i;
 				}
@@ -138,9 +138,17 @@ public class PatternCluster{
 				}
 
 				if (isForward) {
-					node = ((Math.abs(solution.positions.get(start) - solution.positions.get(i-1))+1) / 2) + solution.positions.get(start);
+					if ((center-128 <= solution.positions.get(start)) && (solution.positions.get(i-1) <= center+127)) {
+						node = center; // in this case the node is not centered but the first leau is skipped
+					} else {
+						node = ((Math.abs(solution.positions.get(start) - solution.positions.get(i-1))+1) / 2) + solution.positions.get(start);						
+					}
 				} else {
-					node = -((Math.abs(solution.positions.get(start) - solution.positions.get(i-1))+1) / 2) + solution.positions.get(start);
+					if ((center-128 <= solution.positions.get(i-1)) && (solution.positions.get(start) <= center+127)) {
+						node = center; // in this case the node is not centered but the first leau is skipped
+					} else {
+						node = -((Math.abs(solution.positions.get(start) - solution.positions.get(i-1))+1) / 2) + solution.positions.get(start);
+					}
 				}
 				solution.computedLeau.put(start, node);
 
