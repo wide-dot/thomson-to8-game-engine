@@ -1,9 +1,11 @@
 ; ---------------------------------------------------------------------------
 ; Load_Rings
 ;
-; This is the Ring manager for Sonic 3
+; This is the Ring manager for Sonic 3, with some changes to fit sonic 2
 ; 
 ; ---------------------------------------------------------------------------
+
+        INCLUDE "./Engine/Macros.asm"    
 
 ; All sprites coordinates are image centered
 Rings_width             equ 8
@@ -11,26 +13,11 @@ Rings_height            equ 16
 Rings_view_width        equ 136
 Rings_view_height       equ 160
 
-Rings_manager_routine   fcb 0
-Ring_start_addr_layout  fdb 0 ; address in the ring layout of the first ring whose X position is >= camera X position - 8
-Ring_end_addr_layout    fdb 0 ; address in the ring layout of the first ring whose X position is >= camera X position + 328
-Ring_start_addr_status  fdb 0 ; address in the ring status table of the first ring whose X position is >= camera X position - 8
-
-; move to globals
-Respawn_table_keep      fdb 0
-Current_zone_and_act    fdb 0
-Rings_anim_frame        fcb 0
-
-Ring_status_table       fill 0,$400 ; 1 word per ring (512 rings max)
-Ring_consumption_table             ; $80 bytes ; stores the addresses of all rings currently being consumed
-Ring_consumption_count  fdb 0       ; the number of rings being consumed currently
-Ring_consumption_list   fill 0,$7E  ; the remaining part of the ring consumption table
-
-cur_end_addr_layout    equ engine_dp
+nb_rings                equ dp_engine
 
 Load_Rings                                            *Load_Rings:
                                                       *                moveq   #0,d0
-        lda   Rings_manager_routine                   *                move.b  (Rings_manager_routine).w,d0
+        ; a is set by caller                          *                move.b  (Rings_manager_routine).w,d0
         ldx   #Rings_Routines                         *                move.w  off_E8B8(pc,d0.w),d0
         jmp   [a,x]                                   *                jmp     off_E8B8(pc,d0.w)
                                                       *; End of function Load_Rings
@@ -38,6 +25,7 @@ Load_Rings                                            *Load_Rings:
 Rings_Routines                                        *; ---------------------------------------------------------------------------
         fdb   Rings_Init                              *off_E8B8:       dc.w loc_E8BE-off_E8B8
         fdb   Rings_Main                              *                dc.w loc_E942-off_E8B8
+        fdb   Render_Rings
                                                       *                dc.w loc_E9CA-off_E8B8
                                                       *; ---------------------------------------------------------------------------
                                                       *
@@ -47,14 +35,13 @@ Rings_Init                                            *loc_E8BE:
         ; to rings position and consumption arrays
         ; based on camera x position
 
-        lda   #2 ; => RingsManager_Main
-        sta   Rings_manager_routine                   *                addq.b  #2,(Rings_manager_routine).w
+        ; a is set by caller                          *                addq.b  #2,(Rings_manager_routine).w
         jsr   Rings_Setup                             *                bsr.w   sub_EB1A
                                                       *                cmpi.b  #$14,(Current_zone).w
                                                       *                beq.s   loc_E904
         ldx   Ring_start_addr_layout                  *                movea.l (Ring_start_addr_ROM).w,a1
         ldu   #Ring_status_table                      *                lea     (Ring_status_table).w,a2
-        ldd   Camera_X_pos                            *                move.w  (Camera_X_pos).w,d4
+        ldd   glb_camera_x_pos                        *                move.w  (Camera_X_pos).w,d4
         subd  #Rings_width/2                          *                subq.w  #8,d4
         bhi   >                                       *                bhi.s   loc_E8E6
         ldd   #1 ; no negative values allowed         *                moveq   #1,d4
@@ -127,9 +114,10 @@ Rings_Main                                            *loc_E942:
         jsr   Rings_Consume                           *                bsr.s   sub_E994
         ldy   Ring_start_addr_layout                  *                movea.l (Ring_start_addr_ROM).w,a1
         ldu   Ring_start_addr_status                  *                movea.w (Ring_start_addr_RAM).w,a2
-        ldx   Camera_X_pos                            *                move.w  (Camera_X_pos).w,d4
+        ldx   glb_camera_x_pos                        *                move.w  (Camera_X_pos).w,d4
         leax  -(Rings_width/2),x                      *                subq.w  #8,d4
-        bhi   >                                       *                bhi.s   loc_E95C
+        cmpx  #1
+        bge   >                                       *                bhi.s   loc_E95C
         ldx   #1 ; camera x pos capped to 1           *                moveq   #1,d4
         bra   >                                       *                bra.s   loc_E95C
                                                       *; ---------------------------------------------------------------------------
@@ -154,7 +142,7 @@ Rings_Main                                            *loc_E942:
         sty   Ring_start_addr_layout                  *                move.l  a1,(Ring_start_addr_ROM).w
         stu   Ring_start_addr_status                  *                move.w  a2,(Ring_start_addr_RAM).w
         ldu   Ring_end_addr_layout                    *                movea.l (Ring_end_addr_ROM).w,a2
-        leay  (Rings_width/2)+Rings_view_width,y      *                addi.w  #$150,d4
+        leax  (Rings_width/2)+Rings_view_width,x      *                addi.w  #$150,d4
         bra   >                                       *                bra.s   loc_E980
                                                       *; ---------------------------------------------------------------------------
                                                       *
@@ -173,7 +161,7 @@ Rings_Main                                            *loc_E942:
 !                                                     *loc_E988:
         cmpx  -4,u ; search moving rearward           *                cmp.w   -4(a2),d4
         bls   @d                                      *                bls.s   loc_E986
-        stu   Ring_start_addr_layout                  *                move.l  a2,(Ring_end_addr_ROM).w
+        stu   Ring_end_addr_layout                    *                move.l  a2,(Ring_end_addr_ROM).w
         rts                                           *                rts
                                                       *
 
@@ -452,11 +440,14 @@ Rings_Setup                                           *sub_EB1A:
                                                       *
 
 Render_Rings                                          *Render_Rings:
-        ldx   Ring_start_addr_layout                  *                movea.l (Ring_start_addr_ROM).w,a0
+                                                      *                movea.l (Ring_start_addr_ROM).w,a0
         ldd   Ring_end_addr_layout                    *                move.l  (Ring_end_addr_ROM).w,d2
         subd  Ring_start_addr_layout                  *                sub.l   a0,d2
-        std   cur_end_addr_layout
         beq   @rts ; branch if no rings to display    *                beq.s   locret_EBEC
+        _asrd
+        _asrd
+        stb   nb_rings
+        ldx   Ring_start_addr_layout
         ldu   Ring_start_addr_status                  *                movea.w (Ring_start_addr_RAM).w,a4
                                                       *                lea     CMap_Ring(pc),a1
                                                       *                move.w  4(a3),d4
@@ -467,14 +458,17 @@ Render_Rings                                          *Render_Rings:
         tst   ,u++                                    *                tst.w   (a4)+
         bmi   @next ; branch if ring is consumed      *                bmi.s   loc_EBE6
         ldd   2,x   ; get ring Y pos                  *                move.w  2(a0),d1
-        subd  Camera_Y_pos                            *                sub.w   d4,d1
+        subd  glb_camera_y_pos                        *                sub.w   d4,d1
         addd  #Rings_height/2                         *                addq.w  #8,d1
-        andd  #$7FF ; level Y loop                    *                and.w   d3,d1
+        anda  #$07
+        andb  #$FF  ; level Y loop                    *                and.w   d3,d1
         cmpd  #Rings_view_height+Rings_height         *                cmp.w   d5,d1
         bhs   @next ; ring is out of y screen range   *                bhs.s   loc_EBE6
         addb  #20-(Rings_height/2) ; on screen pos    *                addi.w  #$78,d1
         lda   1,x   ; get ring X pos                  *                move.w  (a0),d0
-        suba  Camera_X_pos+1                          *                sub.w   (a3),d0
+        anda  #%11111110 ; scroll step is 2px
+        inca             ; fix ring position
+        suba  glb_camera_x_pos+1                      *                sub.w   (a3),d0
         adda  #12   ; on screen position of camera    *                addi.w  #$80,d0
         lsra                                ; x=x/2, sprites moves by 2 pixels on x axis
         lsra                                ; x=x/2, RAMA RAMB interlace  
@@ -523,13 +517,11 @@ Render_Rings                                          *Render_Rings:
                                                       *                subq.w  #1,d7
                                                       *
 @next                                                 *loc_EBE6:
-                                                      *                addq.w  #4,a0
-        ldd   cur_end_addr_layout
-        subd  #4                                      *                subq.w  #4,d2
-        std   cur_end_addr_layout
+        leax  4,x                                     *                addq.w  #4,a0
+        dec   nb_rings                                *                subq.w  #4,d2
         bne   @loop                                   *                bne.s   loc_EBA6
                                                       *
-                                                      *locret_EBEC:
+@rts                                                  *locret_EBEC:
         rts                                           *                rts
                                                       *; End of function Render_Rings
 
@@ -593,12 +585,21 @@ Render_Rings                                          *Render_Rings:
                                                       *                dc.w $FFF8
 
 ;--------------------------------------------------------------------------------------------------
+Ring_start_addr_layout  fdb 0 ; address in the ring layout of the first ring whose X position is >= camera X position - 8
+Ring_end_addr_layout    fdb 0 ; address in the ring layout of the first ring whose X position is >= camera X position + 328
+Ring_start_addr_status  fdb 0 ; address in the ring status table of the first ring whose X position is >= camera X position - 8
+
+Ring_status_table       fill 0,$400 ; 1 word per ring (512 rings max)
+Ring_consumption_table             ; $80 bytes ; stores the addresses of all rings currently being consumed
+Ring_consumption_count  fdb 0       ; the number of rings being consumed currently
+Ring_consumption_list   fill 0,$7E  ; the remaining part of the ring consumption table
+
 RingLocPtrs
         fdb   EHZ1_Rings
         fdb   EHZ2_Rings
 
-EHZ1_Rings INCLUDEBIN ".\objects\managers\rings\EHZ_1.bin"
-EHZ2_Rings INCLUDEBIN ".\objects\managers\rings\EHZ_2.bin"
+EHZ1_Rings INCLUDEBIN ".\objects\managers\rings\EHZ_1_INDIVIDUAL.bin"
+EHZ2_Rings INCLUDEBIN ".\objects\managers\rings\EHZ_2_INDIVIDUAL.bin"
 
 Ring_Images
         fdb   draw_img_ring_1
