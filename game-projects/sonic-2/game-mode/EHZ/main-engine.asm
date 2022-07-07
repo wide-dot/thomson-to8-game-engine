@@ -69,6 +69,9 @@ LevelSizeLoad ; todo move to an object
         addd  #2048
         std   ColArray2
 
+        ; init ring manager
+        _RunObjectRoutine ObjID_RingsManager,#0
+
         ; init music
         lda   #$01                     ; 1: play 60hz track at 50hz, 0: do not skip frames
         sta   Smps.60HzData 
@@ -85,10 +88,12 @@ LevelSizeLoad ; todo move to an object
 LevelMainLoop
         jsr   WaitVBL    
         jsr   TileAnimScript
+        jsr   ChangeRingFrame
 
         jsr   ReadJoypads  
         _RunObject ObjID_Sonic,#MainCharacter 
         _RunObject ObjID_Scroll,#MainCharacter   
+        _RunObjectRoutine ObjID_RingsManager,#2
 
         jsr   RunObjects
 	jsr   ForceRefresh
@@ -102,6 +107,7 @@ LevelMainLoop
 	jsr   EHZ_Back
         jsr   ComputeTileBuffer
 	jsr   DrawBufferedTile
+        _RunObjectRoutine ObjID_RingsManager,#4
         jsr   DrawSprites
         jsr   DrawHighPriorityBufferedTile   
 
@@ -109,6 +115,46 @@ LevelMainLoop
 	jsr   EHZ_Mask
 
         bra   LevelMainLoop
+
+ChangeRingFrame                                       *ChangeRingFrame:
+                                                      *        subq.b  #1,(Logspike_anim_counter).w
+                                                      *        bpl.s   +
+                                                      *        move.b  #$B,(Logspike_anim_counter).w
+                                                      *        subq.b  #1,(Logspike_anim_frame).w ; animate unused log spikes
+                                                      *        andi.b  #7,(Logspike_anim_frame).w
+                                                      *+
+        lda   Rings_anim_counter
+        suba  Vint_Main_runcount
+        sta   Rings_anim_counter                      *        subq.b  #1,(Rings_anim_counter).w
+        bpl   >                                       *        bpl.s   +
+        adda  #7
+        sta   Rings_anim_counter                      *        move.b  #7,(Rings_anim_counter).w
+        lda   Rings_anim_frame
+        inca                                          *        addq.b  #1,(Rings_anim_frame).w ; animate rings in the level (obj25)
+        anda  #%00000011                              *        andi.b  #3,(Rings_anim_frame).w
+        sta   Rings_anim_frame
+!                                                     *+
+                                                      *        subq.b  #1,(Unknown_anim_counter).w
+                                                      *        bpl.s   +
+                                                      *        move.b  #7,(Unknown_anim_counter).w
+                                                      *        addq.b  #1,(Unknown_anim_frame).w ; animate nothing (deleted special stage object is my best guess)
+                                                      *        cmpi.b  #6,(Unknown_anim_frame).w
+                                                      *        blo.s   +
+                                                      *        move.b  #0,(Unknown_anim_frame).w
+                                                      *+
+                                                      *        tst.b   (Ring_spill_anim_counter).w
+                                                      *        beq.s   +       ; rts
+                                                      *        moveq   #0,d0
+                                                      *        move.b  (Ring_spill_anim_counter).w,d0
+                                                      *        add.w   (Ring_spill_anim_accum).w,d0
+                                                      *        move.w  d0,(Ring_spill_anim_accum).w
+                                                      *        rol.w   #7,d0
+                                                      *        andi.w  #3,d0
+                                                      *        move.b  d0,(Ring_spill_anim_frame).w ; animate scattered rings (obj37)
+                                                      *        subq.b  #1,(Ring_spill_anim_counter).w
+                                                      *+
+        rts                                           *        rts
+                                                      *; End of function ChangeRingFrame
 
 ForceRefresh
 	; Force sprite to be refreshed when background changes
@@ -214,7 +260,7 @@ Animated_EHZ_4
 Animated_EHZ_5
 	; Pulsing thing against checkered background
 	fcb   -1,6
-	fcb   0,127
+	fcb   0,23
 	fcb   3,9
 	fcb   6,11
 	fcb   9,23

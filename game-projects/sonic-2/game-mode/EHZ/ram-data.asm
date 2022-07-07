@@ -171,8 +171,11 @@ Camera_Y_pos_bias             fdb   0
 Camera_Max_Y_Pos_Changing     fcb   0
 Horiz_scroll_delay_val        fcb   0
 Sonic_Pos_Record_Index        fcb   0 ; index in Sonic_Pos_Record_Buf and Sonic_Stat_Record_Buf
-Sonic_Stat_Record_Buf         fill 0,$100
-Sonic_Pos_Record_Buf          fill 0,$100
+Sonic_Stat_Record_Buf         fill  0,$100
+Sonic_Pos_Record_Buf          fill  0,$100
+Current_zone_and_act          fdb   0
+
+ INCLUDE ".\objects\managers\rings-manager-s3k-ram.asm"
 
 * ---------------------------------------------------------------------------
 * Level Globals
@@ -183,3 +186,4 @@ ColData_page                  fcb   0
 ColCurveMap                   fdb   0
 ColArray                      fdb   0
 ColArray2                     fdb   0
+Respawn_table_keep            fdb 0

@@ -14,7 +14,7 @@ Sonic_acceleration_tmp  equ glb_d5
 Sonic_deceleration_tmp  equ glb_d4
 Sonic_logic_frame_count equ dp+main_object_size+23
 
-framerate_adjust           equ 4 ; for code specific adjustment, search "framerate adjust" comment
+framerate_adjust           equ 5 ; for code specific adjustment, search "framerate adjust" comment
 
 sonic_cst_top_speed        equ $600
 sonic_cst_acceleration     equ $C
@@ -3794,10 +3794,13 @@ SAnim_WalkRun                                         *SAnim_WalkRun:
         lsrb
         andb  #6
         ldx   b,x
-        stx   anim+dp                                  *  add.b   d3,mapping_frame(a0)
+        stx   anim+dp                                 *  add.b   d3,mapping_frame(a0)
         jsr   SAnim_WalkRun_Sub
-        dec   anim_frame_duration+dp                   *  subq.b  #1,anim_frame_duration(a0)
+        lda   anim_frame_duration+dp
+        suba  Vint_Main_runcount                      *  subq.b  #1,anim_frame_duration(a0)
+        sta   anim_frame_duration+dp
         bpl   return_1B4AC                            *  bpl.s   return_1B4AC
+        sta   @delta
         ldd   #0
 @d2     equ   *-2
         _negd                                         *  neg.w   d2
@@ -3806,10 +3809,10 @@ SAnim_WalkRun                                         *SAnim_WalkRun:
         ldd   #0                                      *  moveq   #0,d2
 !                                                     *+
         ;                                             *  lsr.w   #8,d2
-        asra  ; framerate adjust
-        asra  ; framerate adjust
-        sta   anim_frame_duration+dp                   *  move.b  d2,anim_frame_duration(a0)  ; modify frame duration
-        inc   anim_frame+dp                            *  addq.b  #1,anim_frame(a0)       ; modify frame number
+        adda  #0
+@delta  equ   *-1 ; remove drop frames from previous duration
+        sta   anim_frame_duration+dp                  *  move.b  d2,anim_frame_duration(a0)  ; modify frame duration
+        inc   anim_frame+dp                           *  addq.b  #1,anim_frame(a0)       ; modify frame number
                                                       *
 return_1B4AC                                          *return_1B4AC:
         rts                                           *  rts
@@ -3913,12 +3916,15 @@ loc_1B572                                             *loc_1B572:
                                                       *; ===========================================================================
                                                       *; loc_1B586:
 SAnim_Roll                                            *SAnim_Roll:
-        dec   anim_frame_duration+dp                   *  subq.b  #1,anim_frame_duration(a0)  ; subtract 1 from frame duration
+        lda   anim_frame_duration+dp
+        suba  Vint_Main_runcount                      *  subq.b  #1,anim_frame_duration(a0)  ; subtract 1 from frame duration
+        sta   anim_frame_duration+dp
         bmi   >                                       *  bpl.w   SAnim_Delay         ; if time remains, branch
         rts
-!       incb                                          *  addq.b  #1,d0       ; is the start flag = $FE ?
+!       sta   @delta
+        incb                                          *  addq.b  #1,d0       ; is the start flag = $FE ?
         bne   SAnim_Push                              *  bne.s   SAnim_Push  ; if not, branch
-        ldd   inertia+dp                               *  mvabs.w inertia(a0),d2
+        ldd   inertia+dp                              *  mvabs.w inertia(a0),d2
         bpl   >
         _negd
 !       ldx   #SonAni_Roll2                           *  lea (SonAni_Roll2).l,a1
@@ -3932,10 +3938,10 @@ SAnim_Roll                                            *SAnim_Roll:
         ldd   #0                                      *  moveq   #0,d2
 !                                                     *+
         ;                                             *  lsr.w   #8,d2
-        asra  ; framerate adjust
-        asra  ; framerate adjust
-        sta   anim_frame_duration+dp                   *  move.b  d2,anim_frame_duration(a0)
-        lda   status+dp                                *  move.b  status(a0),d1
+        adda  #0
+@delta  equ   *-1
+        sta   anim_frame_duration+dp                  *  move.b  d2,anim_frame_duration(a0)
+        lda   status+dp                               *  move.b  status(a0),d1
         anda  #status_x_orientation                   *  andi.b  #1,d1
         sta   @a
         ldb   render_flags+dp
@@ -3949,10 +3955,10 @@ SAnim_Roll                                            *SAnim_Roll:
                                                       *
 
 SAnim_Push                                            *SAnim_Push:
-        dec   anim_frame_duration+dp                   *  subq.b  #1,anim_frame_duration(a0)  ; subtract 1 from frame duration
+        dec   anim_frame_duration+dp                  *  subq.b  #1,anim_frame_duration(a0)  ; subtract 1 from frame duration
         bmi   >                                       *  bpl.w   SAnim_Delay         ; if time remains, branch
         rts
-!       ldd   inertia+dp                               *  move.w  inertia(a0),d2
+!       ldd   inertia+dp                              *  move.w  inertia(a0),d2
         bmi   >                                       *  bmi.s   +
         _negd                                         *  neg.w   d2
 !                                                     *+
@@ -3961,13 +3967,13 @@ SAnim_Push                                            *SAnim_Push:
         ldd   #0                                      *  moveq   #0,d2
 !                                                     *+
         ;                                             *  lsr.w   #6,d2
-        sta   anim_frame_duration+dp                   *  move.b  d2,anim_frame_duration(a0)
+        sta   anim_frame_duration+dp                  *  move.b  d2,anim_frame_duration(a0)
         ldx   #SonAni_Push                            *  lea (SonAni_Push).l,a1
         ; unimplemented                               *  tst.b   (Super_Sonic_flag).w
         ;                                             *  beq.s   +
         ;                                             *  lea (SupSonAni_Push).l,a1
         ;                                             *+
-        lda   status+dp                                *  move.b  status(a0),d1
+        lda   status+dp                               *  move.b  status(a0),d1
         anda  #status_x_orientation                   *  andi.b  #1,d1
         sta   @a
         ldb   render_flags+dp
