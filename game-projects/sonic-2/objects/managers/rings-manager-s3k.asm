@@ -350,7 +350,7 @@ Test_Ring_Collisions_NextRing                         *Test_Ring_Collisions_Next
                                                       *loc_EAC6:
         ldd   #$604
         std   ,y                                      *                move.w  #$604,(a4) ; set frame and destruction timer
-        ;jsr   Touch_ConsumeRing                      *                bsr.s   sub_EAE6
+        jsr   Touch_ConsumeRing                      *                bsr.s   sub_EAE6
         stx   @x
         ldx   #Ring_consumption_list                  *                lea     (Ring_consumption_list).w,a3
                                                       *
@@ -381,7 +381,7 @@ Touch_NextRing                                        *loc_EADA:
                                                       *
 Touch_ConsumeRing                                     *sub_EAE6:
         ;                                             *                subq.w  #1,(Perfect_rings_left).w
-        rts ; unimplemented                           *                jmp     (GiveRing).l
+        jmp   CollectRing_Sonic                       *                jmp     (GiveRing).l
                                                       *; End of function sub_EAE6
                                                       *
                                                       *; ---------------------------------------------------------------------------
@@ -606,6 +606,49 @@ Render_Rings                                          *Render_Rings:
                                                       *                dc.w $0005
                                                       *                dc.w $100A+make_art_tile(ArtTile_Ring,1,0)
                                                       *                dc.w $FFF8
+
+                                                      ; Sonic 2 code here ...
+CollectRing_Sonic                                     *CollectRing_Sonic:
+        ldd   Ring_count
+        cmpd  #999                                    *        cmpi.w  #999,(Rings_Collected).w ; did Sonic collect 999 or more rings?
+        bhs   >                                       *        bhs.s   CollectRing_1P          ; if yes, branch
+        addd  #1                                      *        addq.w  #1,(Rings_Collected).w  ; add 1 to the number of collected rings
+        std   Ring_count                              *
+!                                                     *CollectRing_1P:
+                                                      *
+                                                      *    if gameRevision=0
+                                                      *        cmpi.w  #999,(Ring_count).w     ; does the player 1 have 999 or more rings?
+                                                      *        bhs.s   +                       ; if yes, skip the increment
+                                                      *        addq.w  #1,(Ring_count).w       ; add 1 to the ring count
+                                                      *+
+                                                      *        ori.b   #1,(Update_HUD_rings).w ; set flag to update the ring counter in the HUD
+                                                      *        move.w  #SndID_Ring,d0          ; prepare to play the ring sound
+                                                      *    else
+                                                      *        move.w  #SndID_Ring,d0          ; prepare to play the ring sound
+                                                      *        cmpi.w  #999,(Ring_count).w     ; does the player 1 have 999 or more rings?
+                                                      *        bhs.s   JmpTo_PlaySoundStereo   ; if yes, play the ring sound
+                                                      *        addq.w  #1,(Ring_count).w       ; add 1 to the ring count
+                                                      *        ori.b   #1,(Update_HUD_rings).w ; set flag to update the ring counter in the HUD
+                                                      *    endif
+                                                      *
+                                                      *        cmpi.w  #100,(Ring_count).w     ; does the player 1 have less than 100 rings?
+                                                      *        blo.s   JmpTo_PlaySoundStereo   ; if yes, play the ring sound
+                                                      *        bset    #1,(Extra_life_flags).w ; test and set the flag for the first extra life
+                                                      *        beq.s   +                       ; if it was clear before, branch
+                                                      *        cmpi.w  #200,(Ring_count).w     ; does the player 1 have less than 200 rings?
+                                                      *        blo.s   JmpTo_PlaySoundStereo   ; if yes, play the ring sound
+                                                      *        bset    #2,(Extra_life_flags).w ; test and set the flag for the second extra life
+                                                      *        bne.s   JmpTo_PlaySoundStereo   ; if it was set before, play the ring sound
+                                                      *+
+                                                      *        addq.b  #1,(Life_count).w       ; add 1 to the life count
+                                                      *        addq.b  #1,(Update_HUD_lives).w ; add 1 to the displayed life count
+                                                      *        move.w  #MusID_ExtraLife,d0     ; prepare to play the extra life jingle
+                                                      *
+                                                      *JmpTo_PlaySoundStereo ; JmpTo
+                                                      *        jmp     (PlaySoundStereo).l
+                                                      *; ===========================================================================
+        rts                                           *        rts
+                                                      *; ===========================================================================
 
 ;--------------------------------------------------------------------------------------------------
 Ring_start_addr_layout  fdb 0 ; address in the ring layout of the first ring whose X position is >= camera X position - 8

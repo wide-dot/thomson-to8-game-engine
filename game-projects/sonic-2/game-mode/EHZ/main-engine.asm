@@ -107,14 +107,21 @@ LevelMainLoop
 	jsr   EHZ_Back
         jsr   ComputeTileBuffer
 	jsr   DrawBufferedTile
-        _RunObjectRoutineB ObjID_RingsManager,#4
         jsr   DrawSprites
+        _RunObjectRoutineB ObjID_RingsManager,#4
         jsr   DrawHighPriorityBufferedTile   
 
         ldb   #2 ; frame mask
 	jsr   EHZ_Mask
 
-        bra   LevelMainLoop
+        ldd   #$A19B
+        std   glb_screen_location_1
+        ldd   #$C19B
+        std   glb_screen_location_2
+        ldb   #3   ; nb digits
+        _RunObject ObjID_DigitCounter,Ring_count
+        
+        jmp   LevelMainLoop
 
 ChangeRingFrame                                       *ChangeRingFrame:
                                                       *        subq.b  #1,(Logspike_anim_counter).w
