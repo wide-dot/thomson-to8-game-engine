@@ -50,7 +50,7 @@ LevelSizeLoad ; todo move to an object
         lda   #5
         sta   Vint_Main_runcount_cap
 
-        _RunObjectRoutine ObjID_EHZ,#0
+        _RunObjectRoutineA ObjID_EHZ,#0
 
         ; init tile buffer based on camera pos
 	jsr   InitTileBuffer
@@ -70,14 +70,14 @@ LevelSizeLoad ; todo move to an object
         std   ColArray2
 
         ; init ring manager
-        _RunObjectRoutine ObjID_RingsManager,#0
+        _RunObjectRoutineB ObjID_RingsManager,#0
 
         ; init music
         lda   #$01                     ; 1: play 60hz track at 50hz, 0: do not skip frames
         sta   Smps.60HzData 
-        _RunObjectRoutine ObjID_Smps,#0 ; YM2413_DrumModeOn
+        _RunObjectRoutineA ObjID_Smps,#0 ; YM2413_DrumModeOn
         ldb   #2                        ; music id
-        _RunObjectRoutine ObjID_Smps,#2 ; PlayMusic 
+        _RunObjectRoutineA ObjID_Smps,#2 ; PlayMusic 
 
 	; start music
         jsr   IrqSet50Hz
@@ -93,7 +93,7 @@ LevelMainLoop
         jsr   ReadJoypads  
         _RunObject ObjID_Sonic,#MainCharacter 
         _RunObject ObjID_Scroll,#MainCharacter   
-        _RunObjectRoutine ObjID_RingsManager,#2
+        _RunObjectRoutineB ObjID_RingsManager,#2
 
         jsr   RunObjects
 	jsr   ForceRefresh
@@ -107,7 +107,7 @@ LevelMainLoop
 	jsr   EHZ_Back
         jsr   ComputeTileBuffer
 	jsr   DrawBufferedTile
-        _RunObjectRoutine ObjID_RingsManager,#4
+        _RunObjectRoutineB ObjID_RingsManager,#4
         jsr   DrawSprites
         jsr   DrawHighPriorityBufferedTile   
 
@@ -180,7 +180,7 @@ EHZ_Back
         lda   #0
         sta   glb_alphaTiles
 
-        _RunObjectRoutine ObjID_EHZ_Back,#0
+        _RunObjectRoutineA ObjID_EHZ_Back,#0
         _SetCartPageA        
 
 	; get image location, this code works for a ND0 only image
@@ -340,6 +340,7 @@ TlsAni_EHZ_pulseball3_imgs
         INCLUDE "./Engine/ObjectManagement/RunObjects.asm"
         INCLUDE "./Engine/ObjectManagement/SingleObjLoad.asm"
         INCLUDE "./Engine/ObjectManagement/DeleteObject.asm"
+        INCLUDE "./Engine/ObjectManagement/RunPgSubRoutine.asm"
         INCLUDE "./engine/object-management/clear-obj-107.asm"	
         INCLUDE "./Engine/Ram/ClearDataMemory.asm"
         INCLUDE "./Engine/Irq/IrqSmpsObj.asm"      

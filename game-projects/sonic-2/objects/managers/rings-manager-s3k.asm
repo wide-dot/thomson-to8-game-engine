@@ -19,13 +19,14 @@ Load_Rings                                            *Load_Rings:
                                                       *                moveq   #0,d0
         ; a is set by caller                          *                move.b  (Rings_manager_routine).w,d0
         ldx   #Rings_Routines                         *                move.w  off_E8B8(pc,d0.w),d0
-        jmp   [a,x]                                   *                jmp     off_E8B8(pc,d0.w)
+        jmp   [b,x]                                   *                jmp     off_E8B8(pc,d0.w)
                                                       *; End of function Load_Rings
                                                       *
 Rings_Routines                                        *; ---------------------------------------------------------------------------
         fdb   Rings_Init                              *off_E8B8:       dc.w loc_E8BE-off_E8B8
         fdb   Rings_Main                              *                dc.w loc_E942-off_E8B8
-        fdb   Render_Rings
+        fdb   Render_Rings ; used for external call
+        fdb   Touch_Rings  ; used for external call
                                                       *                dc.w loc_E9CA-off_E8B8
                                                       *; ---------------------------------------------------------------------------
                                                       *
@@ -171,18 +172,19 @@ Rings_Main                                            *loc_E942:
 
 Rings_Consume                                         *sub_E994:
         ldx   #Ring_consumption_table                 *                lea     (Ring_consumption_table).w,a2
-        ldd   ,x++ ; rings currently being consumed?  *                move.w  (a2)+,d1
-        subd  #1                                      *                subq.w  #1,d1
-        bcs   @end ; exit if no ring                  *                bcs.s   locret_E9C8
-        tfr   d,y
+        ldy   ,x++ ; rings currently being consumed?  *                move.w  (a2)+,d1
+        ;                                             *                subq.w  #1,d1
+        beq   @end ; exit if no ring                  *                bcs.s   locret_E9C8
                                                       *
 @loop                                                 *loc_E99E:
         ldu   ,x++  ; is there a ring in this slot?   *                move.w  (a2)+,d0
         beq   @loop ; branch if not                   *                beq.s   loc_E99E
         ;                                             *                movea.w d0,a1
-        dec   ,u    ; decrement timer                 *                subq.b  #1,(a1)
-        bne   @next ; branch if not ready             *                bne.s   loc_E9C4
-        lda   #6                                      *                move.b  #6,(a1)
+        lda   ,u
+        suba  Vint_Main_runcount
+        sta   ,u    ; decrement timer                 *                subq.b  #1,(a1)
+        bpl   @next ; branch if not ready             *                bne.s   loc_E9C4
+        adda  #6                                      *                move.b  #6,(a1)
         sta   ,u    ; reset timer
         lda   1,u                                     *                addq.b  #1,1(a1)
         inca        ; increment frame (stars)
@@ -263,102 +265,123 @@ Rings_Consume                                         *sub_E994:
                                                       *; =============== S U B R O U T I N E =======================================
                                                       *
                                                       *
-                                                      *Test_Ring_Collisions:
-                                                      *                cmpi.b  #$5A,$34(a0)
-                                                      *                bhs.w   locret_EAE4
-                                                      *                movea.l (Ring_start_addr_ROM).w,a1
-                                                      *                movea.l (Ring_end_addr_ROM).w,a2
-                                                      *                cmpa.l  a1,a2
-                                                      *                beq.w   locret_EAE4
-                                                      *                movea.w (Ring_start_addr_RAM).w,a4
-                                                      *                btst    #Status_LtngShield,status_secondary(a0) ; does Sonic have a Lightning Shield?
-                                                      *                beq.s   Test_Ring_Collisions_NoAttraction
-                                                      *                move.w  $10(a0),d2
-                                                      *                move.w  $14(a0),d3
-                                                      *                subi.w  #$40,d2
-                                                      *                subi.w  #$40,d3
-                                                      *                move.w  #6,d1
-                                                      *                move.w  #$C,d6
-                                                      *                move.w  #$80,d4
-                                                      *                move.w  #$80,d5
-                                                      *                bra.s   Test_Ring_Collisions_NextRing
+Touch_Rings                                           *Test_Ring_Collisions:
+        lda   invulnerable_time,u                     *                cmpi.b  #$5A,$34(a0)
+        cmpa  #$5A
+        bhs   @rts                                    *                bhs.w   locret_EAE4
+        ;                                             *                movea.l (Ring_start_addr_ROM).w,a1
+        ldx   Ring_start_addr_layout                  *                movea.l (Ring_end_addr_ROM).w,a2
+        cmpx  Ring_end_addr_layout                    *                cmpa.l  a1,a2
+        bne   >                                       *                beq.w   locret_EAE4 ; branch if no rings in this area
+@rts    rts
+!       ldy   Ring_start_addr_status                  *                movea.w (Ring_start_addr_RAM).w,a4
+        ;                                             *                btst    #Status_LtngShield,status_secondary(a0) ; does Sonic have a Lightning Shield?
+        ;                                             *                beq.s   Test_Ring_Collisions_NoAttraction
+        ;ldd   x_pos,u                                *                move.w  $10(a0),d2
+        ;subd  #$40
+        ;std   glb_d2
+        ;ldd   y_pos,u                                *                move.w  $14(a0),d3
+        ;subd  #$40
+        ;std   glb_d3
+        ;                                             *                subi.w  #$40,d2
+        ;                                             *                subi.w  #$40,d3
+        ;                                             *                move.w  #6,d1
+        ;                                             *                move.w  #$C,d6
+        ;ldd   #$80
+        ;std   glb_d4                                 *                move.w  #$80,d4
+        ;std   glb_d5                                 *                move.w  #$80,d5
+        ;bra   Test_Ring_Collisions_NextRing          *                bra.s   Test_Ring_Collisions_NextRing
+                                                     *; ---------------------------------------------------------------------------
+                                                      *
+        ;                                             *Test_Ring_Collisions_NoAttraction:
+        ldd   x_pos,u                                 *                move.w  $10(a0),d2
+        ;                                             *                move.w  $14(a0),d3
+        subd  #8                                                                         ; assume X radius to be 8
+        std   glb_d2                                  *                subi.w  #8,d2
+        anda  #0                                      *                moveq   #0,d5
+        ldb   y_radius,u                              *                move.b  $1E(a0),d5
+        subb  #3                                      *                subq.b  #3,d5
+        std   glb_d5
+        ldd   y_pos,u
+        subd  glb_d5 
+        std   glb_d3                                  *                sub.w   d5,d3     ; subtract (Y radius - 3) from Y pos
+        ;                                             *                move.w  #6,d1     ; set ring radius
+        ;                                             *                move.w  #$C,d6    ; set ring diameter
+        ldd   #$10
+        std   glb_d4                                  *                move.w  #$10,d4   ; set Sonic's X diameter
+        ldd   glb_d5        
+        addd  glb_d5
+        std   glb_d5                                  *                add.w   d5,d5     ; set Y diameter
+                                                      *
+Test_Ring_Collisions_NextRing                         *Test_Ring_Collisions_NextRing:
+        ldd   ,y                                      *                tst.w   (a4)      ; has this ring already been collided with?
+        bne   Touch_NextRing                          *                bne.w   loc_EADA  ; if it has, branch
+        ldd   ,x                                      *                move.w  (a1),d0   ; get ring X pos
+        subd  #3                                      *                sub.w   d1,d0     ; get ring left edge X pos
+        subd  glb_d2                                  *                sub.w   d2,d0     ; subtract Sonic's left edge X pos
+        bcc   >                                       *                bcc.s   loc_EAA0  ; if Sonic's to the left of the ring, branch
+        addd  #6                                      *                add.w   d6,d0     ; add ring diameter
+        bcs   @a                                      *                bcs.s   loc_EAA6  ; if Sonic's colliding, branch
+        bra   Touch_NextRing                          *                bra.w   loc_EADA  ; otherwise, test next ring
                                                       *; ---------------------------------------------------------------------------
                                                       *
-                                                      *Test_Ring_Collisions_NoAttraction:
-                                                      *                move.w  $10(a0),d2
-                                                      *                move.w  $14(a0),d3
-                                                      *                subi.w  #8,d2
-                                                      *                moveq   #0,d5
-                                                      *                move.b  $1E(a0),d5
-                                                      *                subq.b  #3,d5
-                                                      *                sub.w   d5,d3
-                                                      *                move.w  #6,d1
-                                                      *                move.w  #$C,d6
-                                                      *                move.w  #$10,d4
-                                                      *                add.w   d5,d5
+!                                                     *loc_EAA0:
+        cmpd  glb_d4                                  *                cmp.w   d4,d0     ; has Sonic crossed the ring?
+        bhi   Touch_NextRing                          *                bhi.w   loc_EADA  ; if he has, branch
                                                       *
-                                                      *Test_Ring_Collisions_NextRing:
-                                                      *                tst.w   (a4)
-                                                      *                bne.w   loc_EADA
-                                                      *                move.w  (a1),d0
-                                                      *                sub.w   d1,d0
-                                                      *                sub.w   d2,d0
-                                                      *                bcc.s   loc_EAA0
-                                                      *                add.w   d6,d0
-                                                      *                bcs.s   loc_EAA6
-                                                      *                bra.w   loc_EADA
+@a                                                    *loc_EAA6:
+        ldd   2,x                                     *                move.w  2(a1),d0  ; get ring Y pos
+        subd  #6                                      *                sub.w   d1,d0     ; get ring top edge pos
+        subd  glb_d3                                  *                sub.w   d3,d0     ; subtract Sonic's top edge pos
+        bcc   >                                       *                bcc.s   loc_EAB8  ; if Sonic's above the ring, branch
+        addd  #12                                     *                add.w   d6,d0     ; add ring diameter
+        bcs   @b                                      *                bcs.s   loc_EABE  ; if Sonic's colliding, branch
+        bra   Touch_NextRing                          *                bra.w   loc_EADA  ; otherwise, test next ring
                                                       *; ---------------------------------------------------------------------------
                                                       *
-                                                      *loc_EAA0:
-                                                      *                cmp.w   d4,d0
-                                                      *                bhi.w   loc_EADA
+!                                                     *loc_EAB8:
+        cmpd  glb_d5                                  *                cmp.w   d5,d0     ; has Sonic crossed the ring?
+        bhi   Touch_NextRing                          *                bhi.w   loc_EADA  ; if he has, branch
                                                       *
-                                                      *loc_EAA6:
-                                                      *                move.w  2(a1),d0
-                                                      *                sub.w   d1,d0
-                                                      *                sub.w   d3,d0
-                                                      *                bcc.s   loc_EAB8
-                                                      *                add.w   d6,d0
-                                                      *                bcs.s   loc_EABE
-                                                      *                bra.w   loc_EADA
-                                                      *; ---------------------------------------------------------------------------
-                                                      *
-                                                      *loc_EAB8:
-                                                      *                cmp.w   d5,d0
-                                                      *                bhi.w   loc_EADA
-                                                      *
-                                                      *loc_EABE:
-                                                      *                btst    #Status_LtngShield,status_secondary(a0) ; does Sonic have a Lightning Shield?
-                                                      *                bne.s   Test_Ring_Collisions_AttractRing
+@b                                                    *loc_EABE:
+        ;                                             *                btst    #Status_LtngShield,status_secondary(a0) ; does Sonic have a Lightning Shield?
+        ;                                             *                bne.s   Test_Ring_Collisions_AttractRing
                                                       *
                                                       *loc_EAC6:
-                                                      *                move.w  #$604,(a4)
-                                                      *                bsr.s   sub_EAE6
-                                                      *                lea     (Ring_consumption_list).w,a3
+        ldd   #$604
+        std   ,y                                      *                move.w  #$604,(a4) ; set frame and destruction timer
+        ;jsr   Touch_ConsumeRing                      *                bsr.s   sub_EAE6
+        stx   @x
+        ldx   #Ring_consumption_list                  *                lea     (Ring_consumption_list).w,a3
                                                       *
-                                                      *loc_EAD0:
-                                                      *                tst.w   (a3)+
-                                                      *                bne.s   loc_EAD0
-                                                      *                move.w  a4,-(a3)
-                                                      *                addq.w  #1,(Ring_consumption_table).w
+!                                                     *loc_EAD0:
+        ldd   ,x++                                    *                tst.w   (a3)+      ; is this slot free?
+        bne   <                                       *                bne.s   loc_EAD0   ; if not, repeat until you find one
+        sty   ,--x                                    *                move.w  a4,-(a3)   ; set ring address
+        ldd   Ring_consumption_table
+        addd  #1
+        std   Ring_consumption_table                  *                addq.w  #1,(Ring_consumption_table).w ; increase count
+        ldx   #0
+@x      equ   *-2
                                                       *
-                                                      *loc_EADA:
-                                                      *                addq.w  #4,a1
-                                                      *                addq.w  #2,a4
-                                                      *                cmpa.l  a1,a2
-                                                      *                bne.w   Test_Ring_Collisions_NextRing
+Touch_NextRing                                        *loc_EADA:
+        leax  4,x                                     *                addq.w  #4,a1
+        leay  2,y                                     *                addq.w  #2,a4
+        cmpx  Ring_end_addr_layout                    *                cmpa.l  a1,a2
+        bne   Test_Ring_Collisions_NextRing           *                bne.w   Test_Ring_Collisions_NextRing
                                                       *
                                                       *locret_EAE4:
-                                                      *                rts
+        rts                                           *                rts
                                                       *; End of function Test_Ring_Collisions
+
                                                       *
                                                       *
                                                       *; =============== S U B R O U T I N E =======================================
                                                       *
                                                       *
-                                                      *sub_EAE6:
-                                                      *                subq.w  #1,(Perfect_rings_left).w
-                                                      *                jmp     (GiveRing).l
+Touch_ConsumeRing                                     *sub_EAE6:
+        ;                                             *                subq.w  #1,(Perfect_rings_left).w
+        rts ; unimplemented                           *                jmp     (GiveRing).l
                                                       *; End of function sub_EAE6
                                                       *
                                                       *; ---------------------------------------------------------------------------

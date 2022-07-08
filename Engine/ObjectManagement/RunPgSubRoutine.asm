@@ -7,15 +7,17 @@
 * ---------------------------------------------------------------------------
 
 RunPgSubRoutine 
-        _GetCartPageB
-        stb   RunPgSubRoutine_return+1 ; backup data page
+        _GetCartPageA
+        sta   PSR_RetPage
         
+        lda   #0
+PSR_Page equ *-1
         _SetCartPageA                  ; set data page for sub routine to call
-        jsr   [glb_Address]
+        jsr   >0
+PSR_Address equ *-2
 
 RunPgSubRoutine_return        
-        lda   #$00
+        lda   #0
+PSR_RetPage equ *-1
         _SetCartPageA                  ; restore data page
         rts
-
-glb_Address                   fdb   $0000

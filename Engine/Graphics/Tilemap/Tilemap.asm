@@ -151,7 +151,7 @@ dyn_Tls ldu   #0000                                   ; (dynamic) Tileset
         ; draw compilated tile
         ldu   <glb_screen_location_2     
         stx   glb_Address        
-        jsr   RunPgSubRoutine        
+        jsr   RunPgSubRoutineA        
         
 dyn_x   lda   #$00                                    ; (dynamic) current column index
         tsta
