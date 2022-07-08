@@ -186,4 +186,10 @@ ColData_page                  fcb   0
 ColCurveMap                   fdb   0
 ColArray                      fdb   0
 ColArray2                     fdb   0
-Respawn_table_keep            fdb 0
+Respawn_table_keep            fdb   0
+
+* ---------------------------------------------------------------------------
+* HUD Globals
+* ---------------------------------------------------------------------------
+
+Ring_count                    fdb   0
