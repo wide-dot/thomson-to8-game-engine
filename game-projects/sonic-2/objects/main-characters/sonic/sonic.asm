@@ -191,9 +191,9 @@ Obj01_Control                                         *  Obj01_Control:
         ;std   anim+dp                                  
 !                                                     *+
         jsr   Sonic_Animate                           *  bsr.w   Sonic_Animate
-        ;lda   obj_control+dp                          *  tst.b   obj_control(a0)
-        ;bmi   >                                      *  bmi.s   +
-        ;jsr   TouchResponse                          *  jsr (TouchResponse).l
+        lda   obj_control+dp                          *  tst.b   obj_control(a0)
+        bmi   >                                       *  bmi.s   +
+        jsr   TouchResponse                           *  jsr (TouchResponse).l
 !                                                     *+
         rts                                           *  bra.w   LoadSonicDynPLC
                                                       *
@@ -2800,9 +2800,9 @@ Obj01_Respawning                                      *  Obj01_Respawning:
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       * 
                                                       * ; loc_3F554:
-                                                      * TouchResponse:
+TouchResponse                                         * TouchResponse:
                                                       *         nop
-                                                      *         jsrto   (Touch_Rings).l, JmpTo_Touch_Rings
+        _RunObjectSwapRoutine ObjID_RingsManager,#6   *         jsrto   (Touch_Rings).l, JmpTo_Touch_Rings
                                                       *         ; Bumpers in CNZ
                                                       *         cmpi.b  #casino_night_zone,(Current_Zone).w
                                                       *         bne.s   +
@@ -2837,7 +2837,7 @@ Obj01_Respawning                                      *  Obj01_Respawning:
                                                       *         dbf     d6,Touch_Loop ; repeat 6F more times
                                                       * 
                                                       *         moveq   #0,d0
-                                                      *         rts
+        rts                                           *         rts
                                                       * ; ===========================================================================
                                                       * ; loc_3F5B4: Touch_Height:
                                                       * Touch_Width:

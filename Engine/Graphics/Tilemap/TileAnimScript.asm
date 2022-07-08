@@ -47,6 +47,7 @@ TileAnimScriptList equ *-2
         leau  ZASize,u
         bra   @loop
 @loadScript
+        sta   @delta                   ; report skipped frames to next one
         lda   ZACurIndex,u             ; animation frame is over, load next one
         inca  
         cmpa  ZAMaxFrame,u             ; at the end of script ?
@@ -64,7 +65,9 @@ TileAnimScriptList equ *-2
 @globalduration
         adda  #2                       ; skip header
         lda   a,y
-@b      std   ZACurFrame,u             ; and ZADuration
+@b      subb  #0
+@delta  equ   *-1
+        std   ZACurFrame,u             ; and ZADuration
         leau  ZASize,u
         bra   @loop
 @rts    rts

@@ -68,7 +68,7 @@
         std   y_pos,u
 
 
-        _RunObjectRoutine ObjID_tilemap,glb_current_submap       
+        _RunObjectRoutineA ObjID_tilemap,glb_current_submap       
 
 * ==============================================================================
 * Main Loop
@@ -79,7 +79,7 @@ LevelMainLoop
         jsr   ReadJoypads
         jsr   AutoScroll
         jsr   RunObjects
-        _RunObjectRoutine ObjID_tilemap,glb_current_submap
+        _RunObjectRoutineA ObjID_tilemap,glb_current_submap
         jsr   CheckSpritesRefresh
         jsr   EraseSprites
         jsr   UnsetDisplayPriority

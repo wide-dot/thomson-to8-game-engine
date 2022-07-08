@@ -54,9 +54,10 @@ _RunObjectSwap MACRO
         ; param 1 : ObjID_
         ; param 2 : Object data RAM address
         ; manual launch of an object from a different dynamic memory page and not from the resident page 1
-        lda   Obj_Index_Page+\1   
-        ldu   Obj_Index_Address+2*\1
-        stu   glb_Address       
+        lda   Obj_Index_Page+\1
+        sta   PSR_Page   
+        ldd   Obj_Index_Address+2*\1
+        std   PSR_Address       
         ldu   \2             
         jsr   RunPgSubRoutine
  ENDM    
@@ -66,9 +67,10 @@ _RunObjectSwapRoutine MACRO
         ; param 2 : Object routine
         ; manual launch of an object from a different dynamic memory page and not from the resident page 1
         lda   Obj_Index_Page+\1   
-        ldu   Obj_Index_Address+2*\1
-        stu   glb_Address       
-        lda   \2        
+        sta   PSR_Page   
+        ldd   Obj_Index_Address+2*\1
+        std   PSR_Address       
+        ldb   \2        
         jsr   RunPgSubRoutine
  ENDM 
  
@@ -89,13 +91,23 @@ _RunObject MACRO
         jsr   ,x
  ENDM
 
-_RunObjectRoutine MACRO 
+_RunObjectRoutineA MACRO 
         ; param 1 : ObjID_
         ; param 2 : Object routine
         ; manual launch of an object from the resident page 1
 	; this object does not need or have a data structure for this routine
         _MountObject \1
         lda   \2        
+        jsr   ,x
+ ENDM
+
+_RunObjectRoutineB MACRO 
+        ; param 1 : ObjID_
+        ; param 2 : Object routine
+        ; manual launch of an object from the resident page 1
+	; this object does not need or have a data structure for this routine
+        _MountObject \1
+        ldb   \2        
         jsr   ,x
  ENDM
 

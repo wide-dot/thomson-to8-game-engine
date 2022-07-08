@@ -83,7 +83,7 @@ InitLevelMainLoop
 	std   Cur_palette
         clr   Refresh_palette	
 
-        _RunObjectRoutine ObjID_Tilemap,glb_current_submap       
+        _RunObjectRoutineA ObjID_Tilemap,glb_current_submap       
 
 * ==============================================================================
 * Main Loop
@@ -94,7 +94,7 @@ LevelMainLoop
         jsr   ReadJoypads
         jsr   AutoScroll
         jsr   RunObjects
-        _RunObjectRoutine ObjID_Tilemap,glb_current_submap
+        _RunObjectRoutineA ObjID_Tilemap,glb_current_submap
         jsr   CheckSpritesRefresh
         jsr   EraseSprites
         jsr   UnsetDisplayPriority
