@@ -1,11 +1,9 @@
-; CUSTOM VERSION FOR TO8 ENGINE - NOT THE ORIGINAL SOURCE
-; Added backward mode
-; License in /Engine/Compression/zx0 directory
-
-; zx0_6809_mega.asm - ZX0 decompressor for M6809 - 198 bytes
+; zx0_6809_mega_backward.asm - ZX0 decompressor for M6809 - xxx bytes
+; Written for the LWTOOLS assembler, http://www.lwtools.ca/.
 ;
 ; Copyright (c) 2021 Doug Masten
 ; ZX0 compression (c) 2021 Einar Saukas, https://github.com/einar-saukas/ZX0
+; ZX0 v2 backward adaptation (c) 2022 Benoit Rousseau
 ;
 ; This software is provided 'as-is', without any express or implied
 ; warranty. In no event will the authors be held liable for any damages
@@ -23,15 +21,6 @@
 ;    misrepresented as being the original software.
 ; 3. This notice may not be removed or altered from any source distribution.
 
-
-; rotate next bit into elias value
-zx0_elias_rotate   macro
-                   lsla                ; get next bit
-                   rolb                ; rotate bit into elias value
-                   rol <zx0_code+1     ;   "     "   "    "
-                   lsla                ; get next bit
-                   endm
-
 ; only get one bit from stream
 zx0_get_1bit       macro
                    lsla                ; get next bit
@@ -42,12 +31,14 @@ done@              equ *
                    endm
 
 ; get elias value
-zx0_get_elias      macro
-                   bcs done@
-loop@              zx0_elias_rotate
-                   bcc loop@           ; loop until done
-                   bne done@           ; is bit stream empty? no, branch
+zx0_elias_bt       macro
+                   bcc done@
+loop@              lsla                ; get next bit
+                   rolb                ; rotate bit into elias value
+                   lsla                ; get next bit
+                   bne >               ; is bit stream empty? no, branch
                    bsr zx0_reload      ; process rest of elias until done
+!                  bcs loop@           ; loop until done
 done@              equ *
                    endm
 
@@ -56,15 +47,43 @@ done@              equ *
 ; Function    : zx0_decompress
 ; Entry       : Reg X = last start of compressed data + 1
 ;             : Reg U = last start of decompression buffer + 1
-; Exit        : Reg X = last end of compressed data 
-;             : Reg U = last end of decompression buffer 
+; Exit        : Reg X = last end of compressed data
+;             : Reg U = last end of decompression buffer
 ; Destroys    : Regs D, Y
 ; Description : Decompress ZX0 data (version 1)
 ;------------------------------------------------------------------------------
+; Options:
+;
+;   ZX0_ONE_TIME_USE
+;     Defined variable to disable re-initialization of variables. Enable
+;     this option for one-time use of depacker for smaller code size.
+;       ex. ZX0_ONE_TIME_USE equ 1
+;
+;   ZX0_DISABLE_SAVE_REGS
+;     Defined variable to disable saving registers CC and DP. Enable
+;     this option for smaller code size and if calling program will take
+;     care of registers CC and DP.
+;       ex. ZX0_DISABLE_SAVE_REGS equ 1
+;
+;   ZX0_DISABLE_DISABLING_INTERRUPTS
+;     Defined variable to disable the disabling of interrupts. Enable
+;     this option if interrupts are already disable or if IRQ and FIRQ
+;     code won't mind register DP being changed.
+;       ex. ZX0_DISABLE_DISABLING_INTERRUPTS
 ;
 zx0_decompress
+                   ifndef ZX0_DISABLE_SAVE_REGS
+                   pshs cc,dp          ; save registers
+                   endc
+
+                   ifndef ZX0_DISABLE_DISABLING_INTERRUPTS
+                   orcc #$50           ; disable interrupts
+                   endc
+
+                   ifndef ZX0_ONE_TIME_USE
                    ldd #1              ; init offset = 1
                    std >zx0_offset+2
+                   endc
 
 zx0_dp             equ */256
                    ldd #($80*256)+zx0_dp  ; init bit stream and register DP
@@ -72,21 +91,31 @@ zx0_dp             equ */256
                    setdp zx0_dp
                    bra zx0_literals    ; start with literals
 
+                   ifndef ZX0_DISABLE_SAVE_REGS
+zx0_eof            puls cc,dp,pc       ; restore registers and exit
+                   else
+zx0_eof            equ zx0_rts         ; just exit
+                   endc
+
+
 ; 1 - copy from new offset (repeat N bytes from new offset)
 zx0_new_offset     ldb #1              ; set elias = 1 (not necessary to set MSB)
                    zx0_get_1bit        ; obtain MSB offset
-                   zx0_get_elias       ;  "      "   "
-                   clr <zx0_code+1     ; set MSB elias for below
-                   addb #0             ; adjust for negative offset (set carry for RORB below)
-                   beq zx0_rts         ; eof? (length = 256) if so exit
-                   rorb                ; last offset bit becomes first length bit
+                   zx0_elias_bt        ;  "      "   "
+                   clr <zx0_code+1     ; set MSB elias for below (and clear cc)
+                   tstb
+                   beq zx0_eof         ; not eof (length = 256) ? if so continue
+                   decb
+                   rorb
                    stb <zx0_offset+2   ; save MSB offset
                    ldb ,-x             ; load LSB offset
                    rorb                ; last offset bit becomes first length bit
                    incb
-                   stb <zx0_offset+3   ; save LSB offset
+                   bne >
+                   inc <zx0_offset+2
+!                  stb <zx0_offset+3   ; save LSB offset
                    ldb #1              ; set elias = 1
-                   zx0_get_elias       ; get elias but skip first bit
+                   zx0_elias_bt        ; get elias but skip first bit
 skip@              incb                ; elias = elias + 1
                    stb <zx0_code+2     ;  " "
                    bne zx0_copy        ;  " "
@@ -106,7 +135,7 @@ save_x@            ldx #$ffff          ; restore reg X
 zx0_literals       ldb #1              ; set elias = 1
                    clr <zx0_code+1     ;  "    "
                    zx0_get_1bit        ; obtain length
-                   zx0_get_elias       ;  "      "
+                   zx0_elias_bt        ;  "      "
                    stb <zx0_code+2     ; save LSB elias
                    ldy <zx0_code+1     ; setup length
 loop@              ldb ,-x             ; copy literals
@@ -115,28 +144,42 @@ loop@              ldb ,-x             ; copy literals
                    bne loop@           ; loop until done
                    lsla                ; get next bit
                    bcs zx0_new_offset  ; branch if next block is new offset
-                   bra zx0_last_offset ; jump to last offset branch
-
-; interlaced elias gamma coding
-loop@              zx0_elias_rotate
-zx0_reload         lda ,-x             ; load another group of 8 bits
-                   rola
-                   bcs zx0_rts
-                   zx0_elias_rotate
-                   bcs zx0_rts
-                   zx0_elias_rotate
-                   bcs zx0_rts
-                   zx0_elias_rotate
-                   bcc loop@
-zx0_rts            rts
 
 ; 0 - copy from last offset (repeat N bytes from last offset)
-zx0_last_offset    ldb #1              ; set elias = 1
+                   ldb #1              ; set elias = 1
                    clr <zx0_code+1     ;  "    "
                    zx0_get_1bit        ; obtain length
-                   zx0_get_elias       ;  "      "
+                   zx0_elias_bt        ;  "      "
                    stb <zx0_code+2     ; save LSB elias
                    bra zx0_copy        ; go copy last offset block
+
+; interlaced elias gamma coding
+zx0_reload         lda ,-x             ; load another group of 8 bits
+                   rola                ; are we done?
+                   bcc zx0_rts         ; yes, exit
+                   lsla                ; get next bit
+                   rolb                ; rotate bit into elias value
+                   lsla                ; are we done?
+                   bcc zx0_rts         ; yes, exit
+                   lsla                ; get next bit
+                   rolb                ; rotate bit into elias value
+                   lsla                ; are we done?
+                   bcc zx0_rts         ; yes, exit
+                   lsla                ; get next bit
+                   rolb                ; rotate bit into elias value
+                   lsla                ; are we done?
+                   bcc zx0_rts         ; yes, exit
+
+; long elias gamma coding
+loop@              lsla                ; get next bit
+                   rolb                ; rotate bit into elias value
+                   rol <zx0_code+1     ;  "      "   "    "     "
+                   lsla                ; is bit stream empty?
+                   bne skip@           ; no, branch
+                   lda ,-x             ; reload bit stream
+                   rola                ; are we done?
+skip@              bcs loop@           ; no, loop again
+zx0_rts            rts                 ; return
 
 
 ; safety check
