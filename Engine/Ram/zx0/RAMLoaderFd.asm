@@ -21,7 +21,7 @@
         org   $4000
         opt   c,ct
 start        
-        INCLUDE "./Engine/Compression/zx0/zx0_6809_mega_rear.asm"  
+        INCLUDE "./Engine/Compression/zx0/zx0_6809_mega_back.asm"  
 
 RAMLoader 
         ldb   $E7E5
@@ -39,6 +39,8 @@ RAMLoader_continue
         ldd   ,u++
         bpl   RL_Continue              ; valeur negative de secteur signifie fin du tableau de donnee
         lds   #glb_system_stack         ; reinit de la pile systeme
+	lda   #dp/256                  ; set direct page to access globals
+	tfr   a,dp
         jmp   $6100                    ; on lance le mode de jeu en page 1
 RL_Continue        
         sta   <dk_sector              ; secteur (1-16)

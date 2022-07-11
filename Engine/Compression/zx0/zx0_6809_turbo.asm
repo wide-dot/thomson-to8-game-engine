@@ -1,4 +1,5 @@
 ; zx0_6809_turbo.asm - ZX0 decompressor for M6809 - 144 bytes
+; Written for the LWTOOLS assembler, http://www.lwtools.ca/.
 ;
 ; Copyright (c) 2021 Doug Masten
 ; ZX0 compression (c) 2021 Einar Saukas, https://github.com/einar-saukas/ZX0

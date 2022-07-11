@@ -1,4 +1,5 @@
-; zx0_6809_standard.asm - ZX0 decompressor for M6809 - 109 bytes
+; zx0_6809_standard.asm - ZX0 decompressor for M6809 - 90 bytes (100 for no options)
+; Written for the LWTOOLS assembler, http://www.lwtools.ca/.
 ;
 ; Copyright (c) 2021 Doug Masten
 ; ZX0 compression (c) 2021 Einar Saukas, https://github.com/einar-saukas/ZX0
@@ -20,11 +21,6 @@
 ; 3. This notice may not be removed or altered from any source distribution.
 
 
-                   ifdef ZX0_VAR1
-zx0_bit            equ ZX0_VAR1        ; use DP memory
-                   endc
-
-
 ;------------------------------------------------------------------------------
 ; Function    : zx0_decompress
 ; Entry       : Reg X = start of compressed data
@@ -41,85 +37,146 @@ zx0_bit            equ ZX0_VAR1        ; use DP memory
 ;     speed optimization.
 ;       ex. ZX0_VAR1 equ $23
 ;
+;   ZX0_VAR2
+;     Defined variable to point to two bytes of DP memory for a space
+;     optimization.
+;       ex. ZX0_VAR2 equ $24
+;
+;   ZX0_VAR3
+;     Defined variable to point to two bytes of DP memory for a speed
+;     optimization.
+;       ex. ZX0_VAR3 equ $26
+;
 ;   ZX0_ONE_TIME_USE
 ;     Defined variable to disable re-initialization of variables. Enable
 ;     this option for one-time use of depacker for smaller code size.
 ;       ex. ZX0_ONE_TIME_USE equ 1
 ;
 zx0_decompress
+
+; assign DP memory variables if used
+                   ifdef ZX0_VAR1
+zx0_bit            equ ZX0_VAR1        ; use DP memory
+                   endc
+
+                   ifdef ZX0_VAR2
+zx0_offset         equ ZX0_VAR2        ; use DP memory
+                   endc
+
+; initialize variables
                    ifndef ZX0_ONE_TIME_USE
-                     ldd #$ffff
-                     std zx0_offset+2  ; init offset = -1
-                     lda #$80
-                     sta zx0_bit       ; init bit stream
+                     ldd #$80ff
+                     sta zx0_bit        ; init bit stream
+                     sex                ; reg A = $FF
+                     std zx0_offset     ; init offset = -1
                    else
                      ifdef ZX0_VAR1
+                       ifdef ZX0_VAR2
+                         ldd #$80ff
+                         sta zx0_bit    ; init bit stream
+                         sex            ; reg A = $FF
+                         std zx0_offset ; init offset = -1
+                       endc
+                     else
                        lda #$80
-                       sta zx0_bit     ; init bit stream
+                       sta zx0_bit      ; init bit stream
+                       ifdef ZX0_VAR2
+                         ldd #$ffff
+                         std zx0_offset ; init offset = -1
+                       endc
                      endc
                    endc
 
 ; 0 - literal (copy next N bytes from compressed data)
 zx0_literals       bsr zx0_elias       ; obtain length
                    tfr d,y             ;  "      "
-loop@              ldb ,x+             ; copy literals
-                   stb ,u+             ;  "    "
-                   leay -1,y           ; decrement loop counter
-                   bne loop@           ; loop until done
-                   lsl zx0_bit         ; get next bit
+                   bsr zx0_copy_bytes  ; copy literals
                    bcs zx0_new_offset  ; branch if next block is new-offset
 
 ; 0 - copy from last offset (repeat N bytes from last offset)
                    bsr zx0_elias       ; obtain length
-zx0_copy           pshs x              ; save reg X
-                   tfr d,x             ; setup length
-zx0_offset         leay >$ffff,u       ; calculate offset address
-loop@              ldb ,y+             ; copy match
-                   stb ,u+             ;  "    "
-                   leax -1,x           ; decrement loop counter
-                   bne loop@           ; loop until done
-                   puls x              ; restore reg X
-                   lsl zx0_bit         ; get next bit
+zx0_copy           equ *
+                   ifndef ZX0_VAR3
+                     pshs x            ; save reg X
+                   else
+                     stx ZX0_VAR3      ; save reg X
+                   endc
+                   tfr d,y             ; setup length
+                   ifndef ZX0_VAR2
+zx0_offset           equ *+2
+                     leax >$ffff,u     ; calculate offset address
+                   else
+                     ldd zx0_offset    ; calculate offset address
+                     leax d,u          ; from stored value
+                   endc
+                   bsr zx0_copy_bytes  ; copy match
+                   ifndef ZX0_VAR3
+                     puls x            ; restore reg X
+                   else
+                     ldx ZX0_VAR3      ; restore reg X
+                   endc
                    bcc zx0_literals    ; branch if next block is literals
 
 ; 1 - copy from new offset (repeat N bytes from new offset)
 zx0_new_offset     bsr zx0_elias       ; obtain offset MSB
                    negb                ; adjust for negative offset (set carry for RORA below)
                    beq zx0_eof         ; eof? (length = 256) if so exit
-                   tfr b,a             ; transfer to MSB position
-                   ldb ,x+             ; obtain LSB offset
-                   rora                ; last offset bit becomes first length bit
-                   rorb                ;  "     "     "    "      "     "      "
-                   std zx0_offset+2    ; preserve new offset
-                   ldd #1              ; set elias = 1
-                   bcs skip@           ; test first length bit
-                   bsr zx0_backtrace   ; get elias but skip first bit
-skip@              incb                ; elias = elias + 1
-                   bne zx0_copy        ; if no carryover, branch to copy new offset match
-                   inca                ; increment MSB elias carryover
+                   ifndef ZX0_VAR2
+                     tfr b,a           ; transfer to MSB position
+                     ldb ,x+           ; obtain LSB offset
+                     rora              ; last offset bit becomes first length bit
+                     rorb              ;  "     "     "    "      "     "      "
+                     std zx0_offset    ; preserve new offset
+                     ldd #1            ; set elias = 1
+                   else
+                     rorb              ; rotate MSB position (bit 7 is set)
+                     stb zx0_offset    ; preserve new MSB offset
+                     ldb ,x+           ; obtain LSB offset
+                     rorb              ; last offset bit becomes first length bit
+                     stb zx0_offset+1  ; preserve new LSB offset
+                     ldb #1            ; set elias = 1 (Reg A is already 0)
+                   endc
+                   bsr zx0_elias_bt    ; get length but skip first bit
+                   addd #1             ; length = length + 1
                    bra zx0_copy        ; copy new offset match
 
 
 ; interlaced elias gamma coding
 zx0_elias          ldd #1              ; set elias = 1
-                   bra start@          ; goto start of elias gamma coding
-;
-zx0_backtrace
-loop@              lsl zx0_bit         ; get next bit
+                   bra zx0_elias_start ; goto start of elias gamma coding
+
+zx0_elias_loop     lsl zx0_bit         ; get next bit
                    rolb                ; rotate elias value
                    rola                ;   "     "     "
-start@             lsl zx0_bit         ; get next bit
-                   bne skip@           ; branch if bit stream is not empty
-                   pshs a              ; save reg A
+zx0_elias_start    lsl zx0_bit         ; get next bit
+                   bne zx0_elias_bt    ; branch if bit stream is not empty
+                   ifndef ZX0_VAR3
+                     pshs a            ; save reg A
+                   else
+                     sta ZX0_VAR3      ; save reg A
+                   endc
                    lda ,x+             ; load another 8-bits
                    rola                ; get next bit
                    sta zx0_bit         ; save bit stream
-                   puls a              ; restore reg A
-skip@              bcc loop@           ; loop until done
+                   ifndef ZX0_VAR3
+                     puls a            ; restore reg A
+                   else
+                     lda ZX0_VAR3      ; restore reg A
+                   endc
+zx0_elias_bt       bcc zx0_elias_loop  ; loop until done
 zx0_eof            rts                 ; return
 
 
-; bit stream
+; copy Y bytes from X to U and get next bit
+zx0_copy_bytes     ldb ,x+             ; copy byte
+                   stb ,u+             ;  "    "
+                   leay -1,y           ; decrement loop counter
+                   bne zx0_copy_bytes  ; loop until done
+                   lsl zx0_bit         ; get next bit
+                   rts
+
+
+; assign bit stream variable if DP memory is not used
                    ifndef ZX0_VAR1
 zx0_bit            fcb $80
                    endc
