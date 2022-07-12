@@ -24,11 +24,15 @@ start
         INCLUDE "./Engine/Compression/zx0/zx0_6809_mega_back.asm"  
 
 RAMLoader
-        ldx   #RL_RAM_index          
-        
+        ldy   #RL_RAM_index          
+
 RL_While
-        ldd   ,x++                     ; A: T2 src page, B: Dest RAM page
+        ldd   ,y++                     ; A: T2 src page, B: Dest RAM page
         bpl   RL_LoadData              ; valeur negative de secteur signifie fin du tableau de donnee
+
+        lds   #glb_system_stack        ; reinit de la pile systeme
+        lda   #dp/256                  ; set direct page to access globals
+        tfr   a,dp
         jmp   $6100                    ; on lance le mode de jeu en page 1
         
 RL_LoadData
@@ -42,9 +46,9 @@ RL_LoadData
         stb   $0555
         sta   $0555                    ; selection de la page T.2
 
-        ldu   ,x++                     ; source ROM (fin des donnees)
-        ldy   ,x++                     ; destination RAM (fin des donnees)
-        jsr   >zx0_decompress          ; decompresse les donnees        
+        ldx   ,y++                     ; source ROM (fin des donnees)
+        ldu   ,y++                     ; destination RAM (fin des donnees)
+        jsr   >zx0_decompress          ; decompresse les donnees     
         bra   RL_While
 fill        
         fill  0,7-((fill-start)%7)      ; le code est un multilpe de 7 octets (pour la copie)

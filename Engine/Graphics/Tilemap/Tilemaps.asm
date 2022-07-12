@@ -248,6 +248,7 @@ dyn_Tls ldu   #0000                                   ; (dynamic) Tileset
 
         ; draw compilated tile
         ldu   <glb_screen_location_2     
+        sta   PSR_Page  
         stx   PSR_Address        
         jsr   RunPgSubRoutine     
         

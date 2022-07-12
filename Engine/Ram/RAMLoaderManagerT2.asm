@@ -72,10 +72,6 @@ RLM_CopyCode
         
 * Execution du RAMLoader en page 0a
 ************************************************************
-        lds   #glb_system_stack        ; reinit de la pile systeme
-		
-        lda   #dp/256         ; set direct page to access globals
-        tfr   a,dp
         jmp   RAMLoader     
 
 * ==============================================================================

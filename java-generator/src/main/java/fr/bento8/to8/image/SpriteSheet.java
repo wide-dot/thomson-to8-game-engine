@@ -546,9 +546,9 @@ public class SpriteSheet {
 					if (firstPixel) {
 						firstPixel = false;
 						switch (locationRef) {
-							case CENTER   : y1_offset[position] = curLine-subImageHeight/2-1; break;
+							case CENTER   : y1_offset[position] = curLine-(subImageHeight-1)/2; break;
 							case TOP_LEFT : y1_offset[position] = 0; break;
-							case TILE8x16 : y1_offset[position] = curLine-subImageHeight*3/4-1; break;
+							case TILE8x16 : y1_offset[position] = curLine-(subImageHeight-1)*3/4; break;
 						}						
 					}
 					if (indexDest*2+page*2-(160*curLine) < x_Min) {
@@ -603,9 +603,9 @@ public class SpriteSheet {
 						if (firstPixel) {
 							firstPixel = false;
 							switch (locationRef) {
-								case CENTER   : y1_offset[position] = curLine-subImageHeight/2-1; break;
+								case CENTER   : y1_offset[position] = curLine-(subImageHeight-1)/2; break;
 								case TOP_LEFT : y1_offset[position] = 0; break;
-								case TILE8x16 : y1_offset[position] = curLine-subImageHeight*3/4-1; break;
+								case TILE8x16 : y1_offset[position] = curLine-(subImageHeight-1)*3/4; break;
 							}							
 						}
 						if (indexDest*2+page*2+1-(160*curLine) < x_Min) {

@@ -30,12 +30,12 @@ RAMLoader
         
         ldu   #RL_RAM_index
         pshs  u
-        
-RAMLoader_continue
+
         setdp $60
         lda   #$60
         tfr   a,dp                     ; positionne la direct page a 60
 
+RAMLoader_continue
         ldd   ,u++
         bpl   RL_Continue              ; valeur negative de secteur signifie fin du tableau de donnee
         lds   #glb_system_stack         ; reinit de la pile systeme
