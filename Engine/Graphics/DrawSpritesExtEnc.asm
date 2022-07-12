@@ -114,7 +114,7 @@ DRS_DrawWithoutBackupB0
         bra   DRS_dyn3B0
         jsr   DecMapAlpha
         bra   DRS_dyn3B0       
-        jsr   zx0_decompress        
+        jsr   zx0_6809_mega_wrap        
 DRS_dyn3B0        
         ldx   #$0000                        ; (dynamic) restore x reg
         stu   rsv_bgdata_0,x                ; store pointer to saved background data
@@ -225,7 +225,7 @@ DRS_DrawWithoutBackupB1
         bra   DRS_dyn3B1        
         jsr   DecMapAlpha
         bra   DRS_dyn3B1        
-        jsr   zx0_decompress        
+        jsr   zx0_6809_mega_wrap        
 DRS_dyn3B1        
         ldx   #$0000                        ; (dynamic) restore x reg
         stu   rsv_bgdata_1,x                ; store pointer to saved background data

@@ -25,11 +25,15 @@ start
         INCLUDE "./Engine/Compression/Exomizer.asm"  
 
 RAMLoader
-        ldx   #RL_RAM_index          
-        
+        ldx   #RL_RAM_index           
+
 RL_While
         ldd   ,x++                     ; A: T2 src page, B: Dest RAM page
         bpl   RL_LoadData              ; valeur negative de secteur signifie fin du tableau de donnee
+
+        lds   #glb_system_stack        ; reinit de la pile systeme
+        lda   #dp/256                  ; set direct page to access globals
+        tfr   a,dp
         jmp   $6100                    ; on lance le mode de jeu en page 1
         
 RL_LoadData
@@ -45,7 +49,7 @@ RL_LoadData
 
         ldu   ,x++                     ; source ROM (fin des donnees)
         ldy   ,x++                     ; destination RAM (fin des donnees)
-        jsr   >exo2                    ; decompresse les donnees        
+        jsr   >exo2                    ; decompresse les donnees     
         bra   RL_While
 fill        
         fill  0,7-((fill-start)%7)      ; le code est un multilpe de 7 octets (pour la copie)

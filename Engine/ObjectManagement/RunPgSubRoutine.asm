@@ -3,7 +3,7 @@
 * ------------
 * Subroutine to run a another Sub Routine in a different Memory Page
 *
-* input REG : [A] Memory Page of Sub Routine
+* input : PSR_Page and PSR_Address
 * ---------------------------------------------------------------------------
 
 RunPgSubRoutine 

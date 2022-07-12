@@ -73,7 +73,7 @@ done@              equ *
 ;
 zx0_decompress
                    ifndef ZX0_DISABLE_SAVE_REGS
-                   pshs cc,dp          ; save registers
+                   pshs d,y,cc,dp      ; save registers
                    endc
 
                    ifndef ZX0_DISABLE_DISABLING_INTERRUPTS
@@ -92,7 +92,7 @@ zx0_dp             equ */256
                    bra zx0_literals    ; start with literals
 
                    ifndef ZX0_DISABLE_SAVE_REGS
-zx0_eof            puls cc,dp,pc       ; restore registers and exit
+zx0_eof            puls d,y,cc,dp,pc   ; restore registers and exit
                    else
 zx0_eof            equ zx0_rts         ; just exit
                    endc

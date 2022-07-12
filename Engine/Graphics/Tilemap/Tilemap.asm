@@ -149,7 +149,8 @@ dyn_Tls ldu   #0000                                   ; (dynamic) Tileset
         pulu  a,x                                     ; a: tile routine page, x: tile routine address
 
         ; draw compilated tile
-        ldu   <glb_screen_location_2     
+        ldu   <glb_screen_location_2   
+        sta   PSR_Page  
         stx   PSR_Address        
         jsr   RunPgSubRoutine        
         
