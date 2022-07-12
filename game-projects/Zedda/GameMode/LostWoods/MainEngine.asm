@@ -119,6 +119,7 @@ LevelMainLoop
         INCLUDE "./Engine/Graphics/CheckSpritesRefresh.asm"
         INCLUDE "./Engine/Graphics/EraseSprites.asm"
         INCLUDE "./Engine/Graphics/UnsetDisplayPriority.asm"
+        INCLUDE "./Engine/Graphics/Codec/DecRLE00.asm"
         INCLUDE "./Engine/Graphics/DrawSpritesExtEnc.asm"
         INCLUDE "./Engine/Graphics/BgBufferAlloc.asm"	
         INCLUDE "./Engine/Joypad/ReadJoypads.asm"
@@ -134,5 +135,3 @@ LevelMainLoop
         INCLUDE "./Engine/Graphics/Camera/AutoScroll.asm"
         INCLUDE "./Engine/Graphics/Tilemap/Tilemap.asm"
         INCLUDE "./Engine/Graphics/GetImgIdA.asm"
-        INCLUDE "./Engine/Graphics/Codec/DecRLE00.asm"
-zx0_decompress rts	

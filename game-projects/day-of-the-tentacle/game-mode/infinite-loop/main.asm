@@ -44,7 +44,6 @@ nb_graphical_objects   equ 2
         INCLUDE "./Engine/Graphics/CheckSpritesRefresh.asm"
         INCLUDE "./Engine/Graphics/EraseSprites.asm"
         INCLUDE "./Engine/Graphics/UnsetDisplayPriority.asm"	
-        INCLUDE "./Engine/Graphics/DrawSpritesExtEnc.asm"
         INCLUDE "./Engine/Graphics/BgBufferAlloc.asm"		
         INCLUDE "./Engine/Palette/UpdatePalette.asm"
         INCLUDE "./Engine/Ram/ClearDataMemory.asm"
@@ -53,6 +52,5 @@ nb_graphical_objects   equ 2
         INCLUDE "./Engine/Irq/IrqSmidi.asm"        
         INCLUDE "./Engine/Sound/Smidi.asm"	
         INCLUDE "./Engine/Graphics/Codec/zx0_mega.asm"	
-        INCLUDE "./Engine/Graphics/Codec/DecRLE00.asm"		
-
+        INCLUDE "./Engine/Graphics/DrawSpritesExtEnc.asm"
 	    

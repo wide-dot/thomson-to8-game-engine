@@ -20,6 +20,9 @@
         
         org   $4000
         opt   c,ct
+
+ZX0_DISABLE_DISABLING_INTERRUPTS equ 1
+
 start        
         INCLUDE "./Engine/Compression/zx0/zx0_6809_mega_back.asm"  
 
