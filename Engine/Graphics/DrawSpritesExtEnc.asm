@@ -9,7 +9,7 @@
 *
 * input REG : none
 * ---------------------------------------------------------------------------
-                                                                           
+
 DrawSprites
 
 DRS_Start
@@ -263,3 +263,13 @@ DRS_NextObjectB1
         ldx   rsv_priority_next_obj_1,x
         lbne  DRS_ProcessEachPriorityLevelB1   
         rts
+
+        ifndef DecMapAlpha
+DecMapAlpha
+        rts
+        endc
+
+        ifndef zx0_6809_mega_wrap
+zx0_6809_mega_wrap
+        rts
+        endc

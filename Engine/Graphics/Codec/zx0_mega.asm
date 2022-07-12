@@ -16,4 +16,7 @@ zx0_6809_mega_wrap
         jmp   zx0_decompress
 @rts    rts
 
+ZX0_DISABLE_DISABLING_INTERRUPTS equ 1
+
         INCLUDE "./Engine/Compression/zx0/zx0_6809_mega.asm"
+        setdp   dp/256
