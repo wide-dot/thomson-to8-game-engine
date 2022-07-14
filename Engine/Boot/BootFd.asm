@@ -11,6 +11,7 @@
 *
 ********************************************************************************
 
+        INCLUDE "./Engine/Constants.asm"
         INCLUDE "./Engine/Macros.asm"          
         
         org   $6200
@@ -114,7 +115,7 @@ pal_idx
 ********************************************************************************
 InitVideo
         orcc  #$50                     * desactive les interruptions
-        lds   #glb_system_stack         * positionnement pile systeme
+        lds   #glb_system_stack        * positionnement pile systeme
         lda   #$7B                     * passage en mode 160x200x16c
         sta   $E7DC
   

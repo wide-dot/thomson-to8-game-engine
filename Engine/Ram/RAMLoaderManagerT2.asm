@@ -17,7 +17,7 @@ RAMLoaderManager
 * Copie en page 0a des donnees du mode a charger
 * les groupes de 6 octets sont recopiees a l'envers
 * la fin des donnees est marquee par un octet negatif ($FF par exemple)
-************************************************************           
+************************************************************       
         ldu   #Gm_Index
         aslb
         ldx   b,u                      ; load address of current game mode data        
@@ -69,6 +69,8 @@ RLM_CopyCode
         pshs  d,x,y,dp                 ; on ecrit 7 octets
         cmps  #$4000                   ; fin ?
         bne   RLM_CopyCode             ; non => boucle
+RLM_CopyCode_restore_s
+        lds   #glb_system_stack        ; positionnement pile systeme
         
 * Execution du RAMLoader en page 0a
 ************************************************************

@@ -10,6 +10,7 @@
 *
 ********************************************************************************
 
+        INCLUDE "./Engine/Constants.asm"
         INCLUDE "./Engine/Macros.asm"          
         
         org   $0000
@@ -179,6 +180,7 @@ SetPalNext
 ********************************************************************************
 InitVideo
         orcc  #$50                     * desactive les interruptions
+        lds   #glb_system_stack        * positionnement pile systeme
         lda   #$7B                     * passage en mode 160x200x16c
         sta   $E7DC
   
@@ -203,6 +205,6 @@ InitVideo
         lda   #$B0
         sta   $0555
         lda   #$02                     ; mode neutre pour la T.2
-                sta   $0556
+        sta   $0556
         
         _ldd  gmboot,$FF               ; level to boot and flag for first level load
