@@ -101,7 +101,6 @@ IrqSync_3
         SETDP   $E7
 
 IrqSmps 
-        ;jmp   $E830 ; debug - skip IRQ
         sts   @bcks                                   ; backup system stack
         lds   #IRQSysStack                            ; set tmp system stack for IRQ 
         ldd   Vint_runcount

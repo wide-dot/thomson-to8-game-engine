@@ -622,7 +622,7 @@ CollectRing_Sonic                                     *CollectRing_Sonic:
                                                       *        addq.w  #1,(Ring_count).w       ; add 1 to the ring count
                                                       *+
                                                       *        ori.b   #1,(Update_HUD_rings).w ; set flag to update the ring counter in the HUD
-                                                      *        move.w  #SndID_Ring,d0          ; prepare to play the ring sound
+        lda   #SndID_Ring                             *        move.w  #SndID_Ring,d0          ; prepare to play the ring sound
                                                       *    else
                                                       *        move.w  #SndID_Ring,d0          ; prepare to play the ring sound
                                                       *        cmpi.w  #999,(Ring_count).w     ; does the player 1 have 999 or more rings?
@@ -645,7 +645,7 @@ CollectRing_Sonic                                     *CollectRing_Sonic:
                                                       *        move.w  #MusID_ExtraLife,d0     ; prepare to play the extra life jingle
                                                       *
                                                       *JmpTo_PlaySoundStereo ; JmpTo
-                                                      *        jmp     (PlaySoundStereo).l
+        sta   Smps.SFXToPlay                          *        jmp     (PlaySoundStereo).l
                                                       *; ===========================================================================
         rts                                           *        rts
                                                       *; ===========================================================================

@@ -2115,6 +2115,22 @@ public class BuildDisk
 			fd.save(game.outputDiskName);
 			fd.saveToSd(game.outputDiskName);
 			
+			if (game.hxcfe != null) {
+				logger.debug("\tconvert fd to hfe ...");
+				List<String> command = new ArrayList<String>(List.of(
+						game.hxcfe,
+						"-finput:"+game.outputDiskName+".fd",
+						"-conv:HXC_HFE",
+						"-foutput:"+game.outputDiskName+".hfe"			   
+						));
+				
+				logger.debug(command);
+				Process p = new ProcessBuilder(command).inheritIO().start();
+				if (p.waitFor() != 0) {
+					throw new Exception ("Erreur de conversion.");
+				}		
+			}
+			
 			logger.info("Build done !");
 		} else {
 			logger.info("***** No way to produce a FD version ! *****");

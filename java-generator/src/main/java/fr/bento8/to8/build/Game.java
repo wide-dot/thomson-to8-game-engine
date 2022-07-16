@@ -42,6 +42,7 @@ public class Game {
 	// Build
 	public String lwasm;
 	public String exobin;
+	public String hxcfe;
 	public boolean debug;
 	public boolean logToConsole;	
 	public String outputDiskName;
@@ -209,6 +210,11 @@ public class Game {
 			} else {
 				BuildDisk.prelog += ("\nRam Data will be compressed by Exomizer\n");
 			}
+			
+			hxcfe = prop.getProperty("builder.hxcfe");
+			if (hxcfe == null) {
+				BuildDisk.prelog += ("\nhxcfe not defined.\n");
+			}	
 
 			if (prop.getProperty("builder.logToConsole") == null) {
 				throw new Exception("builder.logToConsole not found in "+file);

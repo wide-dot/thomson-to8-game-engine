@@ -10,9 +10,33 @@ Song_Index
         fdb   Song_EHZ
 
 Song_EHZ
-        INCLUDEBIN "./objects/engine/smps/songs/2-01 Emerald Hill Zone.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/1-00 Continue.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-00 Casino Night Zone (2P).smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-01 Emerald Hill Zone.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-02 Metropolis Zone.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-03 Casino Night Zone.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-04 Mystic Cave Zone.1380.smp"
+        INCLUDEBIN "./objects/engine/smps/songs/2-05 Mystic Cave Zone (2P).1380.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-06 Aquatic Ruin Zone.1380.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-07 Death Egg Zone.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-08 Special Stage.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-09 Option Screen.smp"
         ;INCLUDEBIN "./objects/engine/smps/songs/2-0A Sweet Sweet Sweet (Ending).smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-0B Final Boss.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-0C Chemical Plant Zone.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-0D Boss.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-0E Sky Chase Zone.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-0F Oil Ocean Zone.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-10 Wing Fortress Zone.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-11 Emerald Hill Zone (2P).smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-12 2P Results Screen.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-13 Super Sonic.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-14 Hill Top Zone.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-16 Title Screen.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-17 Act Clear.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-19 Invincibility.smp"
         ;INCLUDEBIN "./objects/engine/smps/songs/2-1B Hidden Palace Zone.smp"
+        ;INCLUDEBIN "./objects/engine/smps/songs/2-1C Drowning.smp"
 
 Sound_Index
                         fdb   0

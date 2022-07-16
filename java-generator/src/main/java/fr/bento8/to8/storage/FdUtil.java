@@ -22,6 +22,7 @@ public class FdUtil
 	
 	private final byte[] fdBytes = new byte[655360];
 	private int index = 0;
+	private boolean last;
 
 	public FdUtil() {
 	}
@@ -166,7 +167,7 @@ public class FdUtil
 	 * @param outputFileName nom du fichier a écrire
 	 */
 	public void saveToSd(String outputFileName) {
-		final byte[] sdBytes = new byte[1310720];
+		final byte[] sdBytes = new byte[0x140000];
 
 		// Génération des données au format .sd
 		for (int ifd=0, isd=0; ifd<fdBytes.length; ifd++) {
@@ -188,4 +189,5 @@ public class FdUtil
 			e.printStackTrace();
 		}
 	}
+	
 }
