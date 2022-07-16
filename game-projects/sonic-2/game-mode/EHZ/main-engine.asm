@@ -87,6 +87,7 @@ LevelSizeLoad ; todo move to an object
 * ==============================================================================
 LevelMainLoop
         jsr   WaitVBL    
+
         jsr   TileAnimScript
         jsr   ChangeRingFrame
 
@@ -187,16 +188,16 @@ EHZ_Back
         lda   #0
         sta   glb_alphaTiles
 
-        _RunObjectRoutineA ObjID_EHZ_Back,#0
-        _SetCartPageA        
+        _RunObjectRoutineA ObjID_EHZ_Back,#0 ; set image location on screen and get image metadata
+        _SetCartPageA                        ; set metadata page
 
 	; get image location, this code works for a ND0 only image
 	; please adapt metadata decoding if you want another image
 	lda   13,x
 	ldx   14,x
-        _SetCartPageA        
+        _SetCartPageA                        ; set image routine memory page
         ldu   <glb_screen_location_2
-        jmp   ,x
+        jmp   ,x                             ; call draw routine
 
 EHZ_Mask
         _MountObject ObjID_Mask
