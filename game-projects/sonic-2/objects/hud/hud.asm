@@ -1,3 +1,4 @@
+        setdp   dp/256
                                                       *; ---------------------------------------------------------------------------
                                                       *; Subroutine to draw the HUD
                                                       *; ---------------------------------------------------------------------------
@@ -375,7 +376,7 @@ BuildHUD                                              *BuildHUD:
                                                       *; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       *
                                                       *; sub_40D8A:
-                                                      *HudUpdate:
+HudUpdate                                             *HudUpdate:
                                                       *        nop
                                                       *        lea     (VDP_data_port).l,a6
                                                       *        tst.w   (Two_player_mode).w
@@ -401,15 +402,23 @@ BuildHUD                                              *BuildHUD:
                                                       *        moveq   #0,d1
                                                       *        move.w  (Ring_count).w,d1
                                                       *        bsr.w   Hud_Rings
+        ; ring counter
+        ldd   #$C6C2
+        std   glb_screen_location_1
+        ldd   #$A6C1
+        std   glb_screen_location_2
+        ldb   #3   ; nb digits
+        ldu   Ring_count
+        jsr   DisplayDigit
                                                       *; loc_40DDA:
-                                                      *Hud_ChkTime:
+Hud_ChkTime                                           *Hud_ChkTime:
                                                       *        tst.b   (Update_HUD_timer).w    ; does the time need updating?
                                                       *        beq.s   Hud_ChkLives    ; if not, branch
                                                       *        tst.w   (Game_paused).w ; is the game paused?
                                                       *        bne.s   Hud_ChkLives    ; if yes, branch
-                                                      *        lea     (Timer).w,a1
-                                                      *        cmpi.l  #$93B3B,(a1)+   ; is the time 9.59?
-                                                      *        beq.w   loc_40E84       ; if yes, branch
+        ldx   glb_timer                               *        lea     (Timer).w,a1
+        cmpx  #$093c                                  *        cmpi.l  #$93B3B,(a1)+   ; is the time 9.59?
+        beq   Timeout                                 *        beq.w   loc_40E84       ; if yes, branch
                                                       *        addq.b  #1,-(a1)
                                                       *        cmpi.b  #60,(a1)
                                                       *        blo.s   Hud_ChkLives
@@ -427,10 +436,30 @@ BuildHUD                                              *BuildHUD:
                                                       *        moveq   #0,d1
                                                       *        move.b  (Timer_minute).w,d1
                                                       *        bsr.w   Hud_Mins
+        ; minute counter
+        ldd   #$C441
+        std   glb_screen_location_1
+        ldd   #$A440
+        std   glb_screen_location_2
+        lda   #0
+        ldb   glb_timer_minute
+        tfr   d,u
+        ldb   #1   ; nb digits
+        jsr   DisplayDigitPad
                                                       *        move.l  #vdpComm(tiles_to_bytes(ArtTile_HUD_Seconds),VRAM,WRITE),d0
                                                       *        moveq   #0,d1
                                                       *        move.b  (Timer_second).w,d1
                                                       *        bsr.w   Hud_Secs
+        ; second counter
+        ldd   #$C443
+        std   glb_screen_location_1
+        ldd   #$A442
+        std   glb_screen_location_2
+        lda   #0
+        ldb   glb_timer_second
+        tfr   d,u
+        ldb   #2   ; nb digits
+        jmp   DisplayDigitPad
                                                       *; loc_40E38:
                                                       *Hud_ChkLives:
                                                       *        tst.b   (Update_HUD_lives).w    ; does the lives counter need updating?
@@ -460,13 +489,13 @@ BuildHUD                                              *BuildHUD:
                                                       *        rts
                                                       *; ===========================================================================
                                                       *
-                                                      *loc_40E84:
+Timeout                                               *loc_40E84:
                                                       *        clr.b   (Update_HUD_timer).w
                                                       *        lea     (MainCharacter).w,a0 ; a0=character
                                                       *        movea.l a0,a2
                                                       *        bsr.w   KillCharacter
                                                       *        move.b  #1,(Time_Over_flag).w
-                                                      *        rts
+        rts                                           *        rts
                                                       *; ===========================================================================
                                                       *
                                                       *loc_40E9A:
@@ -1081,3 +1110,5 @@ BuildHUD                                              *BuildHUD:
                                                       *
                                                       *        align 4
                                                       *    endif
+
+        INCLUDE "./objects/hud/number/digit-counter.asm"

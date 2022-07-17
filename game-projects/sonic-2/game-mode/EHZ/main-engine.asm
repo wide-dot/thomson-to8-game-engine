@@ -73,10 +73,10 @@ LevelSizeLoad ; todo move to an object
         _RunObjectRoutineB ObjID_RingsManager,#0
 
         ; init music
-        lda   #$01                     ; 1: play 60hz track at 50hz, 0: do not skip frames
+        lda   #$01                       ; 1: play 60hz track at 50hz, 0: do not skip frames
         sta   Smps.60HzData 
         _RunObjectRoutineA ObjID_Smps,#0 ; YM2413_DrumModeOn
-        ldb   #2                        ; music id
+        ldb   #2                         ; music id
         _RunObjectRoutineA ObjID_Smps,#2 ; PlayMusic 
 
 	; start music
@@ -100,7 +100,7 @@ LevelMainLoop
 	jsr   ForceRefresh
         jsr   CheckSpritesRefresh
 
-        ldb   #0 ; sprite mask
+        ldb   #0                 ; sprite mask
 	jsr   EHZ_Mask
 
         jsr   EraseSprites
@@ -112,15 +112,10 @@ LevelMainLoop
         _RunObjectRoutineB ObjID_RingsManager,#4
         jsr   DrawHighPriorityBufferedTile   
 
-        ldb   #2 ; frame mask
+        ldb   #2                ; frame mask
 	jsr   EHZ_Mask
 
-        ldd   #$A19B
-        std   glb_screen_location_1
-        ldd   #$C19B
-        std   glb_screen_location_2
-        ldb   #3   ; nb digits
-        _RunObject ObjID_DigitCounter,Ring_count
+        _RunObject ObjID_HUD,#0 ; Head Up Display
         
         jmp   LevelMainLoop
 

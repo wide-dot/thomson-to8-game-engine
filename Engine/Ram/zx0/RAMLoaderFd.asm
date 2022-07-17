@@ -28,11 +28,10 @@ start
 
 RAMLoader 
         ldb   $E7E5
-        orb   #$60                     ; charge la page video de travail et la positionne
+        orb   #$60                     ; charge la page de travail et la positionne
         stb   $E7E6                    ; dans l'espace cartouche comme buffer pour zx0
         
         ldu   #RL_RAM_index
-        pshs  u
 
         setdp $60
         lda   #$60
