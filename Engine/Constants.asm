@@ -50,9 +50,13 @@ glb_camera_y_offset           equ $9FE7
 glb_force_sprite_refresh      equ $9FE6
 glb_camera_move               equ $9FE5
 glb_alphaTiles                equ $9FE4
+glb_timer_second              equ $9FE3
+glb_timer_minute              equ $9FE2
+glb_timer                     equ $9FE2 
+glb_timer_frame               equ $9FE1
 
 ; BankSwitch
-glb_Page                      equ $9FE3
+glb_Page                      equ $9FE0
 dp_engine                     equ $9FC0 ; engine tmp var space for routine
 dp                            equ $9F00 ; custom tmp var space for routine
 glb_system_stack              equ $9F00

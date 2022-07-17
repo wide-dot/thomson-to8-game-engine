@@ -83,6 +83,7 @@ am_SwapVideoPage
 
         ldd   Vint_runcount
         std   Vint_Last_runcount
+
         rts
         
 glb_Main_runcount      fdb   0 ; page swap counter

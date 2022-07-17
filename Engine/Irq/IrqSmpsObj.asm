@@ -101,11 +101,14 @@ IrqSync_3
         SETDP   $E7
 
 IrqSmps 
+        INCLUDE "./Engine/Irq/timer/timer.asm"
+
+        ldd   Vint_runcount                           ; global continuous frame timer
+        addd  #1
+	std   Vint_runcount
+
         sts   @bcks                                   ; backup system stack
         lds   #IRQSysStack                            ; set tmp system stack for IRQ 
-        ldd   Vint_runcount
-        addd  #1
-        std   Vint_runcount                           ; frame drop count
  	lda   glb_pal_elapsed_frames                  ; PaletteCycling
         inca
 	sta   glb_pal_elapsed_frames
