@@ -10,33 +10,33 @@ Song_Index
         fdb   Song_EHZ
 
 Song_EHZ
-        ;INCLUDEBIN "./objects/engine/smps/songs/1-00 Continue.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-00 Casino Night Zone (2P).smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-01 Emerald Hill Zone.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-02 Metropolis Zone.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-03 Casino Night Zone.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-04 Mystic Cave Zone.1380.smp"
-        INCLUDEBIN "./objects/engine/smps/songs/2-05 Mystic Cave Zone (2P).1380.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-06 Aquatic Ruin Zone.1380.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-07 Death Egg Zone.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-08 Special Stage.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-09 Option Screen.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-0A Sweet Sweet Sweet (Ending).smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-0B Final Boss.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-0C Chemical Plant Zone.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-0D Boss.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-0E Sky Chase Zone.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-0F Oil Ocean Zone.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-10 Wing Fortress Zone.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-11 Emerald Hill Zone (2P).smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-12 2P Results Screen.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-13 Super Sonic.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-14 Hill Top Zone.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-16 Title Screen.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-17 Act Clear.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-19 Invincibility.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-1B Hidden Palace Zone.smp"
-        ;INCLUDEBIN "./objects/engine/smps/songs/2-1C Drowning.smp"
+        ;INCLUDEBIN "./objects/smps/songs/1-00 Continue.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-00 Casino Night Zone (2P).smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-01 Emerald Hill Zone.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-02 Metropolis Zone.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-03 Casino Night Zone.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-04 Mystic Cave Zone.1380.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-05 Mystic Cave Zone (2P).1380.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-06 Aquatic Ruin Zone.1380.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-07 Death Egg Zone.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-08 Special Stage.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-09 Option Screen.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-0A Sweet Sweet Sweet (Ending).smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-0B Final Boss.smp"
+        INCLUDEBIN "./objects/smps/songs/2-0C Chemical Plant Zone.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-0D Boss.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-0E Sky Chase Zone.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-0F Oil Ocean Zone.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-10 Wing Fortress Zone.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-11 Emerald Hill Zone (2P).smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-12 2P Results Screen.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-13 Super Sonic.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-14 Hill Top Zone.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-16 Title Screen.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-17 Act Clear.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-19 Invincibility.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-1B Hidden Palace Zone.smp"
+        ;INCLUDEBIN "./objects/smps/songs/2-1C Drowning.smp"
 
 Sound_Index
                         fdb   0
@@ -509,7 +509,7 @@ Sound45         fdb   ssamp45-Sound45,$0103
 @c              fcb   $F5,$02,$F3,$E7,$80,$02,$C2,$05,$C4,$04,$C2,$05,$C4,$04,$F2
 ssamp45         fcb   $3B,$03,$02,$02,$06,$18,$1A,$1A,$96,$17,$0A,$0E
                 fcb   $10,$00,$00,$00,$00,$FF,$FF,$FF,$FF,$00,$39,$28,$80
-ringsamp        fcb   $31,$0E ; instrument (0-F) / attenuation (0-F) , transpose
+ringsamp        fcb   $32,$0E ; instrument (0-F) / attenuation (0-F) , transpose
 ;               fcb   $04,$37,$77,$72,$49,$1F,$1F,$1F,$1F,$07,$07,$0A
 ;               fcb   $0D,$00,$00,$0B,$0B,$1F,$1F,$0F,$0F,$23,$23,$80,$80
 

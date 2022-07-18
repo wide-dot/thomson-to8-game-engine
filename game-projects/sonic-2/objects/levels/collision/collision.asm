@@ -131,23 +131,26 @@ FindFloor                                             * FindFloor:
         ; III IIII IIII is the index of the 16x16 tile to use
 
         anda  #7                                      *         andi.w  #$3FF,d0
-        std   glb_d0
-        beq   loc_1E7E2                               *         beq.s   loc_1E7E2
+        std   glb_d0           
+                                                      *         beq.s   loc_1E7E2
+        beq   loc_1E7E2  ; if tile is not solid at all, go ahead and test bottom tile
         lda   glb_d4
         bita  glb_d5_b                                *         btst    d5,d4
-        bne   loc_1E7F0                               *         bne.s   loc_1E7F0
-                                                      * 
-loc_1E7E2                ; tile is null or not solid  * loc_1E7E2:
+                                                      *         bne.s   loc_1E7F0
+        bne   loc_1E7F0  ; if tile is top solid, found floor
+                         ; otherwise, go ahead and test bottom tile
+loc_1E7E2                                             * loc_1E7E2:
         ldd   glb_d2
+        std   @d2
         addd  glb_a3                                  *         add.w   a3,d2
         std   glb_d2     ; add delta-y to y_pos
         jsr   FindFloor2 ; search up or down          *         bsr.w   FindFloor2
-        ldd   glb_d2
-        subd  glb_a3                                  *         sub.w   a3,d2
-        std   glb_d2     ; remove delta-y to y_pos
+        ldd   #0         ; remove delta-y to y_pos    *         sub.w   a3,d2
+@d2     equ   *-2
+        std   glb_d2
         ldd   glb_d1
         addd  #$10
-        std   glb_d1     ; add 16px to distance       *         addi.w  #$10,d1
+        std   glb_d1     ; add 16px to found distance *         addi.w  #$10,d1
         lda   glb_b_pg
         _SetCartPageA
         rts                                           *         rts

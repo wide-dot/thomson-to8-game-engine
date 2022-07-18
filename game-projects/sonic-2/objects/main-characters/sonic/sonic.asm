@@ -2238,38 +2238,54 @@ Sonic_DoLevelCollision                                *Sonic_DoLevelCollision:
 !       stx   Collision_addr                          * +
         lda   lrb_solid_bit+dp
         sta   glb_d5_b                                *  move.b  lrb_solid_bit(a0),d5
-        ldx   x_vel+dp                                 *  move.w  x_vel(a0),d1
-        ldd   y_vel+dp                                 *  move.w  y_vel(a0),d2
-        jsr   CalcAngle                               *  jsr (CalcAngle).l
-        suba  #$20                                    *  subi.b  #$20,d0
-        anda  #$C0                                    *  andi.b  #$C0,d0
-        cmpa  #$40                                    *  cmpi.b  #$40,d0
-        lbeq  Sonic_HitLeftWall                       *  beq.w   Sonic_HitLeftWall
-        cmpa  #$80                                    *  cmpi.b  #$80,d0
-        lbeq  Sonic_HitCeilingAndWalls                *  beq.w   Sonic_HitCeilingAndWalls
-        cmpa  #$C0                                    *  cmpi.b  #$C0,d0
-        lbeq  Sonic_HitRightWall                      *  beq.w   Sonic_HitRightWall
+        ldd   x_vel+dp                                *  move.w  x_vel(a0),d1
+        ;                                             *  move.w  y_vel(a0),d2
+        ; a more simple solution than atan2           *  jsr (CalcAngle).l
+        bmi   @x_neg
+        ldd   y_vel+dp
+        bpl   >
+        _negd
+!       cmpd  x_vel+dp
+        lble  Sonic_HitRightWall
+        bra   @up_or_down
+@x_neg
+        ldd   y_vel+dp
+        bpl   >
+        _negd
+!       cmpd  x_vel+dp
+        lble  Sonic_HitLeftWall
+@up_or_down
+        lda   y_vel+dp
+        lbmi  Sonic_HitCeilingAndWalls
+        ;                                             *  subi.b  #$20,d0
+        ;                                             *  andi.b  #$C0,d0
+        ;                                             *  cmpi.b  #$40,d0
+        ;                                             *  beq.w   Sonic_HitLeftWall
+        ;                                             *  cmpi.b  #$80,d0
+        ;                                             *  beq.w   Sonic_HitCeilingAndWalls
+        ;                                             *  cmpi.b  #$C0,d0
+        ;                                             *  beq.w   Sonic_HitRightWall
         jsr   CheckLeftWallDist                       *  bsr.w   CheckLeftWallDist
         ldd   glb_d1                                  *  tst.w   d1
         bpl   >                                       *  bpl.s   +
         _negd
-        addd  x_pos+dp                                 *  sub.w   d1,x_pos(a0)
+        addd  x_pos+dp                                *  sub.w   d1,x_pos(a0)
         std   x_pos+dp
         ldd   #0
-        std   x_vel+dp                                 *  move.w  #0,x_vel(a0) ; stop Sonic since he hit a wall
+        std   x_vel+dp                                *  move.w  #0,x_vel(a0) ; stop Sonic since he hit a wall
 !                                                     *+
         jsr   CheckRightWallDist                      *  bsr.w   CheckRightWallDist
         ldd   glb_d1                                  *  tst.w   d1
         bpl   >                                       *  bpl.s   +
-        addd  x_pos+dp                                 *  add.w   d1,x_pos(a0)
+        addd  x_pos+dp                                *  add.w   d1,x_pos(a0)
         std   x_pos+dp
         ldd   #0
-        std   x_vel+dp                                 *  move.w  #0,x_vel(a0) ; stop Sonic since he hit a wall
+        std   x_vel+dp                                *  move.w  #0,x_vel(a0) ; stop Sonic since he hit a wall
 !                                                     *+
         jsr   Sonic_CheckFloor                        *  bsr.w   Sonic_CheckFloor
         lda   glb_d1                                  *  tst.w   d1
         bpl   return_1AF8A                            *  bpl.s   return_1AF8A
-        lda   y_vel+1+dp                               *  move.b  y_vel(a0),d2
+        lda   y_vel+1+dp                              *  move.b  y_vel(a0),d2
         adda  #8                                      *  addq.b  #8,d2
         nega                                          *  neg.b   d2
         sta   glb_d2_b
@@ -2280,11 +2296,11 @@ Sonic_DoLevelCollision                                *Sonic_DoLevelCollision:
         cmpa  glb_d2_b                                *  cmp.b   d2,d0
         blt   return_1AF8A                            *  blt.s   return_1AF8A
 !           
-        ldd   y_pos+dp                                 *+
+        ldd   y_pos+dp                                *+
         addd  glb_d1                                  *  add.w   d1,y_pos(a0)
         std   y_pos+dp
         lda   glb_d3_b
-        sta   angle+dp                                 *  move.b  d3,angle(a0)
+        sta   angle+dp                                *  move.b  d3,angle(a0)
         jsr   Sonic_ResetOnFloor                      *  bsr.w   Sonic_ResetOnFloor
         lda   glb_d3_b
         sta   glb_d0_b                                *  move.b  d3,d0
@@ -2300,26 +2316,26 @@ Sonic_DoLevelCollision                                *Sonic_DoLevelCollision:
         beq   loc_1AF5A                               *  beq.s   loc_1AF5A
         ldd   y_vel+dp
         _asrd
-        std   y_vel+dp                                 *  asr y_vel(a0)
+        std   y_vel+dp                                *  asr y_vel(a0)
         bra   loc_1AF7C                               *  bra.s   loc_1AF7C
                                                       *; ===========================================================================
                                                       *
 loc_1AF5A                                             *loc_1AF5A:
         ldd   #0
-        std   y_vel+dp                                 *  move.w  #0,y_vel(a0)
+        std   y_vel+dp                                *  move.w  #0,y_vel(a0)
         ldd   x_vel+dp
-        std   inertia+dp                               *  move.w  x_vel(a0),inertia(a0)
+        std   inertia+dp                              *  move.w  x_vel(a0),inertia(a0)
         rts                                           *  rts
                                                       *; ===========================================================================
                                                       *
 loc_1AF68                                             *loc_1AF68:
         ldd   #0
-        std   x_vel+dp                                 *  move.w  #0,x_vel(a0) ; stop Sonic since he hit a wall
+        std   x_vel+dp                                *  move.w  #0,x_vel(a0) ; stop Sonic since he hit a wall
         ldd   y_vel+dp
         cmpd  #$FC0                                   *  cmpi.w  #$FC0,y_vel(a0)
         ble   loc_1AF7C                               *  ble.s   loc_1AF7C
         ldd   #$FC0
-        std   y_vel+dp                                 *  move.w  #$FC0,y_vel(a0)
+        std   y_vel+dp                                *  move.w  #$FC0,y_vel(a0)
                                                       *
 loc_1AF7C                                             *loc_1AF7C:
         ldd   y_vel+dp
@@ -2327,7 +2343,7 @@ loc_1AF7C                                             *loc_1AF7C:
         tst   glb_d3_b                                *  tst.b   d3
         bpl   >                                       *  bpl.s   return_1AF8A
         _negd
-!       std   inertia+dp                               *  neg.w   inertia(a0)
+!       std   inertia+dp                              *  neg.w   inertia(a0)
                                                       *
 return_1AF8A                                          *return_1AF8A:
         rts                                           *  rts
@@ -4784,13 +4800,13 @@ Sonic_CheckFloor                                      * Sonic_CheckFloor:
         ;                                             *         move.w  y_pos(a0),d2
         ;                                             *         move.w  x_pos(a0),d3
         ;                                             *         moveq   #0,d0
-        ldb   y_radius+dp                              *         move.b  y_radius(a0),d0
-        sex                                           *         ext.w   d0
-        addd  y_pos+dp                                 *         add.w   d0,d2
+        ldb   y_radius+dp                             *         move.b  y_radius(a0),d0
+        sex                    ; bottom ...           *         ext.w   d0
+        addd  y_pos+dp                                *         add.w   d0,d2
         std   glb_d2
-        ldb   x_radius+dp                              *         move.b  x_radius(a0),d0
-        sex                                           *         ext.w   d0
-        addd  x_pos+dp                                 *         add.w   d0,d3
+        ldb   x_radius+dp                             *         move.b  x_radius(a0),d0
+        sex                    ; ... right sensor     *         ext.w   d0
+        addd  x_pos+dp                                *         add.w   d0,d3
         std   glb_d3
         ldd   #Primary_Angle
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
@@ -4803,14 +4819,14 @@ Sonic_CheckFloor                                      * Sonic_CheckFloor:
         ;                                             *         move.w  y_pos(a0),d2
         ;                                             *         move.w  x_pos(a0),d3
         ;                                             *         moveq   #0,d0
-        ldb   y_radius+dp                              *         move.b  y_radius(a0),d0
-        sex                                           *         ext.w   d0
-        addd  y_pos+dp                                 *         add.w   d0,d2
+        ldb   y_radius+dp                             *         move.b  y_radius(a0),d0
+        sex                    ; bottom ...           *         ext.w   d0
+        addd  y_pos+dp                                *         add.w   d0,d2
         std   glb_d2
-        ldb   x_radius+dp                              *         move.b  x_radius(a0),d0
-        negb
+        ldb   x_radius+dp                             *         move.b  x_radius(a0),d0
+        negb                   ; ... left sensor
         sex                                           *         ext.w   d0
-        addd  x_pos+dp                                 *         sub.w   d0,d3
+        addd  x_pos+dp                                *         sub.w   d0,d3
         std   glb_d3
         ldd   #Secondary_Angle
         std   glb_a4                                  *         lea     (Secondary_Angle).w,a4
@@ -4825,9 +4841,9 @@ Sonic_CheckFloor                                      * Sonic_CheckFloor:
         stb   glb_d2_b                                *         move.b  #0,d2
                                                       * 
 loc_1ECC6                                             * loc_1ECC6:
-        lda   Secondary_Angle ; based on angles       *         move.b  (Secondary_Angle).w,d3
-        ldx   glb_d1          ; invert distance
-        cmpx  glb_d0          ; of left and right     *         cmp.w   d0,d1
+        lda   Secondary_Angle                         *         move.b  (Secondary_Angle).w,d3
+        ldx   glb_d1          ; choose
+        cmpx  glb_d0          ; left or right         *         cmp.w   d0,d1
         ble   loc_1ECD4       ; sensors               *         ble.s   loc_1ECD4
         ;                     ; this code is common   *         move.b  (Primary_Angle).w,d3
         ;                     ; to floor and ceiling  *         exg     d0,d1
@@ -4911,15 +4927,15 @@ loc_1ECFE                                             * loc_1ECFE:
                                                       * ; ===========================================================================
                                                       * ; loc_1ED56:
 ChkFloorEdge                                          * ChkFloorEdge:
-        ldd   x_pos+dp                                 
+        ldd   x_pos+dp          ; center ...                       
         std   glb_d3                                  *         move.w  x_pos(a0),d3
                                                       * ; loc_1ED5A:
 ChkFloorEdge_Part2                                    * ChkFloorEdge_Part2:
         ;                                             *         move.w  y_pos(a0),d2
-        lda   #0                                      *         moveq   #0,d0
-        ldb   y_radius+dp                              *         move.b  y_radius(a0),d0
-        sex                                           *         ext.w   d0
-        addd  y_pos+dp                                 *         add.w   d0,d2
+        ;                                             *         moveq   #0,d0
+        ldb   y_radius+dp                             *         move.b  y_radius(a0),d0
+        sex                     ; ... bottom sensor   *         ext.w   d0
+        addd  y_pos+dp                                *         add.w   d0,d2
         std   glb_d2
         ldx   Primary_Collision                       *         move.l  #Primary_Collision,(Collision_addr).w
         lda   top_solid_bit+dp
@@ -4981,12 +4997,12 @@ ChkFloorEdge_Part2                                    * ChkFloorEdge_Part2:
                                                       * 
                                                       * ; loc_1EDFA: ObjHitFloor:
 ObjCheckFloorDist                                     * ObjCheckFloorDist:
-        ldd   x_pos+dp                                 *         move.w  x_pos(a0),d3
+        ldd   x_pos+dp       ; center ...             *         move.w  x_pos(a0),d3
         std   glb_d3
         ;                                             *         move.w  y_pos(a0),d2
-        ldb   y_radius+dp                              *         move.b  y_radius(a0),d0
-        sex                                           *         ext.w   d0
-        addd  y_pos+dp                                 *         add.w   d0,d2
+        ldb   y_radius+dp                             *         move.b  y_radius(a0),d0
+        sex                  ; ... bottom sensor      *         ext.w   d0
+        addd  y_pos+dp                                *         add.w   d0,d2
         std   glb_d2
         ldd   #Primary_Angle
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
@@ -5001,7 +5017,7 @@ ObjCheckFloorDist                                     * ObjCheckFloorDist:
         bita  #1                                      *         btst    #0,d3
         beq   >                                       *         beq.s   +
         lda   #0                                      *         move.b  #0,d3
-!       sta   glb_d3_b                                  * +
+!       sta   glb_d3_b                                 * +
         rts                                           *         rts
                                                       * ; ===========================================================================
                                                       * 
@@ -5014,10 +5030,10 @@ ObjCheckFloorDist                                     * ObjCheckFloorDist:
                                                       * ; loc_1EE30:
 FireCheckFloorDist                                    * FireCheckFloorDist:
         ldd   x_pos,x                                 *         move.w  x_pos(a1),d3
-        std   glb_d3
+        std   glb_d3           ; center ...
         ;                                             *         move.w  y_pos(a1),d2
         ldb   y_radius,x                              *         move.b  y_radius(a1),d0
-        sex                                           *         ext.w   d0
+        sex                    ; ... bottom sensor    *         ext.w   d0
         addd  y_pos,x                                 *         add.w   d0,d2
         std   glb_d2
         ldd   #Primary_Angle
@@ -5039,12 +5055,12 @@ FireCheckFloorDist                                    * FireCheckFloorDist:
                                                       * 
                                                       * ; loc_1EE56:
 RingCheckFloorDist                                    * RingCheckFloorDist:
-        ldd   x_pos+dp                                 *         move.w  x_pos(a0),d3
+        ldd   x_pos+dp          ; center ...          *         move.w  x_pos(a0),d3
         std   glb_d3
         ;                                             *         move.w  y_pos(a0),d2
-        lda   y_radius+dp                              *         move.b  y_radius(a0),d0
-        sex                                           *         ext.w   d0
-        addd  y_pos+dp                                 *         add.w   d0,d2
+        lda   y_radius+dp                             *         move.b  y_radius(a0),d0
+        sex                     ; ... bottom sensor   *         ext.w   d0
+        addd  y_pos+dp                                *         add.w   d0,d2
         std   glb_d2
         ldd   #Primary_Angle
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
@@ -5070,16 +5086,16 @@ CheckRightCeilingDist                                 * CheckRightCeilingDist:
         ;                                             *         move.w  y_pos(a0),d2
         ;                                             *         move.w  x_pos(a0),d3
         ;                                             *         moveq   #0,d0
-        ldb   x_radius+dp                              *         move.b  x_radius(a0),d0
+        ldb   x_radius+dp                             *         move.b  x_radius(a0),d0
         aslb ; wide-dot factor
         negb
         sex                                           *         ext.w   d0
-        addd  y_pos+dp                                 *         sub.w   d0,d2
+        addd  y_pos+dp                                *         sub.w   d0,d2
         std   glb_d2
-        ldb   y_radius+dp                              *         move.b  y_radius(a0),d0
+        ldb   y_radius+dp                             *         move.b  y_radius(a0),d0
         asrb ; wide-dot factor
         sex                                           *         ext.w   d0
-        addd  x_pos+dp                                 *         add.w   d0,d3
+        addd  x_pos+dp                                *         add.w   d0,d3
         std   glb_d3
         ldd   #Primary_Angle
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
@@ -5092,15 +5108,15 @@ CheckRightCeilingDist                                 * CheckRightCeilingDist:
         ;                                             *         move.w  y_pos(a0),d2
         ;                                             *         move.w  x_pos(a0),d3
         ;                                             *         moveq   #0,d0
-        ldb   x_radius+dp                              *         move.b  x_radius(a0),d0
+        ldb   x_radius+dp                             *         move.b  x_radius(a0),d0
         aslb ; wide-dot factor
         sex                                           *         ext.w   d0
-        addd  y_pos+dp                                 *         add.w   d0,d2
+        addd  y_pos+dp                                *         add.w   d0,d2
         std   glb_d2
-        ldb   y_radius+dp                              *         move.b  y_radius(a0),d0
+        ldb   y_radius+dp                             *         move.b  y_radius(a0),d0
         asrb ; wide-dot factor
         sex                                           *         ext.w   d0
-        addd  x_pos+dp                                 *         add.w   d0,d3
+        addd  x_pos+dp                                *         add.w   d0,d3
         std   glb_d3
         ldd   #Secondary_Angle
         std   glb_a4                                  *         lea     (Secondary_Angle).w,a4
@@ -5130,9 +5146,9 @@ CheckRightCeilingDist                                 * CheckRightCeilingDist:
                                                       * ; returns angle in d3, or zero if angle was odd
                                                       * ; sub_1EEDC:
 CheckRightWallDist                                    * CheckRightWallDist:
-        ldd   y_pos+dp                                 *         move.w  y_pos(a0),d2
+        ldd   y_pos+dp                                *         move.w  y_pos(a0),d2
         std   glb_d2
-        ldd   x_pos+dp                                 *         move.w  x_pos(a0),d3
+        ldd   x_pos+dp                                *         move.w  x_pos(a0),d3
         std   glb_d3
                                                       * ; loc_1EEE4:
 CheckRightWallDist_Part2                              * CheckRightWallDist_Part2:
@@ -5157,7 +5173,7 @@ ObjCheckRightWallDist                                 * ObjCheckRightWallDist:
         ldd   glb_d3
         addd  x_pos+dp
         std   glb_d3                                  *         add.w   x_pos(a0),d3
-        ldd   y_pos+dp                                 *         move.w  y_pos(a0),d2
+        ldd   y_pos+dp                                *         move.w  y_pos(a0),d2
         std   glb_d2
         ldd   #Primary_Angle
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
@@ -5187,20 +5203,18 @@ ObjCheckRightWallDist                                 * ObjCheckRightWallDist:
                                                       * 
                                                       * ; loc_1EF2E: Sonic_DontRunOnWalls: CheckCeilingDist:
 Sonic_CheckCeiling                                    * Sonic_CheckCeiling:
-        ; Top right sensor check
-        ; **********************
         ;                                             *         move.w  y_pos(a0),d2
         ;                                             *         move.w  x_pos(a0),d3
         ;                                             *         moveq   #0,d0
-        ldb   y_radius+dp ; top sensor is set          *         move.b  y_radius(a0),d0
-        negb             ; by y_pos-y_radius
+        ldb   y_radius+dp    ; top ...                *         move.b  y_radius(a0),d0
+        negb
         sex                                           *         ext.w   d0
-        addd  y_pos+dp                                 *         sub.w   d0,d2
+        addd  y_pos+dp                                *         sub.w   d0,d2
         eorb  #$F                                     *         eori.w  #$F,d2 ; flip position upside-down within the current 16x16 block?
         std   glb_d2
-        ldb   x_radius+dp                              *         move.b  x_radius(a0),d0
+        ldb   x_radius+dp                             *         move.b  x_radius(a0),d0
         sex                                           *         ext.w   d0
-        addd  x_pos+dp                                 *         add.w   d0,d3
+        addd  x_pos+dp       ; ... right sensor       *         add.w   d0,d3
         std   glb_d3
         ldd   #Primary_Angle
         std   glb_a4                                  *         lea     (Primary_Angle).w,a4
@@ -5211,22 +5225,19 @@ Sonic_CheckCeiling                                    * Sonic_CheckCeiling:
         jsr   FindFloor                               *         bsr.w   FindFloor
         ldd   glb_d1
         std   @d0                                     *         move.w  d1,-\(sp\)        
-        ;
-        ; Top left sensor check
-        ; **********************
         ;                                             *         move.w  y_pos(a0),d2
         ;                                             *         move.w  x_pos(a0),d3
         ;                                             *         moveq   #0,d0
-        ldb   y_radius+dp                              *         move.b  y_radius(a0),d0
+        ldb   y_radius+dp    ; top ...                *         move.b  y_radius(a0),d0
         negb
         sex                                           *         ext.w   d0
-        addd  y_pos+dp                                 *         sub.w   d0,d2
+        addd  y_pos+dp                                *         sub.w   d0,d2
         eorb  #$F                                     *         eori.w  #$F,d2
         std   glb_d2
-        ldb   x_radius+dp                              *         move.b  x_radius(a0),d0
+        ldb   x_radius+dp                             *         move.b  x_radius(a0),d0
         negb
         sex                                           *         ext.w   d0
-        addd  x_pos+dp                                 *         sub.w   d0,d3
+        addd  x_pos+dp       ; ... left sensor        *         sub.w   d0,d3
         std   glb_d3
         ldd   #Secondary_Angle
         std   glb_a4                                  *         lea     (Secondary_Angle).w,a4
@@ -5463,6 +5474,6 @@ Control_Locked                  fcb   0
 Chain_Bonus_counter             fcb   0
 Sonic_Look_delay_counter        fcb   0
 
-        INCLUDE "./Engine/Math/CalcAngle.asm"
+        ;INCLUDE "./Engine/Math/CalcAngle.asm"
         INCLUDE "./Engine/Math/CalcSine.asm"
         INCLUDE "./Engine/Math/Mul9x16.asm"
