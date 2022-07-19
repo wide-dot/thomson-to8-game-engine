@@ -3,7 +3,7 @@
 * ===========================================================================
 
 nb_reserved_objects               equ 0
-nb_dynamic_objects                equ 18
+nb_dynamic_objects                equ 18 * should be 40
 nb_level_objects                  equ 1
 nb_graphical_objects              equ 20 * max 64 total
 

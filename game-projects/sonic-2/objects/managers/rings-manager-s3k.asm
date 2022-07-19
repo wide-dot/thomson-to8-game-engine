@@ -17,7 +17,7 @@ nb_rings                equ dp_engine
 
 Load_Rings                                            *Load_Rings:
                                                       *                moveq   #0,d0
-        ; a is set by caller                          *                move.b  (Rings_manager_routine).w,d0
+        ; b is set by caller                          *                move.b  (Rings_manager_routine).w,d0
         ldx   #Rings_Routines                         *                move.w  off_E8B8(pc,d0.w),d0
         jmp   [b,x]                                   *                jmp     off_E8B8(pc,d0.w)
                                                       *; End of function Load_Rings

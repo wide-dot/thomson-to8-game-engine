@@ -108,7 +108,7 @@ next_object                   equ object_size
 ext_variables                 equ object_core_size ; start of reserved space for additionnal variables
 
 id                            equ 0           ; reference to object model id (ObjID_) (0: free slot)
-subtype                       equ 1           ; reference to object subtype (Sub_)
+subtype                       equ 1           ; reference to object subtype (Sub_) DEPENDENCY subtype must follow id
 render_flags                  equ 2
 
 * --- render_flags bitfield variables ---
