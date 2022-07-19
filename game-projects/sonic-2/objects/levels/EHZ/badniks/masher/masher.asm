@@ -11,7 +11,7 @@
                                                       *; Object 5C - Masher (jumping piranha fish badnik) from EHZ
                                                       *; ----------------------------------------------------------------------------
                                                       *; OST Variables:
-Obj5C_initial_y_pos equ ext_variables_size            *Obj5C_initial_y_pos = objoff_30 ; word
+Obj5C_initial_y_pos equ ext_variables_obj             *Obj5C_initial_y_pos = objoff_30 ; word
                                                       *
                                                       *; Sprite_2D394:
 Obj5C                                                 *Obj5C:
@@ -44,15 +44,19 @@ Obj5C_Init                                            *Obj5C_Init:
         std   y_vel,u                                 *    move.w  #-$400,y_vel(a0)
         ldd   y_pos,u
         std   Obj5C_initial_y_pos,u                   *    move.w  y_pos(a0),Obj5C_initial_y_pos(a0)   ; set initial (and lowest) y position
-        ldd   #Ani_obj5C_0
+        ldd   #MasAni_SlowBite
         std   anim,u ; default anim is 0
                                                       *; loc_2D3E4:
 Obj5C_Main                                            *Obj5C_Main:
         ; moved to init                               *    lea (Ani_obj5C).l,a1
-        jsr   AnimateSprite                           *    jsrto   (AnimateSprite).l, JmpTo16_AnimateSprite
-        jsr   ObjectMove                              *    jsrto   (ObjectMove).l, JmpTo22_ObjectMove
+        jsr   AnimateSpriteSync                       *    jsrto   (AnimateSprite).l, JmpTo16_AnimateSprite
+        jsr   ObjectMoveSync                          *    jsrto   (ObjectMove).l, JmpTo22_ObjectMove
         ldd   y_vel,u
-        addd  #$18
+        ldx   Vint_Main_runcount_w
+!       addd  #$18
+        leax  -1,x
+        bne   <
+        addd  #$0C
         std   y_vel,u                                 *    addi.w  #$18,y_vel(a0)  ; apply gravity
         ldx   Obj5C_initial_y_pos,u                   *    move.w  Obj5C_initial_y_pos(a0),d0
         cmpx  y_pos,u                                 *    cmp.w   y_pos(a0),d0    ; has object reached its initial y position?
@@ -61,16 +65,16 @@ Obj5C_Main                                            *Obj5C_Main:
         ldd   #-$500
         std   y_vel,u                                 *    move.w  #-$500,y_vel(a0)    ; jump
 !                                                     *+
-        ldd   #Ani_obj5C_1
+        ldd   #MasAni_FastBite
         std   anim,u                                  *    move.b  #1,anim(a0)
         leax  -$C0,x                                  *    subi.w  #$C0,d0
         cmpx  y_pos,u                                 *    cmp.w   y_pos(a0),d0
         bhs   >                                       *    bhs.s   +   ; rts
-        ldd   #Ani_obj5C_0
+        ldd   #MasAni_SlowBite
         std   anim,u                                  *    move.b  #0,anim(a0)
         tst   y_vel,u                                 *    tst.w   y_vel(a0)   ; is object falling?
         bmi   >                                       *    bmi.s   +   ; rts   ; if not, branch
-        ldd   #Ani_obj5C_2
+        ldd   #MasAni_ClosedJaw
         std   anim,u                                  *    move.b  #2,anim(a0) ; use closed mouth animation
 !                                                     *+
         rts                                           *    rts

@@ -411,7 +411,7 @@ Obj01_MdNormal                                        *Obj01_MdNormal:
         jsr   Sonic_Move                              *  bsr.w   Sonic_Move
         jsr   Sonic_Roll                              *  bsr.w   Sonic_Roll
         ; moved                                       *  bsr.w   Sonic_LevelBound
-        jsr   ObjectMove                              *  jsr (ObjectMove).l
+        jsr   _ObjectMove                             *  jsr (ObjectMove).l
         jsr   AnglePos                                *  bsr.w   AnglePos
         jsr   Sonic_SlopeRepel                        *  bsr.w   Sonic_SlopeRepel
 
@@ -428,7 +428,7 @@ Obj01_MdNormal                                        *Obj01_MdNormal:
         jsr   Sonic_Jump
         jsr   Sonic_SlopeResist
         jsr   Sonic_Move
-        jsr   ObjectMove
+        jsr   _ObjectMove
         jsr   AnglePos
         jsr   Sonic_SlopeRepel
         bra   <
@@ -444,7 +444,7 @@ Obj01_MdAir                                           *Obj01_MdAir:
         jsr   Sonic_JumpHeight                        *  bsr.w   Sonic_JumpHeight
         jsr   Sonic_ChgJumpDir                        *  bsr.w   Sonic_ChgJumpDir
         ; moved                                       *  bsr.w   Sonic_LevelBound
-        jsr   ObjectMoveAndFall                       *  jsr (ObjectMoveAndFall).l
+        jsr   _ObjectMoveAndFall                      *  jsr (ObjectMoveAndFall).l
         ; moved                                       *  btst    #6,status(a0)   ; is Sonic underwater?
         ; moved                                       *  beq.s   +       ; if not, branch
         ; moved                                       *  subi.w  #$28,y_vel(a0)  ; reduce gravity by $28 ($38-$28=$10)
@@ -464,7 +464,7 @@ Obj01_MdAir                                           *Obj01_MdAir:
         jmp   [a,x] ; move to another mode
 @cont   jsr   Sonic_JumpHeight
         jsr   Sonic_ChgJumpDir
-        jsr   ObjectMoveAndFall
+        jsr   _ObjectMoveAndFall
         jsr   Sonic_JumpAngle
         jsr   Sonic_DoLevelCollision
         bra   <
@@ -484,7 +484,7 @@ Obj01_MdRoll                                          *Obj01_MdRoll:
         jsr   Sonic_RollRepel                         *  bsr.w   Sonic_RollRepel
         jsr   Sonic_RollSpeed                         *  bsr.w   Sonic_RollSpeed
         ; moved                                       *  bsr.w   Sonic_LevelBound
-        jsr   ObjectMove                              *  jsr (ObjectMove).l
+        jsr   _ObjectMove                             *  jsr (ObjectMove).l
         jsr   AnglePos                                *  bsr.w   AnglePos
         jsr   Sonic_SlopeRepel                        *  bsr.w   Sonic_SlopeRepel
 
@@ -500,7 +500,7 @@ Obj01_MdRoll                                          *Obj01_MdRoll:
         jmp   [a,x] ; move to another mode
 @cont   jsr   Sonic_RollRepel
         jsr   Sonic_RollSpeed
-        jsr   ObjectMove
+        jsr   _ObjectMove
         jsr   AnglePos
         jsr   Sonic_SlopeRepel
         bra   <
@@ -518,7 +518,7 @@ Obj01_MdJump                                          *Obj01_MdJump:
         jsr   Sonic_JumpHeight                        *  bsr.w   Sonic_JumpHeight
         jsr   Sonic_ChgJumpDir                        *  bsr.w   Sonic_ChgJumpDir
         ; moved                                       *  bsr.w   Sonic_LevelBound
-        jsr   ObjectMoveAndFall                       *  jsr (ObjectMoveAndFall).l
+        jsr   _ObjectMoveAndFall                      *  jsr (ObjectMoveAndFall).l
         ; moved                                       *  btst    #6,status(a0)   ; is Sonic underwater?
         ; moved                                       *  beq.s   +       ; if not, branch
         ; moved                                       *  subi.w  #$28,y_vel(a0)  ; reduce gravity by $28 ($38-$28=$10)
@@ -538,7 +538,7 @@ Obj01_MdJump                                          *Obj01_MdJump:
         jmp   [a,x] ; move to another mode
 @cont   jsr   Sonic_JumpHeight
         jsr   Sonic_ChgJumpDir
-        jsr   ObjectMoveAndFall
+        jsr   _ObjectMoveAndFall
         jsr   Sonic_JumpAngle
         jsr   Sonic_DoLevelCollision
         bra   <
@@ -554,7 +554,7 @@ Obj01_MdJump                                          *Obj01_MdJump:
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       * 
                                                       * ; sub_16380: ObjectFall:
-ObjectMoveAndFall                                     * ObjectMoveAndFall:
+_ObjectMoveAndFall                                    * ObjectMoveAndFall:
                                                       *         move.l  x_pos(a0),d2    ; load x position
                                                       *         move.l  y_pos(a0),d3    ; load y position
                                                       *         move.w  x_vel(a0),d0    ; load x speed
@@ -611,7 +611,7 @@ ObjectMoveAndFall                                     * ObjectMoveAndFall:
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       * 
                                                       * ; sub_163AC: SpeedToPos:
-ObjectMove                                            * ObjectMove:
+_ObjectMove                                           * ObjectMove:
                                                       *         move.l  x_pos(a0),d2    ; load x position
                                                       *         move.l  y_pos(a0),d3    ; load y position
                                                       *         move.w  x_vel(a0),d0    ; load horizontal speed
@@ -2649,7 +2649,7 @@ Obj01_Dead                                            *  Obj01_Dead:
         rts                                           *  rts
                                                       *+
         jsr   CheckGameOver                           *  bsr.w   CheckGameOver
-        jsr   ObjectMoveAndFall                       *  jsr (ObjectMoveAndFall).l
+        jsr   _ObjectMoveAndFall                      *  jsr (ObjectMoveAndFall).l
         jsr   Sonic_RecordPos                         *  bsr.w   Sonic_RecordPos
         jsr   Sonic_Animate                           *  bsr.w   Sonic_Animate
                                                       *  bsr.w   LoadSonicDynPLC

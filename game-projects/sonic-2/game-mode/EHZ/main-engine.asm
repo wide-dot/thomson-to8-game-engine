@@ -72,6 +72,9 @@ LevelSizeLoad ; todo move to an object
         ; init ring manager
         _RunObjectRoutineB ObjID_RingsManager,#0
 
+        ; init object manager
+        _RunObjectRoutineB ObjID_ObjectsManager,#0
+
         ; init music
         lda   #$01                       ; 1: play 60hz track at 50hz, 0: do not skip frames
         sta   Smps.60HzData 
@@ -95,6 +98,7 @@ LevelMainLoop
         _RunObject ObjID_Sonic,#MainCharacter 
         _RunObject ObjID_Scroll,#MainCharacter   
         _RunObjectRoutineB ObjID_RingsManager,#2
+        _RunObjectRoutineB ObjID_ObjectsManager,#2
 
         jsr   RunObjects
 	jsr   ForceRefresh
@@ -331,20 +335,23 @@ TlsAni_EHZ_pulseball3_imgs
         INCLUDE "./Engine/InitGlobals.asm"
         INCLUDE "./Engine/Ram/BankSwitch.asm"
         INCLUDE "./Engine/Graphics/WaitVBL.asm"
+        INCLUDE "./Engine/Graphics/AnimateSprite.asm"	
         INCLUDE "./Engine/Graphics/AnimateSpriteSync.asm"	
         INCLUDE "./objects/main-characters/sonic/sonic-animate.asm"
         INCLUDE "./Engine/Graphics/DisplaySprite.asm"	
+        INCLUDE "./Engine/ObjectManagement/MarkObjGone.asm"
         INCLUDE "./Engine/Graphics/CheckSpritesRefresh.asm"
         INCLUDE "./Engine/Graphics/EraseSprites.asm"
         INCLUDE "./Engine/Graphics/UnsetDisplayPriority.asm"
         INCLUDE "./Engine/Graphics/DrawSprites.asm"
         INCLUDE "./Engine/Graphics/BgBufferAlloc.asm"	
         INCLUDE "./Engine/Joypad/ReadJoypads2.asm"
+        INCLUDE "./Engine/ObjectManagement/ClearObj.asm"
         INCLUDE "./Engine/ObjectManagement/RunObjects.asm"
         INCLUDE "./Engine/ObjectManagement/SingleObjLoad.asm"
         INCLUDE "./Engine/ObjectManagement/DeleteObject.asm"
         INCLUDE "./Engine/ObjectManagement/RunPgSubRoutine.asm"
-        INCLUDE "./engine/object-management/clear-obj-107.asm"	
+        INCLUDE "./Engine/ObjectManagement/ObjectMoveSync.asm"
         INCLUDE "./Engine/Ram/ClearDataMemory.asm"
         INCLUDE "./Engine/Irq/IrqSmpsObj.asm"      
         INCLUDE "./objects/levels/collision/collision.asm"

@@ -2,43 +2,39 @@
 * ClearObj
 * --------
 * Subroutine to clear an object data in OST
-* !!! DOES NOT CLEAR ext_variables !!!
-* If you want to clean ext_variables, crete a copy of this file and customize it
-* you will have to keep the same routine name (called by other Engine routines)
-* Best practice is to init ext_vars in object code
-* Look at the Sonic2 demo for an example of cutomization (ClearObj107)
 *
 * input REG : [u] pointer on objet (OST)
-* clear REG : [d,y]
+* clear REG : none
 * ---------------------------------------------------------------------------
 
-        IFNE object_core_size-93
-        WARNING "ClearObj routine must be upgraded to clean object_core_size bytes (actually 93 bytes)"
-        ENDC
-
 ClearObj 
-        pshs  d,x,y,u
-        sts   CLO_1+2
-        leas  object_core_size,u        
-        ldd   #$0000
+        pshs  d,x,y
+
+        leau  object_size,u ; move to end of data object structure
+        ldd   #$0000        ; init regs to zero
         ldx   #$0000
         leay  ,x
-        leau  ,x
-        pshs  d,x,y,u
-        pshs  d,x,y,u
-        pshs  d,x,y,u
-        pshs  d,x,y,u
-        pshs  d,x,y,u
-        pshs  d,x,y,u
-        pshs  d,x,y,u
-        pshs  d,x,y,u
-        pshs  d,x,y,u
-        pshs  a,x
-        leau  ,s
-CLO_1        
-        lds   #$0000        ; start of object should not be written with S as an index because of IRQ        
-        pshu  d,x,y         ; saving 12 bytes + (2 bytes * _sr calls) inside IRQ routine
-        pshu  d,x,y         ; DEPENDENCY on nb of _sr calls inside IRQ routine  (here 18 bytes of margin)
-        pshu  d,x,y         ; DEPENDENCY on object_size definition
-CLO_2        
-        puls  d,x,y,u,pc
+
+        fill $36,(object_size/6)*2 ; generate object_size/6 assembly instructions $3636 (pshu  d,x,y) 
+
+        IFEQ object_size%6-5
+        pshu  a,x,y
+        ENDC
+
+        IFEQ object_size%6-4
+        pshu  d,x
+        ENDC
+
+        IFEQ object_size%6-3
+        pshu  a,x
+        ENDC
+
+        IFEQ object_size%6-2
+        std   -2,u
+        ENDC
+
+        IFEQ object_size%6-1
+        sta   -1,u
+        ENDC
+
+        puls  d,x,y,pc
