@@ -5,8 +5,8 @@
 *
 ********************************************************************************
 
-        INCLUDE "./Engine/Constants.asm"
-        INCLUDE "./Engine/Macros.asm"        
+        INCLUDE "./engine/constants.asm"
+        INCLUDE "./engine/macros.asm"        
         INCLUDE "./objects/smps/SndID.equ"	
         org   $6100
 
@@ -41,9 +41,9 @@ LevelMainLoop
 * ==============================================================================
 * Routines
 * ==============================================================================
-        INCLUDE "./Engine/InitGlobals.asm"
-        INCLUDE "./Engine/Ram/BankSwitch.asm"
-        INCLUDE "./Engine/Graphics/WaitVBL.asm"
-        INCLUDE "./Engine/ObjectManagement/RunPgSubRoutine.asm"
-        INCLUDE "./Engine/Irq/IrqSmpsObj.asm"      
-        INCLUDE "./Engine/Joypad/ReadJoypads2.asm"
+        INCLUDE "./engine/InitGlobals.asm"
+        INCLUDE "./engine/ram/BankSwitch.asm"
+        INCLUDE "./engine/graphics/vbl/WaitVBL.asm"
+        INCLUDE "./engine/object-management/RunPgSubRoutine.asm"
+        INCLUDE "./engine/irq/IrqSmpsObj.asm"      
+        INCLUDE "./engine/joypad/ReadJoypads2.asm"

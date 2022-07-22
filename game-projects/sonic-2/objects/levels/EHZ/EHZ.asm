@@ -6,7 +6,7 @@
 ;
 ; ---------------------------------------------------------------------------
 
-        INCLUDE "./Engine/Macros.asm"
+        INCLUDE "./engine/macros.asm"
 
 TileMapRegister
 	; register map to engine

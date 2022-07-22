@@ -6,7 +6,7 @@
 ;
 ; ---------------------------------------------------------------------------
 
-        INCLUDE "./Engine/Macros.asm"   
+        INCLUDE "./engine/macros.asm"   
         SETDP   direct_page/256
 
 WIDTH_FACTOR equ 10/20 ; BM16 is wide dot
@@ -5346,6 +5346,6 @@ Control_Locked                  fcb   0
 Chain_Bonus_counter             fcb   0
 Sonic_Look_delay_counter        fcb   0
 
-        INCLUDE "./Engine/Math/CalcAngle.asm"
-        INCLUDE "./Engine/Math/CalcSine.asm"
-        INCLUDE "./Engine/Math/Mul9x16.asm"
+        INCLUDE "./engine/math/CalcAngle.asm"
+        INCLUDE "./engine/math/CalcSine.asm"
+        INCLUDE "./engine/math/Mul9x16.asm"

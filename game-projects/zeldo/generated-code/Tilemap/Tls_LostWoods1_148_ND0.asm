@@ -1,0 +1,68 @@
+	INCLUDE "./engine/constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+DRAW_Tls_LostWoods1_148
+	LEAU 481,U
+
+	LDD #$dd44
+	STD 119,U
+	STD 79,U
+	LDB #$4b
+	STD 39,U
+	LDB #$44
+	STD -1,U
+	STD -41,U
+	STD -81,U
+	STD -121,U
+	LEAU -280,U
+
+	STD 119,U
+	STD 79,U
+	STD 39,U
+	LDB #$4b
+	STD -1,U
+	LDB #$44
+	STD -41,U
+	STD -81,U
+	STD -121,U
+	LEAU -201,U
+
+	STD 40,U
+	STD ,U
+
+	LDU <glb_screen_location_1
+	LEAU 481,U
+
+	LDD #$d244
+	STD 119,U
+	STD 79,U
+	LDD #$24bb
+	STD -1,U
+	LDD #$2244
+	STD 39,U
+	STD -81,U
+	STD -121,U
+	LDD #$244b
+	STD -41,U
+	LEAU -280,U
+
+	LDD #$d244
+	STD 119,U
+	STD 79,U
+	STD 39,U
+	LDA #$22
+	STD -1,U
+	STD -121,U
+	LDD #$24bb
+	STD -41,U
+	LDB #$4b
+	STD -81,U
+	LEAU -201,U
+
+	LDD #$2244
+	STD 40,U
+	LDA #$d2
+	STD ,U
+	RTS
+

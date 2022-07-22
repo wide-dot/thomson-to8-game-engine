@@ -1,0 +1,192 @@
+;Literal (copy next N bytes from compressed file)
+;    0  length  byte[1]  byte[2]  ...  byte[N]
+;Copy from last offset (repeat N bytes from last offset)
+;    0  length
+;Copy from new offset (repeat N bytes from new offset)
+;    1  MSB(offset)+1  LSB(offset)  length-1
+
+; idea copy from 0 means data defaulted to 0
+; 
+
+; ----------------------
+; IRQ must be disabled !
+; ----------------------
+
+CopyFromOffsetEnd
+
+; repeat a pattern of 8 bytes max, 64 times max
+
+          ; u ptr to bytes destination (backward write)
+          ; d is length (1-16384)
+CopyBytes
+        ; nb bytes availables = offet
+        ; use a jump table to load registers
+
+        andb  #%00111111               ; len values are shifted (0 value means length of 1, ...)
+        aslb
+        ldx   #MX0_psh
+        abx
+        stx   @rtne
+        ldd   #0
+        ldx   #0
+        leay  ,x
+        jmp   #0
+@rtne   equ   *-2
+
+MX0_pul
+        fdb   @l1
+        fdb   @l2
+        fdb   @l3
+        fdb   @l4
+        fdb   @l5
+        fdb   @l6
+        fdb   @l7
+        fdb   @l8
+
+@l8     pulu  d,x,y,s
+@l7     pulu  b,x,y,s
+@l6     pulu  d,x,y
+@l6     pulu  b,x,y
+@l6     pulu  d,x
+@l3     pulu  b,x
+@l2     pulu  d
+@l1     pulu  b
+
+
+MX0_psh
+        fdb   @l1
+        fdb   @l2
+        fdb   @l3
+        fdb   @l4
+        fdb   @l5
+        fdb   @l6
+        fdb   @l7
+        fdb   @l8
+        fdb   @l9
+        fdb   @l10
+        fdb   @l11
+        fdb   @l12
+        fdb   @l13
+        fdb   @l14
+        fdb   @l15
+        fdb   @l16
+        fdb   @l17
+        fdb   @l18
+        fdb   @l19
+        fdb   @l20
+        fdb   @l21
+        fdb   @l22
+        fdb   @l23
+        fdb   @l24
+        fdb   @l25
+        fdb   @l26
+        fdb   @l27
+        fdb   @l28
+        fdb   @l29
+        fdb   @l30
+        fdb   @l31
+        fdb   @l32
+        fdb   @l33
+        fdb   @l34
+        fdb   @l35
+        fdb   @l36
+        fdb   @l37
+        fdb   @l38
+        fdb   @l39
+        fdb   @l40
+        fdb   @l41
+        fdb   @l42
+        fdb   @l43
+        fdb   @l44
+        fdb   @l45
+        fdb   @l46
+        fdb   @l47
+        fdb   @l48
+        fdb   @l49
+        fdb   @l50
+        fdb   @l51
+        fdb   @l52
+        fdb   @l53
+        fdb   @l54
+        fdb   @l55
+        fdb   @l56
+        fdb   @l57
+        fdb   @l58
+        fdb   @l59
+        fdb   @l60
+        fdb   @l61
+        fdb   @l62
+        fdb   @l63
+        fdb   @l64
+@l57    pshu  d,x,y,s
+@l49    pshu  d,x,y,s
+@l41    pshu  d,x,y,s
+@l33    pshu  d,x,y,s
+@l25    pshu  d,x,y,s
+@l17    pshu  d,x,y,s
+@l9     pshu  d,x,y,s
+@l1     pshu  b     ; 1
+        jmp   CopyFromOffsetEnd
+@l58    pshu  d,x,y,s
+@l50    pshu  d,x,y,s
+@l42    pshu  d,x,y,s
+@l34    pshu  d,x,y,s
+@l26    pshu  d,x,y,s
+@l18    pshu  d,x,y,s
+@l10    pshu  d,x,y,s
+@l2     pshu  d     ; 2
+        jmp   CopyFromOffsetEnd
+@l59    pshu  d,x,y,s
+@l51    pshu  d,x,y,s
+@l43    pshu  d,x,y,s
+@l35    pshu  d,x,y,s
+@l27    pshu  d,x,y,s
+@l19    pshu  d,x,y,s
+@l11    pshu  d,x,y,s
+@l3     pshu  b,x   ; 3
+        jmp   CopyFromOffsetEnd
+@l60    pshu  d,x,y,s
+@l52    pshu  d,x,y,s
+@l44    pshu  d,x,y,s
+@l36    pshu  d,x,y,s
+@l28    pshu  d,x,y,s
+@l20    pshu  d,x,y,s
+@l12    pshu  d,x,y,s
+@l4     pshu  d,x   ; 4
+        jmp   CopyFromOffsetEnd
+@l61    pshu  d,x,y,s
+@l53    pshu  d,x,y,s
+@l45    pshu  d,x,y,s
+@l37    pshu  d,x,y,s
+@l29    pshu  d,x,y,s
+@l21    pshu  d,x,y,s
+@l13    pshu  d,x,y,s
+@l5     pshu  b,x,y ; 5
+        jmp   CopyFromOffsetEnd
+@l62    pshu  d,x,y,s
+@l54    pshu  d,x,y,s
+@l46    pshu  d,x,y,s
+@l38    pshu  d,x,y,s
+@l30    pshu  d,x,y,s
+@l22    pshu  d,x,y,s
+@l14    pshu  d,x,y,s
+@l6     pshu  d,x,y ; 6
+        jmp   CopyFromOffsetEnd
+@l63    pshu  d,x,y,s
+@l55    pshu  d,x,y,s
+@l47    pshu  d,x,y,s
+@l39    pshu  d,x,y,s
+@l31    pshu  d,x,y,s
+@l23    pshu  d,x,y,s
+@l15    pshu  d,x,y,s
+@l7     pshu  b,x,y,s ; 7
+        jmp   CopyFromOffsetEnd
+@l64    pshu  d,x,y,s
+@l56    pshu  d,x,y,s
+@l48    pshu  d,x,y,s
+@l40    pshu  d,x,y,s
+@l32    pshu  d,x,y,s
+@l24    pshu  d,x,y,s
+@l16    pshu  d,x,y,s
+@l8     pshu  d,x,y,s ; 8
+        jmp   CopyFromOffsetEnd

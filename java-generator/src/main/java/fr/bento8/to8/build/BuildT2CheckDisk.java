@@ -35,17 +35,17 @@ public class BuildT2CheckDisk
 	public static void main(String[] args) throws Throwable
 	{
 		try {
-			buildT2Loader();
+			buildT2Flash();
 			
 		} catch (Exception e) {
 			System.out.println(e);
 		}
 	}
 	
-	private static void buildT2Loader() throws Exception {
+	private static void buildT2Flash() throws Exception {
 		System.out.println("Build T2 Loader for SDDRIVE ...");
 		
-		String tmpFile = duplicateFile("./Engine/Boot/BootT2Loader.asm");
+		String tmpFile = duplicateFile("./engine/boot/boot-t2-flash.asm");
 		compileRAW(tmpFile);
 		byte[] bin;
 		
@@ -58,7 +58,7 @@ public class BuildT2CheckDisk
 
 		String prepend = "Builder_End_Page equ "+(romT2.endPage+1)+"\n";
 		prepend += "Builder_Progress_Step equ "+((Game.T2_NB_PAGES/(romT2.endPage+1))*256+(int)(256*(((double)Game.T2_NB_PAGES/(romT2.endPage+1))-(Game.T2_NB_PAGES/(romT2.endPage+1)))))+"\n";
-		tmpFile = duplicateFilePrepend("./Engine/T2/T2Tester.asm", "", prepend);
+		tmpFile = duplicateFilePrepend("./engine/megarom-t2/t2-test.asm", "", prepend);
 		compileRAW(tmpFile);
 		bin = Files.readAllBytes(Paths.get(getBINFileName(tmpFile)));
 		
@@ -133,7 +133,7 @@ public class BuildT2CheckDisk
 	
 	public static String duplicateFilePrepend(String fileName, String subDir, String prepend) throws IOException {
 		String basename = FileUtil.removeExtension(Paths.get(fileName).getFileName().toString());
-		String destFileName = "./GeneratedCode/"+subDir+"/"+basename+".asm";
+		String destFileName = "./generated-code/"+subDir+"/"+basename+".asm";
 
 		// Creation du chemin si les répertoires sont manquants
 		File file = new File (destFileName);
@@ -156,7 +156,7 @@ public class BuildT2CheckDisk
 	
 	public static String duplicateFile(String fileName) throws IOException {
 		String basename = FileUtil.removeExtension(Paths.get(fileName).getFileName().toString());
-		String destFileName = "./GeneratedCode/"+basename+".asm";
+		String destFileName = "./generated-code/"+basename+".asm";
 
 		Path original = Paths.get(fileName);        
 		Path copied = Paths.get(destFileName);

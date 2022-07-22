@@ -1,28 +1,28 @@
 ; DIRECT PAGE TEMP VARIABLES
 ; --------------------------
-glb_d0   equ   dp+main_object_size
-glb_d0_b equ   dp+main_object_size+1
+glb_d0   equ   dp_engine
+glb_d0_b equ   dp_engine+1
 ; must be a free byte here for 24bits computation
-glb_d1   equ   dp+main_object_size+3
-glb_d1_b equ   dp+main_object_size+4
+glb_d1   equ   dp_engine+3
+glb_d1_b equ   dp_engine+4
 ; must be a free byte here for 24bits computation
-glb_d2   equ   dp+main_object_size+6
-glb_d2_b equ   dp+main_object_size+7
+glb_d2   equ   dp_engine+6
+glb_d2_b equ   dp_engine+7
 ; must be a free byte here for 24bits computation
-glb_d3   equ   dp+main_object_size+9
-glb_d3_b equ   dp+main_object_size+10
+glb_d3   equ   dp_engine+9
+glb_d3_b equ   dp_engine+10
 ; must be a free byte here for 24bits computation
-glb_d4   equ   dp+main_object_size+12
-glb_d4_b equ   dp+main_object_size+13
-glb_d5   equ   dp+main_object_size+14
-glb_d5_b equ   dp+main_object_size+15
-glb_d6   equ   dp+main_object_size+16
-glb_d6_b equ   dp+main_object_size+17
-glb_a3   equ   dp+main_object_size+18
-glb_a3_b equ   dp+main_object_size+19
-glb_a4   equ   dp+main_object_size+20
-glb_a4_b equ   dp+main_object_size+21
-glb_b_pg equ   dp+main_object_size+22
+glb_d4   equ   dp_engine+12
+glb_d4_b equ   dp_engine+13
+glb_d5   equ   dp_engine+14
+glb_d5_b equ   dp_engine+15
+glb_d6   equ   dp_engine+16
+glb_d6_b equ   dp_engine+17
+glb_a3   equ   dp_engine+18
+glb_a3_b equ   dp_engine+19
+glb_a4   equ   dp_engine+20
+glb_a4_b equ   dp_engine+21
+glb_b_pg equ   dp_engine+22
 
         SETDP   dp/256
 

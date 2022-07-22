@@ -296,7 +296,7 @@ public class ZX0Encoder extends Encoder{
 
 	public List<String> getCodeFrameDrawHeader(String org) {
 		List<String> asm = new ArrayList<String>();
-		asm.add("\tINCLUDE \"./Engine/Constants.asm\"");
+		asm.add("\tINCLUDE \"./engine/constants.asm\"");
 		asm.add("");
 		asm.add("\torg   $" + org + "");
 		asm.add("\tsetdp $FF");

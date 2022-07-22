@@ -150,7 +150,7 @@ public class BuildDisk
 			compileRAMLoaderManager();
 			compileAndWriteBootFd();
 			compileAndWriteBootT2();
-			buildT2Loader();
+			buildT2Flash();
 			
 		} catch (Exception e) {
 			logger.fatal("Build error.", e);
@@ -2158,10 +2158,10 @@ public class BuildDisk
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
-	private static void buildT2Loader() throws Exception {
+	private static void buildT2Flash() throws Exception {
 		logger.info("Build T2 Loader for SDDRIVE ...");
 		
-		String tmpFile = duplicateFile(game.engineAsmBootT2Loader);
+		String tmpFile = duplicateFile(game.engineAsmBootT2Flash);
 		compileRAW(tmpFile, MEGAROM_T2);
 		byte[] bin;
 		
@@ -2174,7 +2174,7 @@ public class BuildDisk
 
 		String prepend = "Builder_End_Page equ "+(game.romT2.endPage+1)+"\n";
 		prepend += "Builder_Progress_Step equ "+((Game.T2_NB_PAGES/(game.romT2.endPage+1))*256+(int)(256*(((double)Game.T2_NB_PAGES/(game.romT2.endPage+1))-(Game.T2_NB_PAGES/(game.romT2.endPage+1)))))+"\n";
-		tmpFile = duplicateFilePrepend(game.engineAsmT2Loader, "", prepend);
+		tmpFile = duplicateFilePrepend(game.engineAsmT2Flash, "", prepend);
 		compileRAW(tmpFile, MEGAROM_T2);
 		bin = Files.readAllBytes(Paths.get(getBINFileName(tmpFile)));
 		

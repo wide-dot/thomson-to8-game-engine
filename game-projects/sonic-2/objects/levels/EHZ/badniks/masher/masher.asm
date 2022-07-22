@@ -33,9 +33,9 @@ Obj5C_Init                                            *Obj5C_Init:
                                                       *    move.l  #Obj5C_MapUnc_2D442,mappings(a0)
                                                       *    move.w  #make_art_tile(ArtTile_ArtNem_Masher,0,0),art_tile(a0)
                                                       *    jsrto   (Adjust2PArtPointer).l, JmpTo58_Adjust2PArtPointer
-        lda   render_flags,u
-        ora   #render_playfieldcoord_mask|render_overlay_mask
+        lda   #render_playfieldcoord_mask|render_overlay_mask
         sta   render_flags,u                          *    move.b  #4,render_flags(a0)
+        ldb   #4
         stb   priority,u                              *    move.b  #4,priority(a0)
         ldd   #$0910
         sta   collision_flags,u                       *    move.b  #9,collision_flags(a0)

@@ -31,7 +31,7 @@ Object_RAM_End
 * ===========================================================================
 
 ; ext_variables_size is for dynamic objects
-ext_variables_size            equ   14
+ext_variables_size            equ   21
 
 status                        equ   status_flags   ; note  exact meaning depends on the object... for sonic/tails  bit 0  leftfacing. bit 1  inair. bit 2  spinning. bit 3  onobject. bit 4  rolljumping. bit 5  pushing. bit 6  underwater.
 width_pixels                  equ   ext_variables
@@ -42,16 +42,16 @@ collision_flags               equ   ext_variables+4
 collision_property            equ   ext_variables+5
 respawn_index                 equ   ext_variables+6
 parent                        equ   ext_variables+7
-ext_variables_obj             equ   object_core_size+9
-ext_variables_main            equ   object_core_size+ext_variables_size
+ext_variables_obj             equ   ext_variables+9
 
 * ===========================================================================
 * Main characters object structure
 * ===========================================================================
 
-main_ext_variables_size       equ   ext_variables_size+26
-main_object_size              equ   object_core_size+main_ext_variables_size ; the size of a main character object
+main_ext_variables_size       equ   25
+main_object_size              equ   object_size+main_ext_variables_size ; the size of a main character object
 next_main_object              equ   main_object_size
+ext_variables_main            equ   object_size
 
 inertia            equ   ext_variables_main    ; and +1 ; directionless representation of speed... not updated in the air
 flip_angle         equ   ext_variables_main+2  ; angle about the x axis (360 degrees  equ  256) (twist/tumble)
@@ -76,6 +76,39 @@ jumping            equ   ext_variables_main+22
 interact           equ   ext_variables_main+23 ; RAM address of the last object Sonic stood on, minus $FFFFB000 and divided by $40
 top_solid_bit      equ   ext_variables_main+24 ; the bit to check for top solidity (either $C or $E)
 lrb_solid_bit      equ   ext_variables_main+25 ; the bit to check for left/right/bottom solidity (either $D or $F)
+
+; ---------------------------------------------------------------------------
+; when childsprites are activated (i.e. bit #6 of render_flags set)
+; 4 bytes + (8*6) bytes + 2 bytes = 54 bytes
+mainspr_childsprites    equ   subtype         ; amount of child sprites
+mainspr_mapframe        equ   render_flags
+mainspr_width           equ   render_flags+1
+mainspr_height          equ   render_flags+2
+sub2_x_pos              equ   render_flags+3  ; +4
+sub2_y_pos              equ   render_flags+5  ; +6
+sub2_mapframe           equ   render_flags+7  ; +8
+sub3_x_pos              equ   render_flags+9  ; +10
+sub3_y_pos              equ   render_flags+11 ; +12
+sub3_mapframe           equ   render_flags+13 ; +14
+sub4_x_pos              equ   render_flags+15 ; +16
+sub4_y_pos              equ   render_flags+17 ; +18
+sub4_mapframe           equ   render_flags+19 ; +20
+sub5_x_pos              equ   render_flags+21 ; +22
+sub5_y_pos              equ   render_flags+23 ; +24
+sub5_mapframe           equ   render_flags+25 ; +26
+sub6_x_pos              equ   render_flags+27 ; +28
+sub6_y_pos              equ   render_flags+29 ; +30
+sub6_mapframe           equ   render_flags+31 ; +32
+sub7_x_pos              equ   render_flags+33 ; +34
+sub7_y_pos              equ   render_flags+35 ; +36
+sub7_mapframe           equ   render_flags+37 ; +38
+sub8_x_pos              equ   render_flags+39 ; +40
+sub8_y_pos              equ   render_flags+41 ; +42
+sub8_mapframe           equ   render_flags+43 ; +44
+sub9_x_pos              equ   render_flags+45 ; +46
+sub9_y_pos              equ   render_flags+47 ; +48
+sub9_mapframe           equ   render_flags+49 ; +50
+next_subspr             equ   render_flags+51 ; +52
 
 ; ---------------------------------------------------------------------------
 ; Bits 3-6 of an object's status after a SolidObject call is a
@@ -187,6 +220,54 @@ ColCurveMap                   fdb   0
 ColArray                      fdb   0
 ColArray2                     fdb   0
 Respawn_table_keep            fdb   0
+
+Current_Zone                  fcb   emerald_hill_zone
+
+; Zone IDs. These MUST be declared in the order in which their IDs are in stock Sonic 2, otherwise zone offset tables will screw up
+emerald_hill_zone        	equ   $00
+zone_1        			equ   $01
+wood_zone        		equ   $02
+zone_3        			equ   $03
+metropolis_zone        		equ   $04
+metropolis_zone_2        	equ   $05
+wing_fortress_zone        	equ   $06
+hill_top_zone        		equ   $07
+hidden_palace_zone        	equ   $08
+zone_9        			equ   $09
+oil_ocean_zone        		equ   $0A
+mystic_cave_zone        	equ   $0B
+casino_night_zone        	equ   $0C
+chemical_plant_zone        	equ   $0D
+death_egg_zone        		equ   $0E
+aquatic_ruin_zone        	equ   $0F
+sky_chase_zone        		equ   $10
+
+; Zone and act IDs
+emerald_hill_zone_act_1  	equ   (emerald_hill_zone*256)+$00
+emerald_hill_zone_act_2  	equ   (emerald_hill_zone*256)+$01
+chemical_plant_zone_act_1  	equ   (chemical_plant_zone*256)+$00
+chemical_plant_zone_act_2  	equ   (chemical_plant_zone*256)+$01
+aquatic_ruin_zone_act_1  	equ   (aquatic_ruin_zone*256)+$00
+aquatic_ruin_zone_act_2  	equ   (aquatic_ruin_zone*256)+$01
+casino_night_zone_act_1  	equ   (casino_night_zone*256)+$00
+casino_night_zone_act_2  	equ   (casino_night_zone*256)+$01
+hill_top_zone_act_1  		equ   (hill_top_zone*256)+$00
+hill_top_zone_act_2  		equ   (hill_top_zone*256)+$01
+mystic_cave_zone_act_1  	equ   (mystic_cave_zone*256)+$00
+mystic_cave_zone_act_2  	equ   (mystic_cave_zone*256)+$01
+oil_ocean_zone_act_1  		equ   (oil_ocean_zone*256)+$00
+oil_ocean_zone_act_2  		equ   (oil_ocean_zone*256)+$01
+metropolis_zone_act_1  		equ   (metropolis_zone*256)+$00
+metropolis_zone_act_2  		equ   (metropolis_zone*256)+$01
+metropolis_zone_act_3  		equ   (metropolis_zone_2*256)+$00
+sky_chase_zone_act_1  		equ   (sky_chase_zone*256)+$00
+wing_fortress_zone_act_1  	equ   (wing_fortress_zone*256)+$00
+death_egg_zone_act_1  		equ   (death_egg_zone*256)+$00
+; Prototype zone and act IDs
+wood_zone_act_1  		equ   (wood_zone*256)+$00
+wood_zone_act_2  		equ   (wood_zone*256)+$01
+hidden_palace_zone_act_1  	equ   (hidden_palace_zone*256)+$00
+hidden_palace_zone_act_2  	equ   (hidden_palace_zone*256)+$01
 
 * ---------------------------------------------------------------------------
 * HUD Globals

@@ -38,7 +38,7 @@
 ; Sur $E7DA il faut donc utiliser l'instruction ST pour ecrire
 ;*******************************************************************************   
 
-        INCLUDE "./Engine/Macros.asm"   
+        INCLUDE "./engine/macros.asm"   
         INCLUDE "./objects/engine/sfx/palette-fade/palette-fade.idx"           
 
 PaletteFade

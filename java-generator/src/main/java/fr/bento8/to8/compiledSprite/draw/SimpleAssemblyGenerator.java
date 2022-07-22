@@ -267,7 +267,7 @@ public class SimpleAssemblyGenerator extends Encoder{
 
 	public List<String> getCodeFrameDrawStart(String org, boolean alphaFlag) {
 		List<String> asm = new ArrayList<String>();
-		asm.add("\tINCLUDE \"./Engine/Constants.asm\"");		
+		asm.add("\tINCLUDE \"./engine/constants.asm\"");		
 		asm.add("\tORG $" + org + "");
 		asm.add("\tSETDP $FF");
 		asm.add("\tOPT C,CT");		

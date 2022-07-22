@@ -3,7 +3,7 @@
 ;
 ; ---------------------------------------------------------------------------
 
-        INCLUDE "./Engine/Sound/SmpsObj.asm"
+        INCLUDE "./engine/sound/SmpsObj.asm"
 
 Song_Index
         fdb   0
