@@ -59,7 +59,7 @@ AnimateSpriteLoad
 ;
 ; run specific routine that apply to this animation frame
 ; -------------------------------------------------------
-        leax  object_core_size,u
+        leax  object_size,u
         jsr   [,x]
 ;
 @rts
