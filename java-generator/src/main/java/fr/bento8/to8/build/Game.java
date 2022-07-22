@@ -29,8 +29,8 @@ public class Game {
 	public static int loadManagerSizeT2 = 0;
 	public static int bootSizeT2 = 0;
 	public static int T2_NB_PAGES = 128;
-	public String engineAsmBootT2Loader;
-	public String engineAsmT2Loader;
+	public String engineAsmBootT2Flash;
+	public String engineAsmT2Flash;
 	
 	// Game Mode
 	public String gameModeBoot;
@@ -107,14 +107,14 @@ public class Game {
 				throw new Exception("engine.asm.boot.t2 not found in "+file);
 			}
 			
-			engineAsmBootT2Loader = prop.getProperty("engine.asm.boot.t2Loader");
-			if (engineAsmBootT2Loader == null) {
-				throw new Exception("engine.asm.boot.t2Loader not found in "+file);
+			engineAsmBootT2Flash = prop.getProperty("engine.asm.boot.t2flash");
+			if (engineAsmBootT2Flash == null) {
+				throw new Exception("engine.asm.boot.t2flash not found in "+file);
 			}						
 
-			engineAsmT2Loader = prop.getProperty("engine.asm.t2Loader");
-			if (engineAsmT2Loader == null) {
-				throw new Exception("engine.asm.t2Loader not found in "+file);
+			engineAsmT2Flash = prop.getProperty("engine.asm.t2flash");
+			if (engineAsmT2Flash == null) {
+				throw new Exception("engine.asm.t2flash not found in "+file);
 			}				
 			
 			engineAsmRAMLoaderManagerFd = prop.getProperty("engine.asm.RAMLoaderManager.fd");

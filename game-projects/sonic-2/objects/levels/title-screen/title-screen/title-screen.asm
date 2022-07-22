@@ -61,7 +61,7 @@
 ; Another sprite is used to mask the upper part of the emblem (non linear shape.
 ; ---------------------------------------------------------------------------
 
-        INCLUDE "./Engine/Macros.asm"
+        INCLUDE "./engine/macros.asm"
         INCLUDE "./objects/engine/sfx/raster-fade/raster-fade.idx"
         INCLUDE "./objects/engine/sfx/palette-fade/palette-fade.idx"
 
@@ -470,7 +470,7 @@ Sonic_CreateHand                                 *Obj0E_Sonic_LastFrame:
 
         * Change sprite to overlay
         lda   render_flags,u
-        ora   #render_overlay_mask|render_motionless_mask
+        ora   #render_overlay_mask
         sta   render_flags,u
 
         jmp   DisplaySprite                      *        bra.w   DisplaySprite
@@ -660,7 +660,7 @@ Tails_CreateHand                                 *loc_130A2:
 
         * Change sprite to overlay
         lda   render_flags,u
-        ora   #render_overlay_mask|render_motionless_mask
+        ora   #render_overlay_mask
         sta   render_flags,u
 
                                                  *
@@ -701,7 +701,7 @@ EmblemFront_Init                                 *Obj0E_LogoTop_Init:
         * trademark logo for PAL                 *        tst.b   (Graphics_Flags).w
         * game version                           *        bmi.s   +
         lda   render_flags,u
-        ora   #render_overlay_mask|render_motionless_mask
+        ora   #render_overlay_mask
         sta   render_flags,u
         * initialized in object creation         *        move.b  #$A,mapping_frame(a0)
                                                  *+
@@ -743,7 +743,7 @@ EmblemBack_Routines
 
 EmblemBack_Init
         lda   render_flags,u
-        ora   #render_overlay_mask|render_motionless_mask
+        ora   #render_overlay_mask
         sta   render_flags,u
         ldb   #$06
         stb   priority,u
@@ -903,7 +903,7 @@ SonicHand_Init                                   *Obj0E_SonicHand_Init:
 SonicHand_DisplaySprite                          *BranchTo13_DisplaySprite
         * Change sprite to overlay
         lda   render_flags,u
-        ora   #render_overlay_mask|render_motionless_mask
+        ora   #render_overlay_mask
         sta   render_flags,u
 
         jmp   DisplaySprite                      *        bra.w   DisplaySprite
@@ -955,7 +955,7 @@ TailsHand_Init                                   *Obj0E_TailsHand_Init:
 TailsHand_DisplaySprite                          *BranchTo14_DisplaySprite
         * Change sprite to overlay
         lda   render_flags,u
-        ora   #render_overlay_mask|render_motionless_mask
+        ora   #render_overlay_mask
         sta   render_flags,u
 
         jmp   DisplaySprite                      *        bra.w   DisplaySprite

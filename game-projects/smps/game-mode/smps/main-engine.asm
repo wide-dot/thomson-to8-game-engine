@@ -7,8 +7,8 @@
 *
 ********************************************************************************
 
-        INCLUDE "./Engine/Constants.asm"
-        INCLUDE "./Engine/Macros.asm"        
+        INCLUDE "./engine/constants.asm"
+        INCLUDE "./engine/macros.asm"        
         INCLUDE "./objects/engine/smps/SndID.equ"	
         org   $6100
 
@@ -207,7 +207,7 @@ EHZ_Mask
         ldu   <glb_screen_location_2
         jmp   ,x
 
-        INCLUDE "./Engine/Graphics/Tilemap/TileAnimScript.asm"  
+        INCLUDE "./engine/graphics/Tilemap/TileAnimScript.asm"  
 
 ; ===========================================================================
 ; for each script :
@@ -328,24 +328,24 @@ TlsAni_EHZ_pulseball3_imgs
 * ==============================================================================
 * Routines
 * ==============================================================================
-        INCLUDE "./Engine/InitGlobals.asm"
-        INCLUDE "./Engine/Ram/BankSwitch.asm"
-        INCLUDE "./Engine/Graphics/WaitVBL.asm"
-        INCLUDE "./Engine/Graphics/AnimateSpriteSync.asm"	
+        INCLUDE "./engine/InitGlobals.asm"
+        INCLUDE "./engine/ram/BankSwitch.asm"
+        INCLUDE "./engine/graphics/vbl/WaitVBL.asm"
+        INCLUDE "./engine/graphics/animation/AnimateSpriteSync.asm"	
         INCLUDE "./objects/main-characters/sonic/sonic-animate.asm"
-        INCLUDE "./Engine/Graphics/DisplaySprite.asm"	
-        INCLUDE "./Engine/Graphics/CheckSpritesRefresh.asm"
-        INCLUDE "./Engine/Graphics/EraseSprites.asm"
-        INCLUDE "./Engine/Graphics/UnsetDisplayPriority.asm"
-        INCLUDE "./Engine/Graphics/DrawSprites.asm"
-        INCLUDE "./Engine/Graphics/BgBufferAlloc.asm"	
-        INCLUDE "./Engine/Joypad/ReadJoypads2.asm"
-        INCLUDE "./Engine/ObjectManagement/RunObjects.asm"
-        INCLUDE "./Engine/ObjectManagement/SingleObjLoad.asm"
-        INCLUDE "./Engine/ObjectManagement/DeleteObject.asm"
-        INCLUDE "./Engine/ObjectManagement/RunPgSubRoutine.asm"
+        INCLUDE "./engine/graphics/DisplaySprite.asm"	
+        INCLUDE "./engine/graphics/CheckSpritesRefresh.asm"
+        INCLUDE "./engine/graphics/EraseSprites.asm"
+        INCLUDE "./engine/graphics/UnsetDisplayPriority.asm"
+        INCLUDE "./engine/graphics/draw/DrawSprites.asm"
+        INCLUDE "./engine/graphics/BgBufferAlloc.asm"	
+        INCLUDE "./engine/joypad/ReadJoypads2.asm"
+        INCLUDE "./engine/object-management/RunObjects.asm"
+        INCLUDE "./engine/object-management/SingleObjLoad.asm"
+        INCLUDE "./engine/object-management/DeleteObject.asm"
+        INCLUDE "./engine/object-management/RunPgSubRoutine.asm"
         INCLUDE "./engine/object-management/clear-obj-107.asm"	
-        INCLUDE "./Engine/Ram/ClearDataMemory.asm"
-        INCLUDE "./Engine/Irq/IrqSmpsObj.asm"      
+        INCLUDE "./engine/ram/ClearDataMemory.asm"
+        INCLUDE "./engine/irq/IrqSmpsObj.asm"      
         INCLUDE "./objects/levels/collision/collision.asm"
-        INCLUDE "./Engine/Graphics/Tilemap/TilemapBuffer.asm"
+        INCLUDE "./engine/graphics/Tilemap/TilemapBuffer.asm"

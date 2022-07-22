@@ -1,0 +1,70 @@
+	INCLUDE "./engine/constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+DRAW_Img_0007_0
+	LEAU 3902,U
+
+	LDA #$33
+	STA ,U
+	LDA 80,U
+	ANDA #$0F
+	ORA #$30
+	STA 80,U
+	LDA 40,U
+	ANDA #$0F
+	ORA #$30
+	STA 40,U
+	LDA 35,U
+	ANDA #$F0
+	ORA #$03
+	STA 35,U
+	LDA -5,U
+	ANDA #$F0
+	ORA #$03
+	STA -5,U
+	LDA -40,U
+	ANDA #$F0
+	ORA #$03
+	STA -40,U
+	LDA -80,U
+	ANDA #$0F
+	ORA #$00
+	STA -80,U
+
+	LDU <glb_screen_location_1
+	LEAU 3917,U
+
+	LDA 20,U
+	ANDA #$F0
+	ORA #$00
+	STA 20,U
+	LDA -16,U
+	ANDA #$F0
+	ORA #$00
+	STA -16,U
+	LDA -20,U
+	ANDA #$F0
+	ORA #$00
+	STA -20,U
+	LDA -56,U
+	ANDA #$F0
+	ORA #$00
+	STA -56,U
+	LDA -60,U
+	ANDA #$0F
+	ORA #$30
+	STA -60,U
+	LDA -100,U
+	ANDA #$0F
+	ORA #$30
+	STA -100,U
+	LDD 64,U
+	ANDA #$F0
+	ANDB #$0F
+	ADDD #$0330
+	STD 64,U
+	LDA #$33
+	STA 100,U
+	RTS
+

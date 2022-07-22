@@ -94,7 +94,7 @@ public class SdUtil
 					sdBytes[isd++] = (byte) 0xFF;
 		}
 
-		Path outputFile = Paths.get(outputFileName+"_T2Loader.sd");
+		Path outputFile = Paths.get(outputFileName+"_t2_flash.sd");
 		try {
 			Files.deleteIfExists(outputFile);
 			Files.createFile(outputFile);

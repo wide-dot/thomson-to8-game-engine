@@ -1,0 +1,127 @@
+	INCLUDE "./engine/constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+ERASE_Img_link14_0
+	STS glb_register_s
+
+	LEAS ,U
+ERASE_CODE_Img_link14_0
+	PULS D,U
+	STD ,U
+
+	PULS D,X,U
+	STD -80,U
+	STX -40,U
+
+	PULS D,X,Y
+	STD 40,U
+	STX 80,U
+	STY -120,U
+
+	PULS D,X
+	STD 120,U
+	STX ,U
+
+	PULS D,X,U
+	STD 40,U
+	STX -120,U
+
+	PULS D,X,Y
+	STD -80,U
+	STX ,U
+	STY -40,U
+
+	PULS D,X
+	STD 120,U
+	STX 80,U
+
+	PULS D,U
+	STD -120,U
+
+	PULS D,X
+	STD -80,U
+	STX ,U
+
+	PULS A,B
+	STA 2,U
+	STB -38,U
+
+	PULS A,B,X,Y
+	STA -78,U
+	STB -118,U
+	STX -40,U
+	STY 120,U
+
+	PULS D,X
+	STD 80,U
+	STX 40,U
+
+	PULS A,B,U
+	STA -20,U
+	STB 20,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D
+	STD 40,U
+
+	PULS A,B
+	STA 122,U
+	STB 82,U
+
+	PULS A,X,Y
+	STA 42,U
+	STX 120,U
+	STY 80,U
+
+	PULS A,X,U
+	PSHU A,X
+
+	PULS D
+	STD -79,U
+
+	PULS A,X,Y
+	STA -38,U
+	STX -40,U
+	STY -120,U
+
+	PULS D,U
+	STD 99,U
+
+	PULS D,X,Y
+	STD 59,U
+	STX 19,U
+	STY -21,U
+
+	PULS D
+	STD -60,U
+
+	PULS A,B,X
+	STA -19,U
+	STB 21,U
+	STX -100,U
+
+	PULS D,U
+	STD 39,U
+
+	PULS D,X
+	STD -1,U
+	STX -80,U
+
+	PULS A,B,X,Y
+	STA 1,U
+	STB -120,U
+	STX -40,U
+	STY 120,U
+
+	PULS A,X
+	STA 41,U
+	STX 80,U
+
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+DataSize equ $0077

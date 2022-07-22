@@ -377,7 +377,7 @@ public class AssemblyGenerator{
 
 	public List<String> getCodeFrameBckDrawStart(String org) {
 		List<String> asm = new ArrayList<String>();
-		asm.add("\tINCLUDE \"./Engine/Constants.asm\"");
+		asm.add("\tINCLUDE \"./engine/constants.asm\"");
 		asm.add("\tORG $" + org + "");
 		asm.add("\tSETDP $FF");
 		asm.add("\tOPT C,CT");
@@ -446,7 +446,7 @@ public class AssemblyGenerator{
 
 	public List<String> getCodeFrameEraseStart(String org) {
 		List<String> asm = new ArrayList<String>();
-		asm.add("\tINCLUDE \"./Engine/Constants.asm\"");		
+		asm.add("\tINCLUDE \"./engine/constants.asm\"");		
 		asm.add("\tORG $" + org + "");
 		asm.add("\tSETDP $FF");
 		asm.add("\tOPT C,CT");		

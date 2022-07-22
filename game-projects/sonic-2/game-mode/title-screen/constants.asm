@@ -9,7 +9,7 @@ nb_dynamic_objects            equ 38
 nb_level_objects              equ 3
 nb_graphical_objects          equ 43 * max 64 total
 
-        INCLUDE "./Engine/Constants.asm"
+        INCLUDE "./engine/constants.asm"
 
 * --- status bitfield variables for objects ---
 status_x_orientation          equ   $01 ; (bit 0) X Orientation. Clear is left and set is right

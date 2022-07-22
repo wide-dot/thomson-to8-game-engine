@@ -1,9 +1,10 @@
-        INCLUDE "./Engine/Constants.asm"
-	INCLUDE "./Engine/Macros.asm"   
+        INCLUDE "./engine/constants.asm"
+	INCLUDE "./engine/macros.asm"   
 
 ext_variables_size equ 6
 
         org   $6100
+        jsr   InitGlobals
         jsr   LoadAct
 
         jsr   ResetMidi
@@ -37,20 +38,25 @@ nb_graphical_objects   equ 2
 * Routines
 * ==============================================================================
 
-        INCLUDE "./Engine/Ram/BankSwitch.asm"
-        INCLUDE "./Engine/Graphics/WaitVBL.asm"
-        INCLUDE "./Engine/Graphics/AnimateSprite.asm"	
-        INCLUDE "./Engine/Graphics/DisplaySprite.asm"	
-        INCLUDE "./Engine/Graphics/CheckSpritesRefresh.asm"
-        INCLUDE "./Engine/Graphics/EraseSprites.asm"
-        INCLUDE "./Engine/Graphics/UnsetDisplayPriority.asm"	
-        INCLUDE "./Engine/Graphics/BgBufferAlloc.asm"		
-        INCLUDE "./Engine/Palette/UpdatePalette.asm"
-        INCLUDE "./Engine/Ram/ClearDataMemory.asm"
-        INCLUDE "./Engine/ObjectManagement/RunObjects.asm"
-        INCLUDE "./Engine/ObjectManagement/ClearObj.asm"	
-        INCLUDE "./Engine/Irq/IrqSmidi.asm"        
-        INCLUDE "./Engine/Sound/Smidi.asm"	
-        INCLUDE "./Engine/Graphics/Codec/zx0_mega.asm"	
-        INCLUDE "./Engine/Graphics/DrawSpritesExtEnc.asm"
+        ; utilities
+        INCLUDE "./engine/InitGlobals.asm"
+        INCLUDE "./engine/ram/BankSwitch.asm"
+        INCLUDE "./engine/graphics/vbl/WaitVBL.asm"
+        INCLUDE "./engine/ram/ClearDataMemory.asm"
+        INCLUDE "./engine/palette/UpdatePalette.asm"
+
+        ; object management
+        INCLUDE "./engine/object-management/RunObjects.asm"
+        INCLUDE "./engine/object-management/ClearObj.asm"
+
+        ; sound
+        INCLUDE "./engine/irq/IrqSmidi.asm"        
+        INCLUDE "./engine/sound/Smidi.asm"	
+
+        ; animation & image
+        INCLUDE "./engine/graphics/animation/AnimateSprite.asm"	
+        INCLUDE "./engine/graphics/Codec/zx0_mega.asm"	
+
+        ; sprite
+        INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"
 	    

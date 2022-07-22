@@ -7,10 +7,10 @@
 *
 ********************************************************************************
 
-        INCLUDE "./Engine/Constants.asm"
-        INCLUDE "./Engine/Macros.asm"        
+        INCLUDE "./engine/constants.asm"
+        INCLUDE "./engine/macros.asm"        
         org   $6100
-		
+        jsr   InitGlobals		
         lda   #GmID_TitleScreen
         sta   glb_Cur_Game_Mode
 	lda   #GmID_EHZ
@@ -42,22 +42,23 @@ LevelMainLoop
 * ==============================================================================
 * Routines
 * ==============================================================================
-	INCLUDE "./Engine/Ram/BankSwitch.asm"
-        INCLUDE "./Engine/Graphics/WaitVBL.asm"
-        INCLUDE "./Engine/Graphics/AnimateSprite.asm"	
-        INCLUDE "./Engine/Graphics/DisplaySprite.asm"	
-        INCLUDE "./Engine/Graphics/CheckSpritesRefresh.asm"
-        INCLUDE "./Engine/Graphics/EraseSprites.asm"
-        INCLUDE "./Engine/Graphics/UnsetDisplayPriority.asm"
-        INCLUDE "./Engine/Graphics/DrawSprites.asm"
-        INCLUDE "./Engine/Graphics/BgBufferAlloc.asm"	
-        INCLUDE "./Engine/Joypad/ReadJoypads.asm"
-        INCLUDE "./Engine/ObjectManagement/RunObjects.asm"
-        INCLUDE "./Engine/ObjectManagement/DeleteObject.asm"
+        INCLUDE "./engine/InitGlobals.asm"
+	INCLUDE "./engine/ram/BankSwitch.asm"
+        INCLUDE "./engine/graphics/vbl/WaitVBL.asm"
+        INCLUDE "./engine/graphics/animation/AnimateSprite.asm"	
+        INCLUDE "./engine/graphics/DisplaySprite.asm"	
+        INCLUDE "./engine/graphics/CheckSpritesRefresh.asm"
+        INCLUDE "./engine/graphics/EraseSprites.asm"
+        INCLUDE "./engine/graphics/UnsetDisplayPriority.asm"
+        INCLUDE "./engine/graphics/draw/DrawSprites.asm"
+        INCLUDE "./engine/graphics/BgBufferAlloc.asm"	
+        INCLUDE "./engine/joypad/ReadJoypads.asm"
+        INCLUDE "./engine/object-management/RunObjects.asm"
+        INCLUDE "./engine/object-management/DeleteObject.asm"
         INCLUDE "./engine/object-management/clear-obj-107.asm"
-        INCLUDE "./Engine/LevelManagement/LoadGameMode.asm"	
-        INCLUDE "./Engine/Ram/ClearDataMemory.asm"
-	INCLUDE "./Engine/Palette/UpdatePalette.asm"
-        INCLUDE "./Engine/Sound/PlayDPCM16kHz.asm"
-        INCLUDE "./Engine/Sound/Smps.asm"
-        INCLUDE "./Engine/Irq/IrqSmpsRaster.asm"
+        INCLUDE "./engine/level-management/LoadGameMode.asm"	
+        INCLUDE "./engine/ram/ClearDataMemory.asm"
+	INCLUDE "./engine/palette/UpdatePalette.asm"
+        INCLUDE "./engine/sound/PlayDPCM16kHz.asm"
+        INCLUDE "./engine/sound/Smps.asm"
+        INCLUDE "./engine/irq/IrqSmpsRaster.asm"

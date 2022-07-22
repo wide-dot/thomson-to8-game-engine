@@ -7,9 +7,10 @@
 *
 ********************************************************************************
 
-        INCLUDE "./Engine/Constants.asm"
-        INCLUDE "./Engine/Macros.asm"        	
+        INCLUDE "./engine/constants.asm"
+        INCLUDE "./engine/macros.asm"        	
         org   $6100
+        jsr   InitGlobals
         SETDP $9F
 
 CalcAngleUnitTest
@@ -19,6 +20,15 @@ CalcAngleUnitTest
         jsr   CalcAngle
         sta   ,y+                    ; write angle
         cmpu  #CalcAngleUnitTestData+1024+32+4
+        bne   @a
+
+CalcAngleUnitTest2
+        ldu   #CalcAngleUnitTestData2 ; read test data
+        ldy   #CalcAngleUnitTestData2 ; write debug 
+@a      pulu  d,x
+        jsr   CalcAngle
+        sta   ,y+                    ; write angle
+        cmpu  #CalcAngleUnitTestData2+1024
         bne   @a
 
 Mul9x16UnitTest
@@ -306,6 +316,264 @@ CalcAngleUnitTestData
         fdb   $00FE,$FFFA ; 1
         fdb   $00FF,$0000 ; 0
 
+CalcAngleUnitTestData2
+        FDB   $04FA,$001F
+        FDB   $04F9,$003E
+        FDB   $04F7,$005D
+        FDB   $04F4,$007C
+        FDB   $04F1,$009C
+        FDB   $04ED,$00BB
+        FDB   $04E8,$00D9
+        FDB   $04E2,$00F8
+        FDB   $04DC,$0117
+        FDB   $04D4,$0135
+        FDB   $04CC,$0154
+        FDB   $04C4,$0172
+        FDB   $04BA,$018F
+        FDB   $04B0,$01AD
+        FDB   $04A5,$01CA
+        FDB   $0499,$01E7
+        FDB   $048D,$0204
+        FDB   $0480,$0221
+        FDB   $0472,$023D
+        FDB   $0464,$0259
+        FDB   $0455,$0274
+        FDB   $0445,$028F
+        FDB   $0435,$02AA
+        FDB   $0424,$02C4
+        FDB   $0412,$02DE
+        FDB   $0400,$02F7
+        FDB   $03ED,$0310
+        FDB   $03D9,$0328
+        FDB   $03C5,$0340
+        FDB   $03B0,$0358
+        FDB   $039B,$036F
+        FDB   $0385,$0385
+        FDB   $036F,$039B
+        FDB   $0358,$03B0
+        FDB   $0340,$03C5
+        FDB   $0328,$03D9
+        FDB   $0310,$03ED
+        FDB   $02F7,$0400
+        FDB   $02DE,$0412
+        FDB   $02C4,$0424
+        FDB   $02AA,$0435
+        FDB   $028F,$0445
+        FDB   $0274,$0455
+        FDB   $0259,$0464
+        FDB   $023D,$0472
+        FDB   $0221,$0480
+        FDB   $0204,$048D
+        FDB   $01E7,$0499
+        FDB   $01CA,$04A5
+        FDB   $01AD,$04B0
+        FDB   $018F,$04BA
+        FDB   $0172,$04C4
+        FDB   $0154,$04CC
+        FDB   $0135,$04D4
+        FDB   $0117,$04DC
+        FDB   $00F8,$04E2
+        FDB   $00D9,$04E8
+        FDB   $00BB,$04ED
+        FDB   $009C,$04F1
+        FDB   $007C,$04F4
+        FDB   $005D,$04F7
+        FDB   $003E,$04F9
+        FDB   $001F,$04FA
+        FDB   $0000,$04FB
+        FDB   $FFE1,$04FA
+        FDB   $FFC2,$04F9
+        FDB   $FFA3,$04F7
+        FDB   $FF84,$04F4
+        FDB   $FF64,$04F1
+        FDB   $FF45,$04ED
+        FDB   $FF27,$04E8
+        FDB   $FF08,$04E2
+        FDB   $FEE9,$04DC
+        FDB   $FECB,$04D4
+        FDB   $FEAC,$04CC
+        FDB   $FE8E,$04C4
+        FDB   $FE71,$04BA
+        FDB   $FE53,$04B0
+        FDB   $FE36,$04A5
+        FDB   $FE19,$0499
+        FDB   $FDFC,$048D
+        FDB   $FDDF,$0480
+        FDB   $FDC3,$0472
+        FDB   $FDA7,$0464
+        FDB   $FD8C,$0455
+        FDB   $FD71,$0445
+        FDB   $FD56,$0435
+        FDB   $FD3C,$0424
+        FDB   $FD22,$0412
+        FDB   $FD09,$0400
+        FDB   $FCF0,$03ED
+        FDB   $FCD8,$03D9
+        FDB   $FCC0,$03C5
+        FDB   $FCA8,$03B0
+        FDB   $FC91,$039B
+        FDB   $FC7B,$0385
+        FDB   $FC65,$036F
+        FDB   $FC50,$0358
+        FDB   $FC3B,$0340
+        FDB   $FC27,$0328
+        FDB   $FC13,$0310
+        FDB   $FC00,$02F7
+        FDB   $FBEE,$02DE
+        FDB   $FBDC,$02C4
+        FDB   $FBCB,$02AA
+        FDB   $FBBB,$028F
+        FDB   $FBAB,$0274
+        FDB   $FB9C,$0259
+        FDB   $FB8E,$023D
+        FDB   $FB80,$0221
+        FDB   $FB73,$0204
+        FDB   $FB67,$01E7
+        FDB   $FB5B,$01CA
+        FDB   $FB50,$01AD
+        FDB   $FB46,$018F
+        FDB   $FB3C,$0172
+        FDB   $FB34,$0154
+        FDB   $FB2C,$0135
+        FDB   $FB24,$0117
+        FDB   $FB1E,$00F8
+        FDB   $FB18,$00D9
+        FDB   $FB13,$00BB
+        FDB   $FB0F,$009C
+        FDB   $FB0C,$007C
+        FDB   $FB09,$005D
+        FDB   $FB07,$003E
+        FDB   $FB06,$001F
+        FDB   $FB05,$0000
+        FDB   $FB06,$FFE1
+        FDB   $FB07,$FFC2
+        FDB   $FB09,$FFA3
+        FDB   $FB0C,$FF84
+        FDB   $FB0F,$FF64
+        FDB   $FB13,$FF45
+        FDB   $FB18,$FF27
+        FDB   $FB1E,$FF08
+        FDB   $FB24,$FEE9
+        FDB   $FB2C,$FECB
+        FDB   $FB34,$FEAC
+        FDB   $FB3C,$FE8E
+        FDB   $FB46,$FE71
+        FDB   $FB50,$FE53
+        FDB   $FB5B,$FE36
+        FDB   $FB67,$FE19
+        FDB   $FB73,$FDFC
+        FDB   $FB80,$FDDF
+        FDB   $FB8E,$FDC3
+        FDB   $FB9C,$FDA7
+        FDB   $FBAB,$FD8C
+        FDB   $FBBB,$FD71
+        FDB   $FBCB,$FD56
+        FDB   $FBDC,$FD3C
+        FDB   $FBEE,$FD22
+        FDB   $FC00,$FD09
+        FDB   $FC13,$FCF0
+        FDB   $FC27,$FCD8
+        FDB   $FC3B,$FCC0
+        FDB   $FC50,$FCA8
+        FDB   $FC65,$FC91
+        FDB   $FC7B,$FC7B
+        FDB   $FC91,$FC65
+        FDB   $FCA8,$FC50
+        FDB   $FCC0,$FC3B
+        FDB   $FCD8,$FC27
+        FDB   $FCF0,$FC13
+        FDB   $FD09,$FC00
+        FDB   $FD22,$FBEE
+        FDB   $FD3C,$FBDC
+        FDB   $FD56,$FBCB
+        FDB   $FD71,$FBBB
+        FDB   $FD8C,$FBAB
+        FDB   $FDA7,$FB9C
+        FDB   $FDC3,$FB8E
+        FDB   $FDDF,$FB80
+        FDB   $FDFC,$FB73
+        FDB   $FE19,$FB67
+        FDB   $FE36,$FB5B
+        FDB   $FE53,$FB50
+        FDB   $FE71,$FB46
+        FDB   $FE8E,$FB3C
+        FDB   $FEAC,$FB34
+        FDB   $FECB,$FB2C
+        FDB   $FEE9,$FB24
+        FDB   $FF08,$FB1E
+        FDB   $FF27,$FB18
+        FDB   $FF45,$FB13
+        FDB   $FF64,$FB0F
+        FDB   $FF84,$FB0C
+        FDB   $FFA3,$FB09
+        FDB   $FFC2,$FB07
+        FDB   $FFE1,$FB06
+        FDB   $0000,$FB05
+        FDB   $001F,$FB06
+        FDB   $003E,$FB07
+        FDB   $005D,$FB09
+        FDB   $007C,$FB0C
+        FDB   $009C,$FB0F
+        FDB   $00BB,$FB13
+        FDB   $00D9,$FB18
+        FDB   $00F8,$FB1E
+        FDB   $0117,$FB24
+        FDB   $0135,$FB2C
+        FDB   $0154,$FB34
+        FDB   $0172,$FB3C
+        FDB   $018F,$FB46
+        FDB   $01AD,$FB50
+        FDB   $01CA,$FB5B
+        FDB   $01E7,$FB67
+        FDB   $0204,$FB73
+        FDB   $0221,$FB80
+        FDB   $023D,$FB8E
+        FDB   $0259,$FB9C
+        FDB   $0274,$FBAB
+        FDB   $028F,$FBBB
+        FDB   $02AA,$FBCB
+        FDB   $02C4,$FBDC
+        FDB   $02DE,$FBEE
+        FDB   $02F7,$FC00
+        FDB   $0310,$FC13
+        FDB   $0328,$FC27
+        FDB   $0340,$FC3B
+        FDB   $0358,$FC50
+        FDB   $036F,$FC65
+        FDB   $0385,$FC7B
+        FDB   $039B,$FC91
+        FDB   $03B0,$FCA8
+        FDB   $03C5,$FCC0
+        FDB   $03D9,$FCD8
+        FDB   $03ED,$FCF0
+        FDB   $0400,$FD09
+        FDB   $0412,$FD22
+        FDB   $0424,$FD3C
+        FDB   $0435,$FD56
+        FDB   $0445,$FD71
+        FDB   $0455,$FD8C
+        FDB   $0464,$FDA7
+        FDB   $0472,$FDC3
+        FDB   $0480,$FDDF
+        FDB   $048D,$FDFC
+        FDB   $0499,$FE19
+        FDB   $04A5,$FE36
+        FDB   $04B0,$FE53
+        FDB   $04BA,$FE71
+        FDB   $04C4,$FE8E
+        FDB   $04CC,$FEAC
+        FDB   $04D4,$FECB
+        FDB   $04DC,$FEE9
+        FDB   $04E2,$FF08
+        FDB   $04E8,$FF27
+        FDB   $04ED,$FF45
+        FDB   $04F1,$FF64
+        FDB   $04F4,$FF84
+        FDB   $04F7,$FFA3
+        FDB   $04F9,$FFC2
+        FDB   $04FA,$FFE1
+        FDB   $04FB,$0000
+
 Mul9x16UnitTestData
         fdb   $0031,$FFDC ; $FFF9
         fdb   $FF23,$00AB ; $FF6C
@@ -316,5 +584,6 @@ Mul9x16UnitTestData
         fdb   $FF00,$DEDC ; $2124
         fdb   $0100,$DEDC ; $DEDC
 
-        INCLUDE "./Engine/Math/CalcAngle.asm"
-        INCLUDE "./Engine/Math/Mul9x16.asm"
+        INCLUDE "./engine/InitGlobals.asm"
+        INCLUDE "./engine/math/CalcAngle.asm"
+        INCLUDE "./engine/math/Mul9x16.asm"

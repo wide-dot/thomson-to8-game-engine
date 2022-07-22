@@ -6,13 +6,13 @@
 ;
 ; ---------------------------------------------------------------------------
 
-        INCLUDE "./Engine/Macros.asm"   
+        INCLUDE "./engine/macros.asm"   
         SETDP   dp/256
 
 Sonic_top_speed_tmp     equ glb_d6
 Sonic_acceleration_tmp  equ glb_d5
 Sonic_deceleration_tmp  equ glb_d4
-Sonic_logic_frame_count equ dp+main_object_size+23
+Sonic_logic_frame_count equ dp_engine+23
 
 framerate_adjust           equ 5 ; for code specific adjustment, search "framerate adjust" comment
 
@@ -5474,6 +5474,6 @@ Control_Locked                  fcb   0
 Chain_Bonus_counter             fcb   0
 Sonic_Look_delay_counter        fcb   0
 
-        ;INCLUDE "./Engine/Math/CalcAngle.asm"
-        INCLUDE "./Engine/Math/CalcSine.asm"
-        INCLUDE "./Engine/Math/Mul9x16.asm"
+        ;INCLUDE "./engine/math/CalcAngle.asm"
+        INCLUDE "./engine/math/CalcSine.asm"
+        INCLUDE "./engine/math/Mul9x16.asm"
