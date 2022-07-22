@@ -42,15 +42,15 @@ collision_flags               equ   ext_variables+4
 collision_property            equ   ext_variables+5
 respawn_index                 equ   ext_variables+6
 parent                        equ   ext_variables+7
-ext_variables_obj             equ   object_core_size+9
-ext_variables_main            equ   object_core_size+ext_variables_size
+ext_variables_obj             equ   object_size+9
+ext_variables_main            equ   object_size+ext_variables_size
 
 * ===========================================================================
 * Main characters object structure
 * ===========================================================================
 
 main_ext_variables_size       equ   ext_variables_size+26
-main_object_size              equ   object_core_size+main_ext_variables_size ; the size of a main character object
+main_object_size              equ   object_size+main_ext_variables_size ; the size of a main character object
 next_main_object              equ   main_object_size
 
 inertia            equ   ext_variables_main    ; and +1 ; directionless representation of speed... not updated in the air
