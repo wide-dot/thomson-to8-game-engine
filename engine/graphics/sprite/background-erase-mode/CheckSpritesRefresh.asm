@@ -14,16 +14,22 @@
 * Sub Priority Objects List - SOL
 * ---------------------------------------------------------------------------
 
+cur_priority                  equ dp_engine   ; byte
+cur_ptr_sub_obj_erase         equ dp_engine+1 ; word
+cur_ptr_sub_obj_draw          equ dp_engine+3 ; word
+
 Tbl_Sub_Object_Erase          fill  0,nb_graphical_objects*2    ; entries of objects that have erase flag in the order back to front
 Tbl_Sub_Object_Draw           fill  0,nb_graphical_objects*2    ; entries of objects that have draw flag in the order back to front                                
-                                           
+
+        setdp dp/256
+
 CheckSpritesRefresh
 
 CSR_Start
         ldd   #Tbl_Sub_Object_Erase
-        std   <glb_cur_ptr_sub_obj_erase
+        std   cur_ptr_sub_obj_erase
         ldd   #Tbl_Sub_Object_Draw
-        std   <glb_cur_ptr_sub_obj_draw
+        std   cur_ptr_sub_obj_draw
         lda   glb_Cur_Wrk_Screen_Id         ; read current screen buffer for write operations
         bne   CSR_SetBuffer1
         
@@ -34,49 +40,49 @@ CSR_P8B0
         ldu   DPS_buffer_0+buf_Tbl_Priority_First_Entry+16 ; read DPS from priority 8 to priority 1
         beq   CSR_P7B0
         lda   #$08
-        sta   <glb_cur_priority        
+        sta   cur_priority        
         jsr   CSR_ProcessEachPriorityLevel   
 CSR_P7B0
         ldu   DPS_buffer_0+buf_Tbl_Priority_First_Entry+14
         beq   CSR_P6B0
         lda   #$07
-        sta   <glb_cur_priority        
+        sta   cur_priority        
         jsr   CSR_ProcessEachPriorityLevel   
 CSR_P6B0
         ldu   DPS_buffer_0+buf_Tbl_Priority_First_Entry+12
         beq   CSR_P5B0
         lda   #$06
-        sta   <glb_cur_priority        
+        sta   cur_priority        
         jsr   CSR_ProcessEachPriorityLevel   
 CSR_P5B0
         ldu   DPS_buffer_0+buf_Tbl_Priority_First_Entry+10
         beq   CSR_P4B0
         lda   #$05
-        sta   <glb_cur_priority                       
+        sta   cur_priority                       
         jsr   CSR_ProcessEachPriorityLevel   
 CSR_P4B0
         ldu   DPS_buffer_0+buf_Tbl_Priority_First_Entry+8
         beq   CSR_P3B0
         lda   #$04
-        sta   <glb_cur_priority                       
+        sta   cur_priority                       
         jsr   CSR_ProcessEachPriorityLevel               
 CSR_P3B0
         ldu   DPS_buffer_0+buf_Tbl_Priority_First_Entry+6
         beq   CSR_P2B0
         lda   #$03
-        sta   <glb_cur_priority                       
+        sta   cur_priority                       
         jsr   CSR_ProcessEachPriorityLevel      
 CSR_P2B0
         ldu   DPS_buffer_0+buf_Tbl_Priority_First_Entry+4
         beq   CSR_P1B0
         lda   #$02
-        sta   <glb_cur_priority                       
+        sta   cur_priority                       
         jsr   CSR_ProcessEachPriorityLevel  
 CSR_P1B0
         ldu   DPS_buffer_0+buf_Tbl_Priority_First_Entry+2
         beq   CSR_rtsB0
         lda   #$01
-        sta   <glb_cur_priority                       
+        sta   cur_priority                       
         jsr   CSR_ProcessEachPriorityLevel
 CSR_rtsB0        
         rts
@@ -88,49 +94,49 @@ CSR_P8B1
         ldu   DPS_buffer_1+buf_Tbl_Priority_First_Entry+16 ; read DPS from priority 8 to priority 1
         beq   CSR_P7B1
         lda   #$08
-        sta   <glb_cur_priority        
+        sta   cur_priority        
         jsr   CSR_ProcessEachPriorityLevel   
 CSR_P7B1
         ldu   DPS_buffer_1+buf_Tbl_Priority_First_Entry+14
         beq   CSR_P6B1
         lda   #$07
-        sta   <glb_cur_priority                       
+        sta   cur_priority                       
         jsr   CSR_ProcessEachPriorityLevel   
 CSR_P6B1
         ldu   DPS_buffer_1+buf_Tbl_Priority_First_Entry+12
         beq   CSR_P5B1
         lda   #$06
-        sta   <glb_cur_priority                       
+        sta   cur_priority                       
         jsr   CSR_ProcessEachPriorityLevel   
 CSR_P5B1
         ldu   DPS_buffer_1+buf_Tbl_Priority_First_Entry+10
         beq   CSR_P4B1
         lda   #$05
-        sta   <glb_cur_priority                       
+        sta   cur_priority                       
         jsr   CSR_ProcessEachPriorityLevel   
 CSR_P4B1
         ldu   DPS_buffer_1+buf_Tbl_Priority_First_Entry+8
         beq   CSR_P3B1
         lda   #$04
-        sta   <glb_cur_priority
+        sta   cur_priority
         jsr   CSR_ProcessEachPriorityLevel               
 CSR_P3B1
         ldu   DPS_buffer_1+buf_Tbl_Priority_First_Entry+6
         beq   CSR_P2B1
         lda   #$03
-        sta   <glb_cur_priority                       
+        sta   cur_priority                       
         jsr   CSR_ProcessEachPriorityLevel      
 CSR_P2B1
         ldu   DPS_buffer_1+buf_Tbl_Priority_First_Entry+4
         beq   CSR_P1B1
         lda   #$02
-        sta   <glb_cur_priority                       
+        sta   cur_priority                       
         jsr   CSR_ProcessEachPriorityLevel  
 CSR_P1B1
         ldu   DPS_buffer_1+buf_Tbl_Priority_First_Entry+2
         beq   CSR_rtsB1
         lda   #$01
-        sta   <glb_cur_priority                       
+        sta   cur_priority                       
         jsr   CSR_ProcessEachPriorityLevel
 CSR_rtsB1        
         rts
@@ -186,7 +192,7 @@ CSR_CheckPlayFieldCoord
         lblo  CSR_SetOutOfRange             ; out of range if x_pos < glb_camera_x_pos
         tsta 
         lbne  CSR_SetOutOfRange             ; out of range if x_pos + 256 > glb_camera_x_pos
-        addb  glb_camera_x_offset
+        addb  glb_camera_x_offset+1
         stb   x_pixel,u
 
         ldd   y_pos,u
@@ -194,13 +200,13 @@ CSR_CheckPlayFieldCoord
         lblo  CSR_SetOutOfRange             ; out of range if y_pos < glb_camera_y_pos
         tsta 
         lbne  CSR_SetOutOfRange             ; out of range if y_pos + 256 > glb_camera_y_pos
-        addb  glb_camera_y_offset
+        addb  glb_camera_y_offset+1
         stb   y_pixel,u
         bra   CSR_ComputeMappingFrame
         
 CSR_DoNotDisplaySprite
         lda   priority,u                     
-        cmpa  <glb_cur_priority 
+        cmpa  cur_priority 
         bne   CSR_NextObject                ; next object if this one is a new priority record (no need to erase) 
         
         lda   rsv_render_flags,u
@@ -213,9 +219,9 @@ CSR_DoNotDisplaySprite
         ora   #rsv_render_erasesprite_mask  ; set erase flag to true if on screen                  
         sta   rsv_render_flags,u
         
-        ldy   <glb_cur_ptr_sub_obj_erase         ; maintain list of changing sprites to erase
+        ldy   cur_ptr_sub_obj_erase         ; maintain list of changing sprites to erase
         stu   ,y++
-        sty   <glb_cur_ptr_sub_obj_erase 
+        sty   cur_ptr_sub_obj_erase 
         
 CSR_NextObject
         ldu   buf_priority_next_obj,x
@@ -340,10 +346,10 @@ CSR_SetOutOfRange
 CSR_CheckErase
         stx   CSR_CheckDraw+1
         lda   buf_priority,x
-        cmpa  <glb_cur_priority 
+        cmpa  cur_priority 
         lbne  CSR_CheckDraw
         
-        ldy   <glb_cur_ptr_sub_obj_erase
+        ldy   cur_ptr_sub_obj_erase
         
         lda   rsv_render_flags,u
         anda  #rsv_render_outofrange_mask
@@ -375,7 +381,7 @@ CSR_SetEraseTrue
         sta   rsv_render_flags,u
         
         stu   ,y++
-        sty   <glb_cur_ptr_sub_obj_erase
+        sty   cur_ptr_sub_obj_erase
                 
         jmp   CSR_CheckDraw
         
@@ -388,7 +394,7 @@ CSR_SubEraseSpriteSearchInit
         * there are two lists because a sprite can be erased at a position
         * and displayed at another position : both cases should be tested !
 
-        ldx   <glb_cur_ptr_sub_obj_erase       
+        ldx   cur_ptr_sub_obj_erase       
         lda   glb_Cur_Wrk_Screen_Id         ; read current screen buffer for write operations
         bne   CSR_SubEraseSearchB1
         
@@ -409,7 +415,7 @@ CSR_SubEraseCheckCollisionB0
         cmpb  rsv_y1_pixel,u                ;     entry : y_pixel
         blo   CSR_SubEraseSearchB0
         
-        ldy   <glb_cur_ptr_sub_obj_erase
+        ldy   cur_ptr_sub_obj_erase
         bra   CSR_SetEraseTrue              ; found a collision
 
 CSR_SubEraseSearchB1
@@ -429,11 +435,11 @@ CSR_SubEraseCheckCollisionB1
         cmpb  rsv_y1_pixel,u                ;     entry : y_pixel
         blo   CSR_SubEraseSearchB1
         
-        ldy   <glb_cur_ptr_sub_obj_erase
+        ldy   cur_ptr_sub_obj_erase
         bra   CSR_SetEraseTrue              ; found a collision
 
 CSR_SubDrawSpriteSearchInit
-        ldx   <glb_cur_ptr_sub_obj_draw
+        ldx   cur_ptr_sub_obj_draw
         
 CSR_SubDrawSearch
         cmpx  #Tbl_Sub_Object_Draw
@@ -452,7 +458,7 @@ CSR_SubDrawCheckCollision
         cmpb  rsv_y1_pixel,u                ;     entry : y_pixel
         blo   CSR_SubDrawSearch
         
-        ldy   <glb_cur_ptr_sub_obj_erase
+        ldy   cur_ptr_sub_obj_erase
         jmp   CSR_SetEraseTrue              ; found a collision
 
 CSR_SetEraseFalse
@@ -463,10 +469,10 @@ CSR_SetEraseFalse
 CSR_CheckDraw
         ldx   #$FFFF                        ; dynamic restore x
         lda   priority,u
-        cmpa  <glb_cur_priority 
+        cmpa  cur_priority 
         lbne  CSR_NextObject
         
-        ldy   <glb_cur_ptr_sub_obj_draw
+        ldy   cur_ptr_sub_obj_draw
         
         lda   rsv_render_flags,u
         anda  #rsv_render_outofrange_mask
@@ -494,7 +500,7 @@ CSR_SDT2
         bpl   CSR_SetHide
 CSR_SDT3
         stu   ,y++
-        sty   <glb_cur_ptr_sub_obj_draw          ; maintain list of changing sprites to draw, should be to draw and ((on screen and to erase) or (not on screen and not to erase)) 
+        sty   cur_ptr_sub_obj_draw          ; maintain list of changing sprites to draw, should be to draw and ((on screen and to erase) or (not on screen and not to erase)) 
 
 CSR_SetHide        
         lda   render_flags,u

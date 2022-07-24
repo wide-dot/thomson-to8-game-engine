@@ -35,10 +35,10 @@ LevelSizeLoad ; todo move to an object
 	ldd   #camera_Y_pos_bias_default
         std   Camera_Y_pos_bias
 
-        lda   #12+screen_left
-        sta   glb_camera_x_offset
-        lda   #20+screen_top
-        sta   glb_camera_y_offset
+        ldd   #12+screen_left
+        std   glb_camera_x_offset
+        ldd   #20+screen_top
+        std   glb_camera_y_offset
 
         ldd   #0
         std   <glb_camera_x_pos

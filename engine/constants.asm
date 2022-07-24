@@ -26,39 +26,38 @@ dk_write_location             equ $604F
 * ===========================================================================
 * Globals
 * ===========================================================================
+glb_ram_end                   equ $A000
 
 ; compilated sprite
-glb_register_s                equ $9FFE  ; reverved space to store S from ROM routines
+glb_register_s                equ glb_ram_end-2             ; reverved space to store S from ROM routines
 
 ; DrawSprites
-glb_screen_location_1         equ $9FFC  ; start address for rendering of current sprite Part1     
-glb_screen_location_2         equ $9FFA  ; start address for rendering of current sprite Part2 (Must follow Part1)
+glb_screen_location_1         equ glb_register_s-2          ; start address for rendering of current sprite Part1     
+glb_screen_location_2         equ glb_screen_location_1-2   ; start address for rendering of current sprite Part2 (DEPENDENCY Must follow Part1)
 
-; CheckSpritesRefresh
-glb_cur_priority              equ $9FF9
-glb_cur_ptr_sub_obj_erase     equ $9FF7
-glb_cur_ptr_sub_obj_draw      equ $9FF5
-
-glb_camera_x_pos              equ $9FF3 ; camera x position in palyfield coordinates
-glb_camera_y_pos              equ $9FF1 ; camera y position in palyfield coordinates
-glb_camera_x_min_pos          equ $9FEF
-glb_camera_y_min_pos          equ $9FED
-glb_camera_x_max_pos          equ $9FEB
-glb_camera_y_max_pos          equ $9FE9
-glb_camera_x_offset           equ $9FE8
-glb_camera_y_offset           equ $9FE7 
-glb_force_sprite_refresh      equ $9FE6
-glb_camera_move               equ $9FE5
-glb_alphaTiles                equ $9FE4
-glb_timer_second              equ $9FE3
-glb_timer_minute              equ $9FE2
-glb_timer                     equ $9FE2 
-glb_timer_frame               equ $9FE1
+glb_camera_height             equ glb_screen_location_2-2
+glb_camera_width              equ glb_camera_height-2
+glb_camera_x_pos_coarse       equ glb_camera_width-2        ; ((glb_camera_x_pos - 64) / 64) * 64
+glb_camera_x_pos              equ glb_camera_x_pos_coarse-2 ; camera x position in palyfield coordinates
+glb_camera_y_pos              equ glb_camera_x_pos-2        ; camera y position in palyfield coordinates
+glb_camera_x_min_pos          equ glb_camera_y_pos-2
+glb_camera_y_min_pos          equ glb_camera_x_min_pos-2
+glb_camera_x_max_pos          equ glb_camera_y_min_pos-2
+glb_camera_y_max_pos          equ glb_camera_x_max_pos-2
+glb_camera_x_offset           equ glb_camera_y_max_pos-2
+glb_camera_y_offset           equ glb_camera_x_offset-2
+glb_force_sprite_refresh      equ glb_camera_y_offset-1
+glb_camera_move               equ glb_force_sprite_refresh-1
+glb_alphaTiles                equ glb_camera_move-1
+glb_timer_second              equ glb_alphaTiles-1
+glb_timer_minute              equ glb_timer_second-1
+glb_timer                     equ glb_timer_minute
+glb_timer_frame               equ glb_timer-1
 
 ; BankSwitch
-glb_Page                      equ $9FE0
-dp_engine                     equ $9FB0 ; engine and user routines tmp var space
-dp                            equ $9F00 ; free user tmp var space
+glb_Page                      equ glb_timer_frame-1
+dp_engine                     equ glb_Page-48 ; engine and user routines tmp var space
+dp                            equ $9F00       ; free user tmp var space
 glb_system_stack              equ $9F00
 
 * ===========================================================================
@@ -105,7 +104,13 @@ sound_meta_size   equ 5
 ; ext_variables_size should be declared in game source code
 
 object_base_size              equ 34  ; the size of an object without ext_vars - DEPENDENCY ClearObj routine
+ ifndef OverlayMode
 object_rsvd_size              equ 59  ; the size of an object without ext_vars - DEPENDENCY ClearObj routine
+ else
+object_rsvd_size              equ 5   ; the size of an object without ext_vars - DEPENDENCY ClearObj routine
+ endc
+; overlay pack
+;object_rsvd_size              equ 5  ; the size of an object without ext_vars - DEPENDENCY ClearObj routine
 object_rsvd                   equ object_base_size+ext_variables_size
 object_size                   equ object_base_size+ext_variables_size+object_rsvd_size ; the size of a dynamic object
 next_object                   equ object_size
@@ -117,15 +122,27 @@ render_flags                  equ 2
 
 ; bit 7 = onscreen flag, bit 0 = x mirror, bit 1 = y mirror, bit 2 = coordinate system, bit 6 = render subobjects
 
-* --- render_flags bitfield variables ---
+ ifndef OverlayMode
+* --- render_flags bitfield variables --- background erase pack
 render_xmirror_mask           equ $01 ; (bit 0) DEPENDENCY should be bit 0 - tell display engine to mirror sprite on horizontal axis
 render_ymirror_mask           equ $02 ; (bit 1) DEPENDENCY should be bit 1 - tell display engine to mirror sprite on vertical axis
 render_overlay_mask           equ $04 ; (bit 2) DEPENDENCY should be bit 2 - compilated sprite with no background save
 render_playfieldcoord_mask    equ $08 ; (bit 3) tell display engine to use playfield (1) or screen (0) coordinates
 render_xloop_mask             equ $10 ; (bit 4) (in screen coordinate) tell display engine to hide sprite when x is out of screen (0) or to display (1)  
 render_todelete_mask          equ $20 ; (bit 5) tell display engine to delete sprite and clear OST for this object
+render_subobjects_mask        equ $40 ; (bit 6) tell display engine to render subobjects for this object
+render_hide_mask              equ $80 ; (bit 7) tell display engine to hide sprite (keep priority and mapping_frame)
+ else
+; --- render_flags bitfield variables --- overlay pack
+render_xmirror_mask           equ $01 ; (bit 0) DEPENDENCY should be bit 0 - tell display engine to mirror sprite on horizontal axis
+render_ymirror_mask           equ $02 ; (bit 1) DEPENDENCY should be bit 1 - tell display engine to mirror sprite on vertical axis
+
+render_playfieldcoord_mask    equ $08 ; (bit 3) tell display engine to use playfield (1) or screen (0) coordinates
+render_xloop_mask             equ $10 ; (bit 4) (in screen coordinate) tell display engine to hide sprite when x is out of screen (0) or to display (1)  
+render_no_range_ctrl_mask     equ $20 ; (bit 5) tell display engine to skip out of range controls (this may lead to memory corruption BEWARE)
 render_subobjects             equ $40 ; (bit 6) tell display engine to render subobjects for this object
 render_hide_mask              equ $80 ; (bit 7) tell display engine to hide sprite (keep priority and mapping_frame)
+ endc
 
 priority                      equ 3           ; display priority (0: nothing to display, 1:front, ..., 8:back)
 anim                          equ 4  ; and 5  ; reference to current animation (Ani_)
@@ -160,6 +177,7 @@ routine_secondary             equ 31          ; index of current secondary routi
 routine_tertiary              equ 32          ; index of current tertiary routine
 routine_quaternary            equ 33          ; index of current quaternary routine
 
+ ifndef OverlayMode
 * ---------------------------------------------------------------------------
 * reserved variables (read/write by engine)
 
@@ -252,5 +270,12 @@ buf_prev_xy2_pixel            equ 17 ;
 buf_prev_x2_pixel             equ 17 ;
 buf_prev_y2_pixel             equ 18 ;
 buf_prev_render_flags         equ 19 ;
+ else
+* ---------------------------------------------------------------------------
+* reserved variables (engine) - buffer specific - overlay pack
 
+rsv_priority                  equ object_rsvd   ; internal value that hold priority in video buffer 0
+rsv_priority_prev_obj         equ object_rsvd+1 ; and +2 ; previous object (OST address) in display priority list for video buffer 0 (0000 if none) w
+rsv_priority_next_obj         equ object_rsvd+3 ; and +4 ; next object (OST address) in display priority list for video buffer 0 (0000 if none) w
+ endc
  endc

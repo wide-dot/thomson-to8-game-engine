@@ -67,11 +67,11 @@ ObjectsManager_Init                                   *ObjectsManager_Init:
         ldy   #Obj_respawn_index                      *        lea     (Obj_respawn_index).w,a2        ; reset a2
         sta   glb_d2_b                                *        moveq   #0,d2
         ldd   glb_camera_x_pos                        *        move.w  (Camera_X_pos).w,d6
-        subd  #$40                                    *        subi.w  #$80,d6 ; look one chunk to the left
+        subd  #$40 ; wide-dot factor                  *        subi.w  #$80,d6 ; look one chunk to the left
         bcc   >                                       *        bcc.s   +       ; if the result was negative,
         ldd   #0                                      *        moveq   #0,d6   ; cap at zero
 !                                                     *+
-        andb  #$C0                                    *        andi.w  #$FF80,d6       ; limit to increments of $80 (width of a chunk)
+        andb  #$C0 ; wide-dot factor                  *        andi.w  #$FF80,d6       ; limit to increments of $80 (width of a chunk)
         std   glb_d6
         ldx   Obj_load_addr_right                     *        movea.l (Obj_load_addr_right).w,a0      ; load address of object placement list
                                                       *
@@ -95,7 +95,7 @@ loc_17B3E                                             *loc_17B3E:
         stx   Obj_load_addr_right                     *        move.l  a0,(Obj_load_addr_right).w      ; remember rightmost object that has been processed, so far (we still need to look forward)
         stx   Obj_load_addr_2                         *        move.l  a0,(Obj_load_addr_2).w
         ldx   Obj_load_addr_left                      *        movea.l (Obj_load_addr_left).w,a0       ; reset a0
-        subd  #$40                                    *        subi.w  #$80,d6         ; look even farther left (any object behind this is out of range)
+        subd  #$40 ; wide-dot factor                  *        subi.w  #$80,d6         ; look even farther left (any object behind this is out of range)
         std   glb_d6
         bcs   loc_17B62                               *        bcs.s   loc_17B62       ; branch, if camera position would be behind level's left boundary
                                                       *
@@ -128,22 +128,22 @@ loc_17B62                                             *loc_17B62:
                                                       *; loc_17B84
 ObjectsManager_Main                                   *ObjectsManager_Main:
         ldd   glb_camera_x_pos                        *        move.w  (Camera_X_pos).w,d1
-        subd  #$40                                    *        subi.w  #$80,d1
-        andb  #$C0                                    *        andi.w  #$FF80,d1
-        std   Camera_X_pos_coarse                     *        move.w  d1,(Camera_X_pos_coarse).w
+        subd  #$40 ; wide-dot factor                  *        subi.w  #$80,d1
+        andb  #$C0 ; wide-dot factor                  *        andi.w  #$FF80,d1
+        std   glb_camera_x_pos_coarse                 *        move.w  d1,(Camera_X_pos_coarse).w
                                                       *
         ldy   #Obj_respawn_index                      *        lea     (Obj_respawn_index).w,a2
         ldd   #0                                      *        moveq   #0,d2
         sta   glb_d2_b
         ldd   glb_camera_x_pos                        *        move.w  (Camera_X_pos).w,d6
-        andb  #$C0                                    *        andi.w  #$FF80,d6
+        andb  #$C0 ; wide-dot factor                  *        andi.w  #$FF80,d6
         cmpd  Camera_X_pos_last                       *        cmp.w   (Camera_X_pos_last).w,d6        ; is the X range the same as last time?
         lbeq  ObjectsManager_SameXRange               *        beq.w   ObjectsManager_SameXRange       ; if yes, branch (rts)
         bge   ObjectsManager_GoingForward             *        bge.s   ObjectsManager_GoingForward     ; if new pos is greater than old pos, branch
-                                                      *        ; if the player is moving back
+ObjectsManager_GoingRearward                          *        ; if the player is moving back
         std   Camera_X_pos_last                       *        move.w  d6,(Camera_X_pos_last).w        ; remember current position for next time
         ldx   Obj_load_addr_left                      *        movea.l (Obj_load_addr_left).w,a0       ; get current object from the left
-        subd  #$40                                    *        subi.w  #$80,d6         ; look one chunk to the left
+        subd  #$40 ; wide-dot factor                  *        subi.w  #$80,d6         ; look one chunk to the left
         bcs   loc_17BE6                               *        bcs.s   loc_17BE6       ; branch, if camera position would be behind level's left boundary
         std   glb_d6
                                                       *
@@ -165,7 +165,7 @@ ObjectsManager_Main                                   *ObjectsManager_Main:
         bra   @c                                      *        bra.s   -       ; continue with previous object
                                                       *; ---------------------------------------------------------------------------
                                                       *
-                                                      *+       ; undo a few things, if the object couldn't load
+!                                                     *+       ; undo a few things, if the object couldn't load
         tst   2,x                                     *        tst.b   2(a0)   ; does the object get a respawn table entry?
         bpl   >                                       *        bpl.s   +       ; if not, branch
         lda   1,y
@@ -178,7 +178,7 @@ ObjectsManager_Main                                   *ObjectsManager_Main:
 loc_17BE6                                             *loc_17BE6:
         stx   Obj_load_addr_left                      *        move.l  a0,(Obj_load_addr_left).w       ; remember current object from the left
         ldx   Obj_load_addr_right                     *        movea.l (Obj_load_addr_right).w,a0      ; get next object from the right
-        addd  #$300
+        addd  #$40+160+$20+$40+$40 ; wide-dot factor
         std   glb_d6                                  *        addi.w  #$300,d6        ; look two chunks beyond the right edge of the screen
                                                       *
 @d                                                    *-       ; subtract number of objects that have been moved out of range (from the right side)
@@ -203,7 +203,7 @@ loc_17C04                                             *loc_17C04:
 ObjectsManager_GoingForward                           *ObjectsManager_GoingForward:
         std   Camera_X_pos_last                       *        move.w  d6,(Camera_X_pos_last).w
         ldx   Obj_load_addr_right                     *        movea.l (Obj_load_addr_right).w,a0      ; get next object from the right
-        addd  #$200                                   *        addi.w  #$280,d6        ; look two chunks forward
+        addd  #160+$20+$40+$40 ; wide-dot factor      *        addi.w  #$280,d6        ; look two chunks forward
         std   glb_d6
                                                       *
 @e                                                    *-       ; load all objects right of the screen that are now in range
@@ -222,7 +222,7 @@ ObjectsManager_GoingForward                           *ObjectsManager_GoingForwa
 loc_17C2A                                             *loc_17C2A:
         stx   Obj_load_addr_right                     *        move.l  a0,(Obj_load_addr_right).w      ; remember next object from the right
         ldx   Obj_load_addr_left                      *        movea.l (Obj_load_addr_left).w,a0       ; get current object from the left
-        subd  #$300                                   *        subi.w  #$300,d6        ; look one chunk behind the left edge of the screen
+        subd  #$40+160+$20+$40+$40 ; wide-dot factor  *        subi.w  #$300,d6        ; look one chunk behind the left edge of the screen
         std   glb_d6
         bcs   loc_17C4A                               *        bcs.s   loc_17C4A       ; branch, if camera position would be behind level's left boundary
                                                       *
@@ -667,7 +667,7 @@ ChkLoadObj                                            *ChkLoadObj:
         ldd   ,x++
         std   id,u ; and subtype,u                    *        _move.b (a0)+,id(a1) ; load obj
         ;                                             *        move.b  (a0)+,subtype(a1)
-                                                      *        moveq   #0,d0
+        orcc  #%00000100 ; set zero flag              *        moveq   #0,d0
                                                       *
 @rts                                                  *return_17F7E:
         rts                                           *        rts
@@ -813,17 +813,11 @@ _SingleObjLoad                                        *SingleObjLoad:
                                                       *; ===========================================================================
 
 Camera_X_pos_last    fdb   0
-Camera_X_pos_coarse  fdb   0
 
 Obj_load_addr_right  fdb   0 ; contains the address of the next object to load when moving right
 Obj_load_addr_left   fdb   0 ; contains the address of the last object loaded when moving left
 Obj_load_addr_2      fdb   0
 Obj_load_addr_3      fdb   0
-
-Object_Respawn_Table
-Obj_respawn_index    fdb    0      ; respawn table indices of the next objects when moving left or right for the first player
-Obj_respawn_data     fill   0,$7C  ; Maximum possible number of respawn entries that S2 can handle; for stock S2, $80 is enough
-Obj_respawn_data_End               ; 2 byte index + $7C is max. reachable pair value with 8bit signed adressing mode
 
 ; --------------------------------------------------------------------------------------
 ; Offset index of object locations
