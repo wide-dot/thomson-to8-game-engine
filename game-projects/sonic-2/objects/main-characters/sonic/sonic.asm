@@ -62,17 +62,18 @@ Obj01_Index                                           *Obj01_Index:  offsetTable
                                                       *; ===========================================================================
                                                       *; loc_19F76: Obj_01_Sub_0: Obj01_Main:
 Obj01_Init                                            *  Obj01_Init:
-        inc   routine+dp                               *  addq.b  #2,routine(a0)  ; => Obj01_Control
+        inc   routine+dp                              *  addq.b  #2,routine(a0)  ; => Obj01_Control
         _ldd  $14,4                                   *  move.b  #$13,y_radius(a0) ; this sets Sonic's collision height (2*pixels)
-        std   y_radius+dp ; and x_radius               *  move.b  #9,x_radius(a0)
-        ; unused                                      *  move.l  #Mapunc_Sonic,mappings(a0)
+        std   y_radius+dp ; and x_radius              *  move.b  #9,x_radius(a0)
+        ldd   #Img_sonic_000                          *  move.l  #Mapunc_Sonic,mappings(a0)
+        std   image_set,u
         lda   #$02                                    *            
-        sta   priority+dp                              *  move.b  #2,priority(a0)
+        sta   priority+dp                             *  move.b  #2,priority(a0)
         lda   #9                         
-        sta   width_pixels+dp                          *  move.b  #$18,width_pixels(a0)
+        sta   width_pixels+dp                         *  move.b  #$18,width_pixels(a0)
         lda   render_flags+dp
-        ora   #render_playfieldcoord_mask|render_overlay_mask        
-        sta   render_flags+dp                          *  move.b  #4,render_flags(a0)
+        ora   #render_playfieldcoord_mask        
+        sta   render_flags+dp                         *  move.b  #4,render_flags(a0)
         ldd   #sonic_cst_top_speed                    *
         std   Sonic_top_speed                         *  move.w  #$600,(Sonic_top_speed).w   ; set Sonic's top speed
         ldd   #sonic_cst_acceleration                 *
@@ -85,29 +86,29 @@ Obj01_Init                                            *  Obj01_Init:
         ; unused                                      *  move.w  #make_art_tile(ArtTile_ArtUnc_Sonic,0,0),art_tile(a0)
         ; unused                                      *  bsr.w   Adjust2PArtPointer
         ldd   #$0810
-        sta   top_solid_bit+dp                         *  move.b  #$C,top_solid_bit(a0)
+        sta   top_solid_bit+dp                        *  move.b  #$C,top_solid_bit(a0)
         sta   Saved_Solid_bits
-        stb   lrb_solid_bit+dp                         *  move.b  #$D,lrb_solid_bit(a0)
-        ldd   x_pos+dp                                 *               
+        stb   lrb_solid_bit+dp                        *  move.b  #$D,lrb_solid_bit(a0)
+        ldd   x_pos+dp                                *               
         std   Saved_x_pos                             *  move.w  x_pos(a0),(Saved_x_pos).w
-        ldd   y_pos+dp                                 *               
+        ldd   y_pos+dp                                *               
         std   Saved_y_pos                             *  move.w  y_pos(a0),(Saved_y_pos).w
         ; unused                                      *  move.w  art_tile(a0),(Saved_art_tile).w
         ; moved                                       *  move.w  top_solid_bit(a0),(Saved_Solid_bits).w
                                                       *
 Obj01_Init_Continued                                  *  Obj01_Init_Continued:
         ldd   #$0004
-        sta   flips_remaining+dp                       *  move.b  #0,flips_remaining(a0)
-        stb   flip_speed+dp                            *  move.b  #4,flip_speed(a0)
+        sta   flips_remaining+dp                      *  move.b  #0,flips_remaining(a0)
+        stb   flip_speed+dp                           *  move.b  #4,flip_speed(a0)
         ; unimplemented                               *  move.b  #0,(Super_Sonic_flag).w
         lda   #$1E
-        sta   air_left+dp                              *  move.b  #$1E,air_left(a0)
+        sta   air_left+dp                             *  move.b  #$1E,air_left(a0)
         ldd   x_pos+dp
         subd  #$10
-        std   x_pos+dp                                 *  subi.w  #$20,x_pos(a0)
+        std   x_pos+dp                                *  subi.w  #$20,x_pos(a0)
         ldd   y_pos+dp
         addd  #4
-        std   y_pos+dp                                 *  addi_.w #4,y_pos(a0)
+        std   y_pos+dp                                *  addi_.w #4,y_pos(a0)
         anda  #0                                      *
         sta   Sonic_Pos_Record_Index                  *  move.w  #0,(Sonic_Pos_Record_Index).w
                                                       *

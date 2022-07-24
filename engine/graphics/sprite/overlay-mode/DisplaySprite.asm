@@ -20,94 +20,89 @@
 * input REG : [a] priority
 * ---------------------------------------------------------------------------
 
+* ---------------------------------------------------------------------------
+* Display Priority Structure - DPS
+* ---------------------------------------------------------------------------
+Tbl_Priority_First_Entry      fill  0,2+(nb_priority_levels*2) ; first address of object in linked list for each priority index (buffer 0) index 0 unused
+Tbl_Priority_Last_Entry       fill  0,2+(nb_priority_levels*2) ; last address of object in linked list for each priority index (buffer 0) index 0 unused
+
 DisplaySprite_priority
 DisplaySprite3                              ; u : ptr object RAM, a : priority
         pshs  d,x,u
-        bra   DSP_Start
-
+        bra   @Start
 DisplaySprite_x                             ; x : ptr object RAM
 DisplaySprite2
         pshs  d,x,u
         tfr   x,u
-        bra   DSP_Start
-        
+        bra   @Start
 DisplaySprite                               ; u : ptr object RAM
         pshs  d,x,u
         lda   priority,u                    ; read priority set for this object
-        
-DSP_Start
+@Start
         ldb   render_flags,u
         andb  #^render_hide_mask            ; unset hide flag
         stb   render_flags,u
-
-        ldb   glb_Cur_Wrk_Screen_Id         ; read current screen buffer for write operations
-        bne   DSP_SetBuffer1
-        
-DSP_SetBuffer0        
-        leax  rsv_buffer_0,u                ; set x pointer to object variables that belongs to screen buffer 0
-        ldy   #DPS_buffer_0                 ; set y pointer to Display Priority Structure that belongs to screen buffer 0
-        bra   DSP_BufferPositionned
-        
-DSP_SetBuffer1       
-        leax  rsv_buffer_1,u                ; set x pointer to object variables that belongs to screen buffer 1
-        ldy   #DPS_buffer_1                 ; set y pointer to Display Priority Structure that belongs to screen buffer 1        
-        
-DSP_BufferPositionned       
-        cmpa  buf_priority,x
-        beq   DSP_rts                       ; priority and current priority are the same: nothing to do
-        ldb   buf_priority,x   
-        bne   DSP_ChangePriority
-        
-DSP_InitPriority
-        sta   buf_priority,x                ; init priority for this screen buffer with priority from object
-        
-DSP_CheckLastEntry
-        leay  buf_Tbl_Priority_Last_Entry,y
+        cmpa  rsv_priority,u
+        beq   @rts                          ; priority and current priority are the same: nothing to do
+        ldb   rsv_priority,u   
+        bne   @ChangePriority
+@InitPriority
+        sta   rsv_priority,u                ; init priority for this screen buffer with priority from object
+@CheckLastEntry
+        ldy   #Tbl_Priority_Last_Entry
         asla                                ; change priority number to priority index (value x2)        
         tst   a,y                           ; test left byte only is ok, no object will be stored at $00__ address
-        bne   DSP_addToExistingNode         ; not the first object at this priority level, branch
-        
-DSP_addFirstNode        
+        bne   @addToExistingNode            ; not the first object at this priority level, branch
+@addFirstNode        
         stu   a,y                           ; save object as last entry in linked list
-        leay  buf_Tbl_Priority_First_Entry-buf_Tbl_Priority_Last_Entry,y
+        ldy   #Tbl_Priority_First_Entry
         stu   a,y                           ; save object as first entry in linked list
         ldd   #0
-        std   buf_priority_prev_obj,x       ; clear object prev and next link, it's the only object at this priority level
-        std   buf_priority_next_obj,x
-        
-DSP_rts
+        std   rsv_priority_prev_obj,u       ; clear object prev and next link, it's the only object at this priority level
+        std   rsv_priority_next_obj,u
+@rts
         puls  d,x,u,pc                      ; rts        
-        
-DSP_addToExistingNode
+@addToExistingNode
         ldx   a,y                           ; x register now store last object at the priority level of current object
-        ldb   glb_Cur_Wrk_Screen_Id
-        bne   DSP_LinkBuffer1
-        stu   rsv_priority_next_obj_0,x     ; link last object with current object if active screen buffer 0
-        stx   rsv_priority_prev_obj_0,u     ; link current object with previous object
+        stu   rsv_priority_next_obj,x       ; link last object with current object if active screen buffer 0
+        stx   rsv_priority_prev_obj,u       ; link current object with previous object
         ldx   #0
-        stx   rsv_priority_next_obj_0,u     ; clear object next link        
-        bra   DSP_LinkCurWithPrev        
-DSP_LinkBuffer1        
-        stu   rsv_priority_next_obj_1,x     ; link last object with current object if active screen buffer 1
-        stx   rsv_priority_prev_obj_1,u     ; link current object with previous object
-        ldx   #0
-        stx   rsv_priority_next_obj_1,u     ; clear object next link        
-        
-DSP_LinkCurWithPrev        
+        stx   rsv_priority_next_obj,u       ; clear object next link        
+@LinkCurWithPrev        
         stu   a,y                           ; update last object in index
         puls  d,x,u,pc                      ; rts
-        
-DSP_ChangePriority
-        pshs  d,y
-        leay  buf_Lst_Priority_Unset,y
-        stu   [,y]                          ; add current object address to last free unset list cell
-        ldd   ,y
-        addd  #2
-        std   ,y                            ; set unset list free index to next free cell of unset list
-        puls  d,y                           ; get back DSP_buffer in y
-        cmpa  #0
-        bne   DSP_CheckLastEntry            ; priority is != 0, branch to add object to display priority list
-        puls  d,x,u,pc                      ; rts
+@ChangePriority
+        ldd   rsv_priority_prev_obj,u       ; unregister current priority
+        bne   @chainPrev
+        lda   rsv_priority,u
+        lsla
+        ldy   #Tbl_Priority_First_Entry
+        leay  a,y
+        ldd   rsv_priority_next_obj,u
+        std   ,y
+        bra   @checkPrioNext
+@chainPrev
+        ldd   rsv_priority_next_obj,u
+        ldy   rsv_priority_prev_obj,u        
+        std   rsv_priority_next_obj,y        
+@checkPrioNext       
+        ldd   rsv_priority_next_obj,u
+        bne   @chainNext
+        lda   rsv_priority,u
+        lsla
+        ldy   #Tbl_Priority_Last_Entry
+        leay  a,y
+        ldd   rsv_priority_prev_obj,u
+        std   ,y
+        bra   >
+@chainNext
+        ldd   rsv_priority_prev_obj,u
+        ldy   rsv_priority_next_obj,u        
+        std   rsv_priority_prev_obj,y
+!
+        lda   priority,u
+        bne   @CheckLastEntry               ; priority is != 0, branch to add object to display priority list
+        puls  d,x,u,pc                      ; else new priority is 0, return
 
         
                                                       *; ---------------------------------------------------------------------------
@@ -174,22 +169,3 @@ DSP_ChangePriority
                                                       *return_16542:
                                                       *        rts   
 
-* ---------------------------------------------------------------------------
-* Display Priority Structure - DPS
-* ---------------------------------------------------------------------------
-
-DPS_buffer_0
-Tbl_Priority_First_Entry_0    fill  0,2+(nb_priority_levels*2) ; first address of object in linked list for each priority index (buffer 0) index 0 unused
-Tbl_Priority_Last_Entry_0     fill  0,2+(nb_priority_levels*2) ; last address of object in linked list for each priority index (buffer 0) index 0 unused
-Lst_Priority_Unset_0          fdb   Lst_Priority_Unset_0+2     ; pointer to end of list (initialized to its own address+2) (buffer 0)
-                              fill  0,(nb_graphical_objects*2) ; objects to delete from priority list
-DPS_buffer_1                              
-Tbl_Priority_First_Entry_1    fill  0,2+(nb_priority_levels*2) ; first address of object in linked list for each priority index (buffer 1) index 0 unused
-Tbl_Priority_Last_Entry_1     fill  0,2+(nb_priority_levels*2) ; last address of object in linked list for each priority index (buffer 1) index 0 unused
-Lst_Priority_Unset_1          fdb   Lst_Priority_Unset_1+2     ; pointer to end of list (initialized to its own address+2) (buffer 1)
-                              fill  0,(nb_graphical_objects*2) ; objects to delete from priority list
-DPS_buffer_end                              
-
-buf_Tbl_Priority_First_Entry  equ   0                                                            
-buf_Tbl_Priority_Last_Entry   equ   Tbl_Priority_Last_Entry_0-DPS_buffer_0          
-buf_Lst_Priority_Unset        equ   Lst_Priority_Unset_0-DPS_buffer_0                                       

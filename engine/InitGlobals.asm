@@ -9,10 +9,12 @@ InitGlobals
         cmpx  #dp+256
         bne   <
 
-        lda   #screen_left
-        sta   glb_camera_x_offset
-        lda   #screen_top
-        sta   glb_camera_y_offset
+ ifdef DrawSprites
+        ldd   #screen_left
+        std   glb_camera_x_offset
+        ldd   #screen_top
+        std   glb_camera_y_offset
+ endc
 
         lda   #1
         sta   glb_alphaTiles

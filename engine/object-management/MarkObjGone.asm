@@ -7,6 +7,11 @@
 * clear REG : none
 * ---------------------------------------------------------------------------
 
+Object_Respawn_Table
+Obj_respawn_index    fdb    0      ; respawn table indices of the next objects when moving left or right for the first player
+Obj_respawn_data     fill   0,$7C  ; Maximum possible number of respawn entries that S2 can handle; for stock S2, $80 is enough
+Obj_respawn_data_End               ; 2 byte index + $7C is max. reachable pair value with 8bit signed adressing mode
+
                                                       *; ---------------------------------------------------------------------------
                                                       *; Routines to mark an enemy/monitor/ring/platform as destroyed
                                                       *; ---------------------------------------------------------------------------
@@ -19,19 +24,22 @@ MarkObjGone                                           *MarkObjGone:
                                                       *        beq.s   +                       ; if not, branch
                                                       *        bra.w   DisplaySprite
                                                       *+
-                                                      *        move.w  x_pos(a0),d0
-                                                      *        andi.w  #$FF80,d0
-                                                      *        sub.w   (Camera_X_pos_coarse).w,d0
-                                                      *        cmpi.w  #$80+320+$40+$80,d0     ; This gives an object $80 pixels of room offscreen before being unloaded (the $40 is there to round up 320 to a multiple of $80)
-                                                      *        bhi.w   +
+        ldd   x_pos,u                                 *        move.w  x_pos(a0),d0
+        andb  #$C0 ; wide-dot factor                  *        andi.w  #$FF80,d0
+        subd  glb_camera_x_pos_coarse                 *        sub.w   (Camera_X_pos_coarse).w,d0
+        cmpd  #$40+160+$20+$40                        *        cmpi.w  #$80+320+$40+$80,d0     ; This gives an object $80 pixels of room offscreen before being unloaded (the $40 is there to round up 320 to a multiple of $80)
+        bhi   >                                       *        bhi.w   +
         jmp   DisplaySprite                           *        bra.w   DisplaySprite
                                                       *
-                                                      *+       lea     (Object_Respawn_Table).w,a2
-                                                      *        moveq   #0,d0
-                                                      *        move.b  respawn_index(a0),d0
-                                                      *        beq.s   +
-                                                      *        bclr    #7,2(a2,d0.w)
-                                                      *+
+!       ldx   #Object_Respawn_Table                   *+       lea     (Object_Respawn_Table).w,a2
+        ;                                             *        moveq   #0,d0
+        ldb   respawn_index,u                         *        move.b  respawn_index(a0),d0
+        beq   >                                       *        beq.s   +
+        addb  #2
+        lda   b,x
+        anda  #%01111111
+        sta   b,x                                     *        bclr    #7,2(a2,d0.w)
+!                                                     *+
         jmp   DeleteObject                            *        bra.w   DeleteObject
                                                       *; ===========================================================================
                                                       *; input: d0 = the object's x position

@@ -6,6 +6,7 @@
 *
 *
 ********************************************************************************
+OverlayMode equ 1
 
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"        
@@ -35,10 +36,15 @@ LevelSizeLoad ; todo move to an object
 	ldd   #camera_Y_pos_bias_default
         std   Camera_Y_pos_bias
 
-        lda   #12+screen_left
-        sta   glb_camera_x_offset
-        lda   #20+screen_top
-        sta   glb_camera_y_offset
+        ldd   #12
+        std   glb_camera_x_offset
+        ldd   #20
+        std   glb_camera_y_offset
+
+        ldd   #136
+        std   glb_camera_width
+        ldd   #160
+        std   glb_camera_height
 
         ldd   #0
         std   <glb_camera_x_pos
@@ -101,19 +107,19 @@ LevelMainLoop
         _RunObjectRoutineB ObjID_ObjectsManager,#2
 
         jsr   RunObjects
-	jsr   ForceRefresh
-        jsr   CheckSpritesRefresh
+        jsr   ForceRefresh
 
         ldb   #0                 ; sprite mask
 	jsr   EHZ_Mask
 
-        jsr   EraseSprites
-        jsr   UnsetDisplayPriority
 	jsr   EHZ_Back
         jsr   ComputeTileBuffer
 	jsr   DrawBufferedTile
-        jsr   DrawSprites
+
+        jsr   BuildSprites
+
         _RunObjectRoutineB ObjID_RingsManager,#4
+
         jsr   DrawHighPriorityBufferedTile   
 
         ldb   #2                ; frame mask
@@ -340,7 +346,7 @@ TlsAni_EHZ_pulseball3_imgs
         INCLUDE "./engine/object-management/ClearObj.asm"
         INCLUDE "./engine/object-management/RunObjects.asm"
         INCLUDE "./engine/object-management/SingleObjLoad.asm"
-        
+        INCLUDE "./engine/object-management/MarkObjGone.asm"
 
         ; utilities
         INCLUDE "./engine/InitGlobals.asm"

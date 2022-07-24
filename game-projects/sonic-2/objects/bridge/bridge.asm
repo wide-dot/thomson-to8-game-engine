@@ -10,7 +10,7 @@ Obj11_baseYPos equ ext_variables_obj+4 ; word
                                                       * ; Sprite_F66C:
 Obj11                                                 * Obj11:
         lda   render_flags,u                          *         btst    #6,render_flags(a0)     ; is this a child sprite object?
-        anda  #render_subobjects
+        anda  #render_subobjects_mask
         bne   >                                       *         bne.w   +                       ; if yes, branch
                                                       *         moveq   #0,d0
         lda   routine,u                               *         move.b  routine(a0),d0
@@ -48,7 +48,7 @@ Obj11_Init                                            * Obj11_Init:
                                                       *         move.w  #make_art_tile(ArtTile_ArtNem_HPZ_Bridge,3,0),art_tile(a0)
 !                                                     * +
         ;                                             *         bsr.w   Adjust2PArtPointer
-        lda   #render_playfieldcoord_mask|render_overlay_mask
+        lda   #render_playfieldcoord_mask
         sta   render_flags,u                          *         move.b  #4,render_flags(a0)
         lda   #$40 ; wide-dot factor
         sta   width_pixels,u                          *         move.b  #$80,width_pixels(a0)
@@ -110,7 +110,7 @@ Obj11_MakeBdgSegment                                  * Obj11_MakeBdgSegment:
         std   image_set,x                             *         move.l  mappings(a0),mappings(a1)
         ;                                             *         move.w  art_tile(a0),art_tile(a1)
         lda   render_flags,u                          *         move.b  render_flags(a0),render_flags(a1)
-        anda  #render_subobjects                      *         bset    #6,render_flags(a1)
+        anda  #render_subobjects_mask                      *         bset    #6,render_flags(a1)
         sta   render_flags,x
         lda   #$20 ; wide-dot factor
         sta   mainspr_width,x                         *         move.b  #$40,mainspr_width(a1)
@@ -185,8 +185,8 @@ Obj11_Unload                                          * Obj11_Unload:
                                                       * ; ---------------------------------------------------------------------------
 !                                                     * +
         ldd   x_pos,u                                 *         move.w  x_pos(a0),d0
-        andb  #$40 ; wide-dot factor                  *         andi.w  #$FF80,d0
-        subd  Camera_X_pos_coarse                     *         sub.w   (Camera_X_pos_coarse).w,d0
+        andb  #$C0 ; wide-dot factor                  *         andi.w  #$FF80,d0
+        subd  glb_camera_X_pos_coarse                 *         sub.w   (Camera_X_pos_coarse).w,d0
         cmpd  #$280                                   *         cmpi.w  #$280,d0
         bhi   >                                       *         bhi.s   +
         rts                                           *         rts

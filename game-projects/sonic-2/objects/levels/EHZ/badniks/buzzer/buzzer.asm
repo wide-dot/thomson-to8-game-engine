@@ -26,7 +26,7 @@ Buzzer_Init
         ldd   #$0250
         std   y_pos,u
         lda   render_flags,u
-        ora   #render_playfieldcoord_mask|render_overlay_mask        
+        ora   #render_playfieldcoord_mask        
         sta   render_flags,u
         inc   routine,u   
         
