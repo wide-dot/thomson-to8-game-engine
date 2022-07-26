@@ -3,7 +3,9 @@ package fr.bento8.to8.build;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -17,7 +19,8 @@ public class GameModeCommon {
 	public String fileName;
 	public Item[] items;
 		
-	public HashMap<String, Object> objects = new HashMap<String, Object>();
+	public List<Object> objects = new ArrayList<Object>();
+	public List<String> objectsName = new ArrayList<String>();
 	public AsmSourceCode glb;
 	
 	public GameModeCommon(GameMode gm, String fileName) throws Exception {
@@ -56,13 +59,14 @@ public class GameModeCommon {
 				object.addGameMode(gm);
 			}					
 			
-			objects.put(curObject.getKey(), object);
+			objects.add(object);
+			objectsName.add(curObject.getKey());
 		}		
 	}
 	
 	public void registerNewGameMode(GameMode gm) throws Exception {
-		for (Entry<String, Object> curObject : objects.entrySet() ) {
-			curObject.getValue().addGameMode(gm);
+		for (Object curObject : objects ) {
+			curObject.addGameMode(gm);
 		}
 	}
 }

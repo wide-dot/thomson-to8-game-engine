@@ -268,15 +268,15 @@ public class BuildDisk
 			// Game Mode Common
 			for (GameModeCommon common : gameMode.getValue().gameModeCommon) {
 				if (common != null) {
-					for (Entry<String, Object> object : common.objects.entrySet()) {
-						objIndex = generateObjectIDs(gameMode.getValue(), object.getValue(), objIndex);
+					for (Object object : common.objects) {
+						objIndex = generateObjectIDs(gameMode.getValue(), object, objIndex);
 					}
 				}
 			}
 			
 			// Objets du Game Mode
-			for (Entry<String, Object> object : gameMode.getValue().objects.entrySet()) {
-				objIndex = generateObjectIDs(gameMode.getValue(), object.getValue(), objIndex);
+			for (Object object : gameMode.getValue().objects) {
+				objIndex = generateObjectIDs(gameMode.getValue(), object, objIndex);
 
 			}
 			gameMode.getValue().glb.flush();
@@ -334,14 +334,14 @@ public class BuildDisk
 			// Game Mode Common
 			for (GameModeCommon common : gameMode.getValue().gameModeCommon) {
 				if (common != null) {
-					for (Entry<String, Object> object : common.objects.entrySet()) {
-						processSounds(gameMode.getValue(), object.getValue());
+					for (Object object : common.objects) {
+						processSounds(gameMode.getValue(), object);
 					}
 				}
 			}			
 			
-			for (Entry<String, Object> object : gameMode.getValue().objects.entrySet()) {
-				processSounds(gameMode.getValue(), object.getValue());
+			for (Object object : gameMode.getValue().objects) {
+				processSounds(gameMode.getValue(), object);
 			}
 		}
 	}
@@ -784,14 +784,14 @@ public class BuildDisk
 			// Game Mode Common
 			for (GameModeCommon common : gameMode.getValue().gameModeCommon) {
 				if (common != null) {
-					for (Entry<String, Object> object : common.objects.entrySet()) {
-						compileObject(gameMode.getValue(), object.getValue(), 0);
+					for (Object object : common.objects) {
+						compileObject(gameMode.getValue(), object, 0);
 					}
 				}
 			}
 						
-			for (Entry<String, Object> object : gameMode.getValue().objects.entrySet()) {
-				compileObject(gameMode.getValue(), object.getValue(), 0);
+			for (Object object : gameMode.getValue().objects) {
+				compileObject(gameMode.getValue(), object, 0);
 			}		
 		}		
 	}	
@@ -999,7 +999,7 @@ public class BuildDisk
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
-	private static Item[] getRAMItems(GameMode gm, HashMap<String, Object> objects, int mode, boolean isCommon) {
+	private static Item[] getRAMItems(GameMode gm, List<Object> objects, int mode, boolean isCommon) {
 		logger.debug("\t\tCompute " + (isCommon?"Common":"") + " RAM Items for " + MODE_LABEL[mode] + " ...");
 
 		// Répartition des données en RAM
@@ -1025,30 +1025,30 @@ public class BuildDisk
 				nbGameModeItems++;
 		}
 		
-		for (Entry<String, Object> object : objects.entrySet()) {
+		for (Object object : objects) {
 
 			// Sprites
-			for (SubSpriteBin subSprite : object.getValue().subSpritesBin)
+			for (SubSpriteBin subSprite : object.subSpritesBin)
 				if (mode == FLOPPY_DISK || (mode == MEGAROM_T2 && subSprite.inRAM))
 					nbGameModeItems ++;
 
 			// ImageSet Index
-			if (object.getValue().subSpritesBin.size() > 0
-					&& (mode == FLOPPY_DISK || (mode == MEGAROM_T2 && object.getValue().imageSetInRAM)))
+			if (object.subSpritesBin.size() > 0
+					&& (mode == FLOPPY_DISK || (mode == MEGAROM_T2 && object.imageSetInRAM)))
 				nbGameModeItems++;
 
 			// Animation Index
-			if (!object.getValue().animationsProperties.isEmpty()
-					&& (mode == FLOPPY_DISK || (mode == MEGAROM_T2 && object.getValue().animationInRAM)))
+			if (!object.animationsProperties.isEmpty()
+					&& (mode == FLOPPY_DISK || (mode == MEGAROM_T2 && object.animationInRAM)))
 				nbGameModeItems++;
 			
 			// TileSets
-			for (TileBin tile : object.getValue().tilesBin)
+			for (TileBin tile : object.tilesBin)
 				if (mode == FLOPPY_DISK || (mode == MEGAROM_T2 && tile.inRAM))
 					nbGameModeItems ++;			
 
 			// Sounds
-			for (Sound sound : object.getValue().sounds)
+			for (Sound sound : object.sounds)
 				for (SoundBin soundBIN : sound.sb)
 					if (mode == FLOPPY_DISK || (mode == MEGAROM_T2 && soundBIN.inRAM))
 						nbGameModeItems++;
@@ -1068,37 +1068,37 @@ public class BuildDisk
 		}		
 		
 		// Initialisation des items
-		for (Entry<String, Object> object : objects.entrySet()) {
+		for (Object object : objects) {
 
 			// Sprites
-			for (SubSpriteBin subSprite : object.getValue().subSpritesBin)
+			for (SubSpriteBin subSprite : object.subSpritesBin)
 				if (mode == FLOPPY_DISK || (mode == MEGAROM_T2 && subSprite.inRAM))
 					items[itemIdx++] = new Item(subSprite, 1);
 
 			// ImageSet Index
-			if (object.getValue().subSpritesBin.size() > 0
-					&& (mode == FLOPPY_DISK || (mode == MEGAROM_T2 && object.getValue().imageSetInRAM)))
-				items[itemIdx++] = new Item(object.getValue().imageSet, 1);
+			if (object.subSpritesBin.size() > 0
+					&& (mode == FLOPPY_DISK || (mode == MEGAROM_T2 && object.imageSetInRAM)))
+				items[itemIdx++] = new Item(object.imageSet, 1);
 
 			// Animation Index
-			if (!object.getValue().animationsProperties.isEmpty()
-					&& (mode == FLOPPY_DISK || (mode == MEGAROM_T2 && object.getValue().animationInRAM)))
-				items[itemIdx++] = new Item(object.getValue().animation, 1);
+			if (!object.animationsProperties.isEmpty()
+					&& (mode == FLOPPY_DISK || (mode == MEGAROM_T2 && object.animationInRAM)))
+				items[itemIdx++] = new Item(object.animation, 1);
 			
 			// TileSets
-			for (TileBin tile : object.getValue().tilesBin)
+			for (TileBin tile : object.tilesBin)
 				if (mode == FLOPPY_DISK || (mode == MEGAROM_T2 && tile.inRAM))
 					items[itemIdx++] = new Item(tile, 1);			
 
 			// Sounds
-			for (Sound sound : object.getValue().sounds)
+			for (Sound sound : object.sounds)
 				for (SoundBin soundBIN : sound.sb)
 					if (mode == FLOPPY_DISK || (mode == MEGAROM_T2 && soundBIN.inRAM))
 						items[itemIdx++] = new Item(soundBIN, 1);
 
 			// Object Code
 			if (!isCommon) {
-				Item obj = new Item(object.getValue().gmCode.get(gm).code, 1);
+				Item obj = new Item(object.gmCode.get(gm).code, 1);
 				items[itemIdx++] = obj;	
 			}
 		}
@@ -1119,7 +1119,7 @@ public class BuildDisk
 		// Compte le nombre d'objets a traiter
 		for (GameModeCommon common : gm.gameModeCommon) {
 			if (common != null) {
-				for (Entry<String, Object> object : common.objects.entrySet()) {
+				for (Object object : common.objects) {
 
 					// Ajoute les items du commun de type code objet
 					nbGameModeItems++;
@@ -1136,10 +1136,10 @@ public class BuildDisk
 
 		for (GameModeCommon common : gm.gameModeCommon) {
 			if (common != null) {
-				for (Entry<String, Object> object : common.objects.entrySet()) {
+				for (Object object : common.objects) {
 					
 					// Ajoute les items du commun de type code objet
-					Item obj = new Item(object.getValue().gmCode.get(gm).code, 1);
+					Item obj = new Item(object.gmCode.get(gm).code, 1);
 					newItems[i++] = obj;
 				}
 			}
@@ -1451,15 +1451,15 @@ public class BuildDisk
 			// Objets Communs au Game Mode
 			for (GameModeCommon common : gm.gameModeCommon) {
 				if (common != null) {
-					for (Entry<String, Object> object : common.objects.entrySet()) {
-						generateDynamicContent(gameMode.getValue(), object.getValue());
+					for (Object object : common.objects) {
+						generateDynamicContent(gameMode.getValue(), object);
 					}
 				}
 			}
 			
 			// Objets du Game Mode
-			for (Entry<String, Object> object : gm.objects.entrySet()) {
-				generateDynamicContent(gameMode.getValue(), object.getValue());
+			for (Object object : gm.objects) {
+				generateDynamicContent(gameMode.getValue(), object);
 			}
 		}
 	}
@@ -1545,15 +1545,15 @@ public class BuildDisk
 			// Objets Communs au Game Mode
 			for (GameModeCommon common : gm.gameModeCommon) {
 				if (common != null) {
-					for (Entry<String, Object> object : common.objects.entrySet()) {
-						generateImgAniIndex(gameMode.getValue(), object.getValue());
+					for (Object object : common.objects) {
+						generateImgAniIndex(gameMode.getValue(), object);
 					}
 				}
 			}
 			
 			// Objets du Game Mode
-			for (Entry<String, Object> object : gm.objects.entrySet()) {
-				generateImgAniIndex(gameMode.getValue(), object.getValue());
+			for (Object object : gm.objects) {
+				generateImgAniIndex(gameMode.getValue(), object);
 			}
 		}
 	}
@@ -2688,15 +2688,15 @@ public class BuildDisk
 		// Game Mode Common
 		for (GameModeCommon common : gm.gameModeCommon) {
 			if (common != null) {
-				for (Entry<String, Object> obj : common.objects.entrySet()) {
-					writeObjIndex(objIndexPage, objIndex, gm, obj.getValue(), mode);				
+				for (Object obj : common.objects) {
+					writeObjIndex(objIndexPage, objIndex, gm, obj, mode);				
 				}
 			}
 		}
 		
 		// Objets du Game Mode
-		for (Entry<String, Object> obj : gm.objects.entrySet()) {
-			writeObjIndex(objIndexPage, objIndex, gm, obj.getValue(), mode);		
+		for (Object obj : gm.objects) {
+			writeObjIndex(objIndexPage, objIndex, gm, obj, mode);		
 		}			
 		
 		asmBuilder.addLabel("Obj_Index_Page");
@@ -2738,8 +2738,8 @@ public class BuildDisk
 		// Game Mode Common
 		for (GameModeCommon common : gameMode.gameModeCommon) {
 			if (common != null) {
-				for (Entry<String, Object> object : common.objects.entrySet()) {
-					for (Sound sound : object.getValue().sounds) {
+				for (Object object : common.objects) {
+					for (Sound sound : object.sounds) {
 						writeSndIndex(asmSndIndex, sound, gameMode, mode);
 					}
 				}
@@ -2747,8 +2747,8 @@ public class BuildDisk
 		}
 		
 		// Objets du Game Mode
-		for (Entry<String, Object> object : gameMode.objects.entrySet()) {
-			for (Sound sound : object.getValue().sounds) {
+		for (Object object : gameMode.objects) {
+			for (Sound sound : object.sounds) {
 				writeSndIndex(asmSndIndex, sound, gameMode, mode);
 			}
 		}
@@ -2818,15 +2818,15 @@ public class BuildDisk
 		// Game Mode Common
 		for (GameModeCommon common : gameMode.gameModeCommon) {
 			if (common != null) {
-				for (Entry<String, Object> object : common.objects.entrySet()) {
-					writeImgPgIndex(asmBuilder, object.getValue().imageSet, object.getValue().imageSetInRAM, mode, gameMode);
+				for (Object object : common.objects) {
+					writeImgPgIndex(asmBuilder, object.imageSet, object.imageSetInRAM, mode, gameMode);
 				}
 			}
 		}
 		
 		// Objets du Game Mode
-		for (Entry<String, Object> object : gameMode.objects.entrySet()) {
-			writeImgPgIndex(asmBuilder, object.getValue().imageSet, object.getValue().imageSetInRAM, mode, gameMode);
+		for (Object object : gameMode.objects) {
+			writeImgPgIndex(asmBuilder, object.imageSet, object.imageSetInRAM, mode, gameMode);
 		}
 	}	
 	
@@ -2855,15 +2855,15 @@ public class BuildDisk
 		// Game Mode Common
 		for (GameModeCommon common : gameMode.gameModeCommon) {
 			if (common != null) {
-				for (Entry<String, Object> object : common.objects.entrySet()) {
-					writeAniPgIndex(asmBuilder, object.getValue().animation, object.getValue().animationInRAM, mode, gameMode);
+				for (Object object : common.objects) {
+					writeAniPgIndex(asmBuilder, object.animation, object.animationInRAM, mode, gameMode);
 				}
 			}
 		}
 		
 		// Objets du Game Mode
-		for (Entry<String, Object> object : gameMode.objects.entrySet()) {
-			writeAniPgIndex(asmBuilder, object.getValue().animation, object.getValue().animationInRAM, mode, gameMode);
+		for (Object object : gameMode.objects) {
+			writeAniPgIndex(asmBuilder, object.animation, object.animationInRAM, mode, gameMode);
 		}
 	}	
 	
@@ -2893,15 +2893,15 @@ public class BuildDisk
 		// Game Mode Common
 		for (GameModeCommon common : gameMode.gameModeCommon) {
 			if (common != null) {
-				for (Entry<String, Object> object : common.objects.entrySet()) {
-					writeAniAsdIndex(asmBuilder, object.getValue().animation, object.getValue().animationInRAM, mode, gameMode);
+				for (Object object : common.objects) {
+					writeAniAsdIndex(asmBuilder, object.animation, object.animationInRAM, mode, gameMode);
 				}
 			}
 		}
 		
 		// Objets du Game Mode
-		for (Entry<String, Object> object : gameMode.objects.entrySet()) {
-			writeAniAsdIndex(asmBuilder, object.getValue().animation, object.getValue().animationInRAM, mode, gameMode);
+		for (Object object : gameMode.objects) {
+			writeAniAsdIndex(asmBuilder, object.animation, object.animationInRAM, mode, gameMode);
 		}
 	}	
 	

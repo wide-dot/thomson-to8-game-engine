@@ -30,7 +30,7 @@ Object_RAM_End
 * ===========================================================================
 
 ; ext_variables_size is for dynamic objects
-ext_variables_size            equ   21
+ext_variables_size            equ   26
 
 status                        equ   status_flags   ; note  exact meaning depends on the object... for sonic/tails  bit 0  leftfacing. bit 1  inair. bit 2  spinning. bit 3  onobject. bit 4  rolljumping. bit 5  pushing. bit 6  underwater.
 width_pixels                  equ   ext_variables
@@ -75,39 +75,6 @@ jumping            equ   ext_variables_main+22
 interact           equ   ext_variables_main+23 ; RAM address of the last object Sonic stood on, minus $FFFFB000 and divided by $40
 top_solid_bit      equ   ext_variables_main+24 ; the bit to check for top solidity (either $C or $E)
 lrb_solid_bit      equ   ext_variables_main+25 ; the bit to check for left/right/bottom solidity (either $D or $F)
-
-; ---------------------------------------------------------------------------
-; when childsprites are activated (i.e. bit #6 of render_flags set)
-; 4 bytes + (8*6) bytes + 2 bytes = 54 bytes
-mainspr_childsprites    equ   subtype         ; amount of child sprites
-mainspr_mapframe        equ   render_flags
-mainspr_width           equ   render_flags+1
-mainspr_height          equ   render_flags+2
-sub2_x_pos              equ   render_flags+3  ; +4
-sub2_y_pos              equ   render_flags+5  ; +6
-sub2_mapframe           equ   render_flags+7  ; +8
-sub3_x_pos              equ   render_flags+9  ; +10
-sub3_y_pos              equ   render_flags+11 ; +12
-sub3_mapframe           equ   render_flags+13 ; +14
-sub4_x_pos              equ   render_flags+15 ; +16
-sub4_y_pos              equ   render_flags+17 ; +18
-sub4_mapframe           equ   render_flags+19 ; +20
-sub5_x_pos              equ   render_flags+21 ; +22
-sub5_y_pos              equ   render_flags+23 ; +24
-sub5_mapframe           equ   render_flags+25 ; +26
-sub6_x_pos              equ   render_flags+27 ; +28
-sub6_y_pos              equ   render_flags+29 ; +30
-sub6_mapframe           equ   render_flags+31 ; +32
-sub7_x_pos              equ   render_flags+33 ; +34
-sub7_y_pos              equ   render_flags+35 ; +36
-sub7_mapframe           equ   render_flags+37 ; +38
-sub8_x_pos              equ   render_flags+39 ; +40
-sub8_y_pos              equ   render_flags+41 ; +42
-sub8_mapframe           equ   render_flags+43 ; +44
-sub9_x_pos              equ   render_flags+45 ; +46
-sub9_y_pos              equ   render_flags+47 ; +48
-sub9_mapframe           equ   render_flags+49 ; +50
-next_subspr             equ   render_flags+51 ; +52
 
 ; ---------------------------------------------------------------------------
 ; Bits 3-6 of an object's status after a SolidObject call is a
@@ -207,7 +174,7 @@ Sonic_Stat_Record_Buf         fill  0,$100
 Sonic_Pos_Record_Buf          fill  0,$100
 Current_zone_and_act          fdb   0
 
- INCLUDE ".\objects\managers\rings-manager-s3k-ram.asm"
+ INCLUDE ".\objects\manager\ring\ring-manager-s3k-ram.asm"
 
 * ---------------------------------------------------------------------------
 * Level Globals

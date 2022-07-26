@@ -21,7 +21,8 @@ public class GameMode {
 	
 	public String engineAsmMainEngine;
 	public List<GameModeCommon> gameModeCommon = new ArrayList<GameModeCommon>();	
-	public HashMap<String, Object> objects = new HashMap<String, Object>();
+	public List<Object> objects = new ArrayList<Object>();
+	public List<String> objectsName = new ArrayList<String>();
 	public HashMap<Object, Integer> objectsId = new HashMap<Object, Integer>();
 	public HashMap<String, Palette> palettes = new HashMap<String, Palette>();
 	public HashMap<String, Act> acts = new HashMap<String, Act>(); 
@@ -121,7 +122,8 @@ public class GameMode {
 				object.addGameMode(this);
 			}			
 
-			objects.put(curObject.getKey(), object);
+			objects.add(object);
+			objectsName.add(curObject.getKey());
 		}	
 		
 		// Palettes

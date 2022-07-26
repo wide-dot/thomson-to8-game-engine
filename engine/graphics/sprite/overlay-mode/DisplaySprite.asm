@@ -29,15 +29,17 @@ Tbl_Priority_Last_Entry       fill  0,2+(nb_priority_levels*2) ; last address of
 DisplaySprite_priority
 DisplaySprite3                              ; u : ptr object RAM, a : priority
         pshs  d,x,u
+        sta   @prio
         bra   @Start
 DisplaySprite_x                             ; x : ptr object RAM
 DisplaySprite2
         pshs  d,x,u
         tfr   x,u
-        bra   @Start
+        bra   >
 DisplaySprite                               ; u : ptr object RAM
         pshs  d,x,u
-        lda   priority,u                    ; read priority set for this object
+!       lda   priority,u                    ; read priority set for this object
+        sta   @prio
 @Start
         ldb   render_flags,u
         andb  #^render_hide_mask            ; unset hide flag
@@ -100,7 +102,8 @@ DisplaySprite                               ; u : ptr object RAM
         ldy   rsv_priority_next_obj,u        
         std   rsv_priority_prev_obj,y
 !
-        lda   priority,u
+        lda   #0
+@prio   equ   *-1
         bne   @CheckLastEntry               ; priority is != 0, branch to add object to display priority list
         puls  d,x,u,pc                      ; else new priority is 0, return
 

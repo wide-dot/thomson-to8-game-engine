@@ -1,1 +1,0 @@
-; see ring manager
