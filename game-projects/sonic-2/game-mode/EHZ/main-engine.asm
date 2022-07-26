@@ -359,12 +359,12 @@ TlsAni_EHZ_pulseball3_imgs
         ; animation
         INCLUDE "./engine/graphics/animation/AnimateSprite.asm"	
         INCLUDE "./engine/graphics/animation/AnimateSpriteSync.asm"	
-        INCLUDE "./objects/main-characters/sonic/sonic-animate.asm"
+        INCLUDE "./objects/main-character/sonic/sonic-animate.asm"
         INCLUDE "./engine/object-management/ObjectMoveSync.asm"
 
         ; music and palette
         INCLUDE "./engine/irq/IrqSmpsObj.asm"      
 
         ; tilemap
-        INCLUDE "./objects/levels/collision/collision.asm"
+        INCLUDE "./objects/level/stage/_common/collision/collision.asm"
         INCLUDE "./engine/graphics/Tilemap/TilemapBuffer.asm"

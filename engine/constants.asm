@@ -109,8 +109,7 @@ object_rsvd_size              equ 59  ; the size of an object without ext_vars -
  else
 object_rsvd_size              equ 5   ; the size of an object without ext_vars - DEPENDENCY ClearObj routine
  endc
-; overlay pack
-;object_rsvd_size              equ 5  ; the size of an object without ext_vars - DEPENDENCY ClearObj routine
+
 object_rsvd                   equ object_base_size+ext_variables_size
 object_size                   equ object_base_size+ext_variables_size+object_rsvd_size ; the size of a dynamic object
 next_object                   equ object_size
@@ -140,7 +139,7 @@ render_ymirror_mask           equ $02 ; (bit 1) DEPENDENCY should be bit 1 - tel
 render_playfieldcoord_mask    equ $08 ; (bit 3) tell display engine to use playfield (1) or screen (0) coordinates
 render_xloop_mask             equ $10 ; (bit 4) (in screen coordinate) tell display engine to hide sprite when x is out of screen (0) or to display (1)  
 render_no_range_ctrl_mask     equ $20 ; (bit 5) tell display engine to skip out of range controls (this may lead to memory corruption BEWARE)
-render_subobjects             equ $40 ; (bit 6) tell display engine to render subobjects for this object
+render_subobjects_mask        equ $40 ; (bit 6) tell display engine to render subobjects for this object
 render_hide_mask              equ $80 ; (bit 7) tell display engine to hide sprite (keep priority and mapping_frame)
  endc
 
@@ -277,5 +276,41 @@ buf_prev_render_flags         equ 19 ;
 rsv_priority                  equ object_rsvd   ; internal value that hold priority in video buffer 0
 rsv_priority_prev_obj         equ object_rsvd+1 ; and +2 ; previous object (OST address) in display priority list for video buffer 0 (0000 if none) w
 rsv_priority_next_obj         equ object_rsvd+3 ; and +4 ; next object (OST address) in display priority list for video buffer 0 (0000 if none) w
+
+; ---------------------------------------------------------------------------
+; when childsprites are activated (i.e. bit #6 of render_flags set)
+; object_base_size+ext_variables_size should cover at least 2+58 bytes
+; subtype is recovered
+mainspr_childsprites    equ   subtype         ; amount of child sprites
+mainspr_width           equ   render_flags+1
+mainspr_height          equ   render_flags+2
+mainspr_x_pos           equ   mainspr_height+1
+mainspr_y_pos           equ   mainspr_height+3
+mainspr_mapframe        equ   mainspr_height+5
+sub2_x_pos              equ   mainspr_x_pos+6
+sub2_y_pos              equ   mainspr_y_pos+6
+sub2_mapframe           equ   mainspr_mapframe+6
+sub3_x_pos              equ   sub2_x_pos+6
+sub3_y_pos              equ   sub2_y_pos+6
+sub3_mapframe           equ   sub2_mapframe+6
+sub4_x_pos              equ   sub3_x_pos+6
+sub4_y_pos              equ   sub3_y_pos+6
+sub4_mapframe           equ   sub3_mapframe+6
+sub5_x_pos              equ   sub4_x_pos+6
+sub5_y_pos              equ   sub4_y_pos+6
+sub5_mapframe           equ   sub4_mapframe+6
+sub6_x_pos              equ   sub5_x_pos+6
+sub6_y_pos              equ   sub5_y_pos+6
+sub6_mapframe           equ   sub5_mapframe+6
+sub7_x_pos              equ   sub6_x_pos+6
+sub7_y_pos              equ   sub6_y_pos+6
+sub7_mapframe           equ   sub6_mapframe+6
+sub8_x_pos              equ   sub7_x_pos+6
+sub8_y_pos              equ   sub7_y_pos+6
+sub8_mapframe           equ   sub7_mapframe+6
+sub9_x_pos              equ   sub8_x_pos+6
+sub9_y_pos              equ   sub8_y_pos+6
+sub9_mapframe           equ   sub8_mapframe+6
+next_subspr             equ   sub9_mapframe+2
  endc
  endc
