@@ -23,8 +23,8 @@
 * ---------------------------------------------------------------------------
 * Display Priority Structure - DPS
 * ---------------------------------------------------------------------------
-Tbl_Priority_First_Entry      fill  0,2+(nb_priority_levels*2) ; first address of object in linked list for each priority index (buffer 0) index 0 unused
-Tbl_Priority_Last_Entry       fill  0,2+(nb_priority_levels*2) ; last address of object in linked list for each priority index (buffer 0) index 0 unused
+Tbl_Priority_First_Entry      fill  0,2+(nb_priority_levels*2) ; first address of object in linked list for each priority index index 0 unused
+Tbl_Priority_Last_Entry       fill  0,2+(nb_priority_levels*2) ; last address of object in linked list for each priority index index 0 unused
 
 DisplaySprite_priority
 DisplaySprite3                              ; u : ptr object RAM, a : priority
@@ -66,7 +66,7 @@ DisplaySprite                               ; u : ptr object RAM
         puls  d,x,u,pc                      ; rts        
 @addToExistingNode
         ldx   a,y                           ; x register now store last object at the priority level of current object
-        stu   rsv_priority_next_obj,x       ; link last object with current object if active screen buffer 0
+        stu   rsv_priority_next_obj,x       ; link last object with current object
         stx   rsv_priority_prev_obj,u       ; link current object with previous object
         ldx   #0
         stx   rsv_priority_next_obj,u       ; clear object next link        
@@ -104,7 +104,7 @@ DisplaySprite                               ; u : ptr object RAM
 !
         lda   #0
 @prio   equ   *-1
-        bne   @CheckLastEntry               ; priority is != 0, branch to add object to display priority list
+        bne   @InitPriority                 ; priority is != 0, branch to add object to display priority list
         puls  d,x,u,pc                      ; else new priority is 0, return
 
         

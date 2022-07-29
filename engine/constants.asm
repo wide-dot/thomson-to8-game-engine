@@ -26,7 +26,10 @@ dk_write_location             equ $604F
 * ===========================================================================
 * Globals
 * ===========================================================================
-glb_ram_end                   equ $A000
+
+; WARNING - BuildSprite allow to cross $A000 limit by glb_camera_x_offset/4
+; be sure to compile with enough margin here
+glb_ram_end                   equ $A000-3
 
 ; compilated sprite
 glb_register_s                equ glb_ram_end-2             ; reverved space to store S from ROM routines
