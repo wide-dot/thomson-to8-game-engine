@@ -26,7 +26,7 @@ Obj11                                                 * Obj11:
 Obj11_Index                                           * Obj11_Index:    offsetTable
         fdb   Obj11_Init                              *                 offsetTableEntry.w Obj11_Init           ; 0
         fdb   Obj11_EHZ                               *                 offsetTableEntry.w Obj11_EHZ            ; 2
-        fdb   DisplaySprite                           *                 offsetTableEntry.w Obj11_Display        ; 4
+        fdb   DisplaySprite ; unused                  *                 offsetTableEntry.w Obj11_Display        ; 4
         fdb   Obj11_HPZ                               *                 offsetTableEntry.w Obj11_HPZ            ; 6
                                                       * ; ===========================================================================
                                                       * ; loc_F694: Obj11_Main:
@@ -65,7 +65,7 @@ Obj11_Init                                            * Obj11_Init:
         lsrb                                          *         lsr.w   #1,d0
         lslb
         lslb
-        lslb  ; wide-dot factor                       *         lsl.w   #4,d0   ; (d0 div 2) * 16
+        lslb  ; wide-dot factor                       *         lsl.w   #4,d0   ; (d0/2) * 16
         negb
         sex
         addd  x_pos,u                                 *         sub.w   d0,d3   ; x position of left half
@@ -88,7 +88,8 @@ Obj11_Init                                            * Obj11_Init:
         stx   Obj11_child2,u                          *         move.l  a1,Obj11_child2(a0)     ; pointer to second subsprite object
         ldb   glb_d4_b                                *         move.w  d4,d0
         aslb                                          *         add.w   d0,d0
-        addb  glb_d4_b                                *         add.w   d4,d0   ; d0*3
+        addb  glb_d4_b
+        aslb  ; *6                                    *         add.w   d4,d0   ; d0*3
         addb  #sub2_x_pos
         ldd   b,x ; load x_pos of center log          *         move.w  sub2_x_pos(a1,d0.w),d0
         subd  #4  ; wide-dot factor                   *         subq.w  #8,d0
@@ -116,8 +117,7 @@ Obj11_MakeBdgSegment                                  * Obj11_MakeBdgSegment:
         sta   mainspr_width,x                         *         move.b  #$40,mainspr_width(a1)
         ldb   glb_d1_b ; hold number of logs to process
         stb   mainspr_childsprites,x                  *         move.b  d1,mainspr_childsprites(a1)
-        decb
-        stb   glb_d1_b                                *         subq.b  #1,d1
+        ;                                             *         subq.b  #1,d1
         leay  sub2_x_pos,x                            *         lea     sub2_x_pos(a1),a2 ; starting address for subsprite data
                                                       * 
 @a      ldd   glb_d3
@@ -135,17 +135,20 @@ Obj11_MakeBdgSegment                                  * Obj11_MakeBdgSegment:
         rts                                           *         rts
                                                       * ; End of function Obj11_MakeBdgSegment
                                                       * 
+
                                                       * ; ===========================================================================
                                                       * ; loc_F77A: Obj11_Action:
 Obj11_EHZ                                             * Obj11_EHZ:
-        ;lda   status,u                                *         move.b  status(a0),d0
-        ;anda  #standing_mask                          *         andi.b  #standing_mask,d0
-        ;bne   >                                       *         bne.s   +
-        ; angle ?                                     *         tst.b   objoff_3E(a0)
-                                                      *         beq.s   loc_F7BC
-                                                      *         subq.b  #4,objoff_3E(a0)
-                                                      *         bra.s   loc_F7B8
-                                                     * +
+        rts ; code in progree
+        lda   status,u                                *         move.b  status(a0),d0
+        anda  #standing_mask                          *         andi.b  #standing_mask,d0
+        bne   >                                       *         bne.s   +
+        ldb   angle,u                                 *         tst.b   objoff_3E(a0)
+        beq   loc_F7BC                                *         beq.s   loc_F7BC
+        subd  #4
+        std   angle,u                                 *         subq.b  #4,objoff_3E(a0)
+        bra   loc_F7B8                                *         bra.s   loc_F7B8
+                                                      * +
                                                       *         andi.b  #p2_standing,d0
                                                       *         beq.s   ++
                                                       *         move.b  objoff_3F(a0),d0
@@ -155,26 +158,33 @@ Obj11_EHZ                                             * Obj11_EHZ:
                                                       *         addq.b  #1,objoff_3F(a0)
                                                       *         bra.s   ++
                                                       * ; ---------------------------------------------------------------------------
-                                                     * +
+                                                      * +
                                                       *         subq.b  #1,objoff_3F(a0)
 !                                                     * +
-                                                      *         cmpi.b  #$40,objoff_3E(a0)
-                                                      *         beq.s   loc_F7B8
-                                                      *         addq.b  #4,objoff_3E(a0)
+        cmpb  #$40                                    *         cmpi.b  #$40,objoff_3E(a0)
+        beq   loc_F7B8                                *         beq.s   loc_F7B8
+        addb  #4
+        stb   angle,u                                 *         addq.b  #4,objoff_3E(a0)
                                                       * 
 loc_F7B8                                              * loc_F7B8:
-        ;jsr   Obj11_Depress                           *         bsr.w   Obj11_Depress
+        jsr   Obj11_Depress                           *         bsr.w   Obj11_Depress
                                                       * 
 loc_F7BC                                              * loc_F7BC:
-                                                      *         moveq   #0,d1
-                                                      *         move.b  subtype(a0),d1
-                                                      *         lsl.w   #3,d1
-                                                      *         move.w  d1,d2
-                                                      *         addq.w  #8,d1
-                                                      *         add.w   d2,d2
-                                                      *         moveq   #8,d3
-                                                      *         move.w  x_pos(a0),d4
-        ;jsr   sub_F872                                *         bsr.w   sub_F872
+        ;                                             *         moveq   #0,d1
+        lda   subtype,u                               *         move.b  subtype(a0),d1
+        lsla
+        lsla
+        lsla                                          *         lsl.w   #3,d1
+        tfr   a,b                                     *         move.w  d1,d2
+        adda  #8                                      *         addq.w  #8,d1
+        sta   glb_d1_b
+        aslb                                          *         add.w   d2,d2
+        stb   glb_d2_b
+        lda   #8
+        sta   glb_d3_b                                *         moveq   #8,d3
+        ldd   x_pos,u                                 *         move.w  x_pos(a0),d4
+        std   glb_d4
+        jsr   sub_F872                                *         bsr.w   sub_F872
                                                       * 
                                                       * ; loc_F7D4:
 Obj11_Unload                                          * Obj11_Unload:
