@@ -13,7 +13,7 @@ Rings_height            equ 16
 Rings_view_width        equ 136
 Rings_view_height       equ 160
 
-nb_rings                equ dp_engine
+nb_rings                equ glb_d0
 
 Load_Rings                                            *Load_Rings:
                                                       *                moveq   #0,d0

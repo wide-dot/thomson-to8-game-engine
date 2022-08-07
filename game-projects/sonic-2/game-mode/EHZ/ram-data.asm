@@ -30,7 +30,7 @@ Object_RAM_End
 * ===========================================================================
 
 ; ext_variables_size is for dynamic objects
-ext_variables_size            equ   26
+ext_variables_size            equ   25
 
 status                        equ   status_flags   ; note  exact meaning depends on the object... for sonic/tails  bit 0  leftfacing. bit 1  inair. bit 2  spinning. bit 3  onobject. bit 4  rolljumping. bit 5  pushing. bit 6  underwater.
 width_pixels                  equ   ext_variables
@@ -47,10 +47,11 @@ ext_variables_obj             equ   ext_variables+9
 * Main characters object structure
 * ===========================================================================
 
-main_ext_variables_size       equ   25
+main_ext_variables_size       equ   27
 main_object_size              equ   object_size+main_ext_variables_size ; the size of a main character object
 next_main_object              equ   main_object_size
 ext_variables_main            equ   object_size
+dp_user                       equ   dp+main_object_size
 
 inertia            equ   ext_variables_main    ; and +1 ; directionless representation of speed... not updated in the air
 flip_angle         equ   ext_variables_main+2  ; angle about the x axis (360 degrees  equ  256) (twist/tumble)
@@ -72,9 +73,9 @@ pinball_mode       equ   spindash_flag
 spindash_counter   equ   ext_variables_main+20 ; and +21
 restart_countdown  equ   spindash_counter
 jumping            equ   ext_variables_main+22
-interact           equ   ext_variables_main+23 ; RAM address of the last object Sonic stood on, minus $FFFFB000 and divided by $40
-top_solid_bit      equ   ext_variables_main+24 ; the bit to check for top solidity (either $C or $E)
-lrb_solid_bit      equ   ext_variables_main+25 ; the bit to check for left/right/bottom solidity (either $D or $F)
+interact           equ   ext_variables_main+23 ; RAM address of the last object Sonic stood on
+top_solid_bit      equ   ext_variables_main+25 ; the bit to check for top solidity (either $C or $E)
+lrb_solid_bit      equ   ext_variables_main+26 ; the bit to check for left/right/bottom solidity (either $D or $F)
 
 ; ---------------------------------------------------------------------------
 ; Bits 3-6 of an object's status after a SolidObject call is a
