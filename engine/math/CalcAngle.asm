@@ -23,12 +23,12 @@
 
         SETDP   dp/256
 
-tstd            equ dp_engine+25
-x_h             equ dp_engine+27
-y_h             equ dp_engine+28
-x_l             equ dp_engine+29
-y_l             equ dp_engine+30
-octant          equ dp_engine+31
+tstd            equ dp_engine
+x_h             equ dp_engine+2
+y_h             equ dp_engine+3
+x_l             equ dp_engine+4
+y_l             equ dp_engine+5
+octant          equ dp_engine+6
 
 CalcAngle
         ; scale down 16 bit value to 9 bit ; y 4dc x 117

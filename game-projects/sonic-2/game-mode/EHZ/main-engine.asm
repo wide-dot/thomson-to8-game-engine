@@ -355,6 +355,8 @@ TlsAni_EHZ_pulseball3_imgs
         INCLUDE "./engine/ram/BankSwitch.asm"
         INCLUDE "./engine/object-management/RunPgSubRoutine.asm"
         INCLUDE "./engine/joypad/ReadJoypads2.asm"
+        INCLUDE "./engine/math/CalcSine.asm"
+        INCLUDE "./engine/math/Mul9x16.asm"
 
         ; animation
         INCLUDE "./engine/graphics/animation/AnimateSprite.asm"	

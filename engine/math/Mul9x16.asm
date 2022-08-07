@@ -20,12 +20,12 @@
 
         SETDP   dp/256
 
-@m      equ dp_engine+25
-@m_h    equ dp_engine+26
-@m_l    equ dp_engine+27
-@r_h    equ dp_engine+28
-@r_l    equ dp_engine+29
-@r      equ dp_engine+30
+@m      equ dp_engine
+@m_h    equ dp_engine+1
+@m_l    equ dp_engine+2
+@r_h    equ dp_engine+3
+@r_l    equ dp_engine+4
+@r      equ dp_engine+5
 ;
 Mul9x16
         tsta

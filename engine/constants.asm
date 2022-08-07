@@ -59,9 +59,41 @@ glb_timer_frame               equ glb_timer-1
 
 ; BankSwitch
 glb_Page                      equ glb_timer_frame-1
-dp_engine                     equ glb_Page-48 ; engine and user routines tmp var space
-dp                            equ $9F00       ; free user tmp var space
-glb_system_stack              equ $9F00
+dp_engine                     equ glb_Page-40  ; engine routines tmp var space
+dp_extreg                     equ dp_engine-28 ; extra register space (user and engine common)
+dp                            equ $9F00        ; user space
+glb_system_stack              equ dp
+
+; generic direct page extra registers
+; -----------------------------------
+glb_d0   equ   dp_extreg
+glb_d0_b equ   dp_extreg+1
+; must be a free byte here for 24bits computation
+glb_d1   equ   dp_extreg+3
+glb_d1_b equ   dp_extreg+4
+; must be a free byte here for 24bits computation
+glb_d2   equ   dp_extreg+6
+glb_d2_b equ   dp_extreg+7
+; must be a free byte here for 24bits computation
+glb_d3   equ   dp_extreg+9
+glb_d3_b equ   dp_extreg+10
+; must be a free byte here for 24bits computation
+glb_d4   equ   dp_extreg+12
+glb_d4_b equ   dp_extreg+13
+glb_d5   equ   dp_extreg+14
+glb_d5_b equ   dp_extreg+15
+glb_d6   equ   dp_extreg+16
+glb_d6_b equ   dp_extreg+17
+glb_a0   equ   dp_extreg+18
+glb_a0_b equ   dp_extreg+19
+glb_a1   equ   dp_extreg+20
+glb_a1_b equ   dp_extreg+21
+glb_a2   equ   dp_extreg+22
+glb_a2_b equ   dp_extreg+23
+glb_a3   equ   dp_extreg+24
+glb_a3_b equ   dp_extreg+25
+glb_a4   equ   dp_extreg+26
+glb_a4_b equ   dp_extreg+27
 
 * ===========================================================================
 * Display Constants
@@ -282,7 +314,7 @@ rsv_priority_next_obj         equ object_rsvd+3 ; and +4 ; next object (OST addr
 
 ; ---------------------------------------------------------------------------
 ; when childsprites are activated (i.e. bit #6 of render_flags set)
-; object_base_size+ext_variables_size should cover at least 2+58 bytes
+; object_base_size+ext_variables_size should cover at least 3+56 bytes 
 ; subtype is recovered
 mainspr_childsprites    equ   subtype         ; amount of child sprites
 mainspr_width           equ   render_flags+1
@@ -314,6 +346,6 @@ sub8_mapframe           equ   sub7_mapframe+6
 sub9_x_pos              equ   sub8_x_pos+6
 sub9_y_pos              equ   sub8_y_pos+6
 sub9_mapframe           equ   sub8_mapframe+6
-next_subspr             equ   sub9_mapframe+2
+next_subspr             equ   6 ; size of a subsprite data
  endc
  endc
