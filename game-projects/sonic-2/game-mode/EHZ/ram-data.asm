@@ -74,8 +74,8 @@ spindash_counter   equ   ext_variables_main+20 ; and +21
 restart_countdown  equ   spindash_counter
 jumping            equ   ext_variables_main+22
 interact           equ   ext_variables_main+23 ; RAM address of the last object Sonic stood on
-top_solid_bit      equ   ext_variables_main+25 ; the bit to check for top solidity (either $C or $E)
-lrb_solid_bit      equ   ext_variables_main+26 ; the bit to check for left/right/bottom solidity (either $D or $F)
+top_solid_bit      equ   ext_variables_main+25 ; the bit to check for top solidity (either $08 or $20)
+lrb_solid_bit      equ   ext_variables_main+26 ; the bit to check for left/right/bottom solidity (either $10 or $40) (DEPENDENCY Must follow top_solid_bit)
 
 ; ---------------------------------------------------------------------------
 ; Bits 3-6 of an object's status after a SolidObject call is a

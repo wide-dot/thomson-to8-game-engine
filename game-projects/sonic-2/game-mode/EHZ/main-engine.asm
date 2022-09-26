@@ -20,7 +20,7 @@ OverlayMode equ 1
 LevelSizeLoad ; todo move to an object
 
         lda   #ObjID_Sonic
-        sta   id+dp
+        sta   dp+id
 
         ldd   #$60/2 ; init
         ;ldd   #$03C2 ; cave
