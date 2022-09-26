@@ -1,3 +1,6 @@
+ ; TODO line 725 : a quick fix was made for frame rate adjustment
+
+
         INCLUDE "./engine/macros.asm"   
         SETDP   dp/256
                                                       * ; ===========================================================================
@@ -722,7 +725,7 @@ PlatformObject_ChkYRange                              *PlatformObject_ChkYRange:
         subd  glb_d1                                  *        sub.w   d1,d0
         bhi   return_19E8E                            *        bhi.w   return_19E8E
         std   glb_d0
-        cmpd  #-$10                                   *        cmpi.w  #-$10,d0
+        cmpd  #-$10*framerate_adjust ; TODO           *        cmpi.w  #-$10,d0
         blo   return_19E8E                            *        blo.w   return_19E8E
         tst   dp+obj_control                          *        tst.b   obj_control(a1)
         bmi   return_19E8E                            *        bmi.w   return_19E8E

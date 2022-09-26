@@ -66,25 +66,28 @@ MarkObjGone                                           *MarkObjGone:
                                                       *; input: a0 = the object
                                                       *; does nothing instead of calling DisplaySprite in the case of no deletion
                                                       *; loc_1643E:
-                                                      *MarkObjGone3:
+MarkObjGone3                                          *MarkObjGone3:
                                                       *        tst.w   (Two_player_mode).w
                                                       *        beq.s   +
                                                       *        rts
                                                       *+
-                                                      *        move.w  x_pos(a0),d0
-                                                      *        andi.w  #$FF80,d0
-                                                      *        sub.w   (Camera_X_pos_coarse).w,d0
-                                                      *        cmpi.w  #$80+320+$40+$80,d0     ; This gives an object $80 pixels of room offscreen before being unloaded (the $40 is there to round up 320 to a multiple of $80)
-                                                      *        bhi.w   +
-                                                      *        rts
+        ldd   x_pos,u                                 *        move.w  x_pos(a0),d0
+        andb  #$C0 ; wide-dot factor                  *        andi.w  #$FF80,d0
+        subd  glb_camera_x_pos_coarse                 *        sub.w   (Camera_X_pos_coarse).w,d0
+        cmpd  #$40+160+$20+$40 ; wide-dot factor      *        cmpi.w  #$80+320+$40+$80,d0     ; This gives an object $80 pixels of room offscreen before being unloaded (the $40 is there to round up 320 to a multiple of $80)
+        bhi   >                                       *        bhi.w   +
+        rts                                           *        rts
                                                       *+
-                                                      *        lea     (Object_Respawn_Table).w,a2
-                                                      *        moveq   #0,d0
-                                                      *        move.b  respawn_index(a0),d0
-                                                      *        beq.s   +
-                                                      *        bclr    #7,2(a2,d0.w)
-                                                      *+
-                                                      *        bra.w   DeleteObject
+!       ldx   #Object_Respawn_Table                   *        lea     (Object_Respawn_Table).w,a2
+        ;                                             *        moveq   #0,d0
+        ldb   respawn_index,u                         *        move.b  respawn_index(a0),d0
+        beq   >                                       *        beq.s   +
+        addb  #2
+        lda   b,x
+        anda  #%01111111
+        sta   b,x                                     *        bclr    #7,2(a2,d0.w)
+!                                                     *+
+        jmp   DeleteObject                            *        bra.w   DeleteObject
                                                       *; ===========================================================================
                                                       *; input: a0 = the object
                                                       *; loc_16472:

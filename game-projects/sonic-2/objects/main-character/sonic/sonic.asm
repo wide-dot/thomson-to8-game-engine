@@ -1487,6 +1487,13 @@ Sonic_LevelBound                                      *Sonic_LevelBound:
                                                       *  asl.l   #8,d0
                                                       *  add.l   d0,d1
                                                       *  swap    d1
+
+ ; TEMP - MANUAL KILL
+        lda   $E7C8         ; keyboard register
+        lsra                ; inkey bit
+        lbcs  KillCharacter ; key pressed
+ ; ---------------
+
         ldb   x_vel+dp
         sex                            ; velocity is positive or negative, take care of that
         sta   @a+1
@@ -3281,14 +3288,21 @@ KillCharacter                                         * KillCharacter:
                                                       * +
                                                       *         moveq   #-1,d0
 
-        ; temporary reinit istead of kill
+ ; TEMP - reinit istead of kill
         ldd   #0
         std   x_vel+dp
         std   y_vel+dp
-        ldd   #$60/2
-        std   x_pos+dp
-        ldd   #$028F
-        std   y_pos+dp
+
+        ldd   #$60/2 ; init
+        ;ldd   #$03C2 ; cave
+        ;ldd   #$0A42 ; left wall flat
+        ;ldd   #$0827 ; loop
+        std   dp+x_pos
+        ldd   #$028F ; intit
+        ;ldd   #$02F0 ; cave
+        ;ldd   #$03AC ; left wall flat
+        ;ldd   #$022B ; loop
+        std   dp+y_pos
 
         ldd   #0
         std   glb_camera_x_pos
@@ -3296,7 +3310,11 @@ KillCharacter                                         * KillCharacter:
         subd  #camera_Y_pos_bias_default
         std   glb_camera_y_pos
 
-        clr   routine+dp
+        clr   dp+routine
+        clr   dp+render_flags
+
+        jmp   Obj01_Init
+ ; ----------------------------------
         rts                                           *         rts
                                                       * ; ===========================================================================
                                                       * ;loc_3F976:
