@@ -298,7 +298,7 @@ BuildSprites
         ldu   #0                 
 @u      equ   *-2
 ;
-        lda   _render_flags                 ; is this a child multisprite sprite object?
+        lda   _render_flags
         ora   #render_hide_mask             ; set hide flag
         sta   render_flags,u        
 @nextobject2
@@ -340,7 +340,7 @@ BuildSprites
         jsr   @processMulti
         dec   _nbchild
         beq   @nextobject2
-        leay  6,y
+        leay  next_subspr,y
         bra   @computeimageset
 @processMulti
 
