@@ -46,16 +46,16 @@ LevelMainLoop
 	INCLUDE "./engine/ram/BankSwitch.asm"
         INCLUDE "./engine/graphics/vbl/WaitVBL.asm"
         INCLUDE "./engine/graphics/animation/AnimateSprite.asm"	
-        INCLUDE "./engine/graphics/DisplaySprite.asm"	
-        INCLUDE "./engine/graphics/CheckSpritesRefresh.asm"
-        INCLUDE "./engine/graphics/EraseSprites.asm"
-        INCLUDE "./engine/graphics/UnsetDisplayPriority.asm"
-        INCLUDE "./engine/graphics/draw/DrawSprites.asm"
-        INCLUDE "./engine/graphics/BgBufferAlloc.asm"	
-        INCLUDE "./engine/joypad/ReadJoypads.asm"
+
+        ; gfx rendering
+        INCLUDE "./engine/graphics/sprite/sprite-background-erase-pack.asm"
+
+        ; basic object management
+        INCLUDE "./engine/object-management/ClearObj.asm"
         INCLUDE "./engine/object-management/RunObjects.asm"
-        INCLUDE "./engine/object-management/DeleteObject.asm"
-        INCLUDE "./engine/object-management/clear-obj-107.asm"
+        INCLUDE "./engine/object-management/SingleObjLoad.asm"
+
+        INCLUDE "./engine/joypad/ReadJoypads.asm"
         INCLUDE "./engine/level-management/LoadGameMode.asm"	
         INCLUDE "./engine/ram/ClearDataMemory.asm"
 	INCLUDE "./engine/palette/UpdatePalette.asm"

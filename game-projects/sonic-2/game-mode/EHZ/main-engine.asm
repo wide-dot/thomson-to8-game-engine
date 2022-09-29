@@ -26,11 +26,13 @@ LevelSizeLoad ; todo move to an object
         ;ldd   #$03C2 ; cave
         ;ldd   #$0A42 ; left wall flat
         ;ldd   #$0827 ; loop
+        ;ldd   #$0CDC ; loop
         std   x_pos+dp
         ldd   #$028F ; intit
         ;ldd   #$02F0 ; cave
         ;ldd   #$03AC ; left wall flat
         ;ldd   #$022B ; loop
+        ;ldd   #$02BA ; loop
         std   y_pos+dp
 
 	ldd   #camera_Y_pos_bias_default
@@ -109,9 +111,10 @@ LevelMainLoop
         jsr   RunObjects
         jsr   ForceRefresh
 
+ ifdef halfline
         ldb   #0                 ; sprite mask
 	jsr   EHZ_Mask
-
+ endc
 	jsr   EHZ_Back
         jsr   ComputeTileBuffer
 	jsr   DrawBufferedTile
@@ -127,6 +130,9 @@ LevelMainLoop
 
         _RunObject ObjID_HUD,#0 ; Head Up Display
         
+ ifdef debug
+        jsr   DBG_Display
+ endc
         jmp   LevelMainLoop
 
 ChangeRingFrame                                       *ChangeRingFrame:
@@ -370,3 +376,8 @@ TlsAni_EHZ_pulseball3_imgs
         ; tilemap
         INCLUDE "./objects/level/stage/_common/collision/collision.asm"
         INCLUDE "./engine/graphics/Tilemap/TilemapBuffer.asm"
+
+ ifdef debug
+        ; debug
+        INCLUDE "./objects/level/stage/_common/collision/collision-debug.asm"
+ endc

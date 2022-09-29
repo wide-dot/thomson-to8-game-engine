@@ -43,6 +43,13 @@ Obj11_Index                                           * Obj11_Index:    offsetTa
                                                       * ; loc_F694: Obj11_Main:
 Obj11_Init                                            * Obj11_Init:
         inc   routine,u                               *         addq.b  #2,routine(a0)
+
+ ifdef halfline
+        ldd   y_pos,u
+        addd  #1
+        std   y_pos,u ; fix for interlace alignment
+ endc
+
         ldd   #Img_bridge_log   
         std   image_set,u                             *         move.l  #Obj11_MapUnc_FC70,mappings(a0)
                                                       *         move.w  #make_art_tile(ArtTile_ArtNem_EHZ_Bridge,2,0),art_tile(a0)
@@ -498,12 +505,12 @@ Obj11_Depress                                         * Obj11_Depress:
         ldx   #byte_FB28                              *         lea     (byte_FB28).l,a4
         anda  #0                                      *         moveq   #0,d0
         ldb   subtype,u ; get bridge length           *         move.b  subtype(a0),d0
-        lslb
-        lslb
-        lslb
-        lslb  ; bridge length *16                     *         lsl.w   #4,d0
+        _lsld
+        _lsld
+        _lsld
+        _lsld ; bridge length *16                     *         lsl.w   #4,d0
         std   glb_d0
-                                                      *         moveq   #0,d3
+        anda  #0                                      *         moveq   #0,d3
         ldb   Obj11_p1_log_pos,u                      *         move.b  objoff_3F(a0),d3
         stb   glb_d2_b                                *         move.w  d3,d2
         addd  glb_d0
@@ -512,12 +519,12 @@ Obj11_Depress                                         * Obj11_Depress:
         ldy   #Obj11_DepressionOffsets-$80            *         lea     (Obj11_DepressionOffsets-$80).l,a5 ; table begin at length 8 so apply an offset of 8x16 bytes
         lda   d,y                                     *         move.b  (a5,d3.w),d5
         sta   glb_d5_b
-        ldb   glb_d2_b ; faster to get value in d2    *         andi.w  #$F,d3
-        lslb
-        lslb
-        lslb
-        lslb  ;ply log pos*16                         *         lsl.w   #4,d3
         anda  #0
+        ldb   glb_d2_b ; faster to get value in d2    *         andi.w  #$F,d3
+        _lsld
+        _lsld
+        _lsld
+        _lsld ;ply log pos*16                         *         lsl.w   #4,d3
         leax  d,x                                     *         lea     (a4,d3.w),a3
         ldy   Obj11_child1,u                          *         movea.l Obj11_child1(a0),a1
         sty   glb_a1
@@ -565,17 +572,17 @@ Obj11_Depress                                         * Obj11_Depress:
         negb                                          *         neg.b   d3
         bmi   @rts      ; p1 is on last bridge log    *         bmi.s   ++      ; rts
         std   glb_d2    ; store nb of log to process  *         move.w  d3,d2
-        lslb
-        lslb
-        lslb
-        lslb            ; *16 to get the desired line in factor table
-        stb   glb_d3_b                                *         lsl.w   #4,d3
+        _lsld
+        _lsld
+        _lsld
+        _lsld           ; *16 to get the desired line in factor table
+        std   glb_d3                                  *         lsl.w   #4,d3
         ldx   #byte_FB28
         leax  d,x       ; select the line             *         lea     (a4,d3.w),a3
         ldd   glb_d2
         leax  d,x       ; add remaining nb logs, point on $FF value       *         adda.w  d2,a3
         dec   glb_d2_b  ; decrement nb of log to process                              *         subq.w  #1,d2
-        bcs   @rts                                    *         bcs.s   ++      ; rts
+        bmi   @rts                                    *         bcs.s   ++      ; rts
 ; process logs on player's right                      * 
 @loop   anda  #0                                      * -       moveq   #0,d0
         ldb   ,-x  ; decrement and load, get the value on the left of $FF                                   *         move.b  -(a3),d0

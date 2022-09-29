@@ -22,5 +22,9 @@
 	rts
 
 Images
+ ifdef halfline
 	fdb   Img_Mask_Sprite
+ else
+        fdb   0
+ endc
         fdb   Img_Mask_Frame
