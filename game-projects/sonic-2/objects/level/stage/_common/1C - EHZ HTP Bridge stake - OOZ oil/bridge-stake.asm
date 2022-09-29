@@ -95,6 +95,11 @@ Obj1C_Init                                            *Obj1C_Init:
                                                       *        beq.s   BranchTo_MarkObjGone    ; if the radius is zero, branch
                                                       *        move.b  d1,y_radius(a0)
                                                       *        bset    #4,render_flags(a0)
+ ifdef halfline
+        ldd   y_pos,u
+        addd  #1
+        std   y_pos,u ; fix for interlace alignment
+ endc
                                                       *
                                                       *BranchTo_MarkObjGone ; BranchTo
         jmp   MarkObjGone                             *        bra.w   MarkObjGone

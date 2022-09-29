@@ -109,11 +109,18 @@ TlsAni_EHZ
 	fcb   $61
         fdb   TlsAni_EHZ_flower4
 
+ ifdef halfline
 _Primary_Collision
-        INCLUDEBIN "./objects/level/stage/EHZ/map/primary-collision.bin"
-
+        INCLUDEBIN "./objects/level/stage/EHZ/map/halfline/primary-collision.bin"
 _Secondary_Collision
-        INCLUDEBIN "./objects/level/stage/EHZ/map/secondary-collision.bin"
-
+        INCLUDEBIN "./objects/level/stage/EHZ/map/halfline/secondary-collision.bin"
 _Flip_Collision
-        INCLUDEBIN "./objects/level/stage/EHZ/map/flip-collision.bin"
+        INCLUDEBIN "./objects/level/stage/EHZ/map/halfline/flip-collision.bin"
+ else
+_Primary_Collision
+        INCLUDEBIN "./objects/level/stage/EHZ/map/normal/primary-collision.bin"
+_Secondary_Collision
+        INCLUDEBIN "./objects/level/stage/EHZ/map/normal/secondary-collision.bin"
+_Flip_Collision
+        INCLUDEBIN "./objects/level/stage/EHZ/map/normal/flip-collision.bin"
+ endc

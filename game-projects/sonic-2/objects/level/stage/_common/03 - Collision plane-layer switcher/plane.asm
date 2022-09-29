@@ -66,7 +66,7 @@ Obj03_Init                                            *Obj03_Init:
         sta   width_pixels,u                          *        move.b  #$10,width_pixels(a0)
         stb   priority,u                              *        move.b  #5,priority(a0)
         ldb   subtype,u                               *        move.b  subtype(a0),d0
-        andb  #subtype_orientation                    *        btst    #2,d0
+        bitb  #subtype_orientation                    *        btst    #2,d0
         beq   Obj03_Init_CheckX                       *        beq.s   Obj03_Init_CheckX
 Obj03_Init_CheckY                                     *;Obj03_Init_CheckY:
         inc   routine,u                               *        addq.b  #2,routine(a0) ; => Obj03_MainY
@@ -93,10 +93,10 @@ Obj03_Init_CheckY                                     *;Obj03_Init_CheckY:
         jmp   Obj03_MainY                             *        bra.w   Obj03_MainY
                                                       *; ===========================================================================
 Tbl_CollisionRadius                                   *word_1FD68:
-        fcb   $20                                     *        dc.w   $20
-        fcb   $40                                     *        dc.w   $40      ; 1
-        fcb   $80                                     *        dc.w   $80      ; 2
-        fcb   $100                                    *        dc.w  $100      ; 3
+        fdb   $20                                     *        dc.w   $20
+        fdb   $40                                     *        dc.w   $40      ; 1
+        fdb   $80                                     *        dc.w   $80      ; 2
+        fdb   $100                                    *        dc.w  $100      ; 3
                                                       *; ===========================================================================
                                                       *; loc_1FD70:
 Obj03_Init_CheckX                                     *Obj03_Init_CheckX:
@@ -156,7 +156,7 @@ Obj03_MainX                                           *Obj03_MainX:
         bne   @rts          ; skip if in air          *        bne.w   return_1FEAC
 !                                                     *+
         lda   render_flags,u
-        anda  #1                                      *        btst    #0,render_flags(a0)
+        anda  #render_xmirror_mask                    *        btst    #0,render_flags(a0)
         bne   >                                       *        bne.s   +
         ldd   #$0810
         std   dp+top_solid_bit ; and lrb_solid_bit    *        move.b  #$C,top_solid_bit(a1)
@@ -203,7 +203,7 @@ Obj03_MainX_Alt                                       *Obj03_MainX_Alt:
         bne   @rts          ; skip if in air          *        bne.w   return_1FEAC
 !                                                     *+
         lda   render_flags,u
-        anda  #1                                      *        btst    #0,render_flags(a0)
+        anda  #render_xmirror_mask                    *        btst    #0,render_flags(a0)
         bne   >                                       *        bne.s   +
         ldd   #$0810
         std   dp+top_solid_bit ; and lrb_solid_bit    *        move.b  #$C,top_solid_bit(a1)

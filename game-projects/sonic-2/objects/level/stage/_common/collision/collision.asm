@@ -25,7 +25,6 @@ Find_Tile                                             * Find_Tile:
         anda  #$0F
         andb  #$80                                    *         andi.w  #$F00,d0        ; rounded 2*y_pos
         std   glb_d0
-        ; chunks are 64px wide instead of 128px
         ldd   glb_d3                                  *         movea.w d3,d1   ; x_pos
         _lsrd
         _lsrd                                         *         lsr.w   #3,d1
@@ -33,9 +32,9 @@ Find_Tile                                             * Find_Tile:
         _lsrd
         _lsrd
         _lsrd
-        _lsrd                                         *         lsr.w   #4,d1   ; x_pos/128 = x_of_chunk
+        _lsrd ; shift only by 6 (64px not 128px)      *         lsr.w   #4,d1   ; x_pos/128 = x_of_chunk
         anda  #0
-        andb  #$3F ; chunk is 64px wide not 128px     *         andi.w  #$7F,d1
+        andb  #$7F                                    *         andi.w  #$7F,d1
         addd  glb_d0                                  *         add.w   d1,d0   ; d0 is relevant chunk ID now
                                                       *         moveq   #-1,d1
         ldx   glb_map_chunk_adr                       *         clr.w   d1              ; d1 is now $FFFF0000 = Chunk_Table
@@ -116,13 +115,13 @@ FindFloor                                             * FindFloor:
                          ; otherwise, go ahead and test bottom tile
 loc_1E7E2                                             * loc_1E7E2:
         ldd   glb_d2
-        std   @d2
         addd  glb_a3                                  *         add.w   a3,d2
         std   glb_d2     ; add delta-y to y_pos
         jsr   FindFloor2 ; search up or down          *         bsr.w   FindFloor2
-        ldd   #0         ; remove delta-y to y_pos    *         sub.w   a3,d2
-@d2     equ   *-2
-        std   glb_d2
+        ldd   glb_d2
+        subd  glb_a3     ; remove delta-y to y_pos    *         sub.w   a3,d2
+        std   glb_d2     
+
         ldd   glb_d1
         addd  #$10
         std   glb_d1     ; add 16px to found distance *         addi.w  #$10,d1
@@ -215,6 +214,7 @@ loc_1E86A                                             * loc_1E86A:
         subd  glb_a3                                  *         sub.w   a3,d2
         std   glb_d2
         jsr   FindFloor2                              *         bsr.w   FindFloor2
+        ldd   glb_d2
         addd  glb_a3                                  *         add.w   a3,d2
         std   glb_d2
         ldd   glb_d1
@@ -669,7 +669,7 @@ loc_1EA78                                             * loc_1EA78:
                                                       * ; ===========================================================================
                                                       * 
 loc_1EAE0                                             * loc_1EAE0:
-        ldd   glb_d3_b                                *         movea.w d3,d1
+        ldb   glb_d3_b                                *         movea.w d3,d1
         andb  #7                                      *         andi.w  #$F,d1
         stb   glb_d1_b
         addb  glb_d0_b                                *         add.w   d1,d0
