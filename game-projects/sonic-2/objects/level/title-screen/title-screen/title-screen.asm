@@ -396,7 +396,7 @@ Sonic_PaletteFadeAfterWait                       *+
                                                  *
 Sonic_SetPal_TitleScreen                         *loc_12EE8:
         ldd   w_TitleScr_time_frame_count,u
-        cmpd  #$80                               *        cmpi.w  #$80,objoff_34(a0)
+        cmpd  #$70                               *        cmpi.w  #$80,objoff_34(a0)
         bhs   Sonic_SetPal_TitleScreenAfterWait  *        bhs.s   +
         rts                                      *        rts
                                                  *; ===========================================================================
@@ -478,7 +478,7 @@ Sonic_CreateHand                                 *Obj0E_Sonic_LastFrame:
                                                  *
 Sonic_CreateTails                                *loc_12F7C:
         ldd   w_TitleScr_time_frame_count,u
-        cmpd  #$C0                               *        cmpi.w  #$C0,objoff_34(a0)
+        cmpd  #$90 ; was $C0                     *        cmpi.w  #$C0,objoff_34(a0)
         blo   Sonic_CreateTails_BeforeWait       *        blo.s   +
         inc   routine_secondary,u                *        addq.b  #2,routine_secondary(a0)
         ldx   #Obj_Tails                         *        lea     (IntroTails).w,a1
@@ -492,7 +492,7 @@ Sonic_CreateTails_BeforeWait                     *+
                                                  *
 Sonic_FadeInBackground                           *loc_12F9A:
         ldd   w_TitleScr_time_frame_count,u
-        cmpd  #$120                              *        cmpi.w  #$120,objoff_34(a0)
+        cmpd  #$C0 ; was $120                    *        cmpi.w  #$120,objoff_34(a0)
         blo   Sonic_FadeInBackground_NotYet      *        blo.s   +
         bhi   Sonic_FadeInBackground_Continue
                                                  *        addq.b  #2,routine_secondary(a0)
@@ -549,7 +549,7 @@ Sonic_CreateSmallStar                            *loc_12FD6:
         * not implemented                        *        btst    #6,(Graphics_Flags).w ; is Megadrive PAL?
         * not implemented                        *        beq.s   + ; if not, branch
         ldd   w_TitleScr_time_frame_count,u
-        cmpd  #$130                              *        cmpi.w  #$190,objoff_34(a0)
+        cmpd  #$C8 ; was $190                    *        cmpi.w  #$190,objoff_34(a0)
         beq   Sonic_CreateSmallStar_AfterWait    *        beq.s   ++
         jmp   DisplaySprite                      *        bra.w   DisplaySprite
                                                  *; ===========================================================================

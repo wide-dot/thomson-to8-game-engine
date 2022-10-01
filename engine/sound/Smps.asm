@@ -248,7 +248,7 @@ StructEnd
         fill  0,sizeof{Track}-2
         ;fdb   $00E0
         ;fill  0,sizeof{Track}-2
-        fdb   $0003
+        fdb   $0002
         fill  0,sizeof{Track}-2
         fdb   $0004
         fill  0,sizeof{Track}-2
@@ -455,13 +455,13 @@ BGMLoad
         lda   #$C0                     ; set back Tone channel for PSG3 (can be switched to noise by cfSetPSGNoise)
         sta   SongPSG3.VoiceControl
         lda   SMPS_NB_PSG,x
-        sta   >*+4
-@dyn    lda   #$00                     ; (dynamic) nb of PSG tracks to init
+        sta   @var                     ; nb of PSG tracks to init
         ldy   #SongPSG1                ; Init all PSG tracks
-@psglp  dec   @dyn+1
+@psglp  dec   @var
         bmi   BGMLoad_end     
         jsr   InitTrackPSG
         bra   @psglp
+@var    fcb   0
 
 BGMLoad_end
         lda   #0                       ; (dynamic) set back data page
@@ -744,10 +744,7 @@ FMSetFreq
 @a      addb  #$0B                     ; Add FMFrequencies offet for C0 Note, access lower notes with transpose
         addb  Transpose,y              ; Add current channel transpose (coord flag E9)
         addb  InstrTranspose,y         ; Add Instrument (Voice) offset (coord flag EF)
-        cmpb  #95                      ; array bound check
-        blo   @c
-        ldb   #94         
-@c      aslb                           ; Transform note into an index...
+        aslb                           ; Transform note into an index...
         ldu   #FMFrequencies
         lda   #0    
         ldd   d,u
@@ -866,6 +863,7 @@ FMUpdateFreq
         addd  #1                       ; negative value need +1 when div 
 @b      addd  NextData,y               ; apply detune but don't update stored frequency
 @dyna   addd  #0                       ; (dynamic) apply detune        
+        anda  #$0F
         sta   @dynb+1
         lda   #$10                     ; set LSB Frequency Command
         adda  VoiceControl,y           ; get channel number
@@ -992,7 +990,7 @@ PSGFinishTrackUpdate
         
 PSGDoNoteOn
         lda   PlaybackControl,y
-        bita  #$02                     ; Is bit 1 (02h) "track is at rest" set on playback?
+        bita  #$06                     ; If either bit 1 ("track in rest") and 2 ("SFX overriding this track"), quit!
         beq   PSGUpdateFreq                       
         rts                            ; If so, quit
 PSGUpdateFreq
@@ -1044,8 +1042,9 @@ PSGFlutter
         bpl   @a
         cmpa  #$80
         beq   VolEnvHold
-@a      sta   >*+4
+@a      sta   @b
         addb  #0
+@b      equ   *-1
         stb   DynVol+1
                 
 PSGUpdateVol                
@@ -1207,7 +1206,7 @@ SFXTrackOffs
         fdb   SFXPSG3                  ; identified by Track id 80E0 in smps sfx file
 
 MusicTrackOffs
-        fdb   SongFM3
+        fdb   SongFM2
         fdb   SongFM3        
         fdb   SongFM4        
         fdb   SongFM5

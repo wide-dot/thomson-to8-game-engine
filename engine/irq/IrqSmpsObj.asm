@@ -56,7 +56,7 @@ IrqSet50Hz
         ldd   #IrqSmps
         std   irq_routine
 
-        lda   #199                               ; screen line to sync
+        lda   #255                               ; screen line to sync
         ldx   #irq_one_frame                     ; on every frame
         jsr   IrqSync
         jsr   IrqOn 
