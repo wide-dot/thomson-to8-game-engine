@@ -14,7 +14,8 @@ OverlayMode equ 1
         org   $6100
 
         jsr   InitGlobals
-        jsr   LoadAct       
+        jsr   LoadAct    
+        jsr   InitJoypads   
         jsr   ReadJoypads
 
 LevelSizeLoad ; todo move to an object
@@ -360,6 +361,7 @@ TlsAni_EHZ_pulseball3_imgs
         INCLUDE "./engine/graphics/vbl/WaitVBL.asm"
         INCLUDE "./engine/ram/BankSwitch.asm"
         INCLUDE "./engine/object-management/RunPgSubRoutine.asm"
+        INCLUDE "./engine/joypad/InitJoypads.asm"
         INCLUDE "./engine/joypad/ReadJoypads2.asm"
         INCLUDE "./engine/math/CalcSine.asm"
         INCLUDE "./engine/math/Mul9x16.asm"
