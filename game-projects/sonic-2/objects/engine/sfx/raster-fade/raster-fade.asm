@@ -6,7 +6,7 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"   
-        INCLUDE "./objects/engine/sfx/raster-fade/raster-fade.idx"        
+        INCLUDE "./objects/engine/sfx/raster-fade/raster-fade.idx"
 
 RasterFade
         lda   routine,u
@@ -36,17 +36,17 @@ RasterFade_InInit
         sta   raster_cur_frame,u
         
         lda   $E7E6
-        sta   Irq_Raster_Page
+        sta   PalRas_page
         
         ldx   #pal_RasterCurrent                      ; calcul des adresses de debut et de fin
-        stx   Irq_Raster_Start                        ; pour les donnees de palette
+        stx   PalRas_start                        ; pour les donnees de palette
         stx   RFA_InitColor_endloop1+1
         
         lda   #$03                                    ; affectation aux variables globales de
         ldb   raster_nb_colors,u                      ; la routine Irq Raster
         mul
         leax  d,x
-        stx   Irq_Raster_End        
+        stx   PalRas_end        
         stx   RFA_end+2
         stx   RFA_InitColor_endloop3+1
         
@@ -108,16 +108,16 @@ RasterFade_OutInit
         sta   raster_cur_frame,u
         
         lda   $E7E6
-        sta   Irq_Raster_Page
+        sta   PalRas_page
         
         ldx   #pal_RasterCurrent                      ; calcul des adresses de debut et de fin
-        stx   Irq_Raster_Start                        ; pour les donnees de palette
+        stx   PalRas_start                        ; pour les donnees de palette
         
         lda   #$03                                    ; affectation aux variables globales de
         ldb   raster_nb_colors,u                      ; la routine Irq Raster
         mul
         leax  d,x
-        stx   Irq_Raster_End        
+        stx   PalRas_end        
         stx   RFA_end+2
         stx   RFA_OutInitColor_endloop3+1
         
@@ -136,7 +136,7 @@ RasterFade_OutInit
         adda  raster_inc,u
         sta   raster_inc_,u
                 
-        ldx   Irq_Raster_Start
+        ldx   PalRas_start
         lda   raster_pal_dst,u                        ; recopie les index de couleur cible dans le tableau raster
         ldy   #Pal_Index
         ldy   a,y
@@ -260,12 +260,12 @@ pal_buffer   fdb $00                   * buffer de comparaison
 pal_RasterCurrent fill 0,600
 
 Pal_TitleScreenCycle
-		fdb   $0e00
-		fdb   $0c10
-		fdb   $0e00		
-		fdb   $0b41
-		fdb   $0e00				
-		fdb   $0b74 
+        fdb   $0e00
+        fdb   $0c10
+        fdb   $0e00		
+        fdb   $0b41
+        fdb   $0e00				
+        fdb   $0b74 
 Pal_TitleScreenCycle_end	
 
 Pal_Index
@@ -318,7 +318,7 @@ Pal_TitleScreenRaster
         fcb   $1e
         fdb   $0b41	* 162-164
         fcb   $1e
-		fdb   $0a21	* 158-161
+        fdb   $0a21	* 158-161
         fcb   $1e
         fdb   $0b41	* 162-164
         fcb   $1e
@@ -330,33 +330,33 @@ Pal_TitleScreenRaster
         fcb   $1e
         fdb   $0b74	* 168-171
         fcb   $1e
-		fdb   $0a52	* 165-167
+        fdb   $0a52	* 165-167
         fcb   $1e
         fdb   $0b74	* 168-171
         fcb   $1e
-		fdb   $0b74	* 168-171
+        fdb   $0b74	* 168-171
         fcb   $1e
         fdb   $0b97	* 172-174
         fcb   $1e
-		fdb   $0b74	* 168-171
+        fdb   $0b74	* 168-171
         fcb   $1e
         fdb   $0b97	* 172-174
         fcb   $1e
         fdb   $0bbb	* 175-180
         fcb   $1e
-		fdb   $0b97	* 172-174
+        fdb   $0b97	* 172-174
         fcb   $1e
         fdb   $0bbb	* 175-180
         fcb   $18
-		fdb   $0e00	* 175-180 island 12
+        fdb   $0e00	* 175-180 island 12
         fcb   $04
-		fdb   $0c10	* 175-180 island 2
+        fdb   $0c10	* 175-180 island 2
         fcb   $00
-		fdb   $0b41	* 175-180 island 0
+        fdb   $0b41	* 175-180 island 0
         fcb   $1a
-		fdb   $0b74	* 175-180 island 13
+        fdb   $0b74	* 175-180 island 13
         fcb   $16
-		fdb   $0a42	* 175-180 island 11
+        fdb   $0a42	* 175-180 island 11
         fcb   $1e
         fdb   $0c00	* 181-131
         fcb   $1e

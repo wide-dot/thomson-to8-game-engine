@@ -761,8 +761,8 @@ public class BuildDisk
 				
 				if (act.paletteName != null) {
 					asmBuilder.add("        ldd   #" + act.paletteName);
-					asmBuilder.add("        std   Cur_palette");
-					asmBuilder.add("        clr   Refresh_palette");
+					asmBuilder.add("        std   Pal_current");
+					asmBuilder.add("        clr   PalRefresh");
 				}
 			}
 		}
