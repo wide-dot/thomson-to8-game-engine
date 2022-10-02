@@ -228,17 +228,8 @@ Sonic_Routines                                   *off_12E76:      offsetTable
 Sonic_Init                                       *Obj0E_Sonic_Init:
 
         ldd   #Pal_TitleScreen
-        std   Cur_palette
-        clr   Refresh_palette                    * will call refresh palette after next VBL
-        lda   #$01                     ; 1: play 60hz track at 50hz, 0: do not skip frames
-        sta   Smps.60HzData 
-        jsr   YM2413_DrumModeOn
-        ldd   #IrqSmps
-        std   irq_routine
-        lda   #139                               ; screen line to sync
-        ldx   #irq_one_frame                     ; on every frame
-        jsr   IrqSync
-        jsr   IrqOn 
+        std   Pal_current
+        clr   PalRefresh                         * will call refresh palette after next VBL
 
         inc   routine_secondary,u                *        addq.b  #2,routine_secondary(a0)
         ldd   #Img_sonic_1
@@ -257,7 +248,8 @@ Sonic_Init                                       *Obj0E_Sonic_Init:
 
         * moved to Sonic_PaletteFadeAfterWait    *        lea     (IntroEmblemTop).w,a1
                                                  *        move.b  #ObjID_IntroStars,id(a1) ; load obj0E (flashing intro stars) at $FFFFD140
-
+        ldd   #UserIRQ_Pal_Smps
+        std   Irq_user_routine
                                                  *        move.b  #6,subtype(a1)                          ; logo top
         ldx   #Smps_Sparkle                      *        moveq   #SndID_Sparkle,d0
         stx   Smps.SFXToPlay        
@@ -384,10 +376,10 @@ Sonic_PaletteFadeAfterWait                       *+
         lda   #ObjID_PaletteFade
         sta   id,x                               *        move.b  #ObjID_TtlScrPalChanger,id(a1) ; load objC9 (palette change)
         clr   subtype,x                          *        move.b  #0,subtype(a1)
-        ldd   #Black_palette
-        std   pal_src,x
+        ldd   #Pal_black
+        std   _src,x
         ldd   #Pal_TitleScreen
-        std   pal_dst,x
+        std   _dst,x
         lda   #$FF
         sta   b_TitleScr_music_is_playing,u      *        st.b    objoff_30(a0)
         ldx   #Smps_TitleScreen                  *        moveq   #MusID_Title,d0 ; title music
@@ -403,8 +395,8 @@ Sonic_SetPal_TitleScreen                         *loc_12EE8:
 Sonic_SetPal_TitleScreenAfterWait                *+
         inc   routine_secondary,u                *        addq.b  #2,routine_secondary(a0)
 
-        *ldd   #Pal_TitleScreen                   *        lea     (Pal_133EC).l,a1
-        *std   Cur_palette                        *        lea     (Normal_palette).w,a2
+        *ldd   #Pal_TitleScreen                  *        lea     (Pal_133EC).l,a1
+        *std   Pal_current                       *        lea     (Normal_palette).w,a2
                                                  *
         * not implemented                        *        moveq   #$F,d6
         * switch pointer to                      *-       move.w  (a1)+,(a2)+
@@ -533,8 +525,11 @@ Sonic_FadeInBackground_NotYet                    *+
         jmp   DisplaySprite                      *        bra.w   DisplaySprite
 
 Sonic_FadeInBackground_Continue
-        ldd   #IrqSmpsRaster
-        std   irq_routine
+        lda   #139                               ; screen line to sync
+        ldx   #Irq_one_frame                     ; on every frame
+        jsr   IrqSync
+        ldd   #UserIRQ_Raster_Smps
+        std   Irq_user_routine
 
         ldx   #Obj_Island
         lda   #ObjID_TitleScreen

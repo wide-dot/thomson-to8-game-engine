@@ -53,7 +53,7 @@ SATI_fadeIn
         ldx   #Obj_PaletteFade
         lda   #ObjID_PaletteFade
         sta   id,x                 
-        ldd   Cur_palette
+        ldd   Pal_current
         std   ext_variables,x
         ldd   #Pal_SonicAndTailsIn
         std   ext_variables+2,x    
@@ -75,9 +75,9 @@ SATI_fadeOut_continue
         ldx   #Obj_PaletteFade
         lda   #ObjID_PaletteFade
         sta   id,x                 
-        ldd   Cur_palette
+        ldd   Pal_current
         std   ext_variables,x
-        ldd   #Black_palette
+        ldd   #Pal_black
         std   ext_variables+2,x  
           
         inc   routine,u    

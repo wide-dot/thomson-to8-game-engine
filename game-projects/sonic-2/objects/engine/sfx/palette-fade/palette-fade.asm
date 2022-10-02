@@ -39,7 +39,7 @@
 ;*******************************************************************************   
 
         INCLUDE "./engine/macros.asm"   
-        INCLUDE "./objects/engine/sfx/palette-fade/palette-fade.idx"           
+        INCLUDE "./objects/engine/sfx/palette-fade/palette-fade.idx"
 
 PaletteFade
         lda   routine,u
@@ -54,13 +54,13 @@ PaletteFade_Routines
 PaletteFade_Init
         inc   routine,u
         ldd   #$100F    
-        sta   pal_cycles,u
-        stb   pal_mask,u
+        sta   _cycles,u
+        stb   _mask,u
         
-        ldy   pal_src,u
-        cmpy  #Dyn_palette             * Source pal is already current pal, no copy
+        ldy   _src,u
+        cmpy  #Pal_buffer             ; Source pal is already current pal, no copy
         beq   PaletteFade_Main
-        ldx   #Dyn_palette
+        ldx   #Pal_buffer
         ldd   ,y
         std   ,x
         ldd   2,y
@@ -95,56 +95,56 @@ PaletteFade_Init
         std   30,x                                                                                                                     
                                                  
 PaletteFade_Main
-        ldx   pal_dst,u
-        ldy   #Dyn_palette
+        ldx   _dst,u
+        ldy   #Pal_buffer
         lda   #$10
-        sta   pal_idx,u   
-        dec   pal_cycles,u             * decremente le compteur du nombre de frame
-        bne   PFA_Loop                 * on reboucle si nombre de frame n'est pas realise
-        jmp   ClearObj                 * auto-destruction de l'objet
+        sta   _idx,u   
+        dec   _cycles,u                ; decremente le compteur du nombre de frame
+        bne   PFA_Loop                 ; on reboucle si nombre de frame n'est pas realise
+        jmp   ClearObj                 ; auto-destruction de l'objet
         
 PFA_Loop
-        lda   ,y	                   * chargement de la composante verte et rouge
-        anda  pal_mask,u               * on efface la valeur vert ou rouge par masque
-        ldb   ,x                       * composante verte et rouge couleur cible
-        andb  pal_mask,u               * on efface la valeur vert ou rouge par masque
-        stb   pal_buffer,u             * on stocke la valeur cible pour comparaison
-        ldb   #$11                     * preparation de la valeur d'increment de couleur
-        andb  pal_mask,u               * on efface la valeur non utile par masque
-        stb   pal_buffer+1,u           * on stocke la valeur pour ADD ou SUB ulterieur
-        cmpa  pal_buffer,u             * comparaison de la composante courante et cible
-        beq   PFA_VRSuivante           * si composante est egale a la cible on passe
-        bhi   PFA_VRDec                * si la composante est superieure on branche
-        lda   ,y                       * on recharge la valeur avec vert et rouge
-        adda  pal_buffer+1,u           * on incremente la composante verte ou rouge
-        bra   PFA_VRSave               * on branche pour sauvegarder
+        lda   ,y	               ; chargement de la composante verte et rouge
+        anda  _mask,u                  ; on efface la valeur vert ou rouge par masque
+        ldb   ,x                       ; composante verte et rouge couleur cible
+        andb  _mask,u                  ; on efface la valeur vert ou rouge par masque
+        stb   _save,u                  ; on stocke la valeur cible pour comparaison
+        ldb   #$11                     ; preparation de la valeur d'increment de couleur
+        andb  _mask,u                  ; on efface la valeur non utile par masque
+        stb   _save+1,u                ; on stocke la valeur pour ADD ou SUB ulterieur
+        cmpa  _save,u                  ; comparaison de la composante courante et cible
+        beq   PFA_VRSuivante           ; si composante est egale a la cible on passe
+        bhi   PFA_VRDec                ; si la composante est superieure on branche
+        lda   ,y                       ; on recharge la valeur avec vert et rouge
+        adda  _save+1,u                ; on incremente la composante verte ou rouge
+        bra   PFA_VRSave               ; on branche pour sauvegarder
 PFA_VRDec
-        lda   ,y                       * on recharge la valeur avec vert et rouge
-        suba  pal_buffer+1,u           * on decremente la composante verte ou rouge
+        lda   ,y                       ; on recharge la valeur avec vert et rouge
+        suba  _save+1,u                ; on decremente la composante verte ou rouge
 PFA_VRSave                             
-        sta   ,y                       * sauvegarde de la nouvelle valeur vert ou rouge
+        sta   ,y                       ; sauvegarde de la nouvelle valeur vert ou rouge
 PFA_VRSuivante                         
-        com   pal_mask,u               * inversion du masque pour traiter l'autre semioctet
-        bmi   PFA_Loop                 * si on traite $F0 on branche sinon on continue
+        com   _mask,u                  ; inversion du masque pour traiter l'autre semioctet
+        bmi   PFA_Loop                 ; si on traite $F0 on branche sinon on continue
 	    
 PFA_SetPalBleu
-        ldb   1,y                      * chargement composante bleue courante
-        cmpb  1,x                      * comparaison composante courante et cible
-        beq   PFA_SetPalNext           * si composante est egale a la cible on passe
-        bhi   PFA_SetPalBleudec        * si la composante est superieure on branche
-        incb                           * on incremente la composante bleue
-        bra   PFA_SetPalSaveBleu       * on branche pour sauvegarder
+        ldb   1,y                      ; chargement composante bleue courante
+        cmpb  1,x                      ; comparaison composante courante et cible
+        beq   PFA_SetPalNext           ; si composante est egale a la cible on passe
+        bhi   PFA_SetPalBleudec        ; si la composante est superieure on branche
+        incb                           ; on incremente la composante bleue
+        bra   PFA_SetPalSaveBleu       ; on branche pour sauvegarder
 PFA_SetPalBleudec                       
-        decb                           * on decremente la composante bleue
+        decb                           ; on decremente la composante bleue
 PFA_SetPalSaveBleu                         
-        stb   1,y                      * sauvegarde de la nouvelle valeur bleue
+        stb   1,y                      ; sauvegarde de la nouvelle valeur bleue
 								       
 PFA_SetPalNext                             
-        leay  2,y                      * on avance le pointeur vers la nouvelle couleur source
-        leax  2,x                      * on avance le pointeur vers la nouvelle couleur dest
-        dec   pal_idx,u 
-        bne   PFA_Loop                 * on reboucle si fin de liste pas atteinte
-        ldd   #Dyn_palette
-        std   Cur_palette
-        clr   Refresh_palette          * will call refresh palette after next VBL
+        leay  2,y                      ; on avance le pointeur vers la nouvelle couleur source
+        leax  2,x                      ; on avance le pointeur vers la nouvelle couleur dest
+        dec   _idx,u 
+        bne   PFA_Loop                 ; on reboucle si fin de liste pas atteinte
+        ldd   #Pal_buffer
+        std   Pal_current
+        clr   PalRefresh               ; will call refresh palette in IRQ
         rts               

@@ -347,7 +347,7 @@ SEGA_EndWipe
         ldx   #Obj_PaletteFade
         lda   #ObjID_PaletteFade
         sta   id,x
-        ldd   Cur_palette
+        ldd   Pal_current
         std   ext_variables,x
         ldd   #Pal_SEGAEnd
         std   ext_variables+2,x
@@ -366,7 +366,9 @@ SEGA_PlaySample
         inc   routine_secondary,u
 
         ldy   #Pcm_SEGA
+        jsr   IrqOff
         jsr   PlayDPCM16kHz
+        jsr   IrqOn
 
         ldd   #$0000
         std   glb_Main_runcount
@@ -382,9 +384,9 @@ SEGA_fadeOut
         ldx   #Obj_PaletteFade
         lda   #ObjID_PaletteFade
         sta   id,x
-        ldd   Cur_palette
+        ldd   Pal_current
         std   ext_variables,x
-        ldd   #Black_palette
+        ldd   #Pal_black
         std   ext_variables+2,x
         inc   routine_secondary,u
         rts

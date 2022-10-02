@@ -14,6 +14,26 @@ OverlayMode equ 1
         org   $6100
 
         jsr   InitGlobals
+
+        ; init music
+        lda   #$01                       ; 1: play 60hz track at 50hz, 0: do not skip frames
+        sta   Smps.60HzData 
+        _RunObjectRoutineA ObjID_Smps,#0 ; YM2413_DrumModeOn
+        ldb   #2                         ; music id
+        _RunObjectRoutineA ObjID_Smps,#2 ; PlayMusic 
+
+	; user irq
+	lda   #8
+	sta   PalCyc_frames_init
+	sta   PalCyc_frames
+        jsr   IrqInit
+        ldd   #UserIRQ_Pal_ObjSmps
+        std   Irq_user_routine
+        lda   #255                     ; set sync out of display (VBL)
+        ldx   #Irq_one_frame
+        jsr   IrqSync
+        jsr   IrqOn 
+
         jsr   LoadAct    
         jsr   InitJoypads   
         jsr   ReadJoypads
@@ -84,16 +104,6 @@ LevelSizeLoad ; todo move to an object
         ; init object manager
         _RunObjectRoutineB ObjID_ObjectsManager,#0
 
-        ; init music
-        lda   #$01                       ; 1: play 60hz track at 50hz, 0: do not skip frames
-        sta   Smps.60HzData 
-        _RunObjectRoutineA ObjID_Smps,#0 ; YM2413_DrumModeOn
-        ldb   #2                         ; music id
-        _RunObjectRoutineA ObjID_Smps,#2 ; PlayMusic 
-
-	; start music
-        jsr   IrqSet50Hz
-
 * ==============================================================================
 * Main Loop
 * ==============================================================================
@@ -135,6 +145,19 @@ LevelMainLoop
         jsr   DBG_Display
  endc
         jmp   LevelMainLoop
+
+* ==============================================================================
+* Irq user routines
+* ==============================================================================
+
+UserIRQ_Pal_ObjSmps
+        jsr   PalCycling
+        jsr   IrqSecond
+	jmp   IrqObjSmps
+
+* ==============================================================================
+* ECT
+* ==============================================================================
 
 ChangeRingFrame                                       *ChangeRingFrame:
                                                       *        subq.b  #1,(Logspike_anim_counter).w
@@ -373,7 +396,12 @@ TlsAni_EHZ_pulseball3_imgs
         INCLUDE "./engine/object-management/ObjectMoveSync.asm"
 
         ; music and palette
-        INCLUDE "./engine/irq/IrqSmpsObj.asm"      
+	; irq
+        INCLUDE "./engine/irq/Irq.asm"
+	INCLUDE "./engine/palette/PalUpdateNow.asm"
+	INCLUDE "./engine/palette/PalCycling.asm"
+        INCLUDE "./engine/irq/IrqSecond.asm" 
+        INCLUDE "./engine/irq/IrqObjSmps.asm"      
 
         ; tilemap
         INCLUDE "./objects/level/stage/_common/collision/collision.asm"
