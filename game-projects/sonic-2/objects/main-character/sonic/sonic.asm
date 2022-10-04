@@ -1292,13 +1292,13 @@ Obj01_Roll_ResetScr                                   *Obj01_Roll_ResetScr:
 
                                                       *; loc_1A86C:
 Sonic_SetRollSpeeds                                   *Sonic_SetRollSpeeds:
-        ldb   angle+dp                                 *  move.b  angle(a0),d0
+        ldb   angle+dp                                *  move.b  angle(a0),d0
         jsr   CalcSine                                *  jsr (CalcSine).l
         stx   @d1
         ldx   inertia+dp
         jsr   Mul9x16                                 *  muls.w  inertia(a0),d0
         ;                                             *  asr.l   #8,d0
-        std   y_vel+dp                                 *  move.w  d0,y_vel(a0)    ; set y velocity based on $14 and angle
+        std   y_vel+dp                                *  move.w  d0,y_vel(a0)    ; set y velocity based on $14 and angle
         ldd   #0
 @d1     equ   *-2
         ldx   inertia+dp
@@ -2013,11 +2013,11 @@ loc_1AD8C                                             *loc_1AD8C:
                                                       *
                                                       *; loc_1AD96:
 Sonic_SlopeResist                                     *Sonic_SlopeResist:
-        ldb   angle+dp                                 *  move.b  angle(a0),d0
+        ldb   angle+dp                                *  move.b  angle(a0),d0
         addb  #$60                                    *  addi.b  #$60,d0
         cmpb  #$C0                                    *  cmpi.b  #$C0,d0
         bhs   >                                       *  bhs.s   return_1ADCA
-        ldb   angle+dp                                 *  move.b  angle(a0),d0
+        ldb   angle+dp                                *  move.b  angle(a0),d0
         jsr   CalcSine                                *  jsr (CalcSine).l
         tfr   d,x
         ldd   #$20
@@ -2036,7 +2036,7 @@ Sonic_SlopeResist                                     *Sonic_SlopeResist:
         ;                                             *  tst.w   d0
         ;                                             *  beq.s   +
         addd  inertia+dp
-        std   inertia+dp                               *  add.w   d0,inertia(a0)  ; change Sonic's $14
+        std   inertia+dp                              *  add.w   d0,inertia(a0)  ; change Sonic's $14
         ;                                             *+
 !       rts                                           *  rts
                                                       *; ---------------------------------------------------------------------------
@@ -2071,17 +2071,18 @@ Sonic_SlopeResist                                     *Sonic_SlopeResist:
                                                       *
                                                       *; loc_1ADCC:
 Sonic_RollRepel                                       *Sonic_RollRepel:
-        ldb   angle+dp                                 *  move.b  angle(a0),d0
+        ldb   angle+dp                                *  move.b  angle(a0),d0
         addb  $60                                     *  addi.b  #$60,d0
         cmpb  #$C0                                    *  cmpi.b  #$C0,d0
         bhs   return_1AE06                            *  bhs.s   return_1AE06
-        ldb   angle+dp                                 *  move.b  angle(a0),d0
+        ldb   angle+dp                                *  move.b  angle(a0),d0
         jsr   CalcSine                                *  jsr (CalcSine).l
         tfr   d,x
+        ldd   #$50
         jsr   Mul9x16                                 *  muls.w  #$50,d0
         ;                                             *  asr.l   #8,d0
         std   glb_d0
-        ldx   inertia+dp                               *  tst.w   inertia(a0)
+        ldx   inertia+dp                              *  tst.w   inertia(a0)
         bmi   loc_1ADFC                               *  bmi.s   loc_1ADFC
         ldd   glb_d0                                  *  tst.w   d0
         bpl   loc_1ADF6                               *  bpl.s   loc_1ADF6
@@ -2292,7 +2293,7 @@ Sonic_DoLevelCollision                                *Sonic_DoLevelCollision:
         jsr   Sonic_CheckFloor                        *  bsr.w   Sonic_CheckFloor
         lda   glb_d1                                  *  tst.w   d1
         bpl   return_1AF8A                            *  bpl.s   return_1AF8A
-        lda   y_vel+1+dp                              *  move.b  y_vel(a0),d2
+        lda   y_vel+dp                                *  move.b  y_vel(a0),d2
         adda  #8                                      *  addq.b  #8,d2
         nega                                          *  neg.b   d2
         sta   glb_d2_b
@@ -4907,6 +4908,17 @@ Sonic_CheckFloor                                      * Sonic_CheckFloor:
         ldd   #$10
         std   glb_a3                                  *         movea.w #$10,a3
         sta   glb_d6_b                                *         move.w  #0,d6
+
+ ifdef debug
+        lda   #1
+        sta   dbg_sensor_B
+
+        ldd   glb_d3
+        std   dbg_sensor_x_pos_BL
+        ldd   glb_d2
+        std   dbg_sensor_y_pos_BL
+ endc
+
         jsr   FindFloor                               *         bsr.w   FindFloor
         ldd   glb_d1
         pshs  d                                       *         move.w  d1,-\(sp\)        
@@ -4927,6 +4939,14 @@ Sonic_CheckFloor                                      * Sonic_CheckFloor:
         ldd   #$10
         std   glb_a3                                  *         movea.w #$10,a3
         sta   glb_d6_b                                *         move.w  #0,d6
+
+ ifdef debug
+        ldd   glb_d3
+        std   dbg_sensor_x_pos_BR
+        ldd   glb_d2
+        std   dbg_sensor_y_pos_BR
+ endc
+
         jsr   FindFloor                               *         bsr.w   FindFloor
         puls  d                                       *         move.w  (sp)+,d0
         std   glb_d0
@@ -4977,6 +4997,17 @@ CheckFloorDist_Part2                                  * CheckFloorDist_Part2:
         ldd   #$10
         std   glb_a3                                  *         movea.w #$10,a3
         sta   glb_d6_b                                *         move.w  #0,d6
+
+ ifdef debug
+        lda   #1
+        sta   dbg_sensor_B
+
+        ldd   glb_d3
+        std   dbg_sensor_x_pos_BR
+        ldd   glb_d2
+        std   dbg_sensor_y_pos_BR
+ endc
+
         jsr   FindFloor                               *         bsr.w   FindFloor
         andb  #0
         stb   glb_d2_b                                *         move.b  #0,d2
@@ -5045,6 +5076,17 @@ ChkFloorEdge_Part2                                    * ChkFloorEdge_Part2:
         std   glb_a3                                  *         movea.w #$10,a3
         sta   glb_d6_b                                *         move.w  #0,d6
         ; moved                                       *         move.b  top_solid_bit(a0),d5
+
+ ifdef debug
+        lda   #1
+        sta   dbg_sensor_B
+
+        ldd   glb_d3
+        std   dbg_sensor_x_pos_BR
+        ldd   glb_d2
+        std   dbg_sensor_y_pos_BR
+ endc
+
         jsr   FindFloor                               *         bsr.w   FindFloor
         lda   Primary_Angle                           *         move.b  (Primary_Angle).w,d3
         bita  #1                                      *         btst    #0,d3
@@ -5106,6 +5148,17 @@ ObjCheckFloorDist                                     * ObjCheckFloorDist:
         sta   glb_d6_b                                *         move.w  #0,d6
         ldb   #$8                                     *         moveq   #$C,d5
         stb   glb_d5_b
+
+ ifdef debug
+        lda   #1
+        sta   dbg_sensor_B
+
+        ldd   glb_d3
+        std   dbg_sensor_x_pos_BR
+        ldd   glb_d2
+        std   dbg_sensor_y_pos_BR
+ endc
+
         jsr   FindFloor                               *         bsr.w   FindFloor
         lda   Primary_Angle                           *         move.b  (Primary_Angle).w,d3
         bita  #1                                      *         btst    #0,d3
@@ -5315,6 +5368,14 @@ Sonic_CheckCeiling                                    * Sonic_CheckCeiling:
         std   glb_a3
         ldb   #$2
         stb   glb_d6_b                                *         movea.w #$800,d6
+ ifdef debug
+        lda   #1
+        sta   dbg_sensor_T
+        ldd   glb_d3
+        std   dbg_sensor_x_pos_TL
+        ldd   glb_d2
+        std   dbg_sensor_y_pos_TL
+ endc
         jsr   FindFloor                               *         bsr.w   FindFloor
         ldd   glb_d1
         std   @d0                                     *         move.w  d1,-\(sp\)        
@@ -5338,6 +5399,12 @@ Sonic_CheckCeiling                                    * Sonic_CheckCeiling:
         std   glb_a3
         ldb   #$2
         stb   glb_d6_b                                *         movea.w #$800,d6
+ ifdef debug
+        ldd   glb_d3
+        std   dbg_sensor_x_pos_TR
+        ldd   glb_d2
+        std   dbg_sensor_y_pos_TR
+ endc
         jsr   FindFloor                               *         bsr.w   FindFloor
         ldd   #0                                      *         move.w  (sp)+,d0
 @d0     equ   *-2
@@ -5377,6 +5444,17 @@ CheckCeilingDist_Part2                                * CheckCeilingDist_Part2:
         std   glb_a3                                  *         movea.w #-$10,a3
         ldb   #$2
         stb   glb_d6_b                                *         movea.w #$800,d6
+
+ ifdef debug
+        lda   #1
+        sta   dbg_sensor_T
+
+        ldd   glb_d3
+        std   dbg_sensor_x_pos_TR
+        ldd   glb_d2
+        std   dbg_sensor_y_pos_TR
+ endc
+
         jsr   FindFloor                               *         bsr.w   FindFloor
         ldb   #$80
         stb   glb_d2_b                                *         move.b  #$80,d2
