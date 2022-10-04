@@ -21,7 +21,7 @@ sonic_cst_acceleration     equ $C
 sonic_cst_deceleration     equ $80
 sonic_cst_speed_stop_ani   equ $400
 sonic_cst_speed_extra_push equ $400
-sonic_cst_spindash_delay   equ $20/framerate_adjust
+sonic_cst_spindash_delay   equ $20
 sonic_cst_gravity          equ $38
 sonic_cst_water_gravity    equ $10
 sonic_cst_vel_jump         equ $680
@@ -1513,8 +1513,8 @@ Sonic_LevelBound                                      *Sonic_LevelBound:
         ldd   glb_camera_x_max_pos                    *  move.w  (Camera_Max_X_pos).w,d0
         addd  #144-12                                 *  addi.w  #320-24,d0      ; screen width - Sonic's width_pixels
         ; unimplemented                               *  tst.b   (Current_Boss_ID).w
-                                                      *  bne.s   +
-        addd  #$20                                    *  addi.w  #$40,d0
+        ;                                             *  bne.s   +
+        ;addd  #$20                                   *  addi.w  #$40,d0
                                                       *+
         cmpd  glb_d1                                  *  cmp.w   d1,d0           ; has Sonic touched the right boundary?
         bls   Sonic_Boundary_Sides                    *  bls.s   Sonic_Boundary_Sides    ; if yes, branch
@@ -1911,10 +1911,9 @@ Sonic_UpdateSpindash                                  *Sonic_UpdateSpindash:
         lda   #sonic_cst_spindash_delay ; only works   *  addi.w  #$2000,d0
         suba  #0 ; for sonic (not super sonic)
 @delay  equ   *-1
-        lsla     ; see scroll code
-        lsla     ; see scroll code
+	asra  ; framerate adjust
         sta   Horiz_scroll_delay_val                  *  move.w  d0,(Horiz_scroll_delay_val).w
-        lda   status+dp                                *  btst    #0,status(a0)
+        lda   status+dp                               *  btst    #0,status(a0)
         anda  #status_x_orientation
         beq   >                                       *  beq.s   +
         ldd   inertia+dp

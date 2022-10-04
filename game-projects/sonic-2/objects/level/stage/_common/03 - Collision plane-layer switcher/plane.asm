@@ -146,10 +146,10 @@ Obj03_MainX                                           *Obj03_MainX:
         std   glb_d3
         ldd   dp+y_pos                                *        move.w  y_pos(a1),d4
         cmpd  glb_d2                                  *        cmp.w   d2,d4
-        blt   @rts                                    *        blt.w   return_1FEAC
+        blt   @retry                                  *        blt.w   return_1FEAC
         cmpd  glb_d3                                  *        cmp.w   d3,d4
-        bge   @rts                                    *        bge.w   return_1FEAC
-        ldb   subtype,u                               *        move.b  subtype(a0),d0
+        bge   @retry                                  *        bge.w   return_1FEAC
+@pass   ldb   subtype,u                               *        move.b  subtype(a0),d0
         bpl   >                                       *        bpl.s   +
         lda   dp+status
         anda  #status_inair                           *        btst    #1,status(a1)
@@ -174,12 +174,19 @@ Obj03_MainX                                           *Obj03_MainX:
         beq   @rts                                    *        beq.s   return_1FEAC
         ; TODO set high priority                      *        ori.w   #high_priority,art_tile(a1)
 @rts    rts                                           *        bra.s   return_1FEAC
-                                                      *; ===========================================================================
+@retry ; framerate adjust
+        ldd   glb_old_y_pos ; fix when ply is moving faster than the 16px limit
+        cmpd  glb_d2
+        blt   @rts
+        cmpd  glb_d3
+        bge   @rts
+	bra   @pass
 
+                                                      *; ===========================================================================
                                                       *; loc_1FE38:
 Obj03_MainX_Alt                                       *Obj03_MainX_Alt:
         cmpd  dp+x_pos                                *        cmp.w   x_pos(a1),d1
-        bls   @rts                                    *        bls.w   return_1FEAC
+        bls   @rts ; br if ply always the same side   *        bls.w   return_1FEAC
         lda   #0
         sta   ply1_position,u                         *        move.b  #0,-1(a2)
         ldd   y_pos,u
@@ -193,10 +200,10 @@ Obj03_MainX_Alt                                       *Obj03_MainX_Alt:
         std   glb_d3
         ldd   dp+y_pos                                *        move.w  y_pos(a1),d4
         cmpd  glb_d2                                  *        cmp.w   d2,d4
-        blt   @rts                                    *        blt.w   return_1FEAC
+        blt   @retry                                  *        blt.w   return_1FEAC
         cmpd  glb_d3                                  *        cmp.w   d3,d4
-        bge   @rts                                    *        bge.w   return_1FEAC
-        ldb   subtype,u                               *        move.b  subtype(a0),d0
+        bge   @retry                                  *        bge.w   return_1FEAC
+@pass   ldb   subtype,u                               *        move.b  subtype(a0),d0
         bpl   >                                       *        bpl.s   +
         lda   dp+status
         anda  #status_inair                           *        btst    #1,status(a1)
@@ -223,6 +230,13 @@ Obj03_MainX_Alt                                       *Obj03_MainX_Alt:
                                                       *
         ;                                             *return_1FEAC:
 @rts    rts                                           *        rts
+@retry ; framerate adjust
+        ldd   glb_old_y_pos ; fix when ply is moving faster than the 16px limit
+        cmpd  glb_d2
+        blt   @rts
+        cmpd  glb_d3
+        bge   @rts
+	bra   @pass
 
                                                       *; ===========================================================================
                                                       *
@@ -252,10 +266,10 @@ Obj03_MainY                                           *Obj03_MainY:
         std   glb_d3
         ldd   dp+x_pos                                *        move.w  x_pos(a1),d4
         cmpd  glb_d2                                  *        cmp.w   d2,d4
-        blt   @rts                                    *        blt.w   return_1FFB6
+        blt   @retry                                  *        blt.w   return_1FFB6
         cmpd  glb_d3                                  *        cmp.w   d3,d4
-        bge   @rts                                    *        bge.w   return_1FFB6
-        ldb   subtype,u                               *        move.b  subtype(a0),d0
+        bge   @retry                                  *        bge.w   return_1FFB6
+@pass   ldb   subtype,u                               *        move.b  subtype(a0),d0
         bpl   >                                       *        bpl.s   +
         lda   dp+status
         anda  #status_inair                           *        btst    #1,status(a1)
@@ -280,6 +294,13 @@ Obj03_MainY                                           *Obj03_MainY:
         beq   @rts                                    *        beq.s   return_1FFB6
         ; TODO set high priority                      *        ori.w   #high_priority,art_tile(a1)
 @rts    rts                                           *        bra.s   return_1FFB6
+@retry ; framerate adjust
+        ldd   glb_old_x_pos ; fix when ply is moving faster than the 16px limit
+        cmpd  glb_d2
+        blt   @rts
+        cmpd  glb_d3
+        bge   @rts
+	bra   @pass
 
                                                       *; ===========================================================================
                                                       *; loc_1FF42:
@@ -299,10 +320,10 @@ Obj03_MainY_Alt                                       *Obj03_MainY_Alt:
         std   glb_d3
         ldd   dp+x_pos                                *        move.w  x_pos(a1),d4
         cmpd  glb_d2                                  *        cmp.w   d2,d4
-        blt   @rts                                    *        blt.w   return_1FFB6
+        blt   @retry                                  *        blt.w   return_1FFB6
         cmpd  glb_d3                                  *        cmp.w   d3,d4
-        bge   @rts                                    *        bge.w   return_1FFB6
-        ldb   subtype,u                               *        move.b  subtype(a0),d0
+        bge   @retry                                  *        bge.w   return_1FFB6
+@pass   ldb   subtype,u                               *        move.b  subtype(a0),d0
         bpl   >                                       *        bpl.s   +
         lda   dp+status
         anda  #status_inair                           *        btst    #1,status(a1)
@@ -329,3 +350,10 @@ Obj03_MainY_Alt                                       *Obj03_MainY_Alt:
                                                       *
         ;                                             *return_1FFB6:
 @rts    rts                                           *        rts
+@retry ; framerate adjust
+        ldd   glb_old_x_pos ; fix when ply is moving faster than the 16px limit
+        cmpd  glb_d2
+        blt   @rts
+        cmpd  glb_d3
+        bge   @rts
+	bra   @pass

@@ -9,7 +9,7 @@ scroll_v_free_radius      equ 32
 scroll_v_speed_slow       equ 2*framerate_adjust
 scroll_v_speed_medium     equ 6*framerate_adjust
 scroll_v_speed_fast       equ 16*framerate_adjust
-scroll_v_fast_mode_step   equ $800*framerate_adjust
+scroll_v_fast_mode_step   equ $800
 
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       * ; sub_C3D0:
@@ -114,11 +114,15 @@ ScrollHoriz                                           * ScrollHoriz:
                                                       *         bne.s   .return         ; if a teleport is in progress, return
         lda   Horiz_scroll_delay_val                  *         move.w  (a5),d1         ; should scrolling be delayed?
         beq   @scrollNotDelayed                       *         beq.s   .scrollNotDelayed       ; if not, branch
-        suba  #4 ; see spindash code                  *         subi.w  #$100,d1        ; reduce delay value
-        sta   Horiz_scroll_delay_val                  *         move.w  d1,(a5)
+        suba  #framerate_adjust                       *         subi.w  #$100,d1        ; reduce delay value
+        bpl   >   
+        lda   #0
+!       sta   Horiz_scroll_delay_val                  *         move.w  d1,(a5)
         ;                                             *         move.b  (a5),d1         ; get delay value
-        ; moved to spindash code                      *         lsl.b   #2,d1           ; multiply by 4, the size of a position buffer entry
-        adda  #4                                      *         addq.b  #4,d1
+        inca
+        lsla
+        lsla                                          *         lsl.b   #2,d1           ; multiply by 4, the size of a position buffer entry
+        ;                                             *         addq.b  #4,d1
         sta   @pos
         ldb   Sonic_Pos_Record_Index                  *         move.w  2(a5),d0        ; get current position buffer index
         subb  #0                                      *         sub.b   d1,d0
@@ -131,7 +135,7 @@ ScrollHoriz                                           * ScrollHoriz:
                                                       * ; ===========================================================================
                                                       * ; loc_D72E:
 @scrollNotDelayed                                     * .scrollNotDelayed:
-        ldd   x_pos,u                                 *         move.w  x_pos(a0),d0
+        ldd   dp+x_pos                                *         move.w  x_pos(a0),d0
                                                       * ; loc_D732:
 @checkIfShouldScroll                                  * .checkIfShouldScroll:
         subd  glb_camera_x_pos                        *         sub.w   (a1),d0
@@ -190,7 +194,7 @@ ScrollHoriz                                           * ScrollHoriz:
                                                       * ;sub_D77A:
 ScrollVerti                                           * ScrollVerti:
                                                       *         moveq   #0,d1
-        ldd   y_pos,u                                 *         move.w  y_pos(a0),d0
+        ldd   dp+y_pos                                *         move.w  y_pos(a0),d0
         andb  #$FE
         subd  glb_camera_y_pos                        *         sub.w   (a1),d0         ; subtract camera Y pos
         ;ldx   glb_camera_y_min_pos                   *         cmpi.w  #-$100,(Camera_Min_Y_pos).w ; does the level wrap vertically?
@@ -201,7 +205,7 @@ ScrollVerti                                           * ScrollVerti:
                                                       * ; loc_D78E:
 @noWrap                                               * .noWrap:
         std   @d
-        lda   status,u                                *         btst    #2,status(a0)   ; is the player rolling?
+        lda   dp+status                               *         btst    #2,status(a0)   ; is the player rolling?
         anda  #status_jumporroll
         beq   @notRolling                             *         beq.s   .notRolling     ; if not, branch
         ldd   @d
@@ -209,7 +213,7 @@ ScrollVerti                                           * ScrollVerti:
         std   @d
                                                       * ; loc_D798:
 @notRolling                                           * .notRolling:
-        lda   status,u
+        lda   dp+status
         anda  #status_inair                           *         btst    #1,status(a0)                   ; is the player in the air?
         beq   @checkBoundaryCrossed_onGround          *         beq.s   .checkBoundaryCrossed_onGround  ; if not, branch
 @checkBoundaryCrossed_inAir                           * ;.checkBoundaryCrossed_inAir:
@@ -244,7 +248,7 @@ ScrollVerti                                           * ScrollVerti:
         ldx   Camera_Y_pos_bias
         cmpx  #camera_Y_pos_bias_default              *         cmpi.w  #(224/2)-16,d3          ; is the camera bias normal?
         bne   @doScroll_slow                          *         bne.s   .doScroll_slow  ; if not, branch
-        ldd   inertia,u                               *         mvabs.w inertia(a0),d1  ; get player ground velocity, force it to be positive
+        ldd   dp+inertia                              *         mvabs.w inertia(a0),d1  ; get player ground velocity, force it to be positive
         bpl   >
         _negd              
 !       tfr   d,x

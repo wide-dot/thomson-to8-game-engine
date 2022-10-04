@@ -215,7 +215,8 @@ public class SimpleAssemblyGenerator extends Encoder{
 			for (int i=0; i<Game.includeDirs.length; i++)
 				command.add(Game.includeDirs[i]);			
 			
-			if (Game.define != null && Game.define.length()>0) command.add(Game.define);
+			for (int i=0; i<Game.defineList.length; i++)
+				command.add(Game.defineList[i]);
 				
 			p = new ProcessBuilder(command).inheritIO().start();
 			
