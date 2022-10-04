@@ -3095,7 +3095,9 @@ public class BuildDisk
 		for (int i=0; i<Game.includeDirs.length; i++)
 			command.add(Game.includeDirs[i]);
 		
-		if (Game.define != null && Game.define.length()>0) command.add(Game.define);
+		for (int i=0; i<Game.defineList.length; i++)
+			command.add(Game.defineList[i]);
+
 		if (mode==MEGAROM_T2) command.add("--define=T2");
 		if (option != null && option.length() >0) command.add(option);
 			
@@ -3160,8 +3162,8 @@ public class BuildDisk
 			for (int i=0; i<Game.includeDirs.length; i++)
 				command.add(Game.includeDirs[i]);
 			
-			if (Game.define != null && Game.define.length()>0) command.add(Game.define);
-										   
+			for (int i=0; i<Game.defineList.length; i++)
+				command.add(Game.defineList[i]);										   
 			
 			Process p = new ProcessBuilder(command)
 					.directory(new File("."))

@@ -55,7 +55,7 @@ public class Game {
 	public int maxTries;
 	public static String pragma;
 	public static String[] includeDirs;
-	public static String define;
+	public static String[] defineList;
 	
 	// Storage
 	public FdUtil fd = new FdUtil();
@@ -186,18 +186,21 @@ public class Game {
 				pragma = "";
 			}
 
-			includeDirs = prop.getProperty("builder.lwasm.includeDirs").split(";");
-			if (includeDirs != null) {
+			includeDirs = prop.getProperty("builder.lwasm.includeDirs").split(",");
+			if (includeDirs != null && !includeDirs[0].equals("")) {
 				for (int i=0; i<includeDirs.length; i++)
 					includeDirs[i] = "--includedir=" + includeDirs[i];
+			} else {
+				includeDirs = new String[0];
 			}
 			
-			define = prop.getProperty("builder.lwasm.define");
-			if (define != null) {
-				define = "--define=" + define;
+			defineList = prop.getProperty("builder.lwasm.define").split(",");
+			if (defineList != null && !defineList[0].equals("")) {
+				for (int i=0; i<defineList.length; i++)
+					defineList[i] = "--define=" + defineList[i];
 			} else {
-				define = "";
-			}	
+				defineList = new String[0];
+			}
 
 			if (prop.getProperty("builder.debug") == null) {
 				throw new Exception("builder.debug not found in "+file);

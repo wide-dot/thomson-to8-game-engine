@@ -114,7 +114,9 @@ LevelMainLoop
         jsr   ChangeRingFrame
 
         jsr   ReadJoypads  
+	jsr   Col_adj_before
         _RunObject ObjID_Sonic,#MainCharacter 
+	jsr   Col_adj_after
         _RunObject ObjID_Scroll,#MainCharacter   
         _RunObjectRoutineB ObjID_RingsManager,#2
         _RunObjectRoutineB ObjID_ObjectsManager,#2
@@ -158,6 +160,45 @@ UserIRQ_Pal_ObjSmps
 * ==============================================================================
 * ECT
 * ==============================================================================
+
+; collision framerate adjustment
+glb_old_x_pos fdb 0
+glb_old_y_pos fdb 0
+glb_col_x_range_pos fdb 0
+glb_col_x_range_neg fdb 0
+glb_col_y_range_pos fdb 0
+glb_col_y_range_neg fdb 0
+
+Col_adj_before
+	ldd   dp+x_pos
+	std   glb_old_x_pos
+	ldd   dp+y_pos
+	std   glb_old_y_pos
+	rts
+
+Col_adj_after
+	ldd   glb_old_x_pos
+	subd  dp+x_pos
+	bpl   >
+	_negd
+!	anda  #0
+	andb  #$F0
+	addb  #$10
+	std   glb_col_x_range_pos
+	_negd
+	std   glb_col_x_range_neg
+
+	ldd   glb_old_y_pos
+	subd  dp+y_pos
+	bpl   >
+	_negd
+!	anda  #0
+	andb  #$F0
+	addb  #$10
+	std   glb_col_y_range_pos
+	_negd
+	std   glb_col_y_range_neg
+	rts
 
 ChangeRingFrame                                       *ChangeRingFrame:
                                                       *        subq.b  #1,(Logspike_anim_counter).w
@@ -393,7 +434,11 @@ TlsAni_EHZ_pulseball3_imgs
         INCLUDE "./engine/graphics/animation/AnimateSprite.asm"	
         INCLUDE "./engine/graphics/animation/AnimateSpriteSync.asm"	
         INCLUDE "./objects/main-character/sonic/sonic-animate.asm"
-        INCLUDE "./engine/object-management/ObjectMoveSync.asm"
+        INCLUDE "./engine/object-management/ObjectMoveSync.asm"   
+
+        ; tilemap
+        INCLUDE "./objects/level/stage/_common/collision/collision.asm"
+        INCLUDE "./engine/graphics/Tilemap/TilemapBuffer.asm"
 
         ; music and palette
 	; irq
@@ -401,13 +446,14 @@ TlsAni_EHZ_pulseball3_imgs
 	INCLUDE "./engine/palette/PalUpdateNow.asm"
 	INCLUDE "./engine/palette/PalCycling.asm"
         INCLUDE "./engine/irq/IrqSecond.asm" 
-        INCLUDE "./engine/irq/IrqObjSmps.asm"      
-
-        ; tilemap
-        INCLUDE "./objects/level/stage/_common/collision/collision.asm"
-        INCLUDE "./engine/graphics/Tilemap/TilemapBuffer.asm"
+        INCLUDE "./engine/irq/IrqObjSmps.asm"  
 
  ifdef debug
         ; debug
         INCLUDE "./objects/level/stage/_common/collision/collision-debug.asm"
+ endc
+
+_end
+ ifge _end-$9F00
+	error "Main overflow (>=$9F00)"
  endc

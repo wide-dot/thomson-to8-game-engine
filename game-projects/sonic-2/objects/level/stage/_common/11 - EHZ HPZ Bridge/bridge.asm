@@ -45,9 +45,9 @@ Obj11_Init                                            * Obj11_Init:
         inc   routine,u                               *         addq.b  #2,routine(a0)
 
  ifdef halfline
-        ldd   y_pos,u
-        addd  #1
-        std   y_pos,u ; fix for interlace alignment
+        ;ldd   y_pos,u
+        ;addd  #1
+        ;std   y_pos,u ; fix for interlace alignment
  endc
 
         ldd   #Img_bridge_log   
@@ -732,7 +732,7 @@ PlatformObject_ChkYRange                              *PlatformObject_ChkYRange:
         subd  glb_d1                                  *        sub.w   d1,d0
         bhi   return_19E8E                            *        bhi.w   return_19E8E
         std   glb_d0
-        cmpd  #-$10*framerate_adjust ; TODO           *        cmpi.w  #-$10,d0
+        cmpd  glb_col_y_range_neg ; framerate adjust  *        cmpi.w  #-$10,d0
         blo   return_19E8E                            *        blo.w   return_19E8E
         tst   dp+obj_control                          *        tst.b   obj_control(a1)
         bmi   return_19E8E                            *        bmi.w   return_19E8E
