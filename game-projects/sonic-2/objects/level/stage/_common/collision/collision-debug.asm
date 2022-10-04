@@ -25,8 +25,6 @@ dbg_sensor_pos_BR
 dbg_sensor_x_pos_BR fdb 0
 dbg_sensor_y_pos_BR fdb 0
 
-dbg_angle fcb 0
-
 dbg_color fcb 0
 
 ; display slots
@@ -38,16 +36,26 @@ DBG_Display
 	lda   dbg_sensor_T
         beq   >
 	ldx   #dbg_sensor_pos_TL
+        lda   #$B0
+        sta   dbg_color
 	jsr   DBG_Display_Sensor
 	ldx   #dbg_sensor_pos_TR
+        lda   #$F0
+        sta   dbg_color
         jsr   DBG_Display_Sensor
+        clr   dbg_sensor_T
 
 !	lda   dbg_sensor_C
         beq   >
 	ldx   #dbg_sensor_pos_CL
+        lda   #$B0
+        sta   dbg_color
 	jsr   DBG_Display_Sensor
 	ldx   #dbg_sensor_pos_CR
+        lda   #$F0
+        sta   dbg_color
 	jsr   DBG_Display_Sensor
+        clr   dbg_sensor_C
 
 !	lda   dbg_sensor_B
         beq   >
@@ -59,6 +67,7 @@ DBG_Display
         lda   #$F0
         sta   dbg_color
 	jsr   DBG_Display_Sensor
+        clr   dbg_sensor_B
 
 !       lda   dp+top_solid_bit
         cmpa  #8
@@ -68,20 +77,6 @@ DBG_Display
 !       lda   #$FF
 @a	ldb   #dbg_slot1
         jsr   DBG_Display_Slot
-
-        ldd   Collision_addr
-        andb  #1
-        bne   >
-        lda   #$BB
-        bra   @a
-!       lda   #$FF
-@a	ldb   #dbg_slot2
-        jsr   DBG_Display_Slot
-
-
-	;lda   dbg_angle
-	;ldb   #dbg_slot3
-	;jsr   DBG_Display_Slot
 
         rts
 
