@@ -22,9 +22,9 @@ Init
         std   anim,u
         ldb   #$04
         stb   priority,u
-        ldd   #$0079-screen_left
+        ldd   #$0079
         std   x_pos,u
-        ldd   #$0080-screen_top
+        ldd   #$0080
         std   y_pos,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask|render_overlay_mask      

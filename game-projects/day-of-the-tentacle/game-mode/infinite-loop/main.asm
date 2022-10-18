@@ -8,7 +8,15 @@ ext_variables_size equ 6
         jsr   LoadAct
 
         jsr   ResetMidi
-        jsr   IrqSet50Hz
+
+        jsr   IrqInit
+        ldd   #UserIRQ
+        std   Irq_user_routine
+        lda   #255                     ; set sync out of display (VBL)
+        ldx   #Irq_one_frame
+        jsr   IrqSync
+        jsr   IrqOn 
+
         ldx   #Smid_intro
         jsr   PlayMusic 
 
@@ -16,8 +24,7 @@ ext_variables_size equ 6
 * Main Loop
 * ==============================================================================
 LevelMainLoop
-        jsr   WaitVBL   
-        jsr   UpdatePalette        
+        jsr   WaitVBL      
         jsr   RunObjects	
         jsr   CheckSpritesRefresh
         jsr   EraseSprites
@@ -34,6 +41,10 @@ Object_RAM_End
 
 nb_graphical_objects   equ 2
 
+UserIRQ
+        jsr   PalUpdateNow
+        jmp   MusicFrame
+
 * ==============================================================================
 * Routines
 * ==============================================================================
@@ -43,14 +54,14 @@ nb_graphical_objects   equ 2
         INCLUDE "./engine/ram/BankSwitch.asm"
         INCLUDE "./engine/graphics/vbl/WaitVBL.asm"
         INCLUDE "./engine/ram/ClearDataMemory.asm"
-        INCLUDE "./engine/palette/UpdatePalette.asm"
+        INCLUDE "./engine/palette/PalUpdateNow.asm"
 
         ; object management
         INCLUDE "./engine/object-management/RunObjects.asm"
         INCLUDE "./engine/object-management/ClearObj.asm"
 
         ; sound
-        INCLUDE "./engine/irq/IrqSmidi.asm"        
+        INCLUDE "./engine/irq/Irq.asm"        
         INCLUDE "./engine/sound/Smidi.asm"	
 
         ; animation & image
