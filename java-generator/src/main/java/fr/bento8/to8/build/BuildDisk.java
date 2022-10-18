@@ -186,6 +186,12 @@ public class BuildDisk
 		game.glb.addConstant("Build_RAMLoaderManager", String.format("$%1$04X", Game.bootSizeT2));
 		game.glb.flush();
 		//game.romT2.reserveT2Header();
+		game.t2BootData[0x00] = 0x20; // caractère obligatoire en début du nom pour la cartouche
+		game.t2BootData[0x17] = 0x04; // caractère finale obligatoire en fin pour la cartouche
+		byte[] data = game.t2Name.getBytes();
+		byte checksum = ChecksumUtils.calculate(data, (byte) (0x55 + 0x20 + 0x04));
+		System.arraycopy(data, 0, game.t2BootData, 1, data.length);
+		game.t2BootData[0x1A] = checksum;
 	}
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
@@ -2145,12 +2151,14 @@ public class BuildDisk
 		compileRAW(bootTmpFile, MEGAROM_T2);
 		byte[] bin = Files.readAllBytes(Paths.get(getBINFileName(bootTmpFile)));
 		
-		//game.romT2.writeT2Header(bin);
+		// ajout du header autocalculé
+		System.arraycopy(game.t2BootData, 0, bin, 0, game.t2BootData.length);
+		logger.info("Appending T2 Name to the image");
+		
 		game.romT2.setData(0, 0, bin);
 		t2.write(game.romT2);
 		
 		logger.info("Write Megarom T.2 Image to output file ...");
-		
 		t2.save(game.outputDiskName);
 		
 		logger.info("Build done !");	

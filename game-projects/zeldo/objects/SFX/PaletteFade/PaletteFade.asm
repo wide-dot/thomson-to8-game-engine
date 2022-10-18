@@ -59,9 +59,9 @@ PaletteFade_Init
         stb   pal_mask,u
         
         ldy   pal_src,u
-        cmpy  #Dyn_palette             * Source pal is already current pal, no copy
+        cmpy  #Pal_buffer             * Source pal is already current pal, no copy
         beq   PaletteFade_Main
-        ldx   #Dyn_palette
+        ldx   #Pal_buffer
         ldd   ,y
         std   ,x
         ldd   2,y
@@ -99,7 +99,7 @@ PaletteFade_Main
         lda   subtype,u
 	sta   pal_wait_frame,u
         ldx   pal_dst,u
-        ldy   #Dyn_palette
+        ldy   #Pal_buffer
         lda   #$10
         sta   pal_idx,u   
         dec   pal_cycles,u             * decremente le compteur du nombre de frame
@@ -147,9 +147,9 @@ PFA_SetPalNext
         leax  2,x                      * on avance le pointeur vers la nouvelle couleur dest
         dec   pal_idx,u 
         bne   PFA_Loop                 * on reboucle si fin de liste pas atteinte
-        ldd   #Dyn_palette
-        std   Cur_palette
-        clr   Refresh_palette          * will call refresh palette after next VBL
+        ldd   #Pal_buffer
+        std   Pal_current
+        clr   PalRefresh          * will call refresh palette after next VBL
         inc   routine,u	
         rts               
 

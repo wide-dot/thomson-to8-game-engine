@@ -55,7 +55,7 @@ Castle_Wait
         sta   id,x     
 	ldb   #0                       ; wait two frames between palette update                      
         stb   subtype,x        
-        ldd   #White_palette
+        ldd   #Pal_white
         std   pal_src,x
         ldd   #Pal_Flash
         std   pal_dst,x  	

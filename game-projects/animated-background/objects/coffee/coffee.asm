@@ -44,8 +44,8 @@ Coffee_Init
         jsr   DrawFullscreenImage
 
         ldd   #Pal_Coffee
-        std   Cur_palette
-        clr   Refresh_palette
+        std   Pal_current
+        clr   PalRefresh
         jsr   WaitVBL
 
         ; Init Object
