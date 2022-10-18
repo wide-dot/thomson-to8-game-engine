@@ -16,55 +16,55 @@
 
 	; objects init
 	ldu   #Obj_Axe1
-        ldd   #$004A-screen_left
+        ldd   #$004A
         std   x_pos,u
-        ldd   #$0050-screen_top
+        ldd   #$0050
         std   y_pos,u
 	ldu   #Obj_Axe2
-        ldd   #$0062-screen_left
+        ldd   #$0062
         std   x_pos,u
-        ldd   #$0050-screen_top
+        ldd   #$0050
         std   y_pos,u
 	ldu   #Obj_Axe3
-        ldd   #$007A-screen_left
+        ldd   #$007A
         std   x_pos,u
-        ldd   #$0050-screen_top
+        ldd   #$0050
         std   y_pos,u
 	ldu   #Obj_Axe4
-        ldd   #$0092-screen_left
+        ldd   #$0092
         std   x_pos,u
-        ldd   #$0050-screen_top
+        ldd   #$0050
         std   y_pos,u
 	ldu   #Obj_Axe5
-        ldd   #$00AA-screen_left
+        ldd   #$00AA
         std   x_pos,u
-        ldd   #$0050-screen_top
+        ldd   #$0050
         std   y_pos,u
 
 	ldu   #Obj_Bat1
-        ldd   #$004A-screen_left
+        ldd   #$004A
         std   x_pos,u
-        ldd   #$0035-screen_top
+        ldd   #$0035
         std   y_pos,u
 	ldu   #Obj_Bat2
-        ldd   #$0062-screen_left
+        ldd   #$0062
         std   x_pos,u
-        ldd   #$0035-screen_top
+        ldd   #$0035
         std   y_pos,u
 	ldu   #Obj_Bat3
-        ldd   #$007A-screen_left
+        ldd   #$007A
         std   x_pos,u
-        ldd   #$0035-screen_top
+        ldd   #$0035
         std   y_pos,u
 	ldu   #Obj_Bat4
-        ldd   #$0092-screen_left
+        ldd   #$0092
         std   x_pos,u
-        ldd   #$0035-screen_top
+        ldd   #$0035
         std   y_pos,u
 	ldu   #Obj_Bat5
-        ldd   #$00AA-screen_left
+        ldd   #$00AA
         std   x_pos,u
-        ldd   #$0035-screen_top
+        ldd   #$0035
         std   y_pos,u
 
 
@@ -75,7 +75,7 @@
 * ==============================================================================
 LevelMainLoop
         jsr   WaitVBL   
-        jsr   UpdatePalette
+        jsr   PalUpdateNow
         jsr   AutoScroll
         jsr   RunObjects
         _RunObjectRoutineA ObjID_tilemap,glb_current_submap
@@ -103,7 +103,7 @@ LevelMainLoop
         INCLUDE "./engine/ram/ClearDataMemory.asm"
         INCLUDE "./engine/level-management/LoadGameMode.asm"
         INCLUDE "./engine/object-management/RunPgSubRoutine.asm"	
-        INCLUDE "./engine/palette/UpdatePalette.asm"
+        INCLUDE "./engine/palette/PalUpdateNow.asm"
 
         ; object management
         INCLUDE "./engine/object-management/RunObjects.asm"

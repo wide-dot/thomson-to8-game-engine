@@ -20,7 +20,7 @@
 * ==============================================================================
 LevelMainLoop
         jsr   WaitVBL   
-        jsr   UpdatePalette
+        jsr   PalUpdateNow
         jsr   ReadJoypads
         jsr   AutoScroll
         jsr   RunObjects
@@ -58,7 +58,7 @@ LevelMainLoop
         INCLUDE "./engine/ram/BankSwitch.asm"
         INCLUDE "./engine/object-management/RunPgSubRoutine.asm"
         INCLUDE "./engine/joypad/ReadJoypads.asm"
-	INCLUDE "./engine/palette/UpdatePalette.asm"
+	INCLUDE "./engine/palette/PalUpdateNow.asm"
 
         ; animation
         INCLUDE "./engine/graphics/animation/AnimateSprite.asm"	    
