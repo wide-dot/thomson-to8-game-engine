@@ -133,16 +133,16 @@ Sword_Flash
 	cmpa  #31
 	bne   @a
         inc   routine,u
-	ldd   #White_palette
-	std   Cur_palette
-        clr   Refresh_palette
+	ldd   #Pal_white
+	std   Pal_current
+        clr   PalRefresh
 	rts
 @a	ldx   #Sword_Palettes
         anda  #$03
 	asla
 	ldd   a,x
-        std   Cur_palette
-        clr   Refresh_palette
+        std   Pal_current
+        clr   PalRefresh
 	inc   b_Sword_flash_idx,u
 	rts      
 

@@ -98,8 +98,8 @@ Triangle_MainOdd
         lsrb
         ldx   b,y
         stx   2,u
-        stu   Cur_palette
-        clr   Refresh_palette       
+        stu   Pal_current
+        clr   PalRefresh       
 @dyn    ldu   #0                       ; (dynamic)
 @b      jmp   DisplaySprite        
 

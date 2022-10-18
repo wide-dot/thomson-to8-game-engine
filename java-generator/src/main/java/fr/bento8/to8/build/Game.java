@@ -1,11 +1,14 @@
 package fr.bento8.to8.build;
 
 import java.io.File;
+
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
 
 import fr.bento8.to8.image.PngToBottomUpB16Bin;
 import fr.bento8.to8.ram.RamImage;
@@ -46,6 +49,8 @@ public class Game {
 	public boolean debug;
 	public boolean logToConsole;	
 	public String outputDiskName;
+	public String t2Name;
+	public byte[] t2BootData = new byte[27];
 	public static String constAnim;
 	public static String generatedCodeDirName;
 	public static String generatedCodeDirNameDebug;
@@ -224,6 +229,9 @@ public class Game {
 			}
 			logToConsole = (prop.getProperty("builder.logToConsole").contentEquals("Y")?true:false);
 
+			t2Name = prop.getProperty("builder.t2Name").trim();
+     		t2Name = StringUtils.left(t2Name, 22); // 22 caractères uniquement, max.
+			
 			outputDiskName = prop.getProperty("builder.diskName");
 			if (outputDiskName == null) {
 				throw new Exception("builder.diskName not found in "+file);

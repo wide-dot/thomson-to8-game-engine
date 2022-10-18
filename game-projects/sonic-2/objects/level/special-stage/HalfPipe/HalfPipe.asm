@@ -187,8 +187,8 @@ SpecialStage_Init                                     *SpecialStage:
         sta   SSTrack_mapping_frame    ; of perspective data
         
         ldd   #Pal_HalfPipe
-        std   Cur_palette
-        clr   Refresh_palette        
+        std   Pal_current
+        clr   PalRefresh        
         
                                                       *    move.l  #$C0000,(SS_New_Speed_Factor).w
                                                       *    clr.w   (Ctrl_1_Logical).w
