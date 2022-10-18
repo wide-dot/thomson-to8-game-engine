@@ -17,7 +17,6 @@
 * ==============================================================================
 LevelMainLoop
         jsr   WaitVBL    
-        jsr   UpdatePalette
         jsr   ReadJoypads
         jsr   RunObjects
         jsr   CheckSpritesRefresh                                              
@@ -25,7 +24,11 @@ LevelMainLoop
         jsr   UnsetDisplayPriority
         jsr   DrawSprites       
         bra   LevelMainLoop
-        
+
+UserIRQ_PSG
+        jsr   PalUpdateNow
+        jmp   PSGFrame
+
 * ---------------------------------------------------------------------------
 * Game Mode RAM variables
 * ---------------------------------------------------------------------------
@@ -43,7 +46,7 @@ LevelMainLoop
         INCLUDE "./engine/graphics/draw/DrawFullscreenImage.asm"	
         INCLUDE "./engine/level-management/LoadGameMode.asm"
         INCLUDE "./engine/object-management/RunPgSubRoutine.asm"	
-        INCLUDE "./engine/palette/UpdatePalette.asm"
+        INCLUDE "./engine/palette/PalUpdateNow.asm"
         INCLUDE "./engine/joypad/ReadJoypads.asm"
 
         ; object management
@@ -55,7 +58,7 @@ LevelMainLoop
 
         ; sound
         INCLUDE "./engine/sound/PSGlib.asm"
-        INCLUDE "./engine/irq/IrqPsg.asm"	
+        INCLUDE "./engine/irq/Irq.asm"	
 
         ; sprite
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-pack.asm"	

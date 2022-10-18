@@ -66,10 +66,18 @@ Coffee_Init
         ; Init Sound Driver
         ; --------------------------------------------
         jsr   PSGInit
-        jsr   IrqSet50Hz
+
+        jsr   IrqInit
+        ldd   #UserIRQ_PSG
+        std   Irq_user_routine
+        lda   #255                     ; set sync out of display (VBL)
+        ldx   #Irq_one_frame
+        jsr   IrqSync
+        jsr   IrqOn 
+        
         ldx   #Psg_001
         jsr   PSGPlay
-        
+
         inc   routine,u
 
 Coffee_Main
