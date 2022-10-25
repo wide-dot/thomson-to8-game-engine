@@ -34,7 +34,7 @@ ObjectsManager_Init                                   *ObjectsManager_Init:
         ;ldd   Current_ZoneAndAct                     *        move.w  (Current_ZoneAndAct).w,d0 ; If level == $0F01 (ARZ 2)...
                                                       *        ror.b   #1,d0                   ; then this yields $0F80...
                                                       *        lsr.w   #6,d0                   ; and this yields $003E.
-        ldd   #0
+        ldd   Current_zone_and_act
         ldx   #Off_Objects                            *        lea     (Off_Objects).l,a0      ; Next, we load the first pointer in the object layout list pointer index,
         ldx   d,x
                                                       *        movea.l a0,a1                   ; then copy it for quicker use later.

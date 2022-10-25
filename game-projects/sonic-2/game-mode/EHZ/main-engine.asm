@@ -14,6 +14,8 @@ OverlayMode equ 1
         org   $6100
 
         jsr   InitGlobals
+        ldd   #2
+        std   Current_zone_and_act
 
         ; init music
         lda   #$01                       ; 1: play 60hz track at 50hz, 0: do not skip frames
@@ -44,16 +46,9 @@ LevelSizeLoad ; todo move to an object
         sta   dp+id
 
         ldd   #$60/2 ; init
-        ;ldd   #$03C2 ; cave
-        ;ldd   #$0A42 ; left wall flat
-        ;ldd   #$0827 ; loop
-        ;ldd   #$0CDC ; loop
         std   x_pos+dp
-        ldd   #$028F ; intit
-        ;ldd   #$02F0 ; cave
-        ;ldd   #$03AC ; left wall flat
-        ;ldd   #$022B ; loop
-        ;ldd   #$02BA ; loop
+        ldd   #$028F ; intit EHZ 1
+        ldd   #$02AF ; intit EHZ 2
         std   y_pos+dp
 
 	ldd   #camera_Y_pos_bias_default
