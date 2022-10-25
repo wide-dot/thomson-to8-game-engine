@@ -2120,6 +2120,7 @@ public class BuildDisk
 			
 			fd.save(game.outputDiskName);
 			fd.saveToSd(game.outputDiskName);
+			fd.saveToSap(game.outputDiskName);
 			
 			if (game.hxcfe != null) {
 				logger.debug("\tconvert fd to hfe ...");
