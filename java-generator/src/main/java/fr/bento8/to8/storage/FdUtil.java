@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import fr.bento8.to8.storage.sap.Sap;
 import fr.bento8.to8.util.FileUtil;
 
 /**
@@ -188,8 +189,8 @@ public class FdUtil {
 		}
 	}
 
-	public void saveToSap(String outputDiskName) {
-		Sap sap = new Sap(fdBytes, Sap.SAP_FORMAT2);
+	public void saveToSap(String outputDiskName) throws Exception {
+		Sap sap = new Sap(fdBytes, Sap.SAP_FORMAT1);
 		sap.write(outputDiskName);
 	}
 
