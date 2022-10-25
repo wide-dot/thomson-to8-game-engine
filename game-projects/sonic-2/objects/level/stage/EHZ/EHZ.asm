@@ -61,14 +61,18 @@ TileMapRegister
         std   glb_camera_y_min_pos
         ldd   submap_camera_y_max,x
         std   glb_camera_y_max_pos
-
         rts  
 
+ ; EHZ act1 11264x1024
+ ; EHZ act2 11392x1280
 EHZ_map
         fdb   0                   ; submap_camera_x_min - camera position limit
         fdb   0                   ; submap_camera_y_min - camera position limit
-        fdb   5480+16             ; submap_camera_x_max - camera position limit
-        fdb   848+16              ; submap_camera_y_max - camera position limit   
+        fdb   5608+16             ; submap_camera_x_max - camera position limit
+        ;fdb   5480+16             ; submap_camera_x_max - camera position limit
+        fdb   1104+16              ; submap_camera_y_max - camera position limit  
+        ;fdb   848+16              ; submap_camera_y_max - camera position limit   
+
 EHZ_width equ 128
         fcb   EHZ_width           ; layer_map_width     - Width (byte) nb of chunks in this layer map rows
         fcb   8                   ; layer_map_height    - Height (byte) nb of chunks in this layer map columns 
@@ -76,6 +80,9 @@ EHZ_width equ 128
         fdb   Chunk_EHZ_0         ; layer_chunk0        - index to chunk definition (subset of 8x16 tiles) id 0-127
 	fdb   0                   ; layer_chunk1        - index to chunk definition (subset of 8x16 tiles) id 128-255
         fdb   Tls_EHZ             ; layer_tiles         - location of tiles index (page and adress for each tiles)
+; --------------------------------------------
+ ; WARNING SHOULD BE ADJUSTED BASED ON MAP SIZE
+ ; --------------------------------------------
 	fdb   EHZ_width*0         ; layer_mul_ref       - table of precalculated values for y position in map
         fdb   EHZ_width*1
         fdb   EHZ_width*2
@@ -84,6 +91,9 @@ EHZ_width equ 128
         fdb   EHZ_width*5
         fdb   EHZ_width*6
         fdb   EHZ_width*7
+        fdb   EHZ_width*8
+        fdb   EHZ_width*9
+        fdb   EHZ_width*10
 	; only 8 lines of chunks in map, no need to go further
         
 Tls_EHZ  
@@ -111,16 +121,16 @@ TlsAni_EHZ
 
  ifdef halfline
 _Primary_Collision
-        INCLUDEBIN "./objects/level/stage/EHZ/map/halfline/primary-collision.bin"
+        INCLUDEBIN "./objects/level/stage/EHZ/map2/halfline/primary-collision.bin"
 _Secondary_Collision
-        INCLUDEBIN "./objects/level/stage/EHZ/map/halfline/secondary-collision.bin"
+        INCLUDEBIN "./objects/level/stage/EHZ/map2/halfline/secondary-collision.bin"
 _Flip_Collision
-        INCLUDEBIN "./objects/level/stage/EHZ/map/halfline/flip-collision.bin"
+        INCLUDEBIN "./objects/level/stage/EHZ/map2/halfline/flip-collision.bin"
  else
 _Primary_Collision
-        INCLUDEBIN "./objects/level/stage/EHZ/map/normal/primary-collision.bin"
+        INCLUDEBIN "./objects/level/stage/EHZ/map2/normal/primary-collision.bin"
 _Secondary_Collision
-        INCLUDEBIN "./objects/level/stage/EHZ/map/normal/secondary-collision.bin"
+        INCLUDEBIN "./objects/level/stage/EHZ/map2/normal/secondary-collision.bin"
 _Flip_Collision
-        INCLUDEBIN "./objects/level/stage/EHZ/map/normal/flip-collision.bin"
+        INCLUDEBIN "./objects/level/stage/EHZ/map2/normal/flip-collision.bin"
  endc
