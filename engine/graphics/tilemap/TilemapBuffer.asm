@@ -176,18 +176,14 @@ FeedTileBuffer
         ; compute position in cycling buffer
         ; ---------------------------------------------------------------------
  
-        ldb   tmb_x+1                       ; col mask (0-32)
-        andb  #%11111000                    ; tile width 8px (>>3) 
-        lsrb                                ; col size 4 bytes (<<2)
-        stb   @dyn
-        ldb   tmb_y+1                       
-        ;anda  #%00000000                   ; already initialized
-        andb  #%11110000                    ; line mask (0-16)
-        _lsld                               ; tile height 16px (>>4) 
-        _lsld                               ; line skip 128 bytes (<<7)
-        _lsld
-        addd  #0                            ; (dynamic) add x position to index 
-@dyn    equ   *-1
+; OPTIM SAM
+        ldb   tmb_y+1                                 ; each 16px steps in y add $80
+        lda   #%00010000
+        mul
+        ldb   tmb_x+1                                 ; each 8px steps in x add $04
+        andb  #%11111000
+        _lsrd
+
         adda  #tile_buffer/256
         std   b_loc
 
@@ -574,21 +570,17 @@ DrawBufferedTile
 
         ; compute position in cycling buffer
         ; ---------------------------------------------------------------------
-        ldb   <glb_camera_x_pos+1           ; col mask (0-32)
-        andb  #%11111000                    ; tile width 8px (>>3) 
-        lsrb                                ; col size 4 bytes (<<2)
-        stb   @dyn2
-        ldb   <glb_camera_y_pos+1
-        anda  #%00000000
-        andb  #%11110000                    ; line mask (0-16)
-        _lsld                               ; tile height 16px (>>4) 
-        _lsld                               ; line skip 128 bytes (<<7)
-        _lsld
-        addd  #0                            ; (dynamic) add x position to index 
-@dyn2   equ   *-1
-        addd  #tile_buffer
 
-        ldy   #tmb_hprio_tiles              ; high priority tiles queue
+; OPTIM SAM
+        ldb   <glb_camera_y_pos+1                     ; each 16px steps in y add $80
+        lda   #%00010000
+        mul
+        ldb   <glb_camera_x_pos+1                     ; each 8px steps in x add $04
+        andb  #%11111000
+        _lsrd
+
+        addd  #tile_buffer
+        ldy   #tmb_hprio_tiles                        ; high priority tiles queue
 
 ; **************************************
 ; * Tile rendering Loop
@@ -603,31 +595,31 @@ DBT_lloop
         ; tiles in col
         ; ****************
 DBT_cloop
-        pulu  d,x
+        pulu  d,x                      ; get a: b:draw routine page, x:draw routine addr
         pshs  u
         stb   $E7E6
         bne   @a
         inc   glb_alphaTiles           ; if a tile contains transparency, set the tag
-        bra   @skip
+        bra   @skip                
 @a      tsta
         bpl   @low
-        stb   ,y+
-        stx   ,y++
-        ldx   <glb_screen_location_1
-        stx   ,y++
-        ldx   <glb_screen_location_2
-        stx   ,y++
+        stb   ,y+                      ; high priority tile, not rendered yet, save in high prio queue b: draw routine page
+        stx   ,y++                     ; save in high prio queue x: draw routine address
+        ldx   <glb_screen_location_1   ; get draw location 1 in cycling buffer
+        stx   ,y++                     ; save in high prio queue
+        ldx   <glb_screen_location_2   ; get draw location 2 in cycling buffer
+        stx   ,y++                     ; save in high prio queue
         bra   @skip
-@low    ldu   <glb_screen_location_2
-        jsr   ,x
-@skip   puls  d,x,u
+@low    ldu   <glb_screen_location_2   ; load location for draw routine
+        jsr   ,x                       ; call tile draw routine (glb_screen_location_1 will be used in this routine)
+@skip   puls  d,x,u                    ; 
         leau  2,u
         stu   <glb_screen_location_2
         leax  2,x
         stx   <glb_screen_location_1
         pshs  x,u
         anda  #%00000000
-        andb  #%01111100 ; cycle thru this line (0-127) by 4 bytes
+        andb  #%01111100               ; cycle in tile buffer thru this line (0-127) by 4 bytes
         addd  #0
 l_pos   equ   *-2
         tfr   d,u

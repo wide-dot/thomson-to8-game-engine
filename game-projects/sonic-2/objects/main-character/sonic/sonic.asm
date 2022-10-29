@@ -3294,16 +3294,9 @@ KillCharacter                                         * KillCharacter:
         std   y_vel+dp
 
         ldd   #$60/2 ; init
-        ;ldd   #$03C2 ; cave
-        ;ldd   #$0A42 ; left wall flat
-        ;ldd   #$0827 ; loop
-        ;ldd   #$0CDC ; loop
         std   dp+x_pos
-        ldd   #$028F ; intit
-        ;ldd   #$02F0 ; cave
-        ;ldd   #$03AC ; left wall flat
-        ;ldd   #$022B ; loop
-        ;ldd   #$02BA ; loop
+        ldd   #$028F ; intit EHZ 1
+        ldd   #$02AF ; intit EHZ 2
         std   dp+y_pos
 
         ldd   #0

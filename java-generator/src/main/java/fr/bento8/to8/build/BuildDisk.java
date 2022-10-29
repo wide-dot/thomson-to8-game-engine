@@ -3022,7 +3022,7 @@ public class BuildDisk
 			reverse(data);
 			output = new Compressor().compress(new Optimizer().optimize(data, 0, 32640, 4, true), data, 0, true, false, delta);
 			reverse(output);
-			
+			System.out.println("Delta: "+Arrays.toString(delta));
 			Files.write(Paths.get(binFile+".zx0"), output);			
 			return output;
 

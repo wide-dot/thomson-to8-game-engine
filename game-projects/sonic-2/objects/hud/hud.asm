@@ -417,7 +417,7 @@ Hud_ChkTime                                           *Hud_ChkTime:
                                                       *        tst.w   (Game_paused).w ; is the game paused?
                                                       *        bne.s   Hud_ChkLives    ; if yes, branch
         ldx   glb_timer                               *        lea     (Timer).w,a1
-        cmpx  #$093c                                  *        cmpi.l  #$93B3B,(a1)+   ; is the time 9.59?
+        cmpx  #$093b                                  *        cmpi.l  #$93B3B,(a1)+   ; is the time 9.59?
         beq   Timeout                                 *        beq.w   loc_40E84       ; if yes, branch
                                                       *        addq.b  #1,-(a1)
                                                       *        cmpi.b  #60,(a1)
@@ -490,6 +490,9 @@ Hud_ChkTime                                           *Hud_ChkTime:
                                                       *; ===========================================================================
                                                       *
 Timeout                                               *loc_40E84:
+ ; fix
+        ldd   #0
+        std   glb_timer
                                                       *        clr.b   (Update_HUD_timer).w
                                                       *        lea     (MainCharacter).w,a0 ; a0=character
                                                       *        movea.l a0,a2
