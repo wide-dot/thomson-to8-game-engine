@@ -588,6 +588,20 @@ DrawBufferedTile
 ; **************************************
 ; * Tile rendering Loop
 ; **************************************
+
+; OPTIM SAM: ici l'idée est de garder le maximum de trucs dans les registres
+; car les accès mémoire sont couteux. U contient alors les données sur le
+; tile_buffer. Le PULU effectue le +4, et le modulo (buffer 128 octets)
+; se fait par CMPU/BNE qui est finalement le plus rapide (8 cycles l'essentiel
+; du temps) car on accède pas à la mémoire. X contient glb_screeb_location_1
+; lequel n'est mis à jour que lorsque c'est necessaire (paresseusement). Ainsi
+; sur les tiles vide on va très très vite. La variable glb_screeb_location_2
+; est elle aussi mise à jour que lorsque c'est nécéssaire, sa valeur étant
+; déduite de glb_screen_location_1 par un offset constant pré-calculé. Donc au
+; final sur les tiles vides (au moins la moitié des cas), la boucle revient
+; à faire PULU et LEAX. C'est très très rapide, et tout tient dans 128 octets
+; ce qui permet d'utiliser des sauts 8 bits.
+
         ldx   <glb_screen_location_1
 
 DBT_lloop
@@ -601,7 +615,7 @@ DBT_lloop
         std   l_pos
 
 DBT_cloop
-        pulu  d,y                       ; get a: b:draw routine page, x:draw routine addr
+        pulu  d,y                       ; get a: b:draw routine page, y:draw routine addr
         cmpu  #0
 l_pos   set   *-2
         bne   @c
@@ -610,30 +624,17 @@ l_pos2  set   *-2
 @c      stb   $E7E6
         bne   @a
         inc   glb_alphaTiles            ; if a tile contains transparency, set the tag
-        bra   @skip
+        bra   NXT_cloop
 @a      tsta
-        bpl   @low
-        stx   <glb_screen_location_1
-        ldx   #0
-hi_ptr  set   *-2
-        stb   ,x                        ; high priority tile, not rendered yet, save in high prio queue b: draw routine page
-        sty   1,x                       ; save in high prio queue x: draw routine address
-        ldd   <glb_screen_location_1    ; get draw location 1 in cycling buffer
-        std   3,x                       ; save in high prio queue
-        addd  #0                        ; get draw location 2 in cycling buffer
-delta3  set   *-2
-        std   5,x                       ; save in high prio queue
-        leax  7,x
-        stx   hi_ptr
-        ldx   <glb_screen_location_1
-        bra   @skip
-@low    pshs  u,x
-        stx   <glb_screen_location_1
-        leau  $1234,x                   ; load location for draw routine
+        bmi   highpri
+        pshs  u,x
+        stx   <glb_screen_location_1    ; sets location_1 for draw routine
+        leau  $1234,x                   ; load location_2 for draw routine
 delta   set   *-2
         jsr   ,y                        ; call tile draw routine (glb_screen_location_1 will be used in this routine)
         puls  u,x
-@skip   leax  2,x
+NXT_cloop
+        leax  2,x
 
         dec   DBT_ccpt
         bne   DBT_cloop
@@ -645,13 +646,13 @@ DBT_ccpt_bck equ   *-1
         ; last tile in col
         ; ****************
 
-        pulu  d,y
+        pulu  d,y                       ; get a: b:draw routine page, y:draw routine addr
         stb   $E7E6
         bne   @a
-        inc   glb_alphaTiles           ; if a tile contains transparency, set the tag
+        inc   glb_alphaTiles            ; if a tile contains transparency, set the tag
         bra   @skip
-@a      stx   <glb_screen_location_1
-        leau  $1234,x                   ; load location for draw routine
+@a      stx   <glb_screen_location_1    ; sets location_1 for draw routine
+        leau  $1234,x                   ; load location_2 for draw routine
 delta2  set   *-2
         jsr   ,y
 @skip
@@ -671,9 +672,24 @@ ls_pos  equ   *-2               ; line start pos
         adda  #tile_buffer/256  ; add base address
 
         dec   DBT_lcpt
-        lbne  DBT_lloop
+        bne   DBT_lloop
 @rts    clr   [hi_ptr]          ; end marker for high priority tiles
         rts
+
+highpri stx   <glb_screen_location_1
+        ldx   #0
+hi_ptr  set   *-2
+        stb   ,x                        ; high priority tile, not rendered yet, save in high prio queue b: draw routine page
+        sty   1,x                       ; save in high prio queue x: draw routine address
+        ldd   <glb_screen_location_1    ; get draw location 1 in cycling buffer
+        std   3,x                       ; save in high prio queue
+        addd  #0                        ; get draw location 2 in cycling buffer
+delta3  set   *-2
+        std   5,x                       ; save in high prio queue
+        leax  7,x
+        stx   hi_ptr
+        ldx   <glb_screen_location_1
+        bra   NXT_cloop
 
 ; ****************************************************************************************************************************
 ; *
