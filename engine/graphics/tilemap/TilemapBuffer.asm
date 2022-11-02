@@ -24,12 +24,12 @@ h_tl                  equ   dp_engine    ; nb of full sized (middle) horizontal 
 h_tl_bck              equ   dp_engine+1
 v_tl                  equ   dp_engine+2  ; nb of full sized (middle) vertical chunks
 c_h_tl                equ   dp_engine+3  ; variable that stores current left, middle or right width of chunks
-l_h_tl                equ   dp_engine+4 
-r_h_tl                equ   dp_engine+5 
-r_h_tl_bck            equ   dp_engine+6 
+l_h_tl                equ   dp_engine+4
+r_h_tl                equ   dp_engine+5
+r_h_tl_bck            equ   dp_engine+6
 c_v_tl                equ   dp_engine+7  ; variable that stores current up, middle or bottom height of chunks
-u_v_tl                equ   dp_engine+8 
-b_v_tl                equ   dp_engine+9 
+u_v_tl                equ   dp_engine+8
+b_v_tl                equ   dp_engine+9
 c_h_tl_bck            equ   dp_engine+10 ; backup value of horizontal width of chunks
 c_v_tl_bck            equ   dp_engine+11 ; backup value of vertical height of chunks
 cur_c                 equ   dp_engine+12 ; current chunk id
@@ -152,11 +152,11 @@ ComputeTileBuffer
 ; ****************************************************************************************************************************
 ; * FeedTileBuffer
 ; * Feed the tile buffer, based on camera x and y and a number of tiles in width and height
-; * 
-; * tmb_x      (0-32767)                  
-; * tmb_y      (0-32767)          
-; * glb_tmb_width  (1-20)       
-; * glb_tmb_height (1-13)        
+; *
+; * tmb_x      (0-32767)
+; * tmb_y      (0-32767)
+; * glb_tmb_width  (1-20)
+; * glb_tmb_height (1-13)
 ; *
 ; ****************************************************************************************************************************
 
@@ -166,7 +166,7 @@ FeedTileBuffer
         ; ---------------------------------------------------------------------
 
         lda   glb_map_pge
-        _SetCartPageA        
+        _SetCartPageA
         ldu   glb_map_adr
 
         anda  #0
@@ -175,7 +175,7 @@ FeedTileBuffer
 
         ; compute position in cycling buffer
         ; ---------------------------------------------------------------------
- 
+
 ; OPTIM SAM
         ldb   tmb_y+1                                 ; each 16px steps in y add $80
         lda   #%00010000
@@ -193,25 +193,25 @@ FeedTileBuffer
         _lsrd
         _lsrd
         _lsrd
-        _lsrd 
         _lsrd
-        _lsrd                                                 
+        _lsrd
+        _lsrd
         std   @dyn1
         ldd   tmb_y
         _lsrd
         _lsrd
         _lsrd
-        _lsrd 
+        _lsrd
         _lsrd
         _lsrd
         andb  #%11111110                              ; faster than _lsrd (last shift for 128px map) and lsld (2 bytes index in mul ref)
         leax  layer_mul_ref,u
         ldd   d,x                                     ; use precalculated values to get y in map (16 bits mul)
-        addd  #0                                      ; (dynamic) add x position to index 
+        addd  #0                                      ; (dynamic) add x position to index
 @dyn1   equ   *-2
         addd  glb_map_chunk_adr                       ; (dynamic) add map data address to index
         tfr   d,x
-        
+
         ; compute tile offset in chunks
         ; ---------------------------------------------------------------------
 
@@ -220,12 +220,12 @@ FeedTileBuffer
         asra
         asra
         sta   x_off+1                                 ; horizontal offset to first tile in top left chunk
-        asra  
+        asra
         suba  #8                                      ; chunk hold 8 tiles in a row
         nega
         cmpa  #0
-glb_tmb_width equ *-1                                 ; (dynamic) nb of tile in screen width 
-        blt   @a                                      ; branch if requested tiles in width are covered by more chunks than the first one 
+glb_tmb_width equ *-1                                 ; (dynamic) nb of tile in screen width
+        blt   @a                                      ; branch if requested tiles in width are covered by more chunks than the first one
         lda   glb_tmb_width                           ; if not cap to the requested width
 @a      sta   l_h_tl                                  ; save nb of tiles in left chunks
         lda   glb_tmb_width
@@ -242,15 +242,15 @@ glb_tmb_width equ *-1                                 ; (dynamic) nb of tile in 
         lda   tmb_y+1
         anda  #%01110000                              ; get tile position in chunk
         sta   y_off+1                                 ; vertical offset to first tile in top left chunk
-        asra  
-        asra  
-        asra  
-        asra  
+        asra
+        asra
+        asra
+        asra
         suba  #8                                      ; chunk hold 8 tiles in a col
         nega
         cmpa  #0
-glb_tmb_height equ *-1                                ; (dynamic) nb of tile in screen width 
-        blt   @a                                      ; branch if requested tiles in width are covered by the first chunk 
+glb_tmb_height equ *-1                                ; (dynamic) nb of tile in screen width
+        blt   @a                                      ; branch if requested tiles in width are covered by the first chunk
         lda   glb_tmb_height
 @a      sta   u_v_tl                                  ; save nb of vertical tiles in top chunks
         lda   glb_tmb_height                          ; (dynamic) nb of tile in screen height
@@ -284,7 +284,7 @@ glb_tmb_height equ *-1                                ; (dynamic) nb of tile in 
         andb  #%10000000               ; compute line start
         std   cl_pos_bck
         ldb   l_h_tl                   ; nb of tiles on left chunk
-        stb   c_h_tl                   ; store in current nb of tiles               
+        stb   c_h_tl                   ; store in current nb of tiles
         lda   c_v_tl_bck               ; compute location for next row
         ldb   #128                     ; ...
         mul                            ; ...
@@ -492,6 +492,7 @@ cpt_x fcb 0
 ; *
 ; ****************************************************************************************************************************
 
+; 29ms on avg
 DrawBufferedTile
 
         lda   glb_camera_move
@@ -499,15 +500,15 @@ DrawBufferedTile
         rts
 @a
 
-        ; disable page backup (page swap macros) 
-        ; mandatory if using T2 and direct access to E7E6 
+        ; disable page backup (page swap macros)
+        ; mandatory if using T2 and direct access to E7E6
         anda  #0
         sta   glb_Page
 
         ; compute number of tiles to render
         ; saves one tile row or col when camera pos is a multiple of tile size
         ; ---------------------------------------------------------------------
-        ldb   #tmb_vp_h_tiles-1               ; nb of tile in screen width 
+        ldb   #tmb_vp_h_tiles-1               ; nb of tile in screen width
         lda   <glb_camera_x_pos+1
         anda  #%00000111
         bne   @skip
@@ -537,36 +538,36 @@ DrawBufferedTile
         addb  #20                           ; on screen position of camera
 
         lsra                                ; x=x/2, sprites moves by 2 pixels on x axis
-        lsra                                ; x=x/2, RAMA RAMB interlace  
+        lsra                                ; x=x/2, RAMA RAMB interlace
         bcs   @RAM2First                    ; Branch if write must begin in RAM2 first
 @RAM1First
         sta   @dyn1
         lda   #40                           ; 40 bytes per line in RAMA or RAMB
         mul
         addd  #$C000                        ; (dynamic)
-@dyn1   equ   *-1        
+@dyn1   equ   *-1
         addd  #441 ; tileset should be declared with TILE8x16 center parameter in properties
         std   <glb_screen_location_2
-        pshs  d
-        std   s_loc2
         suba  #$20
-        std   <glb_screen_location_1     
+        std   <glb_screen_location_1
         bra   @end
 @RAM2First
         sta   @dyn2
         lda   #40                           ; 40 bytes per line in RAMA or RAMB
         mul
         addd  #$A000                        ; (dynamic)
-@dyn2   equ   *-1        
+@dyn2   equ   *-1
         addd  #441 ; tileset should be declared with TILE8x16 center parameter in properties
         std   <glb_screen_location_2
-        pshs  d
-        std   s_loc2
         addd  #$2001
         std   <glb_screen_location_1
-@end
-        pshs  d
-        std   s_loc1
+@end    std   s_loc1
+
+        ldd   <glb_screen_location_2
+        subd  <glb_screen_location_1
+        std   delta
+        std   delta2
+        std   delta3
 
         ; compute position in cycling buffer
         ; ---------------------------------------------------------------------
@@ -580,49 +581,59 @@ DrawBufferedTile
         _lsrd
 
         addd  #tile_buffer
-        ldy   #tmb_hprio_tiles                        ; high priority tiles queue
+
+        ldu   #tmb_hprio_tiles                        ; high priority tiles queue
+        stu   hi_ptr
 
 ; **************************************
 ; * Tile rendering Loop
 ; **************************************
+        ldx   <glb_screen_location_1
 
 DBT_lloop
+        ; tiles in col
+        ; ****************
         tfr   d,u
         std   ls_pos
         andb  #%10000000
+        std   l_pos2
+        addd  #%10000000
         std   l_pos
 
-        ; tiles in col
-        ; ****************
 DBT_cloop
-        pulu  d,x                      ; get a: b:draw routine page, x:draw routine addr
-        pshs  u
-        stb   $E7E6
+        pulu  d,y                       ; get a: b:draw routine page, x:draw routine addr
+        cmpu  #0
+l_pos   set   *-2
+        bne   @c
+        ldu   #0
+l_pos2  set   *-2
+@c      stb   $E7E6
         bne   @a
-        inc   glb_alphaTiles           ; if a tile contains transparency, set the tag
-        bra   @skip                
+        inc   glb_alphaTiles            ; if a tile contains transparency, set the tag
+        bra   @skip
 @a      tsta
         bpl   @low
-        stb   ,y+                      ; high priority tile, not rendered yet, save in high prio queue b: draw routine page
-        stx   ,y++                     ; save in high prio queue x: draw routine address
-        ldx   <glb_screen_location_1   ; get draw location 1 in cycling buffer
-        stx   ,y++                     ; save in high prio queue
-        ldx   <glb_screen_location_2   ; get draw location 2 in cycling buffer
-        stx   ,y++                     ; save in high prio queue
-        bra   @skip
-@low    ldu   <glb_screen_location_2   ; load location for draw routine
-        jsr   ,x                       ; call tile draw routine (glb_screen_location_1 will be used in this routine)
-@skip   puls  d,x,u                    ; 
-        leau  2,u
-        stu   <glb_screen_location_2
-        leax  2,x
         stx   <glb_screen_location_1
-        pshs  x,u
-        anda  #%00000000
-        andb  #%01111100               ; cycle in tile buffer thru this line (0-127) by 4 bytes
-        addd  #0
-l_pos   equ   *-2
-        tfr   d,u
+        ldx   #0
+hi_ptr  set   *-2
+        stb   ,x                        ; high priority tile, not rendered yet, save in high prio queue b: draw routine page
+        sty   1,x                       ; save in high prio queue x: draw routine address
+        ldd   <glb_screen_location_1    ; get draw location 1 in cycling buffer
+        std   3,x                       ; save in high prio queue
+        addd  #0                        ; get draw location 2 in cycling buffer
+delta3  set   *-2
+        std   5,x                       ; save in high prio queue
+        leax  7,x
+        stx   hi_ptr
+        ldx   <glb_screen_location_1
+        bra   @skip
+@low    pshs  u,x
+        stx   <glb_screen_location_1
+        leau  $1234,x                   ; load location for draw routine
+delta   set   *-2
+        jsr   ,y                        ; call tile draw routine (glb_screen_location_1 will be used in this routine)
+        puls  u,x
+@skip   leax  2,x
 
         dec   DBT_ccpt
         bne   DBT_cloop
@@ -630,47 +641,38 @@ l_pos   equ   *-2
         lda   #0
 DBT_ccpt_bck equ   *-1
         sta   DBT_ccpt
- 
+
         ; last tile in col
         ; ****************
 
-        pulu  d,x
-        pshs  u
+        pulu  d,y
         stb   $E7E6
         bne   @a
         inc   glb_alphaTiles           ; if a tile contains transparency, set the tag
         bra   @skip
-@a      ldu   <glb_screen_location_2
-        jsr   ,x
-@skip   puls  d,x,u
+@a      stx   <glb_screen_location_1
+        leau  $1234,x                   ; load location for draw routine
+delta2  set   *-2
+        jsr   ,y
+@skip
 
- 
         ; next line
         ; ****************
 
-        ldu   #0
-s_loc2  equ   *-2
-        leau  40*16,u
-        stu   <glb_screen_location_2
-        stu   s_loc2
         ldx   #0
 s_loc1  equ   *-2
         leax  40*16,x
-        stx   <glb_screen_location_1
         stx   s_loc1
-        pshs  x,u
-        
+
         ldd   #0
-ls_pos  equ   *-2              ; line start pos
+ls_pos  equ   *-2               ; line start pos
         addd  #128
         anda  #%00000111
-        adda  #tile_buffer/256 ; add base address
+        adda  #tile_buffer/256  ; add base address
 
         dec   DBT_lcpt
         lbne  DBT_lloop
-@rts    leas  4,s               ; empty the stack
-        lda   #0
-        sta   ,y                ; end marker for high priority tiles
+@rts    clr   [hi_ptr]          ; end marker for high priority tiles
         rts
 
 ; ****************************************************************************************************************************
@@ -688,8 +690,8 @@ ls_pos  equ   *-2              ; line start pos
 ; ****************************************************************************************************************************
 
 DrawHighPriorityBufferedTile
-        ; disable page backup (page swap macros) 
-        ; mandatory if using T2 and direct access to E7E6 
+        ; disable page backup (page swap macros)
+        ; mandatory if using T2 and direct access to E7E6
         anda  #0
         sta   glb_Page
 
