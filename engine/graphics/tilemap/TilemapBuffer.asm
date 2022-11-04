@@ -582,27 +582,27 @@ DrawBufferedTile
 
         addd  #tile_buffer
 
-        ldu   #tmb_hprio_tiles                        ; high priority tiles queue
+        ldu   #tmb_hprio_tiles+5                      ; high priority tiles queue
         stu   hi_ptr
 
 ; **************************************
 ; * Tile rendering Loop
 ; **************************************
 
-; OPTIM SAM: ici l'idée est de garder le maximum de trucs dans les registres
-; car les accès mémoire sont couteux. U contient alors les données sur le
-; tile_buffer. Le PULU effectue le +4, et le modulo (buffer 128 octets)
-; se fait par CMPU/BNE qui est finalement le plus rapide (8 cycles l'essentiel
-; du temps) car on accède pas à la mémoire. X contient glb_screeb_location_1
-; lequel n'est mis à jour que lorsque c'est necessaire (paresseusement). Ainsi
-; sur les tiles vide on va très très vite. La variable glb_screeb_location_2
-; est elle aussi mise à jour que lorsque c'est nécéssaire, sa valeur étant
-; déduite de glb_screen_location_1 par un offset constant pré-calculé. Donc au
-; final sur les tiles vides (au moins la moitié des cas), la boucle revient
-; à faire PULU et LEAX. C'est très très rapide, et tout tient dans 128 octets
-; ce qui permet d'utiliser des sauts 8 bits.
+        ; OPTIM SAM: ici l'idÃ©e est de garder le maximum de trucs dans les registres
+        ; car les accÃ¨s mÃ©moire sont couteux. U contient alors les donnÃ©es sur le
+        ; tile_buffer. Le PULU effectue le +4, et le modulo (buffer 128 octets)
+        ; se fait par CMPU/BNE qui est finalement le plus rapide (8 cycles l'essentiel
+        ; du temps) car on accÃ¨de pas Ã  la mÃ©moire. Y contient glb_screeb_location_1
+        ; lequel n'est mis Ã  jour que lorsque c'est necessaire (paresseusement). Ainsi
+        ; sur les tiles vide on va trÃ¨s trÃ¨s vite. La variable glb_screeb_location_2
+        ; est elle aussi mise Ã  jour que lorsque c'est nÃ©cÃ©ssaire, sa valeur Ã©tant
+        ; dÃ©duite de glb_screen_location_1 par un offset constant prÃ©-calculÃ©. Donc au
+        ; final sur les tiles vides (au moins la moitiÃ© des cas), la boucle revient
+        ; Ã  faire PULU et LEAY. C'est trÃ¨s trÃ¨s rapide, et tout tient dans 128 octets
+        ; ce qui permet d'utiliser des sauts 8 bits.
 
-        ldx   <glb_screen_location_1
+        ldy   <glb_screen_location_1
 
 DBT_lloop
         ; tiles in col
@@ -615,7 +615,7 @@ DBT_lloop
         std   l_pos
 
 DBT_cloop
-        pulu  d,y                       ; get a: b:draw routine page, y:draw routine addr
+        pulu  d,x                       ; get a: b:draw routine page, x:draw routine addr
         cmpu  #0
 l_pos   set   *-2
         bne   @c
@@ -627,14 +627,15 @@ l_pos2  set   *-2
         bra   NXT_cloop
 @a      tsta
         bmi   highpri
-        pshs  u,x
-        stx   <glb_screen_location_1    ; sets location_1 for draw routine
-        leau  $1234,x                   ; load location_2 for draw routine
+loc_tmp equ   glb_screen_location_2
+        stu   <loc_tmp                  ; saves U
+        sty   <glb_screen_location_1    ; sets location_1 for draw routine
+        leau  $1234,y                   ; load location_2 for draw routine
 delta   set   *-2
-        jsr   ,y                        ; call tile draw routine (glb_screen_location_1 will be used in this routine)
-        puls  u,x
+        jsr   ,x                        ; call tile draw routine (glb_screen_location_1 will be used in this routine)
+        ldu   <loc_tmp                  ; restore U
 NXT_cloop
-        leax  2,x
+        leay  2,y                       ; advances glb_screen_location_1
 
         dec   DBT_ccpt
         bne   DBT_cloop
@@ -646,24 +647,24 @@ DBT_ccpt_bck equ   *-1
         ; last tile in col
         ; ****************
 
-        pulu  d,y                       ; get a: b:draw routine page, y:draw routine addr
+        pulu  d,x                       ; get a: b:draw routine page, y:draw routine addr
         stb   $E7E6
         bne   @a
         inc   glb_alphaTiles            ; if a tile contains transparency, set the tag
         bra   @skip
-@a      stx   <glb_screen_location_1    ; sets location_1 for draw routine
-        leau  $1234,x                   ; load location_2 for draw routine
+@a      sty   <glb_screen_location_1    ; sets location_1 for draw routine
+        leau  $1234,y                   ; load location_2 for draw routine
 delta2  set   *-2
-        jsr   ,y
+        jsr   ,x
 @skip
 
         ; next line
         ; ****************
 
-        ldx   #0
+        ldy   #0
 s_loc1  equ   *-2
-        leax  40*16,x
-        stx   s_loc1
+        leay  40*16,y
+        sty   s_loc1
 
         ldd   #0
 ls_pos  equ   *-2               ; line start pos
@@ -673,22 +674,20 @@ ls_pos  equ   *-2               ; line start pos
 
         dec   DBT_lcpt
         bne   DBT_lloop
-@rts    clr   [hi_ptr]          ; end marker for high priority tiles
+@rts    ldx   hi_ptr
+        clr   -5,x              ; end marker for high priority tiles
         rts
 
-highpri stx   <glb_screen_location_1
-        ldx   #0
+highpri stu   <loc_tmp
+        ldu   #0
 hi_ptr  set   *-2
-        stb   ,x                        ; high priority tile, not rendered yet, save in high prio queue b: draw routine page
-        sty   1,x                       ; save in high prio queue x: draw routine address
-        ldd   <glb_screen_location_1    ; get draw location 1 in cycling buffer
-        std   3,x                       ; save in high prio queue
-        addd  #0                        ; get draw location 2 in cycling buffer
+        pshu  b,x,y                     ; saves prio,draw routine addr,location_1
+        leax  $1234,y                   ; compute location_2
 delta3  set   *-2
-        std   5,x                       ; save in high prio queue
-        leax  7,x
-        stx   hi_ptr
-        ldx   <glb_screen_location_1
+        stx   5,u                       ; save in high prio queue
+        leau  7+5,u
+        stu   hi_ptr
+        ldu   <loc_tmp
         bra   NXT_cloop
 
 ; ****************************************************************************************************************************
