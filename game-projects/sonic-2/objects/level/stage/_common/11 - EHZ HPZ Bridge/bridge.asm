@@ -517,7 +517,7 @@ Obj11_Depress                                         * Obj11_Depress:
         std   glb_d3                                  *         add.w   d0,d3
                                                       *         moveq   #0,d5
         ldy   #Obj11_DepressionOffsets-$80            *         lea     (Obj11_DepressionOffsets-$80).l,a5 ; table begin at length 8 so apply an offset of 8x16 bytes
-        lda   d,y                                     *         move.b  (a5,d3.w),d5
+        lda   d,y ; TODO read overflow d=$0AC4        *         move.b  (a5,d3.w),d5
         sta   glb_d5_b
         anda  #0
         ldb   glb_d2_b ; faster to get value in d2    *         andi.w  #$F,d3

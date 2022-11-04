@@ -664,8 +664,8 @@ RingLocPtrs
         fdb   EHZ1_Rings
         fdb   EHZ2_Rings
 
-EHZ1_Rings INCLUDEBIN ".\objects\manager\ring\map\EHZ_1_INDIVIDUAL.bin"
-EHZ2_Rings INCLUDEBIN ".\objects\manager\ring\map\EHZ_2_INDIVIDUAL.bin"
+EHZ1_Rings INCLUDEBIN "./objects/manager/ring/map/EHZ_1_INDIVIDUAL.bin"
+EHZ2_Rings INCLUDEBIN "./objects/manager/ring/map/EHZ_2_INDIVIDUAL.bin"
 
 Ring_Images
         fdb   draw_img_ring_1

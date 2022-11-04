@@ -175,7 +175,7 @@ Sonic_Stat_Record_Buf         fill  0,$100
 Sonic_Pos_Record_Buf          fill  0,$100
 Current_zone_and_act          fdb   0
 
- INCLUDE ".\objects\manager\ring\ring-manager-s3k-ram.asm"
+ INCLUDE "./objects/manager/ring/ring-manager-s3k-ram.asm"
 
 * ---------------------------------------------------------------------------
 * Level Globals

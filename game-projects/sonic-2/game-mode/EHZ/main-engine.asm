@@ -120,8 +120,8 @@ LevelMainLoop
         jsr   ForceRefresh
 
  ifdef halfline
-        ldb   #0                 ; sprite mask
-	jsr   EHZ_Mask
+        _MountObject ObjID_MaskSprite
+        jsr   ,x
  endc
 	jsr   EHZ_Back
         jsr   ComputeTileBuffer
@@ -133,8 +133,8 @@ LevelMainLoop
 
         jsr   DrawHighPriorityBufferedTile   
 
-        ldb   #2                ; frame mask
-	jsr   EHZ_Mask
+        _MountObject ObjID_MaskFrame
+        jsr   ,x
 
         _RunObject ObjID_HUD,#0 ; Head Up Display
         
@@ -259,28 +259,7 @@ EHZ_Back
         lda   #0
         sta   glb_alphaTiles
 
-        _RunObjectRoutineA ObjID_EHZ_Back,#0 ; set image location on screen and get image metadata
-        _SetCartPageA                        ; set metadata page
-
-	; get image location, this code works for a ND0 only image
-	; please adapt metadata decoding if you want another image
-	lda   13,x
-	ldx   14,x
-        _SetCartPageA                        ; set image routine memory page
-        ldu   <glb_screen_location_2
-        jmp   ,x                             ; call draw routine
-
-EHZ_Mask
-        _MountObject ObjID_Mask
-        jsr   ,x
-        _SetCartPageA        
-
-	; get image location, this code works for a ND0 only image
-	; please adapt metadata decoding if you want another image
-	lda   13,x
-	ldx   14,x
-        _SetCartPageA        
-        ldu   <glb_screen_location_2
+        _MountObject ObjID_EHZ_Back
         jmp   ,x
 
         INCLUDE "./engine/graphics/Tilemap/TileAnimScript.asm"  
