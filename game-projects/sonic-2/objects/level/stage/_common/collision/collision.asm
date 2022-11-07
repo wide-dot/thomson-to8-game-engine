@@ -9,16 +9,18 @@ glb_b_pg equ   dp_user+1 ; actually coupled to sonic var
                                                       * ; returns relevant block ID in (a1)
                                                       * ; a1 is pointer to block in chunk table
                                                       * ; ---------------------------------------------------------------------------
-                                                      * 
+                                                      *
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
+                                                      *
 ; unlinke in TilemapBuffer.asm
 ; maps are expected to be 128 chunks wide
-; you will need to change this code if not 
+; you will need to change this code if not
                                                       * ; loc_1E596: Floor_ChkTile:
-Find_Tile                                             * Find_Tile:
+Find_Tile
+   if 0
+   * OPTIM SAM: code d'origine gardé pour référence   * Find_Tile:
         lda   glb_map_chunk_pge
-        _SetCartPageA    
+        _SetCartPageA
         ldd   glb_d2                                  *         movea.w d2,d0   ; y_pos
         ; unlike original no interlace of background
         ; and foreground in tilemap                   *         add.w   d0,d0
@@ -35,8 +37,7 @@ Find_Tile                                             * Find_Tile:
         _lsrd ; shift only by 6 (64px not 128px)      *         lsr.w   #4,d1   ; x_pos/128 = x_of_chunk
         anda  #0
         andb  #$7F                                    *         andi.w  #$7F,d1
-        addd  glb_d0                                  *         add.w   d1,d0   ; d0 is relevant chunk ID now
-                                                      *         moveq   #-1,d1
+        addd  glb_d0                                  *         add.w   d1,d0   ; d0 is relevant chunk ID now                                                      *         moveq   #-1,d1
         ldx   glb_map_chunk_adr                       *         clr.w   d1              ; d1 is now $FFFF0000 = Chunk_Table
         leax  d,x                                     *         lea     (Level_Layout).w,a1
         lda   ,x                                      *         move.b  (a1,d0.w),d1    ; move 128*128 chunk ID to d1
@@ -61,6 +62,40 @@ Find_Tile                                             * Find_Tile:
         abx                                           *         add.w   d4,d1
         ; x is loaded with address of block ID        *         movea.l d1,a1   ; address of block ID
         rts                                           *         rts
+   else
+        * OPTIM SAM: ceci calcule la même chose qu'au dessus, mais en
+        * travaillant au maximum sur 8 bits pour gagner en perf.
+        lda   glb_map_chunk_pge
+        _SetCartPageA
+        ldx   glb_map_chunk_adr
+        ldd   glb_d3
+        _lsld
+        _lsld
+        anda  #$7F
+        leax  a,x
+        ldd   glb_d2
+        anda  #$0F
+        andb  #$80
+        lda   d,x
+        bpl   @a
+        ldx   glb_map_defchunk1_adr
+        anda  #%01111111
+        ldb   glb_map_defchunk1_pge
+        bra   @b
+@a      ldx   glb_map_defchunk0_adr
+        ldb   glb_map_defchunk0_pge
+@b      stb   chk_idx_pge
+        _SetCartPageB
+        ldb   glb_d2_b
+        andb  #$70
+        abx                                             * ajout de la partie basse
+        ldb   glb_d3+1                                  *
+        lsrb
+        andb  #%00011100
+        _lsrd                                           * d contient un mélange du A d'avant et les 3 bits de glb_d3
+        leax  d,x
+        rts
+   endc
                                                       * ; ===========================================================================
                                                       * ; precalculated values for Find_Tile
                                                       * ; (Sonic 1 calculated it every time instead of using a table)
@@ -72,9 +107,9 @@ Find_Tile                                             * Find_Tile:
                                                       *         endm
                                                       * ; ===========================================================================
 
-                                                      * 
+                                                      *
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
+                                                      *
                                                       * ; Scans vertically for up to 2 16x16 blocks to find solid ground or ceiling.
                                                       * ; d2 = y_pos
                                                       * ; d3 = x_pos
@@ -85,7 +120,7 @@ Find_Tile                                             * Find_Tile:
                                                       * ; returns relevant block ID in (a1)
                                                       * ; returns distance in d1
                                                       * ; returns angle in (a4)
-                                                      * 
+                                                      *
                                                       * ; loc_1E7D0:
 FindFloor                                             * FindFloor:
         _GetCartPageA
@@ -105,7 +140,7 @@ FindFloor                                             * FindFloor:
         ; III IIII IIII is the index of the 16x16 tile to use
 
         anda  #7                                      *         andi.w  #$3FF,d0
-        std   glb_d0           
+        std   glb_d0
                                                       *         beq.s   loc_1E7E2
         beq   loc_1E7E2  ; if tile is not solid at all, go ahead and test bottom tile
         lda   glb_d4
@@ -120,7 +155,7 @@ loc_1E7E2                                             * loc_1E7E2:
         jsr   FindFloor2 ; search up or down          *         bsr.w   FindFloor2
         ldd   glb_d2
         subd  glb_a3     ; remove delta-y to y_pos    *         sub.w   a3,d2
-        std   glb_d2     
+        std   glb_d2
 
         ldd   glb_d1
         addd  #$10
@@ -129,10 +164,10 @@ loc_1E7E2                                             * loc_1E7E2:
         _SetCartPageA
         rts                                           *         rts
                                                       * ; ===========================================================================
-                                                      * 
+                                                      *
 loc_1E7F0                                             * loc_1E7F0:      ; block has some solidity
         lda   glb_map_pge
-        _SetCartPageA    
+        _SetCartPageA
         ldx   Flip_Collision
         ldd   glb_d0 ; get tile id
         lda   d,x    ; get flip bits for this tile
@@ -144,7 +179,7 @@ loc_1E7F0                                             * loc_1E7F0:      ; block 
         std   glb_d0                                  *         andi.w  #$FF,d0
         beq   loc_1E7E2 ; no collision data           *         beq.s   loc_1E7E2
         lda   ColData_page
-        _SetCartPageA   
+        _SetCartPageA
         ldx   ColCurveMap                             *         lea     (ColCurveMap).l,a2
         abx
         lda   ,x     ; get angle for this tile        *         move.b  (a2,d0.w),(a4)  ; get angle from AngleMap --> (a4)
@@ -200,7 +235,7 @@ loc_1E7F0                                             * loc_1E7F0:      ; block 
         _SetCartPageA
         rts                                           *         rts
                                                       * ; ===========================================================================
-                                                      * 
+                                                      *
 loc_1E85E                                             * loc_1E85E:
         ldb   glb_d2_b                                *         movea.w d2,d1
         andb  #$F                                     *         andi.w  #$F,d1
@@ -208,7 +243,7 @@ loc_1E85E                                             * loc_1E85E:
         std   glb_d1
         addb  glb_d0_b                                *         add.w   d1,d0
         lbpl  loc_1E7E2                               *         bpl.w   loc_1E7E2
-                                                      * 
+                                                      *
 loc_1E86A                                             * loc_1E86A:
         ldd   glb_d2
         subd  glb_a3                                  *         sub.w   a3,d2
@@ -224,10 +259,10 @@ loc_1E86A                                             * loc_1E86A:
         _SetCartPageA
         rts                                           *         rts
                                                       * ; End of function FindFloor
-                                                      * 
-                                                      * 
+                                                      *
+                                                      *
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
+                                                      *
                                                       * ; Checks a 16x16 block to find solid ground or ceiling.
                                                       * ; d2 = y_pos
                                                       * ; d3 = x_pos
@@ -237,7 +272,7 @@ loc_1E86A                                             * loc_1E86A:
                                                       * ; returns relevant block ID in (a1)
                                                       * ; returns distance in d1
                                                       * ; returns angle in (a4)
-                                                      * 
+                                                      *
                                                       * ; loc_1E878:
 FindFloor2                                            * FindFloor2:
         jsr   Find_Tile                               *         bsr.w   Find_Tile
@@ -249,7 +284,7 @@ FindFloor2                                            * FindFloor2:
         lda   glb_d4
         bita  glb_d5_b                                *         btst    d5,d4
         bne   loc_1E898                               *         bne.s   loc_1E898
-                                                      * 
+                                                      *
 loc_1E88A                                             * loc_1E88A:
         ;                                             *         movea.w #$F,d1
         ldb   glb_d2_b                                *         movea.w d2,d0
@@ -260,10 +295,10 @@ loc_1E88A                                             * loc_1E88A:
         std   glb_d1
         rts                                           *         rts
                                                       * ; ===========================================================================
-                                                      * 
+                                                      *
 loc_1E898                                             * loc_1E898:
         lda   glb_map_pge
-        _SetCartPageA    
+        _SetCartPageA
         ldx   Flip_Collision
         ldd   glb_d0 ; get tile id
         lda   d,x    ; get flip bits for this tile
@@ -275,9 +310,9 @@ loc_1E898                                             * loc_1E898:
         std   glb_d0
         beq   loc_1E88A ; no collision data           *         beq.s   loc_1E88A
         lda   ColData_page
-        _SetCartPageA    
+        _SetCartPageA
         ldx   ColCurveMap                             *         lea     (ColCurveMap).l,a2
-        abx        
+        abx
         lda   ,x     ; get angle for this tile        *         move.b  (a2,d0.w),(a4)
         sta   [glb_a4]
         ldd   glb_d0 ; load collision id
@@ -327,7 +362,7 @@ loc_1E898                                             * loc_1E898:
         std   glb_d1
         rts                                           *         rts
                                                       * ; ===========================================================================
-                                                      * 
+                                                      *
 loc_1E900                       ; negative height     * loc_1E900:
         ldb   glb_d2_b          ; sensor y pos        *         movea.w d2,d1
         andb  #$F               ; in 16px tile        *         andi.w  #$F,d1
@@ -340,7 +375,7 @@ loc_1E900                       ; negative height     * loc_1E900:
         std   glb_d1            ; return dist in tile
         rts                                           *         rts
                                                       * ; ===========================================================================
-                                                      * 
+                                                      *
                                                       * ; Checks a 16x16 block to find solid ground or ceiling. May check an additional
                                                       * ; 16x16 block up for ceilings.
                                                       * ; d2 = y_pos
@@ -351,7 +386,7 @@ loc_1E900                       ; negative height     * loc_1E900:
                                                       * ; returns relevant block ID in (a1)
                                                       * ; returns distance in d1
                                                       * ; returns angle in (a4)
-                                                      * 
+                                                      *
                                                       * ; loc_1E910: Obj_CheckInFloor:
 Ring_FindFloor                                        * Ring_FindFloor:
                                                       *         bsr.w   Find_Tile
@@ -361,12 +396,12 @@ Ring_FindFloor                                        * Ring_FindFloor:
                                                       *         beq.s   loc_1E922
                                                       *         btst    d5,d4
                                                       *         bne.s   loc_1E928
-                                                      * 
+                                                      *
                                                       * loc_1E922:
                                                       *         movea.w #$10,d1
                                                       *         rts
                                                       * ; ===========================================================================
-                                                      * 
+                                                      *
                                                       * loc_1E928:
                                                       *         movea.l (Collision_addr).w,a2
                                                       *         move.b  (a2,d0.w),d0
@@ -409,13 +444,13 @@ Ring_FindFloor                                        * Ring_FindFloor:
                                                       *         sub.w   d0,d1
                                                       *         rts
                                                       * ; ===========================================================================
-                                                      * 
+                                                      *
                                                       * loc_1E996:
                                                       *         movea.w d2,d1
                                                       *         andi.w  #$F,d1
                                                       *         add.w   d1,d0
                                                       *         bpl.w   loc_1E922
-                                                      * 
+                                                      *
                                                       * loc_1E9A2:
                                                       *         sub.w   a3,d2
                                                       *         bsr.w   FindFloor2
@@ -423,9 +458,9 @@ Ring_FindFloor                                        * Ring_FindFloor:
                                                       *         subi.w  #$10,d1
         rts                                           *         rts
                                                       * ; ===========================================================================
-                                                      * 
+                                                      *
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
+                                                      *
                                                       * ; Scans horizontally for up to 2 16x16 blocks to find solid walls.
                                                       * ; d2 = y_pos
                                                       * ; d3 = x_pos
@@ -436,7 +471,7 @@ Ring_FindFloor                                        * Ring_FindFloor:
                                                       * ; returns relevant block ID in (a1)
                                                       * ; returns distance to left/right in d1
                                                       * ; returns angle in (a4)
-                                                      * 
+                                                      *
                                                       * ; loc_1E9B0:
 FindWall                                              * FindWall:
         _GetCartPageA
@@ -450,7 +485,7 @@ FindWall                                              * FindWall:
         lda   glb_d4
         bita  glb_d5_b                                *         btst    d5,d4
         bne   loc_1E9D0                               *         bne.s   loc_1E9D0
-                                                      * 
+                                                      *
 loc_1E9C2                                             * loc_1E9C2:
         ldd   glb_d3
         addd  glb_a3                                  *         add.w   a3,d3
@@ -466,10 +501,10 @@ loc_1E9C2                                             * loc_1E9C2:
         _SetCartPageA
         rts                                           *         rts
                                                       * ; ===========================================================================
-                                                      * 
+                                                      *
 loc_1E9D0                                             * loc_1E9D0:
         lda   glb_map_pge
-        _SetCartPageA    
+        _SetCartPageA
         ldx   Flip_Collision
         ldd   glb_d0 ; get tile id
         lda   d,x    ; get flip bits for this tile
@@ -481,7 +516,7 @@ loc_1E9D0                                             * loc_1E9D0:
         std   glb_d0                                  *         andi.w  #$FF,d0 ; relevant collisionArrayEntry
         beq   loc_1E9C2 ; no collision data           *         beq.s   loc_1E9C2
         lda   ColData_page
-        _SetCartPageA    
+        _SetCartPageA
         ldx   ColCurveMap                             *         lea     (ColCurveMap).l,a2
         abx
         lda   ,x     ; get angle for this tile        *         move.b  (a2,d0.w),(a4)
@@ -539,13 +574,13 @@ loc_1E9D0                                             * loc_1E9D0:
         _SetCartPageA
         rts                                           *         rts
                                                       * ; ===========================================================================
-                                                      * 
+                                                      *
 loc_1EA3E                                             * loc_1EA3E:
         ldb   glb_d3_b                                *         movea.w d3,d1
         andb  #7                                      *         andi.w  #$F,d1
         addb  glb_d0_b                                *         add.w   d1,d0
         lbpl  loc_1E9C2                               *         bpl.w   loc_1E9C2       ; no collision
-                                                      * 
+                                                      *
 loc_1EA4A                                             * loc_1EA4A:
         ldd   glb_d3
         subd  glb_a3                                  *         sub.w   a3,d3
@@ -561,10 +596,10 @@ loc_1EA4A                                             * loc_1EA4A:
         _SetCartPageA
         rts                                           *         rts
                                                       * ; End of function FindWall
-                                                      * 
-                                                      * 
+                                                      *
+                                                      *
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                                      * 
+                                                      *
                                                       * ; Checks a 16x16 blocks to find solid walls.
                                                       * ; d2 = y_pos
                                                       * ; d3 = x_pos
@@ -574,7 +609,7 @@ loc_1EA4A                                             * loc_1EA4A:
                                                       * ; returns relevant block ID in (a1)
                                                       * ; returns distance to left/right in d1
                                                       * ; returns angle in (a4)
-                                                      * 
+                                                      *
                                                       * ; loc_1EA58:
 FindWall2                                             * FindWall2:
         jsr   Find_Tile                               *         bsr.w   Find_Tile
@@ -586,7 +621,7 @@ FindWall2                                             * FindWall2:
         lda   glb_d4
         bita  glb_d5_b                                *         btst    d5,d4
         bne   loc_1EA78                               *         bne.s   loc_1EA78
-                                                      * 
+                                                      *
 loc_1EA6A                                             * loc_1EA6A:
         ;                                             *         movea.w #$F,d1
         ldb   glb_d3_b                                *         movea.w d3,d0
@@ -597,10 +632,10 @@ loc_1EA6A                                             * loc_1EA6A:
         std   glb_d1
         rts                                           *         rts
                                                       * ; ===========================================================================
-                                                      * 
+                                                      *
 loc_1EA78                                             * loc_1EA78:
         lda   glb_map_pge
-        _SetCartPageA    
+        _SetCartPageA
         ldx   Flip_Collision
         ldd   glb_d0 ; get tile id
         lda   d,x    ; get flip bits for this tile
@@ -612,7 +647,7 @@ loc_1EA78                                             * loc_1EA78:
         std   glb_d0                                  *         andi.w  #$FF,d0
         beq   loc_1EA6A ; no collision data           *         beq.s   loc_1EA6A
         lda   ColData_page
-        _SetCartPageA    
+        _SetCartPageA
         ldx   ColCurveMap                             *         lea     (ColCurveMap).l,a2
         abx
         lda   ,x     ; get angle for this tile        *         move.b  (a2,d0.w),(a4)
@@ -667,7 +702,7 @@ loc_1EA78                                             * loc_1EA78:
         rts                                           *         rts
 
                                                       * ; ===========================================================================
-                                                      * 
+                                                      *
 loc_1EAE0                                             * loc_1EAE0:
         ldb   glb_d3_b                                *         movea.w d3,d1
         andb  #7                                      *         andi.w  #$F,d1
@@ -680,7 +715,7 @@ loc_1EAE0                                             * loc_1EAE0:
         std   glb_d1
         rts                                           *         rts
                                                       * ; End of function FindWall2
-                                                      * 
+                                                      *
 
 Primary_Angle                   fcb   0
 Secondary_Angle                 fcb   0
