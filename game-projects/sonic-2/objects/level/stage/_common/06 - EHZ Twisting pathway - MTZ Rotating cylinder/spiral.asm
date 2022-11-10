@@ -3,49 +3,51 @@
                                                       * ; Object 06 - Rotating cylinder in MTZ, twisting spiral pathway in EHZ
                                                       * ; ----------------------------------------------------------------------------
                                                       * ; Sprite_214C4:
-                                                      * Obj06:
+Obj06                                                 * Obj06:
                                                       *         moveq   #0,d0
-                                                      *         move.b  routine(a0),d0
-                                                      *         move.w  Obj06_Index(pc,d0.w),d1
-                                                      *         jsr     Obj06_Index(pc,d1.w)
-                                                      *         tst.w   (Two_player_mode).w
-                                                      *         beq.s   Obj06_ChkDel
-                                                      *         rts
+        lda   routine,u                               *         move.b  routine(a0),d0
+        asla
+        ldx   #Obj06_Index                            *         move.w  Obj06_Index(pc,d0.w),d1
+        jsr   [a,x]                                   *         jsr     Obj06_Index(pc,d1.w)
+        ;                                             *         tst.w   (Two_player_mode).w
+        ;                                             *         beq.s   Obj06_ChkDel
+        ;                                             *         rts
                                                       * ; ---------------------------------------------------------------------------
                                                       * ; seems to be an optimization to delete the object the instant it goes offscreen
                                                       * ; only in 1-player mode, because it would screw up the other player
                                                       * ; loc_214DA:
-                                                      * Obj06_ChkDel:
-                                                      *         move.w  x_pos(a0),d0
-                                                      *         andi.w  #$FF80,d0
-                                                      *         sub.w   (Camera_X_pos_coarse).w,d0
-                                                      *         cmpi.w  #$280,d0
-                                                      *         bhi.s   JmpTo19_DeleteObject
-                                                      *         rts
+Obj06_ChkDel                                          * Obj06_ChkDel:
+        ldd   x_pos,u                                 *         move.w  x_pos(a0),d0
+        andb  #$C0 ; wide-dot factor                  *         andi.w  #$FF80,d0
+        subd  glb_camera_x_pos_coarse                 *         sub.w   (Camera_X_pos_coarse).w,d0
+        cmpd  #$40+160+$20+$40  ; wide-dot factor     *         cmpi.w  #$280,d0
+        bhi   JmpTo19_DeleteObject                    *         bhi.s   JmpTo19_DeleteObject
+        rts                                           *         rts
                                                       * ; ---------------------------------------------------------------------------
-                                                      * JmpTo19_DeleteObject ; JmpTo
-                                                      *         jmp     (DeleteObject).l
+JmpTo19_DeleteObject                                  * JmpTo19_DeleteObject ; JmpTo
+        jmp   DeleteObject                            *         jmp     (DeleteObject).l
                                                       * 
                                                       * ; ===========================================================================
                                                       * ; off_214F4:
-                                                      * Obj06_Index:    offsetTable
-                                                      *                 offsetTableEntry.w Obj06_Init           ; 0
-                                                      *                 offsetTableEntry.w Obj06_Spiral         ; 2
-                                                      *                 offsetTableEntry.w Obj06_Cylinder       ; 4
+Obj06_Index                                           * Obj06_Index:    offsetTable
+        fdb   Obj06_Init                              *                 offsetTableEntry.w Obj06_Init           ; 0
+        fdb   Obj06_Spiral                            *                 offsetTableEntry.w Obj06_Spiral         ; 2
+        fdb   Obj06_Cylinder                          *                 offsetTableEntry.w Obj06_Cylinder       ; 4
                                                       * ; ===========================================================================
                                                       * ; loc_214FA:
-                                                      * Obj06_Init:
-                                                      *         addq.b  #2,routine(a0) ; => Obj06_Spiral
-                                                      *         move.b  #$D0,width_pixels(a0)
-                                                      *         tst.b   subtype(a0)
-                                                      *         bpl.s   Obj06_Spiral
-                                                      *         addq.b  #2,routine(a0) ; => Obj06_Cylinder
-                                                      *         bra.w   Obj06_Cylinder
+Obj06_Init                                            * Obj06_Init:
+        inc   routine,u                               *         addq.b  #2,routine(a0) ; => Obj06_Spiral
+        lda   #$D0/2 ; wide-dot factor
+        sta   width_pixels,u                          *         move.b  #$D0,width_pixels(a0)
+        tst   subtype,u                               *         tst.b   subtype(a0)
+        bpl   Obj06_Spiral                            *         bpl.s   Obj06_Spiral
+        inc   routine,u                               *         addq.b  #2,routine(a0) ; => Obj06_Cylinder
+        bra   Obj06_Cylinder                          *         bra.w   Obj06_Cylinder
                                                       * 
                                                       * ; ===========================================================================
                                                       * ; spiral pathway from EHZ
                                                       * ; loc_21512:
-                                                      * Obj06_Spiral:
+Obj06_Spiral                                          * Obj06_Spiral:
                                                       *         lea     (MainCharacter).w,a1 ; a1=character
                                                       *         moveq   #p1_standing_bit,d6
                                                       *         bsr.s   +
@@ -155,25 +157,25 @@
                                                       *         lsr.w   #3,d0
                                                       *         andi.w  #$3F,d0
                                                       *         move.b  Obj06_FlipAngleTable(pc,d0.w),flip_angle(a1)
-                                                      *         rts
+        rts                                           *         rts
                                                       * 
                                                       * ; ===========================================================================
                                                       * ; Fun fact - Sega had a patent which included the original source code
                                                       * ; for these tables: https://patents.google.com/patent/US5411272
                                                       * ; byte_21634:
                                                       * ; sloopdirtbl:
-                                                      * Obj06_FlipAngleTable:
-                                                      *         dc.b    $00,$00
-                                                      *         dc.b    $01,$01,$16,$16,$16,$16,$2C,$2C
-                                                      *         dc.b    $2C,$2C,$42,$42,$42,$42,$58,$58
-                                                      *         dc.b    $58,$58,$6E,$6E,$6E,$6E,$84,$84
-                                                      *         dc.b    $84,$84,$9A,$9A,$9A,$9A,$B0,$B0
-                                                      *         dc.b    $B0,$B0,$C6,$C6,$C6,$C6,$DC,$DC
-                                                      *         dc.b    $DC,$DC,$F2,$F2,$F2,$F2,$01,$01
-                                                      *         dc.b    $00,$00
+Obj06_FlipAngleTable                                  * Obj06_FlipAngleTable:
+        fcb   0,0                                     *         dc.b    $00,$00
+        fcb   2,2,4,4,4,4,6,6                         *         dc.b    $01,$01,$16,$16,$16,$16,$2C,$2C
+        fcb   6,6,8,8,8,8,10,10                       *         dc.b    $2C,$2C,$42,$42,$42,$42,$58,$58
+        fcb   10,10,12,12,12,12,14,14                 *         dc.b    $58,$58,$6E,$6E,$6E,$6E,$84,$84
+        fcb   14,14,16,16,16,16,18,18                 *         dc.b    $84,$84,$9A,$9A,$9A,$9A,$B0,$B0
+        fcb   18,18,20,20,20,20,22,22                 *         dc.b    $B0,$B0,$C6,$C6,$C6,$C6,$DC,$DC
+        fcb   22,22,24,24,24,24,2,2                   *         dc.b    $DC,$DC,$F2,$F2,$F2,$F2,$01,$01
+        fcb   0,0                                     *         dc.b    $00,$00
                                                       * ; byte_21668:
                                                       * ; slooptbl:
-                                                      * Obj06_CosineTable:
+Obj06_CosineTable                                     * Obj06_CosineTable:
                                                       *         dc.b     32, 32, 32, 32, 32, 32, 32, 32
                                                       *         dc.b     32, 32, 32, 32, 32, 32, 32, 32
                                                       * 
@@ -243,7 +245,7 @@
                                                       * ; ===========================================================================
                                                       * ; rotating meshed cage from MTZ
                                                       * ; loc_21808:
-                                                      * Obj06_Cylinder:
+Obj06_Cylinder                                        * Obj06_Cylinder:
                                                       *         lea     (MainCharacter).w,a1 ; a1=character
                                                       *         lea     (MTZCylinder_Angle_Sonic).w,a2
                                                       *         moveq   #p1_standing_bit,d6
@@ -340,7 +342,7 @@
                                                       *         move.w  #1,inertia(a1)
                                                       * 
                                                       * return_2191E:
-                                                      *         rts
+        rts                                           *         rts
                                                       * ; ===========================================================================
                                                       * 
                                                       *     if ~~removeJmpTos

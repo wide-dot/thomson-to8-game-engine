@@ -611,8 +611,10 @@ DBT_lloop
         std   ls_pos
         andb  #%10000000
         std   l_pos2
+        std   l_pos4
         addd  #%10000000
         std   l_pos
+        std   l_pos3
 
 DBT_cloop
         pulu  d,x                       ; get a: b:draw routine page, x:draw routine addr
@@ -622,10 +624,8 @@ l_pos   set   *-2
         ldu   #0
 l_pos2  set   *-2
 @c      stb   $E7E6
-        bne   @a
-        inc   glb_alphaTiles            ; if a tile contains transparency, set the tag
-        bra   NXT_cloop
-@a      tsta
+        beq   empty_tile
+        tsta
         bmi   highpri
 loc_tmp equ   glb_screen_location_2
         stu   <loc_tmp                  ; saves U
@@ -689,6 +689,25 @@ delta3  set   *-2
         stu   hi_ptr
         ldu   <loc_tmp
         bra   NXT_cloop
+
+empty_tile
+        inc   glb_alphaTiles
+        lda   DBT_ccpt
+@a      leay  2,y
+        deca
+        beq   @b
+        ldb   1,u
+        bne   @b
+        leau  4,u
+        cmpu  #0
+l_pos3  set   *-2
+        bne   @a
+        ldu   #0
+l_pos4  set   *-2
+        bra   @a
+@b      sta   DBT_ccpt
+        beq   DBT_ccpt_bck-1
+        jmp   DBT_cloop
 
 ; ****************************************************************************************************************************
 ; *

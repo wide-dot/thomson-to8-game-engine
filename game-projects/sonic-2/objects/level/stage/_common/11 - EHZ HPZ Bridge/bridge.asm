@@ -43,13 +43,6 @@ Obj11_Index                                           * Obj11_Index:    offsetTa
                                                       * ; loc_F694: Obj11_Main:
 Obj11_Init                                            * Obj11_Init:
         inc   routine,u                               *         addq.b  #2,routine(a0)
-
- ifdef halfline
-        ;ldd   y_pos,u
-        ;addd  #1
-        ;std   y_pos,u ; fix for interlace alignment
- endc
-
         ldd   #Img_bridge_log   
         std   image_set,u                             *         move.l  #Obj11_MapUnc_FC70,mappings(a0)
                                                       *         move.w  #make_art_tile(ArtTile_ArtNem_EHZ_Bridge,2,0),art_tile(a0)

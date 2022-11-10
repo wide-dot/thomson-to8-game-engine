@@ -112,8 +112,8 @@ public class CommonSubImages {
 				        int xo = 0, yo = 0, xb = 0, yb = 0;
 					        
 				        // change position of B
-				        for (xo = imageB.getWidth()-1; xo >= -(imageA.getWidth()-1); xo--) {
-				        	for (yo = imageB.getHeight()-1; yo >= -(imageA.getHeight()-1); yo--) {
+				        //for (xo = imageB.getWidth()-1; xo >= -(imageA.getWidth()-1); xo--) {
+				        	//for (yo = imageB.getHeight()-1; yo >= -(imageA.getHeight()-1); yo--) {
 				    	        currentPxCount = 0;
 				    	        for (int x = 0; x < imageA.getWidth(); x++) {
 				    	            for (int y = 0; y < imageA.getHeight(); y++) {
@@ -131,8 +131,8 @@ public class CommonSubImages {
 				    	        	byo = yo;
 				    	        }	    	        
 					        }
-		            	}
-		        	}
+		            	//}
+		        	//}
 		        }
 
 		        if (bestPxCount > 0) {

@@ -177,6 +177,7 @@ ScrollHoriz                                           * ScrollHoriz:
                                                       *         move.w  d0,d1
                                                       *         sub.w   (a1),d1         ; subtract old camera position
                                                       *         asl.w   #8,d1           ; shift up by a byte
+        andb  #$FE
         std   glb_camera_x_pos                        *         move.w  d0,(a1)         ; set new camera position
                                                       *         move.w  d1,(a4)         ; set difference between old and new positions
                                                       *         rts
@@ -195,7 +196,6 @@ ScrollHoriz                                           * ScrollHoriz:
 ScrollVerti                                           * ScrollVerti:
                                                       *         moveq   #0,d1
         ldd   dp+y_pos                                *         move.w  y_pos(a0),d0
-        andb  #$FE
         subd  glb_camera_y_pos                        *         sub.w   (a1),d0         ; subtract camera Y pos
         ;ldx   glb_camera_y_min_pos                   *         cmpi.w  #-$100,(Camera_Min_Y_pos).w ; does the level wrap vertically?
         ;cmpx  #-$100
@@ -372,6 +372,7 @@ ScrollVerti                                           * ScrollVerti:
                                                       *         move.w  d3,(a4)         ; set difference between old and new positions
         ldd   #0
 @scval  equ   *-2
+        andb  #$FE
         std   glb_camera_y_pos                        *         move.l  d1,(a1)         ; set new camera Y pos
         rts                                           *         rts
                                                       * ; End of function ScrollVerti
