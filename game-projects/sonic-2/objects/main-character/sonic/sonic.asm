@@ -3905,43 +3905,72 @@ Lkp_SonAni_Run
                                                       *
                                                       *return_1B51E:
                                                       *  rts
+SonAni_Tumble
+        fdb   0
+        fdb   Img_sonic_095 ; 2
+        fdb   Img_sonic_096 ; 4
+        fdb   Img_sonic_097 ; 6
+        fdb   Img_sonic_098 ; 8
+        fdb   Img_sonic_099 ; 10
+        fdb   Img_sonic_100 ; 12
+        fdb   Img_sonic_101 ; 14
+        fdb   Img_sonic_102 ; 16
+        fdb   Img_sonic_103 ; 18
+        fdb   Img_sonic_104 ; 20
+        fdb   Img_sonic_105 ; 22 
+        fdb   Img_sonic_106 ; 24
+        fdb   Img_sonic_095 ; 2
+        fdb   Img_sonic_096 ; 4
+        fdb   Img_sonic_097 ; 6
+        fdb   Img_sonic_098 ; 8
+        fdb   Img_sonic_099 ; 10
+        fdb   Img_sonic_100 ; 12
+
                                                       *; ===========================================================================
                                                       *; loc_1B520:
 SAnim_Tumble                                          *SAnim_Tumble:
-                                                      *  move.b  flip_angle(a0),d0
+        ldy   #SonAni_Tumble
+        lda   flip_angle,u                            *  move.b  flip_angle(a0),d0
                                                       *  moveq   #0,d1
-                                                      *  move.b  status(a0),d2
-                                                      *  andi.b  #1,d2
-                                                      *  bne.s   SAnim_Tumble_Left
+        ldb   status,u                                *  move.b  status(a0),d2
+        andb  #1                                      *  andi.b  #1,d2
+        bne   SAnim_Tumble_Left                       *  bne.s   SAnim_Tumble_Left
                                                       *
-                                                      *  andi.b  #$FC,render_flags(a0)
-                                                      *  addi.b  #$B,d0
-                                                      *  divu.w  #$16,d0
-                                                      *  addi.b  #$5F,d0
-                                                      *  move.b  d0,mapping_frame(a0)
-                                                      *  move.b  #0,anim_frame_duration(a0)
+        ldb   render_flags+dp
+        andb  #^(render_xmirror_mask|render_ymirror_mask) *  andi.b  #$FC,render_flags(a0)
+        ;                                             *  addi.b  #$B,d0
+        ;                                             *  divu.w  #$16,d0
+        ;                                             *  addi.b  #$5F,d0
+        ldx   a,y
+        stx   image_set,u                             *  move.b  d0,mapping_frame(a0)
+        andb  #0
+        stb   anim_frame_duration,u                   *  move.b  #0,anim_frame_duration(a0)
         rts                                           *  rts
                                                       *; ===========================================================================
                                                       *; loc_1B54E:
 SAnim_Tumble_Left                                     *SAnim_Tumble_Left:
-                                                      *  andi.b  #$FC,render_flags(a0)
-                                                      *  tst.b   flip_turned(a0)
-                                                      *  beq.s   loc_1B566
-                                                      *  ori.b   #1,render_flags(a0)
-                                                      *  addi.b  #$B,d0
+        ldb   render_flags+dp
+        andb  #^(render_xmirror_mask|render_ymirror_mask) *  andi.b  #$FC,render_flags(a0)
+        tst   flip_turned,u                           *  tst.b   flip_turned(a0)
+        beq   loc_1B566                               *  beq.s   loc_1B566
+        orb   #render_xmirror_mask
+        stb   render_flags,u                          *  ori.b   #1,render_flags(a0)
+        ;                                             *  addi.b  #$B,d0
         bra   loc_1B572                               *  bra.s   loc_1B572
                                                       *; ===========================================================================
                                                       *
 loc_1B566                                             *loc_1B566:
-                                                      *  ori.b   #3,render_flags(a0)
-                                                      *  neg.b   d0
-                                                      *  addi.b  #$8F,d0
+        orb   #render_xmirror_mask|render_ymirror_mask *  ori.b   #3,render_flags(a0)
+        ;                                             *  neg.b   d0
+        adda  #2*6                                    *  addi.b  #$8F,d0
                                                       *
 loc_1B572                                             *loc_1B572:
-                                                      *  divu.w  #$16,d0
-                                                      *  addi.b  #$5F,d0
-                                                      *  move.b  d0,mapping_frame(a0)
-                                                      *  move.b  #0,anim_frame_duration(a0)
+        ;                                             *  divu.w  #$16,d0
+        ;                                             *  addi.b  #$5F,d0
+        ldx   a,y
+        stx   image_set,u                             *  move.b  d0,mapping_frame(a0)
+        andb  #0
+        stb   anim_frame_duration,u                   *  move.b  #0,anim_frame_duration(a0)
         rts                                           *  rts
                                                       *; ===========================================================================
                                                       *; loc_1B586:

@@ -25,6 +25,7 @@ MarkObjGone                                           *MarkObjGone:
                                                       *        bra.w   DisplaySprite
                                                       *+
         ldd   x_pos,u                                 *        move.w  x_pos(a0),d0
+MarkObjGone2
         andb  #$C0 ; wide-dot factor                  *        andi.w  #$FF80,d0
         subd  glb_camera_x_pos_coarse                 *        sub.w   (Camera_X_pos_coarse).w,d0
         cmpd  #$40+160+$20+$40 ; wide-dot factor      *        cmpi.w  #$80+320+$40+$80,d0     ; This gives an object $80 pixels of room offscreen before being unloaded (the $40 is there to round up 320 to a multiple of $80)
