@@ -1,32 +1,44 @@
+        INCLUDE "./engine/macros.asm"   
+        SETDP   dp/256
                                                       * ; ===========================================================================
                                                       * ; ----------------------------------------------------------------------------
                                                       * ; Object 2E - Monitor contents (code for power-up behavior and rising image)
                                                       * ; ----------------------------------------------------------------------------
                                                       * 
-                                                      * Obj2E:
+Obj2E                                                 * Obj2E:
                                                       *         moveq   #0,d0
-                                                      *         move.b  routine(a0),d0
-                                                      *         move.w  Obj2E_Index(pc,d0.w),d1
-                                                      *         jmp     Obj2E_Index(pc,d1.w)
+        lda   routine,u                               *         move.b  routine(a0),d0
+        asla
+        ldx   #Obj2E_Index                            *         move.w  Obj2E_Index(pc,d0.w),d1
+        jmp   [a,x]                                   *         jmp     Obj2E_Index(pc,d1.w)
                                                       * ; ===========================================================================
                                                       * ; off_12862:
-                                                      * Obj2E_Index:    offsetTable
-                                                      *                 offsetTableEntry.w Obj2E_Init   ; 0
-                                                      *                 offsetTableEntry.w Obj2E_Raise  ; 2
-                                                      *                 offsetTableEntry.w Obj2E_Wait   ; 4
+Obj2E_Index                                           * Obj2E_Index:    offsetTable
+        fdb   Obj2E_Init                              *                 offsetTableEntry.w Obj2E_Init   ; 0
+        fdb   Obj2E_Animate
+        fdb   Obj2E_Raise                             *                 offsetTableEntry.w Obj2E_Raise  ; 2
+        fdb   Obj2E_Wait                              *                 offsetTableEntry.w Obj2E_Wait   ; 4
                                                       * ; ===========================================================================
                                                       * ; Object initialization. Called if routine counter == 0.
                                                       * ; loc_12868:
-                                                      * Obj2E_Init:
-                                                      *         addq.b  #2,routine(a0)
-                                                      *         move.w  #make_art_tile(ArtTile_ArtNem_Powerups,0,1),art_tile(a0)
-                                                      *         bsr.w   Adjust2PArtPointer
-                                                      *         move.b  #$24,render_flags(a0)
-                                                      *         move.b  #3,priority(a0)
-                                                      *         move.b  #8,width_pixels(a0)
-                                                      *         move.w  #-$300,y_vel(a0)
+Obj2E_Init                                            * Obj2E_Init:
+        inc   routine,u                               *         addq.b  #2,routine(a0)
+        ;                                             *         move.w  #make_art_tile(ArtTile_ArtNem_Powerups,0,1),art_tile(a0)
+        ;                                             *         bsr.w   Adjust2PArtPointer
+        lda   #render_playfieldcoord_mask
+        sta   render_flags,u                          *         move.b  #$24,render_flags(a0)
+        _ldd  3,4
+        sta   priority,u                              *         move.b  #3,priority(a0)
+        stb   width_pixels,u ; wide-dot factor        *         move.b  #8,width_pixels(a0)
+        ldd   #-$300        
+        std   y_vel,u                                 *         move.w  #-$300,y_vel(a0)
                                                       *         moveq   #0,d0
                                                       *         move.b  anim(a0),d0
+        ldx   #Ani_obj26
+        lda   subtype,u
+        asla
+        ldd   a,x
+        std   anim,u 
                                                       * 
                                                       *         tst.w   (Two_player_mode).w     ; is it two player mode?
                                                       *         beq.s   loc_128C6               ; if not, branch
@@ -56,14 +68,16 @@
                                                       *         adda.w  (a1,d0.w),a1
                                                       *         addq.w  #2,a1
                                                       *         move.l  a1,mappings(a0)
-                                                      * ; loc_128DE:
-                                                      * Obj2E_Raise:
-                                                      *         bsr.s   +
-                                                      *         bra.w   DisplaySprite
+Obj2E_Animate                                         * ; loc_128DE:
+        jsr   AnimateSprite
+        jmp   DisplaySprite
+Obj2E_Raise                                           * Obj2E_Raise:
+        jsr   @a                                      *         bsr.s   +
+        jmp   DisplaySprite                           *         bra.w   DisplaySprite
                                                       * 
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       * 
-                                                      * +
+@a                                                    * +
                                                       *         tst.w   y_vel(a0)       ; is icon still floating up?
                                                       *         bpl.w   +               ; if not, branch
                                                       *         bsr.w   ObjectMove      ; update position
@@ -463,7 +477,22 @@
                                                       * ; Holds icon in place for a while, then destroys it
                                                       * ; ---------------------------------------------------------------------------
                                                       * ;loc_12CC2:
-                                                      * Obj2E_Wait:
+Obj2E_Wait                                            * Obj2E_Wait:
                                                       *         subq.w  #1,anim_frame_duration(a0)
-                                                      *         bmi.w   DeleteObject
+ ; before del. obj, clear parent.ext_variables_obj    *         bmi.w   DeleteObject
                                                       *         bra.w   DisplaySprite
+                                                      * ; ===========================================================================
+                                                      * ; animation script
+                                                      * ; off_12CCE:
+Ani_obj26                                             * Ani_obj26:      offsetTable
+        fdb   Ani_obj26_Static                        *                 offsetTableEntry.w Ani_obj26_Static             ;  0
+        fdb   Ani_obj26_Sonic                         *                 offsetTableEntry.w Ani_obj26_Sonic              ;  1
+        fdb   Ani_obj26_Tails                         *                 offsetTableEntry.w Ani_obj26_Tails              ;  2
+        fdb   Ani_obj26_Eggman                        *                 offsetTableEntry.w Ani_obj26_Eggman             ;  3
+        fdb   Ani_obj26_Ring                          *                 offsetTableEntry.w Ani_obj26_Ring               ;  4
+        fdb   Ani_obj26_Shoes                         *                 offsetTableEntry.w Ani_obj26_Shoes              ;  5
+        fdb   Ani_obj26_Shield                        *                 offsetTableEntry.w Ani_obj26_Shield             ;  6
+        fdb   Ani_obj26_Invincibility                 *                 offsetTableEntry.w Ani_obj26_Invincibility      ;  7
+        fdb   Ani_obj26_Teleport                      *                 offsetTableEntry.w Ani_obj26_Teleport           ;  8
+        fdb   Ani_obj26_QuestionMark                  *                 offsetTableEntry.w Ani_obj26_QuestionMark       ;  9
+                                                      *                 offsetTableEntry.w Ani_obj26_Broken             ; $A

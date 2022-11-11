@@ -1,5 +1,7 @@
         INCLUDE "./engine/macros.asm"   
         SETDP   dp/256
+
+Obj26_child        equ ext_variables_obj
                                                       * ; ===========================================================================
                                                       * ; ----------------------------------------------------------------------------
                                                       * ; Object 26 - Monitor
@@ -21,7 +23,7 @@ Obj26_Index                                           * Obj26_Index:    offsetTa
         fdb   Obj26_Main                              *                 offsetTableEntry.w Obj26_Main                   ; 2
         fdb   Obj26_Break                             *                 offsetTableEntry.w Obj26_Break                  ; 4
         fdb   Obj26_Animate                           *                 offsetTableEntry.w Obj26_Animate                ; 6
-        fdb   MarkObjGone                             *                 offsetTableEntry.w BranchTo2_MarkObjGone        ; 8
+        fdb   BranchTo2_MarkObjGone                   *                 offsetTableEntry.w BranchTo2_MarkObjGone        ; 8
                                                       * ; ===========================================================================
                                                       * ; obj_26_sub_0: Obj_26_Init:
 Obj26_Init                                            * Obj26_Init:
@@ -47,17 +49,32 @@ Obj26_Init                                            * Obj26_Init:
         anda  #1                                      *         btst    #0,2(a2,d0.w)   ; if this bit is set it means the monitor is already broken
         beq   >                                       *         beq.s   +
         lda   #4                                      *         move.b  #8,routine(a0)  ; set monitor to 'broken' state
+        sta   routine,u
         ldd   #Img_monitor_broken
         std   image_set,u                             *         move.b  #$B,mapping_frame(a0)
         rts                                           *         rts
                                                       * ; ---------------------------------------------------------------------------
 !                                                     * +
-        ; todo                                        *         move.b  #$46,collision_flags(a0)
-        ldx   #Ani_obj26
+        ldd   #Img_monitor
+        std   image_set,u
+        ; to save some memory, child is allocated before monitor break
+        ; to show monitor's image independently or monitor sprite
+        jsr   SingleObjLoad
+        bne   >
+        stx   Obj26_child,u
+        lda   #ObjID_MonitorContent
+        sta   id,x
         lda   subtype,u
-        asla
-        ldd   a,x
-        std   anim,u                                  *         move.b  subtype(a0),anim(a0)    ; subtype = icon to display
+        sta   subtype,x
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        subd  #2
+        std   y_pos,x
+        stu   parent,x
+!
+        ; todo                                        *         move.b  #$46,collision_flags(a0)
+                                                      *         move.b  subtype(a0),anim(a0)    ; subtype = icon to display
         ;                                             *         tst.w   (Two_player_mode).w     ; is it two player mode?
         ;                                             *         beq.s   Obj26_Main              ; if not, branch
         ;                                             *         move.b  #9,anim(a0)             ; use '?' icon
@@ -92,10 +109,20 @@ Obj26_Main                                            * Obj26_Main:
                                                       * 
 Obj26_Animate                                         * Obj26_Animate:
         ;                                             *         lea     (Ani_obj26).l,a1
-        jsr   AnimateSprite                           *         bsr.w   AnimateSprite
+        ; animation is given to child obj             *         bsr.w   AnimateSprite
+        jsr   DisplaySprite
                                                       * 
 BranchTo2_MarkObjGone                                 * BranchTo2_MarkObjGone
-        jmp   MarkObjGone                             *         bra.w   MarkObjGone
+        ldd   x_pos,u
+        andb  #$C0 ; wide-dot factor 
+        subd  glb_camera_x_pos_coarse
+        cmpd  #$40+160+$20+$40  ; wide-dot factor
+        bhi   >
+        rts
+!       ldx   Obj26_child,u
+        beq   >
+        jsr   DeleteObject2
+!       jmp   MarkObjGone                             *         bra.w   MarkObjGone
                                                       * 
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       * ; sub_12756:
@@ -172,13 +199,14 @@ Obj26_Break                                           * Obj26_Break:
                                                       *         clr.b   status(a0)
                                                       *         addq.b  #2,routine(a0)
                                                       *         move.b  #0,collision_flags(a0)
-                                                      *         bsr.w   SingleObjLoad
-                                                      *         bne.s   Obj26_SpawnSmoke
-                                                      *         _move.b #ObjID_MonitorContents,id(a1) ; load obj2E
-                                                      *         move.w  x_pos(a0),x_pos(a1)     ; set icon's position
-                                                      *         move.w  y_pos(a0),y_pos(a1)
-                                                      *         move.b  anim(a0),anim(a1)
-                                                      *         move.w  parent(a0),parent(a1)   ; parent gets the item
+ ; obj is already allocated,
+ ; instead inc routine of child to run                *         bsr.w   SingleObjLoad
+ ;                                                    *         bne.s   Obj26_SpawnSmoke
+ ; already done                                       *         _move.b #ObjID_MonitorContents,id(a1) ; load obj2E
+ ;                                                    *         move.w  x_pos(a0),x_pos(a1)     ; set icon's position
+ ;                                                    *         move.w  y_pos(a0),y_pos(a1)
+ ;                                                    *         move.b  anim(a0),anim(a1)
+ ;                                                    *         move.w  parent(a0),parent(a1)   ; parent gets the item
                                                       * ;loc_1281E:
                                                       * Obj26_SpawnSmoke:
                                                       *         bsr.w   SingleObjLoad
@@ -194,19 +222,3 @@ Obj26_Break                                           * Obj26_Break:
                                                       *         bset    #0,2(a2,d0.w)   ; mark monitor as destroyed
                                                       *         move.b  #$A,anim(a0)
         jmp   DisplaySprite                           *         bra.w   DisplaySprite
-
-                                                      * ; ===========================================================================
-                                                      * ; animation script
-                                                      * ; off_12CCE:
-Ani_obj26                                             * Ani_obj26:      offsetTable
-        fdb   Ani_obj26_Static                        *                 offsetTableEntry.w Ani_obj26_Static             ;  0
-        fdb   Ani_obj26_Sonic                         *                 offsetTableEntry.w Ani_obj26_Sonic              ;  1
-        fdb   Ani_obj26_Tails                         *                 offsetTableEntry.w Ani_obj26_Tails              ;  2
-        fdb   Ani_obj26_Eggman                        *                 offsetTableEntry.w Ani_obj26_Eggman             ;  3
-        fdb   Ani_obj26_Ring                          *                 offsetTableEntry.w Ani_obj26_Ring               ;  4
-        fdb   Ani_obj26_Shoes                         *                 offsetTableEntry.w Ani_obj26_Shoes              ;  5
-        fdb   Ani_obj26_Shield                        *                 offsetTableEntry.w Ani_obj26_Shield             ;  6
-        fdb   Ani_obj26_Invincibility                 *                 offsetTableEntry.w Ani_obj26_Invincibility      ;  7
-        fdb   Ani_obj26_Teleport                      *                 offsetTableEntry.w Ani_obj26_Teleport           ;  8
-        fdb   Ani_obj26_QuestionMark                  *                 offsetTableEntry.w Ani_obj26_QuestionMark       ;  9
-        fdb   Ani_obj26_Broken                        *                 offsetTableEntry.w Ani_obj26_Broken             ; $A
