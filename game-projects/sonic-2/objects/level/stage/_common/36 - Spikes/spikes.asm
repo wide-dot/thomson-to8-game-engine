@@ -1,10 +1,12 @@
+        INCLUDE "./engine/macros.asm"   
+        SETDP   dp/256
                                                       * ; ===========================================================================
                                                       * ; ----------------------------------------------------------------------------
                                                       * ; Object 36 - Spikes
                                                       * ; ----------------------------------------------------------------------------
                                                       * ; OST Variables:
 spikes_base_x_pos equ ext_variables_obj               * spikes_base_x_pos       = objoff_30     ; original x-position
-                                                      * spikes_base_y_pos       = objoff_32     ; original y-position
+spikes_base_y_pos equ ext_variables_obj+2             * spikes_base_y_pos       = objoff_32     ; original y-position
                                                       * spikes_retract_offset   = objoff_34     ; actual position relative to base position
                                                       * spikes_retract_state    = objoff_36     ; 0 = positive offset, 1 = original position
                                                       * spikes_retract_timer    = objoff_38     ; delay, before spikes move again
@@ -24,48 +26,73 @@ Obj36_Index                                           * Obj36_Index:    offsetTa
         fdb   Obj36_Upsidedown                        *                 offsetTableEntry.w Obj36_Upsidedown     ; 6
                                                       * ; ===========================================================================
                                                       * ; byte_15916:
-                                                      * Obj36_InitData:
+Obj36_InitData                                        * Obj36_InitData:
                                                       *         ;    width_pixels
                                                       *         ;        y_radius
-                                                      *         dc.b $10,$10    ; 0     - Upright or ceiling spikes
-                                                      *         dc.b $20,$10    ; 2
-                                                      *         dc.b $30,$10    ; 4
-                                                      *         dc.b $40,$10    ; 6
-                                                      *         dc.b $10,$10    ; 8     - Sideways spikes
-                                                      *         dc.b $10,$20    ; 10
-                                                      *         dc.b $10,$30    ; 12
-                                                      *         dc.b $10,$40    ; 14
+        fcb   $10/2,$10                               *         dc.b $10,$10    ; 0     - Upright or ceiling spikes
+        fcb   $20/2,$10                               *         dc.b $20,$10    ; 2
+        fcb   $30/2,$10                               *         dc.b $30,$10    ; 4
+        fcb   $40/2,$10                               *         dc.b $40,$10    ; 6
+        fcb   $10/2,$10                               *         dc.b $10,$10    ; 8     - Sideways spikes
+        fcb   $10/2,$20                               *         dc.b $10,$20    ; 10
+        fcb   $10/2,$30                               *         dc.b $10,$30    ; 12
+        fcb   $10/2,$40                               *         dc.b $10,$40    ; 14
                                                       * ; ===========================================================================
                                                       * ; loc_15926:
 Obj36_Init                                            * Obj36_Init:
-                                                      *         addq.b  #2,routine(a0)  ; => Obj36_Upright
-                                                      *         move.l  #Obj36_MapUnc_15B68,mappings(a0)
-                                                      *         move.w  #make_art_tile(ArtTile_ArtNem_Spikes,1,0),art_tile(a0)
-                                                      *         ori.b   #4,render_flags(a0)
-                                                      *         move.b  #4,priority(a0)
-                                                      *         move.b  subtype(a0),d0
-                                                      *         andi.b  #$F,subtype(a0)         ; lower 4 bits determine behavior, upper bits need to be removed
-                                                      *         andi.w  #$F0,d0
-                                                      *         lea_    Obj36_InitData,a1       ; upper 4 bits determine size and orientation
-                                                      *         lsr.w   #3,d0                   ; use upper 4 bits * 2 as offset
-                                                      *         adda.w  d0,a1
-                                                      *         move.b  (a1)+,width_pixels(a0)
-                                                      *         move.b  (a1)+,y_radius(a0)
-                                                      *         lsr.w   #1,d0                   ; use upper 4 bits to determine mappings frame
+        inc   routine,u                               *         addq.b  #2,routine(a0)  ; => Obj36_Upright
+ ifdef halfline
+        ldd   y_pos,u
+        addd  #1
+        std   y_pos,u ; fix for interlace alignment
+ endc
+        ldd   #Img_spikes_v
+        std   image_set,u                             *         move.l  #Obj36_MapUnc_15B68,mappings(a0)
+        ;                                             *         move.w  #make_art_tile(ArtTile_ArtNem_Spikes,1,0),art_tile(a0)
+        _ldd  render_playfieldcoord_mask,4
+        sta   render_flags,u                          *         ori.b   #4,render_flags(a0)
+        stb   priority,u                              *         move.b  #4,priority(a0)
+        lda   subtype,u                               *         move.b  subtype(a0),d0
+        tfr   a,b
+        anda  #$0F
+        sta   subtype,u                               *         andi.b  #$F,subtype(a0)         ; lower 4 bits determine behavior, upper bits need to be removed
+        andb  #$F0                                    *         andi.w  #$F0,d0
+        ldx   #Obj36_InitData                         *         lea_    Obj36_InitData,a1       ; upper 4 bits determine size and orientation
+        lsrb 
+        lsrb
+        lsrb                                          *         lsr.w   #3,d0                   ; use upper 4 bits * 2 as offset
+        lda   b,x                                     *         adda.w  d0,a1
+        sta   width_pixels,u                          *         move.b  (a1)+,width_pixels(a0)
+        incb
+        lda   b,x
+        sta   y_radius,u                              *         move.b  (a1)+,y_radius(a0)
+        lsrb                                          *         lsr.w   #1,d0                   ; use upper 4 bits to determine mappings frame
                                                       *         move.b  d0,mapping_frame(a0)
-                                                      *         cmpi.b  #4,d0                   ; do spikes face sideways?
-                                                      *         blo.s   +                       ; if not, branch
-                                                      *         addq.b  #2,routine(a0)  ; => Obj36_Sideways
-                                                      *         move.w  #make_art_tile(ArtTile_ArtNem_HorizSpike,1,0),art_tile(a0)
-                                                      * +
-                                                      *         btst    #1,status(a0)           ; are spikes upsiede-down?
-                                                      *         beq.s   +                       ; if not, branch
-                                                      *         move.b  #6,routine(a0)  ; => Obj36_Upsidedown
-                                                      * +
+        cmpb   #4                                     *         cmpi.b  #4,d0                   ; do spikes face sideways?
+        blo   >                                       *         blo.s   +                       ; if not, branch
+        inc   routine,u                               *         addq.b  #2,routine(a0)  ; => Obj36_Sideways
+        ldd   #Img_spikes_h
+        std   image_set,u                             *         move.w  #make_art_tile(ArtTile_ArtNem_HorizSpike,1,0),art_tile(a0)
+!                                                     * +
+        lda   status_flags,u
+        anda  #status_xflip_mask|status_yflip_mask
+        sta   @dyn
+        lda   render_flags,u
+        anda  #^(render_xmirror_mask|render_ymirror_mask)
+        ora   #0
+@dyn    equ *-1
+        sta   render_flags,u
+
+        anda  #render_ymirror_mask                    *         btst    #1,status(a0)           ; are spikes upsiede-down?
+        beq   >                                       *         beq.s   +                       ; if not, branch
+        lda   #3
+        sta   routine,u                               *         move.b  #6,routine(a0)  ; => Obj36_Upsidedown
+!                                                     * +
         ldd   x_pos,u
         std   spikes_base_x_pos,u                     *         move.w  x_pos(a0),spikes_base_x_pos(a0)
-                                                      *         move.w  y_pos(a0),spikes_base_y_pos(a0)
-                                                      *         bra.w   Adjust2PArtPointer
+        ldd   y_pos,u
+        std   spikes_base_y_pos,u                     *         move.w  y_pos(a0),spikes_base_y_pos(a0)
+        rts                                           *         bra.w   Adjust2PArtPointer
                                                       * ; ===========================================================================
                                                       * ; loc_15996:
 Obj36_Upright                                         * Obj36_Upright:

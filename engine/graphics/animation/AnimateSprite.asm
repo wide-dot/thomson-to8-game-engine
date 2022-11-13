@@ -68,7 +68,7 @@ Anim_Next                                   *Anim_Next:
         anda  #status_xflip_mask|status_yflip_mask
         sta   @dyn+1
         lda   render_flags,u
-        anda  #^render_xmirror_mask
+        anda  #^(render_xmirror_mask|render_ymirror_mask)
 @dyn    ora   #0
         sta   render_flags,u
                                             *    move.b  status(a0),d1         ; match the orientaion dictated by the object

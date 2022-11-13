@@ -38,8 +38,7 @@ DOB_ToDeleteFlag0
         
 DOB_Unset0        
         ldx   Lst_Priority_Unset_0          ; add object to unset list on buffer 0
-        stu   ,x
-        leax  2,x
+        stu   ,x++
         stx   Lst_Priority_Unset_0
         
 DOB_TestOnscreen1
@@ -53,8 +52,7 @@ DOB_ToDeleteFlag1
         
 DOB_Unset1
         ldx   Lst_Priority_Unset_1          ; add object to unset list on buffer 1                       
-        stu   ,x
-        leax  2,x
+        stu   ,x++
         stx   Lst_Priority_Unset_1
         puls  d,x,u,pc               
 
