@@ -49,8 +49,10 @@ Obj36_Init                                            * Obj36_Init:
         ldd   #Img_spikes_v
         std   image_set,u                             *         move.l  #Obj36_MapUnc_15B68,mappings(a0)
         ;                                             *         move.w  #make_art_tile(ArtTile_ArtNem_Spikes,1,0),art_tile(a0)
-        _ldd  render_playfieldcoord_mask,4
+        lda   render_flags,u
+        ora   #render_playfieldcoord_mask
         sta   render_flags,u                          *         ori.b   #4,render_flags(a0)
+        ldb   #4
         stb   priority,u                              *         move.b  #4,priority(a0)
         lda   subtype,u                               *         move.b  subtype(a0),d0
         tfr   a,b
@@ -75,18 +77,10 @@ Obj36_Init                                            * Obj36_Init:
         std   image_set,u                             *         move.w  #make_art_tile(ArtTile_ArtNem_HorizSpike,1,0),art_tile(a0)
 !                                                     * +
         lda   status_flags,u
-        anda  #status_xflip_mask|status_yflip_mask
-        sta   @dyn
-        lda   render_flags,u
-        anda  #^(render_xmirror_mask|render_ymirror_mask)
-        ora   #0
-@dyn    equ *-1
-        sta   render_flags,u
-
-        anda  #render_ymirror_mask                    *         btst    #1,status(a0)           ; are spikes upsiede-down?
+        anda  #status_yflip_mask                      *         btst    #1,status(a0)           ; are spikes upsiede-down?
         beq   >                                       *         beq.s   +                       ; if not, branch
-        lda   #3
-        sta   routine,u                               *         move.b  #6,routine(a0)  ; => Obj36_Upsidedown
+        ldb   #3
+        stb   routine,u                               *         move.b  #6,routine(a0)  ; => Obj36_Upsidedown
 !                                                     * +
         ldd   x_pos,u
         std   spikes_base_x_pos,u                     *         move.w  x_pos(a0),spikes_base_x_pos(a0)

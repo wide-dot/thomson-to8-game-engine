@@ -2373,7 +2373,8 @@ public class BuildDisk
 		int xyb0_offset = 0;
 		int xyd0_offset = 0;
 		int xyb1_offset = 0;
-		int xyd1_offset = 0;		
+		int xyd1_offset = 0;	
+		int cml_offset = 0;
 		
 		if (asm != null) {
 			if (sprite.associatedIdx != null) {
@@ -2382,11 +2383,13 @@ public class BuildDisk
 			}
 			asm.addLabel(sprite.name+" ");
 		}
+
+		cml_offset += imageSet_header;
 		
 		if (sprite.subSprites.containsKey("NB0") || sprite.subSprites.containsKey("ND0") || sprite.subSprites.containsKey("NB1") || sprite.subSprites.containsKey("ND1")) {
-			n_offset = imageSet_header;			
+			n_offset = cml_offset;			
 		}
-
+		
 		if (sprite.subSprites.containsKey("NB0")) {
 			nb0_offset = imageSubSet_header;
 			n_x1 = sprite.subSprites.get("NB0").x1_offset;
@@ -2410,9 +2413,11 @@ public class BuildDisk
 			n_x1 = sprite.subSprites.get("ND1").x1_offset;
 			n_y1 = sprite.subSprites.get("ND1").y1_offset;
 		}		
+
+		cml_offset += (nd1_offset>0?3:0) + (nb1_offset>0?7:0) + (nd0_offset>0?3:0) + (nb0_offset>0?7:0) + (n_offset>0?imageSubSet_header:0);
 		
 		if (sprite.subSprites.containsKey("XB0") || sprite.subSprites.containsKey("XD0") || sprite.subSprites.containsKey("XB1") || sprite.subSprites.containsKey("XD1")) {
-			x_offset = (nd1_offset>0?3:0) + (nb1_offset>0?7:0) + (nd0_offset>0?3:0) + (nb0_offset>0?7:0) + (n_offset>0?n_offset+imageSubSet_header:imageSet_header);			
+			x_offset = cml_offset;
 		}		
 		
 		if (sprite.subSprites.containsKey("XB0")) {
@@ -2438,9 +2443,11 @@ public class BuildDisk
 			x_x1 = sprite.subSprites.get("XD1").x1_offset;
 			x_y1 = sprite.subSprites.get("XD1").y1_offset;			
 		}		
+
+		cml_offset += (xd1_offset>0?3:0) + (xb1_offset>0?7:0) + (xd0_offset>0?3:0) + (xb0_offset>0?7:0) + (x_offset>0?imageSubSet_header:0);
 		
 		if (sprite.subSprites.containsKey("YB0") || sprite.subSprites.containsKey("YD0") || sprite.subSprites.containsKey("YB1") || sprite.subSprites.containsKey("YD1")) {
-			y_offset = (xd1_offset>0?3:0) + (xb1_offset>0?7:0) + (xd0_offset>0?3:0) + (xb0_offset>0?7:0) + (x_offset>0?x_offset+imageSubSet_header:imageSet_header);			
+			y_offset = cml_offset; 
 		}		
 		
 		if (sprite.subSprites.containsKey("YB0")) {
@@ -2466,9 +2473,11 @@ public class BuildDisk
 			y_x1 = sprite.subSprites.get("YD1").x1_offset;
 			y_y1 = sprite.subSprites.get("YD1").y1_offset;
 		}
+
+		cml_offset += (yd1_offset>0?3:0) + (yb1_offset>0?7:0) + (yd0_offset>0?3:0) + (yb0_offset>0?7:0) + (y_offset>0?imageSubSet_header:0);
 		
 		if (sprite.subSprites.containsKey("XYB0") || sprite.subSprites.containsKey("XYD0") || sprite.subSprites.containsKey("XYB1") || sprite.subSprites.containsKey("XYD1")) {
-			xy_offset = (yd1_offset>0?3:0) + (yb1_offset>0?7:0) + (yd0_offset>0?3:0) + (yb0_offset>0?7:0) + (y_offset>0?y_offset+imageSubSet_header:imageSet_header);			
+			xy_offset = cml_offset;		
 		}		
 		
 		if (sprite.subSprites.containsKey("XYB0")) {
