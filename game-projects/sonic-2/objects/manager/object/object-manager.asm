@@ -661,13 +661,13 @@ ChkLoadObj                                            *ChkLoadObj:
         rola
         rola
         rola                                          *        rol.w   #3,d1   ; adjust bits
-        anda  #3 ; get x and y mirror flags           *        andi.b  #3,d1   ; get render flags
+        anda  #render_xmirror_mask|render_ymirror_mask ; get x and y mirror flags           *        andi.b  #3,d1   ; get render flags
         sta   render_flags,u                          *        move.b  d1,render_flags(a1)
         sta   status_flags,u                          *        move.b  d1,status(a1)
         ldd   ,x++
         std   id,u ; and subtype,u                    *        _move.b (a0)+,id(a1) ; load obj
         ;                                             *        move.b  (a0)+,subtype(a1)
-        orcc  #%00000100 ; set zero flag              *        moveq   #0,d0
+        clra ; set zero flag                          *        moveq   #0,d0
                                                       *
 @rts                                                  *return_17F7E:
         rts                                           *        rts
