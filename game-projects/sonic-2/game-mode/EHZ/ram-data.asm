@@ -1,29 +1,18 @@
 * ===========================================================================
 * Object Constants
 * ===========================================================================
-
-nb_reserved_objects               equ 0
-nb_dynamic_objects                equ 44
-nb_level_objects                  equ 1
-nb_graphical_objects              equ 44 * max 64 total (background erase only)
+nb_dynamic_objects           equ 44
 
 * ===========================================================================
 * Object Status Table - OST
 * ===========================================================================
-MainCharacter                     equ dp 
+MainCharacter                 equ dp 
 
-Reserved_Object_RAM
-Reserved_Object_RAM_End
-Object_RAM
 Dynamic_Object_RAM
                               fill  0,(nb_dynamic_objects)*object_size
 Dynamic_Object_RAM_End
 
-LevelOnly_Object_RAM
-Sonic_Dust                    fcb   ObjID_SplashDust
-                              fill  0,object_size-1
-LevelOnly_Object_RAM_End
-Object_RAM_End
+Sonic_Dust                    fill  0,object_size
 
 * ===========================================================================
 * Common object structure

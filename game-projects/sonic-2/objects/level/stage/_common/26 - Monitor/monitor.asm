@@ -59,8 +59,8 @@ Obj26_Init                                            * Obj26_Init:
         std   image_set,u
         ; to save some memory, child is allocated before monitor break
         ; to show monitor's image independently or monitor sprite
-        jsr   SingleObjLoad
-        bne   >
+        jsr   LoadObject_x
+        beq   >
         stx   Obj26_child,u
         lda   #ObjID_MonitorContent
         sta   id,x

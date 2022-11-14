@@ -65,55 +65,7 @@
         INCLUDE "./objects/engine/sfx/raster-fade/raster-fade.idx"
         INCLUDE "./objects/engine/sfx/palette-fade/palette-fade.idx"
 
-* ---------------------------------------------------------------------------
-* Object Status Table index
-* - objects with a dedicated adress (no dynamic allocation)
-* ---------------------------------------------------------------------------
-TitleScr_This           equ Object_RAM
-Obj_Sonic               equ TitleScr_This
-Obj_Tails               equ TitleScr_This+(object_size*1)
-Obj_LargeStar           equ TitleScr_This+(object_size*2)
-Obj_SmallStar           equ TitleScr_This+(object_size*3)
-Obj_SonicHand           equ TitleScr_This+(object_size*4)
-Obj_TailsHand           equ TitleScr_This+(object_size*5)
-Obj_EmblemFront01       equ TitleScr_This+(object_size*6)
-Obj_EmblemFront02       equ TitleScr_This+(object_size*7)
-Obj_EmblemFront03       equ TitleScr_This+(object_size*8)
-Obj_EmblemFront04       equ TitleScr_This+(object_size*9)
-Obj_EmblemFront05       equ TitleScr_This+(object_size*10)
-Obj_EmblemFront06       equ TitleScr_This+(object_size*11)
-Obj_EmblemFront07       equ TitleScr_This+(object_size*12)
-Obj_EmblemFront08       equ TitleScr_This+(object_size*13)
-Obj_EmblemBack01        equ TitleScr_This+(object_size*14)
-Obj_EmblemBack02        equ TitleScr_This+(object_size*15)
-Obj_EmblemBack03        equ TitleScr_This+(object_size*16)
-Obj_EmblemBack04        equ TitleScr_This+(object_size*17)
-Obj_EmblemBack05        equ TitleScr_This+(object_size*18)
-Obj_EmblemBack06        equ TitleScr_This+(object_size*19)
-Obj_EmblemBack07        equ TitleScr_This+(object_size*20)
-Obj_EmblemBack08        equ TitleScr_This+(object_size*21)
-Obj_EmblemBack09        equ TitleScr_This+(object_size*22)
-Obj_Island              equ TitleScr_This+(object_size*23)
-Obj_IslandWater01       equ TitleScr_This+(object_size*24)
-Obj_IslandWater02       equ TitleScr_This+(object_size*25)
-Obj_IslandWater03       equ TitleScr_This+(object_size*26)
-Obj_IslandWater04       equ TitleScr_This+(object_size*27)
-Obj_IslandWater05       equ TitleScr_This+(object_size*28)
-Obj_IslandWater06       equ TitleScr_This+(object_size*29)
-Obj_IslandWater07       equ TitleScr_This+(object_size*30)
-Obj_IslandWater08       equ TitleScr_This+(object_size*31)
-Obj_IslandWater09       equ TitleScr_This+(object_size*32)
-Obj_IslandWater10       equ TitleScr_This+(object_size*33)
-Obj_IslandWater11       equ TitleScr_This+(object_size*34)
-Obj_IslandWater12       equ TitleScr_This+(object_size*35)
-Obj_IslandWater13       equ TitleScr_This+(object_size*36)
-Obj_IslandWater14       equ TitleScr_This+(object_size*37)
-Obj_IslandWater15       equ TitleScr_This+(object_size*38)
-Obj_IslandMask          equ TitleScr_This+(object_size*39)
-Obj_PaletteFade         equ TitleScr_This+(object_size*40)
-Obj_RasterFade          equ TitleScr_This+(object_size*41)
-Obj_PressStart          equ TitleScr_This+(object_size*42)
-TitleScr_Object_RAM_End equ TitleScr_This+(object_size*43)
+
 
 * ---------------------------------------------------------------------------
 * Object Status Table offsets
@@ -240,7 +192,8 @@ Sonic_Init                                       *Obj0E_Sonic_Init:
         ldd   #$0000
         std   xy_pixel,u                         *        move.w  #$110,x_pixel(a0)
                                                  *        move.w  #$E0,y_pixel(a0)
-        ldx   #Obj_LargeStar                     *        lea     (IntroLargeStar).w,a1
+        jsr   LoadObject_x
+        stx   Obj_LargeStar                     *        lea     (IntroLargeStar).w,a1
         lda   #ObjID_TitleScreen
         sta   id,x                               *        move.b  #ObjID_IntroStars,id(a1) ; load obj0E (flashing intro stars) at $FFFFB0C0
         ldb   #Sub_LargeStar
@@ -266,7 +219,8 @@ Sonic_PaletteFadeAfterWait                       *+
         inc   routine_secondary,u                *        addq.b  #2,routine_secondary(a0)
 
         * Create emblem tiles
-        ldx   #Obj_EmblemFront01
+        jsr   LoadObject_x
+        stx   Obj_EmblemFront01
         lda   #ObjID_TitleScreen
         
         ldb   #Sub_EmblemFront
@@ -275,104 +229,121 @@ Sonic_PaletteFadeAfterWait                       *+
         ldy   #Img_emblemFront01
         sty   image_set,x
 
-        ldx   #Obj_EmblemFront02
+        jsr   LoadObject_x
+        stx   Obj_EmblemFront02
         sta   id,x
         stb   subtype,x
         ldy   #Img_emblemFront02
         sty   image_set,x
 
-        ldx   #Obj_EmblemFront03
+        jsr   LoadObject_x
+        stx   Obj_EmblemFront03
         sta   id,x
         stb   subtype,x
         ldy   #Img_emblemFront03
         sty   image_set,x
 
-        ldx   #Obj_EmblemFront04
+        jsr   LoadObject_x
+        stx   Obj_EmblemFront04
         sta   id,x
         stb   subtype,x
         ldy   #Img_emblemFront04
         sty   image_set,x
 
-        ldx   #Obj_EmblemFront05
+        jsr   LoadObject_x
+        stx   Obj_EmblemFront05
         sta   id,x
         stb   subtype,x
         ldy   #Img_emblemFront05
         sty   image_set,x
 
-        ldx   #Obj_EmblemFront06
+        jsr   LoadObject_x
+        stx   Obj_EmblemFront06
         sta   id,x
         stb   subtype,x
         ldy   #Img_emblemFront06
         sty   image_set,x
 
-        ldx   #Obj_EmblemFront07
+        jsr   LoadObject_x
+        stx   Obj_EmblemFront07
         sta   id,x
         stb   subtype,x
         ldy   #Img_emblemFront07
         sty   image_set,x
 
-        ldx   #Obj_EmblemFront08
+        jsr   LoadObject_x
+        stx   Obj_EmblemFront08
         sta   id,x
         stb   subtype,x
         ldy   #Img_emblemFront08
         sty   image_set,x
 
-        ldx   #Obj_EmblemBack01
+        jsr   LoadObject_x
+        stx   Obj_EmblemBack01
         ldb   #Sub_EmblemBack
         sta   id,x
         stb   subtype,x
         ldy   #Img_emblemBack01
         sty   image_set,x
 
-        ldx   #Obj_EmblemBack02
+        jsr   LoadObject_x
+        stx   Obj_EmblemBack02
         sta   id,x
         stb   subtype,x
         ldy   #Img_emblemBack02
         sty   image_set,x
 
-        ldx   #Obj_EmblemBack03
+        jsr   LoadObject_x
+        stx   Obj_EmblemBack03
         sta   id,x
         stb   subtype,x
         ldy   #Img_emblemBack03
         sty   image_set,x
 
-        ldx   #Obj_EmblemBack04
+        jsr   LoadObject_x
+        stx   Obj_EmblemBack04
         sta   id,x
         stb   subtype,x
         ldy   #Img_emblemBack04
         sty   image_set,x
 
-        ldx   #Obj_EmblemBack05
+        jsr   LoadObject_x
+        stx   Obj_EmblemBack05
         sta   id,x
         stb   subtype,x
         ldy   #Img_emblemBack05
         sty   image_set,x
 
-        ldx   #Obj_EmblemBack06
+        jsr   LoadObject_x
+        stx   Obj_EmblemBack06
         sta   id,x
         stb   subtype,x
         ldy   #Img_emblemBack06
         sty   image_set,x
 
-        ldx   #Obj_EmblemBack07
+        jsr   LoadObject_x
+        stx   Obj_EmblemBack07
         sta   id,x
         stb   subtype,x
         ldy   #Img_emblemBack07
         sty   image_set,x
 
-        ldx   #Obj_EmblemBack08
+        jsr   LoadObject_x
+        stx   Obj_EmblemBack08
         sta   id,x
         stb   subtype,x
         ldy   #Img_emblemBack08
         sty   image_set,x
 
-        ldx   #Obj_EmblemBack09
+        jsr   LoadObject_x
+        stx   Obj_EmblemBack09
         sta   id,x
         stb   subtype,x
         ldy   #Img_emblemBack09
         sty   image_set,x
 
-        ldx   #Obj_PaletteFade                   *        lea     (TitleScreenPaletteChanger3).w,a1
+        jsr   LoadObject_x
+        stx   Obj_PaletteFade                   *        lea     (TitleScreenPaletteChanger3).w,a1
         lda   #ObjID_PaletteFade
         sta   id,x                               *        move.b  #ObjID_TtlScrPalChanger,id(a1) ; load objC9 (palette change)
         clr   subtype,x                          *        move.b  #0,subtype(a1)
@@ -454,7 +425,8 @@ Sonic_CreateHand                                 *Obj0E_Sonic_LastFrame:
         inc   routine_secondary,u                *        addq.b  #2,routine_secondary(a0)
         ldd   #Img_sonic_5
         std   image_set,u                        *        move.b  #$12,mapping_frame(a0)
-        ldx   #Obj_SonicHand                     *        lea     (IntroSonicHand).w,a1
+        jsr   LoadObject_x
+        stx   Obj_SonicHand                     *        lea     (IntroSonicHand).w,a1
         lda   #ObjID_TitleScreen
         sta   id,x                               *        move.b  #ObjID_IntroStars,id(a1) ; load obj0E (flashing intro star) at $FFFFB1C0
         lda   #Sub_SonicHand
@@ -473,7 +445,8 @@ Sonic_CreateTails                                *loc_12F7C:
         cmpd  #$90 ; was $C0                     *        cmpi.w  #$C0,objoff_34(a0)
         blo   Sonic_CreateTails_BeforeWait       *        blo.s   +
         inc   routine_secondary,u                *        addq.b  #2,routine_secondary(a0)
-        ldx   #Obj_Tails                         *        lea     (IntroTails).w,a1
+        jsr   LoadObject_x
+        stx   Obj_Tails                         *        lea     (IntroTails).w,a1
         lda   #ObjID_TitleScreen
         sta   id,x                               *        move.b  #ObjID_IntroStars,id(a1) ; load obj0E (flashing intro star) at $FFFFB080
         lda   #Sub_Tails
@@ -493,7 +466,8 @@ Sonic_FadeInBackground                           *loc_12F9A:
         ldd   #$FF
         std   b_TitleScr_final_state,u           *        st      objoff_2F(a0)
 
-        ldx   #Obj_RasterFade
+        jsr   LoadObject_x
+        stx   Obj_RasterFade
         lda   #ObjID_RasterFade
         sta   id,x
         lda   #Sub_RasterFadeInColor
@@ -531,7 +505,8 @@ Sonic_FadeInBackground_Continue
         ldd   #UserIRQ_Raster_Smps
         std   Irq_user_routine
 
-        ldx   #Obj_Island
+        jsr   LoadObject_x
+        stx   Obj_Island
         lda   #ObjID_TitleScreen
         sta   id,x
         lda   #Sub_Island
@@ -554,7 +529,8 @@ Sonic_CreateSmallStar                            *loc_12FD6:
         * not implemented                        *        bra.w   DisplaySprite
                                                  *; ===========================================================================
 Sonic_CreateSmallStar_AfterWait                  *+
-        ldx   #Obj_SmallStar                     *        lea     (IntroSmallStar2).w,a1
+        jsr   LoadObject_x
+        stx   Obj_SmallStar                     *        lea     (IntroSmallStar2).w,a1
         lda   #ObjID_TitleScreen
         sta   id,x                               *        move.b  #ObjID_IntroStars,id(a1) ; load obj0E (flashing intro star) at $FFFFB440
         lda   #Sub_SmallStar
@@ -647,7 +623,8 @@ Tails_Move                                       *loc_13096:
                                                  *
 Tails_CreateHand                                 *loc_130A2:
         inc   routine_secondary,u                *        addq.b  #2,routine_secondary(a0)
-        ldx   #Obj_TailsHand                     *        lea     (IntroTailsHand).w,a1
+        jsr   LoadObject_x
+        stx   Obj_TailsHand                     *        lea     (IntroTailsHand).w,a1
         lda   #ObjID_TitleScreen                 *        move.b  #ObjID_IntroStars,id(a1) ; load obj0E (flashing intro star) at $FFFFB200
         sta   id,x
         lda   #Sub_TailsHand
@@ -1057,11 +1034,13 @@ Island_Init
         ora   #render_xloop_mask|render_overlay_mask
         sta   render_flags,u
 
-        ldx   #Obj_IslandMask
+        jsr   LoadObject_x
+        stx   Obj_IslandMask
         _ldd  ObjID_TitleScreen,Sub_IslandMask
         std   id,x                                    ; id and subtype
 
-        ldx   #Obj_IslandWater01
+        jsr   LoadObject_x
+        stx   Obj_IslandWater01
         _ldy  ObjID_TitleScreen,Sub_IslandWater
         sty   id,x                                    ; id and subtype
         ldd   #Img_islandWater01
@@ -1069,99 +1048,112 @@ Island_Init
         lda   #0
         sta   b_TitleScr_water_index,x
 
-        ldx   #Obj_IslandWater02
+        jsr   LoadObject_x
+        stx   Obj_IslandWater02
         sty   id,x                                    ; id and subtype
         ldd   #Img_islandWater02
         std   image_set,x
         lda   #1
         sta   b_TitleScr_water_index,x
 
-        ldx   #Obj_IslandWater03
+        jsr   LoadObject_x
+        stx   Obj_IslandWater03
         sty   id,x                                    ; id and subtype
         ldd   #Img_islandWater03
         std   image_set,x
         lda   #2
         sta   b_TitleScr_water_index,x
 
-        ldx   #Obj_IslandWater04
+        jsr   LoadObject_x
+        stx   Obj_IslandWater04
         sty   id,x                                    ; id and subtype
         ldd   #Img_islandWater04
         std   image_set,x
         lda   #3
         sta   b_TitleScr_water_index,x
 
-        ldx   #Obj_IslandWater05
+        jsr   LoadObject_x
+        stx   Obj_IslandWater05
         sty   id,x                                    ; id and subtype
         ldd   #Img_islandWater05
         std   image_set,x
         lda   #4
         sta   b_TitleScr_water_index,x
 
-        ldx   #Obj_IslandWater06
+        jsr   LoadObject_x
+        stx   Obj_IslandWater06
         sty   id,x                                    ; id and subtype
         ldd   #Img_islandWater06
         std   image_set,x
         lda   #5
         sta   b_TitleScr_water_index,x
 
-        ldx   #Obj_IslandWater07
+        jsr   LoadObject_x
+        stx   Obj_IslandWater07
         sty   id,x                                    ; id and subtype
         ldd   #Img_islandWater07
         std   image_set,x
         lda   #6
         sta   b_TitleScr_water_index,x
 
-        ldx   #Obj_IslandWater08
+        jsr   LoadObject_x
+        stx   Obj_IslandWater08
         sty   id,x                                    ; id and subtype
         ldd   #Img_islandWater08
         std   image_set,x
         lda   #7
         sta   b_TitleScr_water_index,x
 
-        ldx   #Obj_IslandWater09
+        jsr   LoadObject_x
+        stx   Obj_IslandWater09
         sty   id,x                                    ; id and subtype
         ldd   #Img_islandWater09
         std   image_set,x
         lda   #8
         sta   b_TitleScr_water_index,x
 
-        ldx   #Obj_IslandWater10
+        jsr   LoadObject_x
+        stx   Obj_IslandWater10
         sty   id,x                                    ; id and subtype
         ldd   #Img_islandWater10
         std   image_set,x
         lda   #9
         sta   b_TitleScr_water_index,x
 
-        ldx   #Obj_IslandWater11
+        jsr   LoadObject_x
+        stx   Obj_IslandWater11
         sty   id,x                                    ; id and subtype
         ldd   #Img_islandWater11
         std   image_set,x
         lda   #10
         sta   b_TitleScr_water_index,x
 
-
-        ldx   #Obj_IslandWater12
+        jsr   LoadObject_x
+        stx   Obj_IslandWater12
         sty   id,x                                    ; id and subtype
         ldd   #Img_islandWater12
         std   image_set,x
         lda   #11
         sta   b_TitleScr_water_index,x
 
-        ldx   #Obj_IslandWater13
+        jsr   LoadObject_x
+        stx   Obj_IslandWater13
         sty   id,x                                    ; id and subtype
         ldd   #Img_islandWater13
         std   image_set,x
         lda   #12
         sta   b_TitleScr_water_index,x
 
-        ldx   #Obj_IslandWater14
+        jsr   LoadObject_x
+        stx   Obj_IslandWater14
         sty   id,x                                    ; id and subtype
         ldd   #Img_islandWater14
         std   image_set,x
         lda   #13
         sta   b_TitleScr_water_index,x
 
-        ldx   #Obj_IslandWater15
+        jsr   LoadObject_x
+        stx   Obj_IslandWater15
         sty   id,x                                    ; id and subtype
         ldd   #Img_islandWater15
         std   image_set,x
@@ -1177,7 +1169,8 @@ Island_Move
         bhs   Island_Move_InScreen
         inc   routine_secondary,u
 
-        ldx   #Obj_PressStart
+        jsr   LoadObject_x
+        stx   Obj_PressStart
         _ldd  ObjID_TitleScreen,Sub_PressStart
         std   id,x                                    ; id and subtype
         clr   b_TitleScr_pressed,x
@@ -1209,14 +1202,14 @@ IslandWater_Init
         lda   render_flags,u
         ora   #render_xloop_mask|render_overlay_mask
         sta   render_flags,u
-        ldx   #Obj_Island
+        ldx   Obj_Island
         lda   y_pixel,x
         sta   y_pixel,u
         lda   Vint_runcount+1
         sta   b_TitleScr_time_frame_count,u
 
 IslandWater_Ripple
-        ldx   #Obj_Island
+        ldx   Obj_Island
 
         ldb   b_TitleScr_ripple_index,u
         lda   Vint_runcount+1
@@ -1294,7 +1287,7 @@ IslandMask_Init
         jmp   DisplaySprite
 
 IslandMask1
-        ldx   #Obj_Island
+        ldx   Obj_Island
         lda   x_pixel,x
         cmpa  #screen_left+80+12
         bhi   IslandMask_continue
@@ -1314,7 +1307,7 @@ PressStart
         lda   #$FF
         sta   b_TitleScr_pressed,u
 
-        ldx   #Obj_RasterFade
+        ldx   Obj_RasterFade
         lda   #Sub_RasterFadeOutColor
         sta   routine,x
 
@@ -1332,7 +1325,7 @@ PressStart_NoPress
         lda   b_TitleScr_pressed,u
         beq   PressStart_While
 
-        ldx   #Obj_RasterFade
+        ldx   Obj_RasterFade
         lda   routine,x
         cmpa  #Sub_RasterCycle
         bne   PressStart_While
@@ -1387,3 +1380,46 @@ PressStart_hide
         std   w_TitleScr_time_frame_count,u
 PressStart_hide1
         rts
+
+Obj_Tails               fdb 0
+Obj_LargeStar           fdb 0
+Obj_SmallStar           fdb 0
+Obj_SonicHand           fdb 0
+Obj_TailsHand           fdb 0
+Obj_EmblemFront01       fdb 0
+Obj_EmblemFront02       fdb 0
+Obj_EmblemFront03       fdb 0
+Obj_EmblemFront04       fdb 0
+Obj_EmblemFront05       fdb 0
+Obj_EmblemFront06       fdb 0
+Obj_EmblemFront07       fdb 0
+Obj_EmblemFront08       fdb 0
+Obj_EmblemBack01        fdb 0
+Obj_EmblemBack02        fdb 0
+Obj_EmblemBack03        fdb 0
+Obj_EmblemBack04        fdb 0
+Obj_EmblemBack05        fdb 0
+Obj_EmblemBack06        fdb 0
+Obj_EmblemBack07        fdb 0
+Obj_EmblemBack08        fdb 0
+Obj_EmblemBack09        fdb 0
+Obj_Island              fdb 0
+Obj_IslandWater01       fdb 0
+Obj_IslandWater02       fdb 0
+Obj_IslandWater03       fdb 0
+Obj_IslandWater04       fdb 0
+Obj_IslandWater05       fdb 0
+Obj_IslandWater06       fdb 0
+Obj_IslandWater07       fdb 0
+Obj_IslandWater08       fdb 0
+Obj_IslandWater09       fdb 0
+Obj_IslandWater10       fdb 0
+Obj_IslandWater11       fdb 0
+Obj_IslandWater12       fdb 0
+Obj_IslandWater13       fdb 0
+Obj_IslandWater14       fdb 0
+Obj_IslandWater15       fdb 0
+Obj_IslandMask          fdb 0
+Obj_PaletteFade         fdb 0
+Obj_RasterFade          fdb 0
+Obj_PressStart          fdb 0

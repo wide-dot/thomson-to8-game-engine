@@ -706,39 +706,39 @@ Obj01_NotRight                                        *Obj01_NotRight:
 
 
 
-        ; TODO fix object size
+        ; TODO
         bra   Sonic_Lookup
         ; --------------------
-        lda   interact+dp                              *  moveq   #0,d0
+        ;lda   interact+dp                              *  moveq   #0,d0
                                                       *  move.b  interact(a0),d0
                                                       *    if object_size=$40
                                                       *  lsl.w   #6,d0
                                                       *    else
-        ldb   #object_size
-        mul                                           *  mulu.w  #object_size,d0
+        ;ldb   #object_size
+        ;mul                                           *  mulu.w  #object_size,d0
                                                       *    endif
-        ldx   #Object_RAM                             *  lea (Object_RAM).w,a1 ; a1=character
-        leax  d,u                                     *  lea (a1,d0.w),a1 ; a1=object
-        lda   status,x                                *  tst.b   status(a1)
-        bmi   Sonic_Lookup                            *  bmi.w   Sonic_Lookup
-        lda   #0                                      *  moveq   #0,d1
-        ldb   width_pixels,x                          *  move.b  width_pixels(a1),d1
-        std   @d1                                     *  move.w  d1,d2
-        _lsld                                         *  add.w   d2,d2
-        subb  #2                                      *  subq.w  #2,d2
-        stb   @d2
-        ldd   #0
-@d1     equ   *-2
-        addd  x_pos+dp                                 *  add.w   x_pos(a0),d1
-        subd  x_pos,x                                 *  sub.w   x_pos(a1),d1
+        ;ldx   #Object_RAM                             *  lea (Object_RAM).w,a1 ; a1=character
+        ;leax  d,u                                     *  lea (a1,d0.w),a1 ; a1=object
+        ;lda   status,x                                *  tst.b   status(a1)
+        ;bmi   Sonic_Lookup                            *  bmi.w   Sonic_Lookup
+        ;lda   #0                                      *  moveq   #0,d1
+        ;ldb   width_pixels,x                          *  move.b  width_pixels(a1),d1
+        ;std   @d1                                     *  move.w  d1,d2
+        ;_lsld                                         *  add.w   d2,d2
+        ;subb  #2                                      *  subq.w  #2,d2
+        ;stb   @d2
+        ;ldd   #0
+ ;@d1     equ   *-2
+        ;addd  x_pos+dp                                 *  add.w   x_pos(a0),d1
+        ;subd  x_pos,x                                 *  sub.w   x_pos(a1),d1
         ;tst   Super_Sonic_flag                        *  tst.b   (Super_Sonic_flag).w
         ;bne   SuperSonic_Balance                      *  bne.w   SuperSonic_Balance
-        cmpd  #2                                      *  cmpi.w  #2,d1
-        blt   Sonic_BalanceOnObjLeft                  *  blt.s   Sonic_BalanceOnObjLeft
-        cmpd  #0                                      *  cmp.w   d2,d1
-@d2     equ   *-1
-        bge   Sonic_BalanceOnObjRight                 *  bge.s   Sonic_BalanceOnObjRight
-        bra   Sonic_Lookup                            *  bra.w   Sonic_Lookup
+        ;cmpd  #2                                      *  cmpi.w  #2,d1
+        ;blt   Sonic_BalanceOnObjLeft                  *  blt.s   Sonic_BalanceOnObjLeft
+        ;cmpd  #0                                      *  cmp.w   d2,d1
+ ;@d2     equ   *-1
+        ;bge   Sonic_BalanceOnObjRight                 *  bge.s   Sonic_BalanceOnObjRight
+        ;bra   Sonic_Lookup                            *  bra.w   Sonic_Lookup
 
                                                       *; ---------------------------------------------------------------------------
                                                       *; loc_1A3FE:

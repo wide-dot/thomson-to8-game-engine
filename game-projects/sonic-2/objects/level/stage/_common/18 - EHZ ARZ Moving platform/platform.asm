@@ -76,8 +76,8 @@ Obj18_Init                                            * Obj18_Init:
         stb   priority,u                              *         move.b  #4,priority(a0)
 
         ; build platform as a multisprite
-        jsr   SingleObjLoad2           ; allocate object in memory
-        bne   >
+        jsr   LoadObject_x
+        beq   >
         stx   Obj18_child,u
         lda   id,u
         sta   id,x

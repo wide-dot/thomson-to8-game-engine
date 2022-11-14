@@ -68,7 +68,7 @@ UDP_CheckDeleteB0
         bmi   UDP_SetNewPrioB0
         lda   rsv_prev_render_flags_1,u
         bmi   UDP_SetNewPrioB0
-        jsr   ClearObj
+        jsr   UnloadObject_u
         bra   UDP_CheckEndB0
         
 UDP_SetNewPrioB0
@@ -131,7 +131,7 @@ UDP_CheckDeleteB1
         bmi   UDP_SetNewPrioB1
         lda   rsv_prev_render_flags_1,u
         bmi   UDP_SetNewPrioB1
-        jsr   ClearObj
+        jsr   UnloadObject_u
         bra   UDP_CheckEndB1
         
 UDP_SetNewPrioB1

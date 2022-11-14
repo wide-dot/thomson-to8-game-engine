@@ -574,7 +574,10 @@ SSCurveOffsets                                        *SSCurveOffsets: ; word_76
 ; search for a free object slot
 ; OUT
 ; [u]: object slot
-; [cc|z]: 1=found 0=not found                                                       
+; [cc|z]: 1=found 0=not found
+           
+!!! REPLACE BY NEW LoadObject ROUTINE !!!
+                                            
                                                       *; sub_6F8E:
 SSSingleObjLoad                                       *SSSingleObjLoad:
         ldu   #Dynamic_Object_RAM                     *    lea (SS_Dynamic_Object_RAM).w,a1
