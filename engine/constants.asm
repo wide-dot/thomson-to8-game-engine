@@ -138,11 +138,11 @@ sound_meta_size   equ 5
 
 ; ext_variables_size should be declared in game source code
 
-object_base_size              equ 34  ; the size of an object without ext_vars - DEPENDENCY ClearObj routine
+object_base_size              equ 38  ; the size of an object without rsvd and ext_vars
  ifndef OverlayMode
-object_rsvd_size              equ 59  ; the size of an object without ext_vars - DEPENDENCY ClearObj routine
+object_rsvd_size              equ 59
  else
-object_rsvd_size              equ 5   ; the size of an object without ext_vars - DEPENDENCY ClearObj routine
+object_rsvd_size              equ 5
  endc
 
 object_rsvd                   equ object_base_size+ext_variables_size
@@ -150,11 +150,11 @@ object_size                   equ object_base_size+ext_variables_size+object_rsv
 next_object                   equ object_size
 ext_variables                 equ object_base_size ; start of reserved space for additionnal variables
 
-id                            equ 0           ; reference to object model id (ObjID_) (0: free slot)
-subtype                       equ 1           ; reference to object subtype (Sub_) DEPENDENCY subtype must follow id
+id                            equ 0   ; reference to object model id (ObjID_) (0: free slot)
+subtype                       equ 1   ; reference to object subtype (Sub_) DEPENDENCY subtype must follow id
 render_flags                  equ 2
-
-; bit 7 = onscreen flag, bit 0 = x mirror, bit 1 = y mirror, bit 2 = coordinate system, bit 6 = render subobjects
+object_list_prev              equ 3   ; previous object to update when deleting current object
+object_list_next              equ 5   ; next object to run by RunObjects
 
  ifndef OverlayMode
 * --- render_flags bitfield variables --- background erase pack
@@ -178,38 +178,38 @@ render_subobjects_mask        equ $40 ; (bit 6) tell display engine to render su
 render_hide_mask              equ $80 ; (bit 7) tell display engine to hide sprite (keep priority and mapping_frame)
  endc
 
-priority                      equ 3           ; display priority (0: nothing to display, 1:front, ..., 8:back)
-anim                          equ 4  ; and 5  ; reference to current animation (Ani_)
-prev_anim                     equ 6  ; and 7  ; reference to previous animation (Ani_)
-anim_frame                    equ 8           ; index of current frame in animation
-anim_frame_duration           equ 9           ; number of frames for each image in animation, range: 00-7F (0-127), 0 means display only during one frame
-anim_flags                    equ 10          ; byte offset to reference an anim_flags LUT (adv) / store a link flag (non adv)
+priority                      equ 7           ; display priority (0: nothing to display, 1:front, ..., 8:back)
+anim                          equ 8  ; and 9  ; reference to current animation (Ani_)
+prev_anim                     equ 10 ; and 11  ; reference to previous animation (Ani_)
+anim_frame                    equ 12          ; index of current frame in animation
+anim_frame_duration           equ 13          ; number of frames for each image in animation, range: 00-7F (0-127), 0 means display only during one frame
+anim_flags                    equ 14          ; byte offset to reference an anim_flags LUT (adv) / store a link flag (non adv)
 
 * --- anim_flags bitfield variables ---
 anim_link_mask                equ $01 ; (bit 0) if set, allow the load of a new animation without reseting anim_frame and anim_frame_duration
 
-status_flags                  equ 11          ; orientation of sprite, is applied to animation xmirror flag during AnimateSprite
+status_flags                  equ 14          ; orientation of sprite, is applied to animation xmirror flag during AnimateSprite
 
 * --- status_flags bitfield variables ---
 status_xflip_mask             equ $01 ; (bit 0) X Flip
 status_yflip_mask             equ $02 ; (bit 1) Y Flip
 
-image_set                     equ 12 ; and 13 ; reference to current image (Img_) (0000 if no image)
-x_pos                         equ 14 ; and 15 ; x playfield coordinate
-x_sub                         equ 16          ; x subpixel (1/256 of a pixel), must follow x_pos in data structure
-y_pos                         equ 17 ; and 18 ; y playfield coordinate
-y_sub                         equ 19          ; y subpixel (1/256 of a pixel), must follow y_pos in data structure
-xy_pixel                      equ 20          ; x and y screen coordinate
-x_pixel                       equ 20          ; x screen coordinate
-y_pixel                       equ 21          ; y screen coordinate, must follow x_pixel
-x_vel                         equ 22 ; and 23 ; horizontal velocity
-y_vel                         equ 24 ; and 25 ; vertical velocity
-x_acl                         equ 26 ; and 27 ; horizontal gravity
-y_acl                         equ 28 ; and 29 ; vertical gravity
-routine                       equ 30          ; index of current object routine
-routine_secondary             equ 31          ; index of current secondary routine
-routine_tertiary              equ 32          ; index of current tertiary routine
-routine_quaternary            equ 33          ; index of current quaternary routine
+image_set                     equ 16 ; and 17 ; reference to current image (Img_) (0000 if no image)
+x_pos                         equ 18 ; and 19 ; x playfield coordinate
+x_sub                         equ 20          ; x subpixel (1/256 of a pixel), must follow x_pos in data structure
+y_pos                         equ 21 ; and 22 ; y playfield coordinate
+y_sub                         equ 23          ; y subpixel (1/256 of a pixel), must follow y_pos in data structure
+xy_pixel                      equ 24          ; x and y screen coordinate
+x_pixel                       equ 24          ; x screen coordinate
+y_pixel                       equ 25          ; y screen coordinate, must follow x_pixel
+x_vel                         equ 26 ; and 27 ; horizontal velocity
+y_vel                         equ 28 ; and 29 ; vertical velocity
+x_acl                         equ 30 ; and 31 ; horizontal gravity
+y_acl                         equ 32 ; and 33 ; vertical gravity
+routine                       equ 34          ; index of current object routine
+routine_secondary             equ 35          ; index of current secondary routine
+routine_tertiary              equ 36          ; index of current tertiary routine
+routine_quaternary            equ 37          ; index of current quaternary routine
 
  ifndef OverlayMode
 * ---------------------------------------------------------------------------
@@ -314,11 +314,11 @@ rsv_priority_next_obj         equ object_rsvd+3 ; and +4 ; next object (OST addr
 
 ; ---------------------------------------------------------------------------
 ; when childsprites are activated (i.e. bit #6 of render_flags set)
-; object_base_size+ext_variables_size should cover at least 3+56 bytes 
+; object_base_size+ext_variables_size should cover at least 7+56 bytes 
 ; subtype is recovered
 mainspr_childsprites    equ   subtype         ; amount of child sprites
-mainspr_width           equ   render_flags+1
-mainspr_height          equ   render_flags+2
+mainspr_width           equ   object_list_next+2
+mainspr_height          equ   object_list_next+3
 mainspr_x_pos           equ   mainspr_height+1
 mainspr_y_pos           equ   mainspr_height+3
 mainspr_mapframe        equ   mainspr_height+5

@@ -120,7 +120,7 @@ DOB_CheckPrioNextB1
         std   ,y
         lda   rsv_prev_render_flags_0,u
         bmi   DOB_rts                       ; branch if onscreen on buffer 0 (do not erase object)        
-        jsr   ClearObj                      ; this object is not onscreen anymore, clear this object now
+        jsr   UnloadObject_u                ; this object is not onscreen anymore, clear this object now
 DOB_rts                                
         puls  d,x,u,pc        
                 
@@ -130,7 +130,7 @@ DOB_ChainNextB1
         std   rsv_priority_prev_obj_1,y
         lda   rsv_prev_render_flags_0,u
         bmi   DOB_rts                       ; branch if onscreen on buffer 0 (do not erase object)        
-        jsr   ClearObj                      ; this object is not onscreen anymore, clear this object now
+        jsr   UnloadObject_u                ; this object is not onscreen anymore, clear this object now
         puls  d,x,u,pc        
 
                                                       *; ---------------------------------------------------------------------------

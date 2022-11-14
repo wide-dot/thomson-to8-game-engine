@@ -10,8 +10,6 @@
         
         INCLUDE "./engine/macros.asm"      
         
-Obj_PaletteFade      equ Object_RAM+(object_size*1)        
-        
 SonicAndTailsIn
         lda   routine,u
         asla
@@ -50,7 +48,8 @@ SATI_fadeIn
         ldx   #$0000
         jsr   ClearDataMem        
 
-        ldx   #Obj_PaletteFade
+        jsr   LoadObject_x
+        stx   Obj_PaletteFade
         lda   #ObjID_PaletteFade
         sta   id,x                 
         ldd   Pal_current
@@ -72,7 +71,8 @@ SATI_fadeOut
         rts
 
 SATI_fadeOut_continue        
-        ldx   #Obj_PaletteFade
+        jsr   LoadObject_x
+        stx   Obj_PaletteFade
         lda   #ObjID_PaletteFade
         sta   id,x                 
         ldd   Pal_current
@@ -84,9 +84,10 @@ SATI_fadeOut_continue
         rts                
                 
 SATI_Wait
-        ldx   #Obj_PaletteFade
-        tst   ,x
-        beq   SATI_clearScreen_end
+        ldx   Obj_PaletteFade
+        lda   ,x
+        cmpa  #ObjID_PaletteFade
+        bne   SATI_clearScreen_end
         rts
         
 SATI_clearScreen_end
@@ -107,10 +108,10 @@ SATI_clearScreen_end
 SATI_End
         ldx   #$FFFF
         jsr   ClearDataMem  
-        jsr   DeleteObject                    
+        jsr   DeleteObject 
+        jsr   LoadObject_u                   
         _ldd  ObjID_TitleScreen,$01                   ; Replace this object with Title Screen Object subtype 3
         std   ,u
-        ldu   #Obj_PaletteFade
-        jsr   ClearObj        
         rts  
                         
+Obj_PaletteFade      fdb   0

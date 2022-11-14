@@ -159,7 +159,7 @@ ObjectsManager_GoingRearward                          *        ; if the player i
         sta   glb_d2_b                                *        move.b  1(a2),d2
 !                                                     *+
         jsr   ChkLoadObj                              *        bsr.w   ChkLoadObj      ; load object
-        bne   >                                       *        bne.s   +               ; branch, if SST is full
+        beq   >                                       *        bne.s   +               ; branch, if SST is full
         leax  -6,x                                    *        subq.w  #6,a0
         ldd   glb_d6
         bra   @c                                      *        bra.s   -       ; continue with previous object
@@ -217,7 +217,7 @@ ObjectsManager_GoingForward                           *ObjectsManager_GoingForwa
         inc   ,y                                      *        addq.b  #1,(a2)         ; respawn index of next object to the right
 !                                                     *+
         jsr   ChkLoadObj                              *        bsr.w   ChkLoadObj      ; load object (and get address of next object)
-        beq   @e                                      *        beq.s   -       ; continue loading objects, if the SST isn't full
+        bne   @e                                      *        beq.s   -       ; continue loading objects, if the SST isn't full
                                                       *
 loc_17C2A                                             *loc_17C2A:
         stx   Obj_load_addr_right                     *        move.l  a0,(Obj_load_addr_right).w      ; remember next object from the right
@@ -635,15 +635,15 @@ ChkLoadObj                                            *ChkLoadObj:
         ;                                             *        bset    #7,2(a2,d2.w)   ; mark object as loaded
         ;                                             *        beq.s   +               ; branch if it wasn't already loaded
         leax  6,x                                     *        addq.w  #6,a0   ; next object
-        orcc  #%00000100 ; set zero flag              *        moveq   #0,d0   ; let the objects manager know that it can keep going
+        ; zero flag not set                           *        moveq   #0,d0   ; let the objects manager know that it can keep going
         rts                                           *        rts
 @g      ora   #%10000000
         sta   b,y
                                                       *; ---------------------------------------------------------------------------
                                                       *
 !                                                     *+
-        jsr   _SingleObjLoad                          *        bsr.w   SingleObjLoad   ; find empty slot
-        bne   @rts                                    *        bne.s   return_17F7E    ; branch, if there is no room left in the SST
+        jsr   LoadObject_u                            *        bsr.w   SingleObjLoad   ; find empty slot
+        beq   @rts                                    *        bne.s   return_17F7E    ; branch, if there is no room left in the SST
         ldd   ,x++
         std   x_pos,u                                 *        move.w  (a0)+,x_pos(a1)
         ldd   ,x++                                    *        move.w  (a0)+,d0        ; there are three things stored in this word
@@ -667,7 +667,7 @@ ChkLoadObj                                            *ChkLoadObj:
         ldd   ,x++
         std   id,u ; and subtype,u                    *        _move.b (a0)+,id(a1) ; load obj
         ;                                             *        move.b  (a0)+,subtype(a1)
-        clra ; set zero flag                          *        moveq   #0,d0
+        ; zero flag not set                           *        moveq   #0,d0
                                                       *
 @rts                                                  *return_17F7E:
         rts                                           *        rts
@@ -724,22 +724,21 @@ ChkLoadObj                                            *ChkLoadObj:
                                                       *; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       *
                                                       *; loc_17FDA: ; allocObject:
-_SingleObjLoad                                        *SingleObjLoad:
-        ldu   #Dynamic_Object_RAM                     *        lea     (Dynamic_Object_RAM).w,a1 ; a1=object
+                                                      *SingleObjLoad:
+                                                      *        lea     (Dynamic_Object_RAM).w,a1 ; a1=object
                                                       *        move.w  #(Dynamic_Object_RAM_End-Dynamic_Object_RAM)/object_size-1,d0 ; search to end of table
                                                       *        tst.w   (Two_player_mode).w
                                                       *        beq.s   +
                                                       *        move.w  #(Dynamic_Object_RAM_2P_End-Dynamic_Object_RAM)/object_size-1,d0 ; search to $BF00 exclusive
                                                       *
                                                       */
-!       tst   ,u                                      *        tst.b   id(a1)  ; is object RAM slot empty?
-        beq   @rts                                    *        beq.s   return_17FF8    ; if yes, branch
-        leau  next_object,u                           *        lea     next_object(a1),a1 ; load obj address ; goto next object RAM slot
-        cmpu  #Dynamic_Object_RAM_End   
-        bne   <                                       *        dbf     d0,-    ; repeat until end
-        ; implicit return zero when not found         *
-@rts                                                  *return_17FF8:
-        rts                                           *        rts
+                                                      *        tst.b   id(a1)  ; is object RAM slot empty?
+                                                      *        beq.s   return_17FF8    ; if yes, branch
+                                                      *        lea     next_object(a1),a1 ; load obj address ; goto next object RAM slot
+                                                      *        dbf     d0,-    ; repeat until end
+                                                      *
+                                                      *return_17FF8:
+                                                      *        rts
                                                       *; ===========================================================================
                                                       *; ---------------------------------------------------------------------------
                                                       *; Single object loading subroutine

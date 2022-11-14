@@ -10,17 +10,6 @@
 
         INCLUDE "./engine/macros.asm"   
 
-SegaScr_This            equ Object_RAM
-Obj_SEGA                equ SegaScr_This
-Obj_Trails1             equ SegaScr_This+(object_size*1)
-Obj_Trails2             equ SegaScr_This+(object_size*2)
-Obj_Trails3             equ SegaScr_This+(object_size*3)
-Obj_Trails4             equ SegaScr_This+(object_size*4)
-Obj_Sonic1              equ SegaScr_This+(object_size*5)
-Obj_Sonic2              equ SegaScr_This+(object_size*6)
-Obj_Sonic3              equ SegaScr_This+(object_size*7)
-Obj_PaletteFade         equ SegaScr_This+(object_size*8)
-
 * ---------------------------------------------------------------------------
 * Object Status Table offsets
 * - two variables can share same space if used by two different subtypes
@@ -102,25 +91,29 @@ SEGA_Init
         _ldd  ObjID_SEGA,Sub_Trails
         ldy   #$F080
 
-        ldx   #Obj_Trails1
+        jsr   LoadObject_x
+        stx   Obj_Trails1
         std   ,x
         sty   xy_pixel,x
         ldu   #Img_SegaTrails_1
         stu   image_set,x
 
-        ldx   #Obj_Trails2
+        jsr   LoadObject_x
+        stx   Obj_Trails2
         std   ,x
         sty   xy_pixel,x
         ldu   #Img_SegaTrails_2
         stu   image_set,x
 
-        ldx   #Obj_Trails3
+        jsr   LoadObject_x
+        stx   Obj_Trails3
         std   ,x
         sty   xy_pixel,x
         ldu   #Img_SegaTrails_5
         stu   image_set,x
 
-        ldx   #Obj_Trails4
+        jsr   LoadObject_x
+        stx   Obj_Trails4
         std   ,x
         sty   xy_pixel,x
         ldu   #Img_SegaTrails_6
@@ -129,19 +122,22 @@ SEGA_Init
         _ldd  ObjID_SEGA,Sub_Sonic
         ldy   #$F87B
 
-        ldx   #Obj_Sonic1
+        jsr   LoadObject_x
+        stx   Obj_Sonic1
         std   ,x
         sty   xy_pixel,x
         ldu   #Ani_SegaSonic_1
         stu   anim,x
 
-        ldx   #Obj_Sonic2
+        jsr   LoadObject_x
+        stx   Obj_Sonic2
         std   ,x
         sty   xy_pixel,x
         ldu   #Ani_SegaSonic_2
         stu   anim,x
 
-        ldx   #Obj_Sonic3
+        jsr   LoadObject_x
+        stx   Obj_Sonic3
         std   ,x
         sty   xy_pixel,x
         ldu   #Ani_SegaSonic_3
@@ -151,38 +147,38 @@ SEGA_Init_01
         ldu   #$0000
 
         * Disable backround save on Trails and set x mirror
-        ldx   #Obj_Trails1
+        ldx   Obj_Trails1
         lda   render_flags,x
         ora   #render_overlay_mask|render_xmirror_mask
         sta   render_flags,x
         ldb   #3
         stb   priority,x
 
-        ldx   #Obj_Trails2
+        ldx   Obj_Trails2
         sta   render_flags,x
         stb   priority,x
 
-        ldx   #Obj_Trails3
+        ldx   Obj_Trails3
         sta   render_flags,x
         stb   priority,x
 
-        ldx   #Obj_Trails4
+        ldx   Obj_Trails4
         sta   render_flags,x
         stb   priority,x
 
         * Set x mirror on Sonic
-        ldx   #Obj_Sonic1
+        ldx   Obj_Sonic1
         lda   status_flags,x
         ora   #status_xflip_mask
         sta   status_flags,x
         ldb   #1
         stb   priority,x
 
-        ldx   #Obj_Sonic2
+        ldx   Obj_Sonic2
         sta   status_flags,x
         stb   priority,x
 
-        ldx   #Obj_Sonic3
+        ldx   Obj_Sonic3
         sta   status_flags,x
         stb   priority,x
 
@@ -194,24 +190,24 @@ SEGA_RunLeft
         dec   b_nbFrames,u
         bmi   SEGA_RunLeft_continue
 
-        ldx   #Obj_Trails1
+        ldx   Obj_Trails1
         lda   x_pixel,x
         suba  #$10
         sta   x_pixel,x
-        ldx   #Obj_Trails2
+        ldx   Obj_Trails2
         sta   x_pixel,x
-        ldx   #Obj_Trails3
+        ldx   Obj_Trails3
         sta   x_pixel,x
-        ldx   #Obj_Trails4
+        ldx   Obj_Trails4
         sta   x_pixel,x
 
-        ldx   #Obj_Sonic1
+        ldx   Obj_Sonic1
         lda   x_pixel,x
         suba  #$10
         sta   x_pixel,x
-        ldx   #Obj_Sonic2
+        ldx   Obj_Sonic2
         sta   x_pixel,x
-        ldx   #Obj_Sonic3
+        ldx   Obj_Sonic3
         sta   x_pixel,x
         rts
 
@@ -225,7 +221,7 @@ SEGA_RunLeft_continue
 SEGA_MidWipe
 
         * Unset x mirror on Trails
-        ldx   #Obj_Trails1
+        ldx   Obj_Trails1
         lda   render_flags,x
         anda   #^render_xmirror_mask
         sta   render_flags,x
@@ -233,24 +229,24 @@ SEGA_MidWipe
         decb
         stb   y_pixel,x
 
-        ldx   #Obj_Trails2
+        ldx   Obj_Trails2
         sta   render_flags,x
         stb   y_pixel,x
 
-        ldx   #Obj_Trails3
+        ldx   Obj_Trails3
         sta   render_flags,x
         stb   y_pixel,x
         ldy   #Img_SegaTrails_3
         sty   image_set,x
 
-        ldx   #Obj_Trails4
+        ldx   Obj_Trails4
         sta   render_flags,x
         stb   y_pixel,x
         ldy   #Img_SegaTrails_4
         sty   image_set,x
 
         * Unset x mirror on Sonic
-        ldx   #Obj_Sonic1
+        ldx   Obj_Sonic1
         lda   status_flags,x
         anda   #^status_xflip_mask
         sta   status_flags,x
@@ -258,11 +254,11 @@ SEGA_MidWipe
         subb  #$10
         stb   x_pixel,x
 
-        ldx   #Obj_Sonic2
+        ldx   Obj_Sonic2
         sta   status_flags,x
         stb   x_pixel,x
 
-        ldx   #Obj_Sonic3
+        ldx   Obj_Sonic3
         sta   status_flags,x
         stb   x_pixel,x
 
@@ -271,7 +267,8 @@ SEGA_MidWipe
         std   image_set,u
 
         * Fade out Trails
-        ldx   #Obj_PaletteFade
+        jsr   LoadObject_x
+        stx   Obj_PaletteFade
         lda   #ObjID_PaletteFade
         sta   id,x
         ldd   #Pal_SEGA
@@ -283,9 +280,10 @@ SEGA_MidWipe
         jmp   DisplaySprite
 
 SEGA_MidWipeWaitPal
-        ldx   #Obj_PaletteFade
-        tst   ,x
-        beq   SEGA_MidWipeWaitPal_continue
+        ldx   Obj_PaletteFade
+        lda   ,x
+        cmpa  #ObjID_PaletteFade
+        bne   SEGA_MidWipeWaitPal_continue
         jmp   DisplaySprite
 
 SEGA_MidWipeWaitPal_continue
@@ -296,24 +294,24 @@ SEGA_RunRight
         dec   b_nbFrames,u
         bmi   SEGA_RunRight_continue
 
-        ldx   #Obj_Trails1
+        ldx   Obj_Trails1
         lda   x_pixel,x
         adda  #$10
         sta   x_pixel,x
-        ldx   #Obj_Trails2
+        ldx   Obj_Trails2
         sta   x_pixel,x
-        ldx   #Obj_Trails3
+        ldx   Obj_Trails3
         sta   x_pixel,x
-        ldx   #Obj_Trails4
+        ldx   Obj_Trails4
         sta   x_pixel,x
 
-        ldx   #Obj_Sonic1
+        ldx   Obj_Sonic1
         lda   x_pixel,x
         adda  #$10
         sta   x_pixel,x
-        ldx   #Obj_Sonic2
+        ldx   Obj_Sonic2
         sta   x_pixel,x
-        ldx   #Obj_Sonic3
+        ldx   Obj_Sonic3
         sta   x_pixel,x
         rts
 
@@ -328,23 +326,24 @@ SEGA_EndWipe
         std   image_set,u
 
         * Delete Trails and Sonic Sprites
-        ldx   #Obj_Trails1
+        ldx   Obj_Trails1
         jsr   DeleteObject_x
-        ldx   #Obj_Trails2
+        ldx   Obj_Trails2
         jsr   DeleteObject_x
-        ldx   #Obj_Trails3
+        ldx   Obj_Trails3
         jsr   DeleteObject_x
-        ldx   #Obj_Trails4
+        ldx   Obj_Trails4
         jsr   DeleteObject_x
-        ldx   #Obj_Sonic1
+        ldx   Obj_Sonic1
         jsr   DeleteObject_x
-        ldx   #Obj_Sonic2
+        ldx   Obj_Sonic2
         jsr   DeleteObject_x
-        ldx   #Obj_Sonic3
+        ldx   Obj_Sonic3
         jsr   DeleteObject_x
 
         * Fade out Trails
-        ldx   #Obj_PaletteFade
+        jsr   LoadObject_x
+        stx   Obj_PaletteFade
         lda   #ObjID_PaletteFade
         sta   id,x
         ldd   Pal_current
@@ -357,9 +356,10 @@ SEGA_EndWipe
         jmp   DisplaySprite
 
 SEGA_EndWipeWaitPal
-        ldx   #Obj_PaletteFade
-        tst   ,x
-        beq   SEGA_PlaySample
+        ldx   Obj_PaletteFade
+        lda   ,x
+        cmpa  #ObjID_PaletteFade
+        bne   SEGA_PlaySample
         jmp   DisplaySprite
 
 SEGA_PlaySample
@@ -381,7 +381,8 @@ SEGA_Wait
         rts
 
 SEGA_fadeOut
-        ldx   #Obj_PaletteFade
+        jsr   LoadObject_x
+        stx   Obj_PaletteFade
         lda   #ObjID_PaletteFade
         sta   id,x
         ldd   Pal_current
@@ -392,16 +393,24 @@ SEGA_fadeOut
         rts
 
 SEGA_End
-        ldx   #Obj_PaletteFade
-        tst   ,x
-        beq   SEGA_return
+        ldx   Obj_PaletteFade
+        lda   ,x
+        cmpa  #ObjID_PaletteFade
+        bne   SEGA_return
         rts
 
 SEGA_return
-        jsr   DeleteObject  
-        _ldd  ObjID_SonicAndTailsIn,$00         ; Replace this object with Title Screen Object subtype 3
+        jsr   DeleteObject
+        jsr   LoadObject_u
+        _ldd  ObjID_SonicAndTailsIn,0
         std   ,u
-
-        ldu   #Obj_PaletteFade
-        jsr   ClearObj
         rts
+
+Obj_Trails1             fdb 0
+Obj_Trails2             fdb 0
+Obj_Trails3             fdb 0
+Obj_Trails4             fdb 0
+Obj_Sonic1              fdb 0
+Obj_Sonic2              fdb 0
+Obj_Sonic3              fdb 0
+Obj_PaletteFade         fdb 0

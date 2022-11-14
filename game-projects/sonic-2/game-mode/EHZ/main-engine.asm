@@ -117,6 +117,7 @@ LevelMainLoop
         _RunObjectRoutineB ObjID_ObjectsManager,#2
 
         jsr   RunObjects
+        _RunObject ObjID_SplashDust,#Sonic_Dust 
         jsr   ForceRefresh
 
  ifdef halfline
@@ -388,9 +389,7 @@ TlsAni_EHZ_pulseball3_imgs
         INCLUDE "./engine/graphics/sprite/sprite-overlay-pack.asm"
         
         ; basic object management
-        INCLUDE "./engine/object-management/ClearObj.asm"
-        INCLUDE "./engine/object-management/RunObjects.asm"
-        INCLUDE "./engine/object-management/SingleObjLoad.asm"
+        INCLUDE "./engine/object-management/RunObjects2.asm"
         INCLUDE "./engine/object-management/MarkObjGone.asm"
 
         ; utilities

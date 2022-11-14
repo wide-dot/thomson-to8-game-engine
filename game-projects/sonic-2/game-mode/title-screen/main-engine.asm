@@ -36,7 +36,14 @@
         jsr   IrqSync
         jsr   IrqOn 
 
-        jsr   LoadAct       
+        jsr   LoadAct     
+
+        ; allocate objects
+        jsr   LoadObject_u
+        beq   >
+        _ldd  ObjID_SEGA,1
+        std   id,u ; and subtype
+!
 
 * ==============================================================================
 * Main Loop
@@ -90,9 +97,7 @@ UserIRQ_Raster_Smps
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-pack.asm"
 
         ; basic object management
-        INCLUDE "./engine/object-management/ClearObj.asm"
-        INCLUDE "./engine/object-management/RunObjects.asm"
-        INCLUDE "./engine/object-management/SingleObjLoad.asm"
+        INCLUDE "./engine/object-management/RunObjects2.asm"
 
 	; irq
         INCLUDE "./engine/irq/Irq.asm"

@@ -41,13 +41,13 @@ DeleteObject
         leay  a,y
         ldd   rsv_priority_prev_obj,u
         std   ,y
-        jsr   ClearObj
+        jsr   UnloadObject_u
         puls  d,x,u,pc
 @chainNext
         ldd   rsv_priority_prev_obj,u
         ldy   rsv_priority_next_obj,u        
         std   rsv_priority_prev_obj,y
-        jsr   ClearObj
+        jsr   UnloadObject_u
         puls  d,x,u,pc        
 
                                                       *; ---------------------------------------------------------------------------

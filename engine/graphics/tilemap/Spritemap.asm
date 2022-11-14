@@ -27,8 +27,8 @@ Spritemap
         stu   dyn2+1
         ldb   spmap_tile_size_divider_x,y
         stb   @dynb1+1
-	ldd   <glb_camera_x_pos
-	subd  spmap_x_pos,y
+        ldd   <glb_camera_x_pos
+        subd  spmap_x_pos,y
 @dynb1  bra   *+2
         _lsrd
         _lsrd
@@ -42,47 +42,47 @@ dyn2    addd  #0                       ; (dynamic) add map data address to index
         
         cmpd  glb_spritemap_index_old  ; check old index value in map
         bne   @continue
-	rts                            ; index is the same so return
+        rts                            ; index is the same so return
 @continue
 
-	; Read Spritemap and allocate new sprites
-	std   spritemap_cur_index
-	addd  spmap_vp_tiles_x,y
-	std   spritemap_cur_index_end
+        ; Read Spritemap and allocate new sprites
+        std   spritemap_cur_index
+        addd  spmap_vp_tiles_x,y
+        std   spritemap_cur_index_end
 
-	ldd   glb_spritemap_index_old
-	std   spritemap_cur_index_old
-	addd  spmap_vp_tiles_x,y
-	std   spritemap_cur_index_old_end
+        ldd   glb_spritemap_index_old
+        std   spritemap_cur_index_old
+        addd  spmap_vp_tiles_x,y
+        std   spritemap_cur_index_old_end
 
-	ldu   spritemap_cur_index
-	stu   glb_spritemap_index_old
+        ldu   spritemap_cur_index
+        stu   glb_spritemap_index_old
 
-@loop	lda   ,u+                      ; or process new sprite
-	beq   @next                    ; no sprite at this map index
-	cmpu  spritemap_cur_index_old
-	bhi   @a                       ; skip
+@loop   lda   ,u+                      ; or process new sprite
+        beq   @next                    ; no sprite at this map index
+        cmpu  spritemap_cur_index_old
+        bhi   @a                       ; skip
 @do     jsr   SingleObjLoad            ; return a free object in x
-	cmpx  #0
-	beq   @rts                     ; no more free sprite available
-	sta   subtype,x                ; store sprite img id in subtype
-	lda   glb_spritemap_obj
-	sta   id,x
+        cmpx  #0
+        beq   @rts                     ; no more free sprite available
+        sta   subtype,x                ; store sprite img id in subtype
+        lda   glb_spritemap_obj
+        sta   id,x
         lda   render_flags,x
         ora   #render_playfieldcoord_mask
         sta   render_flags,x
-	tfr   u,d
-	subd  dyn2+1
-	decb
-	lda   smpap_tile_x_size,y
-	mul
-	addd  #screen_left+8+4
-	std   x_pos,x
-	ldd   #$0067
-	std   y_pos,x
-	bra   @next
+        tfr   u,d
+        subd  dyn2+1
+        decb
+        lda   smpap_tile_x_size,y
+        mul
+        addd  #screen_left+8+4
+        std   x_pos,x
+        ldd   #$0067
+        std   y_pos,x
+        bra   @next
 @a      cmpu  spritemap_cur_index_old_end
-	bhs   @do                      ; process new sprite
-@next	cmpu  spritemap_cur_index_end  ; is the end of sprites in viewport ?
-	bls   @loop
-@rts	rts
+        bhs   @do                      ; process new sprite
+@next   cmpu  spritemap_cur_index_end  ; is the end of sprites in viewport ?
+        bls   @loop
+@rts    rts

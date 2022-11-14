@@ -111,8 +111,8 @@ Obj11_Init                                            * Obj11_Init:
                                                       * ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
                                                       * ; sub_F728:
 Obj11_MakeBdgSegment                                  * Obj11_MakeBdgSegment:
-        jsr   SingleObjLoad2                          *         jsrto   (SingleObjLoad2).l, JmpTo_SingleObjLoad2
-        bne   >                                       *         bne.s   +       ; rts
+        jsr   LoadObject_x                            *         jsrto   (SingleObjLoad2).l, JmpTo_SingleObjLoad2
+        beq   >                                       *         bne.s   +       ; rts
         lda   id,u
         sta   id,x                                    *         _move.b id(a0),id(a1) ; load obj11
         ; useless will beoverwritten later            *         move.w  x_pos(a0),x_pos(a1)
