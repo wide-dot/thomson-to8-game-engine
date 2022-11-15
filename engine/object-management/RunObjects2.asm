@@ -34,10 +34,16 @@ RunObjects
         aslb                  
         ldx   #Obj_Index_Address
         abx
+        ldd   object_list_next,u       ; prevent self-deletion of objects
+        std   @next
         jsr   [,x]              
-@skip   ldu   object_list_next,u     
+        ldu   #0
+@next   equ   *-2    
         bne   <         
 @rts    rts   
+@skip   ldu   object_list_next,u
+        bne   <
+        rts
 
 LoadObject_u
         ldu   #Dynamic_Object_RAM

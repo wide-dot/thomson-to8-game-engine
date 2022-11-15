@@ -166,7 +166,7 @@ Obj08_SkidDust                                        * Obj08_SkidDust:
         suba  Vint_Main_runcount
         sta   obj08_dust_timer,u                      *         move.b  #3,obj08_dust_timer(a0)
         jsr   LoadObject_x                            *         bsr.w   SingleObjLoad
-        bne   loc_1DEE0                               *         bne.s   loc_1DEE0
+        beq   loc_1DEE0                               *         bne.s   loc_1DEE0
         lda   id,u
         sta   id,x                                    *         _move.b id(a0),id(a1) ; load obj08
         ldd   x_pos,y

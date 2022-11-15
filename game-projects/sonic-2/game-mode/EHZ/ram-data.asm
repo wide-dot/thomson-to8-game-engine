@@ -12,7 +12,8 @@ Dynamic_Object_RAM
                               fill  0,(nb_dynamic_objects)*object_size
 Dynamic_Object_RAM_End
 
-Sonic_Dust                    fill  0,object_size
+Sonic_Dust                    fcb   ObjID_SplashDust
+                              fill  0,object_size-1
 
 * ===========================================================================
 * Common object structure
