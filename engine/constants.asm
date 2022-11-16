@@ -153,8 +153,8 @@ ext_variables                 equ object_base_size ; start of reserved space for
 id                            equ 0   ; reference to object model id (ObjID_) (0: free slot)
 subtype                       equ 1   ; reference to object subtype (Sub_) DEPENDENCY subtype must follow id
 render_flags                  equ 2
-object_list_prev              equ 3   ; previous object to update when deleting current object
-object_list_next              equ 5   ; next object to run by RunObjects
+run_object_prev               equ 3   ; previous object to update when deleting current object
+run_object_next               equ 5   ; next object to run by RunObjects
 
  ifndef OverlayMode
 * --- render_flags bitfield variables --- background erase pack
@@ -317,8 +317,8 @@ rsv_priority_next_obj         equ object_rsvd+3 ; and +4 ; next object (OST addr
 ; object_base_size+ext_variables_size should cover at least 7+56 bytes 
 ; subtype is recovered
 mainspr_childsprites    equ   subtype         ; amount of child sprites
-mainspr_width           equ   object_list_next+2
-mainspr_height          equ   object_list_next+3
+mainspr_width           equ   run_object_next+2
+mainspr_height          equ   run_object_next+3
 mainspr_x_pos           equ   mainspr_height+1
 mainspr_y_pos           equ   mainspr_height+3
 mainspr_mapframe        equ   mainspr_height+5
