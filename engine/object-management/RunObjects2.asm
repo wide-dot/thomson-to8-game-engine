@@ -25,8 +25,8 @@ object_list_last  fdb   0
 RunObjects
         ldu   object_list_first
         beq   @rts
-!       ldb   id,u
-        beq   @skip                    ; Load an object with id=0 allows to book a empty slot
+!       ldb   id,u                     ; Load an object with id=0 allows to book a empty slot
+        beq   @skip                    ; that will be usable later, we need to skip in this case (no object index)
         ldx   #Obj_Index_Page
         abx
         lda   ,x              
@@ -34,14 +34,14 @@ RunObjects
         aslb                  
         ldx   #Obj_Index_Address
         abx
-        ldd   object_list_next,u       ; prevent self-deletion of objects
-        std   @next
+        ldd   run_object_next,u        ; in case of self-deletion by current object
+        std   object_list_next         ; we need to save the next object in run list
         jsr   [,x]              
         ldu   #0
-@next   equ   *-2    
+object_list_next equ   *-2    
         bne   <         
 @rts    rts   
-@skip   ldu   object_list_next,u
+@skip   ldu   run_object_next,u
         bne   <
         rts
 
@@ -58,9 +58,9 @@ LoadObject_u
         pshs  x
         ldx   object_list_last
         beq   >
-        stu   object_list_next,x
+        stu   run_object_next,x
         stu   object_list_last
-        stx   object_list_prev,u
+        stx   run_object_prev,u
         puls  x,pc                     ; return z=0 when found
 !       stu   object_list_last
         stu   object_list_first
@@ -79,9 +79,9 @@ LoadObject_x
         pshs  u
         ldu   object_list_last
         beq   >
-        stx   object_list_next,u
+        stx   run_object_next,u
         stx   object_list_last
-        stu   object_list_prev,x
+        stu   run_object_prev,x
         puls  u,pc                     ; return z=0 when found
 !       stx   object_list_last
         stx   object_list_first
@@ -89,19 +89,23 @@ LoadObject_x
 
 UnloadObject_u
         pshs  d,x,y,u
-
-        ldy   object_list_next,u
+        cmpu  object_list_next         ; if current object to delete
+        bne   >                        ; is the following to execute
+        ldy   run_object_next,u
+        sty   object_list_next         ; then update the next object in RunObjects routine
         beq   @noNext
-        ldx   object_list_prev,u
-        stx   object_list_prev,y
+!       ldy   run_object_next,u
+        beq   @noNext
+        ldx   run_object_prev,u
+        stx   run_object_prev,y
         beq   @noPrev
-        sty   object_list_next,x
+        sty   run_object_next,x
         bra   @clearObj
 @noPrev sty   object_list_first
         bra   @clearObj
-@noNext ldx   object_list_prev,u
+@noNext ldx   run_object_prev,u
         beq   >
-        sty   object_list_next,x
+        sty   run_object_next,x
 !       stx   object_list_last
         bne   @clearObj
         stx   object_list_first
@@ -138,19 +142,23 @@ UnloadObject_clear
 
 UnloadObject_x
         pshs  d,x,y,u
-
-        ldy   object_list_next,x 
+        cmpx  object_list_next         ; if current object to delete
+        bne   >                        ; is the following to execute
+        ldy   run_object_next,x
+        sty   object_list_next         ; then update the next object in RunObjects routine
         beq   @noNext
-        ldu   object_list_prev,x
-        stu   object_list_prev,y
+        ldy   run_object_next,x 
+        beq   @noNext
+        ldu   run_object_prev,x
+        stu   run_object_prev,y
         beq   @noPrev
-        sty   object_list_next,u
+        sty   run_object_next,u
         bra   @clearObj
 @noPrev sty   object_list_first
         bra   @clearObj
-@noNext ldu   object_list_prev,x
+@noNext ldu   run_object_prev,x
         beq   >
-        sty   object_list_next,u
+        sty   run_object_next,u
 !       stu   object_list_last
         bne   @clearObj
         stx   object_list_first
