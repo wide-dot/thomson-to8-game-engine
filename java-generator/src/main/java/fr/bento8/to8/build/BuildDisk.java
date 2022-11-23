@@ -3082,6 +3082,7 @@ public class BuildDisk
 		String lstFile = asmFileName + ".lst";
 		String glbFile = asmFileName + ".glb";			
 		String glbTmpFile = asmFileName + ".tmp";	
+		String mapFile = asmFileName + ".map";
 		
 		if (mode==MEGAROM_T2)
 			dynamicContentT2.patchSource(path);
@@ -3096,19 +3097,38 @@ public class BuildDisk
 		del.delete();
 		del = new File (glbTmpFile);
 		del.delete();
+		del = new File (mapFile);
+		del.delete();
 
 		logger.debug("\t# Compile "+path.toString());
 		
-		List<String> command = new ArrayList<String>(List.of(game.lwasm,
-				   path.toString(),
-				   "--output=" + binFile,
-				   "--list=" + lstFile,
-				   "--6809",	
-				   "--includedir="+path.getParent().toString(),
-				   "--includedir=./",
-				   "--symbol-dump=" + glbTmpFile,
-				   Game.pragma				   
-				   ));
+		// map file is only generated for .fd (debug under dcmoto only)
+		// in next builder version, need to generated fd and T2 in separate folder
+		List<String> command;
+		if (mode==FLOPPY_DISK) {
+			command = new ArrayList<String>(List.of(game.lwasm,
+					   path.toString(),
+					   "--output=" + binFile,
+					   "--list=" + lstFile,
+					   "--6809",	
+					   "--includedir="+path.getParent().toString(),
+					   "--includedir=./",
+					   "--symbol-dump=" + glbTmpFile,
+					   "--map=" + mapFile,
+					   Game.pragma				   
+					   ));
+		} else {
+			command = new ArrayList<String>(List.of(game.lwasm,
+					   path.toString(),
+					   "--output=" + binFile,
+					   "--list=" + lstFile,
+					   "--6809",	
+					   "--includedir="+path.getParent().toString(),
+					   "--includedir=./",
+					   "--symbol-dump=" + glbTmpFile,
+					   Game.pragma				   
+					   ));
+		}
 		
 		for (int i=0; i<Game.includeDirs.length; i++)
 			command.add(Game.includeDirs[i]);
