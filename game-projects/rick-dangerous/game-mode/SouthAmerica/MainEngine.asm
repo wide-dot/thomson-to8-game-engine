@@ -13,7 +13,12 @@
 			
         jsr   InitGlobals
         jsr   LoadAct
-        _RunObjectRoutineA ObjID_Tilemap,glb_current_submap       
+        _RunObjectRoutineA ObjID_Tilemap,glb_current_submap     
+
+        ; allocate objects
+        jsr   LoadObject_u
+        lda   #ObjID_Rick
+        sta   id,u
 
 * ==============================================================================
 * Main Loop
@@ -46,9 +51,7 @@ LevelMainLoop
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-pack.asm"	
         
         ; basic object management
-        INCLUDE "./engine/object-management/ClearObj.asm"
         INCLUDE "./engine/object-management/RunObjects.asm"
-        INCLUDE "./engine/object-management/SingleObjLoad.asm"
         
 
         ; utilities

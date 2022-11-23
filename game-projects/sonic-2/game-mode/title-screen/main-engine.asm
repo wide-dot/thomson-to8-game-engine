@@ -97,7 +97,7 @@ UserIRQ_Raster_Smps
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-pack.asm"
 
         ; basic object management
-        INCLUDE "./engine/object-management/RunObjects2.asm"
+        INCLUDE "./engine/object-management/RunObjects.asm"
 
 	; irq
         INCLUDE "./engine/irq/Irq.asm"

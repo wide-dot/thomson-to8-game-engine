@@ -1,102 +1,167 @@
 * ---------------------------------------------------------------------------
 * RunObjects
 * ------------
-* Subroutine to run objects code
+* Subroutines to run, load and unload objects
 *
-* input REG : none
+* RunObjects
+* ----------
+* Run all object's code
+*
+* LoadObject_u, LoadObject_x
+* --------------------------
+* Find a empty object slot and link the new object in run list
+* return zero flag when no more memory avaible
+* return the allocated memory in u or x
+*
+* UnloadObject_u, UnloadObject_x
+* ------------------------------
+* Unlink object (u or x) from run list and clear object's data
+*
 * ---------------------------------------------------------------------------
-                                            *; -------------------------------------------------------------------------------
-                                            *; This runs the code of all the objects that are in Object_RAM
-                                            *; -------------------------------------------------------------------------------
-                                            *
-                                            *; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                            *
-                                            *; sub_15F9C: ObjectsLoad:
-RunObjects                                  *RunObjects:
-                                            *    tst.b   (Teleport_flag).w
-                                            *    bne.s   RunObjects_End  ; rts
-        ldu   #Object_RAM                   *    lea (Object_RAM).w,a0 ; a0=object
-        bra   am_RunNextObject
-                                            *    moveq   #(Dynamic_Object_RAM_End-Object_RAM)/object_size-1,d7 ; run the first $80 objects out of levels
-                                            *    moveq   #0,d0
-                                            *    cmpi.b  #GameModeID_Demo,(Game_Mode).w  ; demo mode?
-                                            *    beq.s   +   ; if in a level in a demo, branch
-                                            *    cmpi.b  #GameModeID_Level,(Game_Mode).w ; regular level mode?
-                                            *    bne.s   RunObject ; if not in a level, branch to RunObject
-RunObjects_01                               *+
-                                            *    move.w  #(Object_RAM_End-Object_RAM)/object_size-1,d7   ; run the first $90 objects in levels
-                                            *    tst.w   (Two_player_mode).w
-                                            *    bne.s   RunObject ; if in 2 player competition mode, branch to RunObject
-                                            *
-        ;tst   glb_MainCharacter_Is_Dead     *    cmpi.b  #6,(MainCharacter+routine).w
-        ;bne   RunObjectsWhenPlayerIsDead    *    bhs.s   RunObjectsWhenPlayerIsDead ; if dead, branch
-                                            *    ; continue straight to RunObject
-                                            *; ---------------------------------------------------------------------------
-                                            *
-                                            *; -------------------------------------------------------------------------------
-                                            *; This is THE place where each individual object's code gets called from
-                                            *; -------------------------------------------------------------------------------
-                                            *
-                                            *; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                            *
-                                            *; sub_15FCC:
-RunObject                                   *RunObject:
-        ldb   id,u                          *    move.b  id(a0),d0   ; get the object's ID
-        beq   RunNextObject                 *    beq.s   RunNextObject ; if it's obj00, skip it
 
+object_list_first fdb   0
+object_list_last  fdb   0
+
+RunObjects
+        ldu   object_list_first
+        beq   @rts
+!       ldb   id,u                     ; Load an object with id=0 allows to book a empty slot
+        beq   @skip                    ; that will be usable later, we need to skip in this case (no object index)
         ldx   #Obj_Index_Page
         abx
-        lda   ,x                            ; page memoire
-        _SetCartPageA                       ; selection de la page en RAM (0000-3FFF)
-        aslb                                *    add.w   d0,d0
-                                            *    add.w   d0,d0   ; d0 = object ID * 4
-        ldx   #Obj_Index_Address            *    movea.l Obj_Index-4(pc,d0.w),a1 ; load the address of the object's code
+        lda   ,x              
+        _SetCartPageA         
+        aslb                  
+        ldx   #Obj_Index_Address
         abx
-        jsr   [,x]                          *    jsr (a1)    ; dynamic call! to one of the the entries in Obj_Index
-                                            *    moveq   #0,d0
-                                            *
-                                            *; loc_15FDC:
-RunNextObject                               *RunNextObject:
-        leau  next_object,u                 *    lea next_object(a0),a0 ; load 0bj address
-am_RunNextObject                            
-        cmpu  #Object_RAM_End               *    dbf d7,RunObject
-        bne   RunObject                     *; return_15FE4:
-RunObjects_End                              *RunObjects_End:
-        rts                                 *    rts
-                                            *
-                                            *; ---------------------------------------------------------------------------
-                                            *; this skips certain objects to make enemies and things pause when Sonic dies
-                                            *; loc_15FE6:
-RunObjectsWhenPlayerIsDead                  *RunObjectsWhenPlayerIsDead:
-        ;ldu   #Reserved_Object_RAM
-        ;ldx   #Reserved_Object_RAM_End
-        ;stx   am_RunNextObject+2            *    moveq   #(Reserved_Object_RAM_End-Reserved_Object_RAM)/object_size-1,d7
-        ;bsr   RunObject                     *    bsr.s   RunObject   ; run the first $10 objects normally
-                                            *    moveq   #(Dynamic_Object_RAM_End-Dynamic_Object_RAM)/object_size-1,d7
-                                            *    bsr.s   RunObjectDisplayOnly ; all objects in this range are paused      
-        ;ldu   #LevelOnly_Object_RAM 
-        ;ldx   #LevelOnly_Object_RAM_End
-        ;stx   am_RunNextObject+2            *    moveq   #(LevelOnly_Object_RAM_End-LevelOnly_Object_RAM)/object_size-1,d7
-        ;bsr   RunObject                     *    bra.s   RunObject   ; run the last $10 objects normally
-                                            *
-        ;ldx   #Object_RAM_End               * repositionne la fin du RunObject avec sa valeur par d�faut
-        ;stx   am_RunNextObject+2
-        ;rts            
-                                            *; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-                                            *
-                                            *; sub_15FF2:
-                                            *RunObjectDisplayOnly:
-                                            *    moveq   #0,d0
-                                            *    move.b  id(a0),d0   ; get the object's ID
-                                            *    beq.s   +   ; if it's obj00, skip it
-                                            *    tst.b   render_flags(a0)    ; should we render it?
-                                            *    bpl.s   +           ; if not, skip it
-                                            *    bsr.w   DisplaySprite
-                                            *+
-                                            *    lea next_object(a0),a0 ; load 0bj address
-                                            *    dbf d7,RunObjectDisplayOnly
-                                            
-                                            *    rts
-                                            *; End of function RunObjectDisplayOnly
-                                            *
-                                            *; ===========================================================================
+        ldd   run_object_next,u        ; in case of self-deletion by current object
+        std   object_list_next         ; we need to save the next object in run list
+        jsr   [,x]              
+        ldu   #0
+object_list_next equ   *-2    
+        bne   <         
+@rts    rts   
+@skip   ldu   run_object_next,u
+        bne   <
+        rts
+
+LoadObject_u
+        ldu   #Dynamic_Object_RAM
+@loop
+        tst   ,u
+        beq   @link
+        leau  next_object,u
+        cmpu  #Dynamic_Object_RAM_End
+        bne   @loop
+        rts                            ; return z=1 when not found
+@link
+        pshs  x
+        ldx   object_list_last
+        beq   >
+        stu   run_object_next,x
+        stu   object_list_last
+        stx   run_object_prev,u
+        puls  x,pc                     ; return z=0 when found
+!       stu   object_list_last
+        stu   object_list_first
+        puls  x,pc                     ; return z=0 when found
+
+LoadObject_x
+        ldx   #Dynamic_Object_RAM
+@loop
+        tst   ,x
+        beq   @link
+        leax  next_object,x
+        cmpx  #Dynamic_Object_RAM_End
+        bne   @loop
+        rts                            ; return z=1 when not found
+@link
+        pshs  u
+        ldu   object_list_last
+        beq   >
+        stx   run_object_next,u
+        stx   object_list_last
+        stu   run_object_prev,x
+        puls  u,pc                     ; return z=0 when found
+!       stx   object_list_last
+        stx   object_list_first
+        puls  u,pc                     ; return z=0 when found
+
+UnloadObject_u
+        pshs  d,x,y,u
+        cmpu  object_list_next         ; if current object to delete
+        bne   >                        ; is the following to execute
+        ldy   run_object_next,u
+        sty   object_list_next         ; then update the next object in RunObjects routine
+        beq   @noNext
+!       ldy   run_object_next,u
+        beq   @noNext
+        ldx   run_object_prev,u
+        stx   run_object_prev,y
+        beq   @noPrev
+        sty   run_object_next,x
+        bra   @clearObj
+@noPrev sty   object_list_first
+        bra   @clearObj
+@noNext ldx   run_object_prev,u
+        beq   >
+        sty   run_object_next,x
+!       stx   object_list_last
+        bne   @clearObj
+        stx   object_list_first
+@clearObj
+        leau  object_size,u ; move to end of data object structure
+UnloadObject_clear
+        ldd   #$0000        ; init regs to zero
+        ldx   #$0000
+        leay  ,x
+
+        fill $36,(object_size/6)*2 ; generate object_size/6 assembly instructions $3636 (pshu  d,x,y) 
+
+        IFEQ object_size%6-5
+        pshu  a,x,y
+        ENDC
+
+        IFEQ object_size%6-4
+        pshu  d,x
+        ENDC
+
+        IFEQ object_size%6-3
+        pshu  a,x
+        ENDC
+
+        IFEQ object_size%6-2
+        pshu  d
+        ENDC
+
+        IFEQ object_size%6-1
+        pshu  a
+        ENDC
+
+        puls  d,x,y,u,pc
+
+UnloadObject_x
+        pshs  d,x,y,u
+        cmpx  object_list_next         ; if current object to delete
+        bne   >                        ; is the following to execute
+        ldy   run_object_next,x
+        sty   object_list_next         ; then update the next object in RunObjects routine
+        beq   @noNext
+        ldy   run_object_next,x 
+        beq   @noNext
+        ldu   run_object_prev,x
+        stu   run_object_prev,y
+        beq   @noPrev
+        sty   run_object_next,u
+        bra   @clearObj
+@noPrev sty   object_list_first
+        bra   @clearObj
+@noNext ldu   run_object_prev,x
+        beq   >
+        sty   run_object_next,u
+!       stu   object_list_last
+        bne   @clearObj
+        stx   object_list_first
+@clearObj
+        leau  object_size,x ; move to end of data object structure
+        bra   UnloadObject_clear
