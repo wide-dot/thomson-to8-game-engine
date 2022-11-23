@@ -695,19 +695,18 @@ empty_tile
         lda   DBT_ccpt
 @a      leay  2,y
         deca
-        beq   @b
+        beq   DBT_ccpt_bck-1
         ldb   1,u
-        bne   @b
-        leau  4,u
+        beq   @b
+        sta   DBT_ccpt
+        jmp   DBT_cloop
+@b      leau  4,u
         cmpu  #0
 l_pos3  set   *-2
         bne   @a
         ldu   #0
 l_pos4  set   *-2
         bra   @a
-@b      sta   DBT_ccpt
-        beq   DBT_ccpt_bck-1
-        jmp   DBT_cloop
 
 ; ****************************************************************************************************************************
 ; *

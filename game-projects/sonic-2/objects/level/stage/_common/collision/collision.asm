@@ -93,7 +93,7 @@ Find_Tile
         lsrb
         andb  #%00011100
         _lsrd                                           * d contient un mélange du A d'avant et les 3 bits de glb_d3
-        leax  d,x
+        ldd   d,x
         rts
    endc
                                                       * ; ===========================================================================
@@ -126,7 +126,7 @@ FindFloor                                             * FindFloor:
         _GetCartPageA
         sta   glb_b_pg
         jsr   Find_Tile                               *         bsr.w   Find_Tile
-        ldd   ,x                                      *         move.w  (a1),d0
+        *ldd   ,x                                      *         move.w  (a1),d0
         std   glb_d4                                  *         movea.w d0,d4
 
         ; keep tile id by filtering out flags
@@ -276,7 +276,7 @@ loc_1E86A                                             * loc_1E86A:
                                                       * ; loc_1E878:
 FindFloor2                                            * FindFloor2:
         jsr   Find_Tile                               *         bsr.w   Find_Tile
-        ldd   ,x                                      *         move.w  (a1),d0
+        *ldd   ,x                                      *         move.w  (a1),d0
         std   glb_d4                                  *         movea.w d0,d4
         anda  #7                                      *         andi.w  #$3FF,d0
         std   glb_d0
@@ -477,7 +477,7 @@ FindWall                                              * FindWall:
         _GetCartPageA
         sta   glb_b_pg
         jsr   Find_Tile                               *         bsr.w   Find_Tile
-        ldd   ,x                                      *         move.w  (a1),d0
+        *ldd   ,x                                      *         move.w  (a1),d0
         std   glb_d4                                  *         movea.w d0,d4
         anda  #7                                      *         andi.w  #$3FF,d0        ; plain blockID
         std   glb_d0
@@ -613,7 +613,7 @@ loc_1EA4A                                             * loc_1EA4A:
                                                       * ; loc_1EA58:
 FindWall2                                             * FindWall2:
         jsr   Find_Tile                               *         bsr.w   Find_Tile
-        ldd   ,x                                      *         move.w  (a1),d0
+        *ldd   ,x                                      *         move.w  (a1),d0
         std   glb_d4                                  *         movea.w d0,d4
         anda  #7                                      *         andi.w  #$3FF,d0
         std   glb_d0
