@@ -20,6 +20,14 @@ ext_variables_size equ 6
         ldx   #Smid_intro
         jsr   PlayMusic 
 
+        jsr   LoadObject_u
+        lda   #ObjID_background1
+        sta   id,u
+
+        jsr   LoadObject_u
+        lda   #ObjID_background2
+        sta   id,u
+
 * ==============================================================================
 * Main Loop
 * ==============================================================================
@@ -32,14 +40,12 @@ LevelMainLoop
         jsr   DrawSprites        	
         bra   LevelMainLoop
 
-Object_RAM 
-        fcb   ObjID_background1
-        fill  0,object_size-1
-        fcb   ObjID_background2
-        fill  0,object_size-1	
-Object_RAM_End
+Dynamic_Object_RAM 
+        fill  0,nb_dynamic_objects*object_size
+Dynamic_Object_RAM_End
 
-nb_graphical_objects   equ 2
+nb_dynamic_objects                 equ 2 ; dynamic allocation
+nb_graphical_objects               equ 2 ; only count objects that will be rendered on screen (max 64 total)
 
 UserIRQ
         jsr   PalUpdateNow
@@ -58,7 +64,6 @@ UserIRQ
 
         ; object management
         INCLUDE "./engine/object-management/RunObjects.asm"
-        INCLUDE "./engine/object-management/ClearObj.asm"
 
         ; sound
         INCLUDE "./engine/irq/Irq.asm"        

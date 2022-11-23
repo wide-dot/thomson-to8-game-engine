@@ -50,9 +50,9 @@ Castle_Wait
         ldd   #Img_Castle
         std   image_set,u
 
-        ldx   #Obj_PaletteFade
+        jsr   LoadObject_x
         lda   #ObjID_PaletteFade
-        sta   id,x     
+        sta   id,x   
 	ldb   #0                       ; wait two frames between palette update                      
         stb   subtype,x        
         ldd   #Pal_white

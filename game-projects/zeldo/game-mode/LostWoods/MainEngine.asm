@@ -26,6 +26,26 @@
         ldx   #Smps_Zelda
         jsr   PlayMusic 
 
+        jsr   LoadObject_u
+        lda   #ObjID_Triangle
+        sta   id,u
+
+        jsr   LoadObject_u
+        lda   #ObjID_Nindendo
+        sta   id,u
+
+        jsr   LoadObject_u
+        lda   #ObjID_Title
+        sta   id,u
+
+        jsr   LoadObject_u
+        lda   #ObjID_Sword
+        sta   id,u
+
+        jsr   LoadObject_u
+        lda   #ObjID_Castle
+        sta   id,u
+
 * ==============================================================================
 * Intro
 * ==============================================================================
@@ -67,13 +87,17 @@ InitLevelMainLoop
         jsr   ClearDataMem
 
         ; TODO put this as two routines in engine, one for cleaning all objects, another for cleaning Display priority data
-        ldu   #Object_RAM
-@a      jsr   ClearObj
-        leau  object_size,u
-        cmpu  #Object_RAM_End
+        ldu   #Dynamic_Object_RAM
+@a      tst   ,u
+        beq   >
+        jsr   UnloadObject_u
+!       leau  object_size,u
+        cmpu  #Dynamic_Object_RAM_End
         bne   @a
-        lda   #ObjID_Link        
-        sta   LinkData
+
+        jsr   LoadObject_u
+        lda   #ObjID_Link
+        sta   id,u
         ldu   #Tbl_Priority_First_Entry_0
         ldd   #0
 @b      std   ,u++
@@ -125,9 +149,7 @@ UserIRQ_Smps
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"        
         
         ; basic object management
-        INCLUDE "./engine/object-management/ClearObj.asm"
         INCLUDE "./engine/object-management/RunObjects.asm"
-        INCLUDE "./engine/object-management/SingleObjLoad.asm"
 
         ; utilities
         INCLUDE "./engine/InitGlobals.asm"

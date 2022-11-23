@@ -21,33 +21,6 @@ Coffee_Routines
         fdb   Coffee_Main
 
 Coffee_Init
-
-        ; Set Key Frame
-        ; --------------------------------------------
-
-        ldb   #$02                         ; load page 2
-        stb   $E7E5                        ; in data space ($A000-$DFFF)
-        ldx   #Bgi_titleScreen
-        jsr   DrawFullscreenImage
-
-        lda   $E7DD                        ; set border color
-        anda  #$F0  
-        adda  #$08                         ; color ref
-        sta   $E7DD
-        anda  #$0F
-        adda  #$80
-        sta   glb_screen_border_color+1    ; maj WaitVBL
-        jsr   WaitVBL
-        ldb   #$03                         ; load page 3
-        stb   $E7E5                        ; data space ($A000-$DFFF)
-        ldx   #Bgi_titleScreen
-        jsr   DrawFullscreenImage
-
-        ldd   #Pal_Coffee
-        std   Pal_current
-        clr   PalRefresh
-        jsr   WaitVBL
-
         ; Init Object
         ; --------------------------------------------
         ldb   #$08

@@ -78,7 +78,7 @@ Sword_Wait
 
         * Allocate and init all sub objects
         * Title overlay
-	jsr   SingleObjLoad
+	jsr   LoadObject_x
         _ldd  ObjID_Sword,Sub_SwordTile     ; this set object id and subtype
 	std   ,x
         ldd   #Img_Title_overlay
@@ -92,7 +92,7 @@ Sword_Wait
         stb   priority,x
 
         * Sword tiles
-@b	jsr   SingleObjLoad
+@b	jsr   LoadObject_x
         _ldd  ObjID_Sword,Sub_SwordTile     ; this set object id and subtype
 	std   ,x
         lda   b_Sword_nb_sub_tile,u

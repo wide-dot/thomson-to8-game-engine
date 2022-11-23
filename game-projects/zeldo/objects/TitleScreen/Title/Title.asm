@@ -49,7 +49,7 @@ Title_Wait
         jmp   DisplaySprite	
 
 Title_FadeIn
-        ldx   #Obj_PaletteFade
+        jsr   LoadObject_x
         lda   #ObjID_PaletteFade
         sta   id,x     
 	ldb   #4                       ; wait two frames between palette update                      
