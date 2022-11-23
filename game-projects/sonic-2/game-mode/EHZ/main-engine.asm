@@ -389,7 +389,7 @@ TlsAni_EHZ_pulseball3_imgs
         INCLUDE "./engine/graphics/sprite/sprite-overlay-pack.asm"
         
         ; basic object management
-        INCLUDE "./engine/object-management/RunObjects2.asm"
+        INCLUDE "./engine/object-management/RunObjects.asm"
         INCLUDE "./engine/object-management/MarkObjGone.asm"
 
         ; utilities
