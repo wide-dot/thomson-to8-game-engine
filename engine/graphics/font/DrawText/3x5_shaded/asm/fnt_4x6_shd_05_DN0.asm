@@ -1,0 +1,50 @@
+
+	OPT C,CT
+adr_fnt_4x6_shd_05_DN0
+	LEAU 80,U
+
+	LDA 80,U
+	ANDA #$F0
+
+	STA 80,U
+	LDA 40,U
+	ANDA #$0F
+	ORA #$30
+	STA 40,U
+	LDA ,U
+	ANDA #$F0
+	ORA #$03
+	STA ,U
+	LDA -40,U
+	ANDA #$F0
+
+	STA -40,U
+	LDA -80,U
+	ANDA #$0F
+	ORA #$30
+	STA -80,U
+
+	LEAU -$2000+40,U
+
+	LDA 80,U
+	ANDA #$F0
+
+	STA 80,U
+	LDA 40,U
+	ANDA #$0F
+	ORA #$30
+	STA 40,U
+	LDA ,U
+	ANDA #$0F
+
+	STA ,U
+	LDA -40,U
+	ANDA #$F0
+
+	STA -40,U
+	LDA -80,U
+	ANDA #$0F
+	ORA #$30
+	STA -80,U
+	RTS
+
