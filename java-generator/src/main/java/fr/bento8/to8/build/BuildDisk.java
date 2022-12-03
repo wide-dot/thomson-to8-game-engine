@@ -430,10 +430,23 @@ public class BuildDisk
 		for (Entry<String, String[]> spriteProperties : object.spritesProperties.entrySet()) {
 
 			Sprite sprite = new Sprite(spriteProperties.getKey());
-			sprite.spriteFile = spriteProperties.getValue()[0].split(",")[0];
-			String spriteFileRef = (spriteProperties.getValue()[0].split(",").length>1?spriteProperties.getValue()[0].split(",")[1]:null);
-			sprite.associatedIdx = (spriteProperties.getValue()[0].split(",").length>2?(spriteProperties.getValue()[0].split(",")[2].equals("")?null:spriteProperties.getValue()[0].split(",")[2]):null);
-			boolean interlaced = (spriteProperties.getValue()[0].split(",").length>3?(spriteProperties.getValue()[0].split(",")[3].equals("_full")?false:true):true);			
+			String spriteFileRef;
+			boolean interlaced;
+			
+			if (spriteProperties.getValue()[0].contains(":")) {
+				sprite.spriteFile = spriteProperties.getValue()[0].split(",")[0];
+				sprite.associatedIdx = sprite.spriteFile.split(":")[1];
+				sprite.spriteFile = sprite.spriteFile.split(":")[0];
+				spriteFileRef = (spriteProperties.getValue()[0].split(",").length>1?spriteProperties.getValue()[0].split(",")[1]:null);
+				interlaced = (spriteProperties.getValue()[0].split(",").length>3?(spriteProperties.getValue()[0].split(",")[3].equals("_full")?false:true):true);
+
+			} else {
+				sprite.spriteFile = spriteProperties.getValue()[0].split(",")[0];
+				spriteFileRef = (spriteProperties.getValue()[0].split(",").length>1?spriteProperties.getValue()[0].split(",")[1]:null);
+				sprite.associatedIdx = (spriteProperties.getValue()[0].split(",").length>2?(spriteProperties.getValue()[0].split(",")[2].equals("")?null:spriteProperties.getValue()[0].split(",")[2]):null);
+				interlaced = (spriteProperties.getValue()[0].split(",").length>3?(spriteProperties.getValue()[0].split(",")[3].equals("_full")?false:true):true);
+			}
+			
 			String[] spriteVariants = spriteProperties.getValue()[1].split(",");
 			if (spriteProperties.getValue().length > 2 && spriteProperties.getValue()[2].equalsIgnoreCase(BuildDisk.RAM))
 				sprite.inRAM = true;					

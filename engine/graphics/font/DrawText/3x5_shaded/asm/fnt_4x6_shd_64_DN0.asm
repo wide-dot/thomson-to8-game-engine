@@ -1,0 +1,19 @@
+
+	OPT C,CT
+adr_fnt_4x6_shd_64_DN0
+	LDA 40,U
+	ANDA #$F0
+	ORA #$03
+	STA 40,U
+	LDA ,U
+	ANDA #$0F
+	ORA #$30
+	STA ,U
+
+	LEAU -$2000,U
+	LDA 80,U
+	ANDA #$0F
+
+	STA 80,U
+	RTS
+

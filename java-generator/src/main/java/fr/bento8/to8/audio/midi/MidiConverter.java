@@ -22,7 +22,7 @@ public class MidiConverter{
 	// This converter will skip any midi message that is not supported by Roland MT32
 	// in order to save save at runtime
 	// TODO : be able to specify filtered messages as a parameter
-
+	
 	public static void main(String[] args) throws Exception {
 		Sequence sequence = MidiSystem.getSequence(new File(args[0]));
 		
@@ -141,6 +141,8 @@ public class MidiConverter{
 					relativeFrame -= relativeFrame%127;
 				}
 				
+				GM2MT.convert_to_mt(message);
+				
 				System.out.print(" data ");
 				// write message data (msb 1)
 				for (int j = 0; j < message.getLength(); j++) {
@@ -151,7 +153,7 @@ public class MidiConverter{
 				
 				System.out.println("");
 			} else {
-				System.out.println("*********** SKIPPED *********** "+(message instanceof MetaMessage||message instanceof MetaMessage?"":"midi message: "+((ShortMessage)message).getCommand())+" "+Arrays.toString(message.getMessage())+" "+message.getClass().getSimpleName());
+				System.out.println("*********** SKIPPED *********** " + Arrays.toString(message.getMessage()) + " " + message.getClass().getSimpleName());
 			}
 		}
 		
