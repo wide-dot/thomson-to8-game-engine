@@ -45,13 +45,13 @@ public class VGMInterpreter {
 				int cmd = this.input.read();
 				int data = this.input.read();
 
-				// Overwrite drum volume
-				if (cmd==0x36)
-					data = SVGMTool.drumVol[0];
-				if (cmd==0x37)
-					data = SVGMTool.drumVol[1];
-				if (cmd==0x38)
-					data = SVGMTool.drumVol[2];
+//				// Overwrite drum volume
+//				if (cmd==0x36)
+//					data = SVGMTool.drumVol[0];
+//				if (cmd==0x37)
+//					data = SVGMTool.drumVol[1];
+//				if (cmd==0x38)
+//					data = SVGMTool.drumVol[2];
 				
 				fireWrite(cmd);
 				fireWrite(data);
