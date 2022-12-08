@@ -465,7 +465,7 @@ public class SpriteSheet {
 	public void prepareImages(boolean onePixelOffset, int locationRef) {
 		// sépare l'image en deux parties pour la RAM A et RAM B
 		// ajoute les pixels transparents pour constituer une image linéaire de largeur 2x80px
-		int paddedImage = 80*height;
+		int paddedImage = 80*(height/subImageNb);
 		pixels = new byte[subImageNb][2][paddedImage];
 		data = new byte[subImageNb][2][paddedImage];
 		x1_offset = new int[subImageNb];
