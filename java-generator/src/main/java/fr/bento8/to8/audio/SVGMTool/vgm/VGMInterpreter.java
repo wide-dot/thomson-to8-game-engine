@@ -11,7 +11,7 @@ public class VGMInterpreter {
 	public static final int SAMPLES_PER_FRAME_PAL = 882;
 
 	private VGMInputStream input;
-	public int[] arrayOfInt = new int[16384];
+	public int[] arrayOfInt = new int[0x80000];
 	public int i = 0;
 	public int loopMarkerHit = 0;
 	public int cumulatedFrames = 0;
