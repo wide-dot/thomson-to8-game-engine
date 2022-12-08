@@ -169,7 +169,7 @@ public class AssemblyGenerator{
 
 			sizeEFrameCode = 0;
 			sizeEFrameCode += getCodeFrameEraseStartSize();			
-			sizeEFrameCode += getCodeFrameEraseEndSize();			
+			sizeEFrameCode += getCodeFrameEraseEndSize();
 		} else {
 			// Utilisation du .BIN existant
 			sizeDCache = Files.readAllBytes(Paths.get(binBckDrawFileName)).length;

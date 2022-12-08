@@ -152,7 +152,7 @@ public class SimpleAssemblyGenerator extends Encoder{
 			sizeDFrameCode = 0;
 			sizeDFrameCode += getCodeFrameDrawStartSize(alpha);
 			sizeDFrameCode += getCodeFrameDrawMidSize();
-			sizeDFrameCode += getCodeFrameDrawEndSize();					
+			sizeDFrameCode += getCodeFrameDrawEndSize();
 		} else {
 			// Utilisation du .BIN existant
 			sizeDCache = Files.readAllBytes(Paths.get(binDrawFileName)).length;
