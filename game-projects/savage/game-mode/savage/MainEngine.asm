@@ -94,5 +94,5 @@ LevelMainLoop
 
         ; tilemap
         INCLUDE "./engine/graphics/Camera/AutoScroll.asm"
-        INCLUDE "./engine/graphics/Tilemap/Tilemap.asm"
+        INCLUDE "./engine/graphics/tilemap/Tilemap.asm"
 	

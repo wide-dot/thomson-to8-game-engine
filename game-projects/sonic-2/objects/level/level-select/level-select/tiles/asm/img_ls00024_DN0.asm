@@ -1,0 +1,123 @@
+	INCLUDE "./engine/constants.asm"
+	OPT C,CT
+adr_img_ls00024_DN0
+	LEAU 604,U
+
+	LDD #$5555
+	LDX #$5555
+	PSHU D,X
+	LEAU -36,U
+
+	LDD #$4544
+	LDX #$4444
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	LDX #$4400
+	PSHU D,X
+	LEAU -36,U
+
+	LDX #$4455
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	LDD #$0500
+	LDX #$0055
+	PSHU D,X
+	LEAU -36,U
+
+	LDD #$5555
+	LDX #$5555
+	PSHU D,X
+
+	LDU <glb_screen_location_1
+	LEAU 604,U
+
+	LDD #$5555
+	LDX #$5555
+	PSHU D,X
+	LEAU -36,U
+
+	LDA #$54
+	LDX #$4445
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	LDX #$4005
+	PSHU D,X
+	LEAU -36,U
+
+	LDX #$4555
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	PSHU D,X
+	LEAU -36,U
+
+	LDA #$50
+	LDX #$0555
+	PSHU D,X
+	LEAU -36,U
+
+	LDA #$55
+	LDX #$5555
+	PSHU D,X
+	RTS
+

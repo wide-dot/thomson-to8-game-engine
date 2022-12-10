@@ -1095,7 +1095,7 @@ Tbl_SSShadow_Side
         fdb   Img_SSShadow_029 																		  
 																		  
 Sine_Data                                                                 *Sine_Data:      BINCLUDE        "misc/sinewave.bin"
-        INCLUDEBIN "./Engine/Math/sinewave.bin"                                 
+        INCLUDEBIN "./engine/Math/sinewave.bin"                                 
 
         ; -------------------------------------------------------------------------------------------------------------        
         ; Sinus/Cosinus

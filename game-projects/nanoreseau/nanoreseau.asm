@@ -23,7 +23,7 @@ nano_buffer_end
 ;* Return: Z=0 (success), Z=1 (fail)
 ;*----------------------------------------------------------------------------*
 
-; TODO some code is missing in Init Namo
+; TODO some code is missing in Init Nano
 InitNano
         ldx   #$9c40                   ; 40000 max connexion retries
 @a      jsr   Init6854

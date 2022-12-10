@@ -263,7 +263,7 @@ EHZ_Back
         _MountObject ObjID_EHZ_Back
         jmp   ,x
 
-        INCLUDE "./engine/graphics/Tilemap/TileAnimScript.asm"  
+        INCLUDE "./engine/graphics/tilemap/TileAnimScript.asm"  
 
 ; ===========================================================================
 ; for each script :
@@ -411,7 +411,7 @@ TlsAni_EHZ_pulseball3_imgs
 
         ; tilemap
         INCLUDE "./objects/level/stage/_common/collision/collision.asm"
-        INCLUDE "./engine/graphics/Tilemap/TilemapBuffer.asm"
+        INCLUDE "./engine/graphics/tilemap/TilemapBuffer.asm"
 
         ; music and palette
 	; irq
