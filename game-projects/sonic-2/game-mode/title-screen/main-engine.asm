@@ -7,14 +7,19 @@
 *
 ********************************************************************************
 
+        INCLUDE "./game-mode/globals.equ"
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"        
         org   $6100
 
-* ==============================================================================
-* Init
-* ==============================================================================
-        jsr   InitGlobals		
+        ; init game globals
+        ldd   #0
+        std   Current_ZoneAndAct
+        sta   Life_count
+        sta   Score
+
+        ; init engine globals
+        jsr   InitGlobals	
 
 	; game mode
         lda   #GmID_TitleScreen

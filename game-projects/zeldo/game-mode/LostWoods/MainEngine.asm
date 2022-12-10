@@ -168,7 +168,7 @@ UserIRQ_Smps
 
         ; tilemap
         INCLUDE "./engine/graphics/Camera/AutoScroll.asm"
-        INCLUDE "./engine/graphics/Tilemap/Tilemap.asm"
+        INCLUDE "./engine/graphics/tilemap/Tilemap.asm"
 
         ; sound
         INCLUDE "./engine/irq/Irq.asm"        

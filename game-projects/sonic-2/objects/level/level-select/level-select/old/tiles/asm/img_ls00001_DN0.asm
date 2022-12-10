@@ -1,0 +1,43 @@
+	INCLUDE "./engine/constants.asm"
+	OPT C,CT
+adr_img_ls00001_DN0
+	LEAU 161,U
+
+	LDD #$4400
+	STD 119,U
+	LDB #$55
+	STD 79,U
+	LDD #$5000
+	STD -121,U
+	LDD #$0444
+	STD -81,U
+	LDA #$44
+	STD 39,U
+	STD -1,U
+	STD -41,U
+	LEAU -161,U
+
+	LDD #$5555
+	STD ,U
+
+	LDU <glb_screen_location_1
+	LEAU 161,U
+
+	LDD #$4055
+	STD 119,U
+	LDA #$45
+	STD 79,U
+	LDB #$45
+	STD 39,U
+	STD -1,U
+	STD -41,U
+	LDD #$4405
+	STD -81,U
+	LDD #$0055
+	STD -121,U
+	LEAU -161,U
+
+	LDA #$55
+	STD ,U
+	RTS
+

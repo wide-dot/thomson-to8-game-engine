@@ -104,7 +104,7 @@ PaletteFade_Main
         sta   pal_idx,u   
         dec   pal_cycles,u             * decremente le compteur du nombre de frame
         bne   PFA_Loop                 * on reboucle si nombre de frame n'est pas realise
-        jmp   ClearObj                 * auto-destruction de l'objet
+        jmp   UnloadObject_u           * auto-destruction de l'objet
         
 PFA_Loop
         lda   ,y                       * chargement de la composante verte et rouge
