@@ -5,20 +5,13 @@
 ; https://github.com/simondotm/vgm-packer
 ;******************************************************************
 
+;  vars without huffman
+VGM_VARS fill 0,4
 
-;-------------------------------
-; workspace/zeropage vars
-;-------------------------------
-
-; Declare where VGM player should locate its zero page vars
-; VGM player uses:
-;  6 zero page vars without huffman
-VGM_ZP fill 0,4 ; must be in zero page 
-
-; declare zero page registers used for each compressed stream (they are context switched)
-lz_zp equ VGM_ZP+0
-zp_literal_cnt  equ lz_zp+0    ; literal count, 7 references
-zp_match_cnt    equ lz_zp+2    ; match count, 10 references
+; registers used for each compressed stream (they are context switched)
+lz_vars equ VGM_VARS+0
+vgc_literal_cnt  equ lz_vars+0
+vgc_match_cnt    equ lz_vars+2
 
 VGM_MUSIC_BPM equ 125
 VGM_BEATS_PER_PATTERN equ 8
