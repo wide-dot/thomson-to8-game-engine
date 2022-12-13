@@ -23,23 +23,30 @@ PSG equ $E7FF
 ;--------------------------------------------------
 
 ;-------------------------------------------
-; vgc_init
+; vgc_play
 ;-------------------------------------------
 ; Initialise playback routine
 ;  A points to HI byte of a page aligned 2Kb RAM buffer address
 ;  X point to the VGC data stream to be played
 ;  C=1 for looped playback
 ;-------------------------------------------
-vgc_play
+vgc_init
         sta   vgc_buffers              ; stash the 2kb buffer address
         lda   #0
         rora                           ; move carry into A
         sta   vgc_loop
         lda   ,x                       ; get memory page that contains track data
         sta   vgc_source_page
+        _SetCartPageA
+        stb   @LoadA
+@a      _SetCartPageA
         ldx   1,x                      ; get ptr to track data
         stx   vgc_source               ; stash the data source addr for looping
-        jmp   vgc_stream_mount         ; Prepare the data for streaming (passed in X)
+        jsr   vgc_stream_mount         ; Prepare the data for streaming (passed in X)
+        lda   #0
+@LoadA  equ   *-1
+        _SetCartPageA
+        rts
 
 ;-------------------------------------------
 ; vgc_update
@@ -50,36 +57,40 @@ vgc_play
 ;  returns non-zero when VGC is finished.
 ;-------------------------------------------
 vgc_update
-        lda vgc_finished
-        bne exit        
+        lda   vgc_finished
+        bne   @exit        
+        lda   vgc_source_page
+        bne   @a
+        rts                            ; no music to play
+@a      _SetCartPageA
         ; SN76489 data register format is %1cctdddd where cc=channel, t=0=tone, t=1=volume, dddd=data
         ; The data is run length encoded.
         ; Get Channel 3 tone first because that contains the EOF marker        
         ; Update Tone3
-        lda   #3
-        jsr   vgc_update_register1  ; on exit C set if data changed, Y is last value
-        bcc   @more_updates
+        ;lda   #3
+        ;jsr   vgc_update_register1  ; on exit C set if data changed, Y is last value
+        ;bcc   @more_updates
         ;
-        cmpa  #$08     ; EOF marker? (0x08 is an invalid tone 3 value)
-        beq   @finished
+        ;cmpa  #$08     ; EOF marker? (0x08 is an invalid tone 3 value)
+        ;beq   @finished
         ; 
 @more_updates
         lda   #7
         jsr   vgc_update_register1  ; Volume3
-        lda   #1
-        jsr   vgc_update_register2  ; Tone1
-        lda   #2
-        jsr   vgc_update_register2  ; Tone2
-        lda   #4
-        jsr   vgc_update_register1  ; Volume0
-        lda   #5
-        jsr   vgc_update_register1  ; Volume1
-        lda   #6
-        jsr   vgc_update_register1  ; Volume2
-        ; do tone0 last so we can use B output as the Zero return flag
-        lda   #0
-        jsr   vgc_update_register2  ; Tone0, returns 0 in X
-        tstb ; return Z=0=still playing
+        ;lda   #1
+        ;jsr   vgc_update_register2  ; Tone1
+        ;lda   #2
+        ;jsr   vgc_update_register2  ; Tone2
+        ;lda   #4
+        ;jsr   vgc_update_register1  ; Volume0
+        ;lda   #5
+        ;jsr   vgc_update_register1  ; Volume1
+        ;lda   #6
+        ;jsr   vgc_update_register1  ; Volume2
+        ; do tone0 last so we can use B output as the Zero return flagsn_reset
+        ;lda   #0
+        ;jsr   vgc_update_register2  ; Tone0, returns 0 in X
+        ;tstb ; return Z=0=still playing
 @exit
         rts
         ;
@@ -92,7 +103,7 @@ vgc_update
         lda   vgc_loop
         asla ; -> C
         lda   vgc_buffers
-        jsr   vgc_init ; TODO rechargement par les données dejà enregistrées (pas l'id sound)
+        jsr   vgc_stream_mount
         jmp   vgc_update
 @no_looping 
         ; no looping so set flag $ stop PSG
@@ -130,14 +141,13 @@ VGC_STREAMS equ 8
 vgc_streams ; decoder contexts - 8 bytes per stream, 8 streams (64 bytes)
         fill 0,VGC_STREAMS*VGC_STREAM_CONTEXT_SIZE
         ; 0 zp_stream_src     ; stream data ptr HI/LO
-        ; 2 zp_literal_cnt    ; literal count HI/LO
-        ; 4 zp_match_cnt      ; match count HI/LO
+        ; 2 vgc_literal_cnt    ; literal count HI/LO
+        ; 4 vgc_match_cnt      ; match count HI/LO
         ; 6 lz_window_src     ; window read ptr - index LO
         ; 7 lz_window_dst     ; window write ptr - index LO
 
 vgc_buffers     fcb 0    ; the HI byte of the address where the buffers are stored
 vgc_finished    fcb 0    ; a flag to indicate player has reached the end of the vgc stream
-vgc_temp        fcb 0    ; used by vgc_update_register1()
 vgc_loop        fcb 0    ; non zero if tune is to be looped
 vgc_source      fdb 0    ; vgc data address
 vgc_source_page fdb 0    ; vgc data address
@@ -173,11 +183,10 @@ vgc_stream_mount
         ; bit 6 - LZ 8 bit (0) or 16 bit (1)
         ; bit 7 - Huffman (1) or no huffman (0)
         ; -- 6809 version -- only support : 8 bit / no huffman
-        leax  7,x ; Skip frame header, and move to first block
-        leau  ,x  ; init first block position
-no_block_hi
-        ; read the block headers (size)
+        leau  7,x ; Skip frame header, and move to first block
+        ; init first block position
         ldx   #0
+        ldy   #vgc_register_counts
         ; clear vgc finished flag
         clr   vgc_finished
 @block_loop
@@ -190,15 +199,15 @@ no_block_hi
         std   vgc_streams+VGC_STREAMS*6,x  ; window src dst ptr 
         ; setup RLE tables
         inca
-        sta   vgc_register_counts,x
-
-        ldd   ,u                       ; read 16-bit block size
-        addd  #4                       ; +4 to compensate for block header
+        sta   ,y+
+        ;
+        ldb   -4,u                     ; read 16-bit block size
+        lda   -3,u                     ; read 16-bit block size
         leau  d,u                      ; move to next block
-
+        ;
         ; for all 8 blocks
-        leax  1,x
-        cpmx  #8
+        leax  2,x
+        cmpx  #16
         bne   @block_loop
         rts
 
@@ -211,6 +220,7 @@ vgc_get_register_data
         ; set the LZ4 decoder stream workspace buffer (initialised by vgc_stream_mount)
         ldx   #0
         leax  a,x
+        leax  a,x
         adda  vgc_buffers ; hi byte of the base address of the 2Kb (8x256) vgc stream buffers
         ; store hi byte of where the 256 byte vgc stream buffer for this stream is located
         sta   lz_window_src ; **SELFMOD** HI
@@ -222,28 +232,28 @@ vgc_get_register_data
         ; we have to load the required decoder context to ZP
         ldu   vgc_streams+VGC_STREAMS*0,x
         ldd   vgc_streams+VGC_STREAMS*2,x
-        std   zp_literal_cnt
+        std   vgc_literal_cnt
         ldd   vgc_streams+VGC_STREAMS*4,x
-        std   zp_match_cnt
+        std   vgc_match_cnt
         ldd   vgc_streams+VGC_STREAMS*6,x
         sta   lz_window_src+1   ; **SELF MODIFY** LO
         stb   lz_window_dst+1   ; **SELF MODIFY** LO
         ; then fetch a decompressed byte
         jsr   lz_decode_byte
-        sta   @loadA ; Stash A for later - ** SMOD ** [4](2) faster than pha/pla 
+        stb   @loadB ; Stash B for later - ** SMOD ** [4](2) faster than pha/pla 
         ; then we save the decoder context from ZP back to main ram
         ldx   #0  ; *** SELF MODIFIED - See above ***
-@loadX equ *-2
+@loadX  equ *-2
         stu   vgc_streams+VGC_STREAMS*0,x
-        ldd   zp_literal_cnt
+        ldd   vgc_literal_cnt
         std   vgc_streams+VGC_STREAMS*2,x
-        ldd   zp_match_cnt
+        ldd   vgc_match_cnt
         std   vgc_streams+VGC_STREAMS*4,x
         lda   lz_window_src+1 ; LO
         ldb   lz_window_dst+1 ; LO
         std   vgc_streams+VGC_STREAMS*6,x
-        lda   #0 ;[2](2) - ***SELF MODIFIED - See above ***
-@loadA equ *-1
+        ldb   #0 ;[2](2) - ***SELF MODIFIED - See above ***
+@loadB  equ *-1
         rts
 
 ; Fetch 1 register data byte from the encoded stream and send to sound chip (volumes $ tone3)
@@ -255,33 +265,35 @@ vgc_get_register_data
 
 vgc_update_register1
         ldx   #vgc_register_counts
+        andcc #$fe
         dec   a,x ; no effect on C
         bne   skip_register_update
 
         ; decode a byte $ send to psg
-        sta   vgc_temp
-        jsr   vgc_get_register_data
         sta   @LoadA
-        anda  #$0f
-        ldx   #0
-        ldb   vgc_temp
-        leax  b,x
-        ora   vgc_register_headers,x
+        jsr   vgc_get_register_data
+        stb   @LoadB
+        andb  #$0f
+        ldx   #vgc_register_headers
+        lda   #0
+@LoadA  equ   *-1
+        orb   a,x
         ; check if it's a tone3 skip command ($ef) before we play it
         ; - this prevents the LFSR being reset unnecessarily
-        cmpa  #$ef
+        cmpb  #$ef
         beq   skip_tone3
-        sta   <PSG
+        stb   <PSG
 skip_tone3
         ; get run length (top 4-bits+1)
-        lda   #0
-@LoadA equ *-1
-        lsra
-        lsra
-        lsra
-        lsra
-        inca
-        sta   vgc_register_counts,x
+        ldb   #0
+@LoadB  equ *-1
+        lsrb
+        lsrb
+        lsrb
+        lsrb
+        incb
+        ldx   #vgc_register_counts
+        stb   a,x
         orcc  #1
 skip_register_update
         rts
@@ -289,25 +301,20 @@ skip_register_update
 ; Fetch 2 register bytes (LATCH+DATA) from the encoded stream and send to sound chip (tone0, tone1, tone2)
 ; Same parameters as vgc_update_register1
 vgc_update_register2
+        sta   @LoadA
         jsr   vgc_update_register1    ; returns stream in X if updated, and C=0 if no update needed
         bcc   skip_register_update
-
+        ;
         ; decode 2nd byte and send to psg as (DATA)
-        tfr   b,a
+        lda   #0
+@LoadA  equ   *-1
         jsr   vgc_get_register_data 
-	sta   <PSG
+	stb   <PSG
         rts
 
 ;-------------------------------
 ; lz4 decoder
 ;-------------------------------
-
-; fetch a byte from the current decode buffer at the current read ptr offset
-; returns byte in A, clobbers Y
-lz_fetch_buffer
-        ldb   $ffff ; *** SELF MODIFIED ***
-        inc   lz_fetch_buffer+2
-        rts
 
 ; push byte into decode buffer
 ; clobbers Y, preserves A
@@ -325,9 +332,9 @@ lz_window_dst equ lz_store_buffer+1 ; window write ptr HI (2 bytes) - index, 3 r
 ; Returns 16-bit length in X
 lz_fetch_count
         lda   #0
+        tfr   d,x
         cmpb  #15                      ; >=15 signals byte extend
         bne   lz_fetch_count_done
-        tfr   d,x
 fetch
 fetchByte1
         ldb   ,u+
@@ -351,9 +358,9 @@ lz_decode_byte
 
 ; try fetching a literal byte from the stream
 try_literal
-        lda   zp_literal_cnt+1
+        lda   vgc_literal_cnt+1
         bne   is_literal
-        lda   zp_literal_cnt
+        lda   vgc_literal_cnt
         beq   try_match
 
 is_literal
@@ -365,9 +372,9 @@ fetchByte2
         stb   stashB+1                 ; **SELF MODIFICATION**
 
         ; using inverted counter
-        inc zp_literal_cnt+1
+        inc vgc_literal_cnt+1
         bne >
-        inc zp_literal_cnt
+        inc vgc_literal_cnt
 !       bne end_literal
 
 begin_matches
@@ -381,19 +388,19 @@ fetchByte3
 
         ; set buffer read ptr
         stb   stashS+1 ; **SELF MODIFICATION**
-        ldb   lz_window_dst+1 ; *** SELF MODIFYING CODE ***
+        lda   lz_window_dst+1 ; *** SELF MODIFYING CODE ***
         orcc  #1
 stashS
-        sbcb  #0 ; **SELFMODIFIED**
+        sbca  #0 ; **SELFMODIFIED**
         sta   lz_window_src+1 ; *** SELF MODIFYING CODE ***
 
         ; fetch match length
-        ldb   zp_match_cnt+1
+        ldb   vgc_match_cnt+1
         jsr   lz_fetch_count
         ; match length is always+4 (0=4)
         ; cant do this before because we need to detect 15
         leax  4,x
-        stx   zp_match_cnt
+        stx   vgc_match_cnt
 
 end_literal
 stashB
@@ -402,23 +409,27 @@ stashB
 
 ; try fetching a matched byte from the stream
 try_match
-        lda   zp_match_cnt
+        lda   vgc_match_cnt
         bne   is_match
-        lda   zp_match_cnt+1
+        lda   vgc_match_cnt+1
         ; all matches done, so get a new token.
         beq   try_token
 
 is_match
-        jsr   lz_fetch_buffer    ; fetch matched byte from decode buffer
+; fetch a byte from the current decode buffer at the current read ptr offset
+; returns byte in A, clobbers Y
+lz_fetch_buffer
+        ldb   $ffff ; *** SELF MODIFIED ***
+        inc   lz_fetch_buffer+2
         jsr   lz_store_buffer    ; stash in decode buffer
 
         ; for all matches
         ; we know match cnt is at least 1
-        lda   zp_match_cnt+1
+        lda   vgc_match_cnt+1
         bne   skiphi
-        dec   zp_match_cnt
+        dec   vgc_match_cnt
 skiphi
-        dec   zp_match_cnt+1
+        dec   vgc_match_cnt+1
 
 end_match
         rts
@@ -431,9 +442,9 @@ fetchByte5
         ldb   ,u+
 
         ; unpack match length from token (bottom 4 bits)
+        lda   #0
         andb  #$0f
-        stb   zp_match_cnt+1
-        clr   zp_match_cnt
+        std   vgc_match_cnt
 
         ; unpack literal length from token (top 4 bits)
         ldb   -1,u
@@ -444,7 +455,7 @@ fetchByte5
 
         ; fetch literal extended length, passing in B
         jsr   lz_fetch_count
-        stx   zp_literal_cnt
+        stx   vgc_literal_cnt
         
         ; if no literals, begin the match sequence
         ; and fetch one match byte
@@ -456,11 +467,11 @@ fetchByte5
 
 has_literals
         ; negate the literals counter so we can increment it rather than decrement it
-        ldd   zp_literal_cnt
+        ldd   vgc_literal_cnt
         nega
         negb
         sbca  #0
-        std   zp_literal_cnt
+        std   vgc_literal_cnt
 
         ; ok now go back to literal parser so we can return a byte
         ; if no literals, logic will fall through to matches
