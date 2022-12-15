@@ -67,30 +67,29 @@ vgc_update
         ; The data is run length encoded.
         ; Get Channel 3 tone first because that contains the EOF marker        
         ; Update Tone3
-        ;lda   #3
-        ;jsr   vgc_update_register1  ; on exit C set if data changed, Y is last value
-        ;bcc   @more_updates
+        lda   #3
+        jsr   vgc_update_register1  ; on exit C set if data changed, B is last value
+        bcc   @more_updates
         ;
-        ;cmpa  #$08     ; EOF marker? (0x08 is an invalid tone 3 value)
-        ;beq   @finished
+        ldb   skip_tone3+1
+        cmpb  #$08     ; EOF marker? (0x08 is an invalid tone 3 value)
+        beq   @finished
         ; 
 @more_updates
         lda   #7
         jsr   vgc_update_register1  ; Volume3
-        ;lda   #1
-        ;jsr   vgc_update_register2  ; Tone1
-        ;lda   #2
-        ;jsr   vgc_update_register2  ; Tone2
-        ;lda   #4
-        ;jsr   vgc_update_register1  ; Volume0
-        ;lda   #5
-        ;jsr   vgc_update_register1  ; Volume1
-        ;lda   #6
-        ;jsr   vgc_update_register1  ; Volume2
-        ; do tone0 last so we can use B output as the Zero return flagsn_reset
-        ;lda   #0
-        ;jsr   vgc_update_register2  ; Tone0, returns 0 in X
-        ;tstb ; return Z=0=still playing
+        lda   #0
+        jsr   vgc_update_register2  ; Tone0
+        lda   #4
+        jsr   vgc_update_register1  ; Volume0
+        lda   #1
+        jsr   vgc_update_register2  ; Tone1
+        lda   #5
+        jsr   vgc_update_register1  ; Volume1
+        lda   #2
+        jsr   vgc_update_register2  ; Tone2
+        lda   #6
+        jsr   vgc_update_register1  ; Volume2
 @exit
         rts
         ;
@@ -107,7 +106,7 @@ vgc_update
         jmp   vgc_update
 @no_looping 
         ; no looping so set flag $ stop PSG
-        sta   vgc_finished    ; any NZ value is fine, in this case 0x08
+        stb   vgc_finished    ; any NZ value is fine, in this case 0x08
         jmp   sn_reset ; also returns non-zero in A
 
 ;-------------------------------------------
@@ -259,13 +258,12 @@ vgc_get_register_data
 ; Fetch 1 register data byte from the encoded stream and send to sound chip (volumes $ tone3)
 ; A is register to update
 ; on exit:
-;    C is set if an update happened and Y contains last register value
-;    C is clear if no updated happened and Y is preserved
-;    X contains register provided in A on entry (0-7)
+;    C is set if an update happened and B contains last register value
+;    C is clear if no updated happened and B is preserved
 
 vgc_update_register1
         ldx   #vgc_register_counts
-        andcc #$fe
+        andcc #$fe ; clear cc
         dec   a,x ; no effect on C
         bne   skip_register_update
 
@@ -294,19 +292,19 @@ skip_tone3
         incb
         ldx   #vgc_register_counts
         stb   a,x
-        orcc  #1
+        orcc  #1 ; set cc
 skip_register_update
         rts
 
 ; Fetch 2 register bytes (LATCH+DATA) from the encoded stream and send to sound chip (tone0, tone1, tone2)
 ; Same parameters as vgc_update_register1
 vgc_update_register2
-        sta   @LoadA
+        sta   @LoadA                  ; saves stream id
         jsr   vgc_update_register1    ; returns stream in X if updated, and C=0 if no update needed
         bcc   skip_register_update
         ;
         ; decode 2nd byte and send to psg as (DATA)
-        lda   #0
+        lda   #0                      ; load stream id
 @LoadA  equ   *-1
         jsr   vgc_get_register_data 
 	stb   <PSG
@@ -389,9 +387,10 @@ fetchByte3
         ; set buffer read ptr
         stb   stashS+1 ; **SELF MODIFICATION**
         lda   lz_window_dst+1 ; *** SELF MODIFYING CODE ***
-        orcc  #1
+        ;orcc  #1
 stashS
-        sbca  #0 ; **SELFMODIFIED**
+        suba  #0 ; **SELFMODIFIED**
+        ;inca
         sta   lz_window_src+1 ; *** SELF MODIFYING CODE ***
 
         ; fetch match length
@@ -417,7 +416,7 @@ try_match
 
 is_match
 ; fetch a byte from the current decode buffer at the current read ptr offset
-; returns byte in A, clobbers Y
+; returns byte in B
 lz_fetch_buffer
         ldb   $ffff ; *** SELF MODIFIED ***
         inc   lz_fetch_buffer+2
@@ -438,7 +437,7 @@ end_match
 try_token
 fetchByte5
         ; fetch a token
-        ; plain LZ4 byte fetch
+        ; plain LZ4 byte fetch 
         ldb   ,u+
 
         ; unpack match length from token (bottom 4 bits)
