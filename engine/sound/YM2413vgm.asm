@@ -90,13 +90,13 @@ YVGM_MusicFrame
 @DoStopTrack
         lda   vgc_loop
         beq   @no_looping
-        lda   #1
+        lda   #3 ; fix for battlesquadron files should be 1
         sta   YVGM_WaitFrame
         ldx   YVGM_MusicData
         ldu   #YM2413_buffer
         stu   YVGM_MusicDataPos
-        jmp   ym2413zx0_decompress    
-        ;jmp   YVGM_MusicFrame  
+        jsr   ym2413zx0_decompress    
+        jmp   YVGM_MusicFrame  
 @no_looping
         lda   #0
         sta   YVGM_MusicStatus
