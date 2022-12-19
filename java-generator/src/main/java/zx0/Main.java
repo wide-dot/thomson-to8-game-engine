@@ -30,7 +30,8 @@ import java.nio.file.*;
 
 public class Main {
     public static final int MAX_OFFSET_ZX0 = 32640;
-    public static final int MAX_OFFSET_ZX7 = 2176;
+    //public static final int MAX_OFFSET_ZX7 = 2176;
+    public static final int MAX_OFFSET_ZX7 = 512;
     public static final int DEFAULT_THREADS = 4;
 
     private static int parseInt(String s) {

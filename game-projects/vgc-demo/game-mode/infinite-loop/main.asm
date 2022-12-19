@@ -7,12 +7,18 @@ ext_variables_size equ 6
         jsr   InitGlobals
         jsr   LoadAct
 
-        ; initialize the vgm player with a vgc data stream
+        ; initialize the SN76489 vgm player with a vgc data stream
         ldd   #vgc_stream_buffers
         ldx   #Vgc_intro
-        ; andcc #$fe ; clear carry (no loop)
+        ;andcc #$fe ; clear carry (no loop)
         orcc  #1 ; set carry (loop)
         jsr   vgc_init 
+
+        ; init YM2413 music
+        ldx   #Vgc_introYM
+        ;andcc #$fe ; clear carry (no loop)
+        orcc  #1 ; set carry (loop)
+        jsr   YVGM_PlayMusic
 
         jsr   IrqInit
         ldd   #UserIRQ
@@ -51,6 +57,7 @@ nb_graphical_objects               equ 2 ; only count objects that will be rende
 
 UserIRQ
         jsr   PalUpdateNow
+        jsr   YVGM_MusicFrame
         jmp   vgc_update
 
 * ==============================================================================
@@ -81,6 +88,7 @@ UserIRQ
         ; vgc player
         INCLUDE "./engine/sound/vgc/lib/vgcplayer.h.asm"
         INCLUDE "./engine/sound/vgc/lib/vgcplayer.asm"
+        INCLUDE "./engine/sound/YM2413vgm.asm"
 
 ; reserve space for the vgm decode buffers (8x256 = 2Kb)
         ALIGN 256
