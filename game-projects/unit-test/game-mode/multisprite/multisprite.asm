@@ -26,26 +26,33 @@ LevelSizeLoad ; todo move to an object
         ;ldd   #160/2
         ;std   y_pos,u
 
-        ldu   #Object_RAM
+ ; warning this test moves camera
+ ; camera is unsigned value and should not be decremented below 0 on x and y
+
+ut_x_start_pos equ 200
+ut_y_start_pos equ 200
+
+        jsr   LoadObject_u
         lda   #ObjID_Box
         sta   id,u
-        ldd   #0
+        ldd   #ut_x_start_pos+24/2 ; minus sprite width
         std   x_pos,u
-        ldd   #160/2
+        ldd   #ut_y_start_pos+20/2-1 ; minus sprite height
         std   y_pos,u
 
-        ldd   #12
+        ldd   #12 ; x border on left
         std   glb_camera_x_offset
-        ldd   #20
+        ldd   #20 ; y border on top
         std   glb_camera_y_offset
 
-        ldd   #136
+        ldd   #160-24 ; screen minus left and right border
         std   glb_camera_width
-        ldd   #160
+        ldd   #200-40 ; screen minus top and bottom border
         std   glb_camera_height
 
-        ldd   #0
+        ldd   #ut_x_start_pos
         std   glb_camera_x_pos
+        ldd   #ut_y_start_pos
         std   glb_camera_y_pos
 
 * ==============================================================================
@@ -53,7 +60,7 @@ LevelSizeLoad ; todo move to an object
 * ==============================================================================
 LevelMainLoop
         jsr   WaitVBL    
-        jsr   UpdatePalette
+        jsr   PalUpdateNow
         jsr   ReadJoypads
 	jsr   EHZ_Back
         jsr   RunObjects
@@ -86,9 +93,7 @@ EHZ_Back
         INCLUDE "./engine/graphics/sprite/sprite-overlay-pack.asm"
         
         ; basic object management
-        INCLUDE "./engine/object-management/ClearObj.asm"
         INCLUDE "./engine/object-management/RunObjects.asm"
-        INCLUDE "./engine/object-management/SingleObjLoad.asm"
 
         ; utilities
         INCLUDE "./engine/InitGlobals.asm"
@@ -97,4 +102,4 @@ EHZ_Back
         INCLUDE "./engine/ram/BankSwitch.asm"
         INCLUDE "./engine/object-management/RunPgSubRoutine.asm"
         INCLUDE "./engine/joypad/ReadJoypads.asm"
-	INCLUDE "./engine/palette/UpdatePalette.asm"
+	INCLUDE "./engine/palette/PalUpdateNow.asm"
