@@ -100,7 +100,7 @@ YVGM_MusicFrame
 @no_looping
         lda   #0
         sta   YVGM_MusicStatus
-        jsr   @FMSilenceAll
+        jsr   YVGM_SilenceAll
         rts
 @YM2413
         sta   <YM2413_A0
@@ -116,7 +116,7 @@ YVGM_MusicFrame
 * FMSilenceAll
 * destroys A, B, Y
 ******************************************************************************
-@FMSilenceAll
+YVGM_SilenceAll
         ldd   #$200E
         stb   YM2413_A0
         nop                            ; (wait of 2 cycles)
