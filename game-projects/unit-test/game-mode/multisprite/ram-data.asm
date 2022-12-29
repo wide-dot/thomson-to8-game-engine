@@ -3,9 +3,9 @@
 * ===========================================================================
 
 nb_reserved_objects               equ 0
-nb_dynamic_objects                equ 4
+nb_dynamic_objects                equ 5
 nb_level_objects                  equ 0
-nb_graphical_objects              equ 4 * max 64 total (background erase only)
+nb_graphical_objects              equ 5 * max 64 total (background erase only)
 
 * ===========================================================================
 * Object Status Table - OST

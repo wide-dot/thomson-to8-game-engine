@@ -1,22 +1,13 @@
-Obj11_child1   equ ext_variables ; word
-glb_d1         equ dp_engine
-glb_d1_b       equ dp_engine+1
-glb_d2         equ dp_engine+2
-glb_d2_b       equ dp_engine+3
-glb_d3         equ dp_engine+4
-glb_d3_b       equ dp_engine+5
-glb_d4         equ dp_engine+6
-glb_d4_b       equ dp_engine+7
+Obj01_child1   equ ext_variables ; word
 
-
-Obj11
+Obj01
         lda   render_flags,u
         anda  #render_subobjects_mask
         bne   >
 
         lda   routine,u
         asla
-        ldx   #Obj11_Index
+        ldx   #Obj01_Index
         jsr   [a,x]
 
 !
@@ -24,11 +15,11 @@ Obj11
         jmp   DisplaySprite3
 
 
-Obj11_Index
-        fdb   Obj11_Init
-        fdb   Obj11_Main
+Obj01_Index
+        fdb   Obj01_Init
+        fdb   Obj01_Main
 
-Obj11_Init
+Obj01_Init
         inc   routine,u
         ldd   #Img_Box24x20
         std   image_set,u
@@ -46,13 +37,13 @@ Obj11_Init
 
         ldb   #4 ; make 5 boxes
         stb   glb_d1_b
-        jsr   Obj11_MakeBdgSegment
-        stx   Obj11_child1,u
+        jsr   Obj01_MakeSegment
+        stx   Obj01_child1,u
         rts
 
-Obj11_MakeBdgSegment
-        jsr   SingleObjLoad2
-        bne   Obj11_rts
+Obj01_MakeSegment
+        jsr   LoadObject_x
+        beq   Obj01_rts        ; branch if no more space
 
         lda   id,u
         sta   id,x             ; set child id
@@ -64,7 +55,7 @@ Obj11_MakeBdgSegment
         ldb   glb_d1_b 
         stb   mainspr_childsprites,x ; hold number of childs
 
-        leay  mainspr_x_pos,x  ; first pos
+        leay  sub2_x_pos,x     ; first pos
 
 !       ldd   glb_d3
         addd  #24              ; move horizontally by box width
@@ -79,10 +70,10 @@ Obj11_MakeBdgSegment
 
         dec   glb_d1_b
         bne   <
-Obj11_rts
+Obj01_rts
         rts
 
-Obj11_Main
+Obj01_Main
         lda   Dpad_Held
         ldb   Fire_Press
 TestLeft
