@@ -65,17 +65,6 @@ public class leanScroll{
 					}
 				}				
 				
-				int offset = 1;
-				if (interlace != null)
-					offset = 2;
-				
-				// group pixels by pair in y axis
-				for (int y = 0; y < height; y+=2*offset) {
-					for (int x = 0; x < width; x++) {
-						group2y(x, y, offset);
-					}
-				}					
-				
 				File outputfile = new File(FileUtil.removeExtension(file)+"_lean.png");
 				ImageIO.write(leanTiles, "png", outputfile);
 				
@@ -378,28 +367,15 @@ public class leanScroll{
 	}
 	
 	public static void group2x(int x, int y) {
-		if ((leanTiles.getRaster().getDataBuffer()).getElem(x+(y*width)) == (leanTilesCommon.getRaster().getDataBuffer()).getElem(x+1+(y*width))) {
-			leanTiles.setRGB(x+1, y, image.getRGB(x, y));
-			leanTilesCommon.setRGB(x+1, y, image.getColorModel().getRGB(0));
+		if ((leanTiles.getRaster().getDataBuffer()).getElem(x+(y*width)) == 0 && (leanTiles.getRaster().getDataBuffer()).getElem(x+1+(y*width)) != 0){
+			keepPixel(x,y);
+			return;
 		}
 		
-		if ((leanTilesCommon.getRaster().getDataBuffer()).getElem(x+(y*width)) == (leanTiles.getRaster().getDataBuffer()).getElem(x+1+(y*width))) {
-			leanTiles.setRGB(x, y, image.getRGB(x+1, y));
-			leanTilesCommon.setRGB(x, y, image.getColorModel().getRGB(0));
+		if ((leanTiles.getRaster().getDataBuffer()).getElem(x+(y*width)) != 0 && (leanTiles.getRaster().getDataBuffer()).getElem(x+1+(y*width)) == 0){
+			keepPixel(x+1,y);
+			return;
 		}
-		return;		
 	}
 	
-	public static void group2y(int x, int y, int offset) {
-		if ((leanTiles.getRaster().getDataBuffer()).getElem(x+(y*width)) == (leanTilesCommon.getRaster().getDataBuffer()).getElem(x+((y+offset)*width))) {
-			leanTiles.setRGB(x, y+offset, image.getRGB(x, y));
-			leanTilesCommon.setRGB(x, y+offset, image.getColorModel().getRGB(0));
-		}
-		
-		if ((leanTilesCommon.getRaster().getDataBuffer()).getElem(x+(y*width)) == (leanTiles.getRaster().getDataBuffer()).getElem(x+((y+offset)*width))) {
-			leanTiles.setRGB(x, y, image.getRGB(x, y+offset));
-			leanTilesCommon.setRGB(x, y, image.getColorModel().getRGB(0));
-		}
-		return;		
-	}	
 }

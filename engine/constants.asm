@@ -100,6 +100,7 @@ glb_a4_b equ   dp_extreg+27
 * ===========================================================================
 
 screen_width                  equ 160    ; in pixel
+screen_height                 equ 200    ; in pixel
 screen_top                    equ 28     ; in pixel
 screen_bottom                 equ 28+199 ; in pixel
 screen_left                   equ 48     ; in pixel

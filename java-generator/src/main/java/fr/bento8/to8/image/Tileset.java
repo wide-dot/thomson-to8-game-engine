@@ -12,6 +12,7 @@ public class Tileset {
 	public int nbRows;
 	public int centerMode;
 	public boolean inRAM = false;
+	public String mapFile = null;
 
 	public List<TileBin> tiles;
 

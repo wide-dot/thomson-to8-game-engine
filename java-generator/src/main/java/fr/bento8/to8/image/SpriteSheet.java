@@ -59,12 +59,14 @@ public class SpriteSheet {
 	public static final int CENTER = 0;
 	public static final int TOP_LEFT = 1;
 	public static final int TILE8x16 = 2;	
+	public static final int TILE16x16 = 3;
 	public static final HashMap<String, Integer> colorModes= new HashMap<String, Integer>(){
 		private static final long serialVersionUID = 1L;
 	{
 			put("CENTER",CENTER);
 			put("TOP_LEFT",TOP_LEFT);
 			put("TILE8x16",TILE8x16);
+			put("TILE16x16",TILE16x16);
 			}};
 
 	// TODO mutualiser les deux constructeurs
@@ -483,6 +485,7 @@ public class SpriteSheet {
 			case CENTER   : center = (int)((Math.ceil(subImageHeight/2.0)-1)*40) +  subImageWidth/8; break;
 			case TOP_LEFT : center = 0; break;
 			case TILE8x16 : center = (int)((Math.ceil(subImageHeight*3.0/4.0)-1)*40) +  subImageWidth/8; break; 
+			case TILE16x16 : center = (int)((Math.ceil(subImageHeight*3.0/4.0)-1)*40) +  subImageWidth/8; break;
 		}
 		
 		// Correction positionnement sprite en fonction de la largeur d'image
@@ -549,6 +552,7 @@ public class SpriteSheet {
 							case CENTER   : y1_offset[position] = curLine-(subImageHeight-1)/2; break;
 							case TOP_LEFT : y1_offset[position] = 0; break;
 							case TILE8x16 : y1_offset[position] = curLine-(subImageHeight-1)*3/4; break;
+							case TILE16x16 : y1_offset[position] = curLine-(subImageHeight-1)*3/4; break;
 						}						
 					}
 					if (indexDest*2+page*2-(160*curLine) < x_Min) {
@@ -557,6 +561,7 @@ public class SpriteSheet {
 							case CENTER   : x1_offset[position] = x_Min-(subImageWidth/2); break;
 							case TOP_LEFT : x1_offset[position] = 0; break;
 							case TILE8x16 : x1_offset[position] = 0; break;
+							case TILE16x16 : x1_offset[position] = 0; break;
 						}						
 					}
 					if (indexDest*2+page*2-(160*curLine) > x_Max) {
@@ -606,6 +611,7 @@ public class SpriteSheet {
 								case CENTER   : y1_offset[position] = curLine-(subImageHeight-1)/2; break;
 								case TOP_LEFT : y1_offset[position] = 0; break;
 								case TILE8x16 : y1_offset[position] = curLine-(subImageHeight-1)*3/4; break;
+								case TILE16x16 : y1_offset[position] = curLine-(subImageHeight-1)*3/4; break;
 							}							
 						}
 						if (indexDest*2+page*2+1-(160*curLine) < x_Min) {
@@ -614,6 +620,7 @@ public class SpriteSheet {
 								case CENTER   : x1_offset[position] = x_Min-(subImageWidth/2); break;
 								case TOP_LEFT : x1_offset[position] = 0; break;
 								case TILE8x16 : x1_offset[position] = 0; break;
+								case TILE16x16 : x1_offset[position] = 0; break;
 							}					
 						}
 						if (indexDest*2+page*2+1-(160*curLine) > x_Max) {
