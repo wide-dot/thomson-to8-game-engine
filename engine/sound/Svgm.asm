@@ -46,8 +46,12 @@ PlayMusic
 * x39     xnn           : (2 bytes) command code xnn (x00-xff)
 *   |____ x00           : (2 bytes) stop track
 *   |____ xnn           : (2 bytes) wait xnn frames (x01-x7f)
+*
+* For future use (not yep available) :
 *   |____ x80 xnnnn     : (4 bytes) jump to xnnnn 
-*   |____ x81 xnnnn xnn : (5 bytes) replay at xnnnn (signed offset) xnn bytes and return
+*   |____ x81 xnnnn xnn : (5 bytes) replay at xnnnn (unsigned offset to start) xnn bytes and return
+*
+* replay offset is 16bits, it can address 4 pages of 16Ko
 *
 * destroys A,B,X,Y
 ******************************************************************************

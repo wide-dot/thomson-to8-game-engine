@@ -569,7 +569,8 @@ public class BuildDisk
 			} else {
 				tileset.centerMode=SpriteSheet.colorModes.get(tilesetProperties.getValue()[1].split(",")[3]);
 			}
-
+			tileset.mapFile=tilesetProperties.getValue()[1].split(",")[4];
+			
 			//if (tilesetProperties.getValue().length > 2 && tilesetProperties.getValue()[2].equalsIgnoreCase(BuildDisk.RAM))
 			// tileset should always be in RAM for rendering speed
 			tileset.inRAM = true;					
@@ -634,6 +635,13 @@ public class BuildDisk
 			object.tilesets.put(tileset.name, tileset);
 			dynamicContentFD.set(tileset.name, "index", tileId*3);
 			dynamicContentT2.set(tileset.name, "index", tileId*3);
+			
+			if (tileset.mapFile != null) {
+				Path path = Paths.get(tileset.mapFile);
+				byte[] map = Files.readAllBytes(path);
+				dynamicContentFD.set(tileset.name, "buffer", map.length*4);
+				dynamicContentT2.set(tileset.name, "buffer", map.length*4);
+			}
 		}
 	}	
 	
@@ -1526,6 +1534,73 @@ public class BuildDisk
 			dynamicContentT2.set(tileset.getValue().name, "index", data);			
 		}
 
+		// Generate Tileset buffer
+		// *******************************************************************************
+		for (Entry<String, Tileset> tileset : obj.tilesets.entrySet()) {
+			byte[] data;
+			int i;
+			
+			if (tileset.getValue().mapFile != null) {
+				Path path = Paths.get(tileset.getValue().mapFile);
+				byte[] map = Files.readAllBytes(path);
+			
+				// FLOPPY DISK
+				if (!abortFloppyDisk) {
+					data = new byte[map.length*4]; // destination buffer
+					i = 0;
+					
+					for (int j = 0; j < map.length; j++) {
+						if (map[j] != 0) {
+							data[i++] = 0;
+							data[i++] = (byte)(tileset.getValue().tiles.get(map[j]).dataIndex.get(gm).fd_ram_page + 0x60);
+							data[i++] = (byte)(tileset.getValue().tiles.get(map[j]).dataIndex.get(gm).fd_ram_address >> 8);		
+							data[i++] = (byte)(tileset.getValue().tiles.get(map[j]).dataIndex.get(gm).fd_ram_address & 0xFF);
+						} else {
+							data[i++] = 0;
+							data[i++] = 0;
+							data[i++] = 0;
+							data[i++] = 0;							
+						}
+					}
+					dynamicContentFD.set(tileset.getValue().name, "buffer", data);
+				}
+	
+				// MEGAROM T2
+				data = new byte[map.length*4];
+				i = 0;
+				if (tileset.getValue().inRAM) {
+					for (int j = 0; j < map.length; j++) {
+						if (map[j] != 0) {
+							data[i++] = 0;
+							data[i++] = (byte)(tileset.getValue().tiles.get(map[j]).dataIndex.get(gm).t2_ram_page + 0x60);
+							data[i++] = (byte)(tileset.getValue().tiles.get(map[j]).dataIndex.get(gm).t2_ram_address >> 8);		
+							data[i++] = (byte)(tileset.getValue().tiles.get(map[j]).dataIndex.get(gm).t2_ram_address & 0xFF);
+						} else {
+							data[i++] = 0;
+							data[i++] = 0;
+							data[i++] = 0;
+							data[i++] = 0;							
+						}
+					}
+				} else {
+					for (int j = 0; j < map.length; j++) {
+						if (map[j] != 0) {
+							data[i++] = 0;
+							data[i++] = (byte)(tileset.getValue().tiles.get(map[j]).t2_page + 0x80);
+							data[i++] = (byte)(tileset.getValue().tiles.get(map[j]).t2_address >> 8);		
+							data[i++] = (byte)(tileset.getValue().tiles.get(map[j]).t2_address & 0xFF);
+						} else {
+							data[i++] = 0;
+							data[i++] = 0;
+							data[i++] = 0;
+							data[i++] = 0;							
+						}
+					}
+				}
+				dynamicContentT2.set(tileset.getValue().name, "buffer", data);
+			}
+		}
+		
 		// Place new dynamic content here
 		// ...
 	}	

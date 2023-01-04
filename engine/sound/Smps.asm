@@ -173,6 +173,26 @@ DACEnabled                     rmb   1
 60HzData                       rmb   1                ; 1: play 60hz track at 50hz, 0: do not skip frames
  ENDSTRUCT
 
+SFXPriorityVal                 equ   0
+TempoTimeout                   equ   1        
+CurrentTempo                   equ   2
+StopMusic                      equ   3
+FadeOutCounter                 equ   4        
+FadeOutDelay                   equ   5        
+QueueToPlay                    equ   6
+SFXToPlay                      equ   7
+VoiceTblPtr                    equ   9
+SFXVoiceTblPtr                 equ   11
+FadeInFlag                     equ   13       
+FadeInDelay                    equ   14        
+FadeInCounter                  equ   15        
+_1upPlaying                    equ   16        
+TempoMod                       equ   17        
+TempoTurbo                     equ   18
+SpeedUpFlag                    equ   19        
+DACEnabled                     equ   20                
+_60HzData                      equ   21
+
 ******************************************************************************
 
 StructStart
@@ -361,6 +381,46 @@ YM2413_DrumModeOn
 InitMusicPlayback
         jsr   FMSilenceAll
         jsr   PSGSilenceAll
+
+        ldu   #SongFM1+sizeof{Track}
+        jsr   ClearTrack
+        ldu   #SongFM2+sizeof{Track}
+        jsr   ClearTrack  
+        ldu   #SongFM3+sizeof{Track}
+        jsr   ClearTrack  
+        ldu   #SongFM4+sizeof{Track}
+        jsr   ClearTrack  
+        ldu   #SongFM5+sizeof{Track}
+        jsr   ClearTrack  
+        ldu   #SongFM6+sizeof{Track}
+        jsr   ClearTrack  
+        ldu   #SongFM7+sizeof{Track}
+        jsr   ClearTrack  
+        ldu   #SongFM8+sizeof{Track}
+        jsr   ClearTrack          
+        ldu   #SongFM9+sizeof{Track}
+        jsr   ClearTrack  
+
+        ldu   #SongPSG1+sizeof{Track}
+        jsr   ClearTrack 
+        ldu   #SongPSG2+sizeof{Track}
+        jsr   ClearTrack 
+        ldu   #SongPSG3+sizeof{Track}
+        jsr   ClearTrack 
+
+        ldu   #SFXFM3+sizeof{Track}
+        jsr   ClearTrack 
+        ldu   #SFXFM4+sizeof{Track}
+        jsr   ClearTrack 
+        ldu   #SFXFM5+sizeof{Track}
+        jsr   ClearTrack 
+
+        ldu   #SFXPSG1+sizeof{Track}
+        jsr   ClearTrack 
+        ldu   #SFXPSG2+sizeof{Track}
+        jsr   ClearTrack 
+        ldu   #SFXPSG3+sizeof{Track}
+        jsr   ClearTrack 
         rts
 
 ******************************************************************************
@@ -1686,7 +1746,37 @@ cfJumpToGosub
 cfSkip1
         leax  1,x
 cfNop 
-        rts                                                 
+        rts      
+
+ClearTrack
+        pshs  d,x,y
+        ldd   #$0000        ; init regs to zero
+        ldx   #$0000
+        leay  ,x
+
+        fill $36,((sizeof{Track}-2)/6)*2 ; generate object_size/6 assembly instructions $3636 (pshu  d,x,y) 
+
+        IFEQ (sizeof{Track}-2)%6-5
+        pshu  a,x,y
+        ENDC
+
+        IFEQ (sizeof{Track}-2)%6-4
+        pshu  d,x
+        ENDC
+
+        IFEQ (sizeof{Track}-2)%6-3
+        pshu  a,x
+        ENDC
+
+        IFEQ (sizeof{Track}-2)%6-2
+        pshu  d
+        ENDC
+
+        IFEQ (sizeof{Track}-2)%6-1
+        pshu  a
+        ENDC
+
+        puls  d,x,y,pc
 
 * YM2413 Instrument presets
 * -------------------------

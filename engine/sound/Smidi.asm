@@ -136,7 +136,7 @@ ReadCommand
         sta   NbByteInFrame
         ldb   CircularBufferEnd+1      ; load next free position in circular buffer
         addb  #$80                     ; adjust offset because write is made with 8 bit offset (-128,+127)
-        ldy   #CircularBuffer+128      ; and reading buffer is made by direct address (lda   CircularBuffer)
+        ldy   #CircularBuffer          ; and reading buffer is made by direct address (lda   CircularBuffer)
         ldx   MusicDataPos             ; load current position in music track
         lda   MusicPage
 @a      _SetCartPageA
@@ -201,5 +201,7 @@ DisableFIRQ
         bra   @a
 
         align 256
+        fill  0,128
 CircularBuffer
-        fill  0,256
+        fill  0,128
+
