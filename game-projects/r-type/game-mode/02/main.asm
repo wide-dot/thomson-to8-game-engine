@@ -118,7 +118,7 @@ glb_camera_update
         INCLUDE "./engine/graphics/animation/AnimateSprite.asm"
 
         ; sprite
-        INCLUDE "./engine/graphics/Codec/DecRLE00.asm"
+        INCLUDE "./engine/graphics/codec/DecRLE00.asm"
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"  
 
         ; tilemap
