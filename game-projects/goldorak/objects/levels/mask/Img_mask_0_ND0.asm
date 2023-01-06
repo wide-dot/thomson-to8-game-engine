@@ -1,0 +1,1298 @@
+	INCLUDE "./engine/constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+DRAW_Img_mask_0
+	LDU #$D900
+
+	LDD #$ffff
+	LDX #$ffff
+	PSHU D,X
+	LEAU -32,U
+
+	STD -8,U
+	LDY #$ffff
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	PSHU D,X
+
+	LDU #$B900
+
+	LDD #$ffff
+	LDX #$ffff
+	PSHU D,X
+	LEAU -32,U
+
+	STD -8,U
+	LDY #$ffff
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	STD -8,U
+	PSHU D,X,Y
+	LEAU -34,U
+
+	PSHU D,X
+	RTS
+
