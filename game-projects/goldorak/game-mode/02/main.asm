@@ -38,17 +38,9 @@
         ldx   #Tls_lvl02
         stx   tile_buffer
 
-* user irq
-        jsr   IrqInit
-        ldd   #UserIRQ
-        std   Irq_user_routine
-        lda   #255                     ; set sync out of display (VBL)
-        ldx   #Irq_one_frame
-        jsr   IrqSync
-        jsr   IrqOn 
-
 LevelMainLoop
         jsr   WaitVBL
+        jsr   PalUpdateNow
         jsr   ReadJoypads
         jsr   Scroll
         jsr   RunObjects
@@ -60,9 +52,6 @@ LevelMainLoop
         _MountObject ObjID_Mask
         jsr   ,x
         bra   LevelMainLoop
-
-UserIRQ
-	jmp   PalUpdateNow
 
 Scroll
         clr   glb_camera_move
@@ -109,7 +98,6 @@ glb_camera_update
 * ---------------------------------------------------------------------------
 
         INCLUDE "./game-mode/02/ram_data.asm"
-        INCLUDE "./engine/irq/Irq.asm"
 
         INCLUDE "./engine/InitGlobals.asm"
         INCLUDE "./engine/ram/BankSwitch.asm"
