@@ -5,26 +5,21 @@
 ; ---------
 ;
 ; ---------------------------------------------------------------------------
-
         INCLUDE "./engine/macros.asm"
-
 ply_acceleration equ $A0
 ply_deceleration equ $80
-ply_max_vel      equ $200
-ply_max_vel_neg  equ $-200
-ply_width        equ 12/2
-ply_height       equ 16/2
-
+ply_max_velocityP equ $300
+ply_max_velocityN equ -$300
+ply_width        equ 8
+ply_height       equ 15
 Player
         lda   routine,u
         asla
         ldx   #Routines
         jmp   [a,x]
-
 Routines
         fdb   Init
         fdb   Live
-
 Init
         ldd   #Ani_Player1
         std   anim,u
@@ -38,22 +33,17 @@ Init
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
         inc   routine,u
-
 Live
-        tst   glb_camera_update
-        beq   >
-        ldd   x_pos,u
-        addd  #2
-        std   x_pos,u
-!
         lda   Dpad_Held
         anda  #c1_button_left_mask
         beq   @testRight
         ldd   x_vel,u
         subd  #ply_acceleration
-        cmpd  #ply_max_vel_neg
-        ble   @testUp
+            cmpd #ply_max_velocityN                  ;max vel
+            ble >
         std   x_vel,u
+!       ldd   #Ani_Player1_left
+        std   anim,u
         bra   @testUp
 @testRight
         lda   Dpad_Held
@@ -61,32 +51,30 @@ Live
         beq   @testUp
         ldd   x_vel,u
         addd  #ply_acceleration
-        cmpd  #ply_max_vel
-        bge   @testUp
+            cmpd #ply_max_velocityP                  ;max vel
+            bge >
         std   x_vel,u
+!       ldd   #Ani_Player1_right
+        std   anim,u
 @testUp
         lda   Dpad_Held
         anda  #c1_button_up_mask
         beq   @testDown
         ldd   y_vel,u
         subd  #ply_acceleration*2
-        cmpd  #ply_max_vel_neg*2
-        ble   @testFire
+            cmpd #ply_max_velocityN*2                  ;max vel
+            ble >
         std   y_vel,u
-        ldd   #Ani_Player1_up
-        std   anim,u
-        bra   @testFire
+!       bra   @testFire
 @testDown
         lda   Dpad_Held
         anda  #c1_button_down_mask
         beq   @testFire
         ldd   y_vel,u
         addd  #ply_acceleration*2
-        cmpd  #ply_max_vel*2
-        bge   @testFire
+            cmpd #ply_max_velocityP*2                ;max vel
+            bge @testFire
         std   y_vel,u
-        ldd   #Ani_Player1_down
-        std   anim,u
 @testFire
         ; press fire
         lda   Fire_Press
@@ -94,17 +82,18 @@ Live
         beq   >
         jsr   LoadObject_x
         beq   >                        ; branch if no more available object slot
-        lda   #ObjID_Weapon1           ; fire !
+        lda   #ObjID_Weapon10          ; fire !
         sta   id,x
         ldd   x_pos,u
         std   x_pos,x
         ldd   y_pos,u
         std   y_pos,x
-
         ; decelerate player on x
 !       ldd   Dpad_Held
         anda  #c1_button_left_mask|c1_button_right_mask ; check if not moving left or right
         bne   >
+        ldd   #Ani_Player1             ; set normal image
+        std   anim,u
         ldd   x_vel,u                  ; decelerate on x axis
         bmi   @neg
         subd  #ply_deceleration
@@ -119,8 +108,6 @@ Live
 !       ldd   Dpad_Held
         anda  #c1_button_up_mask|c1_button_down_mask ; check if not moving up or down
         bne   >
-        ldd   #Ani_Player1             ; set normal image
-        std   anim,u
         ldd   y_vel,u                  ; decelerate on y axis
         bmi   @neg
         subd  #ply_deceleration
@@ -130,28 +117,26 @@ Live
         bmi   @store
 @cap    ldd   #0
 @store  std   y_vel,u
-
         ; move and animate
 !       jsr   AnimateSprite
         jsr   ObjectMove
         jsr   CheckRange
         jmp   DisplaySprite
-
 CheckRange
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        cmpd  #16+ply_width
+        cmpd  #ply_width
         bge   >
         ldd   glb_camera_x_pos
-        addd  #16+ply_width
+        addd  #ply_width
         std   x_pos,u
         ldd   #0
         std   x_vel,u
         bra   @y
-!       cmpd  #16+128-ply_width
+!       cmpd  #159-ply_width
         ble   @y
         ldd   glb_camera_x_pos
-        addd  #16+128
+        addd  #159
         subd  #ply_width
         std   x_pos,u
         ldd   #0
@@ -166,10 +151,10 @@ CheckRange
         ldd   #0
         std   y_vel,u
         rts
-!       cmpd  #160-ply_height
+!       cmpd  #199-ply_height
         ble   >
         ldd   glb_camera_y_pos
-        addd  #160
+        addd  #199
         subd  #ply_height
         std   y_pos,u
         ldd   #0
