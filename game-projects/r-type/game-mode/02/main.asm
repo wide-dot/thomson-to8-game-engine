@@ -47,6 +47,9 @@
         jsr   IrqSync
         jsr   IrqOn 
 
+        ldx   #Snd_S02
+        jsr   PlayMusic
+
 LevelMainLoop
         jsr   WaitVBL
         jsr   ReadJoypads
@@ -62,7 +65,8 @@ LevelMainLoop
         bra   LevelMainLoop
 
 UserIRQ
-	jmp   PalUpdateNow
+	jsr   PalUpdateNow
+        jmp   MusicFrame
 
 Scroll
         clr   glb_camera_move
@@ -135,6 +139,9 @@ glb_camera_update
 
         ; tilemap
         INCLUDE "./engine/graphics/tilemap/TilemapBuffer_alt.asm"  
+
+        ; sound
+        INCLUDE "./engine/sound/Svgm.asm"
 
         align 256
 Tls_lvl02
