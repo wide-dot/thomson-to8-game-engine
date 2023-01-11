@@ -47,7 +47,7 @@ PlayMusic
 *   |____ x00           : (2 bytes) stop track
 *   |____ xnn           : (2 bytes) wait xnn frames (x01-x7f)
 *
-* For future use (not yep available) :
+* For future use (not yet available) :
 *   |____ x80 xnnnn     : (4 bytes) jump to xnnnn 
 *   |____ x81 xnnnn xnn : (5 bytes) replay at xnnnn (unsigned offset to start) xnn bytes and return
 *
