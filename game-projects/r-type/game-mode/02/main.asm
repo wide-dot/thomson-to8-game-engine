@@ -138,7 +138,7 @@ glb_camera_update
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"  
 
         ; tilemap
-        INCLUDE "./engine/graphics/tilemap/TilemapBuffer_alt.asm"  
+        INCLUDE "./engine/graphics/tilemap/horizontal-scroll/scroll-map-buffered-16x16.asm"  
 
         ; sound
         INCLUDE "./engine/sound/Svgm.asm"
