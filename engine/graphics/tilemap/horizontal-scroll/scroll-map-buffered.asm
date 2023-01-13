@@ -25,7 +25,6 @@ scroll_map_page equ *+1
 tile_buffer               fdb   0
 tile_buffer_page          fdb   0
 scroll_tile_pos_offset    fcb   0   ; current camera x position offset from tile_pos
-scroll_tile_pos_offset_b  fcb   0            
 scroll_map_x_pos          fcb   0   ; current tile position in the map
 scroll_stop               fcb   0   ; flag that stops scroll
 scroll_frame              fcb   0   ; current scroll frame id 0-3
@@ -45,7 +44,7 @@ InitScroll
         ldd   #-1
         std   glb_camera_x_pos                   ; first Scroll call will inc camera to 0
         lda   #1
-        stb   scroll_tile_pos_offset_b           ; first Scroll call will dec offset to 0
+        stb   scroll_tile_pos_offset           ; first Scroll call will dec offset to 0
         ldb   scroll_vp_v_tiles                  ; nb of tile in screen height
         stb   scroll_lcpt
         neg   scroll_tile_width                  ; saves some cycles in computation
@@ -90,13 +89,13 @@ Scroll
         cmpd  #map_width-viewport_width+1        ; check end of map
         beq   >                                  ; if so no need to swap the tiles, only set scroll_stop
         std   glb_camera_x_pos
-        lda   scroll_tile_pos_offset_b           ; rendering position offset for tiles
+        lda   scroll_tile_pos_offset           ; rendering position offset for tiles
         inca
         cmpa  scroll_tile_width                  ; test for tile width
         bne   >
         inc   scroll_map_x_pos                   ; move next tile
         lda   #0                                 ; reinit offset   
-!       sta   scroll_tile_pos_offset_b
+!       sta   scroll_tile_pos_offset
         lda   scroll_parity                      ; swap tileset
         coma
         sta   scroll_parity
@@ -132,7 +131,7 @@ DrawTiles
         ; saves one tile col when camera pos is a multiple of tile size
         ; ---------------------------------------------------------------------
         ldb   scroll_vp_h_tiles              ; nb of tile in screen width
-        lda   scroll_tile_pos_offset_b
+        lda   scroll_tile_pos_offset
         beq   >
         incb
 !       stb   scroll_ccpt
@@ -140,8 +139,12 @@ DrawTiles
 
         ; compute top left tile position on screen
         ; ---------------------------------------------------------------------
-        lda   scroll_vp_x_pos
-        lsra                                ; x=x/2, tiles moves by 2 pixels on x axis
+        lda   scroll_tile_pos_offset
+        anda  #%11111110                    ; the shifted tileset will be drawn at the same position as the unshifted version
+        nega                                ; substract tile offset
+        adda  scroll_vp_x_pos               ; add viewport offset
+        adda  #80                           ; if tile need to be rendered off screen on the left get some margin that will be remove later
+        lsra                                ; x=x/2, a byte is made of two pixels
         lsra                                ; x=x/2, RAMA RAMB interlace
         bcs   @RAM2First                    ; Branch if write must begin in RAM2 first
 @RAM1First
@@ -150,10 +153,10 @@ DrawTiles
         mul
         addd  #$C000                        ; (dynamic)
 @dyn1   equ   *-1
-
-        subd  scroll_tile_pos_offset
+        subd  #80/4                         ; remove margin in video memory size (remember the two lsra)
         ;addd  #441 ; tileset should be declared with TILE8x16 center parameter in properties
-        ;addd  #442 ; tileset should be declared with TILE8x16 center parameter in properties - TODO CAR !
+        ;addd  #442 ; tileset should be declared with TILE16x16 center parameter in properties
+        ; apply tile positionning offset here !
         std   <glb_screen_location_2
         suba  #$20
         std   <glb_screen_location_1
@@ -164,10 +167,10 @@ DrawTiles
         mul
         addd  #$A000                        ; (dynamic)
 @dyn2   equ   *-1
-
-        suba  scroll_tile_pos_offset
+        subd  #80/4                         ; remove margin in video memory size (remember the two lsra)
         ;addd  #441 ; tileset should be declared with TILE8x16 center parameter in properties
-        ;addd  #442 ; tileset should be declared with TILE8x16 center parameter in properties - TODO CAR !
+        ;addd  #442 ; tileset should be declared with TILE16x16 center parameter in properties
+        ; apply tile positionning offset here !
         std   <glb_screen_location_2
         addd  #$2001
         std   <glb_screen_location_1
@@ -177,7 +180,6 @@ DrawTiles
         subd  <glb_screen_location_1
         std   delta
         std   delta2
-        ;std   delta3
 
         ; compute position in cycling buffer
         ; ---------------------------------------------------------------------
