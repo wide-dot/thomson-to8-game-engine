@@ -1,3 +1,5 @@
+        INCLUDE "./engine/macros.asm"
+
 Level
         lda   routine,u
         asla
@@ -23,23 +25,24 @@ Level_Init_0
         ; register map location to main
         ldx   #scroll_map
         ldd   #Tls_lvl01
-        std   ,x
+        std   -2,x
         ldd   #Tls_lvl01_s
-        std   2,x
+        std   ,x
         ldx   #scroll_map_page
         _GetCartPageA
+        sta   -1,x
         sta   ,x
-        std   1,x
 
         ; set scroll parameters
-        ldd   #10
-        std   scroll_vp_h_tiles
-        ldd   #12
-        std   scroll_vp_v_tiles
-        lda   #14
-        sta   scroll_tile_width
-        lda   #10
+        _ldd  10,12
+        sta   scroll_vp_h_tiles
+        stb   scroll_vp_v_tiles
+        _ldd  10,14
         sta   scroll_vp_x_pos
+        stb   scroll_tile_width
+        _ldd  14,120
+        sta   scroll_tile_height
+        stb   scroll_map_width
 
 Level_Init_1
 	inc   routine,u

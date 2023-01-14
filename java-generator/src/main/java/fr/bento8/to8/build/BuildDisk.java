@@ -1552,9 +1552,9 @@ public class BuildDisk
 					for (int j = 0; j < map.length; j++) {
 						if (map[j] != 0) {
 							data[i++] = 0;
-							data[i++] = (byte)(tileset.getValue().tiles.get(map[j]).dataIndex.get(gm).fd_ram_page + 0x60);
-							data[i++] = (byte)(tileset.getValue().tiles.get(map[j]).dataIndex.get(gm).fd_ram_address >> 8);		
-							data[i++] = (byte)(tileset.getValue().tiles.get(map[j]).dataIndex.get(gm).fd_ram_address & 0xFF);
+							data[i++] = (byte)(tileset.getValue().tiles.get(map[j] & 0xFF).dataIndex.get(gm).fd_ram_page + 0x60);
+							data[i++] = (byte)(tileset.getValue().tiles.get(map[j] & 0xFF).dataIndex.get(gm).fd_ram_address >> 8);		
+							data[i++] = (byte)(tileset.getValue().tiles.get(map[j] & 0xFF).dataIndex.get(gm).fd_ram_address & 0xFF);
 						} else {
 							data[i++] = 0;
 							data[i++] = 0;
@@ -1572,9 +1572,9 @@ public class BuildDisk
 					for (int j = 0; j < map.length; j++) {
 						if (map[j] != 0) {
 							data[i++] = 0;
-							data[i++] = (byte)(tileset.getValue().tiles.get(map[j]).dataIndex.get(gm).t2_ram_page + 0x60);
-							data[i++] = (byte)(tileset.getValue().tiles.get(map[j]).dataIndex.get(gm).t2_ram_address >> 8);		
-							data[i++] = (byte)(tileset.getValue().tiles.get(map[j]).dataIndex.get(gm).t2_ram_address & 0xFF);
+							data[i++] = (byte)(tileset.getValue().tiles.get(map[j] & 0xFF).dataIndex.get(gm).t2_ram_page + 0x60);
+							data[i++] = (byte)(tileset.getValue().tiles.get(map[j] & 0xFF).dataIndex.get(gm).t2_ram_address >> 8);		
+							data[i++] = (byte)(tileset.getValue().tiles.get(map[j] & 0xFF).dataIndex.get(gm).t2_ram_address & 0xFF);
 						} else {
 							data[i++] = 0;
 							data[i++] = 0;
@@ -1586,9 +1586,9 @@ public class BuildDisk
 					for (int j = 0; j < map.length; j++) {
 						if (map[j] != 0) {
 							data[i++] = 0;
-							data[i++] = (byte)(tileset.getValue().tiles.get(map[j]).t2_page + 0x80);
-							data[i++] = (byte)(tileset.getValue().tiles.get(map[j]).t2_address >> 8);		
-							data[i++] = (byte)(tileset.getValue().tiles.get(map[j]).t2_address & 0xFF);
+							data[i++] = (byte)(tileset.getValue().tiles.get(map[j] & 0xFF).t2_page + 0x80);
+							data[i++] = (byte)(tileset.getValue().tiles.get(map[j] & 0xFF).t2_address >> 8);		
+							data[i++] = (byte)(tileset.getValue().tiles.get(map[j] & 0xFF).t2_address & 0xFF);
 						} else {
 							data[i++] = 0;
 							data[i++] = 0;

@@ -40,11 +40,9 @@ Init
         inc   routine,u
 
 Live
-        tst   glb_camera_update
-        beq   >
-        ldd   x_pos,u
-        addd  #2
-        std   x_pos,u
+        inc   x_pos+1,u
+        bcc   >
+        inc   x_pos,u
 !
         lda   Dpad_Held
         anda  #c1_button_left_mask

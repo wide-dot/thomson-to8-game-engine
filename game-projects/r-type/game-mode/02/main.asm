@@ -50,6 +50,8 @@
         ldx   #Snd_S02
         jsr   PlayMusic
 
+        jsr   InitScroll
+
 LevelMainLoop
         jsr   WaitVBL
         jsr   ReadJoypads
