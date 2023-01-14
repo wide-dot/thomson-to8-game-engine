@@ -41,10 +41,7 @@ Init
 Live
         ldd   x_pos,u
         addd  #6
-        tst   glb_camera_update
-        beq   >
-        addd  #2
-!
+
         std   x_pos,u
         subd  glb_camera_x_pos
         cmpd  #160-8/2 ; img height/2
