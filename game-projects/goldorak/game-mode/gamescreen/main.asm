@@ -24,7 +24,7 @@ OverlayMode equ 1
         lda   #ObjID_scrollB
         sta   VS_ObjIDB
 
-        lda   #1
+        lda   #8
         sta   VS_scroll_step
 
         lda   #0
