@@ -25,7 +25,7 @@ Init
         std   x_pos,u
 
         ldd   y_pos,u
-        addd  #4
+        addd  #2
         std   y_pos,u
 
         ldd   #Ani_weapon_1
@@ -41,10 +41,9 @@ Init
 Live
         ldd   x_pos,u
         addd  #6
-
         std   x_pos,u
         subd  glb_camera_x_pos
-        cmpd  #160-8/2 ; img height/2
+        cmpd  #160-8/2 ; img width/2
         ble   Anim
         jmp   DeleteObject
 
