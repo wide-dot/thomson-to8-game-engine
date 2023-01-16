@@ -115,7 +115,7 @@ Scroll
         ldx   a,x
         stx   tile_buffer
         inc   glb_camera_x_pos+1
-        bcc   >
+        bne   >
         inc   glb_camera_x_pos
 !       lda   scroll_tile_pos_offset             ; rendering position offset for tiles
         inca
