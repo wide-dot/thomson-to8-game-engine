@@ -51,6 +51,10 @@ viewport_height equ 168
         ldx   #Snd_S01
         jsr   PlayMusic
 
+        jsr   LoadObject_u
+        lda   #ObjID_patapata
+        sta   id,u
+
 * ---------------------------------------------------------------------------
 * MAIN GAME LOOP
 * ---------------------------------------------------------------------------

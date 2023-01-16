@@ -52,7 +52,6 @@ Level_Init_1
 Level_End
         jmp   DeleteObject
 
-        align 256
 Tls_lvl01
         INCLUDEGEN Tls_lvl01 buffer
         ; pre-rendered tilemap buffer
@@ -61,7 +60,6 @@ Tls_lvl01
         ; address (word) absolute address of compilated tile routine
         ; [repeated for each tile in the map]
 
-        align 256
 Tls_lvl01_s
         INCLUDEGEN Tls_lvl01_s buffer
         ; pre-rendered tilemap buffer
