@@ -41,10 +41,12 @@
 *
 ********************************************************************************
 WaitVBL
+ ifdef DO_NOT_WAIT_VBL
         ldd   Vint_runcount
         subd  Vint_Last_runcount
 	cmpb  #2
 	bhs   SwapVideoPage
+ endc
 @a
         tst   $E7E7              * le faisceau n'est pas dans l'ecran
         bpl   @a                 * tant que le bit est a 0 on boucle
