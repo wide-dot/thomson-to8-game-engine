@@ -14,7 +14,7 @@ Level_Routines
 Level_Init_0
         ldd   #Img_lvl01_init
         std   image_set,u
-	ldd   #$806B
+	ldd   #$806F
         std   xy_pixel,u
 	ldb   #7
         stb   priority,u
@@ -43,6 +43,7 @@ Level_Init_0
         _ldd  14,120
         sta   scroll_tile_height
         stb   scroll_map_width
+        clr   scroll_map_x_pos
 
 Level_Init_1
 	inc   routine,u

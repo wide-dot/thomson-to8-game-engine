@@ -32,11 +32,11 @@ scroll_map_x_pos          fcb   0   ; current tile position in the map
 scroll_stop               fcb   0   ; flag that stops scroll
 scroll_frame              fcb   0   ; current scroll frame id 0-3
 scroll_parity             fcb   0   ; current tileset (0:no shift, 1:shifted by 1 px to the left)
-scroll_routine            fcb   0   ; used to set starting routine (for tile width not multiple of 4px)
 
 ; tmp variables
 scroll_lcpt               equ   dp_engine
 scroll_ccpt               equ   dp_engine+1
+scroll_loc_exg            equ   dp_engine+2
 
 * ---------------------------------------------------------------------------
 * InitScroll
@@ -49,26 +49,21 @@ InitScroll
         sta   scroll_frame                       ; first Scroll call will inc frame to 0
         ldd   #-1
         std   glb_camera_x_pos                   ; first Scroll call will inc camera to 0
-        lda   #1
-        sta   scroll_tile_pos_offset             ; first Scroll call will dec offset to 0
-        dec   scroll_vp_h_tiles                  ; saves some cycles in computation
-        lda   scroll_vp_v_tiles                  ; nb of tile in screen height
-        sta   scroll_lcpt
+        stb   scroll_tile_pos_offset             ; first Scroll call will inc offset to 0
         lda   scroll_tile_width                  ; set video memory steps between each tiles
-        asla
-        sta   scroll_routine
-        asla
+        asra
+        asra
+        sta   scroll_m_step3
+        sta   scroll_m_step4
+        ldb   scroll_tile_width
+        andb  #%00000010                         ; check if tile width is a multiple of 4px (2, 6, 10, 14, ...)
+        beq   >                                  ; if so keep the memory steps the same
+        ldb   #1
+        stb   scroll_loc_offset
+        inca
         sta   scroll_m_step1
         sta   scroll_m_step2
-        deca
-        sta   scroll_m_step3                     ; used to set starting routine (for tile width not multiple of 4px)
-        sta   scroll_m_step4
-        nega                                     ; saves some cycles in computation
-        sta   scroll_tile_width   
-        lda   scroll_routine
-        anda  #%00000001
-        sta   scroll_routine                     ; transform to boolean
-        lda   scroll_tile_height                 ; set video memory byte offset for a tile height (40 bytes per line)
+!       lda   scroll_tile_height                 ; set video memory byte offset for a tile height (40 bytes per line)
         ldb   #40
         mul
         std   s_line1
@@ -77,6 +72,10 @@ InitScroll
         ldb   #4
         mul
         std   map_line_width
+        std   map_line_width2
+        lda   scroll_vp_x_pos
+        anda  #%11111110                         ; this routine only accept even position on screen for tiles
+        sta   scroll_vp_x_pos
         rts
 
 * ---------------------------------------------------------------------------
@@ -92,40 +91,20 @@ InitScroll
 * ---------------------------------------------------------------------------
 
 Scroll
-
 ; apply frame pattern
         lda   scroll_stop
         beq   >
         rts                                      ; scroll is stopped, return
 !       clr   glb_camera_move                    ; desactivate tiles drawing
-        ldb   scroll_frame                       ; load actual frame number (0-3)
+        ldb   scroll_frame                       ; load last frame number (0-3)
+        incb                                     ; increment to current frame number
+        andb  #%00000011                         ; modulo 4 to keep frame number btw 0-3
+        stb   scroll_frame                       ; store frame id
         cmpb  #1                                 ; is frame 2 or 3 ? (no tile drawing)
-        bgt   >                                  ; if so branch
-        lda   #1                                 ; else frame 0 or 1 we want to draw tiles
-        sta   <glb_force_sprite_refresh          ; force sprites to do a full refresh (background will be changed)
-        sta   glb_camera_move                    ; set flag to activate tile drawing
-!       incb                                     ; increment to next frame number
-        cmpb  #4                                 ; loop frames between 0-3 
-        beq   >
-        stb   scroll_frame                       ; store next frame id
-        rts
-!       ldb   #0                                 ; reset next frame id
-        stb   scroll_frame
-
-; move camera and swap between tiles and shifted tiles
-        ldd   glb_camera_x_pos
-        addd  #1
-        cmpd  #map_width-viewport_width+1        ; check end of map
-        beq   >                                  ; if so no need to swap the tiles, only set scroll_stop
-        std   glb_camera_x_pos
-        lda   scroll_tile_pos_offset             ; rendering position offset for tiles
-        inca
-        cmpa  scroll_tile_width                  ; test for tile width
-        bne   >
-        inc   scroll_map_x_pos                   ; move next tile
-        lda   #0                                 ; reinit offset   
-!       sta   scroll_tile_pos_offset
-        lda   scroll_parity                      ; swap tileset
+        bgt   @end                               ; if so branch
+        beq   @skip   
+        ; move camera and swap between tiles and shifted tiles
+        lda   scroll_parity                      ; swap tileset only on first of the 4 frames
         coma
         sta   scroll_parity
         ldx   #scroll_map_page
@@ -135,9 +114,25 @@ Scroll
         ldx   #scroll_map
         ldx   a,x
         stx   tile_buffer
+        inc   glb_camera_x_pos+1
+        bcc   >
+        inc   glb_camera_x_pos
+!       lda   scroll_tile_pos_offset             ; rendering position offset for tiles
+        inca
+        cmpa  scroll_tile_width                  ; test for tile width
+        bne   >
+        inc   scroll_map_x_pos                   ; move next tile
+        lda   #0                                 ; reinit offset   
+!       sta   scroll_tile_pos_offset
+@skip   lda   #1                                 ; frame 0 or 1 we want to draw tiles
+        sta   <glb_force_sprite_refresh          ; force sprites to do a full refresh (background will be changed)
+        sta   glb_camera_move                    ; set flag to activate tile drawing
         rts
-!       inc   scroll_stop
-        rts
+@end    ldd   glb_camera_x_pos
+        cmpd  #map_width-viewport_width          ; check end of map
+        bne   >                                  ; if so no need to swap the tiles, only set scroll_stop
+        inc   scroll_stop
+!       rts
 
 * ---------------------------------------------------------------------------
 * DrawTiles
@@ -153,22 +148,22 @@ DrawTiles
 
         ; disable page backup (page swap macros)
         ; mandatory if using T2 and direct access to E7E6
-        anda  #0
+        lda   #0
         sta   glb_Page
-
-        lda   tile_buffer_page
-        sta   $E7E6
 
         ; compute number of tiles to render
         ; saves one tile col when camera pos is a multiple of tile size
         ; ---------------------------------------------------------------------
         ldb   scroll_vp_h_tiles        ; nb of tile in screen width
         lda   scroll_tile_pos_offset
-        beq   >
-        incb
+        bne   >
+        decb
 !       stb   scroll_ccpt              ; nb of tile to render in screen width
         stb   scroll_ccpt_bck
         stb   scroll_ccpt_bck2
+
+        lda   scroll_vp_v_tiles                  ; nb of tile in screen height
+        sta   scroll_lcpt
 
         ; compute top left tile position on screen
         ; ---------------------------------------------------------------------
@@ -195,7 +190,11 @@ DrawTiles
 
         ldd   <glb_screen_location_2
         subd  <glb_screen_location_1
-        std   delta
+        std   delta3
+        std   delta4
+        addd  #0
+scroll_loc_offset equ *-1
+        std   delta1
         std   delta2
 
         ; compute position in buffer
@@ -218,22 +217,24 @@ scroll_lloop
         tfr   d,u                      ; u is the ptr in map
         std   ls_pos1                  ; store position in map
         std   ls_pos2                  ; store position in map
-        tst   scroll_routine
-        bne   scroll_cloop2
-
-scroll_cloop1
         lda   tile_buffer_page
         sta   $E7E6
+        jmp   scroll_cloop2
+
+scroll_cloop1
         pulu  d,x                      ; get a: b:draw routine page, x:draw routine addr
 @c      stb   $E7E6                    ; mount page to run tile rendering routine
         beq   empty_tile               ; if zero this is an empty tile
         pshs  u                        ; backup u before draw routine
+        leau  ,y                       ; load location_2 for draw routine
+        pshs  y                        ; backup y before draw routine
+        leay  $1234,y
+delta1  set   *-2
         sty   <glb_screen_location_1   ; sets location_1 for draw routine
-        leau  $1234,y                  ; load location_2 for draw routine
-delta   set   *-2
-        pshs  y                        ; backup u before draw routine
         jsr   ,x                       ; call tile draw routine (glb_screen_location_1 will be used in this routine)
         puls  y,u
+        lda   tile_buffer_page
+        sta   $E7E6
         leay  40,y                     ; move ahead in video memory
 scroll_m_step1 equ *-1
         dec   scroll_ccpt              ; decrement column cpt
@@ -245,8 +246,6 @@ scroll_ccpt_bck equ   *-1
 
         ; last tile in col
         ; ****************
-        lda   tile_buffer_page
-        sta   $E7E6
         pulu  d,x                      ; get a: b:draw routine page, y:draw routine addr
         stb   $E7E6
         bne   >
@@ -255,8 +254,9 @@ scroll_ccpt_bck equ   *-1
 !       pshs  u                        ; backup u before draw routine
         sty   <glb_screen_location_1   ; sets location_1 for draw routine
         leau  $1234,y                  ; load location_2 for draw routine
-delta2  set   *-2
+delta4  set   *-2
         pshs  y                        ; backup u before draw routine
+        jsr   ,x
         puls  y,u
 @skip
 
@@ -278,6 +278,8 @@ map_line_width equ *-2
         rts
 
 empty_tile
+        lda   tile_buffer_page
+        sta   $E7E6
         inc   glb_alphaTiles           ; this is an empty tile so set transparency flag
         lda   scroll_ccpt
 empty_tile_loop
@@ -295,8 +297,6 @@ scroll_m_step2 equ *-1
 ; -----------------------------------------------------------------------------
 
 scroll_cloop2
-        lda   tile_buffer_page
-        sta   $E7E6
         pulu  d,x                      ; get a: b:draw routine page, x:draw routine addr
 @c      stb   $E7E6                    ; mount page to run tile rendering routine
         beq   empty_tile2              ; if zero this is an empty tile
@@ -304,9 +304,11 @@ scroll_cloop2
         sty   <glb_screen_location_1   ; sets location_1 for draw routine
         leau  $1234,y                  ; load location_2 for draw routine
 delta3  set   *-2
-        pshs  y                        ; backup u before draw routine
+        pshs  y                        ; backup y before draw routine
         jsr   ,x                       ; call tile draw routine (glb_screen_location_1 will be used in this routine)
         puls  y,u
+        lda   tile_buffer_page
+        sta   $E7E6
         leay  40,y                     ; move ahead in video memory
 scroll_m_step3 equ *-1
         dec   scroll_ccpt              ; decrement column cpt
@@ -318,18 +320,18 @@ scroll_ccpt_bck2 equ   *-1
 
         ; last tile in col
         ; ****************
-        lda   tile_buffer_page
-        sta   $E7E6
         pulu  d,x                      ; get a: b:draw routine page, y:draw routine addr
         stb   $E7E6
         bne   >
         inc   glb_alphaTiles           ; this is an empty tile so set transparency flag
         bra   @skip
 !       pshs  u                        ; backup u before draw routine
+        leau  ,y                       ; load location_2 for draw routine
+        pshs  y                        ; backup y before draw routine
+        leay  $1234,y
+delta2  set   *-2
         sty   <glb_screen_location_1   ; sets location_1 for draw routine
-        leau  $1234,y                  ; load location_2 for draw routine
-delta4  set   *-2
-        pshs  y                        ; backup u before draw routine
+        jsr   ,x
         puls  y,u
 @skip
 
@@ -351,6 +353,8 @@ map_line_width2 equ *-2
         rts
 
 empty_tile2
+        lda   tile_buffer_page
+        sta   $E7E6
         inc   glb_alphaTiles           ; this is an empty tile so set transparency flag
         lda   scroll_ccpt
 empty_tile_loop2

@@ -40,9 +40,13 @@ Init
         inc   routine,u
 
 Live
-        inc   x_pos+1,u
-        bcc   >
-        inc   x_pos,u
+        ldd   glb_camera_x_pos
+        subd  glb_camera_x_pos_old
+        beq   >
+        addd  x_pos,u
+        std   x_pos,u
+        ldd   glb_camera_x_pos
+        std   glb_camera_x_pos_old
 !
         lda   Dpad_Held
         anda  #c1_button_left_mask
@@ -138,18 +142,18 @@ Live
 CheckRange
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        cmpd  #16+ply_width
+        cmpd  #10+ply_width
         bge   >
         ldd   glb_camera_x_pos
-        addd  #16+ply_width
+        addd  #10+ply_width
         std   x_pos,u
         ldd   #0
         std   x_vel,u
         bra   @y
-!       cmpd  #16+128-ply_width
+!       cmpd  #10+140-ply_width
         ble   @y
         ldd   glb_camera_x_pos
-        addd  #16+128
+        addd  #10+140
         subd  #ply_width
         std   x_pos,u
         ldd   #0
@@ -164,12 +168,14 @@ CheckRange
         ldd   #0
         std   y_vel,u
         rts
-!       cmpd  #160-ply_height
+!       cmpd  #168-ply_height
         ble   >
         ldd   glb_camera_y_pos
-        addd  #160
+        addd  #168
         subd  #ply_height
         std   y_pos,u
         ldd   #0
         std   y_vel,u
 !       rts
+
+glb_camera_x_pos_old fdb 0

@@ -88,7 +88,6 @@ UserIRQ
 * ---------------------------------------------------------------------------
 
         ; common utilities
-        INCLUDE "./engine/InitGlobals.asm"
         INCLUDE "./engine/ram/BankSwitch.asm"
         INCLUDE "./engine/graphics/vbl/WaitVBL.asm"
         INCLUDE "./engine/palette/PalUpdateNow.asm"
@@ -115,3 +114,6 @@ UserIRQ
 
         ; sound
         INCLUDE "./engine/sound/Svgm.asm"
+
+        ; should be at the end of includes (ifdef dependencies)
+        INCLUDE "./engine/InitGlobals.asm"
