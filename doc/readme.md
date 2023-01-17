@@ -77,4 +77,8 @@ L'apprentissage de l'assembleur est un prérequis indispensable à la lecture de
 
 ## Les routines pour Thomson TO8
 
+à rédiger - Le lancement automatique
+
+à rédiger - La lecture de disquette
+
 à rédiger - La palette de couleur
