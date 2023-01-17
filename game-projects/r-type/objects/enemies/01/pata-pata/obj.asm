@@ -23,15 +23,17 @@ Init
         std   anim,u
         ldb   #6
         stb   priority,u
-        ldd   #120
-        std   x_pos,u
-        ldd   #80
-        std   y_pos,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
         inc   routine,u
 
 Live
+        ldd   x_pos,u
+        subd  #1
+        std   x_pos,u
+        cmpd  glb_camera_x_pos
+        ble   >
         jsr   AnimateSprite
         jmp   DisplaySprite
+!       jmp   DeleteObject

@@ -51,10 +51,6 @@ viewport_height equ 168
         ldx   #Snd_S01
         jsr   PlayMusic
 
-        jsr   LoadObject_u
-        lda   #ObjID_patapata
-        sta   id,u
-
 * ---------------------------------------------------------------------------
 * MAIN GAME LOOP
 * ---------------------------------------------------------------------------
@@ -63,6 +59,7 @@ LevelMainLoop
         jsr   WaitVBL
         jsr   ReadJoypads
         jsr   Scroll
+        jsr   ObjectWave
         jsr   RunObjects
         jsr   CheckSpritesRefresh
         jsr   EraseSprites
@@ -105,6 +102,7 @@ UserIRQ
         ; object management
         INCLUDE "./engine/object-management/RunObjects.asm"
         INCLUDE "./engine/object-management/ObjectMove.asm"
+        INCLUDE "./engine/object-management/ObjectWave.asm"
 
         ; animation & image
         INCLUDE "./engine/graphics/animation/AnimateSprite.asm"

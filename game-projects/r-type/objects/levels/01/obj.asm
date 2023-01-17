@@ -45,6 +45,12 @@ Level_Init_0
         stb   scroll_map_width
         clr   scroll_map_x_pos
 
+        ; register object wave
+        ldd   #Level_data
+        std   object_wave_data
+        _GetCartPageA
+        sta   object_wave_data_page
+
 Level_Init_1
 	inc   routine,u
         jmp   DisplaySprite	
@@ -67,3 +73,6 @@ Tls_lvl01_s
         ; page    (byte) page number of compilated tile routine
         ; address (word) absolute address of compilated tile routine
         ; [repeated for each tile in the map]
+
+Level_data
+        INCLUDE "./objects/levels/01/object-wave/object-wave.asm"
