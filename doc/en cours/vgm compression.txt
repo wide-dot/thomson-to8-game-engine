@@ -1,0 +1,26 @@
+1. save two vgm files one per chip from a .dmf file
+Launch Furnace tracker
+file -> open (select your .dmf file)
+file -> export VGM -> select 1.61 as format version
+file -> export VGM -> check only SN76489, save the file as sn76489.vgm
+file -> export VGM -> check only YM2413, save the file as ym2413.vgm
+
+2. encode the ym2413 vgm file
+with the 6809-game-engine, run this command (without the .bat if you are under linux/macos) :
+svgm.bat -f="C:\tmp\ym2413.vgm" -ym2413 -v
+
+3. compress the ym2413 file
+with the thomson-to8-game-engine, run this java class :
+zx0.Main -q -c -f "C:\Users\bhrou\Documents\tmp\ym2413-ym2413.ymm"
+It's a classic zx0 compression but with a buffer of 512 bytes
+you end up with a file named : ym2413-ym2413.ymm.zx0
+you can rename wathever you want and use it as input for the YM2413vgm.asm player
+
+4. encode and compress the sn76489 file
+with the thomson-to8-game-engine, in \engine\sound\vgc , run this python command :
+vgmpacker.py C:\tmp\sn76489.vgm 
+
+if an error is raised, check that the vgm rate is not null.
+If the rate is null, open the vgm file with a binary editor and remplace the 0 value at position 0x24 with the value 0x32
+
+A sn76489.vgc file is produced, you can rename wathever you want and use it as input for the vgcplayer.asm player
