@@ -81,4 +81,8 @@ L'apprentissage de l'assembleur est un prérequis indispensable à la lecture de
 
 à rédiger - La lecture de disquette
 
+à rédiger - L'accès aux manettes
+
+à rédiger - L'accès au clavier
+
 à rédiger - La palette de couleur
