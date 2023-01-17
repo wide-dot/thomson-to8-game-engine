@@ -27,7 +27,15 @@ Il faut décocher l'option "Save BMP, PNG, ICO, GIF with minimal Color Depth"
 
 ## <a name="ratio"></a>Afficher son projet au ratio 2:1
 
-à renseigner
+Pour afficher une image au ratio 2:1, aller dans les préférences et sélectionner "Pixel Size" à 2x1 :
+
+![image](images/pmn.ratio.01.png)
+![image](images/pmn.ratio.02.png)
+
+Attention, à la sauvegarde l'option "Apply Pixel Size" est cochée par défaut. Cela signifie que l'image sera sauvegardée en effectuant un redimensionnement x2 en largeur.
+Pensez à la décocher pour conserver une image à la dimension d'origine.
+
+![image](images/pmn.ratio.03.png)
 
 ## <a name="palette"></a>Manipuler la palette
 
