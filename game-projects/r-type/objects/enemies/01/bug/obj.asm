@@ -29,6 +29,8 @@ Init
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
         inc   routine,u
+	ldd   #$0014
+        std   bug_a,u
 
 Live
         ldd   x_pos,u
