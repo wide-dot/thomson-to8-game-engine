@@ -38,6 +38,9 @@ viewport_height equ 168
 ; init scroll
         jsr   InitScroll
 
+; init starfield
+        jsr   InitStarField        
+
 ; init user irq
         jsr   IrqInit
         ldd   #UserIRQ
@@ -79,6 +82,21 @@ UserIRQ
         jmp   MusicFrame
 
 * ---------------------------------------------------------------------------
+* INIT STARFIELD
+* ---------------------------------------------------------------------------
+
+InitStarField
+        jsr   InitRNG
+        ldx   #StarField_RAM
+!       jsr   RandomNumber
+        stb   ,x+                   ; let's populate the starfield
+        cmpx  #StarField_RAM_End    ; finished ?
+!       bne <
+        rts
+
+
+
+* ---------------------------------------------------------------------------
 * Game Mode RAM variables
 * ---------------------------------------------------------------------------
 
@@ -94,6 +112,9 @@ UserIRQ
         INCLUDE "./engine/palette/PalUpdateNow.asm"
         INCLUDE "./engine/ram/ClearDataMemory.asm"
         INCLUDE "./engine/irq/Irq.asm"
+
+        ; math for random
+        INCLUDE "./engine/math/RandomNumber.asm"
 
         ; joystick
         INCLUDE "./engine/joypad/InitJoypads.asm"
