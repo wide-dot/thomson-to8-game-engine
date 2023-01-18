@@ -8,10 +8,8 @@
 
         INCLUDE "./engine/macros.asm"
 
-patapata_a       equ ext_variables    ; Current amplitude    * 
-patapata_d       equ ext_variables+1    ; Direction (1 = up, 0 = down)    * 
-
-
+bug_a       equ ext_variables    ; Current amplitude    * 
+bug_d       equ ext_variables+1    ; Direction (1 = up, 0 = down)    * 
 Onject
         lda   routine,u
         asla
@@ -23,7 +21,7 @@ Routines
         fdb   Live
 
 Init
-        ldd   #Ani_patapata
+        ldd   #Ani_bug
         std   anim,u
         ldb   #6
         stb   priority,u
@@ -31,8 +29,6 @@ Init
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
         inc   routine,u
-        ldd   #$1401
-        std   patapata_a,u
 
 Live
         ldd   x_pos,u
@@ -40,36 +36,38 @@ Live
         std   x_pos,u
         cmpd  glb_camera_x_pos
         ble   >
-        lda   patapata_d,u
-        beq   patapata_down
-        lda   patapata_a,u
+        lda   bug_d,u
+        beq   bug_down
+        lda   bug_a,u
         cmpa  #$28
-        beq   patapata_switchuptodown
+        beq   bug_switchuptodown
         inca
-        sta   patapata_a,u
+        sta   bug_a,u
         ldd   y_pos,u
         subd  #1
         std   y_pos,u
         jsr   AnimateSprite
         jmp   DisplaySprite
-patapata_switchuptodown
-        clr   patapata_d,u
+bug_switchuptodown
+        clr   bug_d,u
         jsr   AnimateSprite
         jmp   DisplaySprite
-patapata_down
-        lda   patapata_a,u
-        beq   patapata_switchdowntoup
+bug_down
+        lda   bug_a,u
+        beq   bug_switchdowntoup
         deca
-        sta   patapata_a,u
+        sta   bug_a,u
         ldd   y_pos,u
         addd  #1
         std   y_pos,u
         jsr   AnimateSprite
         jmp   DisplaySprite
-patapata_switchdowntoup
+bug_switchdowntoup
         lda   #$01
-        sta   patapata_d,u
+        sta   bug_d,u
         jsr   AnimateSprite
         jmp   DisplaySprite
         
 !       jmp   DeleteObject
+
+S
