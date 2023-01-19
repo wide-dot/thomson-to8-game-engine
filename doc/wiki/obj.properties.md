@@ -47,11 +47,12 @@ Each frame of a sprite is to be specified with the following syntax (one line fo
 
 ```
 sprite.Img_bink_0=./objects/enemies/01/bink/images/bink_00.png;NB0,NB1
+```
 
 
 <table>
   <tr>
-   <td>```
+   <td>
 
 Object
    </td>
@@ -140,11 +141,11 @@ The sequence of animation between a same sprite frames can be specified with the
 
 ```
 animation.Ani_bink=2;Img_bink_3;Img_bink_2;Img_bink_3;Img_bink_1;_resetAnim
-
+```
 
 <table>
   <tr>
-   <td>```
+   <td>
 
 Object
    </td>
