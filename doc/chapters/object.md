@@ -1,8 +1,10 @@
 # La gestion des objets
 
-Dans la boucle principale d'un programme, on peut exécuter librement un ensemble de routines. Un problème se pose cependant lorsque l'on veut exécuter plusieurs fois la même routine, mais associée à un ensemble de données chaque fois différent.
+## Un embryon d'objet
 
-Pour répondre à ce besoin, la première chose qu inous vient à l'esprit est de passer un pointeur vers un ensemble de données en paramètre de cette routine.
+Dans la boucle principale d'un programme, on peut exécuter librement un ensemble de routines. Un problème se pose cependant lorsque l'on veut exécuter plusieurs fois la même routine, mais associée à un ensemble de données différent.
+
+Pour répondre à ce besoin, la première chose qui nous vient à l'esprit est de passer un pointeur vers un ensemble de données en paramètre de cette routine.
 
 Pour cela nous allons utiliser le registre U.
 ```
@@ -36,7 +38,7 @@ data2
         fill  0,4 ; an array of 4 bytes
 ```
 
-Une autre stratégie est d'utiliser le registre DP (direct page). le traitement sera alors plus rapide, l'inconvénient étant que la structure de donnée a une taille fixe à 256 octets et doit être positionnée en mémoire à une adresse multiple de 256.
+Une autre stratégie est d'utiliser le registre DP (direct page). le traitement sera alors plus rapide, l'inconvénient étant que la structure de donnée a une taille fixe de 256 octets et doit être positionnée en mémoire à une adresse multiple de 256.
 
 ```
         ; ...
@@ -73,13 +75,17 @@ data2
         fill  0,4 ; an array of 4 bytes
 ```
 
-Même si ce principe reste rudimentaire on peut considérer que c'est un début de gestion d'objets, en effet nous avons ici un comportement associé à un ensemble d'attributs propres.
+Même si ce principe reste rudimentaire on peut considérer que c'est un début de gestion d'objet, en effet nous avons ici un comportement associé à un ensemble d'attributs propres, dont les données sont persistantes.
 
-Cela n'est cependant pas suffisant si l'on souhaite créer des objets de manière dynamique.
-Pour cela il faut implémenter un ensemble de fonctionnalités :
-- instancier un objet
-- détruire un objet
-- définir des attributs
-- définir des comportements
-- exécuter un comportement
+Cela n'est cependant pas suffisant si l'on souhaite créer ces objets à plus grande échelle et de manière dynamique.
+
+## Instancier un objet
+
+## Détruire un objet
+
+## Définir des attributs
+
+## Définir des comportements
+
+## Exécuter un comportement
 
