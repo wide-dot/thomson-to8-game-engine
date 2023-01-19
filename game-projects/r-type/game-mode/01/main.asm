@@ -87,6 +87,7 @@ UserIRQ
 * ---------------------------------------------------------------------------
 * ENGINE routines
 * ---------------------------------------------------------------------------
+DO_NOT_WAIT_VBL equ 1
 
         ; common utilities
         INCLUDE "./engine/ram/BankSwitch.asm"
@@ -101,11 +102,10 @@ UserIRQ
 
         ; object management
         INCLUDE "./engine/object-management/RunObjects.asm"
-        INCLUDE "./engine/object-management/ObjectMove.asm"
+        INCLUDE "./engine/object-management/ObjectMoveSync.asm"
         INCLUDE "./engine/object-management/ObjectWave.asm"
 
         ; animation & image
-        INCLUDE "./engine/graphics/animation/AnimateSprite.asm"
         INCLUDE "./engine/graphics/animation/AnimateSpriteSync.asm"
 
         ; sprite

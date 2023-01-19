@@ -28,9 +28,9 @@ Init
         addd  #2
         std   y_pos,u
 
-        ldd   #Ani_weapon_1
-        std   anim,u
-        ldb   #$04
+        ldd   #Img_weapon_1
+        std   image_set,u
+        ldb   #2
         stb   priority,u
 
         lda   render_flags,u
@@ -39,17 +39,16 @@ Init
         inc   routine,u
 
 Live
-        ldd   x_pos,u
-        addd  #6
+        lda   #4
+        ldb   Vint_Main_runcount
+        mul
+        addd  x_pos,u
         std   x_pos,u
         subd  glb_camera_x_pos
         cmpd  #160-8/2 ; img width/2
-        ble   Anim
+        ble   >
         jmp   DeleteObject
-
-Anim
-        jsr   AnimateSprite
-        jmp   DisplaySprite
+!       jmp   DisplaySprite
 
 
 *************

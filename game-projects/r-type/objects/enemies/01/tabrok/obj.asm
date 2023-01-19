@@ -26,14 +26,15 @@ Init
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
+        ldd   #$-20
+        std   x_vel,u
         inc   routine,u
 
 Live
         ldd   x_pos,u
-        subd  #1
-        std   x_pos,u
         cmpd  glb_camera_x_pos
         ble   >
-        jsr   AnimateSprite
+        jsr   AnimateSpriteSync
+        jsr   ObjectMoveSync
         jmp   DisplaySprite
 !       jmp   DeleteObject

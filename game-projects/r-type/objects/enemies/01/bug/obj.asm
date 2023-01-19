@@ -8,9 +8,10 @@
 
         INCLUDE "./engine/macros.asm"
 
-bug_a       equ ext_variables    ; Current amplitude    * 
-bug_d       equ ext_variables+1    ; Direction (1 = up, 0 = down)    * 
-Onject
+amplitude equ ext_variables ; current amplitude
+amplitude_max equ 50       ; maximum amplitude before direction change
+
+Object
         lda   routine,u
         asla
         ldx   #Routines
@@ -18,58 +19,66 @@ Onject
 
 Routines
         fdb   Init
-        fdb   Live
+        fdb   LiveUp
+        fdb   LiveDown
 
 Init
-        ldd   #Ani_bug
-        std   anim,u
         ldb   #6
         stb   priority,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
-        inc   routine,u
-	ldd   #$0008
-        std   bug_a,u
+        ldd   #amplitude_max
+        std   amplitude,u
+        ldd   #$-A0
+        std   x_vel,u
+        lda   subtype,u
+        sta   routine,u
+        cmpa  #1
+        bne   >
+        ldd   #Ani_bug_center_to_up
+        std   anim,u
+        ldd   #$-A0
+        std   y_vel,u
+        bra   Object
+!       ldd   #Ani_bug_center_to_down
+        std   anim,u
+        ldd   #$A0
+        std   y_vel,u
+        bra   Object
 
-Live
-        ldd   x_pos,u
+LiveUp
+        ldd   amplitude,u
         subd  Vint_Main_runcount_w
-        std   x_pos,u
+        std   amplitude,u
+        bpl   CheckEOL
+        inc   routine,u
+        ldd   #amplitude_max
+        std   amplitude,u
+        ldd   #Ani_bug_up_to_down
+        std   anim,u
+        ldd   #$A0
+        std   y_vel,u
+
+LiveDown
+        ldd   amplitude,u
+        subd  Vint_Main_runcount_w
+        std   amplitude,u
+        bpl   CheckEOL
+        dec   routine,u
+        ldd   #amplitude_max
+        std   amplitude,u
+        ldd   #Ani_bug_down_to_up
+        std   anim,u
+        ldd   #$-A0
+        std   y_vel,u
+        bra   LiveUp
+
+CheckEOL
+        ldd   x_pos,u
         cmpd  glb_camera_x_pos
         ble   >
-        lda   bug_d,u
-        beq   bug_down
-        lda   bug_a,u
-        cmpa  #$10
-        beq   bug_switchuptodown
-        inca
-        sta   bug_a,u
-        ldd   y_pos,u
-        subd  Vint_Main_runcount_w
-        std   y_pos,u
         jsr   AnimateSpriteSync
+        jsr   ObjectMoveSync
         jmp   DisplaySprite
-bug_switchuptodown
-        clr   bug_d,u
-        jsr   AnimateSpriteSync
-        jmp   DisplaySprite
-bug_down
-        lda   bug_a,u
-        beq   bug_switchdowntoup
-        deca
-        sta   bug_a,u
-        ldd   y_pos,u
-        addd  Vint_Main_runcount_w
-        std   y_pos,u
-        jsr   AnimateSpriteSync
-        jmp   DisplaySprite
-bug_switchdowntoup
-        lda   #$01
-        sta   bug_d,u
-        jsr   AnimateSpriteSync
-        jmp   DisplaySprite
-        
 !       jmp   DeleteObject
-
-S
