@@ -106,6 +106,7 @@ UserIRQ
 
         ; animation & image
         INCLUDE "./engine/graphics/animation/AnimateSprite.asm"
+        INCLUDE "./engine/graphics/animation/AnimateSpriteSync.asm"
 
         ; sprite
         INCLUDE "./engine/graphics/codec/DecRLE00.asm"

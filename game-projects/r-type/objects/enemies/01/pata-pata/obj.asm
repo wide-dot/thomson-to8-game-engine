@@ -8,11 +8,10 @@
 
         INCLUDE "./engine/macros.asm"
 
-patapata_a       equ ext_variables    ; Current amplitude    * 
-patapata_d       equ ext_variables+1    ; Direction (1 = up, 0 = down)    * 
+amplitude equ ext_variables ; current amplitude
+amplitude_max equ 20        ; maximum amplitude before direction change
 
-
-Onject
+Object
         lda   routine,u
         asla
         ldx   #Routines
@@ -20,7 +19,8 @@ Onject
 
 Routines
         fdb   Init
-        fdb   Live
+        fdb   LiveUp
+        fdb   LiveDown
 
 Init
         ldd   #Ani_patapata
@@ -30,46 +30,41 @@ Init
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
-        inc   routine,u
-        ldd   #$1401
-        std   patapata_a,u
+        lda   #amplitude_max
+        sta   amplitude,u
+        lda   subtype,u
+        sta   routine,u
+        bra   Object
 
-Live
+LiveUp
+        dec   amplitude,u
+        beq   >
+        ldd   y_pos,u
+        subd  Vint_Main_runcount_w
+        std   y_pos,u
+        bra   CheckEOL
+!       inc   routine,u
+        lda   #amplitude_max
+        sta   amplitude,u
+
+LiveDown
+        dec   amplitude,u
+        beq   >
+        ldd   y_pos,u
+        addd  Vint_Main_runcount_w
+        std   y_pos,u
+        bra   CheckEOL
+!       dec   routine,u
+        lda   #amplitude_max
+        sta   amplitude,u
+        bra   LiveUp
+
+CheckEOL
         ldd   x_pos,u
-        subd  #1
+        subd  Vint_Main_runcount_w
         std   x_pos,u
         cmpd  glb_camera_x_pos
         ble   >
-        lda   patapata_d,u
-        beq   patapata_down
-        lda   patapata_a,u
-        cmpa  #$28
-        beq   patapata_switchuptodown
-        inca
-        sta   patapata_a,u
-        ldd   y_pos,u
-        subd  #1
-        std   y_pos,u
-        jsr   AnimateSprite
+        jsr   AnimateSpriteSync
         jmp   DisplaySprite
-patapata_switchuptodown
-        clr   patapata_d,u
-        jsr   AnimateSprite
-        jmp   DisplaySprite
-patapata_down
-        lda   patapata_a,u
-        beq   patapata_switchdowntoup
-        deca
-        sta   patapata_a,u
-        ldd   y_pos,u
-        addd  #1
-        std   y_pos,u
-        jsr   AnimateSprite
-        jmp   DisplaySprite
-patapata_switchdowntoup
-        lda   #$01
-        sta   patapata_d,u
-        jsr   AnimateSprite
-        jmp   DisplaySprite
-        
 !       jmp   DeleteObject
