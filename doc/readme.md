@@ -53,7 +53,7 @@ L'apprentissage de l'assembleur est un prérequis indispensable à la lecture de
 
 à rédiger - Le double buffering
 
-à rédiger - La gestion des objets
+en cours de rédaction - [La gestion des objets][objects]
 
 à rédiger - Les interruptions
 
@@ -86,3 +86,5 @@ L'apprentissage de l'assembleur est un prérequis indispensable à la lecture de
 à rédiger - L'accès au clavier
 
 à rédiger - La palette de couleur
+
+[objects]: chapters/object.md
