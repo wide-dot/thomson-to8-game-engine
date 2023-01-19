@@ -42,7 +42,7 @@ code=./objects/enemies/01/bink/obj.asm
 
 ### Frames
 
-Each frame of a sprite is to be specified with the following syntax (one line for each frame) : 
+Each frame of a sprite is defined with the following syntax (one line for each frame) : 
 
 
 ```
@@ -53,7 +53,6 @@ sprite.Img_bink_0=./objects/enemies/01/bink/images/bink_00.png;NB0,NB1
 <table>
   <tr>
    <td>
-
 Object
    </td>
    <td>Definition
@@ -190,9 +189,16 @@ Object
 <p>
 Each frame name refers to the frames created (See “Frames” section above) and are separated by a semicolon ;
 <p>
-The animation is closed by <code>_resetAnim</code>
-<p>
-(Is there anything like _loopbackAnim or something ?)
+The animation is closed by one of the following options :
+<ul>
+<li>_resetAnim : Loops the animation back from start
+<li>_goBackNFrames : loops the animation back N frames (e.g. _goBackNFrames;3 would loop from 3 frames back)
+<li>_goToAnimation : ??? Move to another defined animation (e.g. _goToAnimation:Ani_bink_explosion)
+<li>_nextRoutine : ???
+<li>_resetAnimAndSubRoutine : ???
+<li>_nextSubRoutine : ???
+</ul>
+
    </td>
   </tr>
 </table>
