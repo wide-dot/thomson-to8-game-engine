@@ -34,6 +34,8 @@ Level_Init_0
         sta   ,x
 
         ; set scroll parameters
+        lda   #4
+        sta   scroll_wait_frames
         _ldd  10,12
         sta   scroll_vp_h_tiles
         stb   scroll_vp_v_tiles
