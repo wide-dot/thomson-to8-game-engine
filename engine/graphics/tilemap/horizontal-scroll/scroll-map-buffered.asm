@@ -11,6 +11,7 @@
         SETDP   dp/256
 
 ; parameters to set before using InitScroll and Scroll routines
+scroll_wait_frames        fcb   1   ; number of frames to wait between key frames
 scroll_vp_h_tiles         fcb   10  ; viewport tiles on x axis
 scroll_vp_v_tiles         fcb   12  ; viewport tiles on y axis
 scroll_tile_width         fcb   0   ; tile width
@@ -24,9 +25,13 @@ scroll_map_page equ *+1
                           fcb   0
                           fcb   0
 
-; routine variables
+; public routine variables
+scroll_factor             fcb   0   ; factor for sprite mouvements
+
+; private variables
 tile_buffer               fdb   0
 tile_buffer_page          fcb   0
+scroll_remain_frames      fcb   0   ; countdown to next scroll step
 scroll_tile_pos_offset    fcb   0   ; current camera x position offset from tile_pos
 scroll_map_x_pos          fcb   0   ; current tile position in the map
 scroll_stop               fcb   0   ; flag that stops scroll
@@ -45,8 +50,8 @@ scroll_loc_exg            equ   dp_engine+2
 * ---------------------------------------------------------------------------
 
 InitScroll
-        lda   #3
-        sta   scroll_frame                       ; first Scroll call will inc frame to 0
+        lda   #0
+        sta   scroll_frame
         ldd   #-1
         std   glb_camera_x_pos                   ; first Scroll call will inc camera to 0
         stb   scroll_tile_pos_offset             ; first Scroll call will inc offset to 0
@@ -76,34 +81,35 @@ InitScroll
         lda   scroll_vp_x_pos
         anda  #%11111110                         ; this routine only accept even position on screen for tiles
         sta   scroll_vp_x_pos
+        lda   scroll_wait_frames
+        sta   scroll_remain_frames
         rts
 
 * ---------------------------------------------------------------------------
 * Scroll
 * ----------
-* Drive scroll with a dedicated frame pattern :
-* A A x x B B x x
-* A : draw tiles
-* A : draw tiles
-* B : draw tiles shifted
-* B : draw tiles shifted
-* x : no draw
+* Drive scroll at a constant framerate
 * ---------------------------------------------------------------------------
 
 Scroll
-; apply frame pattern
         lda   scroll_stop
         beq   >
+        lda   #1
+        sta   scroll_factor                      ; when scroll is stopped, factor is 1
         rts                                      ; scroll is stopped, return
 !       clr   glb_camera_move                    ; desactivate tiles drawing
-        ldb   scroll_frame                       ; load last frame number (0-3)
-        incb                                     ; increment to current frame number
-        andb  #%00000011                         ; modulo 4 to keep frame number btw 0-3
-        stb   scroll_frame                       ; store frame id
-        cmpb  #1                                 ; is frame 2 or 3 ? (no tile drawing)
-        bgt   @end                               ; if so branch
-        beq   @skip   
-        ; move camera and swap between tiles and shifted tiles
+        ldb   scroll_frame                       ; load frame number
+        beq   @keyfrm                            ; frame 0 is the key frame
+        cmpb  #1
+        bne   @skipfrm
+        bra   @updbuf
+@keyfrm
+        lda   scroll_remain_frames
+        suba  Vint_Main_runcount
+        sta   scroll_remain_frames
+        bmi   >
+        incb                                     ; next frame will not be key frame
+!       stb   scroll_frame                       ; store 0 if high frame drop (next frame will be a key)
         lda   scroll_parity                      ; swap tileset only on first of the 4 frames
         coma
         sta   scroll_parity
@@ -124,12 +130,26 @@ Scroll
         inc   scroll_map_x_pos                   ; move next tile
         lda   #0                                 ; reinit offset   
 !       sta   scroll_tile_pos_offset
-@skip   lda   #1                                 ; frame 0 or 1 we want to draw tiles
+        lda   #1                                 ; frame 0 we want to draw tiles
         sta   <glb_force_sprite_refresh          ; force sprites to do a full refresh (background will be changed)
         sta   glb_camera_move                    ; set flag to activate tile drawing
         rts
-@end    ldd   glb_camera_x_pos
-        cmpd  #map_width-viewport_width          ; check end of map
+@updbuf
+        lda   #1                                 ; frame 1 we want to draw tiles
+        sta   <glb_force_sprite_refresh          ; force sprites to do a full refresh (background will be changed)
+        sta   glb_camera_move                    ; set flag to activate tile drawing
+@skipfrm
+        incb                                     ; no frame to draw
+        lda   scroll_remain_frames
+        suba  Vint_Main_runcount
+        sta   scroll_remain_frames
+        bpl   >
+        lda   scroll_wait_frames
+        sta   scroll_remain_frames
+        ldb   #0                                 ; next frame is key frame 0
+!       stb   scroll_frame  
+        ldd   glb_camera_x_pos
+        cmpd  #map_width-viewport_width          ; check end of map (only when the 2 buffers are updated)
         bne   >                                  ; if so no need to swap the tiles, only set scroll_stop
         inc   scroll_stop
 !       rts

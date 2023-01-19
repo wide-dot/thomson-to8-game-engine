@@ -2,27 +2,27 @@
 
         fdb   210-140                  ; x_pos to instanciate object
         fcb   ObjID_patapata           ; object id
-        fcb   00                       ; object subtype
+        fcb   01                       ; object subtype
         fdb   220,40                   ; x_pos, y_pos
 
         fdb   213-140
         fcb   ObjID_patapata
-        fcb   00
+        fcb   01
         fdb   223,40
 
         fdb   216-140
         fcb   ObjID_patapata
-        fcb   00
+        fcb   01
         fdb   226,40
 
         fdb   219-140
         fcb   ObjID_patapata
-        fcb   00
+        fcb   01
         fdb   229,40
 
         fdb   222-140
         fcb   ObjID_patapata
-        fcb   00
+        fcb   01
         fdb   232,40
 
 
@@ -35,31 +35,31 @@
         fdb   233,140
 
 
-; Seconde pata-pata wave
+; Second pata-pata wave
 
         fdb   222-140                
         fcb   ObjID_patapata         
-        fcb   00                      
+        fcb   01                      
         fdb   232,114                  
 
         fdb   225-140
         fcb   ObjID_patapata
-        fcb   00
+        fcb   02
         fdb   235,114
 
         fdb   228-140
         fcb   ObjID_patapata
-        fcb   00
+        fcb   01
         fdb   238,114
 
         fdb   231-140
         fcb   ObjID_patapata
-        fcb   00
+        fcb   02
         fdb   241,114
 
         fdb   234-140
         fcb   ObjID_patapata
-        fcb   00
+        fcb   01
         fdb   244,114
 
 

@@ -29,30 +29,30 @@ Init
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
         inc   routine,u
-	ldd   #$0014
+	ldd   #$0008
         std   bug_a,u
 
 Live
         ldd   x_pos,u
-        subd  #1
+        subd  Vint_Main_runcount_w
         std   x_pos,u
         cmpd  glb_camera_x_pos
         ble   >
         lda   bug_d,u
         beq   bug_down
         lda   bug_a,u
-        cmpa  #$28
+        cmpa  #$10
         beq   bug_switchuptodown
         inca
         sta   bug_a,u
         ldd   y_pos,u
-        subd  #1
+        subd  Vint_Main_runcount_w
         std   y_pos,u
-        jsr   AnimateSprite
+        jsr   AnimateSpriteSync
         jmp   DisplaySprite
 bug_switchuptodown
         clr   bug_d,u
-        jsr   AnimateSprite
+        jsr   AnimateSpriteSync
         jmp   DisplaySprite
 bug_down
         lda   bug_a,u
@@ -60,14 +60,14 @@ bug_down
         deca
         sta   bug_a,u
         ldd   y_pos,u
-        addd  #1
+        addd  Vint_Main_runcount_w
         std   y_pos,u
-        jsr   AnimateSprite
+        jsr   AnimateSpriteSync
         jmp   DisplaySprite
 bug_switchdowntoup
         lda   #$01
         sta   bug_d,u
-        jsr   AnimateSprite
+        jsr   AnimateSpriteSync
         jmp   DisplaySprite
         
 !       jmp   DeleteObject
