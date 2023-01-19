@@ -25,9 +25,6 @@ scroll_map_page equ *+1
                           fcb   0
                           fcb   0
 
-; public routine variables
-scroll_factor             fcb   0   ; factor for sprite mouvements
-
 ; private variables
 tile_buffer               fdb   0
 tile_buffer_page          fcb   0
@@ -94,8 +91,6 @@ InitScroll
 Scroll
         lda   scroll_stop
         beq   >
-        lda   #1
-        sta   scroll_factor                      ; when scroll is stopped, factor is 1
         rts                                      ; scroll is stopped, return
 !       clr   glb_camera_move                    ; desactivate tiles drawing
         ldb   scroll_frame                       ; load frame number
@@ -109,7 +104,10 @@ Scroll
         sta   scroll_remain_frames
         bmi   >
         incb                                     ; next frame will not be key frame
+        lda   #0
 !       stb   scroll_frame                       ; store 0 if high frame drop (next frame will be a key)
+        adda  Vint_Main_runcount
+        sta   Vint_Main_runcount
         lda   scroll_parity                      ; swap tileset only on first of the 4 frames
         coma
         sta   scroll_parity

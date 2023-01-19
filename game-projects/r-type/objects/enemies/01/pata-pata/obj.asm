@@ -9,7 +9,7 @@
         INCLUDE "./engine/macros.asm"
 
 amplitude equ ext_variables ; current amplitude
-amplitude_max equ 20        ; maximum amplitude before direction change
+amplitude_max equ 40        ; maximum amplitude before direction change
 
 Object
         lda   routine,u
@@ -30,41 +30,49 @@ Init
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
-        lda   #amplitude_max
-        sta   amplitude,u
+        ldd   #amplitude_max
+        std   amplitude,u
+        ldd   #$-A0
+        std   x_vel,u
         lda   subtype,u
         sta   routine,u
+        cmpa  #1
+        bne   >
+        ldd   #$-A0
+        std   y_vel,u
+        bra   Object
+!       ldd   #$A0
+        std   y_vel,u
         bra   Object
 
 LiveUp
-        dec   amplitude,u
-        beq   >
-        ldd   y_pos,u
+        ldd   amplitude,u
         subd  Vint_Main_runcount_w
-        std   y_pos,u
-        bra   CheckEOL
-!       inc   routine,u
-        lda   #amplitude_max
-        sta   amplitude,u
+        std   amplitude,u
+        bpl   CheckEOL
+        inc   routine,u
+        ldd   #amplitude_max
+        std   amplitude,u
+        ldd   #$A0
+        std   y_vel,u
 
 LiveDown
-        dec   amplitude,u
-        beq   >
-        ldd   y_pos,u
-        addd  Vint_Main_runcount_w
-        std   y_pos,u
-        bra   CheckEOL
-!       dec   routine,u
-        lda   #amplitude_max
-        sta   amplitude,u
+        ldd   amplitude,u
+        subd  Vint_Main_runcount_w
+        std   amplitude,u
+        bpl   CheckEOL
+        dec   routine,u
+        ldd   #amplitude_max
+        std   amplitude,u
+        ldd   #$-A0
+        std   y_vel,u
         bra   LiveUp
 
 CheckEOL
         ldd   x_pos,u
-        subd  Vint_Main_runcount_w
-        std   x_pos,u
         cmpd  glb_camera_x_pos
         ble   >
         jsr   AnimateSpriteSync
+        jsr   ObjectMoveSync
         jmp   DisplaySprite
 !       jmp   DeleteObject

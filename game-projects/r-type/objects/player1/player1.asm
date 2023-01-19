@@ -8,10 +8,10 @@
 
         INCLUDE "./engine/macros.asm"
 
-ply_acceleration equ $A0
-ply_deceleration equ $80
-ply_max_vel      equ $200
-ply_max_vel_neg  equ $-200
+ply_acceleration equ $20
+ply_deceleration equ $1A
+ply_max_vel      equ $100
+ply_max_vel_neg  equ $-100
 ply_width        equ 12/2
 ply_height       equ 16/2
 
@@ -134,8 +134,8 @@ Live
 @store  std   y_vel,u
 
         ; move and animate
-!       jsr   AnimateSprite
-        jsr   ObjectMove
+!       jsr   AnimateSpriteSync
+        jsr   ObjectMoveSync
         jsr   CheckRange
         jmp   DisplaySprite
 
