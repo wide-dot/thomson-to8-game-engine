@@ -191,7 +191,7 @@ Each frame name refers to the frames created (See “Frames” section above) an
 <p>
 The animation is closed by one of the following options :
 <ul>
-<li>_resetAnim : Loops the animation back from start
+<li>_resetAnim : Loops the animation back from the start
 <li>_goBackNFrames : loops the animation back N frames (e.g. _goBackNFrames;3 would loop from 3 frames back)
 <li>_goToAnimation : ??? Move to another defined animation (e.g. _goToAnimation:Ani_bink_explosion)
 <li>_nextRoutine : ???
