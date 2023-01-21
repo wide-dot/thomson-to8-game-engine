@@ -37,6 +37,6 @@ Live
         ble   >
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
+
 Over
-        jmp   DeleteObject
 !       jmp   DeleteObject

@@ -109,8 +109,11 @@ wave_bug_02_space equ 2
         fcb   00
         fdb   280,130
 
+; Shell wave
+wave_shell        equ 870
+wave_shell_width  equ 8
+        fdb   wave_shell-140-8,(ObjID_shell*256)+00,916,139
+
         fdb   -1 ; end marker
-
-
 
 
