@@ -87,7 +87,7 @@ UserIRQ
 * ---------------------------------------------------------------------------
 * ENGINE routines
 * ---------------------------------------------------------------------------
-DO_NOT_WAIT_VBL equ 1
+;DO_NOT_WAIT_VBL equ 1
 
         ; common utilities
         INCLUDE "./engine/ram/BankSwitch.asm"
@@ -95,6 +95,8 @@ DO_NOT_WAIT_VBL equ 1
         INCLUDE "./engine/palette/PalUpdateNow.asm"
         INCLUDE "./engine/ram/ClearDataMemory.asm"
         INCLUDE "./engine/irq/Irq.asm"
+        INCLUDE "./engine/math/CalcSine.asm"
+        INCLUDE "./engine/math/Mul9x16.asm"
 
         ; joystick
         INCLUDE "./engine/joypad/InitJoypads.asm"

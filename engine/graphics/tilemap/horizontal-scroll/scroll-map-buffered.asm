@@ -101,13 +101,12 @@ Scroll
 @keyfrm
         lda   scroll_remain_frames
         suba  Vint_Main_runcount
-        sta   scroll_remain_frames
-        bmi   >
-        incb                                     ; next frame will not be key frame
-        lda   #0
-!       stb   scroll_frame                       ; store 0 if high frame drop (next frame will be a key)
-        adda  Vint_Main_runcount
-        sta   Vint_Main_runcount
+        bpl   >
+        lda   scroll_wait_frames                 ; next frame will be keyframe
+        bra   @nxtkey
+!       incb                                     ; next frame will not be key frame
+        stb   scroll_frame
+@nxtkey sta   scroll_remain_frames
         lda   scroll_parity                      ; swap tileset only on first of the 4 frames
         coma
         sta   scroll_parity
