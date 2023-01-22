@@ -9,7 +9,7 @@
         INCLUDE "./engine/macros.asm"
 
 ply_acceleration equ $20
-ply_deceleration equ $1A
+ply_deceleration equ $100
 ply_max_vel      equ $100
 ply_max_vel_neg  equ $-100
 ply_width        equ 12/2
