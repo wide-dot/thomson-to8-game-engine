@@ -95,8 +95,8 @@ UserIRQ
         INCLUDE "./engine/palette/PalUpdateNow.asm"
         INCLUDE "./engine/ram/ClearDataMemory.asm"
         INCLUDE "./engine/irq/Irq.asm"
-        INCLUDE "./engine/math/CalcSine.asm"
-        INCLUDE "./engine/math/Mul9x16.asm"
+        ;INCLUDE "./engine/math/CalcSine.asm"
+        ;INCLUDE "./engine/math/Mul9x16.asm"
 
         ; joystick
         INCLUDE "./engine/joypad/InitJoypads.asm"
