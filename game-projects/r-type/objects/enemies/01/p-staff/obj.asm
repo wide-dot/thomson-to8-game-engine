@@ -9,7 +9,7 @@
         INCLUDE "./engine/macros.asm"
 
 mouvement equ ext_variables ; current amplitude
-mouvement_max equ 100   
+mouvement_max equ 180   
 
 Onject
         lda   routine,u
@@ -47,7 +47,8 @@ WalkLeft
         inc   routine,u
         ldd   #mouvement_max
         std   mouvement,u
-        clr   x_vel,u
+        ldd   #0
+        std   x_vel,u
         ldd   #Ani_pstaff_shoot_left
         std   anim,u
         jsr   AnimateSpriteSync
@@ -87,7 +88,8 @@ WalkRight
         inc   routine,u
         ldd   #mouvement_max
         std   mouvement,u
-        clr   x_vel,u
+        ldd   #0
+        std   x_vel,u
         ldd   #Ani_pstaff_shoot_right
         std   anim,u
         jsr   AnimateSpriteSync
@@ -101,7 +103,7 @@ ShootRight
         bpl   CheckEOL
         lda   #01
         sta   routine,u
-        ldd   #Ani_pstaff_walk_left
+        ldd   #Ani_pstaff_rewalk_left
         std   anim,u
         ldd   #mouvement_max
         std   mouvement,u
