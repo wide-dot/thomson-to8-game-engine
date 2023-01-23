@@ -9,7 +9,7 @@
         INCLUDE "./engine/macros.asm"
 
 amplitude equ ext_variables ; current amplitude
-amplitude_max equ 50       ; maximum amplitude before direction change
+amplitude_max equ 60       ; maximum amplitude before direction change
 
 Object
         lda   routine,u
@@ -36,12 +36,12 @@ Init
         sta   routine,u
         cmpa  #1
         bne   >
-        ldd   #Ani_bug_center_to_up
+        ldd   #Ani_bug_to_up
         std   anim,u
         ldd   #$-A0
         std   y_vel,u
         bra   Object
-!       ldd   #Ani_bug_center_to_down
+!       ldd   #Ani_bug_to_down
         std   anim,u
         ldd   #$A0
         std   y_vel,u

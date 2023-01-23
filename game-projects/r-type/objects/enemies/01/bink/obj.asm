@@ -26,7 +26,7 @@ Init
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
-        ldd   #$-20
+        ldd   #$-40
         std   x_vel,u
         inc   routine,u
 
