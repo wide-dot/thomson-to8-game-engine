@@ -19,7 +19,7 @@ Routines
         fdb   Live
 
 Init
-        ldd   #Ani_bink
+        ldd   #Ani_bink_left
         std   anim,u
         ldb   #6
         stb   priority,u
