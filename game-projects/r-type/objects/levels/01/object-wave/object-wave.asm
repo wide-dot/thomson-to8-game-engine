@@ -3,8 +3,14 @@
 enemies_patapata equ 20
 enemies_bink     equ 28
 enemies_bug      equ 24
+enemies_scant    equ 24
+enemies_pstaff    equ 14
 
 ; x_pos to instanciate object,object id,subtype,x_pos,y_pos
+
+
+; P-Staff #1
+        fdb   140-140,(ObjID_pstaff*256)+00,140+enemies_pstaff,141
 
 
 ; First pata-pata wave
@@ -58,25 +64,57 @@ wave_patapata_03_space equ 4
 
 ; Fourth pata-pata wave
 wave_patapata_04       equ 280
-wave_patapata_04_space equ 14
+wave_patapata_04_space equ 4
         fdb   wave_patapata_04-140+wave_patapata_04_space*1,(ObjID_patapata*256)+02,wave_patapata_04+enemies_patapata+wave_patapata_04_space*1,50
-        fdb   wave_patapata_04-140+wave_patapata_04_space*1,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*2,40
-        fdb   wave_patapata_04-140+wave_patapata_04_space*1,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*3,35
-        fdb   wave_patapata_04-140+wave_patapata_04_space*1,(ObjID_patapata*256)+02,wave_patapata_04+enemies_patapata+wave_patapata_04_space*4,95
-        fdb   wave_patapata_04-140+wave_patapata_04_space*1,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*5,45
-        fdb   wave_patapata_04-140+wave_patapata_04_space*1,(ObjID_patapata*256)+02,wave_patapata_04+enemies_patapata+wave_patapata_04_space*6,55
-        fdb   wave_patapata_04-140+wave_patapata_04_space*1,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*8,100
-        fdb   wave_patapata_04-140+wave_patapata_04_space*1,(ObjID_patapata*256)+02,wave_patapata_04+enemies_patapata+wave_patapata_04_space*9,40
-        fdb   wave_patapata_04-140+wave_patapata_04_space*1,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*10,40
-        fdb   wave_patapata_04-140+wave_patapata_04_space*1,(ObjID_patapata*256)+02,wave_patapata_04+enemies_patapata+wave_patapata_04_space*11,95
-        fdb   wave_patapata_04-140+wave_patapata_04_space*1,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*12,45
-        fdb   wave_patapata_04-140+wave_patapata_04_space*1,(ObjID_patapata*256)+02,wave_patapata_04+enemies_patapata+wave_patapata_04_space*14,40
-        fdb   wave_patapata_04-140+wave_patapata_04_space*1,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*15,55
-        fdb   wave_patapata_04-140+wave_patapata_04_space*1,(ObjID_patapata*256)+02,wave_patapata_04+enemies_patapata+wave_patapata_04_space*16,35
-        fdb   wave_patapata_04-140+wave_patapata_04_space*1,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*18,50
-        fdb   wave_patapata_04-140+wave_patapata_04_space*1,(ObjID_patapata*256)+02,wave_patapata_04+enemies_patapata+wave_patapata_04_space*20,100
-        fdb   wave_patapata_04-140+wave_patapata_04_space*1,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*21,95
-        fdb   wave_patapata_04-140+wave_patapata_04_space*1,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*24,80
+        fdb   wave_patapata_04-140+wave_patapata_04_space*2,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*2,40
+        fdb   wave_patapata_04-140+wave_patapata_04_space*3,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*3,35
+        fdb   wave_patapata_04-140+wave_patapata_04_space*4,(ObjID_patapata*256)+02,wave_patapata_04+enemies_patapata+wave_patapata_04_space*4,95
+        fdb   wave_patapata_04-140+wave_patapata_04_space*5,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*5,45
+        fdb   wave_patapata_04-140+wave_patapata_04_space*6,(ObjID_patapata*256)+02,wave_patapata_04+enemies_patapata+wave_patapata_04_space*6,55
+        fdb   wave_patapata_04-140+wave_patapata_04_space*8,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*8,100
+        fdb   wave_patapata_04-140+wave_patapata_04_space*9,(ObjID_patapata*256)+02,wave_patapata_04+enemies_patapata+wave_patapata_04_space*9,40
+        fdb   wave_patapata_04-140+wave_patapata_04_space*10,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*10,40
+        fdb   wave_patapata_04-140+wave_patapata_04_space*11,(ObjID_patapata*256)+02,wave_patapata_04+enemies_patapata+wave_patapata_04_space*11,95
+        fdb   wave_patapata_04-140+wave_patapata_04_space*12,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*12,45
+        fdb   wave_patapata_04-140+wave_patapata_04_space*14,(ObjID_patapata*256)+02,wave_patapata_04+enemies_patapata+wave_patapata_04_space*14,40
+        fdb   wave_patapata_04-140+wave_patapata_04_space*15,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*15,55
+        fdb   wave_patapata_04-140+wave_patapata_04_space*16,(ObjID_patapata*256)+02,wave_patapata_04+enemies_patapata+wave_patapata_04_space*16,35
+        fdb   wave_patapata_04-140+wave_patapata_04_space*18,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*18,50
+        fdb   wave_patapata_04-140+wave_patapata_04_space*20,(ObjID_patapata*256)+02,wave_patapata_04+enemies_patapata+wave_patapata_04_space*20,100
+        fdb   wave_patapata_04-140+wave_patapata_04_space*21,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*21,95
+        fdb   wave_patapata_04-140+wave_patapata_04_space*24,(ObjID_patapata*256)+01,wave_patapata_04+enemies_patapata+wave_patapata_04_space*24,80
+
+; Solo bink #2
+        fdb   392-140,(ObjID_bink*256)+00,392+enemies_bink,140
+
+; Fifth pata-pata wave
+wave_patapata_05       equ 395
+wave_patapata_05_space equ 4
+        fdb   wave_patapata_05-140+wave_patapata_05_space*1,(ObjID_patapata*256)+01,wave_patapata_05+enemies_patapata+wave_patapata_05_space*1,50
+        fdb   wave_patapata_05-140+wave_patapata_05_space*2,(ObjID_patapata*256)+02,wave_patapata_05+enemies_patapata+wave_patapata_05_space*2,90
+
+; Solo bink #3
+        fdb   420-140,(ObjID_bink*256)+00,420+enemies_bink,140
+
+
+; Fifth pata-pata wave
+wave_patapata_06       equ 422
+wave_patapata_06_space equ 4
+        fdb   wave_patapata_06-140+wave_patapata_06_space*1,(ObjID_patapata*256)+01,wave_patapata_06+enemies_patapata+wave_patapata_06_space*1,50
+        fdb   wave_patapata_06-140+wave_patapata_06_space*3,(ObjID_patapata*256)+02,wave_patapata_06+enemies_patapata+wave_patapata_06_space*3,70
+
+; Scant #1
+        fdb   448-140,(ObjID_scant*256)+00,448+enemies_scant,80
+
+; Solo bink #3
+        fdb   450-140,(ObjID_bink*256)+00,450+enemies_bink,140
+
+; P-Staff #1
+        fdb   476-140,(ObjID_pstaff*256)+00,476+enemies_pstaff,141
+
+; Solo bink #4
+        fdb   480-140,(ObjID_bink*256)+00,480+enemies_bink,140
+
 
 ; Shell wave
 wave_shell        equ 870
