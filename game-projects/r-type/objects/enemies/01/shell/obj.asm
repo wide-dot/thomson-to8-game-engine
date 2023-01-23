@@ -8,8 +8,14 @@
 
         INCLUDE "./engine/macros.asm"
 
-angle      equ  ext_variables ; 8.8
+angle      equ  ext_variables   ; 8.8
+child_ptr  equ  ext_variables+2 ; 16
 angle_step equ 16
+
+; child offsets
+parent         equ  ext_variables
+old_pos_0      equ  ext_variables+2
+old_pos_1      equ  ext_variables+4
 
 Onject
         lda   routine,u
@@ -24,9 +30,22 @@ Routines
         fdb   LiveEye
 
 CreateChilds
-        ; create n childs
-@loop   jsr   LoadObject_x
+        stu   @u
+@loop   jsr   LoadObject_u             ; create background object
         beq   @nomore                  ; branch if no more available object slot
+        lda   #ObjID_shellmask         ; must set the id before calling next loadobject routine
+        sta   id,u
+        lda   #7
+        sta   priority,u
+        lda   render_flags,u
+        ora   #render_overlay_mask
+        sta   render_flags,u
+        jsr   LoadObject_x             ; create shell object
+        ; background object
+        beq   @nomore
+        stx   parent,u
+        stu   child_ptr,x
+        ; shell object
         lda   #ObjID_shell
         sta   id,x
         _ldd  -angle_step*0,0 ; start pos
@@ -44,16 +63,22 @@ cur_angle equ *-2
 !       deca
         sta   childs
         bne   @loop
+        ldu   #0
+@u      equ   *-2
 @nomore jmp   DeleteObject
         rts
 
 childs fcb 14
 
+LiveEye
+        ldx   #ImagesEye
+        bra   LiveContinue
+
 Init
         ldb   #6
         stb   priority,u
         lda   render_flags,u
-        ora   #render_playfieldcoord_mask
+        ora   #render_playfieldcoord_mask|render_overlay_mask
         sta   render_flags,u
         tst   subtype,u
         beq   >
@@ -113,7 +138,7 @@ LiveContinue
 
         addd  #55+8         ; circle 2*x_radius + max sprite radius in any positions
         cmpd  glb_camera_x_pos
-        ble   >
+        ble   Delete
 
         ldx   #YPositions
         ldb   angle,u
@@ -121,13 +146,12 @@ LiveContinue
         sex
         addd  #84           ; y center nof circle
         std   y_pos,u
-
         jmp   DisplaySprite
-!       jmp   DeleteObject
 
-LiveEye
-        ldx   #ImagesEye
-        bra   LiveContinue
+Delete
+        ldx   child_ptr,u
+        jsr   DeleteObject_x ; destroy child object
+        jmp   DeleteObject
 
 Images
         fdb   Img_shell_7
