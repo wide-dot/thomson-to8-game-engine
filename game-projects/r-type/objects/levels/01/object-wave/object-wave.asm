@@ -8,6 +8,11 @@ enemies_pstaff    equ 14
 
 ; x_pos to instanciate object,object id,subtype,x_pos,y_pos
 
+; P-Staff #1
+        fdb   140-140,(ObjID_pstaff*256)+00,140,141
+        fdb   142-140,(ObjID_pstaff_rocket*256)+00,142,110
+
+
 ; First pata-pata wave
 wave_patapata_01       equ 168
 wave_patapata_01_space equ 4
