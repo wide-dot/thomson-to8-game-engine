@@ -8,7 +8,7 @@
 
         INCLUDE "./engine/macros.asm"
 
-mouvement equ ext_variables ; current amplitude
+mouvement equ ext_variables ; current mouvement
 mouvement_max equ 180   
 
 Onject
@@ -56,6 +56,11 @@ WalkLeft
         jmp   DisplaySprite
 
 ShootLeft
+        lda   anim_frame,u
+        cmpa  #5
+        bne   SkipRocketShootLeft
+        jsr   FireRocketLeft
+SkipRocketShootLeft
         ldd   mouvement,u
         subd  Vint_Main_runcount_w
         std   mouvement,u
@@ -79,6 +84,9 @@ CheckEOL
         jsr   ObjectMoveSync
         jmp   DisplaySprite
 
+
+!       jmp   DeleteObject
+
 WalkRight
 
         ldd   mouvement,u
@@ -97,21 +105,54 @@ WalkRight
         jmp   DisplaySprite
 
 ShootRight
+        lda   anim_frame,u
+        cmpa  #10
+        bne   SkipRocketShootRight
+        jsr   FireRocketRight
+SkipRocketShootRight
         ldd   mouvement,u
         subd  Vint_Main_runcount_w
         std   mouvement,u
         bpl   CheckEOL
-        lda   #01
-        sta   routine,u
-        ldd   #Ani_pstaff_rewalk_left
+        ldd   #Ani_pstaff_walk_right
         std   anim,u
         ldd   #mouvement_max
         std   mouvement,u
-        ldd   #-$30
+        ldd   #$30
         std   x_vel,u
         inc   routine,u
         jsr   AnimateSpriteSync
         jsr   ObjectMoveSync
         jmp   DisplaySprite
 
-!       jmp   DeleteObject
+FireRocketLeft
+
+        jsr   LoadObject_x
+        beq   <
+        lda   #ObjID_pstaff_rocket
+        sta   id,x
+        clra
+        sta   subtype,x
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
+        rts
+
+FireRocketRight
+
+        jsr   LoadObject_x
+        beq   <
+        lda   #ObjID_pstaff_rocket
+        sta   id,x
+        lda   #1
+        sta   subtype,x
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
+        rts
+
+
+
+
