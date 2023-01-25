@@ -19,12 +19,8 @@ Onject
 Routines
         fdb   Init
         fdb   PStaffRocketLeft
-        fdb   Init_PStaffRocketExplosion
-        fdb   Live_PStaffRocketExplosion
         fdb   PStaffRocketDestroy
         fdb   PStaffRocketRight
-        fdb   Init_PStaffRocketExplosion
-        fdb   Live_PStaffRocketExplosion
         fdb   PStaffRocketDestroy
 
 Init
@@ -48,7 +44,7 @@ PStaffRocketLeft
         ble   >
         ldd   y_pos,u
         cmpd  origin,u
-        bgt   Init_PStaffRocketExplosion
+        bgt   PStaffRocketDestroy
         lda   anim_frame,u
         asla
         asla
@@ -67,7 +63,7 @@ PStaffRocketLeft
 InitRocketRight
         ldd   #Ani_pstaff_rocket_right
         std   anim,u
-        lda   #5
+        lda   #3
         sta   routine,u
 
 PStaffRocketRight
@@ -76,7 +72,7 @@ PStaffRocketRight
         ble   >
         ldd   y_pos,u
         cmpd  origin,u
-        bgt   Init_PStaffRocketExplosion
+        bgt   PStaffRocketDestroy
         lda   anim_frame,u
         asla
         asla
@@ -91,17 +87,6 @@ PStaffRocketRight
         jsr   ObjectMoveSync
         jmp   DisplaySprite
 
-
-Init_PStaffRocketExplosion
-        ldd   #Ani_pstaff_rocket_explosion
-        std   anim,u
-        inc   routine,u
-Live_PStaffRocketExplosion
-        ldd   x_pos,u
-        cmpd  glb_camera_x_pos
-        ble   >
-        jsr   AnimateSpriteSync
-        jmp   DisplaySprite
 PStaffRocketDestroy
 !       jmp   DeleteObject
 
