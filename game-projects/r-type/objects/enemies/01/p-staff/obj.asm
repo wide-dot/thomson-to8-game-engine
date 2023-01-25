@@ -27,14 +27,14 @@ Routines
 Init
         ldd   #Ani_pstaff_walk_left
         std   anim,u
-        ldb   #6
+        ldb   #5
         stb   priority,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
         ldd   #mouvement_max
         std   mouvement,u
-        ldd   #$-30
+        ldd   #-$30
         std   x_vel,u
         inc   routine,u
 
@@ -106,7 +106,7 @@ WalkRight
 
 ShootRight
         lda   anim_frame,u
-        cmpa  #10
+        cmpa  #$05
         bne   SkipRocketShootRight
         jsr   FireRocketRight
 SkipRocketShootRight
@@ -114,16 +114,19 @@ SkipRocketShootRight
         subd  Vint_Main_runcount_w
         std   mouvement,u
         bpl   CheckEOL
-        ldd   #Ani_pstaff_walk_right
+        ldd   #Ani_pstaff_walk_left
         std   anim,u
         ldd   #mouvement_max
         std   mouvement,u
-        ldd   #$30
+        ldd   #-$30
         std   x_vel,u
-        inc   routine,u
+        lda   #1
+        sta   routine,u
         jsr   AnimateSpriteSync
         jsr   ObjectMoveSync
         jmp   DisplaySprite
+
+!       jmp   DeleteObject
 
 FireRocketLeft
 
@@ -131,11 +134,10 @@ FireRocketLeft
         beq   <
         lda   #ObjID_pstaff_rocket
         sta   id,x
-        clra
-        sta   subtype,x
         ldd   x_pos,u
         std   x_pos,x
         ldd   y_pos,u
+        subd  #8
         std   y_pos,x
         rts
 
@@ -150,6 +152,7 @@ FireRocketRight
         ldd   x_pos,u
         std   x_pos,x
         ldd   y_pos,u
+        subd  #8
         std   y_pos,x
         rts
 
