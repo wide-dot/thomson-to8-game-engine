@@ -10,7 +10,7 @@ enemies_pstaff    equ 14
 
 ; P-Staff #1
         fdb   140-140,(ObjID_pstaff*256)+00,140,141
-        fdb   142-140,(ObjID_pstaff_rocket*256)+00,142,110
+        fdb   142-140,(ObjID_pstaff_rocket*256)+01,142,110
 
 
 ; First pata-pata wave
