@@ -8,6 +8,8 @@
 
         INCLUDE "./engine/macros.asm"
 
+origin equ ext_variables ; missile origin
+
 Onject
         lda   routine,u
         asla
@@ -17,15 +19,20 @@ Onject
 Routines
         fdb   Init
         fdb   PStaffRocketLeft
-        fdb   PStaffRocketExplosion
+        fdb   Init_PStaffRocketExplosion
+        fdb   Live_PStaffRocketExplosion
         fdb   PStaffRocketDestroy
         fdb   PStaffRocketRight
-        fdb   PStaffRocketExplosion
+        fdb   Init_PStaffRocketExplosion
+        fdb   Live_PStaffRocketExplosion
         fdb   PStaffRocketDestroy
 
 Init
         ldb   #6
         stb   priority,u
+        ldd   y_pos
+        addd  #35
+        std   origin,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
@@ -39,6 +46,9 @@ PStaffRocketLeft
         ldd   x_pos,u
         cmpd  glb_camera_x_pos
         ble   >
+        ldd   y_pos,u
+        cmpd  origin,u
+        bgt   Init_PStaffRocketExplosion
         lda   anim_frame,u
         asla
         asla
@@ -57,13 +67,16 @@ PStaffRocketLeft
 InitRocketRight
         ldd   #Ani_pstaff_rocket_right
         std   anim,u
-        lda   #4
+        lda   #5
         sta   routine,u
 
 PStaffRocketRight
         ldd   x_pos,u
         cmpd  glb_camera_x_pos
         ble   >
+        ldd   y_pos,u
+        cmpd  origin,u
+        bgt   Init_PStaffRocketExplosion
         lda   anim_frame,u
         asla
         asla
@@ -78,7 +91,12 @@ PStaffRocketRight
         jsr   ObjectMoveSync
         jmp   DisplaySprite
 
-PStaffRocketExplosion
+
+Init_PStaffRocketExplosion
+        ldd   #Ani_pstaff_rocket_explosion
+        std   anim,u
+        inc   routine,u
+Live_PStaffRocketExplosion
         ldd   x_pos,u
         cmpd  glb_camera_x_pos
         ble   >
@@ -91,48 +109,48 @@ PStaffRocketDestroy
 
 
 RocketLeftTable
-        fdb $0000,-$01FF
-        fdb $0000,-$01FF
-        fdb $0000,-$01FF
-        fdb $0000,-$01FF
-        fdb $0000,-$01FF
+        fdb $0000,-$02FF
+        fdb -$0040,-$02FF
+        fdb -$0040,-$02FF
+        fdb -$0040,-$02FF
+        fdb -$0040,-$02FF
         * starts turning
-        fdb -$0010,-$00A0
-        fdb -$0030,-$0040
-        fdb -$0080,-$000A
+        fdb -$0040,-$0100
+        fdb -$0060,-$0050
+        fdb -$0080,-$0010
         * horizontal
-        fdb -$0D0,-$0000
+        fdb -$00D0,-$0000
         * descending and turning back
-        fdb -$0080,$000A
-        fdb -$0030,$0040
-        fdb -$0010,$00A0
+        fdb -$0080,$0010
+        fdb -$0060,$0050
+        fdb -$0040,$0100
         * straight down
-        fdb $0000,$01FF
-        fdb $0000,$01FF
-        fdb $0000,$01FF
-        fdb $0000,$01FF
-        fdb $0000,$01FF       
+        fdb $0000,$02FF
+        fdb $0000,$02FF
+        fdb $0000,$02FF
+        fdb $0000,$02FF
+        fdb $0000,$02FF       
 
 RocketRightTable
-        fdb $0000,-$01FF
-        fdb $0000,-$01FF
-        fdb $0000,-$01FF
-        fdb $0000,-$01FF
-        fdb $0000,-$01FF
+        fdb $0000,-$02FF
+        fdb $0040,-$02FF
+        fdb $0040,-$02FF
+        fdb $0040,-$02FF
+        fdb $0040,-$02FF
         * starts turning
-        fdb $0020,-$00A0
-        fdb $0040,-$0040
-        fdb $0080,-$000A
+        fdb $0040,-$0100
+        fdb $0060,-$0050
+        fdb $0080,-$0010
         * horizontal
-        fdb $00160,-$0000
+        fdb $00D0,-$0000
         * descending and turning back
-        fdb $0080,$000A
-        fdb $0040,$0040
-        fdb $0020,$00A0
+        fdb $0080,$0010
+        fdb $0060,$0050
+        fdb $0040,$0100
         * straight down
-        fdb $0000,$01FF
-        fdb $0000,$01FF
-        fdb $0000,$01FF
-        fdb $0000,$01FF
-        fdb $0000,$01FF       
+        fdb $0000,$02FF
+        fdb $0000,$02FF
+        fdb $0000,$02FF
+        fdb $0000,$02FF
+        fdb $0000,$02FF     
         

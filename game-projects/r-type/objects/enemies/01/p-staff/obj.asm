@@ -126,12 +126,10 @@ SkipRocketShootRight
         jsr   ObjectMoveSync
         jmp   DisplaySprite
 
-!       jmp   DeleteObject
-
 FireRocketLeft
 
         jsr   LoadObject_x
-        beq   <
+        beq   >
         lda   #ObjID_pstaff_rocket
         sta   id,x
         ldd   x_pos,u
@@ -142,9 +140,8 @@ FireRocketLeft
         rts
 
 FireRocketRight
-
         jsr   LoadObject_x
-        beq   <
+        beq   >
         lda   #ObjID_pstaff_rocket
         sta   id,x
         lda   #1
@@ -155,6 +152,9 @@ FireRocketRight
         subd  #8
         std   y_pos,x
         rts
+
+!       rts
+
 
 
 
