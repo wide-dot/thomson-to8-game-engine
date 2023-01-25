@@ -11,7 +11,7 @@
 amplitude         equ ext_variables ; current amplitude
 shoottiming       equ ext_variables+2
 amplitude_max     equ 40        ; maximum amplitude before direction change
-shoottiming_value equ 20
+shoottiming_value equ 80
 
 
 Object
@@ -78,9 +78,19 @@ LiveDown
 CheckEOL
         ldd   shoottiming,u
         subd  Vint_Main_runcount_w
-        ldd   shoottiming,u
-        ;ble   PatapataShoot
-ContinueCheckEOL
+        std   shoottiming,u
+        bpl   @noshoot
+        ldd   #shoottiming_value
+        std   shoottiming,u
+        jsr   LoadObject_x ; PatapataShoot
+        beq   @noshoot
+        lda   #ObjID_foefire
+        sta   id,x
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
+@noshoot
         ldd   x_pos,u
         cmpd  glb_camera_x_pos
         ble   >
@@ -88,15 +98,5 @@ ContinueCheckEOL
         jsr   ObjectMoveSync
         jmp   DisplaySprite
 !       jmp   DeleteObject
-PatapataShoot
-;        jsr   LoadObject_x
-;        beq   >
-;        lda   #ObjID_foefire
-;        sta   id,x
-;        ldd   x_pos,u
-;        std   x_pos,x
-;        ldd   y_pos,u
-;        std   y_pos,x
-!
-        jmp   ContinueCheckEOL
+
         
