@@ -8,8 +8,11 @@
 
         INCLUDE "./engine/macros.asm"
 
-amplitude equ ext_variables ; current amplitude
-amplitude_max equ 40        ; maximum amplitude before direction change
+amplitude         equ ext_variables ; current amplitude
+shoottiming       equ ext_variables+2
+amplitude_max     equ 40        ; maximum amplitude before direction change
+shoottiming_value equ 20
+
 
 Object
         lda   routine,u
@@ -32,9 +35,13 @@ Init
         sta   render_flags,u
         ldd   #amplitude_max
         std   amplitude,u
+        ldd   #shoottiming_value
+        std   shoottiming,u
         ldd   #$-A0
         std   x_vel,u
         lda   subtype,u
+        anda   #$01
+        inca
         sta   routine,u
         cmpa  #1
         bne   >
@@ -69,6 +76,11 @@ LiveDown
         bra   LiveUp
 
 CheckEOL
+        ldd   shoottiming,u
+        subd  Vint_Main_runcount_w
+        ldd   shoottiming,u
+        ;ble   PatapataShoot
+ContinueCheckEOL
         ldd   x_pos,u
         cmpd  glb_camera_x_pos
         ble   >
@@ -76,3 +88,15 @@ CheckEOL
         jsr   ObjectMoveSync
         jmp   DisplaySprite
 !       jmp   DeleteObject
+PatapataShoot
+;        jsr   LoadObject_x
+;        beq   >
+;        lda   #ObjID_foefire
+;        sta   id,x
+;        ldd   x_pos,u
+;        std   x_pos,x
+;        ldd   y_pos,u
+;        std   y_pos,x
+!
+        jmp   ContinueCheckEOL
+        
