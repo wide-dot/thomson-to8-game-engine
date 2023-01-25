@@ -20,17 +20,17 @@ Routines
         fdb   Live
 
 Init
-        ldd   #Ani_foefire_0
-        std   anim,u
+        ldd   #Img_foefire_0
+        std   image_set,u
         ldb   #3
         stb   priority,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
 
-        ldd   #$-B0
+        ldd   #$-100
         std   x_vel,u
-        ldd   #$0
+        ldd   #$80
         std   y_vel,u
         inc   routine
 
@@ -38,7 +38,6 @@ Live
         ldd   x_pos,u
         cmpd  glb_camera_x_pos
         ble   >
-        jsr   AnimateSpriteSync
         jsr   ObjectMoveSync
         jmp   DisplaySprite
         

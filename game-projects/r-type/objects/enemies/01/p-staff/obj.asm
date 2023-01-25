@@ -137,7 +137,7 @@ FireRocketLeft
         ldd   y_pos,u
         subd  #8
         std   y_pos,x
-        rts
+!       rts
 
 FireRocketRight
         jsr   LoadObject_x
@@ -151,11 +151,4 @@ FireRocketRight
         ldd   y_pos,u
         subd  #8
         std   y_pos,x
-        rts
-
 !       rts
-
-
-
-
-
