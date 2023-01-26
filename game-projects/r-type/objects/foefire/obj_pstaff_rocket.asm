@@ -26,7 +26,7 @@ Routines
 Init
         ldb   #6
         stb   priority,u
-        ldd   y_pos
+        ldd   y_pos,u
         addd  #35
         std   origin,u
         lda   render_flags,u
@@ -88,6 +88,14 @@ PStaffRocketRight
         jmp   DisplaySprite
 
 PStaffRocketDestroy
+        jsr   LoadObject_x ; Explosion
+        beq   >
+        lda   #ObjID_enemiesfirework
+        sta   id,x
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
 !       jmp   DeleteObject
 
         

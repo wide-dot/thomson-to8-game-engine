@@ -10,8 +10,12 @@
 
 amplitude         equ ext_variables ; current amplitude
 shoottiming       equ ext_variables+2
-amplitude_max     equ 40        ; maximum amplitude before direction change
-shoottiming_value equ 80
+shootdirection    equ ext_variables+4
+shootyesno        equ ext_variables+5
+shoottiming_value equ ext_variables+6
+amplitude_max     equ 40
+shootingtiming_value equ 80
+
 
 
 Object
@@ -33,24 +37,35 @@ Init
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
-        ldd   #amplitude_max
-        std   amplitude,u
-        ldd   #shoottiming_value
-        std   shoottiming,u
         ldd   #$-A0
         std   x_vel,u
-        lda   subtype,u
-        anda   #$01
-        inca
-        sta   routine,u
-        cmpa  #1
-        bne   >
-        ldd   #$-A0
+        ldd   #amplitude_max
+        std   amplitude,u
+
+        ldd   #$-A0     
         std   y_vel,u
+        inc   routine,u
+
+        lda    subtype,u
+        bita   #$01
+        bne >
+        negb             ; Down
+        std   y_vel+1,u
+        clr   y_vel,u
+        inc   routine,u
+!        
+
+        ;ldd    #$80
+        ;std    shoottiming,u
+        ;std    shoottiming_value,u
+
+        ldb   #$80
+        clr   shoottiming,u
+        clr   shoottiming_value,u
+        stb   shoottiming+1,u
+        stb   shoottiming_value+1,u
         bra   Object
-!       ldd   #$A0
-        std   y_vel,u
-        bra   Object
+
 
 LiveUp
         ldd   amplitude,u
@@ -76,27 +91,39 @@ LiveDown
         bra   LiveUp
 
 CheckEOL
+        ldd   x_pos,u
+        cmpd  glb_camera_x_pos
+        ble   >
+
         ldd   shoottiming,u
         subd  Vint_Main_runcount_w
         std   shoottiming,u
-        bpl   @noshoot
-        ldd   #shoottiming_value
+        bpl   Patapatanoshoot
+        ldd   shoottiming_value,u
         std   shoottiming,u
         jsr   LoadObject_x ; PatapataShoot
-        beq   @noshoot
+        beq   Patapatanoshoot
         lda   #ObjID_foefire
         sta   id,x
         ldd   x_pos,u
         std   x_pos,x
         ldd   y_pos,u
         std   y_pos,x
-@noshoot
-        ldd   x_pos,u
-        cmpd  glb_camera_x_pos
-        ble   >
+
+        ;ldx   #Patapatashoottable
+        ;clra
+Patapatanoshoot
         jsr   AnimateSpriteSync
         jsr   ObjectMoveSync
         jmp   DisplaySprite
 !       jmp   DeleteObject
+
+Patapatashoottable
+        fcb $120
+        fcb $100
+        fcb $80
+        fcb $0
+        fcb $80
+        fcb $100
 
         
