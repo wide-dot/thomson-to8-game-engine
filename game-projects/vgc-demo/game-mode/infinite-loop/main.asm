@@ -20,14 +20,6 @@ ext_variables_size equ 6
         orcc  #1 ; set carry (loop)
         jsr   YVGM_PlayMusic
 
-        jsr   IrqInit
-        ldd   #UserIRQ
-        std   Irq_user_routine
-        lda   #255                     ; set sync out of display (VBL)
-        ldx   #Irq_one_frame
-        jsr   IrqSync
-        jsr   IrqOn 
-
         jsr   LoadObject_u
         lda   #ObjID_background1
         sta   id,u
@@ -35,6 +27,21 @@ ext_variables_size equ 6
         jsr   LoadObject_u
         lda   #ObjID_background2
         sta   id,u
+
+        jsr   WaitVBL      
+        jsr   RunObjects	
+        jsr   CheckSpritesRefresh
+        jsr   EraseSprites
+        jsr   UnsetDisplayPriority	
+        jsr   DrawSprites   
+
+        jsr   IrqInit
+        ldd   #UserIRQ
+        std   Irq_user_routine
+        lda   #255                     ; set sync out of display (VBL)
+        ldx   #Irq_one_frame
+        jsr   IrqSync
+        jsr   IrqOn 
 
 * ==============================================================================
 * Main Loop
