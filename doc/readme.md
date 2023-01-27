@@ -39,7 +39,7 @@ La machine bénéficie des caractéristiques suivantes :
 
 L'apprentissage de l'assembleur est un prérequis indispensable à la lecture de ce manuel. Bonne nouvelle : le 6809 est un processeur simple à aborder.
 
-à rédiger - historique du processeur
+à rédiger - historique
 
 à rédiger - architecture et fonctionnement
 
@@ -54,6 +54,8 @@ L'apprentissage de l'assembleur est un prérequis indispensable à la lecture de
 à rédiger - Le double buffering
 
 en cours de rédaction - [La gestion des objets][objects]
+
+en cours de rédaction - [La gestion des collisions][collision]
 
 à rédiger - Les interruptions
 
@@ -88,3 +90,4 @@ en cours de rédaction - [La gestion des objets][objects]
 à rédiger - La palette de couleur
 
 [objects]: chapters/object.md
+[collision]: chapters/collision.md
