@@ -11,6 +11,8 @@
 amplitude         equ ext_variables ; current amplitude
 shoottiming       equ ext_variables+2
 shoottiming_value equ ext_variables+4
+shootnoshoot      equ ext_variables+6
+shootdirection    equ ext_variables+7
 amplitude_max     equ 40        ; maximum amplitude before direction change
 
 
@@ -36,8 +38,6 @@ Init
         sta   render_flags,u
         ldd   #amplitude_max
         std   amplitude,u
-        ldx   #80
-        stx   shoottiming_value,u
         ldd   #$-A0
         std   x_vel,u
 
@@ -52,16 +52,35 @@ Init
 !
         stx   y_vel,u
 
-        ldx   #80
-        bita  #$02 ; Starts shooting late or early ?
-        beq   >
-        nop
-        nop
-        nop
-        nop
+        bita  #$02 ; Shoot or no shoot
+        bne   >
+        clr   shootnoshoot,u ; No shoot, can skip the end about shooting details
+        bra   Object
+!
+        ldb   #1
+        stb   shootnoshoot,u
 
+        ldx   #20
+        bita  #$04 ; Starts shooting late or early ?
+        beq   >
+        ldx   #80  ; Starts late
 !
         stx   shoottiming,u
+
+        ldx   #40  ; Shoots more frequently or less
+        bita  #$08
+        beq   >
+        ldx   #80  ; Less frequently
+!
+        stx   shoottiming_value,u
+
+        asra
+        asra
+        asra
+        asra
+        anda #7
+        sta   shootdirection,u
+
         bra   Object
 
 LiveUp
@@ -92,6 +111,8 @@ CheckEOL
         subd  Vint_Main_runcount_w
         std   shoottiming,u
         bpl   @noshoot
+        lda   shootnoshoot,u
+        beq   @noshoot
         ldd   shoottiming_value,u
         std   shoottiming,u
         jsr   LoadObject_x ; PatapataShoot
@@ -102,6 +123,31 @@ CheckEOL
         std   x_pos,x
         ldd   y_pos,u
         std   y_pos,x
+        lda   shootdirection,u
+        asla
+        ldy   #130  ; Simulated rtype x_pos
+        cmpy  x_pos,u
+        blt   @xpos
+        ldy   #Patapatashoottable
+        jmp   @xcontinue
+@xpos
+        ldy   #Patapatashoottable+14
+@xcontinue
+        ldd   a,y
+        std   x_vel,x
+        lda   shootdirection,u
+        asla
+        ldy   #84  ; Simulated rtype y_pos
+        cmpy  y_pos,u
+        blt   @ypos
+        ldy   #Patapatashoottable+6
+        jmp   @ycontinue
+@ypos
+        ldy   #Patapatashoottable+20
+@ycontinue
+        ldd   a,y
+        std   y_vel,x
+        lda   shootdirection,u
 @noshoot
         ldd   x_pos,u
         cmpd  glb_camera_x_pos
@@ -111,4 +157,18 @@ CheckEOL
         jmp   DisplaySprite
 !       jmp   DeleteObject
 
-        
+Patapatashoottable
+        fdb $120
+        fdb $100
+        fdb $80
+        fdb $0
+        fdb $80
+        fdb $100
+        fdb $120
+        fdb -$120
+        fdb -$100
+        fdb -$80
+        fdb -$0
+        fdb -$80
+        fdb -$100
+        fdb -$120

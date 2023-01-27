@@ -28,10 +28,10 @@ Init
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
 
-        ldd   #$-100
-        std   x_vel,u
-        ldd   #$80
-        std   y_vel,u
+        ;ldd   #$-100
+        ;std   x_vel,u
+        ;ldd   #$80
+        ;std   y_vel,u
         inc   routine
 
 Live
