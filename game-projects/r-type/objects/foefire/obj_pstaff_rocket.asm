@@ -118,10 +118,10 @@ RocketLeftTable
         fdb -$0060,$0050
         fdb -$0040,$0100
         * straight down
-        fdb $0000,$02FF
-        fdb $0000,$02FF
-        fdb $0000,$02FF
-        fdb $0000,$02FF
+        fdb -$0040,$02FF
+        fdb -$0040,$02FF
+        fdb -$0040,$02FF
+        fdb -$0040,$02FF
         fdb $0000,$02FF       
 
 RocketRightTable
@@ -141,9 +141,9 @@ RocketRightTable
         fdb $0060,$0050
         fdb $0040,$0100
         * straight down
-        fdb $0000,$02FF
-        fdb $0000,$02FF
-        fdb $0000,$02FF
-        fdb $0000,$02FF
-        fdb $0000,$02FF     
+        fdb $0040,$02FF
+        fdb $0040,$02FF
+        fdb $0040,$02FF
+        fdb $0040,$02FF
+        fdb $0040,$02FF     
         
