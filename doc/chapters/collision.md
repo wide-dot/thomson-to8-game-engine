@@ -4,7 +4,7 @@ Il existe plusieurs objectifs à la mise en place de tests de collision et donc 
 Dans le cas des shoot 'em up, toute collision est "fatale", le test doit simplement permettre de savoir s'il y a eu collision, pas de savoir a quelle position.
 Les jeux de plateformes permettre au contraire des interactions avec le sol ou des objets solides.
 
-## Cas des shoot 'em up
+## shoot 'em up
 
 Dans un shoot 'em up il est important de permettre au joueur d'avoir un retour visuel sur une collision qui s'est produite.
 Ainsi il est préférable de voir les objets entrer en collision avant de les faire exposer.
@@ -26,7 +26,7 @@ MainLoop
 Les routines d'affichage font une conversion des positions dans le référentiel du terrain de jeu (16bits) en positions écran (8bits).
 Nous allons donc pouvoir utiliser ces calculs déjà réalisés pour effectuer les tests de collision sur 8bits.
 
-## les zones
+## Axis-Aligned Bounding Box
 
 Une zone de collision peut être définie de plusieurs manière.
 Dans ce chapitre nous allons utilisé les AABB (Axis-Aligned Bounding Box), il s'agit d'un rectangle dont les cotés sont alignés sur les axes x et y.
@@ -46,6 +46,7 @@ Une AABB est généralement représentée de trois manières différentes :
 **center-radius**
 - center x, center y, radius x, radius y
 
+Les routines de collision de ce chapitre utilisent la représentation center-radius.
 
 ## Déclaration des zones de collision
 
@@ -58,11 +59,40 @@ Pour déclarer une zone de collision l'objet va appeller la routine suivante :
 ```
 
 En retour cette routine va donner dans le registre X, l'adresse d'un slot disponible pour les données de la zone de collision.
-L'objet va donc utiliser le pointeur X pour paramétrer les valeurs de la zone :
+L'objet va donc utiliser le pointeur X pour paramétrer les valeurs de la zone suivant cette organisation des données (toutes sur 8 bits):
 
-u->p,rx,ry,cx,cy
+- potentiel
+- rayon x
+- rayon y
+- centre x
+- centre y
 
-Enfin, l'objet sauvegardera le pointeur de la zone. Seul l'objet conserve la liste de ses zones associées.
+Exemple :
+```
+        lda   #10
+        sta   AABB.potentiel,x
+        _ldd  10,5
+        std   AABB.radius,x
+        _ldd  xy_pixels,u
+        std   AABB.center,x
+```
+
+Dans cet exemple nous positionnons un potentiel de 10 points à la zone de collision, puis définissons un rectangle de 20 pixels de largeur par 10 pixels de hauteur en paramétrant un radius de 20/2 = 10 et un radius y de 10/2 = 5.
+Le positionnement de la zone est centrée sur celle de l'objet, par conséquent nous recopions la valeur de positionnement écran de l'objet (xy_pixel) pour définir la position de la zone.
+si la zone doit être positionnée de manière décalée par rapport à l'objet, une simple addition peut être ajoutée :
+```
+        _ldd  xy_pixels,u
+        adda  #5            ; décale le centre de la zone de collision de 5px vers
+        std   AABB.center,x ; la droite par rapport au centre de l'objet
+```
+
+Enfin, l'objet sauvegardera le pointeur de la zone. Seul l'objet conserve la liste de ses zones associées, cette information n'est pas stockée par le moteur de jeu.
+
+```
+        AABB1 equ ext_variables
+; ...
+        stx   AABB1,u
+```
 
 La routine AddAABB contient le code suivant :
 
@@ -83,13 +113,9 @@ Cette routine contient le code suivant :
 
 ```
 
+## Test de collision
 
-
-
-
-
-
-
+```
 r = a.rx + b.rx;
 if ((unsigned int)(a.cx - b.cx + r) > r + r) return 0;
 r = a.ry + b.ry;
@@ -143,3 +169,4 @@ si en px
 @draw   stb   p,u
         stb   p,x
         rts
+```
