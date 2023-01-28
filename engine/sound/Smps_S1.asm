@@ -41,11 +41,6 @@ SMPS_SFX_TRK_DATA_PTR        equ   2
 SMPS_SFX_TRK_TR_VOL_PTR      equ   4
 SMPS_SFX_TRK_HDR_LEN         equ   6
 
-; Hardware Addresses
-PSG                          equ   $E7FF
-YM2413_A0                    equ   $E7FC
-YM2413_D0                    equ   $E7FD
-
 ******************************************************************************
 
 Track STRUCT
@@ -288,10 +283,10 @@ SFXPSG_TRACK_COUNT = (SFXPSGEnd-SFXPSGStart)/sizeof{Track}
 ******************************************************************************
 
 _WriteYM MACRO
-        sta   YM2413_A0
+        sta   YM2413.A
         nop
         nop
-        stb   YM2413_D0
+        stb   YM2413.D
  ENDM  
 
 _YMBusyWait5 MACRO
@@ -370,18 +365,18 @@ InitMusicPlayback
 
 FMSilenceAll
         ldd   #$200E
-        stb   YM2413_A0
+        stb   YM2413.A
         ldy   #SongFM1.NoteControl
-        sta   YM2413_D0                ; note off for all drums     
+        sta   YM2413.D                ; note off for all drums     
         _YMBusyWait5
         _YMBusyWait5        
                 
 @a      _YMBusyWait5                   ; total wait btw two notes : 20 cycles
         ldb   ,y                       ; (wait of 4 cycles)
-        sta   YM2413_A0
+        sta   YM2413.A
         andb  #$EF                     ; note off for each track
         inca
-        stb   YM2413_D0
+        stb   YM2413.D
         leay  sizeof{Track},y          ; (wait of 5 cycles)        
         cmpa  #$29                     ; (wait of 2 cycles)
         bne   @a                       ; (wait of 3 cycles)
@@ -394,13 +389,13 @@ FMSilenceAll
         
 PSGSilenceAll
         lda   #$9F
-        sta   PSG
+        sta   SN76489.D
         lda   #$BF
-        sta   PSG       
+        sta   SN76489.D       
         lda   #$DF
-        sta   PSG
+        sta   SN76489.D
         lda   #$FF
-        sta   PSG                               
+        sta   SN76489.D                               
         rts        
 
 ******************************************************************************
@@ -631,9 +626,9 @@ DACUpdateTrack
         rts
 @a
         ldd   #$0E20                   ; note has ended, so note off
-        sta   <YM2413_A0
+        sta   <YM2413.A
         ldx   SongDAC.DataPointer
-        stb   <YM2413_D0        
+        stb   <YM2413.D        
                  
 @b      ldb   ,x+                      ; read DAC song data
         cmpb  #$E0
@@ -665,9 +660,9 @@ DACAfterDur
         ldx   #@data            
         subb  #$81                     ; transform note into an index...      
         lda   #$0E
-        sta   <YM2413_A0
+        sta   <YM2413.A
         ldb   b,x
-        stb   <YM2413_D0      
+        stb   <YM2413.D      
         rts
 @data
         fcb   $30 ; $81 - Kick  (BD+TOM) 34
@@ -696,10 +691,10 @@ _FMNoteOff MACRO                       ; (dependency) should be preceded by A lo
         bita  #$04                     ; Is SFX overriding set?
         bne   @skip                    ; if true skip note off, sfx is playing        
         addb  #$20                     ; set Sus/Key/Block/FNum(MSB) Command
-        stb   <YM2413_A0
+        stb   <YM2413.A
         ldb   NoteControl,y            ; load current value (do not erase FNum MSB)
         andb  #$EF                     ; clear bit 4 (10h) Key Off
-        stb   <YM2413_D0               ; send to YM
+        stb   <YM2413.D               ; send to YM
         stb   NoteControl,y               
 @skip   equ   *        
  ENDM        
@@ -807,17 +802,17 @@ FMUpdateFreqAndNoteOn
         sta   @dyn+1
         lda   #$10                     ; set LSB Frequency Command
         adda  VoiceControl,y
-        sta   <YM2413_A0
+        sta   <YM2413.A
         adda  #$10                     ; set Sus/Key/Block/FNum(MSB) Command
-        stb   <YM2413_D0
+        stb   <YM2413.D
         _YMBusyWait9
         ldb   NoteControl,y            ; load current value (do not erase FNum MSB) (and used as 5 cycles tempo)
         orb   #$10                     ; Set bit 4 (10h) Key On
         andb  #$F0                     ; Clear FNum MSB (and used as 2 cycles tempo)
 @dyn    addb  #0                       ; (dynamic) Set Fnum MSB (and used as 2 cycles tempo)                
-        sta   <YM2413_A0
+        sta   <YM2413.A
         stb   NoteControl,y
-        stb   <YM2413_D0   
+        stb   <YM2413.D   
         
 DoModulation  
         lda   PlaybackControl,y
@@ -869,16 +864,16 @@ FMUpdateFreq
         sta   @dynb+1
         lda   #$10                     ; set LSB Frequency Command
         adda  VoiceControl,y           ; get channel number
-        sta   <YM2413_A0               ; send Fnum update Command
+        sta   <YM2413.A               ; send Fnum update Command
         adda  #$10                     ; set Sus/Key/Block/FNum(MSB) Command
-        stb   <YM2413_D0               ; send FNum (b0-b7)
+        stb   <YM2413.D               ; send FNum (b0-b7)
         _YMBusyWait11                  ; total wait 20 cycles
         ldb   NoteControl,y            ; load current value (do not erase FNum MSB) (and used as 5 cycles tempo)
         andb  #$F0                     ; clear FNum MSB (and used as 2 cycles tempo)
 @dynb   addb  #0                       ; (dynamic) Set Fnum MSB (and used as 2 cycles tempo)        
-        sta   <YM2413_A0               ; send command
+        sta   <YM2413.A               ; send command
         stb   NoteControl,y
-        stb   <YM2413_D0               ; send FNum (b8) and Block (b0-b2)
+        stb   <YM2413.D               ; send FNum (b8) and Block (b0-b2)
 @rts    rts        
  
 ; 95 notes (Note value $81=C0 $DF=A#7) with direct access
@@ -904,7 +899,7 @@ _PSGNoteOff MACRO                      ; (dependency) should be preceded by A lo
         bita  #$04                     ; Is SFX overriding set?
         bne   @skip                    ; if true skip note off, sfx is playing               
         orb   #$1F                     ; Volume Off
-        stb   <PSG
+        stb   <SN76489.D
 @skip   equ   *        
  ENDM
  
@@ -1007,13 +1002,13 @@ PSGUpdateFreq
         addb  #$C0
         bra   @b
 @a      addb  VoiceControl,y           ; Get "voice control" byte...
-@b      stb   <PSG
+@b      stb   <SN76489.D
 @dyn    ldd   #0
         _lsrd
         _lsrd
         _lsrd
         _lsrd              
-        stb   <PSG
+        stb   <SN76489.D
         bra   PSGDoVolFX
         
 PSGUpdateVolFX
@@ -1060,7 +1055,7 @@ DynVol  ldb   #0                       ; (dynamic) volume
         ldb   #$0F
 @a      addb  VoiceControl,y
         orb   #$10
-        stb   <PSG
+        stb   <SN76489.D
         bra   PSGDoModulation        
 @b      lda   NoteFillMaster,y         ; If you get here, then "do not attack next note" was set...
         beq   DynVol                   ; If it's zero, then just process normally
@@ -1110,13 +1105,13 @@ PSGUpdateFreq2
         addb  #$C0
         bra   @b
 @a      addb  VoiceControl,y           ; Get "voice control" byte...
-@b      stb   <PSG
+@b      stb   <SN76489.D
 @dyn    ldd   #0
         _lsrd
         _lsrd
         _lsrd
         _lsrd              
-        stb   <PSG
+        stb   <SN76489.D
         rts        
  
 ; 70 notes (Note value $81=C3 $C7=G#8) with direct access
@@ -1251,9 +1246,9 @@ PlaySound
 @psg    cmpb  #$C0
         bne   @b
         lda   #$DF                     ; set silence on PSG3
-        sta   <PSG
+        sta   <SN76489.D
         lda   #$FF
-        sta   <PSG
+        sta   <SN76489.D
 @b      lsrb                           ; this is a psg track
         lsrb
         lsrb
@@ -1407,7 +1402,7 @@ cfChangeFMVolume
         sta   @dyn1+1
         lda   #$30
         adda  VoiceControl,y
-        sta   <YM2413_A0
+        sta   <YM2413.A
         ldb   InstrAndVolume,y         
         tfr   b,a
         ora   #$0F                     ; set maximum attenuation for compare        
@@ -1416,7 +1411,7 @@ cfChangeFMVolume
 @dyn2   cmpb  #0                       ; (dynamic) test if overflow of attenuation value
         blo   @write                   ; attenuation < F and no overflow
         tfr   a,b                      ; set maximum attenuation (F)
-@write  stb   <YM2413_D0        
+@write  stb   <YM2413.D        
 @rts    rts     
 
 cfPreventAttack
@@ -1490,7 +1485,7 @@ cfSetVoice
 @b        
         lda   VoiceControl,y           ; read channel nb   
         adda  #$30
-        sta   <YM2413_A0
+        sta   <YM2413.A
         aslb
         ldd   b,u
         sta   InstrAndVolume,y        
@@ -1502,7 +1497,7 @@ cfSetVoice
         stb   @dyn1+1
         ldb   #$30
         addb  VoiceControl,y
-        stb   <YM2413_A0
+        stb   <YM2413.A
         tfr   a,b
         orb   #$0F                     ; set maximum attenuation for compare        
         stb   @dyn2+1
@@ -1510,7 +1505,7 @@ cfSetVoice
 @dyn2   cmpa  #0                       ; (dynamic) test if overflow of attenuation value
         blo   @write                   ; attenuation < F and no overflow
         tfr   b,a                      ; set maximum attenuation (F)
-@write  sta   <YM2413_D0     
+@write  sta   <YM2413.D     
 @rts    rts
 
 ; (via Saxman's doc): F0wwxxyyzz - modulation
@@ -1580,7 +1575,7 @@ cfStopTrack
         ldb   VoiceIndex,u
         lda   VoiceControl,u           ; read channel nb  
         adda  #$30
-        sta   <YM2413_A0
+        sta   <YM2413.A
         aslb
         ldd   b,x
         sta   InstrAndVolume,u        
@@ -1597,7 +1592,7 @@ cfStopTrack
 @dyn2   cmpa  #0                       ; (dynamic) test if overflow of attenuation value
         blo   @write                   ; attenuation < F and no overflow
         tfr   b,a                      ; set maximum attenuation (F)
-@write  sta   <YM2413_D0   
+@write  sta   <YM2413.D   
         lda   SoundPage
         _SetCartPageA  
         puls  u                        ; removing return address from stack; will not return to coord flag loop
@@ -1616,7 +1611,7 @@ cfStopTrack
         cmpa  #$E0                     ; Is this a PSG 3 noise (not tone) track?
         bne   @c                       ; If it isn't, don't do next part (non-PSG Noise doesn't restore)
         lda   PSGNoise,u               ; Get PSG noise setting
-        sta   <PSG                     ; Write it to PSG
+        sta   <SN76489.D               ; Write it to PSG
 @c      puls  u                        ; removing return address from stack; will not return to coord flag loop                        
         rts
 
@@ -1630,7 +1625,7 @@ cfSetPSGNoise
         ldb   PlaybackControl,y
         bitb  #$04                     ; Is bit 2 (04h) Is SFX overriding this track?
         bne   @rts        
-        sta   <PSG
+        sta   <SN76489.D
 @rts    rts        
 
 cfDisableModulation

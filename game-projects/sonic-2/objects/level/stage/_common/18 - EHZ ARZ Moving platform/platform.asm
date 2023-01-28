@@ -43,6 +43,7 @@ Obj18_InitData                                        * Obj18_InitData:
                                                       * ; ===========================================================================
                                                       * ; loc_104CE:
 Obj18_Init                                            * Obj18_Init:
+        rts ; desactivate this object
         inc   routine,u                               *         addq.b  #2,routine(a0)
 
  ifdef halfline
