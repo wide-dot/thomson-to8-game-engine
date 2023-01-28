@@ -48,11 +48,6 @@
 *
 * ---------------------------------------------------------------------------
 
-MC6846.TCR      equ $E7C5 ; irq timer ctrl
-MC6846.TMSB     equ $E7C6 ; irq timer MSB
-MC6846.TLSB     equ $E7C7 ; irq timer LSB
-TIMERPT         equ $6027 ; routine irq timer
-
 Irq_user_routine fdb 0                 ; user irq routine called by IrqManager 
 Irq_one_frame    equ 312*64-1          ; one frame timer (lines*cycles_per_lines-1), timer launch at -1
 Irq_one_line     equ 64

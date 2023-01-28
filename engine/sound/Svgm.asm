@@ -6,11 +6,6 @@
 
         opt   c,ct
 
-; Hardware Addresses
-PSG             equ   $E7FF
-YM2413_A0       equ   $E7FC
-YM2413_D0       equ   $E7FD
-
 MusicPage       fcb   0                ; memory page of music data
 MusicData       fdb   0                ; address of song data
 MusicDataPos    fdb   0                ; current playing position in Music Data
@@ -80,7 +75,7 @@ UpdateLoop
         blo   YM2413
 
 SN76489        
-        sta   <PSG
+        sta   <SN76489.D
         bra   UpdateLoop
 
 DoCommand
@@ -107,9 +102,9 @@ DoStopTrack
         rts
                
 YM2413
-        sta   <YM2413_A0
+        sta   <YM2413.A
         ldb   ,x+
-        stb   <YM2413_D0
+        stb   <YM2413.D
         nop
         nop                            ; tempo (should be 24 cycles between two register writes)
         bra   UpdateLoop
@@ -121,13 +116,13 @@ YM2413
         
 PSGSilenceAll
         lda   #$9F
-        sta   PSG
+        sta   SN76489.D
         lda   #$BF
-        sta   PSG       
+        sta   SN76489.D       
         lda   #$DF
-        sta   PSG
+        sta   SN76489.D
         lda   #$FF
-        sta   PSG                               
+        sta   SN76489.D                               
         rts  
 
 ******************************************************************************
@@ -137,19 +132,19 @@ PSGSilenceAll
 
 FMSilenceAll
         ldd   #$200E
-        stb   YM2413_A0
+        stb   YM2413.A
         nop                            ; (wait of 2 cycles)
         ldb   #0                       ; (wait of 2 cycles)
-        sta   YM2413_D0                ; note off for all drums     
+        sta   YM2413.D                ; note off for all drums     
 
         lda   #$20                     ; (wait of 2 cycles)
         brn   *                        ; (wait of 3 cycles)
 @a      exg   a,b                      ; (wait of 8 cycles)                                      
         exg   a,b                      ; (wait of 8 cycles)                                      
-        sta   YM2413_A0
+        sta   YM2413.A
         nop
         inca
-        stb   YM2413_D0
+        stb   YM2413.D
         cmpa  #$29                     ; (wait of 2 cycles)
         bne   @a                       ; (wait of 3 cycles)
         rts        

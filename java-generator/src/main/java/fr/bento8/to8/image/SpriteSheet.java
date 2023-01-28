@@ -105,7 +105,7 @@ public class SpriteSheet {
 				}
 				
 				// Palette start and stop indexes
-				String[] params = sprite.associatedIdx.split("\\(")[1].split("\\)")[0].split(":");
+				String[] params = sprite.associatedIdx.split("\\(")[1].split("\\)")[0].split("-");
 				int idx_min = Integer.parseInt(params[0]);
 				int idx_max = Integer.parseInt(params[1]);
 				if (idx_max-idx_min != 3) {
@@ -467,7 +467,7 @@ public class SpriteSheet {
 	public void prepareImages(boolean onePixelOffset, int locationRef) {
 		// sépare l'image en deux parties pour la RAM A et RAM B
 		// ajoute les pixels transparents pour constituer une image linéaire de largeur 2x80px
-		int paddedImage = 80*(height/subImageNb);
+		int paddedImage = 80*(height/nbRows);
 		pixels = new byte[subImageNb][2][paddedImage];
 		data = new byte[subImageNb][2][paddedImage];
 		x1_offset = new int[subImageNb];

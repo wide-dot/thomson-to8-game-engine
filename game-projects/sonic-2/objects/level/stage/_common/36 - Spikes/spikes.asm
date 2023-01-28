@@ -40,6 +40,7 @@ Obj36_InitData                                        * Obj36_InitData:
                                                       * ; ===========================================================================
                                                       * ; loc_15926:
 Obj36_Init                                            * Obj36_Init:
+        rts ; desactivate this object
         inc   routine,u                               *         addq.b  #2,routine(a0)  ; => Obj36_Upright
  ifdef halfline
         ldd   y_pos,u
