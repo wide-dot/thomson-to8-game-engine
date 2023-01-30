@@ -13,14 +13,14 @@ votre tour l'implémentation des jeux vidéos.
 ## La plateforme
 
 Avant de se lancer il va falloir faire deux choix. Pour rendre ce manuel possible j'ai fait ces choix pour vous :
-- la plateforme d'exécution sera le Thomson TO8
+- la plateforme d'exécution sera le Thomson TO8/TO8D/TO9+
 - le langage de programmation sera l'assembleur
 
 Rien ne vous empêche cependant d'utiliser ce manuel pour d'autres plateformes et d'autres langages, les concepts restent les mêmes.
 
 Pourquoi ces choix ? Un manuel sur la programmation de jeu Megadrive ou NES aurait été tout aussi pertinent. Pas de panique, justement le code mis en oeuvre dans ce manuel s'inspire de celui des jeux sur console, il est simplement transposé à une autre machine.
 
-Le Thomson TO8 est une plateforme intéressante car elle ne bénéficie pas d'accélération materielle particulière, de ce fait le code sera relativement peu dépendant du matériel, même si le code sera bien entendu spécifique au processeur Motorola 6809.
+Cette plateforme est intéressante car elle ne bénéficie pas d'accélération materielle particulière, de ce fait le code sera relativement peu dépendant du matériel, même si le code sera bien entendu spécifique au processeur Motorola 6809.
 De plus c'est une machine très répandue en France, vous n'aurez pas de mal à vous la procuprer.
 
 La machine bénéficie des caractéristiques suivantes :

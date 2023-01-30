@@ -6,15 +6,18 @@
 *
 *
 ********************************************************************************
+;SOUND_CARD_PROTOTYPE equ 1
+DO_NOT_WAIT_VBL equ 1
 OverlayMode equ 1
 
+        INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"        
         INCLUDE "./objects/engine/smps/SndID.equ"	
         org   $6100
 
         jsr   InitGlobals
-        ldd   #2
+        ldd   #0 ; 0 pour act 1 ou 2 pour act 2
         std   Current_zone_and_act
 
         ; init music
@@ -48,7 +51,7 @@ LevelSizeLoad ; todo move to an object
         ldd   #$60/2 ; init
         std   x_pos+dp
         ldd   #$028F ; intit EHZ 1
-        ldd   #$02AF ; intit EHZ 2
+        ;ldd   #$02AF ; intit EHZ 2
         std   y_pos+dp
 
 	ldd   #camera_Y_pos_bias_default

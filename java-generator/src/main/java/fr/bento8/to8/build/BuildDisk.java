@@ -569,7 +569,9 @@ public class BuildDisk
 			} else {
 				tileset.centerMode=SpriteSheet.colorModes.get(tilesetProperties.getValue()[1].split(",")[3]);
 			}
-			tileset.mapFile=tilesetProperties.getValue()[1].split(",")[4];
+			if (tilesetProperties.getValue()[1].split(",").length>4) {
+				tileset.mapFile=tilesetProperties.getValue()[1].split(",")[4];
+			}
 			
 			//if (tilesetProperties.getValue().length > 2 && tilesetProperties.getValue()[2].equalsIgnoreCase(BuildDisk.RAM))
 			// tileset should always be in RAM for rendering speed

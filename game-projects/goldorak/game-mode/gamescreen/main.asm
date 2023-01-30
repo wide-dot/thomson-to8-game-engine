@@ -1,5 +1,6 @@
 
 OverlayMode equ 1
+
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"
 
@@ -24,7 +25,7 @@ OverlayMode equ 1
         lda   #ObjID_scrollB
         sta   VS_ObjIDB
 
-        lda   #8
+        lda   #1
         sta   VS_scroll_step
 
         lda   #0
