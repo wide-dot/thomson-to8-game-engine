@@ -60,10 +60,10 @@ Init
         ldb   #1
         stb   shootnoshoot,u
 
-        ldx   #20
+        ldx   #80
         bita  #$04 ; Starts shooting late or early ?
         beq   >
-        ldx   #80  ; Starts late
+        ldx   #160  ; Starts late
 !
         stx   shoottiming,u
 
