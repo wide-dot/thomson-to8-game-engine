@@ -8,8 +8,6 @@
 ; By Benoit Rousseau
 ;******************************************************************
 
-PSG equ $E7FF
-
 ;---------------------------------------------------------------
 ; VGM Player Library code
 ;---------------------------------------------------------------
@@ -116,13 +114,13 @@ vgc_update
 ; Reset SN76489 sound chip to a default (silent) state
 sn_reset
         lda   #$9F
-        sta   PSG
+        sta   SN76489.D
         lda   #$BF
-        sta   PSG       
+        sta   SN76489.D       
         lda   #$DF
-        sta   PSG
+        sta   SN76489.D
         lda   #$FF
-        sta   PSG  
+        sta   SN76489.D  
 	rts
 
 ;-------------------------------------------
@@ -280,7 +278,7 @@ vgc_update_register1
         ; - this prevents the LFSR being reset unnecessarily
         cmpb  #$ef
         beq   skip_tone3
-        stb   <PSG
+        stb   <SN76489.D
 skip_tone3
         ; get run length (top 4-bits+1)
         ldb   #0
@@ -307,7 +305,7 @@ vgc_update_register2
         lda   #0                      ; load stream id
 @LoadA  equ   *-1
         jsr   vgc_get_register_data 
-	stb   <PSG
+	stb   <SN76489.D
         rts
 
 ;-------------------------------

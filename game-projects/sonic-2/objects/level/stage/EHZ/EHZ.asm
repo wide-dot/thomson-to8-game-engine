@@ -121,16 +121,16 @@ TlsAni_EHZ
 
  ifdef halfline
 _Primary_Collision
-        INCLUDEBIN "./objects/level/stage/EHZ/map2/halfline/primary-collision.bin"
+        INCLUDEBIN "./objects/level/stage/EHZ/map/halfline/primary-collision.bin"
 _Secondary_Collision
-        INCLUDEBIN "./objects/level/stage/EHZ/map2/halfline/secondary-collision.bin"
+        INCLUDEBIN "./objects/level/stage/EHZ/map/halfline/secondary-collision.bin"
 _Flip_Collision
-        INCLUDEBIN "./objects/level/stage/EHZ/map2/halfline/flip-collision.bin"
+        INCLUDEBIN "./objects/level/stage/EHZ/map/halfline/flip-collision.bin"
  else
 _Primary_Collision
-        INCLUDEBIN "./objects/level/stage/EHZ/map2/normal/primary-collision.bin"
+        INCLUDEBIN "./objects/level/stage/EHZ/map/normal/primary-collision.bin"
 _Secondary_Collision
-        INCLUDEBIN "./objects/level/stage/EHZ/map2/normal/secondary-collision.bin"
+        INCLUDEBIN "./objects/level/stage/EHZ/map/normal/secondary-collision.bin"
 _Flip_Collision
-        INCLUDEBIN "./objects/level/stage/EHZ/map2/normal/flip-collision.bin"
+        INCLUDEBIN "./objects/level/stage/EHZ/map/normal/flip-collision.bin"
  endc

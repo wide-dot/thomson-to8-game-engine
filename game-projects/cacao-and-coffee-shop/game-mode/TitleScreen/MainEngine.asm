@@ -6,7 +6,8 @@
 *
 *
 ********************************************************************************
-
+;SOUND_CARD_PROTOTYPE equ 1
+        INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"        
         org   $6100

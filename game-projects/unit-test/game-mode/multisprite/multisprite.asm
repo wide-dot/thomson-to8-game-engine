@@ -55,12 +55,23 @@ ut_y_start_pos equ 200
         ldd   #ut_y_start_pos
         std   glb_camera_y_pos
 
+        lda   #GmID_multisprite
+        sta   glb_Cur_Game_Mode
+
 * ==============================================================================
 * Main Loop
 * ==============================================================================
 LevelMainLoop
         jsr   WaitVBL    
         jsr   PalUpdateNow
+
+        lda   Fire_Press
+        anda  #c1_button_A_mask
+        beq   >
+        lda   #GmID_collision
+        sta   GameMode
+        jsr   LoadGameModeNow
+!
         jsr   ReadJoypads
 	jsr   EHZ_Back
         jsr   RunObjects
@@ -103,3 +114,4 @@ EHZ_Back
         INCLUDE "./engine/object-management/RunPgSubRoutine.asm"
         INCLUDE "./engine/joypad/ReadJoypads.asm"
 	INCLUDE "./engine/palette/PalUpdateNow.asm"
+        INCLUDE "./engine/level-management/LoadGameMode.asm"
