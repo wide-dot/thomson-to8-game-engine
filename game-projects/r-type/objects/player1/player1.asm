@@ -7,7 +7,7 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
-
+        
 ply_acceleration equ $20
 ply_deceleration equ $100
 ply_max_vel      equ $100
