@@ -67,18 +67,19 @@ Init
 !
         stx   shoottiming,u
 
-        ldx   #40  ; Shoots more frequently or less
-        bita  #$08
-        beq   >
+        ; This is currently unused, hence set at "less frequently" by default (according to findings on R-Type Dimensions)
+        ;ldx   #40  ; Shoots more frequently or less
+        ;bita  #$08
+        ;beq   >
         ldx   #80  ; Less frequently
-!
+;!
         stx   shoottiming_value,u
 
         asra
         asra
         asra
         asra
-        anda #7
+        anda  #7
         sta   shootdirection,u
 
         bra   Object

@@ -27,7 +27,7 @@ Init
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
-        inc   routine
+        inc   routine,u
 
 Live
         ldd   x_pos,u

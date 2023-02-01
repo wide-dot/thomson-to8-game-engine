@@ -32,7 +32,7 @@ Init
         ;std   x_vel,u
         ;ldd   #$80
         ;std   y_vel,u
-        inc   routine
+        inc   routine,u
 
 Live
         ldd   x_pos,u

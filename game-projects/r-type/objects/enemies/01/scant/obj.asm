@@ -64,6 +64,7 @@ Scant_shoot
         jmp   DeleteObject
 
 Scant_whattodo
+
         ldd   #50 ; simulated r-type y_pos
         addd  #10
         cmpd  y_pos,u
@@ -126,7 +127,6 @@ Scant_initiateshoot
 !
         rts
 @scantfireball
-
         jsr   LoadObject_x ; Scant shoot
         beq   >
         lda   #ObjID_scantfireball
