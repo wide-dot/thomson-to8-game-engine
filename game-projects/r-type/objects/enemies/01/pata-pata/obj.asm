@@ -107,12 +107,12 @@ LiveDown
         bra   LiveUp
 
 CheckEOL
+        lda   shootnoshoot,u
+        beq   @noshoot
         ldd   shoottiming,u
         subd  Vint_Main_runcount_w
         std   shoottiming,u
         bpl   @noshoot
-        lda   shootnoshoot,u
-        beq   @noshoot
         ldd   shoottiming_value,u
         std   shoottiming,u
         jsr   LoadObject_x ; PatapataShoot
