@@ -8,9 +8,8 @@
 
         INCLUDE "./engine/macros.asm"
 
-
-Scant_isshooting equ ext_variables
-Scant_backfire   equ $40
+Scant_isshooting        equ ext_variables
+Scant_backfire          equ $80
 
 Onject
         lda   routine,u
@@ -38,7 +37,7 @@ Scant_stopshooting
         ldd   #Ani_scant
         std   anim,u   
         clr   anim_frame,u 
-        ldd   #$-20
+        ldd   #$-30
         std   x_vel,u
 
 Scant_live
@@ -65,7 +64,7 @@ Scant_shoot
 
 Scant_whattodo
 
-        ldd   #50 ; simulated r-type y_pos
+        ldd   #30 ; simulated r-type y_pos
         addd  #10
         cmpd  y_pos,u
         blt   Scant_keepup

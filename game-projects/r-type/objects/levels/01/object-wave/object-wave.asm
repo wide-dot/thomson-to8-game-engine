@@ -11,16 +11,13 @@ enemies_pstaff    equ 14
 
 
 ; First pata-pata wave
-;wave_patapata_01       equ 140
-;wave_patapata_01_space equ 4
-;       fdb   wave_patapata_01-140+wave_patapata_01_space*0,(ObjID_patapata*256)+00,wave_patapata_01+enemies_patapata+wave_patapata_01_space*0,50
-;        fdb   wave_patapata_01-140+wave_patapata_01_space*1,(ObjID_patapata*256)+01,wave_patapata_01+enemies_patapata+wave_patapata_01_space*1,50
-;        fdb   wave_patapata_01-140+wave_patapata_01_space*2,(ObjID_patapata*256)+00,wave_patapata_01+enemies_patapata+wave_patapata_01_space*2,50
-;        fdb   wave_patapata_01-140+wave_patapata_01_space*3,(ObjID_patapata*256)+31,wave_patapata_01+enemies_patapata+wave_patapata_01_space*3,50
+wave_patapata_01       equ 140
+wave_patapata_01_space equ 4
+        fdb   wave_patapata_01-140+wave_patapata_01_space*0,(ObjID_patapata*256)+00,wave_patapata_01+enemies_patapata+wave_patapata_01_space*0,50
+        fdb   wave_patapata_01-140+wave_patapata_01_space*1,(ObjID_patapata*256)+01,wave_patapata_01+enemies_patapata+wave_patapata_01_space*1,50
+        fdb   wave_patapata_01-140+wave_patapata_01_space*2,(ObjID_patapata*256)+00,wave_patapata_01+enemies_patapata+wave_patapata_01_space*2,50
+        fdb   wave_patapata_01-140+wave_patapata_01_space*3,(ObjID_patapata*256)+31,wave_patapata_01+enemies_patapata+wave_patapata_01_space*3,50
 
-
-; Scant #1
-        fdb   160-140,(ObjID_scant*256)+00,160+enemies_scant,80
 
 ; Second pata-pata wave
 wave_patapata_02       equ 166
