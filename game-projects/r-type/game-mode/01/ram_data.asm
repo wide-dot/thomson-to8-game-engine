@@ -10,7 +10,7 @@ nb_graphical_objects         equ 64 * max 64 total
 * ===========================================================================
 * Object Status Table - OST
 * ===========================================================================
-MainCharacter                equ dp
+player1                      equ dp
 
 Dynamic_Object_RAM           fill  0,(nb_dynamic_objects)*object_size
 Dynamic_Object_RAM_End
