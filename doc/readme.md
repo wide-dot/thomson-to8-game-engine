@@ -53,7 +53,7 @@ L'apprentissage de l'assembleur est un prérequis indispensable à la lecture de
 
 à rédiger - Le double buffering
 
-en cours de rédaction - [La gestion des objets][objects]
+en cours de rédaction - [La gestion des objets][object]
 
 en cours de rédaction - [La gestion des collisions][collision]
 
@@ -68,6 +68,8 @@ en cours de rédaction - [La gestion des collisions][collision]
 à rédiger - La streaming
 
 à rédiger - La gestion des cartes son et midi
+
+en cours de rédaction - [Les variables globales][global]
 
 ## Les composants
 
@@ -89,5 +91,6 @@ en cours de rédaction - [La gestion des collisions][collision]
 
 à rédiger - La palette de couleur
 
-[objects]: chapters/object.md
+[object]: chapters/object.md
 [collision]: chapters/collision.md
+[global]: chapters/global.md
