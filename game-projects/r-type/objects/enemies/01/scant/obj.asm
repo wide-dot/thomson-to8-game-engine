@@ -64,7 +64,7 @@ Scant_shoot
 
 Scant_whattodo
 
-        ldd   #30 ; simulated r-type y_pos
+        ldd   player1+y_pos
         addd  #10
         cmpd  y_pos,u
         blt   Scant_keepup

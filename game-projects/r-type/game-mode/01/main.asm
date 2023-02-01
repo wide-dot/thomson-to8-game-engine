@@ -31,9 +31,8 @@ viewport_height equ 168
         jsr   DrawSprites
 
 ; init player one
-        jsr   LoadObject_u
         lda   #ObjID_Player1
-        sta   id,u
+        sta   player1+id
 
 ; init scroll
         jsr   InitScroll
@@ -60,6 +59,7 @@ LevelMainLoop
         jsr   ReadJoypads
         jsr   Scroll
         jsr   ObjectWave
+        _RunObject ObjID_Player1,#player1
         jsr   RunObjects
         jsr   CheckSpritesRefresh
         jsr   EraseSprites
