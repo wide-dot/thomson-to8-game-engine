@@ -10,17 +10,20 @@ enemies_pstaff    equ 14
 
 
 
-
 ; First pata-pata wave
-wave_patapata_01       equ 168
-wave_patapata_01_space equ 4
-        fdb   wave_patapata_01-140+wave_patapata_01_space*0,(ObjID_patapata*256)+00,wave_patapata_01+enemies_patapata+wave_patapata_01_space*0,50
-        fdb   wave_patapata_01-140+wave_patapata_01_space*1,(ObjID_patapata*256)+01,wave_patapata_01+enemies_patapata+wave_patapata_01_space*1,50
-        fdb   wave_patapata_01-140+wave_patapata_01_space*2,(ObjID_patapata*256)+30,wave_patapata_01+enemies_patapata+wave_patapata_01_space*2,50
-        fdb   wave_patapata_01-140+wave_patapata_01_space*3,(ObjID_patapata*256)+01,wave_patapata_01+enemies_patapata+wave_patapata_01_space*3,50
+;wave_patapata_01       equ 140
+;wave_patapata_01_space equ 4
+;       fdb   wave_patapata_01-140+wave_patapata_01_space*0,(ObjID_patapata*256)+00,wave_patapata_01+enemies_patapata+wave_patapata_01_space*0,50
+;        fdb   wave_patapata_01-140+wave_patapata_01_space*1,(ObjID_patapata*256)+01,wave_patapata_01+enemies_patapata+wave_patapata_01_space*1,50
+;        fdb   wave_patapata_01-140+wave_patapata_01_space*2,(ObjID_patapata*256)+00,wave_patapata_01+enemies_patapata+wave_patapata_01_space*2,50
+;        fdb   wave_patapata_01-140+wave_patapata_01_space*3,(ObjID_patapata*256)+31,wave_patapata_01+enemies_patapata+wave_patapata_01_space*3,50
+
+
+; Scant #1
+        fdb   160-140,(ObjID_scant*256)+00,160+enemies_scant,80
 
 ; Second pata-pata wave
-wave_patapata_02       equ 196
+wave_patapata_02       equ 166
 wave_patapata_02_space equ 4
         fdb   wave_patapata_02-140+wave_patapata_02_space*0,(ObjID_patapata*256)+27,wave_patapata_02+enemies_patapata+wave_patapata_02_space*0,100
         fdb   wave_patapata_02-140+wave_patapata_02_space*1,(ObjID_patapata*256)+26,wave_patapata_02+enemies_patapata+wave_patapata_02_space*1,100
@@ -28,11 +31,10 @@ wave_patapata_02_space equ 4
         fdb   wave_patapata_02-140+wave_patapata_02_space*3,(ObjID_patapata*256)+28,wave_patapata_02+enemies_patapata+wave_patapata_02_space*3,100   
 
 ; solo bink
-        fdb   220-140,(ObjID_bink*256)+00,220+enemies_bink,140
+        fdb   192-140,(ObjID_bink*256)+00,220+enemies_bink,140
 
 ; First bug wave
-wave_bug_01       equ 224
-test equ 16
+wave_bug_01       equ 196
 wave_bug_01_space equ 2
         fdb   wave_bug_01-140+wave_bug_01_space*0,(ObjID_bug*256)+1,wave_bug_01+enemies_bug+wave_bug_01_space*0,50
         fdb   wave_bug_01-140+wave_bug_01_space*1,(ObjID_bug*256)+1,wave_bug_01+enemies_bug+wave_bug_01_space*1,50
