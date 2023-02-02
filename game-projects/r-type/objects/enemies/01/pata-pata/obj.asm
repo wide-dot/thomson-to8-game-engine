@@ -125,30 +125,11 @@ CheckEOL
         ldd   y_pos,u
         std   y_pos,x
         lda   shootdirection,u
-        asla
-        ldy   #130  ; Simulated rtype x_pos
-        cmpy  x_pos,u
-        blt   @xpos
-        ldy   #Patapatashoottable
-        jmp   @xcontinue
-@xpos
-        ldy   #Patapatashoottable+14
-@xcontinue
-        ldd   a,y
+        jsr   ReturnShootDirection_X
         std   x_vel,x
         lda   shootdirection,u
-        asla
-        ldy   #84  ; Simulated rtype y_pos
-        cmpy  y_pos,u
-        blt   @ypos
-        ldy   #Patapatashoottable+6
-        jmp   @ycontinue
-@ypos
-        ldy   #Patapatashoottable+20
-@ycontinue
-        ldd   a,y
+        jsr   ReturnShootDirection_Y
         std   y_vel,x
-        lda   shootdirection,u
 @noshoot
         ldd   x_pos,u
         cmpd  glb_camera_x_pos
@@ -157,19 +138,3 @@ CheckEOL
         jsr   ObjectMoveSync
         jmp   DisplaySprite
 !       jmp   DeleteObject
-
-Patapatashoottable
-        fdb $120
-        fdb $100
-        fdb $80
-        fdb $0
-        fdb $80
-        fdb $100
-        fdb $120
-        fdb -$120
-        fdb -$100
-        fdb -$80
-        fdb -$0
-        fdb -$80
-        fdb -$100
-        fdb -$120

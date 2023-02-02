@@ -79,6 +79,87 @@ UserIRQ
         jmp   MusicFrame
 
 * ---------------------------------------------------------------------------
+*
+* Foe shoots, returns x_vel or y_vel values from object stored in x
+*
+* Entry : a = direction (a will be destroyed during the process)
+*             Bit 0-1
+*             0 -> horizontal
+*             1 -> 30% angle (from horizon)
+*             2 -> 60% angle (from horizon)
+*             3 -> vertical
+*             Bit 2 : 
+*             0 -> kill tracking OFF
+*             1 -> kill tracking ON
+* Rerturn : d = x_vel or y_vel (depending of the function called)
+*
+* ---------------------------------------------------------------------------
+
+ReturnShootDirection_X
+        pshs  y,a
+        bita  #$04
+        bne   @xkilltracking
+        ldd   glb_camera_x_pos
+        addd  #70
+        tfr   d,y
+        jmp   @xkilltrackingcontinue
+@xkilltracking
+        ldy   player1+x_pos
+        ldd   glb_camera_x_pos
+        addd  #70                       ; Center screen x (140 / 2)
+        tfr   d,y
+@xkilltrackingcontinue
+        puls  a
+        cmpy  x_pos,u
+        blt   @xpos
+        ldy   #Foeshoottable
+        jmp   @xcontinue
+@xpos
+        ldy   #Foeshoottable+14
+@xcontinue
+        anda  #$03
+        asla
+        ldd   a,y
+        puls  y,pc
+
+ReturnShootDirection_Y
+        pshs  y
+        bita  #$04
+        bne   @ykilltracking
+        ldy   #84                       ; Center screen y (168 / 2)
+        jmp   @ykilltrackingcontinue
+@ykilltracking
+        ldy   player1+y_pos
+@ykilltrackingcontinue
+        cmpy  y_pos,u
+        blt   @ypos
+        ldy   #Foeshoottable+6
+        jmp   @ycontinue
+@ypos
+        ldy   #Foeshoottable+20
+@ycontinue
+        anda  #$03
+        asla
+        ldd   a,y
+        puls  y,pc
+
+Foeshoottable
+        fdb $120
+        fdb $100
+        fdb $80
+        fdb $0
+        fdb $80
+        fdb $100
+        fdb $120
+        fdb -$120
+        fdb -$100
+        fdb -$80
+        fdb -$0
+        fdb -$80
+        fdb -$100
+        fdb -$120
+
+* ---------------------------------------------------------------------------
 * Game Mode RAM variables
 * ---------------------------------------------------------------------------
 
