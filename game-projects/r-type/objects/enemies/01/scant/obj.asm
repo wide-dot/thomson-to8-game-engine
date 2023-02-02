@@ -79,12 +79,13 @@ Scant_whattodo
         std   y_vel,u
         rts
 !       
-        ;lda   x_pixel,u
-        ;cmpa  #160
-        ;blt   >
-        ;ldd   #00               ; too far on the right of the screen, don't shoot
-        ;std   y_vel,u
-        ;rts     
+        ldd   glb_camera_x_pos
+        addd  #130
+        cmpd  x_pos,u
+        bgt   >
+        ldd   #00               ; too far on the right of the screen, don't shoot
+        std   y_vel,u
+        rts     
 !                               ; time to initiate the shoot
         ldd   #00
         std   y_vel,u
