@@ -10,6 +10,7 @@
 
 Scant_isshooting        equ ext_variables
 Scant_backfire          equ $80
+Scant_sensitivity       equ 5
 
 Onject
         lda   routine,u
@@ -65,13 +66,26 @@ Scant_shoot
 Scant_whattodo
 
         ldd   player1+y_pos
-        addd  #10
+        addd  #Scant_sensitivity
         cmpd  y_pos,u
         blt   Scant_keepup
-        subd  #20
+        subd  #Scant_sensitivity*2
         cmpd  y_pos,U
         bgt   Scant_keepdown
-        ; time to shoot
+        ldd   player1+x_pos
+        cmpd  x_pos,u
+        blt   >
+        ldd   #00               ; past the r-rtype (on its left), don't shoot
+        std   y_vel,u
+        rts
+!       
+        ;lda   x_pixel,u
+        ;cmpa  #160
+        ;blt   >
+        ;ldd   #00               ; too far on the right of the screen, don't shoot
+        ;std   y_vel,u
+        ;rts     
+!                               ; time to initiate the shoot
         ldd   #00
         std   y_vel,u
         std   x_vel,u
@@ -90,7 +104,7 @@ Scant_keepup
 Scant_shooting
 
         lda   anim_frame,u 
-        cmpa  #6
+        cmpa  #5
         bgt   Scant_shootdown
         cmpa  #3
         bgt   Scant_initiateshoot
@@ -105,7 +119,27 @@ Scant_initiateshoot
         beq   @scantfireball
         rts
 !
-        jsr   LoadObject_x ; Scant shoot
+        ldd   player1+y_pos             ; Let's re-evaluate the shooting
+        addd  #Scant_sensitivity
+        cmpd  y_pos,u
+        blt   Scant_keepup
+        subd  #Scant_sensitivity*2
+        cmpd  y_pos,U
+        bgt   Scant_keepdown
+        ldd   player1+x_pos
+        cmpd  x_pos,u
+        blt   >        
+        clr   Scant_isshooting,u        ; No longer good to shoot, reset
+        lda   #1
+        sta   routine,u
+        ldd   #Ani_scant
+        std   anim,u   
+        clr   anim_frame,u 
+        ldd   #$-30
+        std   x_vel,u
+        rts                   
+!
+        jsr   LoadObject_x              ; Alright, this time, we're good ! Shoot !
         beq   >
         lda   #ObjID_scantfire
         sta   id,x
