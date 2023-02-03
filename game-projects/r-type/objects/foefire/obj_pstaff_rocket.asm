@@ -22,6 +22,7 @@ Routines
         fdb   PStaffRocketDestroy
         fdb   PStaffRocketRight
         fdb   PStaffRocketDestroy
+        fdb   AlreadyDeleted
 
 Init
         ldb   #6
@@ -96,7 +97,10 @@ PStaffRocketDestroy
         std   x_pos,x
         ldd   y_pos,u
         std   y_pos,x
+        inc   routine,u
 !       jmp   DeleteObject
+AlreadyDeleted
+        rts
 
         
 
