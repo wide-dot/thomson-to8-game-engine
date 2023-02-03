@@ -145,9 +145,23 @@ CheckEOL
         std   y_vel,x
 @noshoot
         ldd   x_pos,u
+        subd  #100 ; make then die early ... to be removed
         cmpd  glb_camera_x_pos
         ble   >
         jsr   AnimateSpriteSync
         jsr   ObjectMoveSync
         jmp   DisplaySprite
-!       jmp   DeleteObject
+!       
+        jsr   LoadObject_x ; make then die early ... to be removed
+        beq   >
+        lda   #ObjID_enemiesblastsmall
+        sta   id,x
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
+        ldd   x_vel,u
+        std   x_vel,x
+        clr   y_vel,x
+!       
+        jmp   DeleteObject
