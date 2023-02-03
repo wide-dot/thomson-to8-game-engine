@@ -48,5 +48,6 @@ MainLoop
     INCLUDE "./engine/joypad/InitJoypads.asm"
     INCLUDE "./engine/joypad/ReadJoypads.asm"
 
-* bg images
-    INCLUDE "./engine/graphics/codec/zx0_mega.asm"    ; ???? ici je prends ça ou rien à voir ?
+* bg images & sprites
+    INCLUDE "./engine/graphics/codec/zx0_mega.asm" 
+    INCLUDE "./engine/graphics/sprite/sprite-overlay-pack.asm"
