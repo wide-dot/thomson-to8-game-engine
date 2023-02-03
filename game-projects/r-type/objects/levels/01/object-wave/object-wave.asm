@@ -4,13 +4,15 @@ enemies_patapata equ 20
 enemies_bink     equ 28
 enemies_bug      equ 24
 enemies_scant    equ 24
-enemies_pstaff    equ 14
+enemies_pstaff   equ 14
 
 ; x_pos to instanciate object,object id,subtype,x_pos,y_pos
 
 
+
+
 ; First pata-pata wave
-wave_patapata_01       equ 142
+wave_patapata_01       equ 140
 wave_patapata_01_space equ 4
         fdb   wave_patapata_01-140+wave_patapata_01_space*0,(ObjID_patapata*256)+00,wave_patapata_01+enemies_patapata+wave_patapata_01_space*0,50
         fdb   wave_patapata_01-140+wave_patapata_01_space*1,(ObjID_patapata*256)+01,wave_patapata_01+enemies_patapata+wave_patapata_01_space*1,50
