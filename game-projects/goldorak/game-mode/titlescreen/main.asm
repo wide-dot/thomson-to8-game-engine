@@ -1,4 +1,7 @@
 
+OverlayMode equ 1
+SOUND_CARD_PROTOTYPE equ 1
+    INCLUDE "./engine/system/to8/memory-map.equ"
     INCLUDE "./engine/constants.asm"
     INCLUDE "./engine/macros.asm"
     org   $6100
@@ -109,7 +112,7 @@ UserIRQ
     INCLUDE "./engine/ram/BankSwitch.asm"
     INCLUDE "./engine/graphics/vbl/WaitVBL.asm"
     INCLUDE "./engine/palette/PalUpdateNow.asm"
-*    INCLUDE "./engine/graphics/draw/DrawFullscreenImage.asm"
+    INCLUDE "./engine/graphics/draw/DrawFullscreenImage.asm"
 * gamemode swap
     INCLUDE "./engine/level-management/LoadGameMode.asm"
 * joystick
