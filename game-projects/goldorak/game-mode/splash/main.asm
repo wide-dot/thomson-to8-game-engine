@@ -5,19 +5,20 @@ OverlayMode equ 1
     INCLUDE "./engine/system/to8/memory-map.equ"
     INCLUDE "./engine/constants.asm"
     INCLUDE "./engine/macros.asm"
+    INCLUDE "./engine/InitGlobals.asm"
 
     ORG   $6100
 
 * ============================================================================== 
 * Init
 * ==============================================================================
-
+    jsr   InitGlobals
     jsr   LoadAct
-    jsr   InitJoypads
-
-
-    ; ICI CHARGER et REFERENCER L'OBJET "splash" ? Comment faire ?
-    ; ?????
+    jsr   InitJoypads   
+    jsr   LoadObject_u
+    lda   #ObjID_Splash
+    sta   id,u
+    jsr   PalUpdateNow
 
 * ============================================================================== *
 * MainLoop
@@ -25,13 +26,12 @@ OverlayMode equ 1
 MainLoop
     jsr   WaitVBL
     jsr   RunObjects
+    jsr   BuildSprites
     bra   MainLoop
-
 
 * ============================================================================== 
 * INCLUDES
-* ==============================================================================
-    
+* ==============================================================================  
     INCLUDE "./game-mode/splash/ram-data.asm"
     
     ; common utilities
@@ -50,5 +50,5 @@ MainLoop
 
     ; bg images & sprites
     INCLUDE "./engine/graphics/codec/zx0_mega.asm" 
-    INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"
+    INCLUDE "./engine/graphics/sprite/sprite-overlay-pack.asm"
 

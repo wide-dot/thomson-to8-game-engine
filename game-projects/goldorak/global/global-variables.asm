@@ -1,4 +1,1 @@
 GLOBAL_VARIABLES EQU $9DF0
-
-glb_credits EQU GLOBAL_VARIABLES+0
-glb_options EQU GLOBAL_VARIABLES+1   ; (ou glb_credits+1)
