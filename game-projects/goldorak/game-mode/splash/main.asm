@@ -30,24 +30,20 @@ MainLoop
 * ============================================================================== 
 * INCLUDES
 * ==============================================================================
-        ; common utilities
-        INCLUDE "./engine/ram/BankSwitch.asm"
-        INCLUDE "./engine/graphics/vbl/WaitVBL.asm"
-        INCLUDE "./engine/palette/PalUpdateNow.asm"
-        INCLUDE "./engine/ram/ClearDataMemory.asm"
+    ; common utilities
+    INCLUDE "./engine/ram/BankSwitch.asm"
+    INCLUDE "./engine/graphics/vbl/WaitVBL.asm"
+    INCLUDE "./engine/palette/PalUpdateNow.asm"
+    INCLUDE "./engine/ram/ClearDataMemory.asm"
 
-        ; joystick
-        INCLUDE "./engine/joypad/InitJoypads.asm"
-        INCLUDE "./engine/joypad/ReadJoypads.asm"
+    ; object management
+    INCLUDE "./engine/object-management/RunObjects.asm"
+    INCLUDE "./engine/object-management/ObjectMoveSync.asm"
 
-        ; object management
-        INCLUDE "./engine/object-management/RunObjects.asm"
-        INCLUDE "./engine/object-management/ObjectMoveSync.asm"
-
-* joystick
+    ; joystick
     INCLUDE "./engine/joypad/InitJoypads.asm"
     INCLUDE "./engine/joypad/ReadJoypads.asm"
 
-* bg images & sprites
+    ; bg images & sprites
     INCLUDE "./engine/graphics/codec/zx0_mega.asm" 
     INCLUDE "./engine/graphics/sprite/sprite-overlay-pack.asm"
