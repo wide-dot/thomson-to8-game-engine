@@ -1,11 +1,9 @@
 DO_NOT_WAIT_VBL equ 1
 SOUND_CARD_PROTOTYPE equ 1
-OverlayMode equ 1
 
     INCLUDE "./engine/system/to8/memory-map.equ"
     INCLUDE "./engine/constants.asm"
     INCLUDE "./engine/macros.asm"
-    INCLUDE "./engine/InitGlobals.asm"
 
     ORG   $6100
 
@@ -26,7 +24,10 @@ OverlayMode equ 1
 MainLoop
     jsr   WaitVBL
     jsr   RunObjects
-    jsr   BuildSprites
+    jsr   CheckSpritesRefresh
+    jsr   EraseSprites
+    jsr   UnsetDisplayPriority
+    jsr   DrawSprites
     bra   MainLoop
 
 * ============================================================================== 
@@ -35,6 +36,7 @@ MainLoop
     INCLUDE "./game-mode/splash/ram-data.asm"
     
     ; common utilities
+    INCLUDE "./engine/InitGlobals.asm"
     INCLUDE "./engine/ram/BankSwitch.asm"
     INCLUDE "./engine/graphics/vbl/WaitVBL.asm"
     INCLUDE "./engine/palette/PalUpdateNow.asm"
@@ -50,5 +52,5 @@ MainLoop
 
     ; bg images & sprites
     INCLUDE "./engine/graphics/codec/zx0_mega.asm" 
-    INCLUDE "./engine/graphics/sprite/sprite-overlay-pack.asm"
+    INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"
 
