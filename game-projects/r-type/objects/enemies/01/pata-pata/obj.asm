@@ -164,7 +164,8 @@ CheckEOL
         ldd   x_vel,u
         std   x_vel,x
         clr   y_vel,x
-        inc   routine,u
+        lda   #3
+        sta   routine,u
 !       
         jmp   DeleteObject
 AlreadyDeleted
