@@ -29,26 +29,26 @@ wave_patapata_02_space equ 4
         fdb   wave_patapata_02-140+wave_patapata_02_space*3,(ObjID_patapata*256)+30,wave_patapata_02+enemies_patapata+wave_patapata_02_space*3,100   
 
 ; solo bink
-        fdb   192-140,(ObjID_bink*256)+00,220+enemies_bink,140
+        fdb   192-140,(ObjID_bink*256)+55,220+enemies_bink,140
 
 ; First bug wave
 wave_bug_01       equ 196
 wave_bug_01_space equ 2
-        fdb   wave_bug_01-140+wave_bug_01_space*0,(ObjID_bug*256)+1,wave_bug_01+enemies_bug+wave_bug_01_space*0,50
-        fdb   wave_bug_01-140+wave_bug_01_space*1,(ObjID_bug*256)+1,wave_bug_01+enemies_bug+wave_bug_01_space*1,50
-        fdb   wave_bug_01-140+wave_bug_01_space*2,(ObjID_bug*256)+1,wave_bug_01+enemies_bug+wave_bug_01_space*2,50
-        fdb   wave_bug_01-140+wave_bug_01_space*3,(ObjID_bug*256)+1,wave_bug_01+enemies_bug+wave_bug_01_space*3,50
-        fdb   wave_bug_01-140+wave_bug_01_space*4,(ObjID_bug*256)+1,wave_bug_01+enemies_bug+wave_bug_01_space*4,50  
+        fdb   wave_bug_01-140+wave_bug_01_space*0,(ObjID_bug*256)+0,wave_bug_01+enemies_bug+wave_bug_01_space*0,50
+        fdb   wave_bug_01-140+wave_bug_01_space*1,(ObjID_bug*256)+0,wave_bug_01+enemies_bug+wave_bug_01_space*1,50
+        fdb   wave_bug_01-140+wave_bug_01_space*2,(ObjID_bug*256)+0,wave_bug_01+enemies_bug+wave_bug_01_space*2,50
+        fdb   wave_bug_01-140+wave_bug_01_space*3,(ObjID_bug*256)+30,wave_bug_01+enemies_bug+wave_bug_01_space*3,50
+        fdb   wave_bug_01-140+wave_bug_01_space*4,(ObjID_bug*256)+0,wave_bug_01+enemies_bug+wave_bug_01_space*4,50  
 
 
 ; Second bug wave
 wave_bug_02       equ 260
 wave_bug_02_space equ 2
-        fdb   wave_bug_02-140+wave_bug_02_space*0,(ObjID_bug*256)+2,wave_bug_02+enemies_bug+wave_bug_02_space*0,60
-        fdb   wave_bug_02-140+wave_bug_02_space*1,(ObjID_bug*256)+2,wave_bug_02+enemies_bug+wave_bug_02_space*1,60
-        fdb   wave_bug_02-140+wave_bug_02_space*2,(ObjID_bug*256)+2,wave_bug_02+enemies_bug+wave_bug_02_space*2,60
-        fdb   wave_bug_02-140+wave_bug_02_space*3,(ObjID_bug*256)+2,wave_bug_02+enemies_bug+wave_bug_02_space*3,60
-        fdb   wave_bug_02-140+wave_bug_02_space*4,(ObjID_bug*256)+2,wave_bug_02+enemies_bug+wave_bug_02_space*4,60    
+        fdb   wave_bug_02-140+wave_bug_02_space*0,(ObjID_bug*256)+1,wave_bug_02+enemies_bug+wave_bug_02_space*0,60
+        fdb   wave_bug_02-140+wave_bug_02_space*1,(ObjID_bug*256)+1,wave_bug_02+enemies_bug+wave_bug_02_space*1,60
+        fdb   wave_bug_02-140+wave_bug_02_space*2,(ObjID_bug*256)+1,wave_bug_02+enemies_bug+wave_bug_02_space*2,60
+        fdb   wave_bug_02-140+wave_bug_02_space*3,(ObjID_bug*256)+31,wave_bug_02+enemies_bug+wave_bug_02_space*3,60
+        fdb   wave_bug_02-140+wave_bug_02_space*4,(ObjID_bug*256)+1,wave_bug_02+enemies_bug+wave_bug_02_space*4,60    
 
 
 ; Third pata-pata wave
@@ -81,7 +81,7 @@ wave_patapata_04_space equ 4
         fdb   wave_patapata_04-140+wave_patapata_04_space*24,(ObjID_patapata*256)+27,wave_patapata_04+enemies_patapata+wave_patapata_04_space*24,80
 
 ; Solo bink #2
-        fdb   392-140,(ObjID_bink*256)+00,392+enemies_bink,140
+        fdb   392-140,(ObjID_bink*256)++55,392+enemies_bink,140
 
 ; Fifth pata-pata wave
 wave_patapata_05       equ 395
@@ -90,7 +90,7 @@ wave_patapata_05_space equ 4
         fdb   wave_patapata_05-140+wave_patapata_05_space*2,(ObjID_patapata*256)+26,wave_patapata_05+enemies_patapata+wave_patapata_05_space*2,90
 
 ; Solo bink #3
-        fdb   420-140,(ObjID_bink*256)+00,420+enemies_bink,140
+        fdb   420-140,(ObjID_bink*256)++55,420+enemies_bink,140
 
 
 ; Fifth pata-pata wave
@@ -103,13 +103,13 @@ wave_patapata_06_space equ 4
         fdb   448-140,(ObjID_scant*256)+00,448+enemies_scant,80
 
 ; Solo bink #3
-        fdb   450-140,(ObjID_bink*256)+00,450+enemies_bink,140
+        fdb   450-140,(ObjID_bink*256)+55,450+enemies_bink,140
 
 ; P-Staff #1
         fdb   476-140,(ObjID_pstaff*256)+00,476+enemies_pstaff,141
 
 ; Solo bink #4
-        fdb   480-140,(ObjID_bink*256)+00,480+enemies_bink,140
+        fdb   480-140,(ObjID_bink*256)+55,480+enemies_bink,140
 
 
 ; Shell wave
