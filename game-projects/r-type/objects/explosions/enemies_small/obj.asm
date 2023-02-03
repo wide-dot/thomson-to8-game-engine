@@ -31,12 +31,13 @@ Init
 
 Live
         ldd   x_pos,u
-        subd  Vint_Main_runcount_w
-        std   x_pos,u
+        ;subd  Vint_Main_runcount_w
+        ;std   x_pos,u
         cmpd  glb_camera_x_pos
         ble   >
         jsr   AnimateSpriteSync
+        jsr   ObjectMoveSync
         jmp   DisplaySprite
 Over
+!
         jmp   DeleteObject
-!       jmp   DeleteObject
