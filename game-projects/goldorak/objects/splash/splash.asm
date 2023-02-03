@@ -2,6 +2,8 @@
 XY_CENTERED_FULL_IMAGE EQU $807F 
 LAYER_BACKGROUND EQU #7
 
+        INCLUDE "./engine/macros.asm"
+
 start   lda   routine,u
         asla
         ldx   #routines
