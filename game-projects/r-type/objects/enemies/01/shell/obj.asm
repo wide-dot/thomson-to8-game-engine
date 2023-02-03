@@ -144,7 +144,7 @@ LiveContinue
         ldb   angle,u
         ldb   b,x
         sex
-        addd  #84           ; y center nof circle
+        addd  #84           ; y center of circle
         std   y_pos,u
         jmp   DisplaySprite
 

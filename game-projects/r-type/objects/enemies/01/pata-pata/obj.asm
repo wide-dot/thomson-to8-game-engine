@@ -40,7 +40,7 @@ Routines
         fdb   Init
         fdb   LiveUp
         fdb   LiveDown
-        fdb   Delete
+        fdb   AlreadyDeleted
 
 Init
         ldd   #Ani_patapata
@@ -166,5 +166,6 @@ CheckEOL
         clr   y_vel,x
         inc   routine,u
 !       
-Delete
         jmp   DeleteObject
+AlreadyDeleted
+        rts
