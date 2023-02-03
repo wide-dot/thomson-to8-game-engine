@@ -1,8 +1,10 @@
 
 OverlayMode equ 1
-
+SOUND_CARD_PROTOTYPE equ 1
+        INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./global/global-variables.asm"
 
         org   $6100
         jsr   InitGlobals
@@ -177,7 +179,7 @@ VS_cur_line equ *-1
 * ---------------------------------------------------------------------------
 
         INCLUDE "./game-mode/gamescreen/gamescreenRamData.asm"
-
+        
 * ============================================================================== * Routines
 * ==============================================================================
         INCLUDE "./engine/InitGlobals.asm"
