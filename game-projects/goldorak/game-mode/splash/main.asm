@@ -5,7 +5,8 @@ OverlayMode equ 1
     INCLUDE "./engine/system/to8/memory-map.equ"
     INCLUDE "./engine/constants.asm"
     INCLUDE "./engine/macros.asm"
-    org   $6100
+
+    ORG   $6100
 
 * ============================================================================== 
 * Init
@@ -30,6 +31,9 @@ MainLoop
 * ============================================================================== 
 * INCLUDES
 * ==============================================================================
+    
+    INCLUDE "./game-mode/splash/ram-data.asm"
+    
     ; common utilities
     INCLUDE "./engine/ram/BankSwitch.asm"
     INCLUDE "./engine/graphics/vbl/WaitVBL.asm"
@@ -46,4 +50,5 @@ MainLoop
 
     ; bg images & sprites
     INCLUDE "./engine/graphics/codec/zx0_mega.asm" 
-    INCLUDE "./engine/graphics/sprite/sprite-overlay-pack.asm"
+    INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"
+
