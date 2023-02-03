@@ -107,9 +107,6 @@ ReturnShootDirection_X
         jmp   @xkilltrackingcontinue
 @xkilltracking
         ldy   player1+x_pos
-        ldd   glb_camera_x_pos
-        addd  #70                       ; Center screen x (140 / 2)
-        tfr   d,y
 @xkilltrackingcontinue
         puls  a
         cmpy  x_pos,u

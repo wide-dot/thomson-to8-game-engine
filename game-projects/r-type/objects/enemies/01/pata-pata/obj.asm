@@ -4,6 +4,19 @@
 ; input REG : [u] pointer to Object Status Table (OST)
 ; ---------
 ;
+; Patapata subtype :
+;       
+;       Bit 0 : 0 => Starts up, 1 => Starts down
+;       Bit 1 : 0 => Doies not shoot, 1 => Shoots
+;       Bit 2 : (Shooting timer) 0 => Shoots early, 1=> Shoot late
+;       Bit 3 : (Unused - Shoot frequency) 0 => Shoots fast, 1=> Shoots slow
+;       Bit 4-5 :
+;             0 -> horizontal
+;             1 -> 30% angle (from horizon)
+;             2 -> 60% angle (from horizon)
+;             3 -> vertical
+;       Bit 6 : 0 => kill tracking OFF, 1 => kill tracking ON
+;
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
