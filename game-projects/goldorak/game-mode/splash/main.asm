@@ -12,11 +12,34 @@ SOUND_CARD_PROTOTYPE equ 1
 * ==============================================================================
     jsr   InitGlobals
     jsr   LoadAct
+
+    * ================== Adding Music
+    ; initialize the SN76489 vgm player with a vgc data stream
+    ldd   #vgc_stream_buffers
+    ldx   #Vgc_intro
+    orcc  #1 ; set carry (loop)
+    jsr   vgc_init 
+
+    ; init YM2413 music
+    ldx   #Vgc_introYM
+    orcc  #1 ; set carry (loop)
+    jsr   YVGM_PlayMusic 
+    * ================== Adding Music
+
     jsr   InitJoypads   
     jsr   LoadObject_u
     lda   #ObjID_Splash
     sta   id,u
-    jsr   PalUpdateNow
+
+    * ================== Setting IRQ for music
+    jsr   IrqInit
+    ldd   #UserIRQ
+    std   Irq_user_routine
+    lda   #255                     ; set sync out of display (VBL)
+    ldx   #Irq_one_frame
+    jsr   IrqSync
+    jsr   IrqOn 
+
 
 * ============================================================================== *
 * MainLoop
@@ -29,6 +52,11 @@ MainLoop
     jsr   UnsetDisplayPriority
     jsr   DrawSprites
     bra   MainLoop
+
+UserIRQ
+        jsr   PalUpdateNow
+        jsr   YVGM_MusicFrame
+        jmp   vgc_update    
 
 * ============================================================================== 
 * INCLUDES
@@ -53,4 +81,24 @@ MainLoop
     ; bg images & sprites
     INCLUDE "./engine/graphics/codec/zx0_mega.asm" 
     INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"
+
+     ; sound
+    INCLUDE "./engine/irq/Irq.asm"        
+
+    ; vgc player
+    INCLUDE "./engine/sound/vgc/lib/vgcplayer.h.asm"
+    INCLUDE "./engine/sound/vgc/lib/vgcplayer.asm"
+    INCLUDE "./engine/sound/YM2413vgm.asm"
+
+    ; reserve space for the vgm decode buffers (8x256 = 2Kb)
+        ALIGN 256
+vgc_stream_buffers
+        fill 0,256
+        fill 0,256
+        fill 0,256
+        fill 0,256
+        fill 0,256
+        fill 0,256
+        fill 0,256
+        fill 0,256
 
