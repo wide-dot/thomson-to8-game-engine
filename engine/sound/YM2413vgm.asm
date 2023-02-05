@@ -28,8 +28,8 @@ YVGM_PlayMusic
         sta   @a
         lda   ,x                       ; get memory page that contains track data
         sta   YVGM_MusicPage
-        _SetCartPageA
         sta   YVGM_MusicStatus
+        _SetCartPageA
         lda   #1
         sta   YVGM_WaitFrame
         ldx   1,x                      ; get ptr to track data
