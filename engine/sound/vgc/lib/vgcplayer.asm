@@ -35,14 +35,14 @@ vgc_init
         sta   vgc_loop
         lda   ,x                       ; get memory page that contains track data
         sta   vgc_source_page
+        _GetCartPageB
+        stb   @a
         _SetCartPageA
-        stb   @LoadA
-@a      _SetCartPageA
         ldx   1,x                      ; get ptr to track data
         stx   vgc_source               ; stash the data source addr for looping
         jsr   vgc_stream_mount         ; Prepare the data for streaming (passed in X)
         lda   #0
-@LoadA  equ   *-1
+@a      equ   *-1
         _SetCartPageA
         rts
 
