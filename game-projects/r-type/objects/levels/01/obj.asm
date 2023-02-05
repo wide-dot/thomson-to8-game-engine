@@ -42,7 +42,7 @@ Level_Init_0
         _ldd  10,14
         sta   scroll_vp_x_pos
         stb   scroll_tile_width
-        _ldd  14,120 ; !!!!!!!!!!!!!!!!! MAP WIDTH was 120
+        _ldd  14,126 ; !!!!!!!!!!!!!!!!! MAP WIDTH was 120
         sta   scroll_tile_height
         stb   scroll_map_width
         clr   scroll_map_x_pos
