@@ -4,7 +4,7 @@ DO_NOT_WAIT_VBL equ 1
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"
 
-map_width       equ 1680
+map_width       equ 1792
 viewport_width  equ 140
 viewport_height equ 168
 
