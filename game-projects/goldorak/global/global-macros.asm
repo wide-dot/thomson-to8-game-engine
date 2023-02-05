@@ -1,12 +1,10 @@
 
-_NewManagedObjet_U MACRO
+_NewManagedObject_U MACRO
     jsr   LoadObject_u
     lda   \1
     sta   id,u
     ENDM
 
-
-MUSIC_LOOP EQU 1
 _MusicInit_SN76489 MACRO
     ldd   \2
     ldx   \1
@@ -20,7 +18,6 @@ _MusicInit_YM2413 MACRO
     jsr   YVGM_PlayMusic 
     ENDM
 
-OUT_OF_SYNC_VBL EQU 255
 _MusicInit_IRQ    MACRO
     jsr   IrqInit
     ldd   \1
@@ -35,4 +32,11 @@ _GameModeInit MACRO
     jsr   InitGlobals
     jsr   LoadAct
     jsr   InitJoypads
-    ENDM    
+    ENDM   
+
+_ObjectInitRoutines MACRO
+    lda   routine,u
+    asla
+    ldx   \1
+    jmp   [a,x]  
+    ENDM   
