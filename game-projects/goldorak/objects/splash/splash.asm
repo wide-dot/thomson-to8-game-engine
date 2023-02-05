@@ -1,17 +1,9 @@
-
-XY_CENTERED_FULL_IMAGE EQU $807F 
-LAYER_BACKGROUND EQU 7
-
-        INCLUDE "./engine/macros.asm"
-
-start   lda   routine,u
-        asla
-        ldx   #routines
-        jmp   [a,x]
+        INCLUDE "./global/global-object-preambule-includes.asm"
+        
+start   _ObjectInitRoutines #routines
 routines
         fdb   Init
         fdb   Display
-
 
 Init
         ldb   #LAYER_BACKGROUND
