@@ -38,6 +38,14 @@ Live
         ldd   x_pos,u
         cmpd  glb_camera_x_pos
         ble   >
+        subd  #140
+        cmpd  glb_camera_x_pos
+        bge   >
+        ldd   y_pos,u
+        cmpd  #0
+        ble   >
+        cmpd  #160
+        bge   >
         jsr   ObjectMoveSync
         jmp   DisplaySprite
         

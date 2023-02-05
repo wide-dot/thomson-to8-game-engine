@@ -9,8 +9,6 @@ enemies_pstaff   equ 14
 ; x_pos to instanciate object,object id,subtype,x_pos,y_pos
 
 
-
-
 ; First pata-pata wave
 wave_patapata_01       equ 140
 wave_patapata_01_space equ 4
@@ -110,6 +108,21 @@ wave_patapata_06_space equ 4
 
 ; Solo bink #4
         fdb   480-140,(ObjID_bink*256)+55,480+enemies_bink,140
+
+
+wave_blasters_01      equ 698
+        fdb wave_blasters_01-140,(ObjID_blaster*256)+160,wave_blasters_01+20,34
+        fdb wave_blasters_01-140,(ObjID_blaster*256)+241,wave_blasters_01+20,132
+        fdb wave_blasters_01-140+14,(ObjID_blaster*256)+250,wave_blasters_01+20+14,34
+        fdb wave_blasters_01-140+14,(ObjID_blaster*256)+211,wave_blasters_01+20+14,132
+        fdb wave_blasters_01-140+28,(ObjID_blaster*256)+190,wave_blasters_01+20+28,48
+        fdb wave_blasters_01-140+28,(ObjID_blaster*256)+223,wave_blasters_01+20+28,118
+        fdb wave_blasters_01-140+42,(ObjID_blaster*256)+180,wave_blasters_01+20+42,48
+        fdb wave_blasters_01-140+42,(ObjID_blaster*256)+201,wave_blasters_01+20+42,118
+
+        fdb wave_blasters_01-140+140,(ObjID_blaster*256)+160,wave_blasters_01+20+140,20
+        fdb wave_blasters_01-140+154,(ObjID_blaster*256)+160,wave_blasters_01+20+154,20
+
 
 
 ; Shell wave
