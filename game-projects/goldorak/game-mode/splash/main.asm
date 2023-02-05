@@ -4,53 +4,29 @@ SOUND_CARD_PROTOTYPE equ 1
     INCLUDE "./engine/system/to8/memory-map.equ"
     INCLUDE "./engine/constants.asm"
     INCLUDE "./engine/macros.asm"
+    INCLUDE "./global/global-macros.asm"
 
     ORG   $6100
-
+    
 * ============================================================================== 
 * Init
-* ==============================================================================
-    jsr   InitGlobals
-    jsr   LoadAct
-
-    * ================== Adding Music
-    ; initialize the SN76489 vgm player with a vgc data stream
-    ldd   #vgc_stream_buffers
-    ldx   #Vgc_intro
-    orcc  #1 ; set carry (loop)
-    jsr   vgc_init 
-
-    ; init YM2413 music
-    ldx   #Vgc_introYM
-    orcc  #1 ; set carry (loop)
-    jsr   YVGM_PlayMusic 
-    * ================== Adding Music
-
-    jsr   InitJoypads   
-    jsr   LoadObject_u
-    lda   #ObjID_Splash
-    sta   id,u
-
-    * ================== Setting IRQ for music
-    jsr   IrqInit
-    ldd   #UserIRQ
-    std   Irq_user_routine
-    lda   #255                     ; set sync out of display (VBL)
-    ldx   #Irq_one_frame
-    jsr   IrqSync
-    jsr   IrqOn 
-
+* ============================================================================== 
+    _GameModeInit
+    _MusicInit_SN76489 #Vgc_intro,#vgc_stream_buffers,#MUSIC_LOOP   ; initialize the SN76489 vgm player with a vgc data stream
+    _MusicInit_YM2413 #Vgc_introYM,#MUSIC_LOOP                      ; initialize the YM2413 player 
+    _MusicInit_IRQ #UserIRQ,#OUT_OF_SYNC_VBL,#Irq_one_frame         ; Setting IRQ for music
+    _NewManagedObjet_U #ObjID_Splash
 
 * ============================================================================== *
 * MainLoop
 * ==============================================================================
 MainLoop
-    jsr   WaitVBL
     jsr   RunObjects
     jsr   CheckSpritesRefresh
     jsr   EraseSprites
     jsr   UnsetDisplayPriority
     jsr   DrawSprites
+    jsr   WaitVBL
     bra   MainLoop
 
 UserIRQ
