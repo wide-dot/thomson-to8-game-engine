@@ -133,7 +133,7 @@ LiveContinue
         ldb   angle,u
         ldb   b,x
         sex
-        addd  #920          ; x center of circle
+        addd  #1032         ; x center of circle
         std   x_pos,u
 
         addd  #55+8         ; circle 2*x_radius + max sprite radius in any positions

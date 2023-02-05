@@ -38,7 +38,7 @@ Live
         ldd   x_pos,u
         cmpd  glb_camera_x_pos
         ble   >
-        subd  #140
+        subd  #160-8/2
         cmpd  glb_camera_x_pos
         bge   >
         ldd   y_pos,u
