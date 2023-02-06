@@ -61,14 +61,14 @@ Init
         ldd   #$-A0
         std   x_vel,u
         inc   routine,u
-        ldy   #Ani_bug_to_up
-        ldx   #$-A0
+        ldy   #Ani_bug_to_down
+        ldx   #$A0
 
         lda   subtype,u
         bita  #$01 ; Up or down ?
         bne   >
-        ldy   #Ani_bug_to_down
-        ldx   #$A0
+        ldy   #Ani_bug_to_up
+        ldx   #$-A0
         inc   routine,u
 !
         stx   y_vel,u
