@@ -20,7 +20,6 @@ Weapon10
 
 Weapon10_Routines
         fdb   Init
-        fdb   Init_Collision
         fdb   Live
         fdb   AlreadyDeleted
 
@@ -38,11 +37,8 @@ Init
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
-        inc   routine,u
-        jmp   DisplaySprite
 
-Init_Collision                         ; init collision when a frame is already displayed
-        leax  AABB_0,u                 ; thus xy_pixel is available
+        leax  AABB_0,u
         jsr   AddPlayerAABB
         lda   #1                       ; set damage potential for this hitbox
         sta   AABB.p,x
@@ -54,21 +50,23 @@ Live
         leax  AABB_0,u
         tst   AABB.p,x
         beq   @delete                  ; delete weapon if something was hit  
-        ldd   xy_pixel,u
-        std   AABB.cx,x
         lda   #4
         ldb   Vint_Main_runcount
         mul
         addd  x_pos,u
         std   x_pos,u
         subd  glb_camera_x_pos
+        stb   AABB.cx,x
         cmpd  #160-8/2                 ; delete weapon if out of screen range
         ble   >
-@delete lda   #3
+@delete lda   #2
         sta   routine,u   
         leax  AABB_0,u
         jsr   RemovePlayerAABB
         jmp   DeleteObject
-!       jmp   DisplaySprite
+!       ldd   y_pos,u
+        subd  glb_camera_y_pos
+        stb   AABB.cy,x
+        jmp   DisplaySprite
 AlreadyDeleted
         rts

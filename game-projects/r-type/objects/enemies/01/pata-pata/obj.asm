@@ -40,7 +40,6 @@ Object
 
 Routines
         fdb   Init
-        fdb   Init_Collision
         fdb   LiveUp
         fdb   LiveDown
         fdb   AlreadyDeleted
@@ -58,18 +57,26 @@ Init
         ldd   #$-A0
         std   x_vel,u
 
+        leax  AABB_0,u
+        jsr   AddAiAABB
+        lda   #1                       ; set damage potential for this hitbox
+        sta   AABB.p,x
+        _ldd  4,8                      ; set hitbox xy radius
+        std   AABB.rx,x
+
         ldx   #$-A0
         inc   routine,u
         lda   subtype,u
         bita  #$01 ; Up or down ?
         beq   >
+        inc   routine,u
         ldx   #$A0 ; This is down
 !
         stx   y_vel,u
         bita  #$02 ; Shoot or no shoot
         bne   >
         clr   shootnoshoot,u ; No shoot, can skip the end about shooting details
-        bra   @display
+        bra   Object
 !
         ldb   #1
         stb   shootnoshoot,u
@@ -92,23 +99,7 @@ Init
         asra
         anda  #7
         sta   shootdirection,u
-@display
-        jsr   AnimateSpriteSync
-        jsr   ObjectMoveSync
-        jmp   DisplaySprite
-
-Init_Collision                         ; init collision when a frame is already displayed
-        leax  AABB_0,u                 ; thus xy_pixel is available
-        jsr   AddAiAABB
-        lda   #1                       ; set damage potential for this hitbox
-        sta   AABB.p,x
-        _ldd  4,8                      ; set hitbox xy radius
-        std   AABB.rx,x
-
-        bita  #$01 ; Up or down ?
-        beq   >
-        inc   routine,u
-!       inc   routine,u
+        bra   Object
 
 LiveUp
         ldd   amplitude,u
@@ -161,12 +152,14 @@ CheckEOL
         leax  AABB_0,u
         tst   AABB.p,x
         beq   @dstroy                  ; was killed  
-        ldd   xy_pixel,u
-        std   AABB.cx,x
         ldd   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB.cx,x
         addd  #5                       ; add x radius
-        cmpd  glb_camera_x_pos
-        ble   @delete                  ; branch if out of screen's left
+        bmi   @delete                  ; branch if out of screen's left
+        ldd   y_pos,u
+        subd  glb_camera_y_pos
+        stb   AABB.cy,x
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
 @dstroy jsr   LoadObject_x ; make then die early ... to be removed
@@ -180,7 +173,7 @@ CheckEOL
         ldd   x_vel,u
         std   x_vel,x
         clr   y_vel,x
-@delete lda   #4
+@delete lda   #3
         sta   routine,u      
         leax  AABB_0,u
         jsr   RemoveAiAABB
