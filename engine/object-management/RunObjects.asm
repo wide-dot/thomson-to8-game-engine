@@ -161,7 +161,7 @@ UnloadObject_x
         sty   run_object_next,u
 !       stu   object_list_last
         bne   @clearObj
-        stx   object_list_first
+        stu   object_list_first
 @clearObj
         leau  object_size,x ; move to end of data object structure
         bra   UnloadObject_clear

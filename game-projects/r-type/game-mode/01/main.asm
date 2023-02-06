@@ -61,6 +61,7 @@ LevelMainLoop
         jsr   ReadJoypads
         jsr   Scroll
         jsr   ObjectWave
+        jsr   DoCollision
         _RunObject ObjID_Player1,#player1
         jsr   RunObjects
         jsr   CheckSpritesRefresh
@@ -201,6 +202,9 @@ Foeshoottable
 
         ; sound
         INCLUDE "./engine/sound/Svgm.asm"
+
+        ; collision
+        INCLUDE "./engine/collision/collision.asm"
 
         ; should be at the end of includes (ifdef dependencies)
         INCLUDE "./engine/InitGlobals.asm"

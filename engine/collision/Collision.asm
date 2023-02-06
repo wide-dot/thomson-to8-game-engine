@@ -33,7 +33,7 @@ RemovePlayerAABB
         sty   AABB.next,u
 !       stu   AABB_player_last
         bne   @end
-        stx   AABB_player_first
+        stu   AABB_player_first
 @end    puls  d,y,u,pc
 
 AABB_ai_first
@@ -69,7 +69,7 @@ RemoveAiAABB
         sty   AABB.next,u
 !       stu   AABB_ai_last
         bne   @end
-        stx   AABB_ai_first
+        stu   AABB_ai_first
 @end    puls  d,y,u,pc
 
 DoCollision
@@ -119,9 +119,8 @@ DoCollision
         sta   AABB.p,x
         stb   AABB.p,u
 @break
-@skipx  ldu   AABB.next,x
+@skipx  ldx   AABB.next,x
         bne   @loopx
-@rts    rts
 @skipu  ldu   AABB.next,u
         bne   @loopu
-        rts
+@rts    rts
