@@ -12,8 +12,10 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./engine/collision/struct_AABB.equ"
 
-shoottiming             equ ext_variables
+AABB_0                equ ext_variables   ; AABB struct (9 bytes)
+shoottiming           equ ext_variables
 shootdirection        equ ext_variables+2
 
 Object
@@ -25,6 +27,7 @@ Object
 Routines
         fdb   Init
         fdb   Live
+        fdb   AlreadyDeleted
 
 Init
         ldb   #6
@@ -32,6 +35,14 @@ Init
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
+
+        leax  AABB_0,u
+        jsr   AddAiAABB
+        lda   #1                       ; set damage potential for this hitbox
+        sta   AABB.p,x
+        _ldd  4,7                      ; set hitbox xy radius
+        std   AABB.rx,x
+
         inc   routine,u
         ldb   subtype,u
         clra
@@ -84,13 +95,39 @@ Live
         
 
 CheckEOL
-        ldd   x_pos,u
-        cmpd  glb_camera_x_pos
-        ble   >
         jsr   ObjectMoveSync
+        leax  AABB_0,u
+        tst   AABB.p,x
+        beq   @destroy                  ; was killed  
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB.cx,x
+        addd  #5                       ; add x radius
+        bmi   @delete                  ; branch if out of screen's left
+        ldd   y_pos,u
+        subd  glb_camera_y_pos
+        stb   AABB.cy,x
+        jsr   AnimateSpriteSync
         jmp   DisplaySprite
-        
-!       jmp   DeleteObject
+@destroy 
+        jsr   LoadObject_x ; make then die early ... to be removed
+        beq   @delete
+        lda   #ObjID_enemiesblastsmall
+        sta   id,x
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
+        ldd   x_vel,u
+        std   x_vel,x
+        clr   y_vel,x
+@delete
+        inc   routine,u      
+        leax  AABB_0,u
+        jsr   RemoveAiAABB
+        jmp   DeleteObject
+AlreadyDeleted
+        rts
 
 
 BlasterGetDirection
