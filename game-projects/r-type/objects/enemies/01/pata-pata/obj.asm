@@ -20,12 +20,14 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./engine/collision/struct_AABB.equ"
 
-amplitude         equ ext_variables ; current amplitude
-shoottiming       equ ext_variables+2
-shoottiming_value equ ext_variables+4
-shootnoshoot      equ ext_variables+6
-shootdirection    equ ext_variables+7
+AABB_0            equ ext_variables   ; AABB struct (9 bytes)
+amplitude         equ ext_variables+9 ; current amplitude
+shoottiming       equ ext_variables+11
+shoottiming_value equ ext_variables+13
+shootnoshoot      equ ext_variables+15
+shootdirection    equ ext_variables+16
 amplitude_max     equ 40        ; maximum amplitude before direction change
 
 
@@ -38,6 +40,7 @@ Object
 
 Routines
         fdb   Init
+        fdb   Init_Collision
         fdb   LiveUp
         fdb   LiveDown
         fdb   AlreadyDeleted
@@ -58,29 +61,24 @@ Init
         ldx   #$-A0
         inc   routine,u
         lda   subtype,u
-
         bita  #$01 ; Up or down ?
         beq   >
         ldx   #$A0 ; This is down
-        inc   routine,u
 !
         stx   y_vel,u
-
         bita  #$02 ; Shoot or no shoot
         bne   >
         clr   shootnoshoot,u ; No shoot, can skip the end about shooting details
-        bra   Object
+        bra   @display
 !
         ldb   #1
         stb   shootnoshoot,u
-
         ldx   #80
         bita  #$04 ; Starts shooting late or early ?
         beq   >
         ldx   #160  ; Starts late
 !
         stx   shoottiming,u
-
         ; This is currently unused, hence set at "less frequently" by default (according to findings on R-Type Dimensions)
         ;ldx   #40  ; Shoots more frequently or less
         ;bita  #$08
@@ -88,15 +86,29 @@ Init
         ldx   #80  ; Less frequently
 ;!
         stx   shoottiming_value,u
-
         asra
         asra
         asra
         asra
         anda  #7
         sta   shootdirection,u
+@display
+        jsr   AnimateSpriteSync
+        jsr   ObjectMoveSync
+        jmp   DisplaySprite
 
-        bra   Object
+Init_Collision                         ; init collision when a frame is already displayed
+        leax  AABB_0,u                 ; thus xy_pixel is available
+        jsr   AddAiAABB
+        lda   #1                       ; set damage potential for this hitbox
+        sta   AABB.p,x
+        _ldd  4,8                      ; set hitbox xy radius
+        std   AABB.rx,x
+
+        bita  #$01 ; Up or down ?
+        beq   >
+        inc   routine,u
+!       inc   routine,u
 
 LiveUp
         ldd   amplitude,u
@@ -145,16 +157,20 @@ CheckEOL
         jsr   ReturnShootDirection_Y
         std   y_vel,x
 @noshoot
-        ldd   x_pos,u
-        subd  #100 ; make then die early ... to be removed
-        cmpd  glb_camera_x_pos
-        ble   >
-        jsr   AnimateSpriteSync
         jsr   ObjectMoveSync
+        leax  AABB_0,u
+        tst   AABB.p,x
+        beq   @dstroy                  ; was killed  
+        ldd   xy_pixel,u
+        std   AABB.cx,x
+        ldd   x_pos,u
+        addd  #5                       ; add x radius
+        cmpd  glb_camera_x_pos
+        ble   @delete                  ; branch if out of screen's left
+        jsr   AnimateSpriteSync
         jmp   DisplaySprite
-!       
-        jsr   LoadObject_x ; make then die early ... to be removed
-        beq   >
+@dstroy jsr   LoadObject_x ; make then die early ... to be removed
+        beq   @delete
         lda   #ObjID_enemiesblastsmall
         sta   id,x
         ldd   x_pos,u
@@ -164,9 +180,10 @@ CheckEOL
         ldd   x_vel,u
         std   x_vel,x
         clr   y_vel,x
-        lda   #3
-        sta   routine,u
-!       
+@delete lda   #4
+        sta   routine,u      
+        leax  AABB_0,u
+        jsr   RemoveAiAABB
         jmp   DeleteObject
 AlreadyDeleted
         rts
