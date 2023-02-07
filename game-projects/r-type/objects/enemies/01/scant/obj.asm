@@ -61,7 +61,7 @@ Scant_live
         ldd   x_pos,u
         jsr   ObjectMoveSync
         leax  AABB_0,u
-        tst   AABB.p,x
+        lda   AABB.p,x
         beq   @destroy                  ; was killed  
         ldd   x_pos,u
         subd  glb_camera_x_pos
