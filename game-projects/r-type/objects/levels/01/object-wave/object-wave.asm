@@ -32,21 +32,21 @@ wave_patapata_02_space equ 4
 ; First bug wave
 wave_bug_01       equ 308
 wave_bug_01_space equ 2
-        fdb   wave_bug_01-140+wave_bug_01_space*0,(ObjID_bug*256)+0,wave_bug_01+enemies_bug+wave_bug_01_space*0,50
-        fdb   wave_bug_01-140+wave_bug_01_space*1,(ObjID_bug*256)+0,wave_bug_01+enemies_bug+wave_bug_01_space*1,50
-        fdb   wave_bug_01-140+wave_bug_01_space*2,(ObjID_bug*256)+0,wave_bug_01+enemies_bug+wave_bug_01_space*2,50
-        fdb   wave_bug_01-140+wave_bug_01_space*3,(ObjID_bug*256)+30,wave_bug_01+enemies_bug+wave_bug_01_space*3,50
-        fdb   wave_bug_01-140+wave_bug_01_space*4,(ObjID_bug*256)+0,wave_bug_01+enemies_bug+wave_bug_01_space*4,50  
+        fdb   wave_bug_01-140+wave_bug_01_space*0,(ObjID_bug*256)+1,wave_bug_01+enemies_bug+wave_bug_01_space*0,50
+        fdb   wave_bug_01-140+wave_bug_01_space*1,(ObjID_bug*256)+1,wave_bug_01+enemies_bug+wave_bug_01_space*1,50
+        fdb   wave_bug_01-140+wave_bug_01_space*2,(ObjID_bug*256)+1,wave_bug_01+enemies_bug+wave_bug_01_space*2,50
+        fdb   wave_bug_01-140+wave_bug_01_space*3,(ObjID_bug*256)+31,wave_bug_01+enemies_bug+wave_bug_01_space*3,50
+        fdb   wave_bug_01-140+wave_bug_01_space*4,(ObjID_bug*256)+1,wave_bug_01+enemies_bug+wave_bug_01_space*4,50  
 
 
 ; Second bug wave
 wave_bug_02       equ 372
 wave_bug_02_space equ 2
-        fdb   wave_bug_02-140+wave_bug_02_space*0,(ObjID_bug*256)+1,wave_bug_02+enemies_bug+wave_bug_02_space*0,60
-        fdb   wave_bug_02-140+wave_bug_02_space*1,(ObjID_bug*256)+1,wave_bug_02+enemies_bug+wave_bug_02_space*1,60
-        fdb   wave_bug_02-140+wave_bug_02_space*2,(ObjID_bug*256)+1,wave_bug_02+enemies_bug+wave_bug_02_space*2,60
-        fdb   wave_bug_02-140+wave_bug_02_space*3,(ObjID_bug*256)+31,wave_bug_02+enemies_bug+wave_bug_02_space*3,60
-        fdb   wave_bug_02-140+wave_bug_02_space*4,(ObjID_bug*256)+1,wave_bug_02+enemies_bug+wave_bug_02_space*4,60    
+        fdb   wave_bug_02-140+wave_bug_02_space*0,(ObjID_bug*256)+0,wave_bug_02+enemies_bug+wave_bug_02_space*0,60
+        fdb   wave_bug_02-140+wave_bug_02_space*1,(ObjID_bug*256)+0,wave_bug_02+enemies_bug+wave_bug_02_space*1,60
+        fdb   wave_bug_02-140+wave_bug_02_space*2,(ObjID_bug*256)+0,wave_bug_02+enemies_bug+wave_bug_02_space*2,60
+        fdb   wave_bug_02-140+wave_bug_02_space*3,(ObjID_bug*256)+30,wave_bug_02+enemies_bug+wave_bug_02_space*3,60
+        fdb   wave_bug_02-140+wave_bug_02_space*4,(ObjID_bug*256)+0,wave_bug_02+enemies_bug+wave_bug_02_space*4,60    
 
 
 ; Third pata-pata wave
