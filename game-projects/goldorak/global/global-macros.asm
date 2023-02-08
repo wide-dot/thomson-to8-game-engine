@@ -40,3 +40,15 @@ _ObjectInitRoutines MACRO
     ldx   \1
     jmp   [a,x]  
     ENDM   
+
+_SetImage_U MACRO
+        ldd   \1   
+        std   image_set,u
+        ldd   \2
+        std   xy_pixel,u
+        ldb   \3
+        stb   priority,u
+        lda   render_flags,u
+        ora   \4
+        sta   render_flags,u
+        ENDM    
