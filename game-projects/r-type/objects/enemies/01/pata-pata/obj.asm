@@ -150,8 +150,8 @@ CheckEOL
 @noshoot
         jsr   ObjectMoveSync
         leax  AABB_0,u
-        tst   AABB.p,x
-        beq   @dstroy                  ; was killed  
+        lda   AABB.p,x
+        beq   @destroy                  ; was killed  
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB.cx,x
@@ -162,7 +162,8 @@ CheckEOL
         stb   AABB.cy,x
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
-@dstroy jsr   LoadObject_x ; make then die early ... to be removed
+@destroy 
+        jsr   LoadObject_x ; make then die early ... to be removed
         beq   @delete
         lda   #ObjID_enemiesblastsmall
         sta   id,x
