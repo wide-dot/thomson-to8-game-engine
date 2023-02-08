@@ -32,6 +32,8 @@ UserIRQ
 * INCLUDES
 * ==============================================================================  
     INCLUDE "./game-mode/splash/ram-data.asm"
+    INCLUDE "./engine/graphics/codec/DecRLE00.asm"
     INCLUDE "./global/global-trailer-includes.asm"
+    
     
 
