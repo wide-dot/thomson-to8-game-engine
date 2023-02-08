@@ -1,83 +1,52 @@
         INCLUDE "./engine/collision/struct_AABB.equ"
 
-AABB_player_first
-        fdb   0
-AABB_player_last
-        fdb   0
+; use ./engine/collision/macros.asm
+; --------------------------------------
 
-AddPlayerAABB
-        pshs  u
-        ldu   AABB_player_last
+Collision_AddAABB
+        ldu   2,y
         beq   >
         stx   AABB.next,u
-        stx   AABB_player_last
+        stx   2,y
         stu   AABB.prev,x
-        puls  u,pc
-!       stx   AABB_player_last
-        stx   AABB_player_first
-        puls  u,pc
+        rts
+!       stx   2,y
+        stx   ,y
+        rts
 
-RemovePlayerAABB
-        pshs  d,y,u
+; --------------------------------------
+
+Collision_RemoveAABB
         ldy   AABB.next,x 
         beq   @noNext
         ldu   AABB.prev,x
         stu   AABB.prev,y
         beq   @noPrev
         sty   AABB.next,u
-        puls  d,y,u,pc
-@noPrev sty   AABB_player_first
-        puls  d,y,u,pc
+        rts
+@noPrev sty   0
+Collision_Remove_1 equ *-2
+        rts
 @noNext ldu   AABB.prev,x
         beq   >
         sty   AABB.next,u
-!       stu   AABB_player_last
+!       stu   0
+Collision_Remove_2 equ *-2
         bne   @end
-        stu   AABB_player_first
-@end    puls  d,y,u,pc
+        stu   0
+Collision_Remove_3 equ *-2
+@end    rts
 
-AABB_ai_first
-        fdb   0
-AABB_ai_last
-        fdb   0
+; --------------------------------------
 
-AddAiAABB
-        pshs  u
-        ldu   AABB_ai_last
-        beq   >
-        stx   AABB.next,u
-        stx   AABB_ai_last
-        stu   AABB.prev,x
-        puls  u,pc
-!       stx   AABB_ai_last
-        stx   AABB_ai_first
-        puls  u,pc
-
-RemoveAiAABB
-        pshs  d,y,u
-        ldy   AABB.next,x 
-        beq   @noNext
-        ldu   AABB.prev,x
-        stu   AABB.prev,y
-        beq   @noPrev
-        sty   AABB.next,u
-        puls  d,y,u,pc
-@noPrev sty   AABB_ai_first
-        puls  d,y,u,pc
-@noNext ldu   AABB.prev,x
-        beq   >
-        sty   AABB.next,u
-!       stu   AABB_ai_last
-        bne   @end
-        stu   AABB_ai_first
-@end    puls  d,y,u,pc
-
-DoCollision
-        ldu   AABB_player_first        ; all pairs testing
+Collision_Do
+        ldu   #0                       ; all pairs testing
+Collision_Do_1 equ *-2
         beq   @rts                     ; no AABB in the player AABB list, quit
 @loopu  ldb   AABB.p,u
         beq   @skipu                   ; no more potential, skip this AABB
-        ldx   AABB_ai_first
+        ldx   #0
+Collision_Do_2 equ *-2
         beq   @rts                     ; no AABB in the ai AABB list, quit
 @loopx  ldb   AABB.p,x
         beq   @skipx                   ; no more potential, skip this AABB
@@ -91,7 +60,7 @@ DoCollision
         suba  AABB.cx,x
         cmpa  #0
 @rx     equ *-1 
-        bhi   @break
+        bhi   @continue
         lda   AABB.ry,u
         adda  AABB.ry,x
         asla
@@ -101,26 +70,46 @@ DoCollision
         suba  AABB.cy,x
         cmpa  #0
 @ry     equ *-1 
-        bhi   @break
+        bhi   @continue
 !
         ldb   #0                       ; compute collision damage
-        lda   AABB.p,u 
+        lda   AABB.p,u
+        bmi   @u_invincibility
+        tst   AABB.p,x
+        bmi   @x_invincibility
         suba  AABB.p,x
         beq   @draw
         bmi   @loose
 @draw   stb   AABB.p,u
         stb   AABB.p,x
-        bra   @break
+        bra   @continue
 @win    sta   AABB.p,u
         stb   AABB.p,x
-        bra   @break
+        bra   @continue
 @loose  lda   AABB.p,x
         suba  AABB.p,u
         sta   AABB.p,x
         stb   AABB.p,u
-@break
+@continue
 @skipx  ldx   AABB.next,x
         bne   @loopx
 @skipu  ldu   AABB.next,u
         bne   @loopu
 @rts    rts
+;
+@u_invincibility
+        lda   AABB.p,x
+        bmi   @continue                ; two invincible hitboxes
+        suba  AABB.p,u
+        bcc   >
+        lda   #0                       ; cap lowest value to 0
+!       sta   AABB.p,x
+        bra   @continue
+;
+@x_invincibility
+        lda   AABB.p,u
+        suba  AABB.p,x
+        bcc   >
+        lda   #0                       ; cap lowest value to 0
+!       sta   AABB.p,u
+        bra   @continue

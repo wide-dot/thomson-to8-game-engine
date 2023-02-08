@@ -3,6 +3,7 @@ DO_NOT_WAIT_VBL equ 1
         INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./engine/collision/macros.asm"
 
 map_width       equ 1792
 viewport_width  equ 140
@@ -61,7 +62,7 @@ LevelMainLoop
         jsr   ReadJoypads
         jsr   Scroll
         jsr   ObjectWave
-        jsr   DoCollision
+        _Collision_Do AABB_list_friend,AABB_list_ennemy
         _RunObject ObjID_Player1,#player1
         jsr   RunObjects
         jsr   CheckSpritesRefresh
@@ -168,9 +169,6 @@ Foeshoottable
 * ---------------------------------------------------------------------------
 * ENGINE routines
 * ---------------------------------------------------------------------------
-
-
-
 
         ; common utilities
         INCLUDE "./engine/ram/BankSwitch.asm"

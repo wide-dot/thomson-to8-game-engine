@@ -20,6 +20,7 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
 
 AABB_0            equ ext_variables   ; AABB struct (9 bytes)
@@ -57,8 +58,9 @@ Init
         ldd   #$-A0
         std   x_vel,u
 
+        _Collision_AddAABB AABB_0,AABB_list_ennemy
+        
         leax  AABB_0,u
-        jsr   AddAiAABB
         lda   #1                       ; set damage potential for this hitbox
         sta   AABB.p,x
         _ldd  4,8                      ; set hitbox xy radius
@@ -99,7 +101,7 @@ Init
         asra
         anda  #7
         sta   shootdirection,u
-        bra   Object
+        jmp   Object
 
 LiveUp
         ldd   amplitude,u
@@ -176,8 +178,7 @@ CheckEOL
         clr   y_vel,x
 @delete lda   #3
         sta   routine,u      
-        leax  AABB_0,u
-        jsr   RemoveAiAABB
+        _Collision_RemoveAABB AABB_0,AABB_list_ennemy
         jmp   DeleteObject
 AlreadyDeleted
         rts
