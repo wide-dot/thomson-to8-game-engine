@@ -9,6 +9,7 @@ enemies_pstaff   equ 14
 ; x_pos to instanciate object,object id,subtype,x_pos,y_pos
 
 
+
 ; First pata-pata wave
 wave_patapata_01       equ 252
 wave_patapata_01_space equ 4
@@ -79,7 +80,7 @@ wave_patapata_04_space equ 4
         fdb   wave_patapata_04-140+wave_patapata_04_space*24,(ObjID_patapata*256)+27,wave_patapata_04+enemies_patapata+wave_patapata_04_space*24,80
 
 ; Solo bink #2
-        fdb   504-140,(ObjID_bink*256)++55,504+enemies_bink,140
+        fdb   504-140,(ObjID_bink*256)+55,504+enemies_bink,140
 
 ; Fifth pata-pata wave
 wave_patapata_05       equ 507
@@ -88,7 +89,7 @@ wave_patapata_05_space equ 4
         fdb   wave_patapata_05-140+wave_patapata_05_space*2,(ObjID_patapata*256)+26,wave_patapata_05+enemies_patapata+wave_patapata_05_space*2,90
 
 ; Solo bink #3
-        fdb   532-140,(ObjID_bink*256)++55,532+enemies_bink,140
+        fdb   532-140,(ObjID_bink*256)+55,532+enemies_bink,140
 
 
 ; Fifth pata-pata wave
@@ -100,19 +101,35 @@ wave_patapata_06_space equ 4
 ; Scant #1
         fdb   560-140,(ObjID_scant*256)+00,560+enemies_scant,80
 
-; Solo bink #3
+; Solo bink #4
         fdb   562-140,(ObjID_bink*256)+55,562+enemies_bink,140
 
 ; P-Staff #1
         fdb   588-140,(ObjID_pstaff*256)+00,588+enemies_pstaff,141
 
-; Solo bink #4
+; Solo bink #5
         fdb   592-140,(ObjID_bink*256)+55,592+enemies_bink,140
 
+; Third bug wave
+wave_bug_03       equ 650
+wave_bug_03_space equ 2
+        fdb   wave_bug_03-140+wave_bug_03_space*0,(ObjID_bug*256)+30,wave_bug_03+enemies_bug+wave_bug_03_space*0,30
+        fdb   wave_bug_03-140+wave_bug_03_space*1,(ObjID_bug*256)+0,wave_bug_03+enemies_bug+wave_bug_03_space*1,30
+        fdb   wave_bug_03-140+wave_bug_03_space*2,(ObjID_bug*256)+0,wave_bug_03+enemies_bug+wave_bug_03_space*2,30
+        fdb   wave_bug_03-140+wave_bug_03_space*3,(ObjID_bug*256)+30,wave_bug_03+enemies_bug+wave_bug_03_space*3,30
+        fdb   wave_bug_03-140+wave_bug_03_space*4,(ObjID_bug*256)+0,wave_bug_03+enemies_bug+wave_bug_03_space*4,30  
+
+; Bink falling
+        fdb   664-140,(ObjID_bink*256)+183,644+enemies_bink,0
+
+
+; Solo bink #5
+        fdb  809-140,(ObjID_bink*256)+55,810+enemies_bink,140
 
 wave_blasters_01      equ 810
         fdb wave_blasters_01-140,(ObjID_blaster*256)+160,wave_blasters_01+20,34
         fdb wave_blasters_01-140,(ObjID_blaster*256)+241,wave_blasters_01+20,132
+
         fdb wave_blasters_01-140+14,(ObjID_blaster*256)+250,wave_blasters_01+20+14,34
         fdb wave_blasters_01-140+14,(ObjID_blaster*256)+211,wave_blasters_01+20+14,132
         fdb wave_blasters_01-140+28,(ObjID_blaster*256)+190,wave_blasters_01+20+28,48
@@ -123,6 +140,9 @@ wave_blasters_01      equ 810
         fdb wave_blasters_01-140+140,(ObjID_blaster*256)+160,wave_blasters_01+20+140,20
         fdb wave_blasters_01-140+154,(ObjID_blaster*256)+160,wave_blasters_01+20+154,20
 
+
+; P-Staff #2
+        fdb   928-140,(ObjID_pstaff*256)+00,928+enemies_pstaff*4,141
 
 
 ; Shell wave
