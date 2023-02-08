@@ -72,7 +72,6 @@ Init
         clr   x_vel,u
         ldx   #$100
         stx   y_vel,u
-
 !
         bita  #$01 ; Shoot or no shoot
         bne   >
@@ -108,9 +107,9 @@ LiveFall
         ldx   Vint_Main_runcount_w
         stx   x_vel,u
         ldx   y_pos,u
-        cmpx  #136
+        cmpx  #138
         ble   >
-        ldx   #136
+        ldx   #138
         stx   y_pos,u
         clr   y_vel,u
         ldx   #Ani_bink_stands_left

@@ -178,13 +178,13 @@ BlasterSpriteTable
         fdb   Img_blaster_9
 
 BlasterShootingTable
-        fdb   -$60,$00
-        fdb   -$60,-$60
+        fdb   -$80,$00
+        fdb   -$80,-$80
         fdb   $00,-$120
-        fdb   $60,-$60
+        fdb   $80,-$80
         fdb   $80,$00
-        fdb   -$60,$00
-        fdb   -$60,$60
+        fdb   -$80,$00
+        fdb   -$80,$80
         fdb   $00,$120
-        fdb   $60,$60
-        fdb   $60,$00
+        fdb   $80,$80
+        fdb   $80,$00
