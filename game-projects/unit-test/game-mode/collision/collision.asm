@@ -17,7 +17,7 @@
         jsr   LoadObject_u
         lda   #ObjID_CBox
         sta   id,u
-        ldd   #$80
+        ldd   #$40
         std   x_pos,u
         ldd   #$7F
         std   y_pos,u
@@ -27,9 +27,9 @@
         jsr   LoadObject_u
         lda   #ObjID_CBox
         sta   id,u
-        ldd   #$80
+        ldd   #$40
         std   x_pos,u
-        ldd   #$A0
+        ldd   #$40
         std   y_pos,u
         lda   #1
         sta   subtype,u
@@ -63,10 +63,10 @@ LevelMainLoop
         lda   #1
         sta   glb_force_sprite_refresh
 
-        lda   Fire_Press
-        anda  #c1_button_A_mask
-        beq   >
-        lda   #GmID_multisprite
+        lda   $E7C8 ; lecture d'une touche clavier
+        lsra
+        bcc    >
+        lda   #GmID_atan2
         sta   GameMode
         jsr   LoadGameModeNow
 !
