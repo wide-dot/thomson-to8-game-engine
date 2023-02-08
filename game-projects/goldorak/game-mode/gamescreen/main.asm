@@ -1,4 +1,5 @@
 
+DO_NOT_WAIT_VBL equ 1
 OverlayMode equ 1
 SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/system/to8/memory-map.equ"
@@ -32,19 +33,19 @@ SOUND_CARD_PROTOTYPE equ 1
 
         lda   #0
         sta   VS_viewport_line_pos
-        lda   #191
+        lda   #160
         sta   VS_viewport_size
         jsr   VerticalScrollUpdateViewport
 
 * init sound player NEW
 * initialize the SN76489 vgm player with a vgc data stream
     ldd   #vgc_stream_buffers
-    ldx   #Vgc_GoldorakIntro
+    ldx   #Vgc_introSN
     * andcc #$fe ; clear carry (no loop)
     orcc  #1 ; set carry (loop)
     jsr   vgc_init
     * init YM2413 music
-    ldx   #Vgc_GoldorakIntroYM
+    ldx   #Vgc_introYM
     * andcc #$fe ; clear carry (no loop)
     orcc  #1 ; set carry (loop)
     jsr   YVGM_PlayMusic
