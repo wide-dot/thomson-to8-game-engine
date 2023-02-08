@@ -125,16 +125,17 @@ wave_bug_03_space equ 2
 
 
 ; Cancer wave
-wave_cancer_01  equ 714
+wave_cancer_01  equ 728
         fdb  wave_cancer_01-140,(ObjID_cancer*256)+0,wave_cancer_01+14,40
-        fdb  wave_cancer_01-140,(ObjID_cancer*256)+0,wave_cancer_01+14,120
-        fdb  wave_cancer_01-140+7,(ObjID_cancer*256)+0,wave_cancer_01+14+7,50
-        fdb  wave_cancer_01-140+7,(ObjID_cancer*256)+0,wave_cancer_01+14+7,110
-        fdb  wave_cancer_01-140+14,(ObjID_cancer*256)+0,wave_cancer_01+14+14,100
+        fdb  wave_cancer_01-140,(ObjID_cancer*256)+1,wave_cancer_01+14,120
+        fdb  wave_cancer_01-140+7,(ObjID_cancer*256)+2,wave_cancer_01+14+7,50
+        fdb  wave_cancer_01-140+7,(ObjID_cancer*256)+3,wave_cancer_01+14+7,110
+        fdb  wave_cancer_01-140+14,(ObjID_cancer*256)+4,wave_cancer_01+14+14,100
         fdb  wave_cancer_01-140+14,(ObjID_cancer*256)+0,wave_cancer_01+14+14,60
-        fdb  wave_cancer_01-140+21,(ObjID_cancer*256)+0,wave_cancer_01+14+21,90
-        fdb  wave_cancer_01-140+21,(ObjID_cancer*256)+0,wave_cancer_01+14+21,70
-        fdb  wave_cancer_01-140+28,(ObjID_cancer*256)+0,wave_cancer_01+14+28,80
+        fdb  wave_cancer_01-140+21,(ObjID_cancer*256)+1,wave_cancer_01+14+21,90
+        fdb  wave_cancer_01-140+21,(ObjID_cancer*256)+2,wave_cancer_01+14+21,70
+        fdb  wave_cancer_01-140+28,(ObjID_cancer*256)+3,wave_cancer_01+14+28,80
+        fdb  wave_cancer_01-140+35,(ObjID_cancer*256)+4,wave_cancer_01+14+28,120
 
 
 ; Solo bink #5

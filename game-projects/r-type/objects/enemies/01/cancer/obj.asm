@@ -6,16 +6,11 @@
 ;
 ; Patapata subtype :
 ;       
-;       Bit 0 : 0 => Starts up, 1 => Starts down
-;       Bit 1 : 0 => Doies not shoot, 1 => Shoots
-;       Bit 2 : (Shooting timer) 0 => Shoots early, 1=> Shoot late
-;       Bit 3 : (Unused - Shoot frequency) 0 => Shoots fast, 1=> Shoots slow
-;       Bit 4-5 :
-;             0 -> horizontal
-;             1 -> 30% angle (from horizon)
-;             2 -> 60% angle (from horizon)
-;             3 -> vertical
-;       Bit 6 : 0 => kill tracking OFF, 1 => kill tracking ON
+;       Bit 0,1 :
+;               0 => Track on player 1
+;               1 => Go up for a while then track player 1
+;               2 => Go down for a while then track player 1
+;       Bit 2 : 0 => Slower, 1 => Faster (horizontal speed)
 ;
 ; ---------------------------------------------------------------------------
 
@@ -26,6 +21,7 @@
 AABB_0            equ ext_variables   ; AABB struct (9 bytes)
 shoottiming       equ ext_variables+9
 shootdirection    equ ext_variables+11
+deviation         equ ext_variables+12
 
 
 
@@ -38,6 +34,7 @@ Object
 Routines
         fdb   Init
         fdb   LiveLeft
+        fdb   LiveUpOrDown
         fdb   AlreadyDeleted
 
 Init
@@ -57,14 +54,39 @@ Init
         _ldd  7,18                      ; set hitbox xy radius
         std   AABB.rx,x
 
-        ldx   #$-10
-        stx   x_vel,u
         ldx   #160
         stx   shoottiming,u
         lda   #5
         sta   shootdirection,u
 
+        lda   subtype,u       
+
+        ldx   #$-20                         
+        bita  #04                       ; Horizontal speed ... fast or slow
+        bne   >
+        ldx   #$-10                     ; Sloooooooow
+!
+        stx   x_vel,u
+
         inc   routine,u
+        anda  #03
+        beq   LiveLeft
+
+        ldb   #60
+        stb   deviation,u
+        inc   routine,u
+
+        ldx   #$-30
+        bita  #$2
+        beq   >
+        ldx   #$30
+!
+LiveUpOrDown
+        dec   deviation,u
+        bpl   >
+        lda   #01
+        sta   routine,u
+
 
 LiveLeft
         ldx   #$-30
@@ -122,7 +144,8 @@ LiveLeft
         ldd   x_vel,u
         std   x_vel,x
         clr   y_vel,x
-@delete lda   #2
+@delete 
+        lda   #3
         sta   routine,u      
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
         jmp   DeleteObject
