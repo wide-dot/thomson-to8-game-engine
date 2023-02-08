@@ -17,9 +17,8 @@
 ; X = x (16 bit signed value)
 ;
 ; output register :
-; A = angle 0-255 (255 = 360 deg, 192 = 90 deg, 128 = 180 deg, 64 = 270 deg)
-;     angle 0 start at (x=0, y>0), clockwise
-;     special case (0,0) return $40
+; B = angle 0-255 (255 = 360 deg, 192 = 90 deg, 128 = 180 deg, 64 = 270 deg)
+;     angle 0 start at (x>0, y=0), clockwise
 
         SETDP   dp/256
 
@@ -57,7 +56,7 @@ CalcAngle
         bne   >
         ldd   x_l       ; now values are computed to 8 bits and loaded in A:x ,B:y
         bne   >
-        lda   #$40      ; x=0,y=0
+        ldb   #0        ; x=0,y=0
         rts
 !       lda   x_h
         bne   @y0
@@ -65,9 +64,9 @@ CalcAngle
         bne   @y0
         tst   y_h 
         bmi   >
-        lda   #$00      ; x=0,y>0
+        ldb   #$C0      ; x=0,y>0
         rts
-!       lda   #$80      ; x=0,y<0
+!       ldb   #$40      ; x=0,y<0
         rts
 @y0     lda   y_h
         bne   @run
@@ -75,46 +74,46 @@ CalcAngle
         bne   @run
         tst   x_h
         bmi   >
-        lda   #$C0      ; x>0,y=0
+        ldb   #$80      ; x>0,y=0
         rts
-!       lda   #$40      ; x<0,y=0
+!       ldb   #$00      ; x<0,y=0
         rts         
 @run
         ; set x
-        lda   x_h       ; test sign of x using the 16 bit input value
-        asra            ; cc=1 if x_h<0 (remember x_h is only $00 or $FF)
+        ldb   x_h       ; test sign of x using the 16 bit input value
+        asrb            ; cc=1 if x_h<0 (remember x_h is only $00 or $FF)
         rol   octant    ; set octant b2 if x is negative
-        eora  x_l
+        eorb  x_l
 
         ; set y
-        ldb   y_h       ; test sign of y using the 16 bit input value
-        asrb            ; cc=1 if y_h<0 (remember x_h is only $00 or $FF)
+        lda   y_h       ; test sign of y using the 16 bit input value
+        asra            ; cc=1 if y_h<0 (remember x_h is only $00 or $FF)
         rol   octant    ; set octant b2 if y is negative
-        eorb  y_l
+        eora  y_l
 
         ; compute ratio
         orcc  #1
         ldx   #log2_tab
-        lda   a,x
-        sbca  b,x       ; compute y/x ratio
+        ldb   b,x
+        sbcb  a,x       ; compute y/x ratio
         bcs   >         ; branch if (x < y)
-        nega
+        negb
         andcc #$FE      ; clear carry (x > y)
 !       
 
         ; retrieve the angle
         ldx   #atan_tab
-        lda   a,x
+        ldb   b,x
 
         ; adjust octant
         ldx   #octant_adjust
-        ldb   octant   
-        rolb            ; set octant b0 if (x < y)
-        andb  #%111     ; modulo to keep usefull values
-        eora  b,x       ; apply octant to angle
+        lda   octant   
+        rola            ; set octant b0 if (x < y)
+        anda  #%111     ; modulo to keep usefull values
+        eorb  a,x       ; apply octant to angle
         ldx   #octant_adjust2
-        adda  b,x
-
+        addb  a,x
+        subb  #$40
         rts                  
 
 octant_adjust

@@ -6,8 +6,6 @@
 *
 *
 ********************************************************************************
-OverlayMode equ 1
-
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"        	
         org   $6100
@@ -15,30 +13,6 @@ OverlayMode equ 1
         jsr   InitGlobals
         jsr   LoadAct       
         jsr   ReadJoypads
-
-LevelSizeLoad ; todo move to an object
-
-        ;ldu   #Object_RAM
-        ;lda   #ObjID_Tails
-        ;sta   id,u
-        ;ldd   #136/2
-        ;std   x_pos,u
-        ;ldd   #160/2
-        ;std   y_pos,u
-
- ; warning this test moves camera
- ; camera is unsigned value and should not be decremented below 0 on x and y
-
-ut_x_start_pos equ 200
-ut_y_start_pos equ 200
-
-        jsr   LoadObject_u
-        lda   #ObjID_Box
-        sta   id,u
-        ldd   #ut_x_start_pos+24/2 ; minus sprite width
-        std   x_pos,u
-        ldd   #ut_y_start_pos+20/2-1 ; minus sprite height
-        std   y_pos,u
 
         ldd   #12 ; x border on left
         std   glb_camera_x_offset
@@ -50,12 +24,20 @@ ut_y_start_pos equ 200
         ldd   #200-40 ; screen minus top and bottom border
         std   glb_camera_height
 
-        ldd   #ut_x_start_pos
+        jsr   LoadObject_u
+        lda   #ObjID_Target
+        sta   id,u
+        ldd   #$80-12
+        std   x_pos,u
+        ldd   #$7F-20
+        std   y_pos,u
+
+        ldd   #0
         std   glb_camera_x_pos
-        ldd   #ut_y_start_pos
+        ldd   #0
         std   glb_camera_y_pos
 
-        lda   #GmID_multisprite
+        lda   #GmID_atan2
         sta   glb_Cur_Game_Mode
 
 * ==============================================================================
@@ -64,18 +46,26 @@ ut_y_start_pos equ 200
 LevelMainLoop
         jsr   WaitVBL    
         jsr   PalUpdateNow
+        jsr   ReadJoypads
+
+        lda   #1
+        sta   glb_force_sprite_refresh
 
         lda   $E7C8 ; lecture d'une touche clavier
         lsra
         bcc    >
-        lda   #GmID_collision
+        lda   #GmID_multisprite
         sta   GameMode
         jsr   LoadGameModeNow
 !
-        jsr   ReadJoypads
+
 	jsr   EHZ_Back
         jsr   RunObjects
-        jsr   BuildSprites
+        jsr   CheckSpritesRefresh
+        jsr   EraseSprites
+        jsr   UnsetDisplayPriority
+        jsr   DrawSprites
+        _RunObject ObjID_Hud,#0 ; Head Up Display
         jmp   LevelMainLoop
 
 EHZ_Back
@@ -95,13 +85,14 @@ EHZ_Back
 * ---------------------------------------------------------------------------
         
         INCLUDE "./game-mode/multisprite/ram-data.asm"       
+glb_angle fdb 0
         
 * ==============================================================================
 * Routines
 * ==============================================================================
 
         ; gfx rendering
-        INCLUDE "./engine/graphics/sprite/sprite-overlay-pack.asm"
+        INCLUDE "./engine/graphics/sprite/sprite-background-erase-pack.asm"
         
         ; basic object management
         INCLUDE "./engine/object-management/RunObjects.asm"
@@ -115,3 +106,7 @@ EHZ_Back
         INCLUDE "./engine/joypad/ReadJoypads.asm"
 	INCLUDE "./engine/palette/PalUpdateNow.asm"
         INCLUDE "./engine/level-management/LoadGameMode.asm"
+        INCLUDE "./engine/object-management/ObjectMove.asm"
+        INCLUDE "./engine/math/CalcAngle.asm"
+        INCLUDE "./engine/math/CalcSine.asm"
+        INCLUDE "./engine/math/Mul9x16.asm"
