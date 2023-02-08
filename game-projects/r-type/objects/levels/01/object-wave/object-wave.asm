@@ -10,6 +10,7 @@ enemies_pstaff   equ 14
 
 
 
+
 ; First pata-pata wave
 wave_patapata_01       equ 252
 wave_patapata_01_space equ 4
@@ -123,22 +124,35 @@ wave_bug_03_space equ 2
         fdb   664-140,(ObjID_bink*256)+183,644+enemies_bink,0
 
 
+; Cancer wave
+wave_cancer_01  equ 714
+        fdb  wave_cancer_01-140,(ObjID_cancer*256)+0,wave_cancer_01+14,40
+        fdb  wave_cancer_01-140,(ObjID_cancer*256)+0,wave_cancer_01+14,120
+        fdb  wave_cancer_01-140+7,(ObjID_cancer*256)+0,wave_cancer_01+14+7,50
+        fdb  wave_cancer_01-140+7,(ObjID_cancer*256)+0,wave_cancer_01+14+7,110
+        fdb  wave_cancer_01-140+14,(ObjID_cancer*256)+0,wave_cancer_01+14+14,100
+        fdb  wave_cancer_01-140+14,(ObjID_cancer*256)+0,wave_cancer_01+14+14,60
+        fdb  wave_cancer_01-140+21,(ObjID_cancer*256)+0,wave_cancer_01+14+21,90
+        fdb  wave_cancer_01-140+21,(ObjID_cancer*256)+0,wave_cancer_01+14+21,70
+        fdb  wave_cancer_01-140+28,(ObjID_cancer*256)+0,wave_cancer_01+14+28,80
+
+
 ; Solo bink #5
         fdb  809-140,(ObjID_bink*256)+55,810+enemies_bink,140
 
 wave_blasters_01      equ 810
-        fdb wave_blasters_01-140,(ObjID_blaster*256)+160,wave_blasters_01+20,34
+        fdb wave_blasters_01-140,(ObjID_blaster*256)+230,wave_blasters_01+20,34
         fdb wave_blasters_01-140,(ObjID_blaster*256)+241,wave_blasters_01+20,132
 
         fdb wave_blasters_01-140+14,(ObjID_blaster*256)+250,wave_blasters_01+20+14,34
-        fdb wave_blasters_01-140+14,(ObjID_blaster*256)+211,wave_blasters_01+20+14,132
-        fdb wave_blasters_01-140+28,(ObjID_blaster*256)+190,wave_blasters_01+20+28,48
+        fdb wave_blasters_01-140+14,(ObjID_blaster*256)+221,wave_blasters_01+20+14,132
+        fdb wave_blasters_01-140+28,(ObjID_blaster*256)+230,wave_blasters_01+20+28,48
         fdb wave_blasters_01-140+28,(ObjID_blaster*256)+223,wave_blasters_01+20+28,118
-        fdb wave_blasters_01-140+42,(ObjID_blaster*256)+180,wave_blasters_01+20+42,48
-        fdb wave_blasters_01-140+42,(ObjID_blaster*256)+201,wave_blasters_01+20+42,118
+        fdb wave_blasters_01-140+42,(ObjID_blaster*256)+240,wave_blasters_01+20+42,48
+        fdb wave_blasters_01-140+42,(ObjID_blaster*256)+231,wave_blasters_01+20+42,118
 
-        fdb wave_blasters_01-140+140,(ObjID_blaster*256)+160,wave_blasters_01+20+140,20
-        fdb wave_blasters_01-140+154,(ObjID_blaster*256)+160,wave_blasters_01+20+154,20
+        fdb wave_blasters_01-140+140,(ObjID_blaster*256)+220,wave_blasters_01+20+140,20
+        fdb wave_blasters_01-140+154,(ObjID_blaster*256)+250,wave_blasters_01+20+154,20
 
 
 ; P-Staff #2
