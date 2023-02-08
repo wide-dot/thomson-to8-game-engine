@@ -41,13 +41,13 @@ OverlayMode equ 1
 LevelMainLoop
         jsr   ReadJoypads
         jsr   RunObjects
-        jsr   VerticalScroll        
-        jsr   VerticalScrollMoveUp        
+        jsr   VerticalScroll                        
         jsr   BuildSprites
         jsr   WaitVBL
         bra   LevelMainLoop
 
 UserIRQ
+        jsr   VerticalScrollMoveUp
         jsr   PalUpdateNow
         jsr   YVGM_MusicFrame
         jmp   vgc_update
