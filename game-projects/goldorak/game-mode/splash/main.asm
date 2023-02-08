@@ -32,7 +32,12 @@ UserIRQ
 * INCLUDES
 * ==============================================================================  
     INCLUDE "./game-mode/splash/ram-data.asm"
+    
+     ; bg images & sprites
     INCLUDE "./engine/graphics/codec/DecRLE00.asm"
+    INCLUDE "./engine/graphics/codec/zx0_mega.asm" 
+    INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"
+
     INCLUDE "./global/global-trailer-includes.asm"
     
     

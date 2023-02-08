@@ -119,7 +119,7 @@ Live
 @store  std   y_vel,u
         ; move and animate
 !       jsr   AnimateSprite
-        jsr   ObjectMove
+        jsr   ObjectMoveSync
         jsr   CheckRange
         jmp   DisplaySprite
 CheckRange

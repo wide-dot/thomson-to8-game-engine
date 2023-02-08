@@ -52,3 +52,13 @@ _SetImage_U MACRO
         ora   \4
         sta   render_flags,u
         ENDM    
+
+_SetPalette MACRO
+        ldd   \1
+        std   Pal_current
+        ENDM   
+
+_ShowPalette MACRO
+        clr   PalRefresh
+        jsr   PalUpdateNow
+        ENDM             
