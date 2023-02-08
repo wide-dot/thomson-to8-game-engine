@@ -16,6 +16,7 @@ OverlayMode equ 1
 
 * load object
         _NewManagedObject_U #ObjID_Player1
+        _NewManagedObject_U #ObjID_Cockpit
         _SetPalette #Pal_gamescreen
         _ShowPalette
 
@@ -30,7 +31,7 @@ OverlayMode equ 1
 
         lda   #0
         sta   VS_viewport_line_pos
-        lda   #160
+        lda   #190
         sta   VS_viewport_size
         jsr   VerticalScrollUpdateViewport
 
@@ -161,6 +162,9 @@ VS_cur_line equ *-1
    
         INCLUDE "./engine/graphics/sprite/sprite-overlay-pack.asm"
         INCLUDE "./engine/graphics/animation/AnimateSprite.asm"
+        INCLUDE "./engine/graphics/codec/DecRLE00.asm"
+        INCLUDE "./engine/graphics/codec/zx0_mega.asm" 
+        ;INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"
 
         INCLUDE "./global/global-trailer-includes.asm"
         
