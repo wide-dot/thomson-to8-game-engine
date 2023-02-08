@@ -13,10 +13,6 @@
     INCLUDE "./engine/joypad/InitJoypads.asm"
     INCLUDE "./engine/joypad/ReadJoypads.asm"
 
-    ; bg images & sprites
-    INCLUDE "./engine/graphics/codec/zx0_mega.asm" 
-    INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"
-
      ; sound
     INCLUDE "./engine/irq/Irq.asm"        
 

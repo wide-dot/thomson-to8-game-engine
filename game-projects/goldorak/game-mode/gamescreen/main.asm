@@ -1,26 +1,23 @@
-
-DO_NOT_WAIT_VBL equ 1
 OverlayMode equ 1
-SOUND_CARD_PROTOTYPE equ 1
-        INCLUDE "./engine/system/to8/memory-map.equ"
-        INCLUDE "./engine/constants.asm"
-        INCLUDE "./engine/macros.asm"
-        INCLUDE "./global/global-variables.asm"
+
+        INCLUDE "./global/global-preambule-includes.asm"
 
         org   $6100
-        jsr   InitGlobals
-        jsr   LoadAct
-        jsr   InitJoypads
+
+
+* ============================================================================== 
+* Init
+* ============================================================================== 
+        _GameModeInit
+        _MusicInit_SN76489 #Vgc_introSN,#vgc_stream_buffers,#MUSIC_LOOP ; initialize the SN76489 vgm player with a vgc data stream
+        _MusicInit_YM2413 #Vgc_introYM,#MUSIC_LOOP                      ; initialize the YM2413 player 
+        _MusicInit_IRQ #UserIRQ,#OUT_OF_SYNC_VBL,#Irq_one_frame         ; Setting IRQ for music
+    
 
 * load object
-        jsr   LoadObject_u
-        lda   #ObjID_Player1
-        sta   id,u    
-
-        ldd   #Pal_gamescreen
-        std   Pal_current
-        clr   PalRefresh
-        jsr   PalUpdateNow
+        _NewManagedObject_U #ObjID_Player1
+        _SetPalette #Pal_gamescreen
+        _ShowPalette
 
 * init scroll
         lda   #ObjID_scrollA
@@ -37,38 +34,16 @@ SOUND_CARD_PROTOTYPE equ 1
         sta   VS_viewport_size
         jsr   VerticalScrollUpdateViewport
 
-* init sound player NEW
-* initialize the SN76489 vgm player with a vgc data stream
-    ldd   #vgc_stream_buffers
-    ldx   #Vgc_introSN
-    * andcc #$fe ; clear carry (no loop)
-    orcc  #1 ; set carry (loop)
-    jsr   vgc_init
-    * init YM2413 music
-    ldx   #Vgc_introYM
-    * andcc #$fe ; clear carry (no loop)
-    orcc  #1 ; set carry (loop)
-    jsr   YVGM_PlayMusic
-
-* user irq
-        jsr   IrqInit
-        ldd   #UserIRQ
-        std   Irq_user_routine
-        lda   #255                     ; set sync out of display (VBL)
-        ldx   #Irq_one_frame
-        jsr   IrqSync
-        jsr   IrqOn 
 
 * ============================================================================== * Main Loop
 * ==============================================================================
 LevelMainLoop
-        jsr   WaitVBL
-        jsr   LoadGameMode
         jsr   ReadJoypads
         jsr   RunObjects
         jsr   VerticalScroll        
         jsr   VerticalScrollMoveUp        
         jsr   BuildSprites
+        jsr   WaitVBL
         bra   LevelMainLoop
 
 UserIRQ
@@ -183,42 +158,9 @@ VS_cur_line equ *-1
         
 * ============================================================================== * Routines
 * ==============================================================================
-        INCLUDE "./engine/InitGlobals.asm"
-        INCLUDE "./engine/ram/BankSwitch.asm"
-        INCLUDE "./engine/graphics/vbl/WaitVBL.asm"
-        INCLUDE "./engine/palette/PalUpdateNow.asm"
-        INCLUDE "./engine/irq/Irq.asm"
-
-* gamemode swap
-        INCLUDE "./engine/level-management/LoadGameMode.asm"
-
-* joystick
-        INCLUDE "./engine/joypad/InitJoypads.asm"
-        INCLUDE "./engine/joypad/ReadJoypads.asm"
-
-* object management
-        INCLUDE "./engine/object-management/RunObjects.asm"
-        INCLUDE "./engine/object-management/ObjectMove.asm"
-
-* animation & image
+   
+        INCLUDE "./engine/graphics/sprite/sprite-overlay-pack.asm"
         INCLUDE "./engine/graphics/animation/AnimateSprite.asm"
 
-* sprite
-        INCLUDE "./engine/ram/ClearDataMemory.asm"
-        INCLUDE "./engine/graphics/sprite/sprite-overlay-pack.asm"
-
-* vgc player
-        INCLUDE "./engine/sound/vgc/lib/vgcplayer.h.asm"
-        INCLUDE "./engine/sound/vgc/lib/vgcplayer.asm"
-        INCLUDE "./engine/sound/YM2413vgm.asm"
-* reserve space for the vgm decode buffers (8x256 = 2Kb)
-        ALIGN 256
-vgc_stream_buffers
-        fill 0,256
-        fill 0,256
-        fill 0,256
-        fill 0,256
-        fill 0,256
-        fill 0,256
-        fill 0,256
-        fill 0,256
+        INCLUDE "./global/global-trailer-includes.asm"
+        
