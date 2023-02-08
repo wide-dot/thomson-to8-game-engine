@@ -44,6 +44,11 @@ Init
         sta   AABB.p,x
         _ldd  3,1                      ; set hitbox xy radius
         std   AABB.rx,x
+
+        ldd   y_pos,u
+        subd  glb_camera_y_pos
+        stb   AABB.cy,x
+
         inc   routine,u
 
 Live
@@ -64,9 +69,7 @@ Live
         leax  AABB_0,u
         jsr   RemovePlayerAABB
         jmp   DeleteObject
-!       ldd   y_pos,u
-        subd  glb_camera_y_pos
-        stb   AABB.cy,x
+!       
         jmp   DisplaySprite
 AlreadyDeleted
         rts

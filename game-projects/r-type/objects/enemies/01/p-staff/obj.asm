@@ -7,8 +7,10 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./engine/collision/struct_AABB.equ"
 
-mouvement equ ext_variables ; current mouvement
+AABB_0    equ ext_variables   ; AABB struct (9 bytes)
+mouvement equ ext_variables+9 ; current mouvement
 mouvement_max equ 180   
 
 Onject
@@ -32,6 +34,14 @@ Init
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
+
+        leax  AABB_0,u
+        jsr   AddAiAABB
+        lda   #8                        ; set damage potential for this hitbox
+        sta   AABB.p,x
+        _ldd  6,13                      ; set hitbox xy radius
+        std   AABB.rx,x
+
         ldd   #mouvement_max
         std   mouvement,u
         ldd   #-$30
@@ -79,13 +89,39 @@ SkipRocketShootLeft
 CheckEOL
         ldd   x_pos,u
         cmpd  glb_camera_x_pos
-        ble   >
-        jsr   AnimateSpriteSync
+        ble   @delete
         jsr   ObjectMoveSync
+        leax  AABB_0,u
+        lda   AABB.p,x
+        beq   @destroy                  ; was killed  
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB.cx,x
+        addd  #5                       ; add x radius
+        bmi   @delete                  ; branch if out of screen's left
+        ldd   y_pos,u
+        subd  glb_camera_y_pos
+        stb   AABB.cy,x
+        jsr   AnimateSpriteSync
         jmp   DisplaySprite
-
-
-!       jmp   DeleteObject
+@destroy 
+        jsr   LoadObject_x ; make then die early ... to be removed
+        beq   @delete
+        lda   #ObjID_enemiesblastsmall
+        sta   id,x
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
+        ldd   x_vel,u
+        std   x_vel,x
+        clr   y_vel,x
+@delete
+        lda   #4
+        sta   routine,u      
+        leax  AABB_0,u
+        jsr   RemoveAiAABB
+        jmp   DeleteObject
 
 WalkRight
 
@@ -113,7 +149,7 @@ SkipRocketShootRight
         ldd   mouvement,u
         subd  Vint_Main_runcount_w
         std   mouvement,u
-        bpl   CheckEOL
+        lbpl   CheckEOL
         ldd   #Ani_pstaff_walk_left
         std   anim,u
         ldd   #mouvement_max
@@ -152,3 +188,6 @@ FireRocketRight
         subd  #8
         std   y_pos,x
 !       rts
+
+AlreadyDeleted
+        rts
