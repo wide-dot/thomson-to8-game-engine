@@ -7,6 +7,7 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
 
 AABB_0                  equ ext_variables   ; AABB struct (9 bytes)
@@ -41,8 +42,9 @@ Scant_init
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
 
+        _Collision_AddAABB AABB_0,AABB_list_ennemy
+        
         leax  AABB_0,u
-        jsr   AddAiAABB
         lda   #24                      ; set damage potential for this hitbox
         sta   AABB.p,x
         _ldd  12,25                    ; set hitbox xy radius
@@ -87,8 +89,7 @@ Scant_live
         clr   y_vel,x
 @delete lda   #4
         sta   routine,u      
-        leax  AABB_0,u
-        jsr   RemoveAiAABB
+        _Collision_RemoveAABB AABB_0,AABB_list_ennemy
         jmp   DeleteObject
 AlreadyDeleted
         rts

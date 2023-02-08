@@ -7,6 +7,7 @@ ext_variables_size           equ 20
 * ===========================================================================
 nb_dynamic_objects           equ 64
 nb_graphical_objects         equ 64 * max 64 total
+
 * ===========================================================================
 * Object Status Table - OST
 * ===========================================================================
@@ -14,3 +15,11 @@ player1                      equ dp
 
 Dynamic_Object_RAM           fill  0,(nb_dynamic_objects)*object_size
 Dynamic_Object_RAM_End
+
+* ===========================================================================
+* Collision lists
+* ===========================================================================
+AABB_list_friend             fdb   0,0
+AABB_list_ennemy             fdb   0,0
+AABB_list_player             fdb   0,0
+AABB_list_bonus              fdb   0,0
