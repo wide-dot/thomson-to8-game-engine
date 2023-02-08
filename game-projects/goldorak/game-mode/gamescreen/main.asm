@@ -32,7 +32,7 @@ SOUND_CARD_PROTOTYPE equ 1
 
         lda   #0
         sta   VS_viewport_line_pos
-        lda   #192
+        lda   #191
         sta   VS_viewport_size
         jsr   VerticalScrollUpdateViewport
 
@@ -81,7 +81,7 @@ UserIRQ
 
 OPCODE_JMP_E equ $7E
 VS_line_size equ 75
-VS_buffer_size equ 201          ; nb lines in buffer is 201 (0-200 to fit JMP return)
+VS_buffer_size equ 192          ; nb lines in buffer is 201 (0-200 to fit JMP return)
 
 VS_ObjIDA fcb 0
 VS_ObjIDB fcb 0
