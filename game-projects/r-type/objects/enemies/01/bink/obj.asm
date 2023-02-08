@@ -14,6 +14,11 @@
 ;             2 -> 60% angle (from horizon)
 ;             3 -> vertical
 ;       Bit 5 : 0 => kill tracking OFF, 1 => kill tracking ON
+;       Bit 6,7 : 
+;                0 => Walks left 
+;                1 => Walks right
+;                2 => Falls left
+;                3 => Falls right
 ;
 ; ---------------------------------------------------------------------------
 
@@ -34,7 +39,8 @@ Object
 
 Routines
         fdb   Init
-        fdb   Live
+        fdb   LiveWalk
+        fdb   LiveFall
         fdb   AlreadyDeleted
 
 Init
@@ -48,7 +54,7 @@ Init
 
         leax  AABB_0,u
         jsr   AddAiAABB
-        lda   #1                       ; set damage potential for this hitbox
+        lda   #1                        ; set damage potential for this hitbox
         sta   AABB.p,x
         _ldd  6,13                      ; set hitbox xy radius
         std   AABB.rx,x
@@ -58,10 +64,20 @@ Init
         inc   routine,u
         lda   subtype,u
 
+        bita  #128                      ; Walks or falls ?
+        beq   >
+        inc   routine,u                 ; Falls
+        ldx   #Ani_bink_falls_left
+        stx   anim,u
+        clr   x_vel,u
+        ldx   #$100
+        stx   y_vel,u
+
+!
         bita  #$01 ; Shoot or no shoot
         bne   >
         clr   shootnoshoot,u ; No shoot, can skip the end about shooting details
-        bra   Live
+        bra   Object
 !
         ldb   #1
         stb   shootnoshoot,u
@@ -86,9 +102,21 @@ Init
         asra
         anda  #7
         sta   shootdirection,u
+        bra   Object
 
-
-Live
+LiveFall
+        ldx   Vint_Main_runcount_w
+        stx   x_vel,u
+        ldx   y_pos,u
+        cmpx  #136
+        ble   >
+        ldx   #136
+        stx   y_pos,u
+        clr   y_vel,u
+        ldx   #Ani_bink_stands_left
+        stx   anim,u
+!
+LiveWalk
         lda   shootnoshoot,u
         beq   @noshoot
         ldd   shoottiming,u
@@ -137,7 +165,10 @@ Live
         ldd   x_vel,u
         std   x_vel,x
         clr   y_vel,x
-@delete inc   routine,u      
+@delete 
+        lda   #03
+        sta   routine,u     
+
         leax  AABB_0,u
         jsr   RemoveAiAABB
         jmp   DeleteObject
