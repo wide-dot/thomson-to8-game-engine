@@ -5,6 +5,8 @@
     INCLUDE "./engine/palette/PalUpdateNow.asm"
     INCLUDE "./engine/ram/ClearDataMemory.asm"
 
+    INCLUDE "./engine/level-management/LoadGameMode.asm"
+
     ; object management
     INCLUDE "./engine/object-management/RunObjects.asm"
     INCLUDE "./engine/object-management/ObjectMoveSync.asm"
