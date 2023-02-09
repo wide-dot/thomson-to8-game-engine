@@ -10,7 +10,7 @@ Init
         _SetImage_U #Img_Background_01,#XY_CENTERED_FULL_IMAGE,#LAYER_BACKGROUND,#render_overlay_mask
         inc   routine,u
 Display_01
-        jsr   ReadJoypads
+        ;jsr   ReadJoypads
         ldb   Fire_Press
         bitb  #c1_button_A_mask
         beq   >

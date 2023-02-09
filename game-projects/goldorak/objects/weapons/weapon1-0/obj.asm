@@ -25,10 +25,10 @@ Init
         inc   routine,u
 Live
         ldd   y_pos,u
-        subd  #14
+        subd  #4
         std   y_pos,u
         subd  glb_camera_y_pos
-        cmpd  #15 ; img height/2
+        cmpd  #8 ; img height/2
         bge   Anim
         jmp   DeleteObject
 Anim

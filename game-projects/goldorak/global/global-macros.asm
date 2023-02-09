@@ -53,6 +53,11 @@ _SetImage_U MACRO
         sta   render_flags,u
         ENDM    
 
+_UpdateImage_U MACRO
+        ldd   \1   
+        std   image_set,u    
+        ENDM            
+
 _SetPalette MACRO
         ldd   \1
         std   Pal_current

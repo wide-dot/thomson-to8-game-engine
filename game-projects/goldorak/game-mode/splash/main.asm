@@ -15,7 +15,10 @@
 * MainLoop
 * ==============================================================================
 MainLoop
+    jsr   LoadGameMode
+    jsr   ReadJoypads
     jsr   RunObjects
+    jsr   DoChangeGameMode    
     jsr   CheckSpritesRefresh
     jsr   EraseSprites
     jsr   UnsetDisplayPriority
@@ -23,6 +26,15 @@ MainLoop
     jsr   WaitVBL
     bra   MainLoop
 
+DoChangeGameMode
+        lda ChangeGameMode
+        beq @exit
+        lda #GmID_gamescreen
+        sta GameMode
+        jsr IrqOff
+        jsr sn_reset
+        jsr YVGM_SilenceAll          
+@exit   rts
 UserIRQ
     jsr   PalUpdateNow
     jsr   YVGM_MusicFrame
@@ -32,6 +44,8 @@ UserIRQ
 * INCLUDES
 * ==============================================================================  
     INCLUDE "./game-mode/splash/ram-data.asm"
+
+    INCLUDE "./engine/level-management/LoadGameMode.asm"
     
      ; bg images & sprites
     INCLUDE "./engine/graphics/codec/DecRLE00.asm"
