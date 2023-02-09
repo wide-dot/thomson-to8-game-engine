@@ -18,6 +18,7 @@ routines
                 fdb   Vignette_02
                 fdb   Vignette_02
                 fdb   Bulle_02
+                fdb   Final
 
 
 Vignette_01
@@ -33,4 +34,10 @@ Vignette_02
 
 Bulle_02
                 _SetImage_U #Img_Bulle_02,#$6398,#1,#render_overlay_mask
-                jmp DisplaySprite
+                INC routine,U
+Final           ldb Fire_Press                
+                bne >
+                bra @end
+!               lda #$FF
+                sta ChangeGameMode
+@end            jmp DisplaySprite

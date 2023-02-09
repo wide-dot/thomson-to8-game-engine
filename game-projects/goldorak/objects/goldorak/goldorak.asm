@@ -1,39 +1,32 @@
-; ---------------------------------------------------------------------------
-; Object - Player
-;
-; input REG : [u] pointer to Object Status Table (OST)
-; ---------
-;
-; ---------------------------------------------------------------------------
-        INCLUDE "./engine/macros.asm"
+
+           INCLUDE "./global/global-object-preambule-includes.asm"
+
 ply_acceleration equ $A0
 ply_deceleration equ $80
 ply_max_velocityP equ $300
 ply_max_velocityN equ -$300
-ply_width        equ 8
-ply_height       equ 15
-Player
+ply_width        equ 16
+ply_height       equ 32
+start
         lda   routine,u
         asla
-        ldx   #Routines
+        ldx   #routines
         jmp   [a,x]
-Routines
+routines
         fdb   Init
         fdb   Live
 Init
-        ldd   #Ani_Player1
-        std   anim,u
-        ldb   #3
-        stb   priority,u
+        _SetImage_U #Img_Goldorak_Normal,#XY_CENTERED_FULL_IMAGE,#3,#render_playfieldcoord_mask
         ldd   #80
         std   x_pos,u
         ldd   #100
         std   y_pos,u
-        lda   render_flags,u
-        ora   #render_playfieldcoord_mask
-        sta   render_flags,u
         inc   routine,u
-Live
+Live    
+        ; testing ANY  ---------------------------------
+        lda   Dpad_Held
+        beq   @testFire ; aucun mouvement du joystick ... on skip tout
+        ; testing LEFT ---------------------------------
         lda   Dpad_Held
         anda  #c1_button_left_mask
         beq   @testRight
@@ -42,10 +35,9 @@ Live
             cmpd #ply_max_velocityN                  ;max vel
             ble >
         std   x_vel,u
-!       ldd   #Ani_Player1_left
-        std   anim,u
-        bra   @testUp
-@testRight
+!       _UpdateImage_U #Img_Goldorak_Left
+        bra   @testUp ; on ne test pas le droit on va directement à up
+@testRight ; testing RIGHT -----------------------------
         lda   Dpad_Held
         anda  #c1_button_right_mask
         beq   @testUp
@@ -54,9 +46,8 @@ Live
             cmpd #ply_max_velocityP                  ;max vel
             bge >
         std   x_vel,u
-!       ldd   #Ani_Player1_right
-        std   anim,u
-@testUp
+!       _UpdateImage_U #Img_Goldorak_Right
+@testUp ; testing UP -----------------------------------
         lda   Dpad_Held
         anda  #c1_button_up_mask
         beq   @testDown
@@ -66,7 +57,7 @@ Live
             ble >
         std   y_vel,u
 !       bra   @testFire
-@testDown
+@testDown ; testing DOWN -----------------------------------
         lda   Dpad_Held
         anda  #c1_button_down_mask
         beq   @testFire
@@ -92,8 +83,7 @@ Live
 !       ldd   Dpad_Held
         anda  #c1_button_left_mask|c1_button_right_mask ; check if not moving left or right
         bne   >
-        ldd   #Ani_Player1             ; set normal image
-        std   anim,u
+        _UpdateImage_U #Img_Goldorak_Normal
         ldd   x_vel,u                  ; decelerate on x axis
         bmi   @neg
         subd  #ply_deceleration
@@ -103,8 +93,8 @@ Live
         bmi   @store
 @cap    ldd   #0
 @store  std   x_vel,u
-
         ; decelerate player on y
+
 !       ldd   Dpad_Held
         anda  #c1_button_up_mask|c1_button_down_mask ; check if not moving up or down
         bne   >
@@ -117,9 +107,7 @@ Live
         bmi   @store
 @cap    ldd   #0
 @store  std   y_vel,u
-        ; move and animate
-!       jsr   AnimateSprite
-        jsr   ObjectMoveSync
+!       jsr   ObjectMoveSync
         jsr   CheckRange
         jmp   DisplaySprite
 CheckRange

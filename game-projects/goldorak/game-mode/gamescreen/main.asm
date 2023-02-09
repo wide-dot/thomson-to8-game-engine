@@ -9,13 +9,13 @@ OverlayMode equ 1
 * Init
 * ============================================================================== 
         _GameModeInit
-        _MusicInit_SN76489 #Vgc_introSN,#vgc_stream_buffers,#MUSIC_LOOP ; initialize the SN76489 vgm player with a vgc data stream
-        _MusicInit_YM2413 #Vgc_introYM,#MUSIC_LOOP                      ; initialize the YM2413 player 
+        _MusicInit_SN76489 #Vgc_ingameSN,#vgc_stream_buffers,#MUSIC_LOOP ; initialize the SN76489 vgm player with a vgc data stream
+        _MusicInit_YM2413 #Vgc_ingameYM,#MUSIC_LOOP                      ; initialize the YM2413 player 
         _MusicInit_IRQ #UserIRQ,#OUT_OF_SYNC_VBL,#Irq_one_frame         ; Setting IRQ for music
     
 
 * load object
-        _NewManagedObject_U #ObjID_Player1
+        _NewManagedObject_U #ObjID_Goldorak
         _NewManagedObject_U #ObjID_Cockpit
         _SetPalette #Pal_gamescreen
         _ShowPalette
@@ -26,7 +26,7 @@ OverlayMode equ 1
         lda   #ObjID_scrollB
         sta   VS_ObjIDB
 
-        lda   #1
+        lda   #2
         sta   VS_scroll_step
 
         lda   #0
@@ -41,13 +41,13 @@ OverlayMode equ 1
 LevelMainLoop
         jsr   ReadJoypads
         jsr   RunObjects
+        jsr   VerticalScrollMoveUp
         jsr   VerticalScroll                        
-        jsr   BuildSprites
+        jsr   BuildSprites        
         jsr   WaitVBL
         bra   LevelMainLoop
 
-UserIRQ
-        jsr   VerticalScrollMoveUp
+UserIRQ        
         jsr   PalUpdateNow
         jsr   YVGM_MusicFrame
         jmp   vgc_update
