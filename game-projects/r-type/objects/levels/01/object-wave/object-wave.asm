@@ -9,8 +9,6 @@ enemies_pstaff   equ 14
 ; x_pos to instanciate object,object id,subtype,x_pos,y_pos
 
 
-
-
 ; First pata-pata wave
 wave_patapata_01       equ 252
 wave_patapata_01_space equ 4
@@ -125,17 +123,24 @@ wave_bug_03_space equ 2
 
 
 ; Cancer wave
-wave_cancer_01  equ 728
+wave_cancer_01  equ 748
         fdb  wave_cancer_01-140,(ObjID_cancer*256)+0,wave_cancer_01+14,40
         fdb  wave_cancer_01-140,(ObjID_cancer*256)+1,wave_cancer_01+14,120
-        fdb  wave_cancer_01-140+7,(ObjID_cancer*256)+2,wave_cancer_01+14+7,50
-        fdb  wave_cancer_01-140+7,(ObjID_cancer*256)+3,wave_cancer_01+14+7,110
-        fdb  wave_cancer_01-140+14,(ObjID_cancer*256)+4,wave_cancer_01+14+14,100
+        fdb  wave_cancer_01-140+7,(ObjID_cancer*256)+0,wave_cancer_01+14+7,50
+        fdb  wave_cancer_01-140+7,(ObjID_cancer*256)+1,wave_cancer_01+14+7,110
+        fdb  wave_cancer_01-140+14,(ObjID_cancer*256)+1,wave_cancer_01+14+14,100
         fdb  wave_cancer_01-140+14,(ObjID_cancer*256)+0,wave_cancer_01+14+14,60
-        fdb  wave_cancer_01-140+21,(ObjID_cancer*256)+1,wave_cancer_01+14+21,90
-        fdb  wave_cancer_01-140+21,(ObjID_cancer*256)+2,wave_cancer_01+14+21,70
-        fdb  wave_cancer_01-140+28,(ObjID_cancer*256)+3,wave_cancer_01+14+28,80
-        fdb  wave_cancer_01-140+35,(ObjID_cancer*256)+4,wave_cancer_01+14+28,120
+        fdb  wave_cancer_01-140+21,(ObjID_cancer*256)+0,wave_cancer_01+14+21,90
+        fdb  wave_cancer_01-140+21,(ObjID_cancer*256)+1,wave_cancer_01+14+21,70
+        fdb  wave_cancer_01-140+28,(ObjID_cancer*256)+0,wave_cancer_01+14+28,80
+        fdb  wave_cancer_01-140+28,(ObjID_cancer*256)+1,wave_cancer_01+14+28,60
+        fdb  wave_cancer_01-140+35,(ObjID_cancer*256)+0,wave_cancer_01+14+35,120
+        fdb  wave_cancer_01-140+40,(ObjID_cancer*256)+1,wave_cancer_01+14+40,100
+        fdb  wave_cancer_01-140+40,(ObjID_cancer*256)+0,wave_cancer_01+14+40,80
+        fdb  wave_cancer_01-140+42,(ObjID_cancer*256)+1,wave_cancer_01+14+42,70
+        fdb  wave_cancer_01-140+45,(ObjID_cancer*256)+1,wave_cancer_01+14+45,60
+        fdb  wave_cancer_01-140+45,(ObjID_cancer*256)+0,wave_cancer_01+14+45,110
+        fdb  wave_cancer_01-140+47,(ObjID_cancer*256)+1,wave_cancer_01+14+47,30
 
 
 ; Solo bink #5
@@ -154,6 +159,8 @@ wave_blasters_01      equ 810
 
         fdb wave_blasters_01-140+140,(ObjID_blaster*256)+220,wave_blasters_01+20+140,20
         fdb wave_blasters_01-140+154,(ObjID_blaster*256)+250,wave_blasters_01+20+154,20
+
+
 
 
 ; P-Staff #2

@@ -4,13 +4,9 @@
 ; input REG : [u] pointer to Object Status Table (OST)
 ; ---------
 ;
-; Patapata subtype :
-;       
-;       Bit 0,1 :
-;               0 => Track on player 1
-;               1 => Go up for a while then track player 1
-;               2 => Go down for a while then track player 1
-;       Bit 2 : 0 => Slower, 1 => Faster (horizontal speed)
+; Cancer subtype :
+;
+;      bit 0 : 0 => Starts up, 1 => Starts down
 ;
 ; ---------------------------------------------------------------------------
 
@@ -18,10 +14,12 @@
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
 
-AABB_0            equ ext_variables   ; AABB struct (9 bytes)
-shoottiming       equ ext_variables+9
-shootdirection    equ ext_variables+11
-deviation         equ ext_variables+12
+AABB_0                  equ ext_variables   ; AABB struct (9 bytes)
+shoottiming             equ ext_variables+9
+shootdirection          equ ext_variables+11
+wanderdirection         equ ext_variables+12
+verticalspeedpos        equ $50
+verticalspeedneg        equ $-50
 
 
 
@@ -33,13 +31,12 @@ Object
 
 Routines
         fdb   Init
-        fdb   LiveLeft
         fdb   LiveUpOrDown
+        fdb   LiveLeft
+        fdb   LiveRight
         fdb   AlreadyDeleted
 
 Init
-        ldd   #Ani_cancerleft
-        std   anim,u
         ldb   #6
         stb   priority,u
         lda   render_flags,u
@@ -59,44 +56,77 @@ Init
         lda   #5
         sta   shootdirection,u
 
-        lda   subtype,u       
+        inc   routine,u     
 
-        ldx   #$-20                         
-        bita  #04                       ; Horizontal speed ... fast or slow
-        bne   >
-        ldx   #$-10                     ; Sloooooooow
-!
-        stx   x_vel,u
-
-        inc   routine,u
-        anda  #03
-        beq   LiveLeft
-
-        ldb   #60
-        stb   deviation,u
-        inc   routine,u
-
-        ldx   #$-30
-        bita  #$2
-        beq   >
-        ldx   #$30
-!
-LiveUpOrDown
-        dec   deviation,u
-        bpl   >
-        lda   #01
-        sta   routine,u
-
-
-LiveLeft
-        ldx   #$-30
-        ldy   y_pos,u
-        cmpy  player1+y_pos
+        ldy   #Ani_cancerleft
+        ldx   #$-10
+        ldd   x_pos,u
+        cmpd  player1+x_pos
         bgt   >
+        ldy   #Ani_cancerright
         ldx   #$30
+!
+        sty   anim,u
+        stx   x_vel,u
+        lda   subtype,u  
+        ldx   #verticalspeedneg
+        bita  #$1
+        beq   >
+        ldx   #verticalspeedpos
 !
         stx   y_vel,u
 
+LiveUpOrDown
+
+        ldd   x_pos,u
+        subd  #70                      
+        cmpd  player1+x_pos
+        bgt   >
+        inc   routine,u                 ; Getting close to player1, let's enter tracking mode
+        bra   Live
+!
+        ldd   y_pos,u
+        cmpd  #28
+        bge   >                         
+        ldd   #$30                      ; Too high, let's bounce it
+        std   y_vel,u
+        jmp   @noshoot
+!
+        cmpd  #130
+        lble  @noshoot
+        ldd   #$-30                     ; Too low, let's bounce it
+        std   y_vel,u
+        jmp   @noshoot
+LiveLeft
+        ldd   x_pos,u
+        cmpd  player1+x_pos
+        bgt   Live
+        ldy   #Ani_cancerright
+        ldx   #$40        
+        sty   anim,u
+        stx   x_vel,u
+        lda   #3
+        sta   routine,u
+        bra   Live
+LiveRight
+        ldd   x_pos,u
+        cmpd  player1+x_pos
+        blt   Live
+        ldy   #Ani_cancerleft
+        ldx   #$-10
+        sty   anim,u
+        stx   x_vel,u
+        lda   #2
+        sta   routine,u
+        bra   Live
+Live
+        ldx   #verticalspeedneg
+        ldy   y_pos,u
+        cmpy  player1+y_pos
+        bgt   >
+        ldx   #verticalspeedpos
+!
+        stx   y_vel,u
         ldd   shoottiming,u
         subd  Vint_Main_runcount_w
         std   shoottiming,u
@@ -145,7 +175,7 @@ LiveLeft
         std   x_vel,x
         clr   y_vel,x
 @delete 
-        lda   #3
+        lda   #4
         sta   routine,u      
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
         jmp   DeleteObject
