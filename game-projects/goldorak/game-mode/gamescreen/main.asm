@@ -8,7 +8,7 @@ OverlayMode equ 1
 * ============================================================================== 
 * Init
 * ============================================================================== 
-        _GameModeInit
+        _GameModeInit #GmID_gamescreen
         _MusicInit_SN76489 #Vgc_ingameSN,#vgc_stream_buffers,#MUSIC_LOOP ; initialize the SN76489 vgm player with a vgc data stream
         _MusicInit_YM2413 #Vgc_ingameYM,#MUSIC_LOOP                      ; initialize the YM2413 player 
         _MusicInit_IRQ #UserIRQ,#OUT_OF_SYNC_VBL,#Irq_one_frame         ; Setting IRQ for music

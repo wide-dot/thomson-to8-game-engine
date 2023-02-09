@@ -5,7 +5,7 @@
 * ============================================================================== 
 * Init
 * ============================================================================== 
-    _GameModeInit
+    _GameModeInit #GmID_splash
     _MusicInit_SN76489 #Vgc_introSN,#vgc_stream_buffers,#MUSIC_LOOP ; initialize the SN76489 vgm player with a vgc data stream
     _MusicInit_YM2413 #Vgc_introYM,#MUSIC_LOOP                      ; initialize the YM2413 player 
     _MusicInit_IRQ #UserIRQ,#OUT_OF_SYNC_VBL,#Irq_one_frame         ; Setting IRQ for music
@@ -45,8 +45,6 @@ UserIRQ
 * ==============================================================================  
     INCLUDE "./game-mode/splash/ram-data.asm"
 
-    INCLUDE "./engine/level-management/LoadGameMode.asm"
-    
      ; bg images & sprites
     INCLUDE "./engine/graphics/codec/DecRLE00.asm"
     INCLUDE "./engine/graphics/codec/zx0_mega.asm" 

@@ -29,6 +29,8 @@ _MusicInit_IRQ    MACRO
     ENDM
 
 _GameModeInit MACRO
+    lda   \1
+    sta   glb_Cur_Game_Mode
     jsr   InitGlobals
     jsr   LoadAct
     jsr   InitJoypads
