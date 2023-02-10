@@ -8,8 +8,19 @@ enemies_pstaff   equ 14
 
 ; x_pos to instanciate object,object id,subtype,x_pos,y_pos
 
+tilesizex        equ 28
+tilesizey        equ 14
 
-        fdb 10,(ObjID_collision*256),168,140
+
+
+        ;fdb 10,(ObjID_collision*256),165+tilesizex*00,161-tilesizey*2
+        ;fdb 10,(ObjID_collision*256),165+tilesizex*00,161-tilesizey*1        
+        ;fdb 10,(ObjID_collision*256),165+tilesizex*01,161-tilesizey*1
+
+; Shell wave
+wave_shell        equ 140
+wave_shell_width  equ 8
+        fdb   wave_shell-140,(ObjID_shell*256)+00,186,139
 
 
 
@@ -32,6 +43,8 @@ wave_patapata_02_space equ 4
 
 ; solo bink
         fdb   304-140,(ObjID_bink*256)+55,332+enemies_bink,140
+
+        ;fdb 10,(ObjID_collision*256),165+tilesizex*07,161-tilesizey*1
 
 ; First bug wave
 wave_bug_01       equ 308
@@ -59,6 +72,10 @@ wave_patapata_03_space equ 4
         fdb   wave_patapata_03-140+wave_patapata_03_space*1,(ObjID_patapata*256)+26,wave_patapata_03+enemies_patapata+wave_patapata_03_space*1,100
         fdb   wave_patapata_03-140+wave_patapata_03_space*2,(ObjID_patapata*256)+27,wave_patapata_03+enemies_patapata+wave_patapata_03_space*2,100
         fdb   wave_patapata_03-140+wave_patapata_03_space*3,(ObjID_patapata*256)+26,wave_patapata_03+enemies_patapata+wave_patapata_03_space*4,110   
+
+
+        ;fdb 10,(ObjID_collision*256),165+tilesizex*09,161-tilesizey*1
+        ;fdb 10,(ObjID_collision*256),165+tilesizex*09,161-tilesizey*2
 
 ; Fourth pata-pata wave
 wave_patapata_04       equ 392
@@ -172,9 +189,9 @@ wave_blasters_01      equ 810
 
 
 ; Shell wave
-wave_shell        equ 982
-wave_shell_width  equ 8
-        fdb   wave_shell-140-8,(ObjID_shell*256)+00,1028,139
+;wave_shell        equ 982
+;wave_shell_width  equ 8
+ ;       fdb   wave_shell-140-8,(ObjID_shell*256)+00,1028,139
 
         fdb   -1 ; end marker
 

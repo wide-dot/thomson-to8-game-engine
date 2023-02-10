@@ -40,8 +40,12 @@ Init
         leax  AABB_0,u
         lda   #255                      ; set damage potential for this hitbox
         sta   AABB.p,x
-        _ldd  14,7                      ; set hitbox xy radius
+        _ldd  14,5                      ; set hitbox xy radius
         std   AABB.rx,x
+        ldd   y_pos,u
+        stb   AABB.cy,x
+
+
 Live
         jsr   ObjectMoveSync
 	leax  AABB_0,u

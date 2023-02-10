@@ -6,13 +6,20 @@
 ;
 ; ---------------------------------------------------------------------------
 
-        INCLUDE "./engine/macros.asm"
 
-angle      equ  ext_variables   ; 8.8
-child_ptr  equ  ext_variables+2 ; 16
+        INCLUDE "./engine/macros.asm"
+        INCLUDE "./engine/collision/macros.asm"
+        INCLUDE "./engine/collision/struct_AABB.equ"
+
+AABB_0     equ  ext_variables     ; AABB struct (9 bytes)
+angle      equ  ext_variables+9   ; 8.8
+child_ptr  equ  ext_variables+11  ; 16
+son_ptr    equ  ext_variables+13
+dad_ptr    equ  ext_variables+15
 angle_step equ 16
 
 ; child offsets
+
 parent         equ  ext_variables
 old_pos_0      equ  ext_variables+2
 old_pos_1      equ  ext_variables+4
@@ -45,6 +52,14 @@ CreateChilds
         beq   @nomore
         stx   parent,u
         stu   child_ptr,x
+        ldy   #0
+@dad    equ   *-2
+        sty   dad_ptr,x                ; Child declares its parent
+        cmpy  #0
+        beq   >                        ; Child has no parent, no need to declare itself
+        stx   son_ptr,y                ; Child declares itself to its parent
+!
+        stx   @dad                     ; Save current pointer for next child to declare its parent
         ; shell object
         lda   #ObjID_shell
         sta   id,x
@@ -80,7 +95,17 @@ Init
         lda   render_flags,u
         ora   #render_playfieldcoord_mask|render_overlay_mask
         sta   render_flags,u
-        tst   subtype,u
+
+        _Collision_AddAABB AABB_0,AABB_list_ennemy
+        
+        leax  AABB_0,u
+        lda   #255                     ; set damage potential for this hitbox
+        sta   AABB.p,x
+        _ldd  6,16                     ; set hitbox xy radius
+        std   AABB.rx,x
+
+
+        lda   subtype,u
         beq   >
         lda   #3
         sta   routine,u
@@ -133,22 +158,32 @@ LiveContinue
         ldb   angle,u
         ldb   b,x
         sex
-        addd  #1032         ; x center of circle
+        addd  #190   ; #1032         ; x center of circle
         std   x_pos,u
 
+        leax  AABB_0,u
         addd  #55+8         ; circle 2*x_radius + max sprite radius in any positions
         cmpd  glb_camera_x_pos
         ble   Delete
+        subd  glb_camera_x_pos
+        subd  #55+8
+        stb   AABB.cx,x
 
-        ldx   #YPositions
+        ldy   #YPositions
         ldb   angle,u
-        ldb   b,x
+        ldb   b,y
         sex
         addd  #84           ; y center of circle
         std   y_pos,u
+        subd  glb_camera_y_pos
+        stb   AABB.cy,x
+
+
+
         jmp   DisplaySprite
 
 Delete
+        _Collision_RemoveAABB AABB_0,AABB_list_ennemy
         ldx   child_ptr,u
         jsr   DeleteObject_x ; destroy child object
         jmp   DeleteObject
