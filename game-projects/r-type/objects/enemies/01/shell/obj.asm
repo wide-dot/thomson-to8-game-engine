@@ -55,7 +55,6 @@ CreateChilds
         ldy   #0
 @dad    equ   *-2
         sty   dad_ptr,x                ; Child declares its parent
-        cmpy  #0
         beq   >                        ; Child has no parent, no need to declare itself
         stx   son_ptr,y                ; Child declares itself to its parent
 !
