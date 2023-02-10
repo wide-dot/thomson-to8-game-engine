@@ -15,6 +15,8 @@ MainCharacter                 equ dp
 Dynamic_Object_RAM            fill  0,(nb_dynamic_objects)*object_size
 Dynamic_Object_RAM_End
 
+Obj_PaletteFade FDB $0000
+
 RAM_A_COCKPIT
         INCLUDEBIN "./game-mode/gamescreen/image/goldorak-cockpit.1.0.bin"
 RAM_B_COCKPIT

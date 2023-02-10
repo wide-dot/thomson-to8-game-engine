@@ -39,7 +39,7 @@
 ;*******************************************************************************   
 
         INCLUDE "./engine/macros.asm"   
-        INCLUDE "./objects/engine/sfx/palette-fade/palette-fade.idx"
+        INCLUDE "./objects/palette-fade/palette-fade.idx"
 
 PaletteFade
         lda   routine,u
@@ -49,11 +49,12 @@ PaletteFade
  
 PaletteFade_Routines
         fdb   PaletteFade_Init
+        fdb   PaletteFade_Wait
         fdb   PaletteFade_Main
  
 PaletteFade_Init
         inc   routine,u
-        ldd   #$100F    
+        ldd   #$FF0F    
         sta   _cycles,u
         stb   _mask,u
         
@@ -93,7 +94,13 @@ PaletteFade_Init
         std   28,x
         ldd   30,y
         std   30,x                                                                                                                     
-                                                 
+PaletteFade_Wait
+        ldd   Vint_runcount
+        cmpd _wait,u ; temps d'attente atteint en 1/50 Hz/ ? si oui on lance le fade
+        ble   >
+        inc   routine,u
+        bra   PaletteFade_Main
+!       rts   ; on sort car pas assez de tempo avant de lancer le fade-in                                                       
 PaletteFade_Main
         ldx   _dst,u
         ldy   #Pal_buffer
