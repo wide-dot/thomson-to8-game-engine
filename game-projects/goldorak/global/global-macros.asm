@@ -68,4 +68,17 @@ _SetPalette MACRO
 _ShowPalette MACRO
         clr   PalRefresh
         jsr   PalUpdateNow
-        ENDM             
+        ENDM     
+
+_PaletteFade MACRO                    
+        jsr   LoadObject_x
+        stx   \3
+        lda   #ObjID_PaletteFade
+        sta   id,x                 
+        ldd   \1
+        std   ext_variables,x     ; _src
+        ldd   \2
+        std   ext_variables+2,x   ; _dest 
+        ldd   \4
+        std   ext_variables+9,x   ; _wait
+        ENDM
