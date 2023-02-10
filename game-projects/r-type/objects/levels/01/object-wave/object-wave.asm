@@ -9,6 +9,10 @@ enemies_pstaff   equ 14
 ; x_pos to instanciate object,object id,subtype,x_pos,y_pos
 
 
+        fdb 10,(ObjID_collision*256),168,140
+
+
+
 ; First pata-pata wave
 wave_patapata_01       equ 252
 wave_patapata_01_space equ 4
