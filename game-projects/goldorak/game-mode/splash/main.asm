@@ -10,6 +10,11 @@
     _MusicInit_YM2413 #Vgc_introYM,#MUSIC_LOOP                      ; initialize the YM2413 player 
     _MusicInit_IRQ #UserIRQ,#OUT_OF_SYNC_VBL,#Irq_one_frame         ; Setting IRQ for music
     _NewManagedObject_U #ObjID_Splash
+    
+    _SetPalette #Pal_white
+    _ShowPalette
+
+    _PaletteFade #Pal_white,#Palette_splash,Obj_PaletteFade,#$60
 
 * ============================================================================== *
 * MainLoop
@@ -49,6 +54,8 @@ UserIRQ
     INCLUDE "./engine/graphics/codec/DecRLE00.asm"
     INCLUDE "./engine/graphics/codec/zx0_mega.asm" 
     INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"
+    INCLUDE "./engine/palette/color/Pal_white.asm"
+    INCLUDE "./engine/palette/color/Pal_black.asm"
 
     INCLUDE "./global/global-trailer-includes.asm"
     
