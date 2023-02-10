@@ -55,7 +55,7 @@ Init
 
 Live
         leax  AABB_0,u
-        tst   AABB.p,x
+        lda   AABB.p,x
         beq   @delete                  ; delete weapon if something was hit  
         lda   #4
         ldb   Vint_Main_runcount
