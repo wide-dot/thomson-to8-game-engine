@@ -14,11 +14,14 @@ OverlayMode equ 1
         _MusicInit_IRQ #UserIRQ,#OUT_OF_SYNC_VBL,#Irq_one_frame         ; Setting IRQ for music
     
 
+        _SetPalette #Pal_black
+        _ShowPalette
+        _PaletteFade #Pal_black,#Palette_gamescreen,Obj_PaletteFade,#$20
+
 * load object
         _NewManagedObject_U #ObjID_Goldorak
         _NewManagedObject_U #ObjID_Cockpit
-        _SetPalette #Pal_gamescreen
-        _ShowPalette
+
 
 * init scroll
         lda   #ObjID_scrollA
@@ -165,6 +168,8 @@ VS_cur_line equ *-1
         INCLUDE "./engine/graphics/codec/DecRLE00.asm"
         INCLUDE "./engine/graphics/codec/zx0_mega.asm" 
         ;INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"
+
+        INCLUDE "./engine/palette/color/Pal_black.asm"
 
         INCLUDE "./global/global-trailer-includes.asm"
         
