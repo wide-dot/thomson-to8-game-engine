@@ -248,9 +248,11 @@ LiveContinue
         jmp   DisplaySprite
 !
         ldx   dad_ptr,u         ; Order to self destroy has been received
+        lbeq  DisplaySprite     ; No dad (so sad)
         cmpa  #2
         bne   >
         ldx   son_ptr,u         ; Son to be destroyed, not dad
+        lbeq  DisplaySprite     ; No son (not so sad, tons of time available)
 !
         asla                    ; Set the order back to initial value ... 
         asla
@@ -302,9 +304,11 @@ Destroyed
         jmp   DisplaySprite
 !
         ldx   dad_ptr,u         ; I'm already destroyed, but I need to destroy my next of kin, is it dad ?
+        lbeq  DisplaySprite     ; No dad (so sad)
         cmpa  #2
         bne   >
         ldx   son_ptr,u         ; Son to be destroyed, not dad
+        lbeq  DisplaySprite     ; No son (not so sad, tons of time available)
 !
         asla                    ; Set the order back to initial value ... 
         asla
