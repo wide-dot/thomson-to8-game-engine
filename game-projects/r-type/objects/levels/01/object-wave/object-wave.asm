@@ -17,11 +17,6 @@ tilesizey        equ 14
         ;fdb 10,(ObjID_collision*256),165+tilesizex*00,161-tilesizey*1        
         ;fdb 10,(ObjID_collision*256),165+tilesizex*01,161-tilesizey*1
 
-; Shell wave
-wave_shell        equ 140
-wave_shell_width  equ 8
-        fdb   wave_shell-140,(ObjID_shell*256)+00,186,139
-
 
 
 ; First pata-pata wave
@@ -189,9 +184,9 @@ wave_blasters_01      equ 810
 
 
 ; Shell wave
-;wave_shell        equ 982
-;wave_shell_width  equ 8
- ;       fdb   wave_shell-140-8,(ObjID_shell*256)+00,1028,139
+wave_shell        equ 982
+wave_shell_width  equ 8
+        fdb   wave_shell-140-8,(ObjID_shell*256)+00,1028,139
 
         fdb   -1 ; end marker
 
