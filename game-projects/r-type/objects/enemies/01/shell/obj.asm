@@ -354,6 +354,16 @@ ImagesEye
         fdb   Img_shelleye_0
 
 XPositions equ *+128 ; signed offset
+        fcb   $23
+        fcb   $23
+        fcb   $23
+        fcb   $23
+        fcb   $22
+        fcb   $22
+        fcb   $22
+        fcb   $22
+        fcb   $21
+        fcb   $21
         fcb   $21
         fcb   $20
         fcb   $20
@@ -600,17 +610,17 @@ XPositions equ *+128 ; signed offset
         fcb   $23
         fcb   $23
         fcb   $23
-        fcb   $23
-        fcb   $23
-        fcb   $23
-        fcb   $23
-        fcb   $22
-        fcb   $22
-        fcb   $22
-        fcb   $22
-        fcb   $21
-        fcb   $21
 YPositions equ *+128 ; signed offset
+        fcb   $F8
+        fcb   $F6
+        fcb   $F5
+        fcb   $F4
+        fcb   $F2
+        fcb   $F1
+        fcb   $EF
+        fcb   $EE
+        fcb   $ED
+        fcb   $EB
         fcb   $EA
         fcb   $E9
         fcb   $E7
@@ -857,13 +867,3 @@ YPositions equ *+128 ; signed offset
         fcb   $FC
         fcb   $FB
         fcb   $F9
-        fcb   $F8
-        fcb   $F6
-        fcb   $F5
-        fcb   $F4
-        fcb   $F2
-        fcb   $F1
-        fcb   $EF
-        fcb   $EE
-        fcb   $ED
-        fcb   $EB
