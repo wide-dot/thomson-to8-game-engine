@@ -68,7 +68,7 @@ CreateChilds
         ; shell object
         lda   #ObjID_shell
         sta   id,x
-        _ldd  -angle_step*0,0 ; start pos
+        _ldd  angle_step*-8,0 ; start pos
 cur_angle equ *-2
         std   angle,x
         adda  #angle_step
@@ -354,6 +354,76 @@ ImagesEye
         fdb   Img_shelleye_0
 
 XPositions equ *+128 ; signed offset
+        fcb   $00
+        fcb   $00
+        fcb   $01
+        fcb   $02
+        fcb   $03
+        fcb   $04
+        fcb   $05
+        fcb   $06
+        fcb   $07
+        fcb   $07
+        fcb   $08
+        fcb   $09
+        fcb   $0A
+        fcb   $0B
+        fcb   $0C
+        fcb   $0C
+        fcb   $0D
+        fcb   $0E
+        fcb   $0F
+        fcb   $10
+        fcb   $10
+        fcb   $11
+        fcb   $12
+        fcb   $13
+        fcb   $14
+        fcb   $14
+        fcb   $15
+        fcb   $16
+        fcb   $16
+        fcb   $17
+        fcb   $18
+        fcb   $18
+        fcb   $19
+        fcb   $1A
+        fcb   $1A
+        fcb   $1B
+        fcb   $1B
+        fcb   $1C
+        fcb   $1C
+        fcb   $1D
+        fcb   $1D
+        fcb   $1E
+        fcb   $1E
+        fcb   $1F
+        fcb   $1F
+        fcb   $20
+        fcb   $20
+        fcb   $20
+        fcb   $21
+        fcb   $21
+        fcb   $21
+        fcb   $22
+        fcb   $22
+        fcb   $22
+        fcb   $22
+        fcb   $23
+        fcb   $23
+        fcb   $23
+        fcb   $23
+        fcb   $23
+        fcb   $23
+        fcb   $23
+        fcb   $23
+        fcb   $23
+        fcb   $24
+        fcb   $23
+        fcb   $23
+        fcb   $23
+        fcb   $23
+        fcb   $23
         fcb   $23
         fcb   $23
         fcb   $23
@@ -540,77 +610,77 @@ XPositions equ *+128 ; signed offset
         fcb   $FE
         fcb   $FF
         fcb   $00
-        fcb   $00
-        fcb   $00
-        fcb   $01
-        fcb   $02
-        fcb   $03
-        fcb   $04
-        fcb   $05
-        fcb   $06
-        fcb   $07
-        fcb   $07
-        fcb   $08
-        fcb   $09
-        fcb   $0A
-        fcb   $0B
-        fcb   $0C
-        fcb   $0C
-        fcb   $0D
-        fcb   $0E
-        fcb   $0F
-        fcb   $10
-        fcb   $10
-        fcb   $11
-        fcb   $12
-        fcb   $13
-        fcb   $14
-        fcb   $14
-        fcb   $15
-        fcb   $16
-        fcb   $16
-        fcb   $17
-        fcb   $18
-        fcb   $18
-        fcb   $19
-        fcb   $1A
-        fcb   $1A
-        fcb   $1B
-        fcb   $1B
-        fcb   $1C
-        fcb   $1C
-        fcb   $1D
-        fcb   $1D
-        fcb   $1E
-        fcb   $1E
-        fcb   $1F
-        fcb   $1F
-        fcb   $20
-        fcb   $20
-        fcb   $20
-        fcb   $21
-        fcb   $21
-        fcb   $21
-        fcb   $22
-        fcb   $22
-        fcb   $22
-        fcb   $22
-        fcb   $23
-        fcb   $23
-        fcb   $23
-        fcb   $23
-        fcb   $23
-        fcb   $23
-        fcb   $23
-        fcb   $23
-        fcb   $23
+
+YPositions equ *+128 ; signed offset
+        fcb   $3A
+        fcb   $3A
+        fcb   $3A
+        fcb   $3A
+        fcb   $3A
+        fcb   $3A
+        fcb   $3A
+        fcb   $39
+        fcb   $39
+        fcb   $39
+        fcb   $38
+        fcb   $38
+        fcb   $38
+        fcb   $37
+        fcb   $37
+        fcb   $36
+        fcb   $35
+        fcb   $35
+        fcb   $34
+        fcb   $34
+        fcb   $33
+        fcb   $32
+        fcb   $31
+        fcb   $31
+        fcb   $30
+        fcb   $2F
+        fcb   $2E
+        fcb   $2D
+        fcb   $2C
+        fcb   $2B
+        fcb   $2A
+        fcb   $29
+        fcb   $28
+        fcb   $27
+        fcb   $26
+        fcb   $25
         fcb   $24
         fcb   $23
-        fcb   $23
-        fcb   $23
-        fcb   $23
-        fcb   $23
-YPositions equ *+128 ; signed offset
+        fcb   $21
+        fcb   $20
+        fcb   $1F
+        fcb   $1E
+        fcb   $1D
+        fcb   $1B
+        fcb   $1A
+        fcb   $19
+        fcb   $17
+        fcb   $16
+        fcb   $15
+        fcb   $13
+        fcb   $12
+        fcb   $11
+        fcb   $0F
+        fcb   $0E
+        fcb   $0C
+        fcb   $0B
+        fcb   $0A
+        fcb   $08
+        fcb   $07
+        fcb   $05
+        fcb   $04
+        fcb   $02
+        fcb   $01
+        fcb   $00
+        fcb   $FF
+        fcb   $FE
+        fcb   $FC
+        fcb   $FB
+        fcb   $F9
         fcb   $F8
         fcb   $F6
         fcb   $F5
@@ -798,72 +868,3 @@ YPositions equ *+128 ; signed offset
         fcb   $3A
         fcb   $3A
         fcb   $3B
-        fcb   $3A
-        fcb   $3A
-        fcb   $3A
-        fcb   $3A
-        fcb   $3A
-        fcb   $3A
-        fcb   $3A
-        fcb   $39
-        fcb   $39
-        fcb   $39
-        fcb   $38
-        fcb   $38
-        fcb   $38
-        fcb   $37
-        fcb   $37
-        fcb   $36
-        fcb   $35
-        fcb   $35
-        fcb   $34
-        fcb   $34
-        fcb   $33
-        fcb   $32
-        fcb   $31
-        fcb   $31
-        fcb   $30
-        fcb   $2F
-        fcb   $2E
-        fcb   $2D
-        fcb   $2C
-        fcb   $2B
-        fcb   $2A
-        fcb   $29
-        fcb   $28
-        fcb   $27
-        fcb   $26
-        fcb   $25
-        fcb   $24
-        fcb   $23
-        fcb   $21
-        fcb   $20
-        fcb   $1F
-        fcb   $1E
-        fcb   $1D
-        fcb   $1B
-        fcb   $1A
-        fcb   $19
-        fcb   $17
-        fcb   $16
-        fcb   $15
-        fcb   $13
-        fcb   $12
-        fcb   $11
-        fcb   $0F
-        fcb   $0E
-        fcb   $0C
-        fcb   $0B
-        fcb   $0A
-        fcb   $08
-        fcb   $07
-        fcb   $05
-        fcb   $04
-        fcb   $02
-        fcb   $01
-        fcb   $00
-        fcb   $FF
-        fcb   $FE
-        fcb   $FC
-        fcb   $FB
-        fcb   $F9
