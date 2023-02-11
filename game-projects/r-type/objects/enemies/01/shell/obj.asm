@@ -11,12 +11,16 @@
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
 
-AABB_0     equ  ext_variables     ; AABB struct (9 bytes)
-angle      equ  ext_variables+9   ; 8.8
-child_ptr  equ  ext_variables+11  ; 16
-son_ptr    equ  ext_variables+13
-dad_ptr    equ  ext_variables+15
+AABB_0          equ  ext_variables     ; AABB struct (9 bytes)
+angle           equ  ext_variables+9   ; 8.8
+child_ptr       equ  ext_variables+11  ; 16
+son_ptr         equ  ext_variables+13
+dad_ptr         equ  ext_variables+15
+is_destroyed    equ  ext_variables+17
+kill_my_nok     equ  ext_variables+18
+current_p       equ  ext_variables+19
 angle_step equ 16
+center_of_circle equ 1032
 
 ; child offsets
 
@@ -35,6 +39,8 @@ Routines
         fdb   Init
         fdb   Live
         fdb   LiveEye
+        fdb   Destroyed
+        fdb   AlreadyDeleted
 
 CreateChilds
         stu   @u
@@ -98,9 +104,14 @@ Init
         _Collision_AddAABB AABB_0,AABB_list_ennemy
         
         leax  AABB_0,u
-        lda   #255                     ; set damage potential for this hitbox
+        lda   #1                       ; set damage potential for this hitbox
+        ldb   subtype,u
+        beq   >
+        lda   #2
+!
         sta   AABB.p,x
-        _ldd  6,16                     ; set hitbox xy radius
+        sta   current_p,u
+        _ldd  7,17                     ; set hitbox xy radius
         std   AABB.rx,x
 
 
@@ -133,7 +144,7 @@ LiveContinue
         anda  #%00011110
         ldx   a,x
         stx   image_set,u
-
+        sta   @a
 ; do the maths
 ;        ldb   angle,u
 ;        jsr   CalcSine
@@ -151,15 +162,122 @@ LiveContinue
 ;        jsr   Mul9x16
 ;        addd  #82           ; y center of circle
 ;        std   y_pos,u
-
 ; or precalc positions
         ldx   #XPositions
         ldb   angle,u
         ldb   b,x
         sex
-        addd  #190   ; #1032         ; x center of circle
+        addd  #center_of_circle ; x center of circle
         std   x_pos,u
-
+        leax  AABB_0,u
+        addd  #55+8             ; circle 2*x_radius + max sprite radius in any positions
+        cmpd  glb_camera_x_pos
+        lble   Delete
+        subd  glb_camera_x_pos
+        subd  #55+8
+        stb   AABB.cx,x
+        ldy   #YPositions
+        ldb   angle,u
+        ldb   b,y
+        sex
+        addd  #84               ; y center of circle
+        std   y_pos,u
+        subd  glb_camera_y_pos
+        stb   AABB.cy,x
+        lda   AABB.p,x
+        beq   @destroy          ; was killed
+        cmpa  #255
+        beq   >
+        sta   current_p,u
+!
+        lda   kill_my_nok,u
+        bita  #$03
+        bne   @destroy
+        asra
+        asra
+        sta   kill_my_nok,u
+        ldb   current_p,u
+        ldy   player1+x_pos     ; Starts testing if shell is vulnerable
+        lda   subtype,u
+        lda   #0                ; Contains current image number
+@a      equ   *-1
+        cmpa  #14
+        bgt   @facingleft
+        cmpy  x_pos,u           ; Canons facing right
+        bgt   >
+        ldb   #255
+!
+        stb   AABB.p,x
+        jmp   DisplaySprite
+@facingleft
+        cmpy  x_pos,u           ; Canons facing left
+        blt   >
+        ldb   #255
+!
+        stb   AABB.p,x
+        jmp   DisplaySprite
+@destroy
+        ldb   #255
+        stb   AABB.p,x
+        lda   #4
+        sta   routine,u
+        ldx   #Img_shellbroken
+        stx   image_set,u
+        jsr   LoadObject_x
+        beq   >
+        lda   #ObjID_enemiesblastsmall
+        sta   id,x
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
+!
+        lda   subtype,u
+        beq   >
+        ldx   dad_ptr,u         ; The eye sends the order to destroy his direct son and dad
+        ldb   #4                ; =4 => Next of kin to kill is dad
+        stb   kill_my_nok,x
+        ldx   son_ptr,u
+        aslb                    ; =8 => Next of kin to kill is son
+        stb   kill_my_nok,x
+        jmp   DisplaySprite
+!
+        lda   kill_my_nok,u     ; Not the eye, is there an order to self destroy ?
+        bita  #$03
+        bne   >
+        jmp   DisplaySprite
+!
+        ldx   dad_ptr,u         ; Order to self destroy has been received
+        cmpa  #2
+        bne   >
+        ldx   son_ptr,u         ; Son to be destroyed, not dad
+!
+        asla                    ; Set the order back to initial value ... 
+        asla
+        sta   kill_my_nok,x     ; ... and assign it to next of kin
+        clr   kill_my_nok,u     ; Cancel order for self, this is taken care now 
+        jmp   DisplaySprite
+Delete
+        lda   #5
+        sta   routine,u
+        _Collision_RemoveAABB AABB_0,AABB_list_ennemy
+        ldx   child_ptr,u
+        jsr   DeleteObject_x    ; destroy child object
+        jmp   DeleteObject
+AlreadyDeleted
+        rts
+Destroyed
+        lda   Vint_Main_runcount
+        ldb   #$60
+        mul
+        addd  angle,u
+        std   angle,u
+        ldx   #XPositions
+        ldb   angle,u
+        ldb   b,x
+        sex
+        addd  #center_of_circle ; x center of circle
+        std   x_pos,u
         leax  AABB_0,u
         addd  #55+8         ; circle 2*x_radius + max sprite radius in any positions
         cmpd  glb_camera_x_pos
@@ -167,7 +285,6 @@ LiveContinue
         subd  glb_camera_x_pos
         subd  #55+8
         stb   AABB.cx,x
-
         ldy   #YPositions
         ldb   angle,u
         ldb   b,y
@@ -176,16 +293,25 @@ LiveContinue
         std   y_pos,u
         subd  glb_camera_y_pos
         stb   AABB.cy,x
-
-
-
+        lda   kill_my_nok,u
+        bita  #$03
+        bne   >
+        asra
+        asra
+        sta   kill_my_nok,u
+        jmp   DisplaySprite
+!
+        ldx   dad_ptr,u         ; I'm already destroyed, but I need to destroy my next of kin, is it dad ?
+        cmpa  #2
+        bne   >
+        ldx   son_ptr,u         ; Son to be destroyed, not dad
+!
+        asla                    ; Set the order back to initial value ... 
+        asla
+        sta   kill_my_nok,x     ; ... and assign it to next of kin
+        clr   kill_my_nok,u     ; Cancel order for self, this is taken care of now 
         jmp   DisplaySprite
 
-Delete
-        _Collision_RemoveAABB AABB_0,AABB_list_ennemy
-        ldx   child_ptr,u
-        jsr   DeleteObject_x ; destroy child object
-        jmp   DeleteObject
 
 Images
         fdb   Img_shell_7
