@@ -5,8 +5,8 @@ ext_variables_size           equ 20
 * ===========================================================================
 * Object Constants
 * ===========================================================================
-nb_dynamic_objects           equ 64
-nb_graphical_objects         equ 64 * max 64 total
+nb_dynamic_objects           equ 48
+nb_graphical_objects         equ 48 * max 64 total
 
 * ===========================================================================
 * Object Status Table - OST

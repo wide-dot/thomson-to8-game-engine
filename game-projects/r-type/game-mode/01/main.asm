@@ -40,6 +40,11 @@ viewport_height equ 168
 ; init scroll
         jsr   InitScroll
 
+; load checkpoint
+        ldd   #818 ; camera x position
+        std   glb_camera_x_pos
+        jsr   Game_LoadCheckpoint_x
+
 ; init user irq
         jsr   IrqInit
         ldd   #UserIRQ
@@ -159,6 +164,22 @@ Foeshoottable
         fdb -$80
         fdb -$100
         fdb -$120
+
+* ---------------------------------------------------------------------------
+* Game_Checkpoint_x
+*
+* ---------------------------------------------------------------------------
+
+Game_LoadCheckpoint_x
+        ldx   #0
+        jsr   ClearDataMem
+        jsr   WaitVBL
+        ldx   #0
+        jsr   ClearDataMem
+        jsr   WaitVBL
+
+        jsr   ObjectWave_Init ; find position in object wave based on camera pos
+        jmp   Scroll_JumpToCamera
 
 * ---------------------------------------------------------------------------
 * Game Mode RAM variables

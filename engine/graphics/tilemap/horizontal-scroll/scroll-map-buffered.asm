@@ -385,3 +385,23 @@ scroll_m_step4 equ *-1
         jmp   scroll_cloop1
 !       leau  4,u                      ; move to next tile
         jmp   empty_tile_loop
+
+Scroll_JumpToCamera
+        lda   #0
+        sta   scroll_map_x_pos
+        sta   scroll_tile_pos_offset
+        sta   scroll_frame
+        sta   scroll_parity
+        ldb   scroll_tile_width
+        std   @tile_width
+        ldd   glb_camera_x_pos
+!       subd  #0
+@tile_width equ *-2
+        bmi   @break
+        inc   scroll_map_x_pos
+        bra   <
+@break  addd  glb_camera_x_pos
+        subd  #1
+        std   glb_camera_x_pos
+        dec   scroll_tile_pos_offset
+        rts

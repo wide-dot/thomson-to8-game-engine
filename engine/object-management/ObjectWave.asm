@@ -29,3 +29,16 @@ object_wave_data equ *-2               ; current position in wave data
         bra   <
 @rts    sty   object_wave_data
         rts
+
+ObjectWave_Init
+        pshs  a,x,y
+        lda   object_wave_data_page
+        _SetCartPageA
+        ldy   object_wave_data
+        ldx   glb_camera_x_pos
+!       cmpx  ,y
+        bls   @end
+        leay  8,y
+        bra   <
+@end    sty   object_wave_data
+        puls  a,x,y,pc
