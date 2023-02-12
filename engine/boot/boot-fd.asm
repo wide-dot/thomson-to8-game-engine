@@ -14,6 +14,13 @@
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"          
         
+ IFNDEF boot_color_gr
+boot_color_gr equ $FF
+ ENDC
+ IFNDEF boot_color_b
+boot_color_b  equ $0F
+ ENDC
+
         org   $6200
 
 PalInit
@@ -42,9 +49,9 @@ Tempo
         beq   InitVideo                * si termine
         
 PalRun
-        lda   ,u                                   * chargement de la composante verte et rouge
+        lda   ,u                       * chargement de la composante verte et rouge
         anda  <pal_mask                * on efface la valeur vert ou rouge par masque
-        ldb   #$FF                     * composante verte et rouge couleur cible
+        ldb   #boot_color_gr           * composante verte et rouge couleur cible
         andb  <pal_mask                * on efface la valeur vert ou rouge par masque
         stb   <pal_buffer              * on stocke la valeur cible pour comparaison
         ldb   #$11                     * preparation de la valeur d'increment de couleur
@@ -66,8 +73,8 @@ PalVRSuivante
         bmi   PalRun                   * si on traite $F0 on branche sinon on continue
             
 SetPalBleu
-        ldb   1,u                                   * chargement composante bleue courante
-        cmpb  #$0F                     * comparaison composante courante et cible
+        ldb   1,u                      * chargement composante bleue courante
+        cmpb  #boot_color_b            * comparaison composante courante et cible
         beq   SetPalNext               * si composante est egale a la cible on passe
         bhi   SetPalBleudec            * si la composante est superieure on branche
         incb                           * on incremente la composante bleue

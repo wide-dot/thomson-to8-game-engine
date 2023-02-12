@@ -18,14 +18,15 @@ object_wave_data equ *-2               ; current position in wave data
         bls   @rts
         pshs  x,y
         jsr   LoadObject_u
-        puls  x,y
+        puls  x,y                      ; puls does not change zero
+        beq   @bypass
         ldd   2,y
         std   id,u                     ; and subtype,u
         ldd   4,y
         std   x_pos,u
         ldd   6,y
         std   y_pos,u
-        leay  8,y
+@bypass leay  8,y
         bra   <
 @rts    sty   object_wave_data
         rts

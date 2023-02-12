@@ -386,22 +386,28 @@ scroll_m_step4 equ *-1
 !       leau  4,u                      ; move to next tile
         jmp   empty_tile_loop
 
-Scroll_JumpToCamera
-        lda   #0
+* ---------------------------------------------------------------------------
+* Scroll_JumpToPos
+*
+* D = position in map (A = x | B = y tile number starting from 0)
+* ---------------------------------------------------------------------------
+
+Scroll_JumpToPos
         sta   scroll_map_x_pos
-        sta   scroll_tile_pos_offset
+;        stb   @ytiles
+        ldb   scroll_tile_width
+        mul
+        subd  #1                       ; camera x_pos must be initialized to desired pos -1
+        std   glb_camera_x_pos
+;        lda   #0
+;@ytiles equ *-1
+;        ldb   scroll_tile_height
+;        mul
+;        std   glb_camera_y_pos
+
+        lda   #0
         sta   scroll_frame
         sta   scroll_parity
-        ldb   scroll_tile_width
-        std   @tile_width
-        ldd   glb_camera_x_pos
-!       subd  #0
-@tile_width equ *-2
-        bmi   @break
-        inc   scroll_map_x_pos
-        bra   <
-@break  addd  glb_camera_x_pos
-        subd  #1
-        std   glb_camera_x_pos
-        dec   scroll_tile_pos_offset
+        deca                           ; tile_pos_offset must be initialized to -1
+        sta   scroll_tile_pos_offset
         rts
