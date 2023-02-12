@@ -1,4 +1,6 @@
-package fr.bento8.arcade.image;
+package fr.bento8.arcade.sf2;
+
+import fr.bento8.arcade.util.byteUtil;
 
 public class AnimationFrame {
 	

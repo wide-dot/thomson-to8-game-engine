@@ -6,7 +6,7 @@
 *
 *
 ********************************************************************************
-;SOUND_CARD_PROTOTYPE equ 1
+SOUND_CARD_PROTOTYPE equ 1
 OverlayMode equ 1
 
         INCLUDE "./engine/system/to8/memory-map.equ"
@@ -73,12 +73,12 @@ OverlayMode equ 1
         jsr   YM2413_DrumModeOn
 
         ; set the DAC (percusion) to midi render
-        jsr   ResetMidiCtrl
-        jsr   InitMidiDrv
-        lda   #$ff
-        sta   midiOnFmSynth
-        sta   midiOnFmDrums
-        sta   midiOnPsg
+        ;jsr   ResetMidiCtrl
+        ;jsr   InitMidiDrv
+        ;lda   #$ff
+        ;sta   midiOnFmSynth
+        ;sta   midiOnFmDrums
+        ;sta   midiOnPsg
 
         ldx   #Smps_209
         jsr   PlayMusic 
@@ -137,8 +137,8 @@ init_frames fcb 5
         INCLUDE "./engine/irq/Irq.asm"
 	INCLUDE "./engine/palette/PalUpdateNow.asm"
         INCLUDE "./engine/palette/color/Pal_white.asm"
-        ;INCLUDE "./engine/sound/Smps.asm"  
-        INCLUDE "./engine/sound/SmpsMidi.asm"  
+        INCLUDE "./engine/sound/Smps.asm"  
+        ;INCLUDE "./engine/sound/SmpsMidi.asm"  
 
 _end
  ifge _end-$9F00

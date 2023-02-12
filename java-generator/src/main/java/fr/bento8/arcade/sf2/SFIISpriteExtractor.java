@@ -1,4 +1,4 @@
-package fr.bento8.arcade.image;
+package fr.bento8.arcade.sf2;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.IndexColorModel;
@@ -13,7 +13,12 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 
+import fr.bento8.arcade.util.byteUtil;
+
 public class SFIISpriteExtractor {
+	
+	// C:\Users\bhrou\git\sf2ww\bin\allroms.bin C:\Users\bhrou\git\sf2ww\bin\sf2gfx.bin C:\Users\bhrou\git\sf2ww\bin\out -explore
+	// C:\Users\bhrou\git\sf2ww\bin\allroms.bin C:\Users\bhrou\git\sf2ww\bin\sf2gfx.bin C:\Users\bhrou\git\sf2ww\bin\out
 
 	public static int imgWidth = 320;
 	public static int imgHeight = 200;

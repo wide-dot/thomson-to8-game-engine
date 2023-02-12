@@ -1,4 +1,4 @@
-package fr.bento8.arcade.image;
+package fr.bento8.arcade.sf2;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
