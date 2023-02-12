@@ -1,6 +1,8 @@
 ********************************************************************************  
 * Draw an interlaced image to data area
-* !!! IRQ should be disabled !!!
+* If IRQ is anabled while using this routine, you may expect 12 bytes to be
+* written ahead of S stack
+*
 *
 * input  REG : [x] image data address
 ********************************************************************************

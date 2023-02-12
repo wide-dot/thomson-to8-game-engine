@@ -24,3 +24,14 @@ if an error is raised, check that the vgm rate is not null.
 If the rate is null, open the vgm file with a binary editor and remplace the 0 value at position 0x24 with the value 0x32
 
 A sn76489.vgc file is produced, you can rename wathever you want and use it as input for the vgcplayer.asm player
+
+
+Remarque :
+si le fichier vgm est en 60hz, utiliser la commande powershell (ou 50 = 50hz) :
+Get-ChildItem *.vgm -File | % {$_.Name.Substring(0,$_.Name.length-4)} | Foreach {../../../../engine/sound/vgc/vgmconverter.py "$_.vgm" -quantize 50 -output "$_.tmp.vgm"}
+
+En powel shell pour traiter un répertoire entier avec le packer :
+Get-ChildItem *.tmp.vgm -File | % {$_.Name.Substring(0,$_.Name.length-8)} | Foreach {../../../../engine/sound/vgc/vgmpacker.py "$_.tmp.vgm" -o "$_.vgc"}
+
+Lister les fichiers du répertoire pour le properties :
+Get-ChildItem *.vgc -File | % {$_.Name}
