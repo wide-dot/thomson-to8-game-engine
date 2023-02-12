@@ -83,11 +83,11 @@ cur_angle equ *-2
 !       deca
         sta   childs
         bne   @loop
+@nomore
         ldu   #0
 @u      equ   *-2
-@nomore jmp   DeleteObject
-        rts
-
+        jmp   DeleteObject
+ 
 childs fcb 14
 
 LiveEye

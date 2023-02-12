@@ -33,17 +33,12 @@ viewport_height equ 168
         jsr   UnsetDisplayPriority
         jsr   DrawSprites
 
-; init player one
-        lda   #ObjID_Player1
-        sta   player1+id
-
 ; init scroll
         jsr   InitScroll
 
 ; load checkpoint
-        ldd   #818 ; camera x position
-        std   glb_camera_x_pos
-        jsr   Game_LoadCheckpoint_x
+        ;ldd   #$3A00 ; tile position in x,y
+        ;jsr   Game_LoadCheckpoint_x
 
 ; init user irq
         jsr   IrqInit
@@ -54,9 +49,26 @@ viewport_height equ 168
         jsr   IrqSync
         jsr   IrqOn 
 
-; play music !
+; play music
         ldx   #Snd_S01
         jsr   PlayMusic
+
+; init player one
+        lda   #ObjID_Player1
+        sta   player1+id
+
+; init palette fade
+        jsr   LoadObject_u
+        beq   >
+        lda   #ObjID_fade
+        sta   id,u
+        ldd   Pal_current
+        std   ext_variables,u          ; source palette
+        ldd   #Pal_game
+        std   ext_variables+2,u        ; dest palette
+        lda   #6
+        sta   ext_variables+10,u       ; nb of frames between color change (0-n)
+!
 
 * ---------------------------------------------------------------------------
 * MAIN GAME LOOP
@@ -168,9 +180,16 @@ Foeshoottable
 * ---------------------------------------------------------------------------
 * Game_Checkpoint_x
 *
+* A blank palette is expected on entry (any color)
+* D = position in map (A = x | B = y tile number starting from 0)
 * ---------------------------------------------------------------------------
 
 Game_LoadCheckpoint_x
+
+        ; init scroll to desired position
+        jsr   Scroll_JumpToPos ; set scroll and camera position based on a tile pos
+
+        ; clear the two screen buffers to black
         ldx   #0
         jsr   ClearDataMem
         jsr   WaitVBL
@@ -178,8 +197,13 @@ Game_LoadCheckpoint_x
         jsr   ClearDataMem
         jsr   WaitVBL
 
-        jsr   ObjectWave_Init ; find position in object wave based on camera pos
-        jmp   Scroll_JumpToCamera
+        ; move scroll to build lean scroll on one screen width
+        ; ...
+
+        ; set object wave position based on new camera position
+        jsr   ObjectWave_Init
+
+        rts
 
 * ---------------------------------------------------------------------------
 * Game Mode RAM variables
