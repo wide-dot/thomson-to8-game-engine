@@ -165,3 +165,19 @@ UnloadObject_x
 @clearObj
         leau  object_size,x ; move to end of data object structure
         bra   UnloadObject_clear
+
+ManagedObjects_ClearAll
+        ldd   #0
+        ldx   #0
+        leay  ,x
+        ldu   #Dynamic_Object_RAM_End
+!       cmpu  #Dynamic_Object_RAM+6
+        bls   >
+        pshu  d,x,y
+        bra   <
+!       pshu  a
+        cmpu  #Dynamic_Object_RAM
+        bne   <
+        std   object_list_first
+        std   object_list_last
+        rts

@@ -35,7 +35,7 @@ ObjectWave_Init
         pshs  a,x,y
         lda   object_wave_data_page
         _SetCartPageA
-        ldy   object_wave_data
+        ldy   object_wave_data_start
         ldx   glb_camera_x_pos
 !       cmpx  ,y
         bls   @end
@@ -43,3 +43,5 @@ ObjectWave_Init
         bra   <
 @end    sty   object_wave_data
         puls  a,x,y,pc
+
+object_wave_data_start fdb 0

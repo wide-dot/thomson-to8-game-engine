@@ -11,7 +11,9 @@ nb_graphical_objects         equ 48 * max 64 total
 * ===========================================================================
 * Object Status Table - OST
 * ===========================================================================
-player1                      equ dp
+player1                      equ   dp
+palettefade                  fcb   ObjID_fade
+                             fill  0,object_size-1
 
 Dynamic_Object_RAM           fill  0,(nb_dynamic_objects)*object_size
 Dynamic_Object_RAM_End

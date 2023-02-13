@@ -4,41 +4,36 @@ DO_NOT_WAIT_VBL equ 1
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"
         INCLUDE "./engine/collision/macros.asm"
+        INCLUDE "./engine/objects/palette/fade/fade.equ"
 
 map_width       equ 1792
 viewport_width  equ 140
 viewport_height equ 168
 
+ ; A = tile position in x, B = nb of pre-scrolled tiles
+CHECKPOINT_00 equ $0202
+CHECKPOINT_01 equ $3802
+
         org   $6100
+        sta   ,-u
+        pshu  a
         jsr   InitGlobals
         jsr   LoadAct
         jsr   InitJoypads
 
-; init backgound for tile rendering
-        jsr   LoadObject_u
-        lda   #ObjID_LevelInit
-        sta   id,u
+; register map locations for scroll
+        _MountObject ObjID_LevelInit
+        jsr   ,x
 
         jsr   WaitVBL
-        jsr   RunObjects ; print start frame on buffer 0, will also register map locations
-        jsr   CheckSpritesRefresh
-        jsr   EraseSprites
-        jsr   UnsetDisplayPriority
-        jsr   DrawSprites
-
-        jsr   WaitVBL
-        jsr   RunObjects ; print start frame on buffer 1
-        jsr   CheckSpritesRefresh
-        jsr   EraseSprites
-        jsr   UnsetDisplayPriority
-        jsr   DrawSprites
+        jsr   RunObjects
 
 ; init scroll
         jsr   InitScroll
 
-; load checkpoint
-        ;ldd   #$3A00 ; tile position in x,y
-        ;jsr   Game_LoadCheckpoint_x
+; load checkpoints
+        ldd   #CHECKPOINT_00
+        jsr   Game_LoadCheckpoint_x
 
 ; init user irq
         jsr   IrqInit
@@ -53,23 +48,6 @@ viewport_height equ 168
         ldx   #Snd_S01
         jsr   PlayMusic
 
-; init player one
-        lda   #ObjID_Player1
-        sta   player1+id
-
-; init palette fade
-        jsr   LoadObject_u
-        beq   >
-        lda   #ObjID_fade
-        sta   id,u
-        ldd   Pal_current
-        std   ext_variables,u          ; source palette
-        ldd   #Pal_game
-        std   ext_variables+2,u        ; dest palette
-        lda   #6
-        sta   ext_variables+10,u       ; nb of frames between color change (0-n)
-!
-
 * ---------------------------------------------------------------------------
 * MAIN GAME LOOP
 * ---------------------------------------------------------------------------
@@ -77,9 +55,30 @@ viewport_height equ 168
 LevelMainLoop
         jsr   WaitVBL
         jsr   ReadJoypads
+
+        lda   checkpoint_load          ; load checkpoint requested ?
+        beq   >
+        ldu   #palettefade             ; yes check palette fade
+        lda   routine,u                ; is palette fade over ?
+        cmpa  #o_fade_routine_idle
+        bne   >
+        ldd   #CHECKPOINT_01           ; yes load checkpoint
+        jsr   Game_LoadCheckpoint_x
+!
+        ;lda   $E7C8 ; lecture d'une touche clavier
+        ;lsra
+        ;bcc   >
+        jsr   $E806
+        cmpb  #$41 ; touche A
+        bne   >
+        jsr   Palette_FadeOut
+        lda   #1
+        sta   checkpoint_load
+!
         jsr   Scroll
         jsr   ObjectWave
         _Collision_Do AABB_list_friend,AABB_list_ennemy
+        _RunObject ObjID_fade,#palettefade
         _RunObject ObjID_Player1,#player1
         jsr   RunObjects
         jsr   CheckSpritesRefresh
@@ -183,26 +182,101 @@ Foeshoottable
 * A blank palette is expected on entry (any color)
 * D = position in map (A = x | B = y tile number starting from 0)
 * ---------------------------------------------------------------------------
+checkpoint_load fcb 0
 
 Game_LoadCheckpoint_x
-
-        ; init scroll to desired position
-        jsr   Scroll_JumpToPos ; set scroll and camera position based on a tile pos
-
+        std   @d
+        clr   checkpoint_load
+;
+        ; clear object data
+        jsr   ObjectDp_Clear
+        jsr   ManagedObjects_ClearAll
+        jsr   DisplaySprite_ClearAll
+        jsr   Collision_ClearLists
+;
         ; clear the two screen buffers to black
         ldx   #0
         jsr   ClearDataMem
-        jsr   WaitVBL
+        _SwitchScreenBuffer
         ldx   #0
         jsr   ClearDataMem
-        jsr   WaitVBL
+        _SwitchScreenBuffer
+;
+        ; pre scroll to desired position
+        ldd   #0
+@d equ *-2
+        jsr   Scroll_PreScrollTo
+;
 
-        ; move scroll to build lean scroll on one screen width
-        ; ...
+        ; init player one
+        lda   #ObjID_Player1
+        sta   player1+id
+
+        ; fade in
+        jsr   Palette_FadeIn
 
         ; set object wave position based on new camera position
-        jsr   ObjectWave_Init
+        jmp   ObjectWave_Init
 
+* ---------------------------------------------------------------------------
+* Collision_ClearLists
+*
+* ---------------------------------------------------------------------------
+
+Collision_ClearLists
+        ldd   #0
+        std   AABB_list_friend
+        std   AABB_list_friend+2
+        std   AABB_list_ennemy
+        std   AABB_list_ennemy+2
+        std   AABB_list_player
+        std   AABB_list_player+2
+        std   AABB_list_bonus
+        std   AABB_list_bonus+2
+        rts
+
+* ---------------------------------------------------------------------------
+* Palette_FadeIn
+*
+* ---------------------------------------------------------------------------
+
+Palette_FadeIn
+        ldu   #palettefade
+        clr   routine,u
+        ldd   Pal_current
+        std   o_fade_src,u
+        ldd   #Pal_game
+        std   o_fade_dst,u
+        lda   #6
+        sta   o_fade_wait,u
+        ldd   #Palette_FadeCallback
+        std   o_fade_callback,u
+        rts
+
+* ---------------------------------------------------------------------------
+* Palette_FadeOut
+*
+* ---------------------------------------------------------------------------
+
+Palette_FadeOut
+        ldu   #palettefade
+        clr   routine,u
+        ldd   Pal_current
+        std   o_fade_src,u
+        ldd   #Pal_black
+        std   o_fade_dst,u
+        lda   #0
+        sta   o_fade_wait,u
+        ldd   #Palette_FadeCallback
+        std   o_fade_callback,u
+        rts
+
+* ---------------------------------------------------------------------------
+* Palette_FadeCallback
+*
+* ---------------------------------------------------------------------------
+
+Palette_FadeCallback
         rts
 
 * ---------------------------------------------------------------------------
@@ -232,12 +306,12 @@ Game_LoadCheckpoint_x
         INCLUDE "./engine/object-management/RunObjects.asm"
         INCLUDE "./engine/object-management/ObjectMoveSync.asm"
         INCLUDE "./engine/object-management/ObjectWave.asm"
+        INCLUDE "./engine/object-management/ObjectDp.asm"
 
         ; animation & image
         INCLUDE "./engine/graphics/animation/AnimateSpriteSync.asm"
 
         ; sprite
-        INCLUDE "./engine/graphics/codec/DecRLE00.asm"
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"  
 
         ; tilemap
