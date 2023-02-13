@@ -192,4 +192,32 @@ DPS_buffer_end
 
 buf_Tbl_Priority_First_Entry  equ   0                                                            
 buf_Tbl_Priority_Last_Entry   equ   Tbl_Priority_Last_Entry_0-DPS_buffer_0          
-buf_Lst_Priority_Unset        equ   Lst_Priority_Unset_0-DPS_buffer_0                                       
+buf_Lst_Priority_Unset        equ   Lst_Priority_Unset_0-DPS_buffer_0                   
+
+DisplaySprite_ClearAll
+        ldd   #0
+        ldx   #0
+        leay  ,x
+        ldu   #DPS_buffer_0+6+nb_priority_levels*4+nb_graphical_objects*2
+!       cmpu  #DPS_buffer_0+6
+        bls   >
+        pshu  d,x,y
+        bra   <
+!       pshu  a
+        cmpu  #DPS_buffer_0
+        bne   <
+
+        ldu   #DPS_buffer_1+6+nb_priority_levels*4+nb_graphical_objects*2
+!       cmpu  #DPS_buffer_1+6
+        bls   >
+        pshu  d,x,y
+        bra   <
+!       pshu  a
+        cmpu  #DPS_buffer_1
+        bne   <
+
+        ldd   #Lst_Priority_Unset_0+2
+        std   Lst_Priority_Unset_0
+        ldd   #Lst_Priority_Unset_1+2
+        std   Lst_Priority_Unset_1
+        rts

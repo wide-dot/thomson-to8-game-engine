@@ -111,6 +111,13 @@ _RunObjectRoutineB MACRO
         jsr   ,x
  ENDM
 
+_SwitchScreenBuffer MACRO
+        ldb   $E7E5
+        eorb  #1                       ; switch btw page 2 and 3
+        orb   #$02
+        stb   $E7E5
+ ENDM
+
 _asld MACRO
         aslb
         rola

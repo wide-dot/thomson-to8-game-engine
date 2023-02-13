@@ -44,6 +44,8 @@ Routines
 
 CreateChilds
         stu   @u
+        lda   #14
+        sta   childs
 @loop   jsr   LoadObject_u             ; create background object
         beq   @nomore                  ; branch if no more available object slot
         lda   #ObjID_shellmask         ; must set the id before calling next loadobject routine
@@ -88,7 +90,7 @@ cur_angle equ *-2
 @u      equ   *-2
         jmp   DeleteObject
  
-childs fcb 14
+childs fcb 0
 
 LiveEye
         ldx   #ImagesEye

@@ -1,26 +1,6 @@
         INCLUDE "./engine/macros.asm"
 
-Level
-        lda   routine,u
-        asla
-        ldx   #Level_Routines
-        jmp   [a,x]
-
-Level_Routines
-        fdb   Level_Init_0
-        fdb   Level_Init_1
-        fdb   Level_End
-
-Level_Init_0
-        ldd   #Img_lvl01_init
-        std   image_set,u
-	ldd   #$806F
-        std   xy_pixel,u
-	ldb   #7
-        stb   priority,u
-        lda   render_flags,u
-        ora   #render_overlay_mask
-        sta   render_flags,u
+LevelInit
 
         ; register map location to main
         ldx   #scroll_map
@@ -42,7 +22,7 @@ Level_Init_0
         _ldd  10,14
         sta   scroll_vp_x_pos
         stb   scroll_tile_width
-        _ldd  14,128 ; !!!!!!!!!!!!!!!!! MAP WIDTH was 120
+        _ldd  14,128                   ; ! MAP WIDTH !
         sta   scroll_tile_height
         stb   scroll_map_width
         clr   scroll_map_x_pos
@@ -50,15 +30,10 @@ Level_Init_0
         ; register object wave
         ldd   #Level_data
         std   object_wave_data
+        std   object_wave_data_start
         _GetCartPageA
         sta   object_wave_data_page
-
-Level_Init_1
-	inc   routine,u
-        jmp   DisplaySprite	
-
-Level_End
-        jmp   DeleteObject
+        rts
 
 Tls_lvl01
         INCLUDEGEN Tls_lvl01 buffer

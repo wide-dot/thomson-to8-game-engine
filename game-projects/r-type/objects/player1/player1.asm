@@ -30,13 +30,16 @@ Init
         std   player1+anim
         ldb   #3
         stb   player1+priority
-        ldd   #80
+        ldd   #35
+        addd  glb_camera_x_pos
         std   player1+x_pos
         ldd   #100
         std   player1+y_pos
         lda   player1+render_flags
         ora   #render_playfieldcoord_mask
         sta   player1+render_flags
+        ldd   glb_camera_x_pos
+        std   glb_camera_x_pos_old
         inc   player1+routine
 
 Live

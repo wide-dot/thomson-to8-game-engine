@@ -50,17 +50,18 @@ PaletteFade
 PaletteFade_Routines
         fdb   PaletteFade_Init
         fdb   PaletteFade_Main
+        fdb   PaletteFade_Idle
  
 PaletteFade_Init
         inc   routine,u
         ldd   #$100F    
-        sta   _cycles,u
-        stb   _mask,u
+        sta   o_fade_cycles,u
+        stb   o_fade_mask,u
 
-        lda   _wait,u
-        sta   _curwait,u
+        lda   o_fade_wait,u
+        sta   o_fade_curwait,u
         
-        ldy   _src,u
+        ldy   o_fade_src,u
         cmpy  #Pal_buffer             ; Source pal is already current pal, no copy
         beq   PaletteFade_Main
         ldx   #Pal_buffer
@@ -98,41 +99,45 @@ PaletteFade_Init
         std   30,x                                                                                                                     
                                                  
 PaletteFade_Main
-        dec   _curwait,u
+        dec   o_fade_curwait,u
         bmi   >
         rts
-!       lda   _wait,u
-        sta   _curwait,u
-        ldx   _dst,u
+!       lda   o_fade_wait,u
+        sta   o_fade_curwait,u
+        ldx   o_fade_dst,u
         ldy   #Pal_buffer
         lda   #$10
-        sta   _idx,u   
-        dec   _cycles,u                ; decremente le compteur du nombre de frame
+        sta   o_fade_idx,u   
+        dec   o_fade_cycles,u          ; decremente le compteur du nombre de frame
         bne   PFA_Loop                 ; on reboucle si nombre de frame n'est pas realise
-        jmp   UnloadObject_u           ; auto-destruction de l'objet
+        ldx   o_fade_callback,u
+        beq   >
+        inc   routine,u
+        jmp   ,x                       ; auto-destruction de l'objet
+!       rts
         
 PFA_Loop
         lda   ,y	               ; chargement de la composante verte et rouge
-        anda  _mask,u                  ; on efface la valeur vert ou rouge par masque
+        anda  o_fade_mask,u            ; on efface la valeur vert ou rouge par masque
         ldb   ,x                       ; composante verte et rouge couleur cible
-        andb  _mask,u                  ; on efface la valeur vert ou rouge par masque
-        stb   _save,u                  ; on stocke la valeur cible pour comparaison
+        andb  o_fade_mask,u            ; on efface la valeur vert ou rouge par masque
+        stb   o_fade_save,u            ; on stocke la valeur cible pour comparaison
         ldb   #$11                     ; preparation de la valeur d'increment de couleur
-        andb  _mask,u                  ; on efface la valeur non utile par masque
-        stb   _save+1,u                ; on stocke la valeur pour ADD ou SUB ulterieur
-        cmpa  _save,u                  ; comparaison de la composante courante et cible
+        andb  o_fade_mask,u            ; on efface la valeur non utile par masque
+        stb   o_fade_save+1,u          ; on stocke la valeur pour ADD ou SUB ulterieur
+        cmpa  o_fade_save,u            ; comparaison de la composante courante et cible
         beq   PFA_VRSuivante           ; si composante est egale a la cible on passe
         bhi   PFA_VRDec                ; si la composante est superieure on branche
         lda   ,y                       ; on recharge la valeur avec vert et rouge
-        adda  _save+1,u                ; on incremente la composante verte ou rouge
+        adda  o_fade_save+1,u          ; on incremente la composante verte ou rouge
         bra   PFA_VRSave               ; on branche pour sauvegarder
 PFA_VRDec
         lda   ,y                       ; on recharge la valeur avec vert et rouge
-        suba  _save+1,u                ; on decremente la composante verte ou rouge
+        suba  o_fade_save+1,u          ; on decremente la composante verte ou rouge
 PFA_VRSave                             
         sta   ,y                       ; sauvegarde de la nouvelle valeur vert ou rouge
 PFA_VRSuivante                         
-        com   _mask,u                  ; inversion du masque pour traiter l'autre semioctet
+        com   o_fade_mask,u            ; inversion du masque pour traiter l'autre semioctet
         bmi   PFA_Loop                 ; si on traite $F0 on branche sinon on continue
 	    
 PFA_SetPalBleu
@@ -150,9 +155,12 @@ PFA_SetPalSaveBleu
 PFA_SetPalNext                             
         leay  2,y                      ; on avance le pointeur vers la nouvelle couleur source
         leax  2,x                      ; on avance le pointeur vers la nouvelle couleur dest
-        dec   _idx,u 
+        dec   o_fade_idx,u 
         bne   PFA_Loop                 ; on reboucle si fin de liste pas atteinte
         ldd   #Pal_buffer
         std   Pal_current
         clr   PalRefresh               ; will call refresh palette in IRQ
         rts               
+
+PaletteFade_Idle
+        rts

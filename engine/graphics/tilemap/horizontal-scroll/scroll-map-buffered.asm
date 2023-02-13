@@ -49,6 +49,7 @@ scroll_loc_exg            equ   dp_engine+2
 InitScroll
         lda   #0
         sta   scroll_frame
+        sta   scroll_parity
         ldd   #-1
         std   glb_camera_x_pos                   ; first Scroll call will inc camera to 0
         stb   scroll_tile_pos_offset             ; first Scroll call will inc offset to 0
@@ -389,25 +390,36 @@ scroll_m_step4 equ *-1
 * ---------------------------------------------------------------------------
 * Scroll_JumpToPos
 *
-* D = position in map (A = x | B = y tile number starting from 0)
+* A = final position in map (in tiles)
+* B = tiles to pre-scroll before position
 * ---------------------------------------------------------------------------
 
-Scroll_JumpToPos
+Scroll_PreScrollTo
+        stb   @prescroll_width
+        suba  @prescroll_width
         sta   scroll_map_x_pos
-;        stb   @ytiles
         ldb   scroll_tile_width
         mul
         subd  #1                       ; camera x_pos must be initialized to desired pos -1
         std   glb_camera_x_pos
-;        lda   #0
-;@ytiles equ *-1
-;        ldb   scroll_tile_height
-;        mul
-;        std   glb_camera_y_pos
-
         lda   #0
         sta   scroll_frame
         sta   scroll_parity
         deca                           ; tile_pos_offset must be initialized to -1
         sta   scroll_tile_pos_offset
+        lda   scroll_tile_width
+        ldb   @prescroll_width
+        mul
+        addd  glb_camera_x_pos
+        std   @limit
+!       ldb   #-1
+        stb   scroll_remain_frames     ; force refresh
+        jsr   Scroll
+        jsr   DrawTiles
+        _SwitchScreenBuffer
+        ldd   glb_camera_x_pos
+        cmpd  #0
+@limit equ *-2
+        bmi   <
         rts
+@prescroll_width fcb 0
