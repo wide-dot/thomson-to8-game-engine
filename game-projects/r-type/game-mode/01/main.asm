@@ -65,10 +65,9 @@ LevelMainLoop
         ldd   #CHECKPOINT_01           ; yes load checkpoint
         jsr   Game_LoadCheckpoint_x
 !
-        ;lda   $E7C8 ; lecture d'une touche clavier
-        ;lsra
-        ;bcc   >
-        jsr   $E806
+        jsr   KTST
+        bcc   >
+        jsr   GETC
         cmpb  #$41 ; touche A
         bne   >
         jsr   Palette_FadeOut
