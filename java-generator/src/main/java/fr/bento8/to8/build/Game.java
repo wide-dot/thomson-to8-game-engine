@@ -60,6 +60,7 @@ public class Game {
 	public int maxTries;
 	public static String pragma;
 	public static String[] includeDirs;
+	public static String[] includes;
 	public static String[] defineList;
 	
 	// Storage
@@ -198,6 +199,8 @@ public class Game {
 			} else {
 				includeDirs = new String[0];
 			}
+			
+			includes = prop.getProperty("builder.lwasm.includeDirs").split(",");
 			
 			defineList = prop.getProperty("builder.lwasm.define").split(",");
 			if (defineList != null && !defineList[0].equals("")) {

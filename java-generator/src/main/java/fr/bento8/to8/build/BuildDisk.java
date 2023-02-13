@@ -3335,6 +3335,19 @@ public class BuildDisk
 		return destFileName;
 	}	
 	
+	public static Path includeFile(String fileName) {
+		if (Game.includes != null) {
+			for (int i=0; i < Game.includes.length; i++) {
+				Path p = Paths.get(Game.includes[i], fileName);
+				File f = p.toFile();
+				if (f.exists()) {
+					return p;
+				}
+			}
+		}
+		return Paths.get(fileName);
+	}
+	
 	public static String duplicateFilePrepend(String fileName, String subDir, String prepend) throws IOException {
 		String basename = FileUtil.removeExtension(Paths.get(fileName).getFileName().toString());
 		String destFileName = Game.generatedCodeDirName+subDir+"/"+basename+".asm";
@@ -3345,7 +3358,8 @@ public class BuildDisk
 		
 		List<String> result = new ArrayList<>();
 		result.add(prepend);
-	    try (Stream<String> lines = Files.lines(Paths.get(fileName))) {
+		
+	    try (Stream<String> lines = Files.lines(includeFile(fileName))) {
 	        result.addAll(lines.collect(Collectors.toList()));
 	    }
 		
