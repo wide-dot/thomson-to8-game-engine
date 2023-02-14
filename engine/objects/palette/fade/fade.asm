@@ -53,10 +53,12 @@ PaletteFade_Routines
         fdb   PaletteFade_Idle
  
 PaletteFade_Init
-        ldd  Vint_runcount
+        ldd o_fade_sleep,u
+        beq >                 ; si l'attente est de zéro, alors on déclencher de fader
+        ldd  Vint_runcount    ; sinon on regarde si le temps d'attente est atteint 
         cmpd o_fade_sleep,u
-        beq  >
-        rts
+        beq  >                ; oui il est atteint on déclenche
+        rts                   ; non pas atteint, on attend le prochain tour
 !       inc   routine,u
         ldd   #$100F    
         sta   o_fade_cycles,u
@@ -117,7 +119,7 @@ PaletteFade_Main
         ldx   o_fade_callback,u
         beq   >
         inc   routine,u
-        jmp   ,x                       ; auto-destruction de l'objet
+        jsr   ,x                       ; auto-destruction de l'objet
 !       rts
         
 PFA_Loop
@@ -167,4 +169,7 @@ PFA_SetPalNext
         rts               
 
 PaletteFade_Idle
-        rts
+        ldb o_fade_unload,u   ; ? est-ce qu'on doit supprimer l'objet automatiquement ?
+        beq > 
+        jsr UnloadObject_u    ; oui ! Let's do this
+!       rts
