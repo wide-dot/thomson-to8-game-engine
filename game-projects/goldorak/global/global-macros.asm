@@ -76,9 +76,12 @@ _PaletteFade MACRO
         lda   #ObjID_PaletteFade
         sta   id,x                 
         ldd   \1
-        std   ext_variables,x     ; _src
+        std   o_fade_src,x     ; _src
         ldd   \2
-        std   ext_variables+2,x   ; _dest 
+        std   o_fade_dst,x   ; _dest 
         ldd   \4
-        std   ext_variables+9,x   ; _wait
+        std   o_fade_wait,x   ; _wait
+        ldd   \5
+        std   o_fade_callback,x   ; _callback
+
         ENDM

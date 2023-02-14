@@ -38,6 +38,14 @@ Bulle_02
 Final           ldb Fire_Press                
                 bne >
                 bra @end
-!               lda #$FF
-                sta ChangeGameMode
+!               _PaletteFade #Palette_splash,#Pal_black,PALETTE_FADER,#$60,DoChangeGameMode
 @end            jmp DisplaySprite
+
+DoChangeGameMode
+        rts
+        lda #GmID_gamescreen
+        sta GameMode
+        jsr IrqOff
+        jsr sn_reset
+        jsr YVGM_SilenceAll 
+        jsr LoadGameMode         
