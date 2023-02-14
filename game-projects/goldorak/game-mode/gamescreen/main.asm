@@ -14,9 +14,9 @@ OverlayMode equ 1
         _MusicInit_IRQ #UserIRQ,#OUT_OF_SYNC_VBL,#Irq_one_frame         ; Setting IRQ for music
     
 
-        _SetPalette #Pal_black
+        _SetPalette #Palette_gamescreen
         _ShowPalette
-        _PaletteFade #Pal_black,#Palette_gamescreen,Obj_PaletteFade,#$20
+        #_PaletteFade #Pal_black,#Palette_gamescreen,Obj_PaletteFade,#$20
 
 * load object
         _NewManagedObject_U #ObjID_Goldorak

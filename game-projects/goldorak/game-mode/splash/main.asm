@@ -11,19 +11,17 @@
     _MusicInit_IRQ #UserIRQ,#OUT_OF_SYNC_VBL,#Irq_one_frame         ; Setting IRQ for music
     _NewManagedObject_U #ObjID_Splash
     
-    _SetPalette #Pal_white
+    _SetPalette #Pal_black
     _ShowPalette
 
-    _PaletteFade #Pal_white,#Palette_splash,Obj_PaletteFade,#$60
+    _PaletteFade #Pal_black,#Palette_splash,PALETTE_FADER,#$60,#NO_CALLBACK
 
 * ============================================================================== *
 * MainLoop
 * ==============================================================================
 MainLoop
-    jsr   LoadGameMode
     jsr   ReadJoypads
     jsr   RunObjects
-    jsr   DoChangeGameMode    
     jsr   CheckSpritesRefresh
     jsr   EraseSprites
     jsr   UnsetDisplayPriority
@@ -31,15 +29,7 @@ MainLoop
     jsr   WaitVBL
     bra   MainLoop
 
-DoChangeGameMode
-        lda ChangeGameMode
-        beq @exit
-        lda #GmID_gamescreen
-        sta GameMode
-        jsr IrqOff
-        jsr sn_reset
-        jsr YVGM_SilenceAll          
-@exit   rts
+
 UserIRQ
     jsr   PalUpdateNow
     jsr   YVGM_MusicFrame
