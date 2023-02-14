@@ -46,6 +46,8 @@ CreateChilds
         stu   @u
         lda   #14
         sta   childs
+        lda   #angle_step*-8
+        sta   cur_angle
 @loop   jsr   LoadObject_u             ; create background object
         beq   @nomore                  ; branch if no more available object slot
         lda   #ObjID_shellmask         ; must set the id before calling next loadobject routine
