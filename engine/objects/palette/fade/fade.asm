@@ -53,7 +53,11 @@ PaletteFade_Routines
         fdb   PaletteFade_Idle
  
 PaletteFade_Init
-        inc   routine,u
+        ldd  Vint_runcount
+        cmpd o_fade_sleep,u
+        beq  >
+        rts
+!       inc   routine,u
         ldd   #$100F    
         sta   o_fade_cycles,u
         stb   o_fade_mask,u
