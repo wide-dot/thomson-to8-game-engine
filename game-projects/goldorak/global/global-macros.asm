@@ -80,8 +80,10 @@ _PaletteFade MACRO
         ldd   \2
         std   o_fade_dst,x   ; _dest 
         ldd   \4
-        std   o_fade_wait,x   ; _wait
+        std   o_fade_sleep,x   ; _sleep time before start
         ldd   \5
         std   o_fade_callback,x   ; _callback
+        ldd   \6
+        std   o_fade_unload,x   ; _unload
 
         ENDM

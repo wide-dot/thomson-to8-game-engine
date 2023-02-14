@@ -14,7 +14,7 @@
     _SetPalette #Pal_black
     _ShowPalette
 
-    _PaletteFade #Pal_black,#Palette_splash,PALETTE_FADER,#$60,#NO_CALLBACK
+    _PaletteFade #Pal_black,#Palette_splash,PALETTE_FADER,#$60,#NO_CALLBACK,#$FF ; FF = UNLOAD !
 
 * ============================================================================== *
 * MainLoop
@@ -29,11 +29,19 @@ MainLoop
     jsr   WaitVBL
     bra   MainLoop
 
-
 UserIRQ
     jsr   PalUpdateNow
     jsr   YVGM_MusicFrame
     jmp   vgc_update    
+
+DoChangeGameMode
+        jsr IrqOff
+        jsr sn_reset
+        jsr YVGM_SilenceAll 
+        lda #GmID_gamescreen
+        sta GameMode
+        jsr LoadGameModeNow 
+        rts       
 
 * ============================================================================== 
 * INCLUDES

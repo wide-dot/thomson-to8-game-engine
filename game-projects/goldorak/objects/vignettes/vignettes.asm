@@ -18,6 +18,7 @@ routines
                 fdb   Vignette_02
                 fdb   Vignette_02
                 fdb   Bulle_02
+                fdb   WaitPress
                 fdb   Final
 
 
@@ -35,17 +36,12 @@ Vignette_02
 Bulle_02
                 _SetImage_U #Img_Bulle_02,#$6398,#1,#render_overlay_mask
                 INC routine,U
-Final           ldb Fire_Press                
-                bne >
-                bra @end
-!               _PaletteFade #Palette_splash,#Pal_black,PALETTE_FADER,#$60,DoChangeGameMode
-@end            jmp DisplaySprite
+WaitPress       ldb Fire_Press                
+                bne @fade
+                bra Final
+@fade           _PaletteFade #Palette_splash,#Pal_black,PALETTE_FADER,#$00,#DoChangeGameMode,#$FF
+                INC routine,U
 
-DoChangeGameMode
-        rts
-        lda #GmID_gamescreen
-        sta GameMode
-        jsr IrqOff
-        jsr sn_reset
-        jsr YVGM_SilenceAll 
-        jsr LoadGameMode         
+Final          jmp DisplaySprite
+
+     
