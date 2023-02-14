@@ -49,17 +49,13 @@ PaletteFade
  
 PaletteFade_Routines
         fdb   PaletteFade_Init
+        fdb   PaletteFade_Wait
         fdb   PaletteFade_Main
         fdb   PaletteFade_Idle
+
  
 PaletteFade_Init
-        ldd o_fade_sleep,u
-        beq >                 ; si l'attente est de zéro, alors on déclencher de fader
-        ldd  Vint_runcount    ; sinon on regarde si le temps d'attente est atteint 
-        cmpd o_fade_sleep,u
-        beq  >                ; oui il est atteint on déclenche
-        rts                   ; non pas atteint, on attend le prochain tour
-!       inc   routine,u
+        inc   routine,u
         ldd   #$100F    
         sta   o_fade_cycles,u
         stb   o_fade_mask,u
@@ -102,7 +98,17 @@ PaletteFade_Init
         ldd   28,y
         std   28,x
         ldd   30,y
-        std   30,x                                                                                                                     
+        std   30,x     
+        ldd   o_fade_sleep,u
+        addd  Vint_runcount 
+        std   o_fade_sleep,u   
+
+PaletteFade_Wait      
+        ldd Vint_runcount
+        cmpd o_fade_sleep,u
+        bhs  >
+        rts
+!       inc   routine,u                                                                                                               
                                                  
 PaletteFade_Main
         dec   o_fade_curwait,u
@@ -116,9 +122,9 @@ PaletteFade_Main
         sta   o_fade_idx,u   
         dec   o_fade_cycles,u          ; decremente le compteur du nombre de frame
         bne   PFA_Loop                 ; on reboucle si nombre de frame n'est pas realise
-        ldx   o_fade_callback,u
-        beq   >
         inc   routine,u
+        ldx   o_fade_callback,u
+        beq   >        
         jsr   ,x                       ; auto-destruction de l'objet
 !       rts
         
