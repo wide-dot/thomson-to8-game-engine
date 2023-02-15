@@ -39,6 +39,8 @@ DoChangeGameMode
         jsr sn_reset
         jsr YVGM_SilenceAll 
         lda #GmID_gamescreen
+        sta NEXT_GAME_MODE
+        lda #GmID_loading
         sta GameMode
         jsr LoadGameModeNow 
         rts       
