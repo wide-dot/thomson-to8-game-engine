@@ -162,7 +162,6 @@ VS_cur_line equ *-1
         
 * ============================================================================== * Routines
 * ==============================================================================
-   
         INCLUDE "./engine/graphics/sprite/sprite-overlay-pack.asm"
         INCLUDE "./engine/graphics/animation/AnimateSprite.asm"
         INCLUDE "./engine/graphics/codec/DecRLE00.asm"
