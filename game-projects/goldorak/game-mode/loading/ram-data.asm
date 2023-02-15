@@ -8,10 +8,12 @@ Dynamic_Object_RAM
         fill  0,nb_dynamic_objects*object_size
 Dynamic_Object_RAM_End
 
+
+
 ;SlideShowData 
-;        FDB Img_Vignette_01, $0060
-;        FDB Img_Bulle_01, $0060
-;        FDB Img_Vignette_02, $0060
-;        FDB Img_Bulle_02, $0060
+;        FDB #Img_Vignette_01, $0060
+;        FDB #Img_Bulle_01, $0060
+;        FDB #Img_Vignette_02, $0060
+;        FDB #Img_Bulle_02, $0060
 ;        FDB $0000
 
