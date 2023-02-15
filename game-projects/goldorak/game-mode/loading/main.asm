@@ -11,11 +11,12 @@
     _ShowPalette
 
     ldd NEXT_GAME_MODE_PRESENT
-    cmpa #$00
-    bne > ; Il y a dejà un game-mode qui a été lancé donc on passe l'init
-    lda #$FF ; c'est le premier appel, donc on init pour ne pas y repasser
-    ldb #GmID_gamescreen ; game-mode à lancer après celui-ci
-    std NEXT_GAME_MODE_PRESENT ; on écrit le flag + game-mode à lancer à la bonne adresse
+    cmpd #$C3E1
+    beq > ; Il y a dejà un game-mode qui a été lancé donc on passe l'init
+    ldd #$C3E1 ; c'est le premier appel, donc on init pour ne pas y repasser
+    std NEXT_GAME_MODE_PRESENT
+    lda #GmID_splash ; game-mode à lancer après celui-ci
+    sta NEXT_GAME_MODE ; on écrit le flag + game-mode à lancer à la bonne adresse
 !   lda   NEXT_GAME_MODE
     sta   GameMode
 
@@ -29,7 +30,7 @@ Main
     jsr   UnsetDisplayPriority
     jsr   DrawSprites
     jsr   WaitVBL
-    jsr   LoadGameModeNow 
+    jsr   LoadGameModeNow  
       
 * ============================================================================== 
 * INCLUDES
