@@ -139,7 +139,7 @@ wave_bug_03_space equ 2
 
 
 ; Cancer wave
-wave_cancer_01  equ 748
+wave_cancer_01  equ 720
         fdb  wave_cancer_01-140,(ObjID_cancer*256)+0,wave_cancer_01+14,40
         fdb  wave_cancer_01-140,(ObjID_cancer*256)+1,wave_cancer_01+14,120
         fdb  wave_cancer_01-140+7,(ObjID_cancer*256)+0,wave_cancer_01+14+7,50
