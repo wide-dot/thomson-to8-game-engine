@@ -1,10 +1,12 @@
 DO_NOT_WAIT_VBL equ 1
+SOUND_CARD_PROTOTYPE equ 1
 
         INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/objects/palette/fade/fade.equ"
+        INCLUDE "./global/macro.asm"
 
 map_width       equ 1792
 viewport_width  equ 140
@@ -45,8 +47,10 @@ CHECKPOINT_01 equ $3802
         jsr   IrqOn 
 
 ; play music
-        ldx   #Snd_S01
-        jsr   PlayMusic
+        _MountObject ObjID_ymm
+        _MusicInit_objymm #0,#MUSIC_NO_LOOP,#MusicCallbackYM  ; initialize the YM2413 player 
+        _MountObject ObjID_vgc
+        _MusicInit_objvgc #0,#MUSIC_NO_LOOP,#MusicCallbackSN ; initialize the SN76489 vgm player with a vgc data stream
 
 * ---------------------------------------------------------------------------
 * MAIN GAME LOOP
@@ -95,7 +99,21 @@ LevelMainLoop
 
 UserIRQ
 	jsr   PalUpdateNow
-        jmp   MusicFrame
+        _MountObject ObjID_ymm
+        _MusicFrame_objymm
+        _MountObject ObjID_vgc
+        _MusicFrame_objvgc
+        rts
+
+MusicCallbackYM
+        _MountObject ObjID_ymm
+        _MusicInit_objymm #1,#MUSIC_LOOP,#0
+        rts
+
+MusicCallbackSN
+        _MountObject ObjID_vgc
+        _MusicInit_objvgc #1,#MUSIC_LOOP,#0
+        rts
 
 * ---------------------------------------------------------------------------
 *
@@ -315,9 +333,6 @@ Palette_FadeCallback
 
         ; tilemap
         INCLUDE "./engine/graphics/tilemap/horizontal-scroll/scroll-map-buffered.asm"  
-
-        ; sound
-        INCLUDE "./engine/sound/Svgm.asm"
 
         ; collision
         INCLUDE "./engine/collision/collision.asm"

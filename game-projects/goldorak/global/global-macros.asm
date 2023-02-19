@@ -6,15 +6,16 @@ _NewManagedObject_U MACRO
     ENDM
 
 _MusicInit_SN76489 MACRO
-    ldd   \2
     ldx   \1
-    orcc  \3 ; set carry (loop)
+    ldb   \2
+    ldy   \3
     jsr   vgc_init 
     ENDM
 
 _MusicInit_YM2413 MACRO
     ldx   \1
-    orcc  \2 ; set carry (loop)
+    ldb   \2
+    ldy   \3
     jsr   YVGM_PlayMusic 
     ENDM
 
