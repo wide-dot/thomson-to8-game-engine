@@ -6,8 +6,8 @@
 * Init
 * ============================================================================== 
     _GameModeInit #GmID_splash
-    _MusicInit_SN76489 #Vgc_introSN,#vgc_stream_buffers,#MUSIC_LOOP ; initialize the SN76489 vgm player with a vgc data stream
-    _MusicInit_YM2413 #Vgc_introYM,#MUSIC_LOOP                      ; initialize the YM2413 player 
+    _MusicInit_SN76489 #Vgc_introSN,#MUSIC_LOOP,#0                  ; initialize the SN76489 player
+    _MusicInit_YM2413 #Vgc_introYM,#MUSIC_LOOP,#0                   ; initialize the YM2413 player 
     _MusicInit_IRQ #UserIRQ,#OUT_OF_SYNC_VBL,#Irq_one_frame         ; Setting IRQ for music
     _NewManagedObject_U #ObjID_Splash
     

@@ -24,15 +24,14 @@
 ; vgc_play
 ;-------------------------------------------
 ; Initialise playback routine
-;  A points to HI byte of a page aligned 2Kb RAM buffer address
+;  B=1 for looped playback, 0 for no loop
 ;  X point to the VGC data stream to be played
-;  C=1 for looped playback
 ;-------------------------------------------
 vgc_init
+        lda   #vgc_stream_buffers/256  ; HI byte of a page aligned 2Kb RAM buffer address
         sta   vgc_buffers              ; stash the 2kb buffer address
-        lda   #0
-        rora                           ; move carry into A
-        sta   vgc_loop
+        stb   vgc_loop
+        sty   vgc_callback
         lda   ,x                       ; get memory page that contains track data
         sta   vgc_source_page
         _GetCartPageB
@@ -65,6 +64,7 @@ vgc_update
         ; The data is run length encoded.
         ; Get Channel 3 tone first because that contains the EOF marker        
         ; Update Tone3
+vgc_do_update
         lda   #3
         jsr   vgc_update_register1  ; on exit C set if data changed, B is last value
         bcc   @more_updates
@@ -93,7 +93,10 @@ vgc_update
         ;
 @finished
         ; end of tune reached
-        lda   vgc_loop
+        ldx   vgc_callback             ; check callback routine
+        beq   >
+        jmp   ,x
+!       lda   vgc_loop
         beq   @no_looping
         ; restart if looping
         ldx   vgc_source
@@ -148,6 +151,7 @@ vgc_finished    fcb 0    ; a flag to indicate player has reached the end of the 
 vgc_loop        fcb 0    ; non zero if tune is to be looped
 vgc_source      fdb 0    ; vgc data address
 vgc_source_page fdb 0    ; vgc data address
+vgc_callback    fdb 0    ; 0=no calback routine
 
 ; 8 counters for VGC register update counters (RLE)
 vgc_register_counts
@@ -315,7 +319,7 @@ vgc_update_register2
 ; push byte into decode buffer
 ; clobbers Y, preserves A
 lz_store_buffer    ; called twice - 4 byte overhead, 6 byte function. Cheaper to inline.
-        stb   $ffff   ; *** SELF MODIFIED ***
+        stb   $1234   ; *** SELF MODIFIED ***
         inc   lz_store_buffer+2
         rts                 ; [6] (1)
 
@@ -416,7 +420,7 @@ is_match
 ; fetch a byte from the current decode buffer at the current read ptr offset
 ; returns byte in B
 lz_fetch_buffer
-        ldb   $ffff ; *** SELF MODIFIED ***
+        ldb   $1234 ; *** SELF MODIFIED ***
         inc   lz_fetch_buffer+2
         jsr   lz_store_buffer    ; stash in decode buffer
 

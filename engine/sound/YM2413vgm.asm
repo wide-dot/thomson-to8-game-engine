@@ -12,6 +12,7 @@ YVGM_MusicDataPos    fdb   0                ; current playing position in Music 
 YVGM_MusicStatus     fcb   0                ; 0 : stop playing, 1-255 : play music
 YVGM_WaitFrame       fcb   0                ; number of frames to wait before next play
 YVGM_loop            fcb   0                ; 0=no loop
+YVGM_callback        fdb   0                ; 0=no calback routine
 
 ******************************************************************************
 * PlayMusic - Load a new music and init all tracks
@@ -21,9 +22,8 @@ YVGM_loop            fcb   0                ; 0=no loop
 ******************************************************************************
 
 YVGM_PlayMusic
-        lda   #0
-        rora                           ; move carry into A
-        sta   YVGM_loop
+        stb   YVGM_loop
+        sty   YVGM_callback
         _GetCartPageA
         sta   @a
         lda   ,x                       ; get memory page that contains track data
@@ -69,6 +69,7 @@ YVGM_MusicFrame
         bne   @b
         rts                            ; no music to play
 @b      _SetCartPageA
+YVGM_do_MusicFrame
         ldx   YVGM_MusicDataPos
 @UpdateLoop
         lda   ,x+
@@ -84,9 +85,12 @@ YVGM_MusicFrame
         stx   YVGM_MusicDataPos
         jmp   ym2413zx0_resume         ; read next frame data
 @DoStopTrack
-        lda   vgc_loop
+        ldx   YVGM_callback            ; check callback routine
+        beq   >
+        jmp   ,x
+!       lda   YVGM_loop
         beq   @no_looping
-        lda   #3 ; fix for battlesquadron files should be 1
+        lda   #3 ; fix ? should be 1 ?
         sta   YVGM_WaitFrame
         ldx   YVGM_MusicData
         ldu   #YM2413_buffer
@@ -175,6 +179,7 @@ ym2413zx0_decompress
 ; 0 - literal (copy next N bytes from compressed data)
 @ym2413zx0_literals bsr @zx0_elias       ; obtain length
                    tfr d,y              ;  "      "
+                   clr @mode
                    bsr @zx0_copy_bytes  ; copy literals
                    bcs @zx0_new_offset  ; branch if next block is new-offset
 ; 0 - copy from last offset (repeat N bytes from last offset)
@@ -187,7 +192,9 @@ ym2413zx0_decompress
                    cmpx #YM2413_buffer
                    bhs >
                    leax YM2413_buffer_end-YM2413_buffer,x ; cycle buffer
-!                  bsr @zx0_copy_bytes  ; copy match
+!                  lda #1
+                   sta @mode
+                   bsr @zx0_copy_bytes_b ; copy match
                    ldx #0               ; restore reg X
 @saveX             equ *-2
                    bcc @ym2413zx0_literals ; branch if next block is literals
@@ -197,9 +204,9 @@ ym2413zx0_decompress
                    beq @zx0_eof         ; eof? (length = 256) if so exit
                    tfr b,a              ; transfer to MSB position
                    ldb ,x+              ; obtain LSB offset
-                   cmpx #YM2413_buffer_end
-                   blo >
-                   ldx  #YM2413_buffer  ; cycle buffer
+                   ;cmpx #YM2413_buffer_end
+                   ;blo >
+                   ;ldx  #YM2413_buffer  ; cycle buffer
 !                  rora                 ; last offset bit becomes first length bit
                    rorb                 ;  "     "     "    "      "     "      "
                    std @zx0_offset      ; preserve new offset
@@ -219,9 +226,9 @@ ym2413zx0_decompress
                    bne @zx0_elias_bt    ; branch if bit stream is not empty
                    sta @saveA           ; save reg A
                    lda ,x+              ; load another 8-bits
-                   cmpx #YM2413_buffer_end
-                   blo >
-                   ldx  #YM2413_buffer  ; cycle buffer
+                   ;cmpx #YM2413_buffer_end
+                   ;blo >
+                   ;ldx  #YM2413_buffer  ; cycle buffer
 !                  rola                 ; get next bit
                    sta @zx0_bit         ; save bit stream
                    lda #0               ; restore reg A
@@ -231,6 +238,8 @@ ym2413zx0_decompress
 @zx0_eof           rts                  ; return
 ; copy Y bytes from X to U and get next bit
 @zx0_copy_bytes    ldb ,x+              ; copy byte
+                   bra >
+@zx0_copy_bytes_b  ldb ,x+              ; copy byte
                    cmpx #YM2413_buffer_end
                    blo >
                    ldx  #YM2413_buffer  ; cycle buffer
@@ -255,12 +264,19 @@ ym2413zx0_resume   com @flip
                    lds @stackContextPos
                    puls d,x,y,u
 @nextByte          com @flip
+                   tst @mode
+                   bne >
                    leay -1,y            ; decrement loop counter
                    bne @zx0_copy_bytes  ; loop until done
                    lsl @zx0_bit         ; get next bit
                    rts
+!                  leay -1,y            ; decrement loop counter
+                   bne @zx0_copy_bytes_b ; loop until done
+                   lsl @zx0_bit         ; get next bit
+                   rts
 @zx0_bit  fcb $80
 @flip     fcb 0
+@mode     fcb 0
 @stackContextPos fdb 0
           fill 0,32
 @stackContext equ *
