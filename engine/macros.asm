@@ -185,5 +185,7 @@ _sab MACRO
  ENDM
 
 _breakpoint MACRO
+ IFDEF DEBUG
         sta   >$ffff
+ ENDC
  ENDM
