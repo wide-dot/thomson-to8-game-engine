@@ -186,6 +186,8 @@ _sab MACRO
 
 _breakpoint MACRO
  IFDEF DEBUG
+        pshs  CC
         sta   >$ffff
+        puls  CC
  ENDC
  ENDM
