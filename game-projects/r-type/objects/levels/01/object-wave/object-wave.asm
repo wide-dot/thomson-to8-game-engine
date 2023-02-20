@@ -107,7 +107,7 @@ wave_patapata_05_space equ 4
         fdb   532-140,(ObjID_bink*256)+55,532+enemies_bink,140
 
 
-; Fifth pata-pata wave
+; Sixth pata-pata wave
 wave_patapata_06       equ 534
 wave_patapata_06_space equ 4
         fdb   wave_patapata_06-140+wave_patapata_06_space*1,(ObjID_patapata*256)+27,wave_patapata_06+enemies_patapata+wave_patapata_06_space*1,50
@@ -187,6 +187,42 @@ wave_blasters_01      equ 810
 wave_shell        equ 982
 wave_shell_width  equ 8
         fdb   wave_shell-140-8,(ObjID_shell*256)+00,1028,139
+
+
+
+wave_blasters_02      equ 1118
+
+        fdb wave_blasters_02-140,(ObjID_blaster*256)+230,wave_blasters_02+20,34
+
+; Seventh pata-pata wave
+wave_patapata_07       equ 1148
+wave_patapata_07_space equ 4
+
+        fdb wave_blasters_02-140+14,(ObjID_blaster*256)+240,wave_blasters_02+20+14,34
+        fdb wave_patapata_07-140+wave_patapata_06_space*0,(ObjID_patapata*256)+27,wave_patapata_07+enemies_patapata+wave_patapata_07_space*0,90
+        fdb wave_patapata_07-140+wave_patapata_06_space*2,(ObjID_patapata*256)+26,wave_patapata_07+enemies_patapata+wave_patapata_07_space*2,80
+        fdb wave_blasters_02-140+28,(ObjID_blaster*256)+250,wave_blasters_02+20+28,20
+        fdb wave_patapata_07-140+wave_patapata_06_space*5,(ObjID_patapata*256)+27,wave_patapata_07+enemies_patapata+wave_patapata_07_space*5,85
+        fdb wave_blasters_02-140+42,(ObjID_blaster*256)+230,wave_blasters_02+20+42,20
+        fdb wave_patapata_07-140+wave_patapata_06_space*7,(ObjID_patapata*256)+26,wave_patapata_07+enemies_patapata+wave_patapata_07_space*7,60        
+        fdb wave_blasters_02-140+56,(ObjID_blaster*256)+240,wave_blasters_02+20+56,20
+ ; P-Staff #3
+        fdb 1176-140,(ObjID_pstaff*256)+00,1176+enemies_pstaff*4,141
+        fdb wave_blasters_02-140+70,(ObjID_blaster*256)+230,wave_blasters_02+20+70,20
+
+        fdb wave_patapata_07-140+wave_patapata_06_space*15,(ObjID_patapata*256)+26,wave_patapata_07+enemies_patapata+wave_patapata_07_space*15,70
+
+        fdb wave_blasters_02-140+84,(ObjID_blaster*256)+230,wave_blasters_02+20+84,20
+        fdb wave_blasters_02-140+98,(ObjID_blaster*256)+220,wave_blasters_02+20+98,20
+
+
+
+wave_blasters_03      equ 1258
+
+        fdb wave_blasters_03-140,(ObjID_blaster*256)+230,wave_blasters_03+20,48
+        fdb wave_blasters_03-140,(ObjID_blaster*256)+221,wave_blasters_03+20,118
+        fdb wave_blasters_03-140+14,(ObjID_blaster*256)+240,wave_blasters_03+20+14,48
+        fdb wave_blasters_03-140+14,(ObjID_blaster*256)+251,wave_blasters_03+20+14,118
 
         fdb   -1 ; end marker
 
