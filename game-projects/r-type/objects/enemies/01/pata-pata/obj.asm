@@ -113,6 +113,7 @@ LiveUp
         std   amplitude,u
         ldd   #$A0
         std   y_vel,u
+        _breakpoint
 
 LiveDown
         ldd   amplitude,u
@@ -165,7 +166,7 @@ CheckEOL
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
 @destroy 
-        jsr   LoadObject_x ; make then die early ... to be removed
+        jsr   LoadObject_x
         beq   @delete
         lda   #ObjID_enemiesblastsmall
         sta   id,x

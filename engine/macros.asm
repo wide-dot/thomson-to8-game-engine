@@ -183,3 +183,7 @@ _sab MACRO
         pshs  a
         subb  ,s+
  ENDM
+
+_breakpoint MACRO
+        sta   >$ffff
+ ENDM

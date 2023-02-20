@@ -133,17 +133,15 @@ MusicCallbackSN
 * ---------------------------------------------------------------------------
 
 ReturnShootDirection_X
-        pshs  y,a
+        pshs  y
         bita  #$04
         bne   @xkilltracking
-        ldd   glb_camera_x_pos
-        addd  #70
-        tfr   d,y
+        ldy   glb_camera_x_pos
+        leay  70,y
         jmp   @xkilltrackingcontinue
 @xkilltracking
         ldy   player1+x_pos
 @xkilltrackingcontinue
-        puls  a
         cmpy  x_pos,u
         blt   @xpos
         ldy   #Foeshoottable
