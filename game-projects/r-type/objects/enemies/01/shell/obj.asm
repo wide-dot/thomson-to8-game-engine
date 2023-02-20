@@ -178,7 +178,7 @@ LiveContinue
         leax  AABB_0,u
         addd  #55+8             ; circle 2*x_radius + max sprite radius in any positions
         cmpd  glb_camera_x_pos
-        lble   Delete
+        lble  Delete
         subd  glb_camera_x_pos
         subd  #55+8
         stb   AABB.cx,x
@@ -287,7 +287,7 @@ Destroyed
         addd  #center_of_circle ; x center of circle
         std   x_pos,u
         leax  AABB_0,u
-        addd  #55+8         ; circle 2*x_radius + max sprite radius in any positions
+        addd  #55+8             ; circle 2*x_radius + max sprite radius in any positions
         cmpd  glb_camera_x_pos
         ble   Delete
         subd  glb_camera_x_pos
@@ -297,11 +297,14 @@ Destroyed
         ldb   angle,u
         ldb   b,y
         sex
-        addd  #84           ; y center of circle
+        addd  #84               ; y center of circle
         std   y_pos,u
         subd  glb_camera_y_pos
         stb   AABB.cy,x
         lda   kill_my_nok,u
+        bne   >
+        jmp   DisplaySprite
+!
         bita  #$03
         bne   >
         asra
