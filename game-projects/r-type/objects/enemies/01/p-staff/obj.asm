@@ -26,6 +26,7 @@ Routines
         fdb   ShootLeft
         fdb   WalkRight
         fdb   ShootRight
+        fdb   AlreadyDeleted
 
 Init
         ldd   #Ani_pstaff_walk_left
@@ -119,7 +120,7 @@ CheckEOL
         std   x_vel,x
         clr   y_vel,x
 @delete
-        lda   #4
+        lda   #5
         sta   routine,u      
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
         jmp   DeleteObject
