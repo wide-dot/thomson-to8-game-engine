@@ -166,12 +166,16 @@ wave_blasters_01      equ 810
         fdb wave_blasters_01-140,(ObjID_blaster*256)+230,wave_blasters_01+20,34
         fdb wave_blasters_01-140,(ObjID_blaster*256)+241,wave_blasters_01+20,132
 
+        fdb 820-140,(ObjID_fadetotunnel*256),820,100
+
         fdb wave_blasters_01-140+14,(ObjID_blaster*256)+250,wave_blasters_01+20+14,34
         fdb wave_blasters_01-140+14,(ObjID_blaster*256)+221,wave_blasters_01+20+14,132
         fdb wave_blasters_01-140+28,(ObjID_blaster*256)+230,wave_blasters_01+20+28,48
         fdb wave_blasters_01-140+28,(ObjID_blaster*256)+223,wave_blasters_01+20+28,118
         fdb wave_blasters_01-140+42,(ObjID_blaster*256)+240,wave_blasters_01+20+42,48
         fdb wave_blasters_01-140+42,(ObjID_blaster*256)+231,wave_blasters_01+20+42,118
+
+
 
         fdb wave_blasters_01-140+140,(ObjID_blaster*256)+220,wave_blasters_01+20+140,20
         fdb wave_blasters_01-140+154,(ObjID_blaster*256)+250,wave_blasters_01+20+154,20
@@ -186,7 +190,7 @@ wave_blasters_01      equ 810
 ; Shell wave
 wave_shell        equ 982
 wave_shell_width  equ 8
-        ;fdb   wave_shell-140-8,(ObjID_shell*256)+00,1028,139
+        fdb   wave_shell-140-8,(ObjID_shell*256)+00,1028,139
 
 
 
@@ -223,6 +227,8 @@ wave_blasters_03      equ 1258
         fdb wave_blasters_03-140,(ObjID_blaster*256)+221,wave_blasters_03+20,118
         fdb wave_blasters_03-140+14,(ObjID_blaster*256)+240,wave_blasters_03+20+14,48
         fdb wave_blasters_03-140+14,(ObjID_blaster*256)+251,wave_blasters_03+20+14,118
+
+        fdb 1604-140,(ObjID_fadetotunnel*256)+1,1604,100
 
         fdb   -1 ; end marker
 
