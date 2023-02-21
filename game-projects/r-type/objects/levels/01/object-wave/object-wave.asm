@@ -186,7 +186,7 @@ wave_blasters_01      equ 810
 ; Shell wave
 wave_shell        equ 982
 wave_shell_width  equ 8
-        fdb   wave_shell-140-8,(ObjID_shell*256)+00,1028,139
+        ;fdb   wave_shell-140-8,(ObjID_shell*256)+00,1028,139
 
 
 
