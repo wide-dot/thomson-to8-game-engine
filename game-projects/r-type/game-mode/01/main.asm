@@ -118,7 +118,7 @@ MusicCallbackSN
 
 * ---------------------------------------------------------------------------
 *
-* Foe shoots, returns x_vel or y_vel values from object stored in x
+* Foe shoots, returns x_vel or y_vel values from object stored in u
 *
 * Entry : a = direction (a will be destroyed during the process)
 *             Bit 0-1
@@ -135,13 +135,11 @@ MusicCallbackSN
 
 ReturnShootDirection_X
         pshs  y
+        ldy   player1+x_pos
         bita  #$04
-        bne   @xkilltracking
+        bne   @xkilltrackingcontinue
         ldy   glb_camera_x_pos
         leay  70,y
-        jmp   @xkilltrackingcontinue
-@xkilltracking
-        ldy   player1+x_pos
 @xkilltrackingcontinue
         cmpy  x_pos,u
         blt   @xpos
@@ -157,12 +155,10 @@ ReturnShootDirection_X
 
 ReturnShootDirection_Y
         pshs  y
-        bita  #$04
-        bne   @ykilltracking
-        ldy   #84                       ; Center screen y (168 / 2)
-        jmp   @ykilltrackingcontinue
-@ykilltracking
         ldy   player1+y_pos
+        bita  #$04
+        bne   @ykilltrackingcontinue
+        ldy   #84                       ; Center screen y (168 / 2)
 @ykilltrackingcontinue
         cmpy  y_pos,u
         blt   @ypos
@@ -211,10 +207,10 @@ Game_LoadCheckpoint_x
         jsr   Collision_ClearLists
 ;
         ; clear the two screen buffers to black
-        ldx   #0
+        ldx   #$7777
         jsr   ClearDataMem
         _SwitchScreenBuffer
-        ldx   #0
+        ldx   #$7777
         jsr   ClearDataMem
         _SwitchScreenBuffer
 ;
