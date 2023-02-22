@@ -24,12 +24,13 @@ Init
         ldb   #3
         stb   priority,u
         lda   render_flags,u
-        anda  #255-8
+        ora   #render_playfieldcoord_mask
         sta   render_flags,u
-        ldd   #0
+        ldd   #$80
         std   x_pos,U
-        ldd   #168
+        ldd   #$7F
         std   y_pos,U
         inc   routine,u
+	_breakpoint
 Live      
         jmp   DisplaySprite
