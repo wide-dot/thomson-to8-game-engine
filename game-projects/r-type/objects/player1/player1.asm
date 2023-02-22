@@ -42,6 +42,12 @@ Init
         std   glb_camera_x_pos_old
         inc   player1+routine
 
+        jsr   LoadObject_x
+        beq   >                        ; branch if no more available object slot
+        lda   #ObjID_hud               ; fire !
+        sta   id,x
+!
+
 Live
         ldd   glb_camera_x_pos
         subd  glb_camera_x_pos_old
