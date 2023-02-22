@@ -44,7 +44,7 @@ Init
 
         jsr   LoadObject_x
         beq   >                        ; branch if no more available object slot
-        lda   #ObjID_hud               ; fire !
+        lda   #ObjID_hud               ; Display hud
         sta   id,x
 !
 

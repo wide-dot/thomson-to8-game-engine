@@ -23,14 +23,12 @@ Init
         std   image_set,u
         ldb   #3
         stb   priority,u
-        lda   render_flags,u
-        ora   #render_playfieldcoord_mask
-        sta   render_flags,u
-        ldd   #$80
-        std   x_pos,U
-        ldd   #$7F
-        std   y_pos,U
+	lda   render_flags,u
+        ora   #render_overlay_mask
+        sta   render_flags,u 
+	ldd   #$80CC
+	std   xy_pixel,u
         inc   routine,u
-	_breakpoint
 Live      
+	_breakpoint
         jmp   DisplaySprite
