@@ -571,6 +571,11 @@ public class BuildDisk
 			}
 			if (tilesetProperties.getValue()[1].split(",").length>4) {
 				tileset.mapFile=tilesetProperties.getValue()[1].split(",")[4];
+				if (tilesetProperties.getValue()[1].split(",").length==6) {
+					tileset.mapBitDepth=Integer.parseInt(tilesetProperties.getValue()[1].split(",")[5]);
+				} else {
+					tileset.mapBitDepth=8;
+				}
 			}
 			
 			//if (tilesetProperties.getValue().length > 2 && tilesetProperties.getValue()[2].equalsIgnoreCase(BuildDisk.RAM))
@@ -641,8 +646,9 @@ public class BuildDisk
 			if (tileset.mapFile != null) {
 				Path path = Paths.get(tileset.mapFile);
 				byte[] map = Files.readAllBytes(path);
-				dynamicContentFD.set(tileset.name, "buffer", map.length*4);
-				dynamicContentT2.set(tileset.name, "buffer", map.length*4);
+				tileset.bufferLength = (map.length*4)/(tileset.mapBitDepth/8);
+				dynamicContentFD.set(tileset.name, "buffer", tileset.bufferLength);
+				dynamicContentT2.set(tileset.name, "buffer", tileset.bufferLength);
 			}
 		}
 	}	
@@ -1548,15 +1554,23 @@ public class BuildDisk
 			
 				// FLOPPY DISK
 				if (!abortFloppyDisk) {
-					data = new byte[map.length*4]; // destination buffer
+					data = new byte[tileset.getValue().bufferLength]; // destination buffer
 					i = 0;
 					
-					for (int j = 0; j < map.length; j++) {
-						if (map[j] != 0) {
+					for (int j = 0; j < map.length; j+=(tileset.getValue().mapBitDepth==8?1:2)) {
+						
+						int tileId;
+						if (tileset.getValue().mapBitDepth == 8) {
+							tileId = map[j] & 0xFF;
+						} else {
+							tileId = ((map[j] & 0xFF) << 8) | (map[j+1] & 0xFF);
+						}
+						
+						if (tileId != 0) {
 							data[i++] = 0;
-							data[i++] = (byte)(tileset.getValue().tiles.get(map[j] & 0xFF).dataIndex.get(gm).fd_ram_page + 0x60);
-							data[i++] = (byte)(tileset.getValue().tiles.get(map[j] & 0xFF).dataIndex.get(gm).fd_ram_address >> 8);		
-							data[i++] = (byte)(tileset.getValue().tiles.get(map[j] & 0xFF).dataIndex.get(gm).fd_ram_address & 0xFF);
+							data[i++] = (byte)(tileset.getValue().tiles.get(tileId).dataIndex.get(gm).fd_ram_page + 0x60);
+							data[i++] = (byte)(tileset.getValue().tiles.get(tileId).dataIndex.get(gm).fd_ram_address >> 8);		
+							data[i++] = (byte)(tileset.getValue().tiles.get(tileId).dataIndex.get(gm).fd_ram_address & 0xFF);
 						} else {
 							data[i++] = 0;
 							data[i++] = 0;
@@ -1568,15 +1582,23 @@ public class BuildDisk
 				}
 	
 				// MEGAROM T2
-				data = new byte[map.length*4];
+				data = new byte[tileset.getValue().bufferLength];
 				i = 0;
 				if (tileset.getValue().inRAM) {
-					for (int j = 0; j < map.length; j++) {
-						if (map[j] != 0) {
+					for (int j = 0; j < map.length; j+=(tileset.getValue().mapBitDepth==8?1:2)) {
+						
+						int tileId;
+						if (tileset.getValue().mapBitDepth == 8) {
+							tileId = map[j] & 0xFF;
+						} else {
+							tileId = ((map[j] & 0xFF) << 8) | (map[j+1] & 0xFF);
+						}
+						
+						if (tileId != 0) {
 							data[i++] = 0;
-							data[i++] = (byte)(tileset.getValue().tiles.get(map[j] & 0xFF).dataIndex.get(gm).t2_ram_page + 0x60);
-							data[i++] = (byte)(tileset.getValue().tiles.get(map[j] & 0xFF).dataIndex.get(gm).t2_ram_address >> 8);		
-							data[i++] = (byte)(tileset.getValue().tiles.get(map[j] & 0xFF).dataIndex.get(gm).t2_ram_address & 0xFF);
+							data[i++] = (byte)(tileset.getValue().tiles.get(tileId).dataIndex.get(gm).t2_ram_page + 0x60);
+							data[i++] = (byte)(tileset.getValue().tiles.get(tileId).dataIndex.get(gm).t2_ram_address >> 8);		
+							data[i++] = (byte)(tileset.getValue().tiles.get(tileId).dataIndex.get(gm).t2_ram_address & 0xFF);
 						} else {
 							data[i++] = 0;
 							data[i++] = 0;
@@ -1585,12 +1607,20 @@ public class BuildDisk
 						}
 					}
 				} else {
-					for (int j = 0; j < map.length; j++) {
-						if (map[j] != 0) {
+					for (int j = 0; j < map.length; j+=(tileset.getValue().mapBitDepth==8?1:2)) {
+						
+						int tileId;
+						if (tileset.getValue().mapBitDepth == 8) {
+							tileId = map[j] & 0xFF;
+						} else {
+							tileId = ((map[j] & 0xFF) << 8) | (map[j+1] & 0xFF);
+						}
+						
+						if (tileId != 0) {
 							data[i++] = 0;
-							data[i++] = (byte)(tileset.getValue().tiles.get(map[j] & 0xFF).t2_page + 0x80);
-							data[i++] = (byte)(tileset.getValue().tiles.get(map[j] & 0xFF).t2_address >> 8);		
-							data[i++] = (byte)(tileset.getValue().tiles.get(map[j] & 0xFF).t2_address & 0xFF);
+							data[i++] = (byte)(tileset.getValue().tiles.get(tileId).t2_page + 0x80);
+							data[i++] = (byte)(tileset.getValue().tiles.get(tileId).t2_address >> 8);		
+							data[i++] = (byte)(tileset.getValue().tiles.get(tileId).t2_address & 0xFF);
 						} else {
 							data[i++] = 0;
 							data[i++] = 0;

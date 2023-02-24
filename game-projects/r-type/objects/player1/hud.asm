@@ -26,7 +26,7 @@ Init
 	lda   render_flags,u
         ora   #render_overlay_mask
         sta   render_flags,u 
-	ldd   #$80CC
+	ldd   #$80D7
 	std   xy_pixel,u
         inc   routine,u
 Live      

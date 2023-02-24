@@ -9,9 +9,9 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/objects/palette/fade/fade.equ"
         INCLUDE "./global/macro.asm"
 
-map_width       equ 1792
-viewport_width  equ 140
-viewport_height equ 168
+map_width       equ 1584
+viewport_width  equ 144
+viewport_height equ 180
 
  ; A = tile position in x, B = nb of pre-scrolled tiles
 CHECKPOINT_00 equ $0202
@@ -26,6 +26,9 @@ CHECKPOINT_01 equ $3802
 
 ; register map locations for scroll
         _MountObject ObjID_LevelInit
+        jsr   ,x
+
+        _MountObject ObjID_LevelWave
         jsr   ,x
 
         jsr   WaitVBL
@@ -207,10 +210,10 @@ Game_LoadCheckpoint_x
         jsr   Collision_ClearLists
 ;
         ; clear the two screen buffers to black
-        ldx   #$7777
+        ldx   #$FFFF
         jsr   ClearDataMem
         _SwitchScreenBuffer
-        ldx   #$7777
+        ldx   #$FFFF
         jsr   ClearDataMem
         _SwitchScreenBuffer
 ;

@@ -9,11 +9,10 @@ public class Rom {
 	
 	public String filepath;
 	
-	public byte[] data = new byte[0x1C0000];
-	public int maincpu = 0;
-	public int gfx1 = 0x80000;
-	public int gfx2 = 0x20000;
-	public int gfx3 = 0x20000;
+	public byte[] maincpu = new byte[0x100000];
+	public byte[] gfx1 = new byte[0x80000];
+	public byte[] gfx2 = new byte[0x20000];
+	public byte[] gfx3 = new byte[0x20000];
 	
 	public Rom (String filepath) throws IOException {
 		this.filepath = filepath;
@@ -49,8 +48,7 @@ public class Rom {
 		ROM_LOAD(gfx3, "rt_b-b3.3f", 0x18000);
 	}
 	
-	public void ROM_LOAD16_BYTE(int offset, String filename, int addr) throws IOException {
-		addr += offset;
+	public void ROM_LOAD16_BYTE(byte[] data, String filename, int addr) throws IOException {
 		Path path = Paths.get(filepath+"/"+filename);
 		byte[] in = Files.readAllBytes(path);
 		for (int i=0; i < in.length; i++) {
@@ -58,8 +56,7 @@ public class Rom {
 		}
 	}
 	
-	public void ROM_LOAD(int offset, String filename, int addr) throws IOException {
-		addr += offset;
+	public void ROM_LOAD(byte[] data, String filename, int addr) throws IOException {
 		Path path = Paths.get(filepath+"/"+filename);
 		byte[] in = Files.readAllBytes(path);
 		for (int i=0; i < in.length; i++) {
