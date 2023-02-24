@@ -90,11 +90,11 @@ InitScroll
 * ---------------------------------------------------------------------------
 
 Scroll
-        clr   glb_camera_move                    ; desactivate tiles drawing
         lda   scroll_stop
         beq   >
         rts                                      ; scroll is stopped, return
-!       ldb   scroll_frame                       ; load frame number
+!       clr   glb_camera_move                    ; desactivate tiles drawing
+        ldb   scroll_frame                       ; load frame number
         beq   @keyfrm                            ; frame 0 is the key frame
         cmpb  #1
         bne   @skipfrm
@@ -118,12 +118,9 @@ Scroll
         ldx   #scroll_map
         ldx   a,x
         stx   tile_buffer
-        ldd   glb_camera_x_pos
-        addd  #1
-        std   glb_camera_x_pos
-        cmpd  #map_width-viewport_width          ; check end of map (only when the 2 buffers are updated)
-        bne   >                                  ; if so no need to swap the tiles, only set scroll_stop
-        inc   scroll_stop
+        inc   glb_camera_x_pos+1
+        bne   >
+        inc   glb_camera_x_pos
 !       lda   scroll_tile_pos_offset             ; rendering position offset for tiles
         inca
         cmpa  scroll_tile_width                  ; test for tile width
@@ -149,7 +146,11 @@ Scroll
         sta   scroll_remain_frames
         ldb   #0                                 ; next frame is key frame 0
 !       stb   scroll_frame  
-        rts
+        ldd   glb_camera_x_pos
+        cmpd  #map_width-viewport_width          ; check end of map (only when the 2 buffers are updated)
+        bne   >                                  ; if so no need to swap the tiles, only set scroll_stop
+        inc   scroll_stop
+!       rts
 
 * ---------------------------------------------------------------------------
 * DrawTiles
@@ -329,7 +330,7 @@ delta3  set   *-2
         leay  40,y                     ; move ahead in video memory
 scroll_m_step3 equ *-1
         dec   scroll_ccpt              ; decrement column cpt
-        bne  scroll_cloop2             ; loop if tile remains (DIRTY fix : 2 instead of 1)
+        lbne  scroll_cloop1            ; loop if tile remains
 
         lda   #0                       ; restore number of tiles to draw in column
 scroll_ccpt_bck2 equ   *-1
@@ -343,15 +344,11 @@ scroll_ccpt_bck2 equ   *-1
         inc   glb_alphaTiles           ; this is an empty tile so set transparency flag
         bra   @skip
 !       pshs  u                        ; backup u before draw routine
-;       leau  ,y                       ; load location_2 for draw routine
-;       pshs  y                        ; backup y before draw routine
-;       leay  $1234,y
-;delta2  set   *-2
-;        sty   <glb_screen_location_1   ; sets location_1 for draw routine
-        sty   <glb_screen_location_1   ; sets location_1 for draw routine (DIRTY fix)
-        leau  $1234,y                  ; load location_2 for draw routine (DIRTY fix)
-delta2  set   *-2                      ;  (DIRTY fix)
-        pshs  y                        ; backup y before draw routine (DIRTY fix)
+        leau  ,y                       ; load location_2 for draw routine
+        pshs  y                        ; backup y before draw routine
+        leay  $1234,y
+delta2  set   *-2
+        sty   <glb_screen_location_1   ; sets location_1 for draw routine
         jsr   ,x
         puls  y,u
 @skip
@@ -386,9 +383,9 @@ scroll_m_step4 equ *-1
         ldb   1,u                      ; process next tile
         beq   >                        ; branch if tile is empty
         sta   scroll_ccpt              ; else render tile
-        jmp   scroll_cloop2            ; (DIRTY fix : 2 instead of 1)
+        jmp   scroll_cloop1
 !       leau  4,u                      ; move to next tile
-        jmp   empty_tile_loop2         ; (DIRTY fix : 2 instead of none)
+        jmp   empty_tile_loop
 
 * ---------------------------------------------------------------------------
 * Scroll_JumpToPos
