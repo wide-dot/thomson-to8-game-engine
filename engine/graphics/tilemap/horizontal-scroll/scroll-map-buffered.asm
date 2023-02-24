@@ -12,8 +12,8 @@
 
 ; parameters to set before using InitScroll and Scroll routines
 scroll_wait_frames        fcb   1   ; number of frames to wait between key frames
-scroll_vp_h_tiles         fcb   10  ; viewport tiles on x axis
-scroll_vp_v_tiles         fcb   12  ; viewport tiles on y axis
+scroll_vp_h_tiles         fcb   0   ; viewport tiles on x axis
+scroll_vp_v_tiles         fcb   0   ; viewport tiles on y axis
 scroll_tile_width         fcb   0   ; tile width
 scroll_tile_height        fcb   0   ; tile height
 scroll_vp_x_pos           fcb   0   ; viewport x location on screen
@@ -62,11 +62,11 @@ InitScroll
         andb  #%00000010                         ; check if tile width is a multiple of 4px (2, 6, 10, 14, ...)
         beq   >                                  ; if so keep the memory steps the same
         ldb   #1
-        stb   scroll_loc_offset
         inca
+!       stb   scroll_loc_offset
         sta   scroll_m_step1
         sta   scroll_m_step2
-!       lda   scroll_tile_height                 ; set video memory byte offset for a tile height (40 bytes per line)
+        lda   scroll_tile_height                 ; set video memory byte offset for a tile height (40 bytes per line)
         ldb   #40
         mul
         std   s_line1

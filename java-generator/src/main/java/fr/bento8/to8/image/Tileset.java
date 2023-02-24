@@ -15,6 +15,8 @@ public class Tileset {
 	public String mapFile = null;
 
 	public List<TileBin> tiles;
+	public int mapBitDepth;
+	public int bufferLength;
 
 	public Tileset(String name) {
 		this.name = name;
