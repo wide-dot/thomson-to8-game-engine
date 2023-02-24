@@ -76,7 +76,7 @@ Scant_live
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
 @destroy 
-        jsr   LoadObject_x ; make then die early ... to be removed
+        jsr   LoadObject_x
         beq   @delete
         lda   #ObjID_enemiesblastbig
         sta   id,x
@@ -113,7 +113,7 @@ Scant_shoot
 
 Scant_whattodo
 
-        ldd   player1+x_pos             ; Let's check is Scant is on the left of player1
+        ldd   player1+x_pos             ; Let's check if Scant is on the left of player1
         cmpd  x_pos,u
         blt   >          
         ldd   #Scant_move_left          ; Yes Scant is, let's move it to the left to exit
@@ -133,7 +133,7 @@ Scant_whattodo
         jmp   Scant_whattodonext
 !
         ldd   glb_camera_x_pos          ; Scant is too close to player1, let's check if Scant is too far right
-        addd  #130
+        addd  #120
         cmpd  x_pos,u
         bgt   >
         ldd   #0                        ; Scant is too far on the right, let's cancel its x_vel
@@ -161,13 +161,13 @@ Scant_whattodonext
         rts
 !       
         ldd   glb_camera_x_pos
-        addd  #130
+        addd  #120
         cmpd  x_pos,u
         bgt   >
         ldd   #00                       ; too far on the right of the screen, don't shoot
         std   y_vel,u
         rts     
-!                               ; time to initiate the shoot
+!                                       ; time to initiate the shoot
         ldd   #00
         std   y_vel,u
         std   x_vel,u
