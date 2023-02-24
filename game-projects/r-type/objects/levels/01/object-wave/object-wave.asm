@@ -13,11 +13,12 @@ tilesizey        equ 14
 
 
 
+; Scant #1
+        fdb   250-140,(ObjID_scant*256)+00,250+enemies_scant,80
+
         ;fdb 10,(ObjID_collision*256),165+tilesizex*00,161-tilesizey*2
         ;fdb 10,(ObjID_collision*256),165+tilesizex*00,161-tilesizey*1        
         ;fdb 10,(ObjID_collision*256),165+tilesizex*01,161-tilesizey*1
-
-
 
 ; First pata-pata wave
 wave_patapata_01       equ 252
