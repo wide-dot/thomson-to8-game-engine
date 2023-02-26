@@ -24,6 +24,12 @@ CHECKPOINT_01 equ $3802
         jsr   LoadAct
         jsr   InitJoypads
 
+; init score and lives at level 1
+        ldd   #0
+        std   score
+        ldd   #2
+        std   lives
+
 ; register map locations for scroll
         _MountObject ObjID_LevelInit
         jsr   ,x
@@ -93,9 +99,16 @@ LevelMainLoop
         jsr   UnsetDisplayPriority
         jsr   DrawTiles
         jsr   DrawSprites
+
+        ; display overlay mask and hud
+
         _MountObject ObjID_Mask
         jsr   ,x
-        bra   LevelMainLoop
+
+        _MountObject ObjID_hud
+        jsr   ,x
+
+        jmp   LevelMainLoop
 
 * ---------------------------------------------------------------------------
 * MAIN IRQ

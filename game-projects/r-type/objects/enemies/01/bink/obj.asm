@@ -155,7 +155,11 @@ LiveWalk
         stb   AABB.cy,x
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
-@dstroy jsr   LoadObject_x ; make then die early ... to be removed
+@dstroy 
+        ldd   score
+        addd  #200
+        std   score
+        jsr   LoadObject_x
         beq   @delete
         lda   #ObjID_enemiesblastsmall
         sta   id,x
