@@ -174,7 +174,10 @@ CheckEOL
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
 @destroy 
-        jsr   LoadObject_x ; make then die early ... to be removed
+        ldd   score
+        addd  #200
+        std   score
+        jsr   LoadObject_x
         beq   @delete
         lda   #ObjID_enemiesblastsmall
         sta   id,x
