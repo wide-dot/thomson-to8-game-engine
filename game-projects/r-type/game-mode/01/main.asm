@@ -330,7 +330,7 @@ Palette_FadeCallback
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"  
 
         ; tilemap
-        INCLUDE "./engine/graphics/tilemap/horizontal-scroll/scroll-map-buffered.asm"  
+        INCLUDE "./engine/graphics/tilemap/horizontal-scroll/scroll-map-buffered-even.asm"  
 
         ; collision
         INCLUDE "./engine/collision/collision.asm"

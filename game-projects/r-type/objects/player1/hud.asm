@@ -19,16 +19,17 @@ Routines
         fdb   Live
 
 Init
-        ldd   #Img_Hud
-        std   image_set,u
-        ldb   #3
-        stb   priority,u
-	lda   render_flags,u
-        ora   #render_overlay_mask
-        sta   render_flags,u 
-	ldd   #$80D7
-	std   xy_pixel,u
-        inc   routine,u
+;        ldd   #Img_Hud
+;        std   image_set,u
+;        ldb   #3
+;        stb   priority,u
+;	 lda   render_flags,u
+;        ora   #render_overlay_mask
+;        sta   render_flags,u
+;	 ldd   #$80D7
+;	 std   xy_pixel,u
+;        inc   routine,u
 Live      
-	_breakpoint
-        jmp   DisplaySprite
+;	 _breakpoint
+;        jmp   DisplaySprite
+        rts
