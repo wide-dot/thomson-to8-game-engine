@@ -1,12 +1,16 @@
 
-; ext_variables_size is for dynamic objects
-ext_variables_size           equ 20
+* ===========================================================================
+* Globals
+* ===========================================================================
+score                        equ $9D00 ; 2 bytes
+lives                        equ $9D02 ; 2 bytes
 
 * ===========================================================================
 * Object Constants
 * ===========================================================================
-nb_dynamic_objects           equ 54
-nb_graphical_objects         equ 54 * max 64 total
+nb_dynamic_objects           equ 64
+nb_graphical_objects         equ 64 * max 64 total
+ext_variables_size           equ 20 ; ext_variables_size is for dynamic objects
 
 * ===========================================================================
 * Object Status Table - OST
