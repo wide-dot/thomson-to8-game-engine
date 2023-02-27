@@ -80,10 +80,10 @@ Collision_Do_2 equ *-2
         suba  AABB.p,x
         beq   @draw
         bmi   @loose
-@draw   stb   AABB.p,u
+@win    sta   AABB.p,u
         stb   AABB.p,x
         bra   @continue
-@win    sta   AABB.p,u
+@draw   stb   AABB.p,u
         stb   AABB.p,x
         bra   @continue
 @loose  lda   AABB.p,x
