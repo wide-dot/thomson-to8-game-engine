@@ -770,7 +770,7 @@ DRAW_Img_mask_0_0
 
 	LDD #$0000
 	STD 6,U
-	LDD #$2220
+	LDA #$22
 	LDX #$0000
 	LDY #$0000
 	PSHU D,X,Y
@@ -793,7 +793,7 @@ DRAW_Img_mask_0_0
 	PSHU D,X,Y
 	LEAU -6,U
 
-	LDB #$02
+	LDB #$20
 	LDY #$0000
 	PSHU D,X,Y
 	LDB #$00
@@ -812,15 +812,12 @@ DRAW_Img_mask_0_0
 	PSHU D,X,Y
 	LEAU -6,U
 
-	LDA -5,U
-	ANDA #$F0
-	ORA #$03
-	STA -5,U
-	LDD #$0000
-	PSHU D,X
-	LEAU -16,U
+	LDA #$30
+	LDY #$0000
+	PSHU A,X,Y
+	LEAU -15,U
 
-	STA -7,U
+	STB -7,U
 	LDD #$5550
 	LDX #$0055
 	LDY #$0505
@@ -833,15 +830,12 @@ DRAW_Img_mask_0_0
 	PSHU D,X,Y
 	LEAU -6,U
 
-	LDA -5,U
-	ANDA #$F0
-	ORA #$04
-	STA -5,U
-	LDD #$0000
-	PSHU D,X
-	LEAU -16,U
+	LDA #$40
+	LDY #$0000
+	PSHU A,X,Y
+	LEAU -15,U
 
-	STA -7,U
+	STB -7,U
 	LDA #$55
 	LDX #$5050
 	LDY #$0555
@@ -854,15 +848,12 @@ DRAW_Img_mask_0_0
 	PSHU D,X,Y
 	LEAU -6,U
 
-	LDA -5,U
-	ANDA #$F0
-	ORA #$03
-	STA -5,U
-	LDD #$0000
-	PSHU D,X
-	LEAU -16,U
+	LDA #$30
+	LDY #$0000
+	PSHU A,X,Y
+	LEAU -15,U
 
-	STA -7,U
+	STB -7,U
 	LDD #$5550
 	LDX #$0050
 	LDY #$0555
@@ -875,7 +866,7 @@ DRAW_Img_mask_0_0
 	PSHU D,X,Y
 	LEAU -6,U
 
-	LDB #$02
+	LDB #$20
 	LDY #$0000
 	PSHU D,X,Y
 	LDB #$00
@@ -894,7 +885,7 @@ DRAW_Img_mask_0_0
 	PSHU D,X,Y
 	LEAU -6,U
 
-	LDD #$2220
+	LDA #$22
 	LDY #$0000
 	PSHU D,X,Y
 	LDB #$22
