@@ -157,7 +157,7 @@ LiveWalk
         jmp   DisplaySprite
 @dstroy 
         ldd   score
-        addd  #200
+        addd  #2
         std   score
         jsr   LoadObject_x
         beq   @delete
