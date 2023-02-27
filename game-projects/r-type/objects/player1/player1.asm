@@ -8,6 +8,8 @@
 
         INCLUDE "./engine/macros.asm"
         
+beam_value       equ ext_variables
+is_charging      equ ext_variables+1
 ply_acceleration equ $20
 ply_deceleration equ $100
 ply_max_vel      equ $100
@@ -96,18 +98,53 @@ Live
         ; press fire
         lda   Fire_Press
         anda  #c1_button_A_mask
-        beq   >
+        beq   @testHoldFire
         jsr   LoadObject_x
-        beq   >                        ; branch if no more available object slot
+        beq   @testHoldFire            ; branch if no more available object slot
         lda   #ObjID_Weapon1           ; fire !
         sta   id,x
         ldd   player1+x_pos
         std   x_pos,x
         ldd   player1+y_pos
         std   y_pos,x
-
+@testHoldFire       
+        ; holding fire ?
+        lda   Fire_Held
+        anda  #c1_button_A_mask
+        beq   @wasbuttonhdeld           ; Nop, but let's check if it was held
+        lda   player1+is_charging
+        bne   @incharging
+        lda   player1+beam_value
+        cmpa  #4
+        blt   @incharging
+                                        ; Start charging animation
+        adda  Vint_Main_runcount
+        sta   player1+beam_value
+        sta   player1+is_charging
+        jsr   LoadObject_x
+        beq   @testmoving               ; branch if no more available object slot
+        lda   #ObjID_beamcharge         ; Charge anim
+        sta   id,x
+        bra   @testmoving
+@incharging
+        lda   player1+beam_value
+        adda  Vint_Main_runcount
+        cmpa  #60                       ; Max value ?
+        ble   >
+        lda   #60
+!
+        sta   player1+beam_value
+        tfr   a,b
+        clra
+        std   score
+        bra   @testmoving
+@wasbuttonhdeld
+                                        ; button was held, let's shoot and reset
+        clr   player1+beam_value
+        clr   player1+is_charging
+@testmoving
         ; decelerate player on x
-!       ldd   Dpad_Held
+        ldd   Dpad_Held
         anda  #c1_button_left_mask|c1_button_right_mask ; check if not moving left or right
         bne   >
         ldd   player1+x_vel            ; decelerate on x axis

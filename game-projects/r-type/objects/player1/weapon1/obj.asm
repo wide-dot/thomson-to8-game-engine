@@ -1,6 +1,6 @@
 
 ; ---------------------------------------------------------------------------
-; Object - Weapon10
+; Object - Weapon1
 ;
 ; input REG : [u] pointer to Object Status Table (OST)
 ; ---------
