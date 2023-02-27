@@ -135,36 +135,21 @@ Live
         lda   #60
 !
         sta   player1+beam_value
-        tfr   a,b
-        clra
-        std   score
         bra   @testmoving
 @wasbuttonhdeld
         lda   player1+beam_value
         beq   @testmoving
         cmpa  #beam_sensitivity
-        ble   @resetbeam
-        ldb   #ObjID_beamp4
-        cmpa  #60
-        bge   >
-        ldb   #ObjID_beamp3
-!
-        cmpa  #46
-        bge   >
-        ldb   #ObjID_beamp2
-!
-        cmpa  #32
-        bge   >
-        ldb   #ObjID_beamp1
-!
-        cmpa  #18
-        bge   >
-        ldb   #ObjID_beamp1  
-!     
-                                        ; button was held, let's shoot and reset
+        ble   @resetbeam  
+        adda  #4
+        lsra
+        lsra
+        lsra
+        lsra
+        adda  #ObjID_beamp0
         jsr   LoadObject_x
         beq   @resetbeam                ; branch if no more available object slot
-        stb   id,x
+        sta   id,x
         ldd   player1+x_pos
         std   x_pos,x
         ldd   player1+y_pos
@@ -248,4 +233,4 @@ CheckRange
         std   player1+y_vel
 !       rts
 
-glb_camera_x_pos_old fdb 0
+glb_camera_x_pos_old    fdb 0
