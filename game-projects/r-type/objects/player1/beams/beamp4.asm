@@ -12,8 +12,7 @@
         INCLUDE "./engine/collision/struct_AABB.equ"
 
 AABB_0  equ ext_variables ; AABB struct (9 bytes)
-damage  equ 6
-
+damage  equ 14
 Object
         lda   routine,u
         asla
@@ -26,7 +25,7 @@ Routines
         fdb   AlreadyDeleted
 
 Init
-	ldd   #Ani_beamp0
+	ldd   #Ani_beamp4
         std   anim,u
         ldb   #3
         stb   priority,u

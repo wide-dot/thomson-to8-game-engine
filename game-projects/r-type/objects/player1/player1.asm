@@ -16,6 +16,7 @@ ply_max_vel      equ $100
 ply_max_vel_neg  equ $-100
 ply_width        equ 12/2
 ply_height       equ 16/2
+beam_sensitivity equ 8
 
 Player
         lda   player1+routine
@@ -115,7 +116,7 @@ Live
         ldd   player1+beam_value
         tstb
         bne   @incharging
-        cmpa  #4
+        cmpa  #beam_sensitivity
         blt   @incharging
                                         ; Start charging animation
         adda  Vint_Main_runcount
@@ -141,19 +142,36 @@ Live
 @wasbuttonhdeld
         lda   player1+beam_value
         beq   @testmoving
+        cmpa  #beam_sensitivity
+        ble   @resetbeam
+        ldb   #ObjID_beamp4
+        cmpa  #60
+        bge   >
+        ldb   #ObjID_beamp3
+!
+        cmpa  #46
+        bge   >
+        ldb   #ObjID_beamp2
+!
+        cmpa  #32
+        bge   >
+        ldb   #ObjID_beamp1
+!
+        cmpa  #18
+        bge   >
+        ldb   #ObjID_beamp1  
+!     
                                         ; button was held, let's shoot and reset
         jsr   LoadObject_x
-        beq   >                         ; branch if no more available object slot
-        lda   #ObjID_beamp0             ; fire !
-        sta   id,x
+        beq   @resetbeam                ; branch if no more available object slot
+        stb   id,x
         ldd   player1+x_pos
         std   x_pos,x
         ldd   player1+y_pos
         std   y_pos,x
-!
+@resetbeam
         ldd   #0
         std   player1+beam_value
-        std   score
 @testmoving
         ; decelerate player on x
         ldd   Dpad_Held
