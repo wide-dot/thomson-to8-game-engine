@@ -114,7 +114,6 @@ LiveUp
         std   amplitude,u
         ldd   #$A0
         std   y_vel,u
-        _breakpoint
 
 LiveDown
         ldd   amplitude,u
