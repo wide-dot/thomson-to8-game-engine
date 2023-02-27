@@ -77,12 +77,15 @@ Collision_Do_2 equ *-2
         bmi   @u_invincibility
         ldb   AABB.p,x
         bmi   @x_invincibility
-        ldb   #0 
+        clrb 
         suba  AABB.p,x
-        bpl   @win
-@loose  nega                           ; loose
+        bmi   @loose
 @win    sta   AABB.p,u                 ; win or draw
         stb   AABB.p,x
+        bra   @continue
+@loose  nega                           ; loose
+        sta   AABB.p,x
+        stb   AABB.p,u
 @continue
 @skipx  ldx   AABB.next,x
         bne   @loopx
