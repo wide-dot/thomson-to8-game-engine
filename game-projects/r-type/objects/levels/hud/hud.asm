@@ -3,8 +3,18 @@
         ldu   #$DEA4
         jsr   DisplayDigit
 
-        ldb   #6
         ldx   score
+        beq   >
+        ldb   #4                       ; nb of char
+        ldu   #$DEC0
+        jsr   DisplayDigit
+        ldx   #0                       ; display the last two 0
+        ldb   #2                       ; nb of char
+        ldu   #$DEC4
+        jmp   DisplayDigitPad
+
+!       ldx   #0                       ; special case when score is 0
+        ldb   #6                       ; nb of char
         ldu   #$DEC0
         jmp   DisplayDigit
 
