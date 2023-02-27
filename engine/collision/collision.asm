@@ -72,24 +72,17 @@ Collision_Do_2 equ *-2
 @ry     equ *-1 
         bhi   @continue
 !
-        ldb   #0                       ; compute collision damage
+; compute collision damage
         lda   AABB.p,u
         bmi   @u_invincibility
-        tst   AABB.p,x
+        ldb   AABB.p,x
         bmi   @x_invincibility
+        ldb   #0 
         suba  AABB.p,x
-        beq   @draw
-        bmi   @loose
-@win    sta   AABB.p,u
+        bpl   @win
+@loose  nega                           ; loose
+@win    sta   AABB.p,u                 ; win or draw
         stb   AABB.p,x
-        bra   @continue
-@draw   stb   AABB.p,u
-        stb   AABB.p,x
-        bra   @continue
-@loose  lda   AABB.p,x
-        suba  AABB.p,u
-        sta   AABB.p,x
-        stb   AABB.p,u
 @continue
 @skipx  ldx   AABB.next,x
         bne   @loopx
