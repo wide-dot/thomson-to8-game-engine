@@ -10,7 +10,7 @@ enemies_pstaff   equ 14
 
 tilesizex        equ 24
 tilesizey        equ 12
-offset_y         equ 0
+offset_y         equ 11
 
 
 
@@ -165,7 +165,7 @@ wave_cancer_01  equ 539
 ; Solo bink #5
         fdb  628-140,(ObjID_bink*256)+55,628+enemies_bink,140+offset_y
 
-wave_blasters_01      equ 693
+wave_blasters_01      equ 690
         fdb wave_blasters_01-140,(ObjID_blaster*256)+230,wave_blasters_01+20,30+offset_y
         fdb wave_blasters_01-140,(ObjID_blaster*256)+241,wave_blasters_01+20,148+offset_y
 
@@ -185,7 +185,7 @@ wave_blasters_01      equ 693
         fdb wave_blasters_01-140+132,(ObjID_blaster*256)+250,wave_blasters_01+20+132,18+offset_y
 
 ; Shell wave
-wave_shell        equ 828
+wave_shell        equ 825
 wave_shell_width  equ 8
         fdb   wave_shell-140,(ObjID_shell*256)+00,882,139+offset_y
 
@@ -201,7 +201,7 @@ wave_shell_width  equ 8
 
 
 
-wave_blasters_02      equ 957
+wave_blasters_02      equ 954
 
         fdb wave_blasters_02-140,(ObjID_blaster*256)+230,wave_blasters_02+20,30+offset_y
 
@@ -228,7 +228,7 @@ wave_patapata_07_space equ 4
 
 
 
-wave_blasters_03      equ 1077
+wave_blasters_03      equ 1075
 
         fdb wave_blasters_03-140,(ObjID_blaster*256)+230,wave_blasters_03+20,42+offset_y
         fdb wave_blasters_03-140,(ObjID_blaster*256)+221,wave_blasters_03+20,136+offset_y

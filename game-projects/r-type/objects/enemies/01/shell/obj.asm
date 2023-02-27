@@ -20,7 +20,7 @@ is_destroyed    equ  ext_variables+17
 kill_my_nok     equ  ext_variables+18
 current_p       equ  ext_variables+19
 angle_step equ 16
-center_of_circle equ 886
+center_of_circle equ 883
 
 ; child offsets
 
@@ -186,7 +186,7 @@ LiveContinue
         ldb   angle,u
         ldb   b,y
         sex
-        addd  #90               ; y center of circle
+        addd  #101               ; y center of circle
         std   y_pos,u
         subd  glb_camera_y_pos
         stb   AABB.cy,x
@@ -297,7 +297,7 @@ Destroyed
         ldb   angle,u
         ldb   b,y
         sex
-        addd  #90               ; y center of circle
+        addd  #101               ; y center of circle
         std   y_pos,u
         subd  glb_camera_y_pos
         stb   AABB.cy,x
