@@ -112,9 +112,9 @@ Live
         lda   Fire_Held
         anda  #c1_button_A_mask
         beq   @wasbuttonhdeld           ; Nop, but let's check if it was held
-        lda   player1+is_charging
+        ldd   player1+beam_value
+        tstb
         bne   @incharging
-        lda   player1+beam_value
         cmpa  #4
         blt   @incharging
                                         ; Start charging animation
@@ -139,9 +139,21 @@ Live
         std   score
         bra   @testmoving
 @wasbuttonhdeld
+        lda   player1+beam_value
+        beq   @testmoving
                                         ; button was held, let's shoot and reset
-        clr   player1+beam_value
-        clr   player1+is_charging
+        jsr   LoadObject_x
+        beq   >                         ; branch if no more available object slot
+        lda   #ObjID_beamp0             ; fire !
+        sta   id,x
+        ldd   player1+x_pos
+        std   x_pos,x
+        ldd   player1+y_pos
+        std   y_pos,x
+!
+        ldd   #0
+        std   player1+beam_value
+        std   score
 @testmoving
         ; decelerate player on x
         ldd   Dpad_Held
