@@ -9,6 +9,8 @@
 
         INCLUDE "./engine/macros.asm"
         INCLUDE "./engine/collision/macros.asm"
+        INCLUDE "./objects/player1/player1.equ"
+
 Beamcharge
         lda   routine,u
         asla
@@ -28,7 +30,7 @@ Init
         sta   render_flags,u
         inc   routine,u
 Live
-	lda   player1+ext_variables
+	lda   player1+beam_value
 	beq   >
 	ldd   player1+x_pos
 	addd  #13

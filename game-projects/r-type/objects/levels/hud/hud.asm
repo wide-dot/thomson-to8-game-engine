@@ -8,6 +8,8 @@
 ;
 ; *****************************************************************************
 
+        INCLUDE "./objects/player1/player1.equ"
+
 _beam_seg_extB MACRO                    ; outer lines of 12px
 	PSHU A,X
 
@@ -34,9 +36,6 @@ _beam_seg_intB MACRO                    ; inner line of 12px
 
         LEAU -37+3,U                    ; move to next segment position
  ENDM
-
-; replace this line with an INCLUDE of player1 equates
-beam_value       equ ext_variables
 
 beam_m_start equ $BE87                 ; beam render starting point
 beam_m_size  equ 3                     ; number of byte for a segment
@@ -66,6 +65,7 @@ beam_m_size  equ 3                     ; number of byte for a segment
         ldy   #Beam_mask
         lda   #6
         negb
+        decb
         mul
         leay  d,y
         ldd   1,y
