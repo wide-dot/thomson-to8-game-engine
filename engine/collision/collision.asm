@@ -98,14 +98,12 @@ Collision_Do_2 equ *-2
         bmi   @continue                ; two invincible hitboxes
         suba  AABB.p,u
         bcc   >
-        lda   #0                       ; cap lowest value to 0
-!       sta   AABB.p,x
+!       clr   AABB.p,x                 ; cap lowest value to 0
         bra   @continue
 ;
 @x_invincibility
         lda   AABB.p,u
         suba  AABB.p,x
         bcc   >
-        lda   #0                       ; cap lowest value to 0
-!       sta   AABB.p,u
+!       clr   AABB.p,u                 ; cap lowest value to 0
         bra   @continue
