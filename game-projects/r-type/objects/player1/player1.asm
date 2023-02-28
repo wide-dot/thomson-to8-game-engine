@@ -7,9 +7,12 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./engine/collision/macros.asm"
+        INCLUDE "./engine/collision/struct_AABB.equ"
         
-beam_value       equ ext_variables
-is_charging      equ ext_variables+1
+AABB_0           equ ext_variables   ; AABB struct (9 bytes)
+beam_value       equ ext_variables+9
+is_charging      equ ext_variables+10
 ply_acceleration equ $20
 ply_deceleration equ $100
 ply_max_vel      equ $100
@@ -44,6 +47,16 @@ Init
         ldd   glb_camera_x_pos
         std   glb_camera_x_pos_old
         inc   player1+routine
+
+        _Collision_AddAABB AABB_0,AABB_list_player
+        
+        leax  AABB_0,u
+        lda   #128                      ; set damage potential for this hitbox
+        sta   AABB.p,x
+        _ldd  4,4                       ; set hitbox xy radius
+        std   AABB.rx,x
+        ldd   y_pos,u
+        stb   AABB.cy,x
 
 Live
         ldd   glb_camera_x_pos
@@ -192,6 +205,15 @@ Live
 !       jsr   AnimateSpriteSync
         jsr   ObjectMoveSync
         jsr   CheckRange
+        leax  AABB_0,u
+        ;lda   AABB.p,x
+        ;beq   @destroy                  ; was killed  
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB.cx,x
+        ldd   y_pos,u
+        subd  glb_camera_y_pos
+        stb   AABB.cy,x
         jmp   DisplaySprite
 
 CheckRange
