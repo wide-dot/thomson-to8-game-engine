@@ -23,6 +23,10 @@ offset_y         equ 11
         ;fdb 10,(ObjID_collision*256),165+tilesizex*01,161-tilesizey*1
 
 ; First pata-pata wave
+
+
+        fdb   200-140,(ObjID_pow*256)+1,200,90+offset_y
+
 wave_patapata_01       equ 252
 wave_patapata_01_space equ 4
         fdb   wave_patapata_01-140+wave_patapata_01_space*0,(ObjID_patapata*256)+00,wave_patapata_01+enemies_patapata+wave_patapata_01_space*0,50+offset_y
