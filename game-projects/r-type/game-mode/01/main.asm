@@ -91,6 +91,7 @@ LevelMainLoop
         jsr   Scroll
         jsr   ObjectWave
         _Collision_Do AABB_list_friend,AABB_list_ennemy
+        _Collision_Do AABB_list_player,AABB_list_bonus
         _RunObject ObjID_fade,#palettefade
         _RunObject ObjID_Player1,#player1
         jsr   RunObjects
