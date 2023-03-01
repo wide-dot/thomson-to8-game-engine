@@ -33,7 +33,7 @@ Live
 	lda   player1+beam_value
 	beq   >
 	ldd   player1+x_pos
-	addd  #13
+	addd  #9
 	std   x_pos,u
 	ldd   player1+y_pos
 	std   y_pos,u
