@@ -11,6 +11,8 @@
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./objects/player1/player1.equ"
         
+AABB_0           equ ext_variables     ; AABB struct (9 bytes)
+
 ply_acceleration equ $20
 ply_deceleration equ $100
 ply_max_vel      equ $100

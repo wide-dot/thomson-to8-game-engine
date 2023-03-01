@@ -9,6 +9,7 @@
         INCLUDE "./engine/macros.asm"
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
+        INCLUDE "./objects/player1/player1.equ"
 AABB_0            equ ext_variables   ; AABB struct (9 bytes)
 Object
         lda   routine,u
@@ -28,7 +29,7 @@ Init
         ldx   #optionboxes
         ldd   a,x
         std   image_set,u
-        ldb   #6
+        ldb   #7
         stb   priority,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
@@ -49,7 +50,7 @@ Live
         jsr   ObjectMoveSync
         leax  AABB_0,u
         lda   AABB.p,x
-        beq   @delete                  ; was touched  
+        beq   @captured                ; was touched  
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB.cx,x
@@ -59,9 +60,28 @@ Live
         subd  glb_camera_y_pos
         stb   AABB.cy,x
         jmp   DisplaySprite
+@captured
+        lda   subtype,u
+        sta   player1+forcepodtype
+                                        ; Do we need to spawn a force pod ?
+        lda   player1+forcepodlevel
+        bne   >
+                                        ; Yes, let's spawn a new force pod
+        jsr   LoadObject_x
+        beq   >                         ; branch if no more available object slot
+        lda   #ObjID_forcepod           ; Charge anim
+        sta   id,x                                        
+!
+        lda   player1+forcepodlevel
+        inca
+        cmpa  #3
+        ble   >
+        lda   #3
+!
+        sta  player1+forcepodlevel
 @delete
         inc   routine,u     
-        _Collision_RemoveAABB AABB_0,AABB_list_ennemy
+        _Collision_RemoveAABB AABB_0,AABB_list_bonus
         jmp   DeleteObject
 AlreadyDeleted
         rts
