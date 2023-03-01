@@ -61,7 +61,7 @@ Live
 @continue
         leax  AABB_0,u
         ldd   player1+x_pos
-	addd  #11
+	addd  #9
 	std   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB.cx,x

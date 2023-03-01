@@ -34,7 +34,7 @@ Init
         _Collision_AddAABB AABB_0,AABB_list_ennemy
         
         leax  AABB_0,u
-        lda   #1                                        ; set damage potential for this hitbox
+        lda   #2                                        ; set damage potential for this hitbox
         sta   AABB.p,x
         _ldd  2,2                                       ; set hitbox xy radius
         std   AABB.rx,x
