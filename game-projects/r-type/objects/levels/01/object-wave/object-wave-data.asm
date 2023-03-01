@@ -25,7 +25,11 @@ offset_y         equ 11
 ; First pata-pata wave
 
 
-        fdb   200-140,(ObjID_pow*256)+1,200,90+offset_y
+        fdb   200-140,(ObjID_pow*256)+0,200,90+offset_y
+
+        fdb   220-140,(ObjID_pow*256)+1,220,90+offset_y
+
+        fdb   240-140,(ObjID_pow*256)+2,240,90+offset_y
 
 wave_patapata_01       equ 252
 wave_patapata_01_space equ 4

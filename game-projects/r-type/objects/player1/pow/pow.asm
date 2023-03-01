@@ -23,7 +23,7 @@ Routines
         fdb   AlreadyDeleted
 
 Init
-        ldd   #Ani_pow_fly
+        ldd   #Ani_pow_walk
         std   anim,u
         ldb   #6
         stb   priority,u

@@ -7,8 +7,9 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
-
-
+        INCLUDE "./engine/collision/macros.asm"
+        INCLUDE "./engine/collision/struct_AABB.equ"
+AABB_0                  equ ext_variables   ; AABB struct (9 bytes)
 Object
         lda   routine,u
         asla
@@ -18,6 +19,7 @@ Object
 Routines
         fdb   Init
         fdb   Live
+        fdb   Alreadydeleted
 
 Init
         ldd   #Img_foefire_0
@@ -27,26 +29,42 @@ Init
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
-
-        ;ldd   #$-100
-        ;std   x_vel,u
-        ;ldd   #$80
-        ;std   y_vel,u
         inc   routine,u
+
+        _Collision_AddAABB AABB_0,AABB_list_ennemy
+        
+        leax  AABB_0,u
+        lda   #1                                        ; set damage potential for this hitbox
+        sta   AABB.p,x
+        _ldd  2,2                                       ; set hitbox xy radius
+        std   AABB.rx,x
 
 Live
         ldd   x_pos,u
         cmpd  glb_camera_x_pos
-        ble   >
+        ble   @destroy
         subd  #160-8/2
         cmpd  glb_camera_x_pos
-        bge   >
+        bge   @destroy
         ldd   y_pos,u
         cmpd  #0
-        ble   >
+        ble   @destroy
         cmpd  #160
-        bge   >
+        bge   @destroy
         jsr   ObjectMoveSync
+        leax  AABB_0,u
+        lda   AABB.p,x
+        beq   @destroy                                  ; was destroyed  
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB.cx,x
+	ldd   y_pos,u
+        subd  glb_camera_y_pos
+        stb   AABB.cy,x
         jmp   DisplaySprite
-        
-!       jmp   DeleteObject
+@destroy
+        inc   routine,u
+        _Collision_RemoveAABB AABB_0,AABB_list_ennemy
+        jmp   DeleteObject
+Alreadydeleted
+        rts
