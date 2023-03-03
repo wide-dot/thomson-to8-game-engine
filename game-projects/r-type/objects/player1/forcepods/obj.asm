@@ -12,7 +12,8 @@
         INCLUDE "./objects/player1/player1.equ"
 AABB_0            equ ext_variables   ; AABB struct (9 bytes)
 currentlevel      equ ext_variables+9 ; Byte
-hooked_status     equ ext_variables+10 ; Byte
+hooked_status     equ ext_variables+10 ; Byte (0=Not hooked, 4=hooked front, 5=hooked back)
+hookzoneignore    equ ext_variables+11 ; Byte
 
 
 Onject
@@ -66,11 +67,13 @@ LiveSetTrackSpot
 LiveTrackspot
         jsr   Live
         ldx   #160
+@tsvelxplus   equ   *-2
         ldd   #0
 @tsx    equ   *-2                       ; Tracking spot X
         cmpd  x_pos,u
         bgt   @continuetsx
         ldx   #-100
+@tsvelxmin   equ   *-2
 @continuetsx
         stx   x_vel,u
         ldx   #160
@@ -132,14 +135,26 @@ Live
         ldx   #140
 !
         stx   @stsx
+        ldx   #400
+        stx   @tsvelxplus
+        ldx   #-300
+        stx   @tsvelxmin
         ldd   y_pos,u
         std   @tsy
         clr   hooked_status,u           ; Forcepod is free  
         lda   #1
         sta   routine,u
+        lda   #5
+        sta   hookzoneignore,u
         rts
 @continueliveisfree
                                         ; Is forcepod close du player 1 (ie getting hooked)
+        ldb   hookzoneignore,u
+        beq   >
+        decb
+        stb   hookzoneignore,u
+        rts
+!
         ldd   x_pos,u
         cmpd  glb_camera_x_pos
         blt   @continuelivenothooked    ; Forcepod not on the screen yet
@@ -161,7 +176,7 @@ Live
         ldb   #0
 @hookx  equ   *-1
         bpl   >
-        lda   #5                        ; Nop ... hoocked back      
+        lda   #5                        ; Nop ... hooked back      
 !
         sta   routine,u
         sta   hooked_status,u
@@ -171,9 +186,13 @@ Live
         anda  #c1_button_B_mask
         bne   >
         rts
-!
+!                                       ; Recalling forcepod
         lda   #3
         sta   routine,u
+        ldx   #160
+        stx   @tsvelxplus
+        ldx   #-100
+        stx   @tsvelxmin
         rts
 
 
