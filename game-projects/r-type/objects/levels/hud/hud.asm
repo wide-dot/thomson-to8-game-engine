@@ -241,7 +241,10 @@ DRAW_Img_hud_b
         puls  u,pc
 
 DRAW_Img_hud_0
-        pshs u
+
+	clra
+	STA -120,U
+
 	LDA #$04
 	STA 120,U
 	STA 80,U
@@ -249,8 +252,6 @@ DRAW_Img_hud_0
 	STA ,U
 	STA -40,U
 	STA -80,U
-	LDA #$00
-	STA -120,U
 
         LEAU -$2000,U
 	LDA #$04
@@ -262,7 +263,9 @@ DRAW_Img_hud_0
 	LDA #$44
 	STA 120,U
 	STA -120,U
-        puls  u,pc
+
+        LEAU $2000,U
+	rts
 
 DRAW_Img_hud_1
         pshs u
