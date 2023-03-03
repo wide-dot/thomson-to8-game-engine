@@ -184,9 +184,29 @@ Live
 @continuelivenothooked
         lda   Fire_Press
         anda  #c1_button_B_mask
-        bne   >
+        bne   @continuelivenothookedrecall
+        lda   Fire_Press
+        anda  #c1_button_A_mask
+        beq   >
+        jsr   LoadObject_x
+        beq   >                             ; branch if no more available object slot
+        lda   #ObjID_forcepod_straightup    ; fire straight up !
+        sta   id,x
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
+        jsr   LoadObject_x
+        beq   >                             ; branch if no more available object slot
+        lda   #ObjID_forcepod_straightdown  ; fire straight up !
+        sta   id,x
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
+!
         rts
-!                                       ; Recalling forcepod
+@continuelivenothookedrecall                                       ; Recalling forcepod
         lda   #3
         sta   routine,u
         ldx   #160
