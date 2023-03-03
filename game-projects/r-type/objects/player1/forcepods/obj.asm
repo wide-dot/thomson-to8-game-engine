@@ -12,6 +12,8 @@
         INCLUDE "./objects/player1/player1.equ"
 AABB_0            equ ext_variables   ; AABB struct (9 bytes)
 currentlevel      equ ext_variables+9 ; Byte
+hooked_status     equ ext_variables+10 ; Byte
+
 
 Onject
         lda   routine,u
@@ -21,7 +23,11 @@ Onject
 
 Routines
         fdb   Init
-        fdb   Live
+        fdb   LiveSetTrackSpot
+        fdb   LiveSetTrackSpot
+        fdb   LiveTrackPlayer1
+        fdb   LiveHookedFront
+        fdb   LiveHookedBack
 
 Init
         ldd   #Ani_forcepod_0
@@ -46,10 +52,63 @@ Init
         ldd   y_pos,u
         stb   AABB.cy,x
 
+        ldd   #100
+        std   y_pos,u
+        std   @tsy
+        ldd   glb_camera_x_pos
+        subd  #10
+        std   x_pos,u
+LiveSetTrackSpot
+        ldd   glb_camera_x_pos
+        addd  #80
+@stsx   equ   *-2                       ; Set X tracking position
+        std   @tsx
+LiveTrackspot
+        jsr   Live
+        ldx   #160
+        ldd   #0
+@tsx    equ   *-2                       ; Tracking spot X
+        cmpd  x_pos,u
+        bgt   @continuetsx
+        ldx   #-100
+@continuetsx
+        stx   x_vel,u
+        ldx   #160
+        ldd   #0
+@tsy    equ   *-2                       ; Tracking spot Y
+        cmpd  y_pos,u
+        bgt   @continuetsy
+        ldx   #-160
+        addd  #5
+        cmpd  y_pos,u
+        blt   @continuetsy
+        ldd   @tsy
+        std   y_pos,u
+        ldx   #0
+@continuetsy
+        stx   y_vel,u
+        jsr   ObjectMoveSync
+	leax  AABB_0,u
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB.cx,x
+	ldd   y_pos,u
+        subd  glb_camera_y_pos
+        stb   AABB.cy,x
+        jsr   AnimateSpriteSync
+        jmp   DisplaySprite
+LiveTrackPlayer1
+        ldd   player1+y_pos
+        addd  #6
+        std   @tsy
+        ldd   player1+x_pos
+        addd  #6
+        std   @tsx
+        jmp   LiveTrackspot
 Live
-        lda   player1+forcepodlevel
+        lda   player1+forcepodlevel     ; Has forcepod been upgraded ?
         cmpa  currentlevel,u
-        beq   @continue
+        beq   @continueliveishooked     ; Nop, move along
         ldx   #Ani_forcepod_1
         cmpa  #2
         beq   >
@@ -58,7 +117,71 @@ Live
         stx   anim,u
         clr   anim_frame,u
         sta   currentlevel,u
-@continue
+@continueliveishooked
+        lda   hooked_status,u
+        beq   @continueliveisfree
+                                        ; Forcepod is hooked
+        ldb   Fire_Press
+        andb  #c1_button_B_mask
+        bne   >                         
+        rts                             
+!                                       ; Eject forcepod
+        ldx   #10
+        cmpa  #4
+        bne   >                         ; Back hook               
+        ldx   #140
+!
+        stx   @stsx
+        ldd   y_pos,u
+        std   @tsy
+        clr   hooked_status,u           ; Forcepod is free  
+        lda   #1
+        sta   routine,u
+        rts
+@continueliveisfree
+                                        ; Is forcepod close du player 1 (ie getting hooked)
+        ldd   x_pos,u
+        cmpd  glb_camera_x_pos
+        blt   @continuelivenothooked    ; Forcepod not on the screen yet
+        subd  player1+x_pos
+        stb   @hookx
+        bpl   >
+        negb
+!
+        cmpb  #10
+        bgt   @continuelivenothooked    ; Not on X
+        ldd   y_pos,u
+        subd  player1+y_pos
+        bpl   >
+        negb
+!
+        cmpb  #10
+        bgt   @continuelivenothooked    ; Not on Y either ... not hooked yet
+        lda   #4                        ; Hooked front ?
+        ldb   #0
+@hookx  equ   *-1
+        bpl   >
+        lda   #5                        ; Nop ... hoocked back      
+!
+        sta   routine,u
+        sta   hooked_status,u
+        rts
+@continuelivenothooked
+        lda   Fire_Press
+        anda  #c1_button_B_mask
+        bne   >
+        rts
+!
+        lda   #3
+        sta   routine,u
+        rts
+
+
+
+
+LiveHookedFront
+
+        jsr   Live
         leax  AABB_0,u
         ldd   player1+x_pos
 	addd  #9
@@ -71,4 +194,19 @@ Live
         stb   AABB.cy,x
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
-!       jmp   DeleteObject
+
+LiveHookedBack
+
+        jsr   Live
+        leax  AABB_0,u
+        ldd   player1+x_pos
+	subd  #9
+	std   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB.cx,x
+	ldd   player1+y_pos
+	std   y_pos,u
+        subd  glb_camera_y_pos
+        stb   AABB.cy,x
+        jsr   AnimateSpriteSync
+        jmp   DisplaySprite
