@@ -42,8 +42,10 @@ glb_screen_location_2         equ glb_screen_location_1-2   ; start address for 
 glb_camera_height             equ glb_screen_location_2-2
 glb_camera_width              equ glb_camera_height-2
 glb_camera_x_pos_coarse       equ glb_camera_width-2        ; ((glb_camera_x_pos - 64) / 64) * 64
-glb_camera_x_pos              equ glb_camera_x_pos_coarse-2 ; camera x position in palyfield coordinates
-glb_camera_y_pos              equ glb_camera_x_pos-2        ; camera y position in palyfield coordinates
+glb_camera_x_pos              equ glb_camera_x_pos_coarse-2 ; 16.8 camera x position in palyfield coordinates
+glb_camera_x_sub              equ glb_camera_x_pos-1        ; 
+glb_camera_y_pos              equ glb_camera_x_pos-2        ; 16.8 camera y position in palyfield coordinates
+glb_camera_y_sub              equ glb_camera_y_pos-1        ;
 glb_camera_x_min_pos          equ glb_camera_y_pos-2
 glb_camera_y_min_pos          equ glb_camera_x_min_pos-2
 glb_camera_x_max_pos          equ glb_camera_y_min_pos-2
@@ -60,7 +62,7 @@ glb_timer_frame               equ glb_timer-1
 
 ; BankSwitch
 glb_Page                      equ glb_timer_frame-1
-dp_engine                     equ glb_Page-32  ; engine routines tmp var space
+dp_engine                     equ glb_Page-30  ; engine routines tmp var space
 dp_extreg                     equ dp_engine-28 ; extra register space (user and engine common)
 dp                            equ $9F00        ; user space (149 bytes max)
 glb_system_stack              equ dp
@@ -182,7 +184,8 @@ render_hide_mask              equ $80 ; (bit 7) tell display engine to hide spri
 
 priority                      equ 7           ; display priority (0: nothing to display, 1:front, ..., 8:back)
 anim                          equ 8  ; and 9  ; reference to current animation (Ani_)
-prev_anim                     equ 10 ; and 11  ; reference to previous animation (Ani_)
+prev_anim                     equ 10 ; and 11 ; reference to previous animation (Ani_)
+sub_anim                      equ 10 ; and 11 ; reference to sub animation
 anim_frame                    equ 12          ; index of current frame in animation
 anim_frame_duration           equ 13          ; number of frames for each image in animation, range: 00-7F (0-127), 0 means display only during one frame
 anim_flags                    equ 14          ; byte offset to reference an anim_flags LUT (adv) / store a link flag (non adv)
@@ -204,10 +207,10 @@ y_sub                         equ 23          ; y subpixel (1/256 of a pixel), m
 xy_pixel                      equ 24          ; x and y screen coordinate
 x_pixel                       equ 24          ; x screen coordinate
 y_pixel                       equ 25          ; y screen coordinate, must follow x_pixel
-x_vel                         equ 26 ; and 27 ; horizontal velocity
-y_vel                         equ 28 ; and 29 ; vertical velocity
-x_acl                         equ 30 ; and 31 ; horizontal gravity
-y_acl                         equ 32 ; and 33 ; vertical gravity
+x_vel                         equ 26 ; and 27 ; s8.8 horizontal velocity
+y_vel                         equ 28 ; and 29 ; s8.8 vertical velocity
+x_acl                         equ 30 ; and 31 ; s8.8 horizontal gravity
+y_acl                         equ 32 ; and 33 ; s8.8 vertical gravity
 routine                       equ 34          ; index of current object routine
 routine_secondary             equ 35          ; index of current secondary routine
 routine_tertiary              equ 36          ; index of current tertiary routine

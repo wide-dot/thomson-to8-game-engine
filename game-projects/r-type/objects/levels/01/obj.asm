@@ -3,19 +3,15 @@
 LevelInit
 
         ; register map location to main
-        ldx   #scroll_map
         ldd   #Tls_lvl01
-        std   -2,x
+        std   scroll_map_even
         ldd   #Tls_lvl01_s
-        std   ,x
-        ldx   #scroll_map_page
+        std   scroll_map_odd
         _GetCartPageA
-        sta   -1,x
-        sta   ,x
+        sta   scroll_map_page_even
+        sta   scroll_map_page_odd
 
         ; set scroll parameters
-        lda   #4
-        sta   scroll_wait_frames
         _ldd  12,15
         sta   scroll_vp_h_tiles
         stb   scroll_vp_v_tiles
@@ -25,8 +21,8 @@ LevelInit
         _ldd  12,12
         sta   scroll_tile_width
         stb   scroll_tile_height
-        lda   #132                   ; ! MAP WIDTH !
-        stb   scroll_map_width
+        ldd   #$0030
+        std   scroll_vel
 
         rts
 

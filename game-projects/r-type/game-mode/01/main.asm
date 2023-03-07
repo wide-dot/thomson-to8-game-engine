@@ -9,17 +9,17 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/objects/palette/fade/fade.equ"
         INCLUDE "./global/macro.asm"
 
-map_width       equ 1584
+map_width       equ 1598
 viewport_width  equ 144
 viewport_height equ 180
 
- ; A = tile position in x, B = nb of pre-scrolled tiles
-CHECKPOINT_00 equ $0202
-CHECKPOINT_01 equ $3802
+ ; value in animation script
+CHECKPOINT_00      equ $0202
+CHECKPOINT_00_wave equ 2*12*2
+CHECKPOINT_01      equ $3802
+CHECKPOINT_01_wave equ 56*12*2
 
         org   $6100
-        sta   ,-u
-        pshu  a
         jsr   InitGlobals
         jsr   LoadAct
         jsr   InitJoypads
@@ -45,6 +45,7 @@ CHECKPOINT_01 equ $3802
 
 ; load checkpoints
         ldd   #CHECKPOINT_00
+        ldx   #CHECKPOINT_00_wave
         jsr   Game_LoadCheckpoint_x
 
 ; init user irq
@@ -66,6 +67,10 @@ CHECKPOINT_01 equ $3802
 * MAIN GAME LOOP
 * ---------------------------------------------------------------------------
 
+        ldd   #0
+        std   Vint_runcount
+        std   Vint_Last_runcount
+
 LevelMainLoop
         jsr   WaitVBL
         jsr   ReadJoypads
@@ -77,6 +82,7 @@ LevelMainLoop
         cmpa  #o_fade_routine_idle
         bne   >
         ldd   #CHECKPOINT_01           ; yes load checkpoint
+        ldx   #CHECKPOINT_01_wave
         jsr   Game_LoadCheckpoint_x
 !
         jsr   KTST
@@ -209,12 +215,15 @@ Foeshoottable
 * Game_Checkpoint_x
 *
 * A blank palette is expected on entry (any color)
-* D = position in map (A = x | B = y tile number starting from 0)
+* A = final position in map (in tiles)
+* B = tiles to pre-scroll before position
+* X = position in wave
 * ---------------------------------------------------------------------------
 checkpoint_load fcb 0
 
 Game_LoadCheckpoint_x
         std   @d
+        stx   @x
         clr   checkpoint_load
 ;
         ; clear object data
@@ -236,15 +245,18 @@ Game_LoadCheckpoint_x
 @d equ *-2
         jsr   Scroll_PreScrollTo
 ;
-
         ; init player one
         lda   #ObjID_Player1
         sta   player1+id
-
+;
         ; fade in
         jsr   Palette_FadeIn
-
+;
         ; set object wave position based on new camera position
+        ldd   #0
+@x      equ   *-2
+        std   Vint_runcount
+        std   Vint_Last_runcount
         jmp   ObjectWave_Init
 
 * ---------------------------------------------------------------------------
@@ -333,12 +345,14 @@ Palette_FadeCallback
 
         ; object management
         INCLUDE "./engine/object-management/RunObjects.asm"
+        INCLUDE "./engine/object-management/ObjectMove.asm"
         INCLUDE "./engine/object-management/ObjectMoveSync.asm"
-        INCLUDE "./engine/object-management/ObjectWave.asm"
+        INCLUDE "./engine/object-management/ObjectWave-subtype.asm"
         INCLUDE "./engine/object-management/ObjectDp.asm"
 
         ; animation & image
         INCLUDE "./engine/graphics/animation/AnimateSpriteSync.asm"
+        INCLUDE "./engine/graphics/animation/AnimateMoveSync.asm"
 
         ; sprite
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"  
