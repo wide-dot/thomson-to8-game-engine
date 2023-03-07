@@ -12,30 +12,25 @@
         SETDP   dp/256
 
 ; parameters to set before using InitScroll and Scroll routines
-scroll_wait_frames        fcb   0   ; number of frames to wait between key frames
 scroll_vp_h_tiles         fcb   0   ; viewport tiles on x axis
 scroll_vp_v_tiles         fcb   0   ; viewport tiles on y axis
 scroll_tile_width         fcb   0   ; tile width
 scroll_tile_height        fcb   0   ; tile height
 scroll_vp_x_pos           fcb   0   ; viewport x location on screen (odd value will be converted to even position)
 scroll_vp_y_pos           fcb   0   ; viewport y location on screen
-scroll_map_width          fcb   0   ; map width in tiles
-scroll_map equ *+2
-                          fdb   0
-                          fdb   0
-scroll_map_page equ *+1
-                          fcb   0
-                          fcb   0
+scroll_map_even           fdb   0
+scroll_map_odd            fdb   0
+scroll_map_page_even      fcb   0
+scroll_map_page_odd       fcb   0
+scroll_vel                fdb   0   ; u8.8 scroll speed reference for 1/50s
 
 ; private variables
+buffer_x_pos              fdb   -1,-1
 tile_buffer               fdb   0
 tile_buffer_page          fcb   0
-scroll_remain_frames      fcb   0   ; countdown to next scroll step
 scroll_tile_pos_offset    fcb   0   ; current camera x position offset from tile_pos
 scroll_map_pos            fdb   0   ; current tile position in the map
-scroll_stop               fcb   0   ; flag that stops scroll
-scroll_frame              fcb   0   ; current scroll frame id 0-3
-scroll_parity             fcb   0   ; current tileset (0:no shift, 1:shifted by 1 px to the left)
+glb_camera_x_pos_old      fdb   0   ; previous camera x pos
 
 ; tmp variables
 scroll_lcnt               equ   dp_engine
@@ -48,9 +43,6 @@ scroll_ccnt               equ   dp_engine+1
 * ---------------------------------------------------------------------------
 
 InitScroll
-        lda   #0
-        sta   scroll_frame
-        sta   scroll_parity
         ldd   #-1
         std   glb_camera_x_pos                   ; first Scroll call will inc camera to 0
         stb   scroll_tile_pos_offset             ; first Scroll call will inc offset to 0
@@ -70,84 +62,90 @@ InitScroll
         anda  #%11111110                         ; this routine only accept even position on screen for tiles
         sta   scroll_vp_x_pos
 
-        lda   scroll_wait_frames
-        sta   scroll_remain_frames
-
-        ldd   scroll_map+2
+        ldd   scroll_map_even
         std   scroll_map_pos
         rts
 
 * ---------------------------------------------------------------------------
 * Scroll
 * ----------
-* Drive scroll at a constant framerate
+* Drive scroll with 8.8 velocity
 * ---------------------------------------------------------------------------
 
 Scroll
-        clr   glb_camera_move                    ; desactivate tiles drawing
-        lda   scroll_stop
-        beq   >
-        rts                                      ; scroll is stopped, return
-!       ldb   scroll_frame                       ; load frame number
-        beq   @keyfrm                            ; frame 0 is the key frame
-        cmpb  #1
-        bne   @skipfrm
-        bra   @updbuf
-@keyfrm
-        lda   scroll_remain_frames
-        suba  Vint_Main_runcount
-        bpl   >
-        lda   scroll_wait_frames                 ; next frame will be keyframe
-        bra   @nxtkey
-!       incb                                     ; next frame will not be key frame
-        stb   scroll_frame
-@nxtkey sta   scroll_remain_frames
-        lda   scroll_parity                      ; swap tileset only on first of the 4 frames
-        coma
-        sta   scroll_parity
-        ldx   #scroll_map_page
-        ldb   a,x
-        stb   tile_buffer_page
-        asla
-        ldx   #scroll_map
-        ldx   a,x
-        stx   tile_buffer
         ldd   glb_camera_x_pos
-        addd  #1
-        std   glb_camera_x_pos
-        cmpd  #map_width-viewport_width          ; check end of map (only when the 2 buffers are updated)
-        bne   >                                  ; if so no need to swap the tiles, only set scroll_stop
-        inc   scroll_stop
-!       lda   scroll_tile_pos_offset             ; rendering position offset for tiles
-        inca
-        cmpa  scroll_tile_width                  ; test for tile width
+        std   glb_camera_x_pos_old
+        clr   glb_camera_move          ; desactivate tiles drawing
+        ldx   #map_width-viewport_width
+        cmpx  buffer_x_pos             ; check end of map for buffer 0
         bne   >
-        lda   scroll_vp_v_tiles
-        ldb   #3                                 ; a tile is 3 bytes in map (page, addr)
+        cmpx  buffer_x_pos+2           ; check end of map for buffer 1
+        bne   >
+        rts
+!
+        ; apply scroll velocity in sync with framerate
+        ; --------------------------------------------
+;
+        ldb   scroll_vel
+        sex                            ; velocity is positive or negative, take care of that
+        sta   @a
+        lda   Vint_Main_runcount       ; take number of elapsed frame since last render and multiply by velocity
+        sta   glb_d0_b
+        bne   @loop1
+        inc   glb_d0_b
+@loop1   
+        ldd   glb_camera_x_pos+1       ; glb_camera_x_pos must be followed by glb_camera_x_sub in memory
+        addd  scroll_vel
+        std   glb_camera_x_pos+1       ; update low byte of glb_camera_x_pos and glb_camera_x_sub byte
+        lda   glb_camera_x_pos
+        adca  #$00                     ; (dynamic) parameter is modified by the result of sign extend
+@a      equ   *-1
+        sta   glb_camera_x_pos         ; update high byte of glb_camera_x_pos
+        dec   glb_d0_b
+        bne   @loop1 
+;
+        lda   glb_Cur_Wrk_Screen_Id    ; check if buffer was rendered for this camera position
+        asla
+        ldu   #buffer_x_pos
+        ldx   glb_camera_x_pos
+        cmpx  a,u
+        beq   @rts                     ; already rendered, skip scroll update
+        cmpx  #map_width-viewport_width
+        ble   >
+        ldx   #map_width-viewport_width          ; cap position to end of map
+        stx   glb_camera_x_pos
+!       stx   a,u                                ; update buffer position
+;
+        lda   #1                                 ; we want to draw tiles
+        sta   <glb_force_sprite_refresh          ; force sprites to do a full refresh (background will be changed)
+        sta   glb_camera_move                    ; set flag to activate tile drawing
+;
+        ldb   glb_camera_x_pos+1                 ; check camera position parity
+        lsrb
+        bcs   @odd                               ; odd tileset
+@even   lda   scroll_map_page_even
+        ldx   scroll_map_even
+        bra   >
+@odd    lda   scroll_map_page_odd
+        ldx   scroll_map_odd
+!       sta   tile_buffer_page
+        stx   tile_buffer
+;
+        ldd   glb_camera_x_pos
+        subd  glb_camera_x_pos_old
+        addb  scroll_tile_pos_offset             ; rendering position offset for tiles
+        cmpb  scroll_tile_width                  ; test for tile width
+        blo   >
+        subb  scroll_tile_width
+        stb   scroll_tile_pos_offset
+        ldb   scroll_vp_v_tiles
+        lda   #3                                 ; a tile is 3 bytes in map (page, addr)
         mul
         addd  scroll_map_pos
         std   scroll_map_pos                     ; move next tile column
-        lda   #0                                 ; reinit offset   
-!       sta   scroll_tile_pos_offset
-        lda   #1                                 ; frame 0 we want to draw tiles
-        sta   <glb_force_sprite_refresh          ; force sprites to do a full refresh (background will be changed)
-        sta   glb_camera_move                    ; set flag to activate tile drawing
         rts
-@updbuf
-        lda   #1                                 ; frame 1 we want to draw tiles
-        sta   <glb_force_sprite_refresh          ; force sprites to do a full refresh (background will be changed)
-        sta   glb_camera_move                    ; set flag to activate tile drawing
-@skipfrm
-        incb                                     ; no frame to draw
-        lda   scroll_remain_frames
-        suba  Vint_Main_runcount
-        sta   scroll_remain_frames
-        bpl   >
-        lda   scroll_wait_frames
-        sta   scroll_remain_frames
-        ldb   #0                                 ; next frame is key frame 0
-!       stb   scroll_frame  
-        rts
+!       stb   scroll_tile_pos_offset
+@rts    rts
 
 * ---------------------------------------------------------------------------
 * DrawTiles
@@ -284,24 +282,20 @@ Scroll_PreScrollTo
         mul
         subd  #1                       ; camera x_pos must be initialized to desired pos -1
         std   glb_camera_x_pos
-        lda   #0
-        sta   scroll_frame
-        sta   scroll_parity
-        deca                           ; tile_pos_offset must be initialized to -1
+        std   glb_camera_x_pos_old
+        lda   #-1                      ; tile_pos_offset must be initialized to -1
         sta   scroll_tile_pos_offset
         lda   scroll_tile_width
         ldb   @prescroll_width
         mul
         addd  glb_camera_x_pos
         std   @limit
-!       ldb   #-1
-        stb   scroll_remain_frames     ; force refresh
-        jsr   Scroll
+!       jsr   Scroll
         jsr   DrawTiles
-        _SwitchScreenBuffer
+        jsr   SwapVideoPage
         ldd   glb_camera_x_pos
         cmpd  #0
-@limit equ *-2
+@limit  equ *-2
         bmi   <
         rts
 @prescroll_width fcb 0

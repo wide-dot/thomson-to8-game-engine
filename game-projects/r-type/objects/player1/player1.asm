@@ -44,8 +44,6 @@ Init
         lda   player1+render_flags
         ora   #render_playfieldcoord_mask
         sta   player1+render_flags
-        ldd   glb_camera_x_pos
-        std   glb_camera_x_pos_old
         inc   player1+routine
 
         _Collision_AddAABB AABB_0,AABB_list_player
@@ -64,8 +62,6 @@ Live
         beq   >
         addd  player1+x_pos
         std   player1+x_pos
-        ldd   glb_camera_x_pos
-        std   glb_camera_x_pos_old
 !
         lda   Dpad_Held
         anda  #c1_button_left_mask
@@ -254,5 +250,3 @@ CheckRange
         ldd   #0
         std   player1+y_vel
 !       rts
-
-glb_camera_x_pos_old    fdb 0

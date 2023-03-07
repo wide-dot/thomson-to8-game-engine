@@ -1,0 +1,16 @@
+	fcb   $16
+	fcb   $22
+	fcb   $2E
+	fcb   $34
+	fcb   $3A
+	fcb   $46
+	fcb   $52
+	fcb   $5E
+	fcb   $6A
+	fcb   $76
+	fcb   $82
+	fcb   $94
+	fcb   $A0
+	fcb   $A6
+	fcb   $AC
+	fcb   $B8
