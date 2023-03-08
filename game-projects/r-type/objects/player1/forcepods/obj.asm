@@ -10,6 +10,7 @@
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./objects/player1/player1.equ"
+
 AABB_0            equ ext_variables   ; AABB struct (9 bytes)
 currentlevel      equ ext_variables+9 ; Byte
 hooked_status     equ ext_variables+10 ; Byte (0=Not hooked, 4=hooked front, 5=hooked back)
@@ -126,9 +127,15 @@ Live
                                         ; Forcepod is hooked
         ldb   Fire_Press
         andb  #c1_button_B_mask
-        bne   >                         
+        bne   >     
+        jsr   KTST
+        bcc   >
+        jsr   GETC
+        cmpb  #$3E ; touche ">"     
+        beq   @continueliveishookedcontinue
+!           
         rts                             
-!                                       ; Eject forcepod
+@continueliveishookedcontinue
         ldx   #10
         cmpa  #4
         bne   >                         ; Back hook               
@@ -158,11 +165,13 @@ Live
         ldd   x_pos,u
         cmpd  glb_camera_x_pos
         blt   @continuelivenothooked    ; Forcepod not on the screen yet
-        subd  player1+x_pos
-        stb   @hookx
+        lda   #4                        ; Sets A for routine 4 (LiveHookedFront)
+        subb  player1+x_pos+1
         bpl   >
         negb
+        inca                            ; Sets A to 5 (Same as lda #5 but saves a byte, plugging to routine LiveHookedBack)
 !
+        sta   @hookroutine
         cmpb  #10
         bgt   @continuelivenothooked    ; Not on X
         ldd   y_pos,u
@@ -172,12 +181,8 @@ Live
 !
         cmpb  #10
         bgt   @continuelivenothooked    ; Not on Y either ... not hooked yet
-        lda   #4                        ; Hooked front ?
-        ldb   #0
-@hookx  equ   *-1
-        bpl   >
-        lda   #5                        ; Nop ... hooked back      
-!
+        lda   #4                        ; Forcepod is Hooked
+@hookroutine  equ   *-1
         sta   routine,u
         sta   hooked_status,u
         rts
@@ -185,6 +190,15 @@ Live
         lda   Fire_Press
         anda  #c1_button_B_mask
         bne   @continuelivenothookedrecall
+        jsr   KTST
+        bcc   >
+        jsr   GETC
+        cmpb  #$3E ; touche ">"
+        beq   @continuelivenothookedrecall
+!
+        lda   currentlevel,u
+        cmpa  #1
+        beq   > 
         lda   Fire_Press
         anda  #c1_button_A_mask
         beq   >
