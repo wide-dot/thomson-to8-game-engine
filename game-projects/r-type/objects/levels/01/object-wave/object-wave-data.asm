@@ -1,79 +1,79 @@
-	fdb   $01F8
+	fdb   $01EC
 	fcb   ObjID_patapata,$04
-	fdb   $0206
+	fdb   $01FA
 	fcb   ObjID_patapata,$03
-	fdb   $021A
+	fdb   $020E
 	fcb   ObjID_patapata,$05
-	fdb   $022A
+	fdb   $021E
 	fcb   ObjID_patapata,$13
-	fdb   $025E
+	fdb   $0252
 	fcb   ObjID_patapata,$0A
-	fdb   $0270
+	fdb   $0264
 	fcb   ObjID_patapata,$0B
-	fdb   $027E
+	fdb   $0272
 	fcb   ObjID_patapata,$2A
-	fdb   $0290
+	fdb   $0284
 	fcb   ObjID_patapata,$09
-	fdb   $03DC
+	fdb   $03D0
 	fcb   ObjID_patapata,$0A
-	fdb   $03E6
+	fdb   $03DA
 	fcb   ObjID_patapata,$09
-	fdb   $03F4
+	fdb   $03E8
 	fcb   ObjID_patapata,$0A
-	fdb   $0440
+	fdb   $0434
 	fcb   ObjID_patapata,$07
-	fdb   $0448
+	fdb   $043C
 	fcb   ObjID_patapata,$85
-	fdb   $0454
+	fdb   $0448
 	fcb   ObjID_patapata,$02
-	fdb   $045E
+	fdb   $0452
 	fcb   ObjID_patapata,$03
-	fdb   $046C
+	fdb   $0460
 	fcb   ObjID_patapata,$08
-	fdb   $0476
+	fdb   $046A
 	fcb   ObjID_patapata,$84
-	fdb   $047C
+	fdb   $0470
 	fcb   ObjID_patapata,$05
-	fdb   $0496
+	fdb   $048A
 	fcb   ObjID_patapata,$07
-	fdb   $04A4
+	fdb   $0498
 	fcb   ObjID_patapata,$83
-	fdb   $04B2
+	fdb   $04A6
 	fcb   ObjID_patapata,$04
-	fdb   $04C4
+	fdb   $04B8
 	fcb   ObjID_patapata,$08
-	fdb   $04D2
+	fdb   $04C6
 	fcb   ObjID_patapata,$05
-	fdb   $04FA
+	fdb   $04EE
 	fcb   ObjID_patapata,$04
-	fdb   $0514
+	fdb   $0508
 	fcb   ObjID_patapata,$06
-	fdb   $051C
+	fdb   $0510
 	fcb   ObjID_patapata,$82
-	fdb   $0548
+	fdb   $053C
 	fcb   ObjID_patapata,$27
-	fdb   $057A
+	fdb   $056E
 	fcb   ObjID_patapata,$09
-	fdb   $0588
+	fdb   $057C
 	fcb   ObjID_patapata,$07
-	fdb   $05C6
+	fdb   $05BA
 	fcb   ObjID_patapata,$06
-	fdb   $062C
+	fdb   $0620
 	fcb   ObjID_patapata,$04
-	fdb   $063E
+	fdb   $0632
 	fcb   ObjID_patapata,$0A
-	fdb   $0698
+	fdb   $068C
 	fcb   ObjID_patapata,$04
-	fdb   $06AC
+	fdb   $06A0
 	fcb   ObjID_patapata,$05
-	fdb   $11DA
+	fdb   $11CE
 	fcb   ObjID_patapata,$2A
-	fdb   $11EC
+	fdb   $11E0
 	fcb   ObjID_patapata,$29
-	fdb   $120A
+	fdb   $11FE
 	fcb   ObjID_patapata,$3A
-	fdb   $1260
+	fdb   $1254
 	fcb   ObjID_patapata,$24
-	fdb   $12C4
+	fdb   $12B8
 	fcb   ObjID_patapata,$08
 	fdb   $FFFF
