@@ -84,15 +84,15 @@ LevelMainLoop
         ldd   #CHECKPOINT_01           ; yes load checkpoint
         ldx   #CHECKPOINT_01_wave
         jsr   Game_LoadCheckpoint_x
-!
-        jsr   KTST
-        bcc   >
-        jsr   GETC
-        cmpb  #$41 ; touche A
-        bne   >
-        jsr   Palette_FadeOut
-        lda   #1
-        sta   checkpoint_load
+;!
+        ;jsr   KTST
+        ;bcc   >
+        ;jsr   GETC
+        ;cmpb  #$41 ; touche A
+        ;bne   >
+        ;jsr   Palette_FadeOut
+        ;lda   #1
+        ;sta   checkpoint_load
 !
         jsr   Scroll
         jsr   ObjectWave
