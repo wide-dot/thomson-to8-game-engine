@@ -43,9 +43,13 @@ scroll_ccnt               equ   dp_engine+1
 * ---------------------------------------------------------------------------
 
 InitScroll
-        ldd   #-1
-        std   glb_camera_x_pos                   ; first Scroll call will inc camera to 0
-        stb   scroll_tile_pos_offset             ; first Scroll call will inc offset to 0
+        ldd   #0
+        std   glb_camera_x_pos
+        std   glb_camera_x_pos_old
+        stb   scroll_tile_pos_offset
+        subd  #1
+        std   buffer_x_pos
+        std   buffer_x_pos+2
 
         lda   scroll_tile_height                 ; set video memory steps between each tiles in line
         ldb   #40
@@ -280,11 +284,12 @@ Scroll_PreScrollTo
         std   scroll_map_pos           ; position in map data
         ldb   scroll_tile_width
         mul
-        subd  #1                       ; camera x_pos must be initialized to desired pos -1
         std   glb_camera_x_pos
         std   glb_camera_x_pos_old
-        lda   #-1                      ; tile_pos_offset must be initialized to -1
-        sta   scroll_tile_pos_offset
+        subd  #1
+        std   buffer_x_pos
+        std   buffer_x_pos+2
+        clr   scroll_tile_pos_offset
         lda   scroll_tile_width
         ldb   @prescroll_width
         mul

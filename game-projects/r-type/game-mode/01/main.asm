@@ -15,9 +15,9 @@ viewport_height equ 180
 
  ; value in animation script
 CHECKPOINT_00      equ $0202
-CHECKPOINT_00_wave equ 2*12*2
+CHECKPOINT_00_wave equ (2-2)*12*2
 CHECKPOINT_01      equ $3802
-CHECKPOINT_01_wave equ 56*12*2
+CHECKPOINT_01_wave equ (56-2)*12*2
 
         org   $6100
         jsr   InitGlobals
@@ -66,10 +66,6 @@ CHECKPOINT_01_wave equ 56*12*2
 * ---------------------------------------------------------------------------
 * MAIN GAME LOOP
 * ---------------------------------------------------------------------------
-
-        ldd   #0
-        std   Vint_runcount
-        std   Vint_Last_runcount
 
 LevelMainLoop
         jsr   WaitVBL
