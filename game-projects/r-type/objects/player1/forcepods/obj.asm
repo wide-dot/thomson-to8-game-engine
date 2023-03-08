@@ -32,7 +32,7 @@ Routines
         fdb   LiveHookedBack
 
 Init
-        ldd   #Ani_forcepod_0
+        ldd   #Ani_forcepod_2
         std   anim,u
         ldb   #2
         stb   priority,u

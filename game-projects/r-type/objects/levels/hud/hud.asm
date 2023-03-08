@@ -49,12 +49,12 @@ beam_m_size  equ 3                     ; number of byte for a segment
         lbeq  @loop_black
         subb  #12
         bmi   @do_partial_beam
-	Lda   #$55
-	Ldx   #$5555
-        _beam_seg_extB
-        _beam_seg_extA
 	Lda   #$66
 	Ldx   #$6666
+        _beam_seg_extB
+        _beam_seg_extA
+	Lda   #$dd
+	Ldx   #$dddd
         _beam_seg_intA
         _beam_seg_intB
         cmpu  #beam_m_start+beam_m_size*5
@@ -69,32 +69,32 @@ beam_m_size  equ 3                     ; number of byte for a segment
         mul
         leay  d,y
         ldd   1,y
-        anda  #$55
-        andb  #$55
+        anda  #$66
+        andb  #$66
         tfr   d,x
         lda   ,y
-        anda  #$55
+        anda  #$66
         _beam_seg_extB
         ldd   4,y
-        anda  #$55
-        andb  #$55
+        anda  #$66
+        andb  #$66
         tfr   d,x
         lda   3,y
-        anda  #$55
+        anda  #$66
         _beam_seg_extA
         ldd   4,y
-        anda  #$66
-        andb  #$66
+        anda  #$dd
+        andb  #$dd
         tfr   d,x
         lda   3,y
-        anda  #$66
+        anda  #$dd
         _beam_seg_intA
         ldd   1,y
-        anda  #$66
-        andb  #$66
+        anda  #$dd
+        andb  #$dd
         tfr   d,x
         lda   ,y
-        anda  #$66
+        anda  #$dd
         _beam_seg_intB
         cmpu  #beam_m_start+beam_m_size*5
         beq   @beam_end
