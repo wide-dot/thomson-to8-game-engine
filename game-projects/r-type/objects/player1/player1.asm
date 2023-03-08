@@ -56,6 +56,15 @@ Init
         ldd   y_pos,u
         stb   AABB.cy,x
 
+        ; Temporary code to spawn a forcepod
+        jsr   LoadObject_x
+        lda   #ObjID_forcepod           ; Charge anim
+        sta   id,x      
+        lda   #3
+        sta   player1+forcepodlevel
+        lda   #2
+        sta   player1+forcepodtype
+
 Live
         ldd   glb_camera_x_pos
         subd  glb_camera_x_pos_old
