@@ -10,7 +10,12 @@
 ; ***********************************************************************************************
 ; Patapata
 
-patapata_score		equ 1
+patapata_score		equ 2
 patapata_hitbox_x	equ 4
 patapata_hitbox_y	equ 8
 patapata_hitdamage	equ 1
+
+bug_score		equ 2
+bug_hitbox_x	        equ 4
+bug_hitbox_y	        equ 8
+bug_hitdamage	        equ 1

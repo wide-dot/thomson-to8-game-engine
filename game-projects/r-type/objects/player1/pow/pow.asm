@@ -9,8 +9,10 @@
         INCLUDE "./engine/macros.asm"
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
+        INCLUDE "./objects/animation/anim-data.equ"
 
 AABB_0            equ ext_variables   ; AABB struct (9 bytes)
+
 Object
         lda   routine,u
         asla
@@ -23,15 +25,27 @@ Routines
         fdb   AlreadyDeleted
 
 Init
-        ldd   #Ani_pow_walk
-        std   anim,u
+        ldb   subtype,u                ; load x and y pos based on wave parameter
+        andb  #$0F
+        aslb
+        ldx   #PresetXYIndex
+        abx
+        clra
+        ldb   1,x
+        std   y_pos,u
+        ldb   ,x
+        addd  glb_camera_x_pos
+        std   x_pos,u
+
+        ldx   #anim_pow
+        ldb   #0
+        jsr   AnimateMoveSyncInit
+
         ldb   #6
         stb   priority,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
-        ldd   #$-40
-        std   x_vel,u
 
         _Collision_AddAABB AABB_0,AABB_list_ennemy
         
@@ -41,10 +55,13 @@ Init
         _ldd  5,10                                                     ; set hitbox xy radius
         std   AABB.rx,x
 
-
         inc   routine,u
 Live
-        jsr   ObjectMoveSync
+        jsr   AnimateMoveSync
+        ldx   sub_anim,u
+        beq   @delete
+        jsr   ObjectMove
+;
         leax  AABB_0,u
         lda   AABB.p,x
         beq   @destroy                  ; was killed  
@@ -56,7 +73,13 @@ Live
         ldd   y_pos,u
         subd  glb_camera_y_pos
         stb   AABB.cy,x
-        jsr   AnimateSpriteSync
+;
+        ;ldx   #ImageIndex
+        ;ldb   anim_frame,u
+        ;andb  #$c
+        ;ldd   b,x
+        ldd   #Img_pow_0
+        std   image_set,u
         jmp   DisplaySprite
 @destroy 
         jsr   LoadObject_x
@@ -83,3 +106,15 @@ Live
         jmp   DeleteObject
 AlreadyDeleted
         rts
+
+ImageIndex
+        fdb   Img_pow_1
+        fdb   Img_pow_2
+        fdb   Img_pow_3
+        fdb   Img_pow_4
+        fdb   Img_pow_5
+        fdb   Img_pow_0
+        fdb   Img_pow_0
+
+PresetXYIndex
+        INCLUDE "./global/preset-xy.asm"
