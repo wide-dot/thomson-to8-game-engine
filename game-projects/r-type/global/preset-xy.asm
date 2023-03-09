@@ -1,0 +1,16 @@
+	fcb   $69,$04
+	fcb   $93,$04
+	fcb   $BD,$04
+	fcb   $DB,$1C
+	fcb   $DB,$34
+	fcb   $DB,$5E
+	fcb   $DB,$6A
+	fcb   $DB,$88
+	fcb   $DB,$A0
+	fcb   $BD,$C4
+	fcb   $93,$C4
+	fcb   $69,$C4
+	fcb   $4A,$A0
+	fcb   $4A,$88
+	fcb   $4A,$64
+	fcb   $4A,$1C

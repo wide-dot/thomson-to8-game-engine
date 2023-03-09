@@ -24,6 +24,10 @@ CHECKPOINT_01_wave equ (56-2)*12*2
         jsr   LoadAct
         jsr   InitJoypads
 
+; register animation data object
+        ldb   #ObjID_animation
+        jsr   AnimateMoveSyncRegister
+
 ; init score and lives at level 1
         ldd   #0
         std   score
