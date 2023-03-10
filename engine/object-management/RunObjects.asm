@@ -63,7 +63,7 @@ object_list_next equ   *-2
 
 LoadObject_u
         ldu STACK_POINTER              ; is there a free slot ?
-        cmpu #STACK_SLOT_ADDRESS-2     ; 
+        cmpu #STACK_SLOT_ADDRESS_END   ; 
         bne @link                      ; Yes a slot is free, let's get it and link it
         rts                            ; return z=1 when not found
 @link
@@ -83,7 +83,7 @@ LoadObject_u
 
 LoadObject_x
         ldx STACK_POINTER              ; is there a free slot ?
-        cmpx #STACK_SLOT_ADDRESS-2     ; 
+        cmpx #STACK_SLOT_ADDRESS_END   ; 
         bne @link                      ; Yes a slot is free, let's get it and link it
         rts                            ; return z=1 when not found
 @link
