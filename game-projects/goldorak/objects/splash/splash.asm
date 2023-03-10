@@ -1,25 +1,21 @@
         INCLUDE "./global/global-object-preambule-includes.asm"
         
-start   _ObjectInitRoutines #routines
+start   _object.routines.init #routines
 routines
-        fdb   Init
-        fdb   Display_01
-        fdb   Display_02
+        fdb Init
+        fdb WaitForJoystick
+        fdb Display
 
 Init
-        _SetImage_U #Img_Background_01,#XY_CENTERED_FULL_IMAGE,#LAYER_BACKGROUND,#render_overlay_mask
-        inc   routine,u
-Display_01
-                ldb   Fire_Press
-                bitb  #c1_button_A_mask
-                beq   @display
-                pshs U
-                _NewManagedObject_U #ObjID_Vignettes
-                puls U
-                _SetImage_U #Img_Background_02,#XY_CENTERED_FULL_IMAGE,#LAYER_BACKGROUND,#render_overlay_mask              
-                inc routine,u
-@display  
-Display_02
-                jmp   DisplaySprite
+        _image.set.u #Img_Background_01,#XY_CENTERED_FULL_IMAGE,#LAYER_BACKGROUND,#render_overlay_mask
+        _object.routines.next
+WaitForJoystick
+        _joysticks.test Fire_Press,#c1_button_A_mask
+        beq Display
+        _objectManager.new.x #ObjID_Vignettes
+        _image.set.u #Img_Background_02,#XY_CENTERED_FULL_IMAGE,#LAYER_BACKGROUND,#render_overlay_mask              
+        _object.routines.next
+Display
+        jmp DisplaySprite
 
 

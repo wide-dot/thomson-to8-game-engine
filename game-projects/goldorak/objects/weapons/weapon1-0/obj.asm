@@ -30,6 +30,7 @@ Live
         subd  glb_camera_y_pos
         cmpd  #8 ; img height/2
         bge   Anim
+        _breakpoint
         jmp   DeleteObject
 Anim
         jsr   AnimateSprite

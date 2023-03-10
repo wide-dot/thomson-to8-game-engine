@@ -3,6 +3,7 @@
         INCLUDE "./engine/macros.asm"
         org   $6100
         jsr   InitGlobals
+        jsr   InitStack
         jsr   LoadAct
         jsr   InitJoypads
 
