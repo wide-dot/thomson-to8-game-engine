@@ -1,4 +1,5 @@
 OverlayMode equ 1
+DEBUG EQU 1
 
         INCLUDE "./global/global-preambule-includes.asm"
 
@@ -8,18 +9,18 @@ OverlayMode equ 1
 * ============================================================================== 
 * Init
 * ============================================================================== 
-        _GameModeInit #GmID_gamescreen
-        _MusicInit_SN76489 #Vgc_ingameSN,#MUSIC_LOOP,#0                  ; initialize the SN76489 player
-        _MusicInit_YM2413 #Vgc_ingameYM,#MUSIC_LOOP,#0                   ; initialize the YM2413 player 
-        _MusicInit_IRQ #UserIRQ,#OUT_OF_SYNC_VBL,#Irq_one_frame         ; Setting IRQ for music
-
-        _SetPalette #Palette_gamescreen
-        _ShowPalette
+        _gameMode.init #GmID_gamescreen
+        _music.init.SN76489 #Vgc_ingameSN,#MUSIC_LOOP,#0                 ; initialize the SN76489 player
+        _music.init.YM2413 #Vgc_ingameYM,#MUSIC_LOOP,#0                  ; initialize the YM2413 player 
+        _music.init.IRQ #UserIRQ,#OUT_OF_SYNC_VBL,#Irq_one_frame         ; Setting IRQ for music
+        _palette.set #Palette_gamescreen
+        _palette.show
+        
         #_PaletteFade #Pal_black,#Palette_gamescreen,Obj_PaletteFade,#$20
 
 * load object
-        _NewManagedObject_U #ObjID_Goldorak
-        _NewManagedObject_U #ObjID_Cockpit
+        _objectManager.new.u #ObjID_Goldorak
+        _objectManager.new.u #ObjID_Cockpit
 
 
 * init scroll

@@ -8,15 +8,12 @@ ply_max_velocityN equ -$300
 ply_width        equ 16
 ply_height       equ 32
 start
-        lda   routine,u
-        asla
-        ldx   #routines
-        jmp   [a,x]
+        _object.routines.init #routines
 routines
         fdb   Init
         fdb   Live
 Init
-        _SetImage_U #Img_Goldorak_Normal,#XY_CENTERED_FULL_IMAGE,#3,#render_playfieldcoord_mask
+        _image.set.u #Img_Goldorak_Normal,#XY_CENTERED_FULL_IMAGE,#3,#render_playfieldcoord_mask
         ldd   #80
         std   x_pos,u
         ldd   #100
@@ -35,7 +32,7 @@ Live
             cmpd #ply_max_velocityN                  ;max vel
             ble >
         std   x_vel,u
-!       _UpdateImage_U #Img_Goldorak_Left
+!       _image.update.u #Img_Goldorak_Left
         bra   @testUp ; on ne test pas le droit on va directement à up
 @testRight ; testing RIGHT -----------------------------
         lda   Dpad_Held
@@ -46,7 +43,7 @@ Live
             cmpd #ply_max_velocityP                  ;max vel
             bge >
         std   x_vel,u
-!       _UpdateImage_U #Img_Goldorak_Right
+!       _image.update.u #Img_Goldorak_Right
 @testUp ; testing UP -----------------------------------
         lda   Dpad_Held
         anda  #c1_button_up_mask
@@ -83,7 +80,7 @@ Live
 !       ldd   Dpad_Held
         anda  #c1_button_left_mask|c1_button_right_mask ; check if not moving left or right
         bne   >
-        _UpdateImage_U #Img_Goldorak_Normal
+        _image.update.u #Img_Goldorak_Normal
         ldd   x_vel,u                  ; decelerate on x axis
         bmi   @neg
         subd  #ply_deceleration

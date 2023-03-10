@@ -1,25 +1,42 @@
 
-_NewManagedObject_U MACRO
+_objectManager.new.u MACRO
     jsr   LoadObject_u
     lda   \1
     sta   id,u
     ENDM
 
-_MusicInit_SN76489 MACRO
+_objectManager.new.x MACRO
+    jsr   LoadObject_x
+    lda   \1
+    sta   id,x
+    ENDM    
+
+_object.routines.init MACRO
+    lda   routine,u
+    asla
+    ldx   \1
+    jmp   [a,x]  
+    ENDM     
+
+_object.routines.next MACRO
+    inc routine,u
+    ENDM      
+
+_music.init.SN76489 MACRO
     ldx   \1
     ldb   \2
     ldy   \3
     jsr   vgc_init 
     ENDM
 
-_MusicInit_YM2413 MACRO
+_music.init.YM2413 MACRO
     ldx   \1
     ldb   \2
     ldy   \3
     jsr   YVGM_PlayMusic 
     ENDM
 
-_MusicInit_IRQ    MACRO
+_music.init.IRQ    MACRO
     jsr   IrqInit
     ldd   \1
     std   Irq_user_routine
@@ -29,22 +46,18 @@ _MusicInit_IRQ    MACRO
     jsr   IrqOn  
     ENDM
 
-_GameModeInit MACRO
+_gameMode.init MACRO
     jsr   InitGlobals
+    jsr   InitStack
     jsr   LoadAct
     jsr   InitJoypads
     lda   \1
     sta   glb_Cur_Game_Mode
     ENDM   
 
-_ObjectInitRoutines MACRO
-    lda   routine,u
-    asla
-    ldx   \1
-    jmp   [a,x]  
-    ENDM   
 
-_SetImage_U MACRO
+
+_image.set.u MACRO
         ldd   \1   
         std   image_set,u
         ldd   \2
@@ -56,22 +69,22 @@ _SetImage_U MACRO
         sta   render_flags,u
         ENDM    
 
-_UpdateImage_U MACRO
+_image.update.u MACRO
         ldd   \1   
         std   image_set,u    
         ENDM            
 
-_SetPalette MACRO
+_palette.set MACRO
         ldd   \1
         std   Pal_current
         ENDM   
 
-_ShowPalette MACRO
+_palette.show MACRO
         clr   PalRefresh
         jsr   PalUpdateNow
         ENDM     
 
-_PaletteFade MACRO                    
+_palette.fade MACRO                    
         jsr   LoadObject_x
         stx   \3
         lda   #ObjID_PaletteFade
@@ -88,3 +101,8 @@ _PaletteFade MACRO
         std   o_fade_unload,x   ; _unload
 
         ENDM
+
+_joysticks.test MACRO
+        ldb   \1
+        bitb  \2
+        ENDM        

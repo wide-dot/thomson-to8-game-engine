@@ -5,16 +5,20 @@
 * ============================================================================== 
 * Init
 * ============================================================================== 
-    _GameModeInit #GmID_splash
-    _MusicInit_SN76489 #Vgc_introSN,#MUSIC_LOOP,#0                  ; initialize the SN76489 player
-    _MusicInit_YM2413 #Vgc_introYM,#MUSIC_LOOP,#0                   ; initialize the YM2413 player 
-    _MusicInit_IRQ #UserIRQ,#OUT_OF_SYNC_VBL,#Irq_one_frame         ; Setting IRQ for music
-    _NewManagedObject_U #ObjID_Splash
-    
-    _SetPalette #Pal_black
-    _ShowPalette
+    _gameMode.init #GmID_splash
+    _music.init.SN76489 #Vgc_introSN,#MUSIC_LOOP,#0                  ; initialize the SN76489 player
+    _music.init.YM2413 #Vgc_introYM,#MUSIC_LOOP,#0                   ; initialize the YM2413 player 
+    _music.init.IRQ #UserIRQ,#OUT_OF_SYNC_VBL,#Irq_one_frame         ; Setting IRQ for music
+    _objectManager.new.u #ObjID_Splash  
+    _palette.set #Pal_black
+    _palette.show
+    _palette.fade #Pal_black,#Palette_splash,PALETTE_FADER,#$60,#NO_CALLBACK,#$FF ; FF = UNLOAD !
 
-    _PaletteFade #Pal_black,#Palette_splash,PALETTE_FADER,#$60,#NO_CALLBACK,#$FF ; FF = UNLOAD !
+    ; passage en mode 60 Hz, pour le FUN
+    ; LDA $6081
+    ; ORA #$20
+    ; STA $6081
+    ; STA $E7E7
 
 * ============================================================================== *
 * MainLoop

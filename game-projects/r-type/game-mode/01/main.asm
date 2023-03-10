@@ -21,6 +21,7 @@ CHECKPOINT_01_wave equ (56-2)*12*2
 
         org   $6100
         jsr   InitGlobals
+        jsr   InitStack
         jsr   LoadAct
         jsr   InitJoypads
 

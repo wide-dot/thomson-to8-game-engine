@@ -5,10 +5,10 @@
 * ============================================================================== 
 * Init
 * ============================================================================== 
-    _GameModeInit #GmID_loading
-    _NewManagedObject_U #ObjID_Loading    
-    _SetPalette #Pal_loading
-    _ShowPalette
+    _gameMode.init #GmID_loading
+    _objectManager.new.u #ObjID_Loading    
+    _palette.set #Pal_loading
+    _palette.show
 
     ldd NEXT_GAME_MODE_PRESENT
     cmpd #$C3E1

@@ -22,6 +22,22 @@
 object_list_first fdb   0
 object_list_last  fdb   0
 
+; Stack Structure to hold free object slot addresses
+STACK_SLOT_ADDRESS FILL 0,nb_dynamic_objects*2 
+STACK_SLOT_ADDRESS_END   
+STACK_POINTER FDB 0 ; Stack pointer on the STACK
+
+; loop to init the Stack
+InitStack
+        ldu   #STACK_SLOT_ADDRESS_END  
+        ldx   #Dynamic_Object_RAM_End-object_size
+@loop   pshu  x
+        leax -object_size,x
+        cmpu  #STACK_SLOT_ADDRESS
+        bne   @loop
+        stu   STACK_POINTER    
+        rts    
+
 RunObjects
         ldu   object_list_first
         beq   @rts
@@ -46,15 +62,14 @@ object_list_next equ   *-2
         rts
 
 LoadObject_u
-        ldu   #Dynamic_Object_RAM
-@loop
-        tst   ,u
-        beq   @link
-        leau  next_object,u
-        cmpu  #Dynamic_Object_RAM_End
-        bne   @loop
+        ldu STACK_POINTER              ; is there a free slot ?
+        cmpu #STACK_SLOT_ADDRESS-2     ; 
+        bne @link                      ; Yes a slot is free, let's get it and link it
         rts                            ; return z=1 when not found
 @link
+        pulu D                         ; get a the free slot from the slot stack
+        stu STACK_POINTER              ; updating the slot stack pointer
+        tfr D,U                        ; U is now pointing to the free slot address        
         pshs  x
         ldx   object_list_last
         beq   >
@@ -67,16 +82,15 @@ LoadObject_u
         puls  x,pc                     ; return z=0 when found
 
 LoadObject_x
-        ldx   #Dynamic_Object_RAM
-@loop
-        tst   ,x
-        beq   @link
-        leax  next_object,x
-        cmpx  #Dynamic_Object_RAM_End
-        bne   @loop
+        ldx STACK_POINTER              ; is there a free slot ?
+        cmpx #STACK_SLOT_ADDRESS-2     ; 
+        bne @link                      ; Yes a slot is free, let's get it and link it
         rts                            ; return z=1 when not found
 @link
-        pshs  u
+        pshs  u                        ; let's save U
+        tfr x,u                        ; X contains de address of the stack, so let's transfer it to U
+        pulu X                         ; get a the free slot from the slot stack, X points this free slot
+        stu STACK_POINTER              ; updating the slot stack pointer
         ldu   object_list_last
         beq   >
         stx   run_object_next,u
@@ -89,6 +103,13 @@ LoadObject_x
 
 UnloadObject_u
         pshs  d,x,y,u
+        ; let's update the stack
+        tfr U,D
+        ldu STACK_POINTER
+        pshu D
+        stu STACK_POINTER
+        tfr D,U
+        ; done
         cmpu  object_list_next         ; if current object to delete
         bne   >                        ; is the following to execute
         ldy   run_object_next,u
@@ -138,10 +159,17 @@ UnloadObject_clear
         pshu  a
         ENDC
 
+        
+
         puls  d,x,y,u,pc
 
 UnloadObject_x
         pshs  d,x,y,u
+        ; let's update the stack
+        ldu STACK_POINTER
+        pshu X
+        stu STACK_POINTER
+        ; done
         cmpx  object_list_next         ; if current object to delete
         bne   >                        ; is the following to execute
         ldy   run_object_next,x

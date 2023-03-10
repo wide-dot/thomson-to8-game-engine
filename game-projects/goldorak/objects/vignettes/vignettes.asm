@@ -9,7 +9,7 @@ _WaitAndDisplaySprite MACRO
 @display        jmp   DisplaySprite
         ENDM
         
-start           _ObjectInitRoutines #routines
+start           _object.routines.init #routines
 routines
                 fdb   Vignette_01
                 fdb   Vignette_01        
@@ -23,23 +23,23 @@ routines
 
 
 Vignette_01
-                _SetImage_U #Img_Vignette_01,#$5353,#1,#render_overlay_mask
+                _image.set.u #Img_Vignette_01,#$5353,#1,#render_overlay_mask
                 _WaitAndDisplaySprite
 Bulle_01
-                _SetImage_U #Img_Bulle_01,#$9550,#1,#render_overlay_mask
+                _image.set.u #Img_Bulle_01,#$9550,#1,#render_overlay_mask
                 _WaitAndDisplaySprite
         
 Vignette_02
-                _SetImage_U #Img_Vignette_02,#$A0A5,#1,#render_overlay_mask
+                _image.set.u #Img_Vignette_02,#$A0A5,#1,#render_overlay_mask
                 _WaitAndDisplaySprite
 
 Bulle_02
-                _SetImage_U #Img_Bulle_02,#$6398,#1,#render_overlay_mask
+                _image.set.u #Img_Bulle_02,#$6398,#1,#render_overlay_mask
                 INC routine,U
 WaitPress       ldb Fire_Press                
                 bne @fade
                 bra Final
-@fade           _PaletteFade #Palette_splash,#Pal_black,PALETTE_FADER,#$00,#DoChangeGameMode,#$FF
+@fade           _palette.fade #Palette_splash,#Pal_black,PALETTE_FADER,#$00,#DoChangeGameMode,#$FF
                 INC routine,U
 
 Final          jmp DisplaySprite
