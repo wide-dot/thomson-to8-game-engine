@@ -4,7 +4,7 @@
 ;
 ; input REG : [u] pointer to Object Status Table (OST)
 ; ---------
-;       subtype : bit 6 => 0=going left, 1=going right
+;       subtype : bit 6 => 0=going right, 1=going left
 ;                 bit 7 => 0=going up,   1=going down
 ;
 ; ---------------------------------------------------------------------------
@@ -68,15 +68,15 @@ Init
         lda   #speedxm
 !
         sta   currentspeedx,u
-        ldy   #Img_reboundlaser_0
+        ldx   #Img_reboundlaser_0
         lda   #speedym
         bitb  #%10000000
         beq   >
-        ldy   #Img_reboundlaser_1
+        ldx   #Img_reboundlaser_1
         lda   #speedyp
 !
         sta   currentspeedy,u
-        sty   image_set,u
+        stx   image_set,u
         bra   Live
 
 InitNextFrame
@@ -102,10 +102,10 @@ InitNextFrame
         std   old_posx,x
         ldd   y_pos,u
         std   old_posy,x
-        ldy   image_set,u
-        sty   old_imgset,x
-        ldy   currentspeedx,u
-        sty   currentspeedx,x
+        ldd   image_set,u
+        std   old_imgset,x
+        ldd   currentspeedx,u
+        std   currentspeedx,x
 Live
         lda   is_child,u
         lbne  LiveAsChild
@@ -115,14 +115,14 @@ Live
         std   old_posx,x
         ldd   y_pos,u
         std   old_posy,x
-        ldy   image_set,u
-        sty   old_imgset,x
-        ldy   currentspeedx,u
-        sty   currentspeedx,x
+        ldd   image_set,u
+        std   old_imgset,x
+        ldd   currentspeedx,u
+        std   currentspeedx,x
 !
         leax  AABB_0,u        
         lda   AABB.p,x
-        beq   @delete                  ; delete weapon if something was hit  
+        lbeq  @delete                 ; delete weapon if something was hit  
         lda   is_child,u
         bne   >
         lda   currentspeedx,u
@@ -155,25 +155,36 @@ Live
         blt   @reboundy
         cmpd  #179
         bgt   @reboundy
-        bra   @next
+        clrb
+        lda   currentspeedy,u
+        bmi   >
+        ldb   #$04
+!
+        lda   currentspeedx,u
+        bpl   >
+        andb  #$02
+!
+        ldx   #spritetable
+        ldd   b,x
+        std   image_set,u
+        jmp   DisplaySprite
 @reboundy
-        ldx   #Img_reboundlaser_1
+        ldx   #Img_reboundlaser_2
         lda   #speedyp
         ldb   currentspeedy,u
         bmi   >
-        ldx   #Img_reboundlaser_0
+        ldx   #Img_reboundlaser_3
         lda   #speedym
 !
         sta   currentspeedy,u
         stx   image_set,u
-@next
         jmp   DisplaySprite
-@delete lda   #3
+@delete 
+        _Collision_RemoveAABB AABB_0,AABB_list_friend
+        lda   #3
         sta   routine,u
-        _breakpoint
         ldx   childaddr,u
         clr   is_child,x
-        _Collision_RemoveAABB AABB_0,AABB_list_friend
         jmp   DeleteObject
 
 LiveAsChild       
@@ -183,10 +194,10 @@ LiveAsChild
         std   old_posx,x
         ldd   y_pos,u
         std   old_posy,x
-        ldy   image_set,u
-        sty   old_imgset,x
-        ldy   currentspeedx,u
-        sty   currentspeedx,x
+        ldd   image_set,u
+        std   old_imgset,x
+        ldd   currentspeedx,u
+        std   currentspeedx,x
 !
         ldd   old_posx,u
         std   x_pos,u
@@ -195,7 +206,8 @@ LiveAsChild
         ldd   old_imgset,u
         std   image_set,u
         leax  AABB_0,u 
-        ldb   x_pos+1,u
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
         stb   AABB.cx,x
         ldb   y_pos+1,u
         stb   AABB.cy,x
@@ -204,3 +216,9 @@ LiveAsChild
 
 AlreadyDeleted
         rts
+
+
+spritetable   fdb Img_reboundlaser_0
+              fdb Img_reboundlaser_1
+              fdb Img_reboundlaser_1
+              fdb Img_reboundlaser_0
