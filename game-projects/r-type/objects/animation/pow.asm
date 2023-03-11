@@ -1,3 +1,5 @@
+animidx_19A96
+	fdb   anim_19A96
 anim_19A96
 	fdb   x1B395
 	fdb   x1B3B1
