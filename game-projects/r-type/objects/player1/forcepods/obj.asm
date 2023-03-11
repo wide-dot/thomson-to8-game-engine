@@ -47,7 +47,7 @@ Init
         _Collision_AddAABB AABB_0,AABB_list_friend
         
         leax  AABB_0,u
-        lda   #129                      ; set damage potential for this hitbox
+        lda   #255                      ; set damage potential for this hitbox
         sta   AABB.p,x
         _ldd  7,10                       ; set hitbox xy radius
         std   AABB.rx,x
@@ -133,7 +133,10 @@ Live
         jsr   GETC
         cmpb  #$3E ; touche ">"     
         beq   @continueliveishookedcontinue
-!           
+!       
+        ldb   Fire_Press
+        andb  #c1_button_A_mask
+        lbne  @reboundlaser
         rts                             
 @continueliveishookedcontinue
         ldx   #10
@@ -228,9 +231,29 @@ Live
         ldx   #-100
         stx   @tsvelxmin
         rts
-
-
-
+@reboundlaser
+        jsr   LoadObject_x
+        lbeq  >                             
+        lda   #ObjID_forcepod_reboundlaser  
+        sta   id,x
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
+        lda   #$05
+        sta   subtype,x
+        jsr   LoadObject_x
+        lbeq  >                             
+        lda   #ObjID_forcepod_reboundlaser  
+        sta   id,x
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
+        lda   #$85
+        sta   subtype,x
+!       
+        rts
 
 LiveHookedFront
 
