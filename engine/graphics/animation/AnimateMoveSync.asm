@@ -30,8 +30,9 @@ AnimateMoveSyncInit
         lda   #0                       ; set object anim data
 @anim_page equ *-1
         _SetCartPageA
-        leax  $1234,x                  ; add base adsress of object anim data
+        leax  $1234,x                  ; add base address of object anim data
 @anim_addr equ *-2
+        ldx   ,x                       ; load animation list ptr
         abx                            ; add index in animations list
         ldx   ,x                       ; load animation
         stx   anim,u
