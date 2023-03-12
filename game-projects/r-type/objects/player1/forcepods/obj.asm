@@ -15,7 +15,9 @@ AABB_0            equ ext_variables   ; AABB struct (9 bytes)
 currentlevel      equ ext_variables+9 ; Byte
 hooked_status     equ ext_variables+10 ; Byte (0=Not hooked, 4=hooked front, 5=hooked back)
 hookzoneignore    equ ext_variables+11 ; Byte
+canshootweapon    equ ext_variables+12 ; Byte
 
+canshootweapontiming equ 20
 
 Onject
         lda   routine,u
@@ -134,6 +136,11 @@ Live
         cmpb  #$3E ; touche ">"     
         beq   @continueliveishookedcontinue
 !       
+        ldb   canshootweapon,u
+        beq   >
+        dec   canshootweapon,u
+        rts
+!
         ldb   Fire_Press
         andb  #c1_button_A_mask
         lbne  @reboundlaser
@@ -253,6 +260,8 @@ Live
         lda   #$85
         sta   subtype,x
 !       
+        ldb   #canshootweapontiming
+        stb   canshootweapon,u
         rts
 
 LiveHookedFront
