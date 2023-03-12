@@ -156,6 +156,7 @@ ext_variables                 equ object_base_size ; start of reserved space for
 
 id                            equ 0   ; reference to object model id (ObjID_) (0: free slot)
 subtype                       equ 1   ; reference to object subtype (Sub_) DEPENDENCY subtype must follow id
+subtype_w                     equ 1   ; reference to object subtype (Sub_) takes 2 bytes and overlap render_flags DEPENDENCY subtype must follow id
 render_flags                  equ 2
 run_object_prev               equ 3   ; previous object to update when deleting current object
 run_object_next               equ 5   ; next object to run by RunObjects

@@ -1,12 +1,17 @@
 * ---------------------------------------------------------------------------
-* ObjectWaveSimple
-* ----------------
+* ObjectWave-subtype
+* ------------------
 * Routine to instanciate objects based on a 16bit meter
 * expected data sequence :
-* AAAA (timestamp) BB (id objet) CC (subtype)
+* AAAA (timestamp) BB (id objet) CCCC (subtype)
 * end marker : $FFFF
 *
 * store missed frames to anim_frame_duration value
+* WARNING : subtype is stored as a 16 bit value, thus overlapping render_flags
+* ---------
+* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+* !!! YOU MUST READ subtype_w lower byte before setting the render_flags !!!
+* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 * ---------------------------------------------------------------------------
 
 ObjectWave
@@ -22,12 +27,14 @@ object_wave_data equ *-2               ; current position in wave data
         jsr   LoadObject_u
         puls  x,y                      ; puls does not change zero
         beq   @bypass
-        ldd   2,y
-        std   id,u                     ; and subtype,u
-        ldd   ,y
-        subd  Vint_runcount
+        lda   2,y
+        sta   id,u
+        ldd   3,y
+        std   subtype_w,u
+        ldd   Vint_runcount
+        subd  ,y
         stb   anim_frame_duration,u
-@bypass leay  4,y
+@bypass leay  5,y
         bra   <
 @rts    sty   object_wave_data
         rts
@@ -40,7 +47,7 @@ ObjectWave_Init
         ldx   Vint_runcount
 !       cmpx  ,y
         blo   @end
-        leay  4,y
+        leay  5,y
         bra   <
 @end    sty   object_wave_data
         puls  a,x,y,pc

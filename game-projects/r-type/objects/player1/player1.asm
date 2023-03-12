@@ -36,7 +36,7 @@ Init
         std   player1+anim
         ldb   #3
         stb   player1+priority
-        ldd   #35
+        ldd   #50
         addd  glb_camera_x_pos
         std   player1+x_pos
         ldd   #100
