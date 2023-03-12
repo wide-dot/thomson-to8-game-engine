@@ -86,7 +86,7 @@ InitNextFrame
         stb   @flagsubtype
         ldb   subtype,u
         andb  #%00111111
-        beq   Init                      ; It was the last laser to spawn
+        beq   Live                      ; It was the last laser to spawn
         decb
         orb   #00
 @flagsubtype equ *-1
