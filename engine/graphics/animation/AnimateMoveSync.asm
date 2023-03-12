@@ -46,6 +46,8 @@ AnimateMoveSyncInit
 ; process animation script for current object
 ;
 AnimateMoveSync
+        ldb   Vint_Main_runcount
+AnimateMoveSteps
         _GetCartPageA
         sta   @page2
         lda   #0
@@ -54,11 +56,10 @@ AnimateMoveSync
         ldy   sub_anim,u
         beq   @rts
 ;
-        ldd   #0
-        std   x_vel,u
-        std   y_vel,u
+        ldx   #0
+        stx   x_vel,u
+        stx   y_vel,u
 ;
-        ldb   Vint_Main_runcount
         stb   glb_d0_b
         beq   >                        ; do a loop when 0
 @loop   dec   glb_d0_b

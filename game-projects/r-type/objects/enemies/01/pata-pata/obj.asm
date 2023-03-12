@@ -27,10 +27,10 @@ Routines
 
 Init
         ldd   glb_camera_x_pos
-        addd  #144+27
+        addd  #144+12
         std   x_pos,u
 
-        lda   subtype,u
+        lda   subtype_w+1,u
         anda  #$0F
         ldx   #PresetYIndex
         ldb   a,x
@@ -44,11 +44,14 @@ Init
         ldb   #0
         jsr   AnimateMoveSyncInit
 
+        ; moves skipped frames before object creation
+        ldb   anim_frame_duration,u
+        jsr   AnimateMoveSteps
+
         ldb   #6
         stb   priority,u
 
-        lda   render_flags,u
-        ora   #render_playfieldcoord_mask
+        lda   #render_playfieldcoord_mask
         sta   render_flags,u
 
         _Collision_AddAABB AABB_0,AABB_list_ennemy

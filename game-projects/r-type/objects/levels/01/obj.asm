@@ -21,7 +21,7 @@ LevelInit
         _ldd  12,12
         sta   scroll_tile_width
         stb   scroll_tile_height
-        ldd   #$0030
+        ldd   #$0030 ; 8.8 scroll speed, r-type arcade scroll is 0,5px / frame so here (256*0.5)/(384/144)
         std   scroll_vel
 
         rts

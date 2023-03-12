@@ -25,7 +25,7 @@ Routines
         fdb   AlreadyDeleted
 
 Init
-        ldb   subtype,u                ; load x and y pos based on wave parameter
+        ldb   subtype_w+1,u            ; load x and y pos based on wave parameter
         andb  #$0F
         aslb
         ldx   #PresetXYIndex
@@ -37,14 +37,20 @@ Init
         addd  glb_camera_x_pos
         std   x_pos,u
 
+        ; set subtype based on preset
+        ; (the bonus to be release)
+
         ldx   #anim_pow
         ldb   #0
         jsr   AnimateMoveSyncInit
 
+        ; moves skipped frames before object creation
+        ldb   anim_frame_duration,u
+        jsr   AnimateMoveSteps
+
         ldb   #6
         stb   priority,u
-        lda   render_flags,u
-        ora   #render_playfieldcoord_mask
+        lda   #render_playfieldcoord_mask
         sta   render_flags,u
 
         _Collision_AddAABB AABB_0,AABB_list_ennemy
