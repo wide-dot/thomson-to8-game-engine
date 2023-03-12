@@ -120,13 +120,21 @@ Live
         ldd   currentspeedx,u
         std   currentspeedx,x
 !
+        ldb   Vint_Main_runcount
+        cmpb  #5
+        blt   >
+        ldb   #4
+!
+        stb   @Vint_Main_runcount1
+        stb   @Vint_Main_runcount2
         leax  AABB_0,u        
         lda   AABB.p,x
         lbeq  @delete                 ; delete weapon if something was hit  
         lda   is_child,u
         bne   >
         lda   currentspeedx,u
-        ldb   Vint_Main_runcount
+        ldb   #1
+@Vint_Main_runcount1 equ *-1
         mul
         addd  x_pos,u
         std   x_pos,u
@@ -136,7 +144,8 @@ Live
         blt   @delete
         cmpd  #144
         bgt   @delete
-        ldb   Vint_Main_runcount
+        ldb   #1
+@Vint_Main_runcount2 equ *-1
         lda   currentspeedy,u
         mul
         sex
