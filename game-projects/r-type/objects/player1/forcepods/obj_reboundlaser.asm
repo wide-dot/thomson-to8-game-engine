@@ -17,7 +17,7 @@ AABB_0  equ ext_variables ; AABB struct (9 bytes)
 currentspeedx equ ext_variables+9 ; byte
 currentspeedy equ ext_variables+10 ; byte
 childaddr     equ ext_variables+11 ; word
-is_child      equ ext_variables+13 ; byte
+is_child      equ ext_variables+13 ; byte (0=head, other value = child)
 old_posx      equ ext_variables+14 ; word
 old_posy      equ ext_variables+16 ; word
 old_imgset    equ ext_variables+18 ; word
@@ -25,6 +25,8 @@ speedxp equ $2
 speedxm equ $-1
 speedyp equ $4
 speedym equ $-4
+maxvintcount equ 4
+
 Object
         lda   routine,u
         asla
@@ -34,7 +36,8 @@ Object
 Routines
         fdb   Init
         fdb   InitNextFrame
-        fdb   Live
+        fdb   LiveAsParent
+        fdb   LiveAsChild
         fdb   AlreadyDeleted
 
 Init
@@ -53,14 +56,16 @@ Init
         _Collision_AddAABB AABB_0,AABB_list_friend
         
         leax  AABB_0,u
-        lda   #1                       ; set damage potential for this hitbox
+        lda   #255                     ; set damage potential for this hitbox
         sta   AABB.p,x
         _ldd  3,7                      ; set hitbox xy radius
         std   AABB.rx,x
 
-        inc   routine,u
+        inc   routine,u                ; Set routine to InitNextFrame
         lda   is_child,u
-        bne   Live
+        lbne  LiveAsChild
+        lda   #1 
+        sta   AABB.p,x
         ldb   subtype,u
         lda   #speedxp
         bitb  #%01000000
@@ -77,22 +82,25 @@ Init
 !
         sta   currentspeedy,u
         stx   image_set,u
-        bra   Live
+        bra   Object
 
 InitNextFrame
-        inc   routine,u
+        inc   routine,u                   ; Set routine to LiveAsParent
+        lda   is_child,u
+        beq   >
+        inc   routine,u                   ; Set routine to LiveAsChild
+!
         ldb   subtype,u
         andb  #%11000000
         stb   @flagsubtype
         ldb   subtype,u
         andb  #%00111111
-        beq   Live                      ; It was the last laser to spawn
+        lbeq  Object                      ; It was the last laser to spawn
         decb
         orb   #00
 @flagsubtype equ *-1
         jsr   LoadObject_x
-        beq   Live
-        _breakpoint
+        lbeq  Object
         stx   childaddr,u
         stb   subtype,x                   
         lda   #ObjID_forcepod_reboundlaser  
@@ -106,9 +114,8 @@ InitNextFrame
         std   old_imgset,x
         ldd   currentspeedx,u
         std   currentspeedx,x
-Live
-        lda   is_child,u
-        lbne  LiveAsChild
+        lbra  Object
+LiveAsParent
         ldx   childaddr,u
         beq   >
         ldd   x_pos,u
@@ -121,12 +128,11 @@ Live
         std   currentspeedx,x
 !
         ldb   Vint_Main_runcount
-        cmpb  #5
+        cmpb  #maxvintcount+1
         blt   >
-        ldb   #4
+        ldb   #maxvintcount
 !
-        stb   @Vint_Main_runcount1
-        stb   @Vint_Main_runcount2
+        stb   @Vint_Main_runcount_code
         leax  AABB_0,u        
         lda   AABB.p,x
         lbeq  @delete                 ; delete weapon if something was hit  
@@ -134,7 +140,7 @@ Live
         bne   >
         lda   currentspeedx,u
         ldb   #1
-@Vint_Main_runcount1 equ *-1
+@Vint_Main_runcount_code equ *-1
         mul
         addd  x_pos,u
         std   x_pos,u
@@ -144,8 +150,7 @@ Live
         blt   @delete
         cmpd  #144
         bgt   @delete
-        ldb   #1
-@Vint_Main_runcount2 equ *-1
+        ldb   @Vint_Main_runcount_code
         lda   currentspeedy,u
         mul
         sex
@@ -190,13 +195,25 @@ Live
         jmp   DisplaySprite
 @delete 
         _Collision_RemoveAABB AABB_0,AABB_list_friend
-        lda   #3
+        lda   #4
         sta   routine,u
         ldx   childaddr,u
-        clr   is_child,x
+        beq   >                  ; no child, skip
+        clr   is_child,x         ; Clear is_child ( = head)
+        lda   #2                 ; Set child object's routine to LiveAsParent
+        sta   routine,x
+        leax  AABB_0,x 
+        deca                     ; Set damage to 1
+        sta   AABB.p,x
+!
         jmp   DeleteObject
 
-LiveAsChild       
+LiveAsChild      
+        lda   routine,u
+        cmpa  #3
+        beq   >
+        _breakpoint
+!
         ldx   childaddr,u
         beq   >
         ldd   x_pos,u
