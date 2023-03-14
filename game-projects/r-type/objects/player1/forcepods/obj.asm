@@ -17,7 +17,8 @@ hooked_status     equ ext_variables+10 ; Byte (0=Not hooked, 4=hooked front, 5=h
 hookzoneignore    equ ext_variables+11 ; Byte
 canshootweapon    equ ext_variables+12 ; Byte
 
-canshootweapontiming equ 20
+canshootreboundlasertiming equ 20
+canshootcounterairlasertiming equ 4
 
 Onject
         lda   routine,u
@@ -143,7 +144,7 @@ Live
 !
         ldb   Fire_Press
         andb  #c1_button_A_mask
-        lbne  @reboundlaser
+        lbne  @counterairlaser
         rts                             
 @continueliveishookedcontinue
         ldx   #10
@@ -260,9 +261,24 @@ Live
         lda   #$85
         sta   subtype,x
 !       
-        ldb   #canshootweapontiming
+        ldb   #canshootreboundlasertiming
         stb   canshootweapon,u
         rts
+@counterairlaser
+        jsr   LoadObject_x
+        lbeq  >                             
+        lda   #ObjID_forcepod_counterairlaser
+        sta   id,x
+        ldd   x_pos,u
+        addd  #19
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
+!       
+        ldb   #canshootcounterairlasertiming
+        stb   canshootweapon,u
+        rts
+
 
 LiveHookedFront
 
