@@ -130,7 +130,7 @@ Live
                                         ; Forcepod is hooked
         ldb   Fire_Press
         andb  #c1_button_B_mask
-        bne   >     
+        bne   @continueliveishookedcontinue     
         jsr   KTST
         bcc   >
         jsr   GETC
@@ -269,8 +269,9 @@ Live
         lbeq  >                             
         lda   #ObjID_forcepod_counterairlaser
         sta   id,x
+        lda   hooked_status,u
+        sta   subtype,x
         ldd   x_pos,u
-        addd  #19
         std   x_pos,x
         ldd   y_pos,u
         std   y_pos,x
@@ -301,7 +302,7 @@ LiveHookedBack
         jsr   Live
         leax  AABB_0,u
         ldd   player1+x_pos
-	subd  #9
+	subd  #11
 	std   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB.cx,x
