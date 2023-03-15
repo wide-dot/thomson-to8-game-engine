@@ -53,6 +53,12 @@ CHECKPOINT_01_wave equ (56-2)*12*2
         ldx   #CHECKPOINT_00_wave
         jsr   Game_LoadCheckpoint_x
 
+; play music
+        _MountObject ObjID_ymm
+        _MusicInit_objymm #0,#MUSIC_NO_LOOP,#MusicCallbackYM  ; initialize the YM2413 player 
+        _MountObject ObjID_vgc
+        _MusicInit_objvgc #0,#MUSIC_NO_LOOP,#MusicCallbackSN ; initialize the SN76489 vgm player with a vgc data stream
+
 ; init user irq
         jsr   IrqInit
         ldd   #UserIRQ
@@ -61,12 +67,6 @@ CHECKPOINT_01_wave equ (56-2)*12*2
         ldx   #Irq_one_frame
         jsr   IrqSync
         jsr   IrqOn 
-
-; play music
-        _MountObject ObjID_ymm
-        _MusicInit_objymm #0,#MUSIC_NO_LOOP,#MusicCallbackYM  ; initialize the YM2413 player 
-        _MountObject ObjID_vgc
-        _MusicInit_objvgc #0,#MUSIC_NO_LOOP,#MusicCallbackSN ; initialize the SN76489 vgm player with a vgc data stream
 
 * ---------------------------------------------------------------------------
 * MAIN GAME LOOP
