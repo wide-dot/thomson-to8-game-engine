@@ -19,7 +19,7 @@ ply_max_vel      equ $100
 ply_max_vel_neg  equ $-100
 ply_width        equ 12/2
 ply_height       equ 16/2
-beam_sensitivity equ 8
+beam_sensitivity equ 8   
 
 Player
         lda   player1+routine
@@ -64,6 +64,24 @@ Init
         sta   player1+forcepodlevel
         lda   #2
         sta   player1+forcepodtype
+
+        jsr   LoadObject_x
+        lda   #ObjID_bitdevice        
+        sta   id,x      
+        ldd   player1+x_pos
+        addd  #80
+        std   x_pos,x
+        ldd   player1+y_pos
+        std   y_pos,x
+
+        jsr   LoadObject_x
+        lda   #ObjID_bitdevice        
+        sta   id,x      
+        ldd   player1+x_pos
+        addd  #110
+        std   x_pos,x
+        ldd   player1+y_pos
+        std   y_pos,x
 
         jsr   LoadObject_x
         lda   #ObjID_bitdevice        
