@@ -22,21 +22,15 @@ Object
         jmp   [a,x]
 
 Routines
-        fdb   Init
-        fdb   LiveOpening
-        fdb   LiveFreeInit
+        fdb   InitRight
+        fdb   LiveOpeningRight
+        fdb   LiveFreeInitRight
+        fdb   LiveOpeningLeft
+        fdb   LiveFreeInitLeft
         fdb   LiveFree
         fdb   AlreadyDeleted
 
-Init
-        ldd   #Ani_counterairlaser_0
-        std   anim,u
-        ldb   #3
-        stb   priority,u
-        lda   render_flags,u
-        ora   #render_playfieldcoord_mask
-        sta   render_flags,u
-
+InitRight
 
         _Collision_AddAABB AABB_0,AABB_list_friend
         
@@ -45,8 +39,21 @@ Init
         sta   AABB.p,x
         _ldd  12,24                    ; set hitbox xy radius
         std   AABB.rx,x
-        inc   routine,u                ; Set routine to LiveOpening
-LiveOpening
+        inc   routine,u                ; Set routine to LiveOpeningRight
+
+        ldb   #3
+        stb   priority,u
+        lda   render_flags,u
+        ora   #render_playfieldcoord_mask
+        sta   render_flags,u
+
+        lda   subtype,u
+        bita  #1
+        bne   InitLeft
+
+        ldd   #Ani_counterairlaser_0
+        std   anim,u
+LiveOpeningRight
         leax  AABB_0,u
         ldd   player1+x_pos
 	addd  #33
@@ -58,20 +65,64 @@ LiveOpening
         stb   AABB.cy,x
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
-LiveFreeInit
-        inc   routine,u
+InitLeft
+
+        ldd   #Ani_counterairlaser_2
+        std   anim,u
+        lda   #3                       ; Set routine to LiveOpeningLeft
+        sta   routine,u
+
+LiveOpeningLeft
+        leax  AABB_0,u
+        ldd   player1+x_pos
+	subd  #33
+	std   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB.cx,x
+	ldd   player1+y_pos
+	std   y_pos,u
+        stb   AABB.cy,x
+        jsr   AnimateSpriteSync
+        jmp   DisplaySprite
+
+LiveFreeInitLeft
+        leax  AABB_0,u
+        _ldd  12,12                    ; set hitbox xy radius
+        std   AABB.rx,x
+        lda   #5                       ; Set routine to LiveFree
+        sta   routine,u
+        ldd   #Ani_counterairlaser_3
+        std   anim,u
+        clr   anim_frame,u
+        ldd   x_pos,u
+        subd  #12
+        std   x_pos,u
+        lda   #-2
+        sta   @livefreespeed
+        bra   LiveFree
+LiveFreeInitRight
+        leax  AABB_0,u
+        _ldd  12,12                    ; set hitbox xy radius
+        std   AABB.rx,x
+        lda   #5                       ; Set routine to LiveFree
+        sta   routine,u
         ldd   #Ani_counterairlaser_1
         std   anim,u
         clr   anim_frame,u
         ldd   #12
         addd  x_pos,u
         std   x_pos,u
+        lda   #3
+        sta   @livefreespeed 
 LiveFree
         leax  AABB_0,u
         lda   #3
+@livefreespeed equ *-1
         ldb   Vint_Main_runcount
         mul
+        sex
         addd  x_pos,u
+        bmi   @delete
         std   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB.cx,x
@@ -83,7 +134,7 @@ LiveFree
         jmp   DisplaySprite
 @delete
         _Collision_RemoveAABB AABB_0,AABB_list_friend
-        lda   #4
+        lda   #6
         sta   routine,u
         jmp   DeleteObject
 AlreadyDeleted

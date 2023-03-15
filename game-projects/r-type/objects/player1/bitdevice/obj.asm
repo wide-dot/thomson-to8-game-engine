@@ -30,7 +30,7 @@ Routines
         fdb   Live
 
 InitOptionBox
-        ldb   #6
+        ldb   #2
         stb   priority,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
