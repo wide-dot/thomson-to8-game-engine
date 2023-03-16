@@ -44,27 +44,25 @@ InitOptionBox
         inc   routine,u                 ; Set routine to LiveOptionBox
         _Collision_AddAABB AABB_0,AABB_list_bonus
         
-        leax  AABB_0,u
         lda   #1                        ; set damage potential for this hitbox
-        sta   AABB.p,x
+        sta   AABB_0+AABB.p,u
         _ldd  4,7                       ; set hitbox xy radius
-        std   AABB.rx,x
+        std   AABB_0+AABB.rx,u
 LiveOptionBox
         ldd   x_pos,u
         cmpd  glb_camera_x_pos
         ble   @delete
-        leax  AABB_0,u
         lda   player1+bitdevice
         bita  #2
         bne   >                        ; ignore contact if player1 has already the 2 device bits
-        lda   AABB.p,x
+        lda   AABB_0+AABB.p,u
         beq   Init                     ; was touched  
 !
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
         ldb   y_pos+1,u
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
 @delete       
@@ -77,13 +75,12 @@ Init
         _Collision_RemoveAABB AABB_0,AABB_list_bonus
         _Collision_AddAABB AABB_0,AABB_list_friend
         
-        leax  AABB_0,u
         lda   #255                      ; set damage potential for this hitbox
-        sta   AABB.p,x
+        sta   AABB_0+AABB.p,u
         _ldd  3,6                       ; set hitbox xy radius
-        std   AABB.rx,x
+        std   AABB_0+AABB.rx,u
         ldd   y_pos,u
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
 
         lda   #3
         sta   routine,u
@@ -105,15 +102,14 @@ Init
         inca   
         sta   player1+bitdevice
 Live
-        leax  AABB_0,u
         ldd   old_xpos2,u
         std   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
         ldd   old_ypos2,u
         subd  offsety,u
         std   y_pos,u
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
 
         ldd   old_xpos1,u
         std   old_xpos2,u
