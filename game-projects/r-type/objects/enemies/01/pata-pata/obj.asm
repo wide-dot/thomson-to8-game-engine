@@ -55,11 +55,10 @@ Init
         sta   render_flags,u
 
         _Collision_AddAABB AABB_0,AABB_list_ennemy
-        leax  AABB_0,u
         lda   #patapata_hitdamage
-        sta   AABB.p,x
+        sta   AABB_0+AABB.p,u
         _ldd  patapata_hitbox_x,patapata_hitbox_y
-        std   AABB.rx,x
+        std   AABB_0+AABB.rx,u
 
         inc   routine,u
 
@@ -69,15 +68,14 @@ Live
         beq   @delete
         jsr   ObjectMove
 ;
-        leax  AABB_0,u
-        lda   AABB.p,x
+        lda   AABB_0+AABB.p,u
         beq   @destroy
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
         ldd   y_pos,u
         subd  glb_camera_y_pos
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
 ;
         ldx   #ImageIndex
         ldb   anim_frame,u

@@ -34,11 +34,10 @@ InitRight
 
         _Collision_AddAABB AABB_0,AABB_list_friend
         
-        leax  AABB_0,u
         lda   #255                     ; set damage potential for this hitbox
-        sta   AABB.p,x
+        sta   AABB_0+AABB.p,u
         _ldd  12,24                    ; set hitbox xy radius
-        std   AABB.rx,x
+        std   AABB_0+AABB.rx,u
         inc   routine,u                ; Set routine to LiveOpeningRight
 
         ldb   #3
@@ -54,15 +53,14 @@ InitRight
         ldd   #Ani_counterairlaser_0
         std   anim,u
 LiveOpeningRight
-        leax  AABB_0,u
         ldd   player1+x_pos
 	addd  #33
 	std   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
 	ldd   player1+y_pos
 	std   y_pos,u
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
 InitLeft
@@ -73,22 +71,20 @@ InitLeft
         sta   routine,u
 
 LiveOpeningLeft
-        leax  AABB_0,u
         ldd   player1+x_pos
 	subd  #33
 	std   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
 	ldd   player1+y_pos
 	std   y_pos,u
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
 
 LiveFreeInitLeft
-        leax  AABB_0,u
         _ldd  12,12                    ; set hitbox xy radius
-        std   AABB.rx,x
+        std   AABB_0+AABB.rx,u
         lda   #5                       ; Set routine to LiveFree
         sta   routine,u
         ldd   #Ani_counterairlaser_3
@@ -101,9 +97,8 @@ LiveFreeInitLeft
         sta   @livefreespeed
         bra   LiveFree
 LiveFreeInitRight
-        leax  AABB_0,u
         _ldd  12,12                    ; set hitbox xy radius
-        std   AABB.rx,x
+        std   AABB_0+AABB.rx,u
         lda   #5                       ; Set routine to LiveFree
         sta   routine,u
         ldd   #Ani_counterairlaser_1
@@ -115,7 +110,6 @@ LiveFreeInitRight
         lda   #3
         sta   @livefreespeed 
 LiveFree
-        leax  AABB_0,u
         lda   #3
 @livefreespeed equ *-1
         ldb   Vint_Main_runcount
@@ -125,11 +119,11 @@ LiveFree
         bmi   @delete
         std   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
         cmpd  #160-8/2                 ; delete weapon if out of screen range
         bgt   @delete
 	ldb   y_pos+1,u
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
 @delete

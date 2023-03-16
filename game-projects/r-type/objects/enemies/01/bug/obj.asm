@@ -104,11 +104,10 @@ LiveMain
 
 Init
         _Collision_AddAABB AABB_0,AABB_list_ennemy
-        leax  AABB_0,u
         lda   #bug_hitdamage
-        sta   AABB.p,x
+        sta   AABB_0+AABB.p,u
         _ldd  bug_hitbox_x,bug_hitbox_y
-        std   AABB.rx,x
+        std   AABB_0+AABB.rx,u
 
         ; moves skipped frames before object creation
         ldb   anim_frame_duration,u
@@ -122,17 +121,16 @@ Live
         beq   @delete
         jsr   ObjectMove
 ;
-        leax  AABB_0,u
-        lda   AABB.p,x
+        lda   AABB_0+AABB.p,u
         beq   @destroy
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
         addd  #5                       ; add x radius
         bmi   @delete                  ; branch if out of screen's left
         ldd   y_pos,u
         subd  glb_camera_y_pos
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
 ;
         ldx   #ImageIndex
         ldb   anim_frame,u
