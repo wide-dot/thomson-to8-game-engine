@@ -57,6 +57,8 @@ InitMain
         std   y_pos,u
         ldb   ,x
         addd  glb_camera_x_pos
+        addd  #24  
+                       ; see arcade rom (0x61EB)
         std   x_pos,u
 
         lda   Vint_Main_runcount
