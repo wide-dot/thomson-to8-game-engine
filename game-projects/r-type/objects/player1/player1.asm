@@ -78,19 +78,19 @@ Init
         lda   #ObjID_bitdevice        
         sta   id,x      
         ldd   player1+x_pos
-        addd  #110
+        addd  #100
         std   x_pos,x
         ldd   player1+y_pos
         std   y_pos,x
 
-        jsr   LoadObject_x
-        lda   #ObjID_bitdevice        
-        sta   id,x      
-        ldd   player1+x_pos
-        addd  #140
-        std   x_pos,x
-        ldd   player1+y_pos
-        std   y_pos,x
+        ;jsr   LoadObject_x
+        ;lda   #ObjID_bitdevice        
+        ;sta   id,x      
+        ;ldd   player1+x_pos
+        ;addd  #120
+        ;std   x_pos,x
+        ;ldd   player1+y_pos
+        ;std   y_pos,x
 
 Live
         ldd   glb_camera_x_pos

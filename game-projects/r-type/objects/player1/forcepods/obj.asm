@@ -49,13 +49,12 @@ Init
 
         _Collision_AddAABB AABB_0,AABB_list_friend
         
-        leax  AABB_0,u
         lda   #255                      ; set damage potential for this hitbox
-        sta   AABB.p,x
+        sta   AABB_0+AABB.p,u
         _ldd  7,10                       ; set hitbox xy radius
-        std   AABB.rx,x
+        std   AABB_0+AABB.rx,u
         ldd   y_pos,u
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
 
         ldd   #100
         std   y_pos,u
@@ -95,13 +94,12 @@ LiveTrackspot
 @continuetsy
         stx   y_vel,u
         jsr   ObjectMoveSync
-	leax  AABB_0,u
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
 	ldd   y_pos,u
         subd  glb_camera_y_pos
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
 LiveTrackPlayer1
@@ -284,31 +282,29 @@ Live
 LiveHookedFront
 
         jsr   Live
-        leax  AABB_0,u
         ldd   player1+x_pos
 	addd  #9
 	std   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
 	ldd   player1+y_pos
 	std   y_pos,u
         subd  glb_camera_y_pos
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
 
 LiveHookedBack
 
         jsr   Live
-        leax  AABB_0,u
         ldd   player1+x_pos
 	subd  #11
 	std   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
 	ldd   player1+y_pos
 	std   y_pos,u
         subd  glb_camera_y_pos
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
