@@ -11,8 +11,12 @@
 ;
 ; _Collision_AddAABB AABB_0,AABB_list_friend
 ; _Collision_RemoveAABB AABB_0,AABB_list_friend
+; _Collision_CleanLinksAABB AABB_0
 ; _Collision_Do AABB_list_friend,AABB_list_ennemy
-
+;
+; WARNING !
+; - When a box change from a list to another, you MUST use CleanLinksAABB after removing and before adding
+; - Never use a single box in two or more lists
 ; --------------------------------------
 
 _Collision_AddAABB MACRO
@@ -35,6 +39,14 @@ _Collision_RemoveAABB MACRO
         leax  \1,u
         jsr   Collision_RemoveAABB
         puls  d,u,x,y
+ ENDM
+
+; --------------------------------------
+
+_Collision_CleanLinksAABB MACRO
+        ldd   #0
+        std   \1+AABB.prev,u
+        std   \1+AABB.next,u
  ENDM
 
 ; --------------------------------------

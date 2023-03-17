@@ -71,6 +71,7 @@ AlreadyDeletedOptionBox
         rts
 Init
         _Collision_RemoveAABB AABB_0,AABB_list_bonus
+        _Collision_CleanLinksAABB AABB_0
         _Collision_AddAABB AABB_0,AABB_list_friend
         
         lda   #255                      ; set damage potential for this hitbox

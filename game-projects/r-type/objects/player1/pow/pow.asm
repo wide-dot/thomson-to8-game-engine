@@ -40,7 +40,9 @@ Init
         ; set subtype based on preset
         ; (the bonus to be release)
 
-        ldx   #anim_pow
+        ; need a test on x (if pow comes from left => anim_pow_1)
+        ; require a upgrade of xy preset to 16bits (see converter)
+        ldx   #anim_pow_0
         ldb   #0
         jsr   AnimateMoveSyncInit
 

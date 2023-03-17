@@ -118,6 +118,30 @@ x1AACF	fcb   %01100000
 x1AAD1	fcb   %01110000
 	fdb   $FF40 ; x:-0.75
 	fdb   $FE80 ; y:-1.5
+x1AAD3	fcb   %11100000,2
+	fdb   $00C0 ; x:0.75
+	fdb   $0180 ; y:1.5
+x1AAD6	fcb   %01100000
+	fdb   $00C0 ; x:0.75
+	fdb   $0180 ; y:1.5
+x1AAD8	fcb   %01100000
+	fdb   $00C0 ; x:0.75
+	fdb   $0180 ; y:1.5
+x1AADA	fcb   %01100000
+	fdb   $00C0 ; x:0.75
+	fdb   $0180 ; y:1.5
+x1AADC	fcb   %01100000
+	fdb   $00C0 ; x:0.75
+	fdb   $0180 ; y:1.5
+x1AADE	fcb   %01100000
+	fdb   $00C0 ; x:0.75
+	fdb   $0180 ; y:1.5
+x1AAE0	fcb   %01100000
+	fdb   $00C0 ; x:0.75
+	fdb   $0180 ; y:1.5
+x1AAE2	fcb   %01110000
+	fdb   $00C0 ; x:0.75
+	fdb   $0180 ; y:1.5
 x1AAE4	fcb   %11100000,7
 	fdb   $FF40 ; x:-0.75
 	fdb   $00C0 ; y:0.75
