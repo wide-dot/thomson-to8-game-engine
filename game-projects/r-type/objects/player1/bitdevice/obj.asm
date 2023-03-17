@@ -36,17 +36,15 @@ InitOptionBox
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
         ldx   #25
-        ldy   #Ani_bitdevice1
-        lda   player1+bitdevice
         stx   offsety,u
-        sty   anim,u
-
+        ldx   #Ani_bitdevice1
+        stx   anim,u
         inc   routine,u                 ; Set routine to LiveOptionBox
-        _Collision_AddAABB AABB_0,AABB_list_bonus
-        
+
+        _Collision_AddAABB AABB_0,AABB_list_bonus        
         lda   #1                        ; set damage potential for this hitbox
         sta   AABB_0+AABB.p,u
-        _ldd  4,7                       ; set hitbox xy radius
+        _ldd  3,6                       ; set hitbox xy radius
         std   AABB_0+AABB.rx,u
 LiveOptionBox
         ldd   x_pos,u
@@ -54,7 +52,7 @@ LiveOptionBox
         ble   @delete
         lda   player1+bitdevice
         bita  #2
-        bne   >                        ; ignore contact if player1 has already the 2 device bits
+        bne   >                        ; ignore contact if player1 has already the 2 bit devices
         lda   AABB_0+AABB.p,u
         beq   Init                     ; was touched  
 !
@@ -77,10 +75,6 @@ Init
         
         lda   #255                      ; set damage potential for this hitbox
         sta   AABB_0+AABB.p,u
-        _ldd  3,6                       ; set hitbox xy radius
-        std   AABB_0+AABB.rx,u
-        ldd   y_pos,u
-        stb   AABB_0+AABB.cy,u
 
         lda   #3
         sta   routine,u
