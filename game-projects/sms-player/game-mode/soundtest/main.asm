@@ -7,7 +7,6 @@
 *
 ********************************************************************************
 
-OverlayMode equ 1
 ;SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/constants.asm"
@@ -19,13 +18,18 @@ OverlayMode equ 1
         jsr   LoadAct
         jsr   InitJoypads
 
-* load object
-        jsr   LoadObject_u
-        lda   #ObjID_player
-        sta   id,u    
+* load object   
 
         jsr   LoadObject_u
         lda   #ObjID_text
+        sta   id,u   
+
+        jsr   LoadObject_u
+        lda   #ObjID_player
+        sta   id,u 
+
+        jsr   LoadObject_u
+        lda   #ObjID_img
         sta   id,u   
 
         ldd   #Pal_default
@@ -36,11 +40,16 @@ OverlayMode equ 1
 * init sound player
         lda   #46
         sta   snd_tst_sel_song
+        sta   snd_tst_new_song
+        lda   #4
+        sta   snd_tst_sel_game
+        sta   snd_tst_new_game
+
 
         ldd   #vgc_stream_buffers
         ldx   #Snd_46
-        ;andcc #$fe ; clear carry (no loop)
-        orcc  #1 ; set carry (loop)
+        lda   #1
+        sta   vgc_loop
         jsr   vgc_init
 
 * user irq
@@ -57,11 +66,18 @@ OverlayMode equ 1
 * ==============================================================================
 LevelMainLoop
         jsr   WaitVBL    
+        jsr   PalUpdateNow
         jsr   ReadJoypads  
-        ldx   #0
-        jsr   ClearDataMem
+
+        _MountObject ObjID_mask
+        jsr   ,x
         jsr   RunObjects
-        jsr   BuildSprites
+
+        jsr   CheckSpritesRefresh
+        jsr   EraseSprites
+        jsr   UnsetDisplayPriority
+        jsr   DrawSprites
+
         jmp   LevelMainLoop
 
 * ==============================================================================
@@ -69,7 +85,6 @@ LevelMainLoop
 * ==============================================================================
 
 UserIRQ
-        jsr   PalUpdateNow
 	jsr   vgc_update
         rts
 
@@ -82,10 +97,7 @@ UserIRQ
 * ==============================================================================
 * Routines
 * ==============================================================================
-
-        ; gfx rendering
-        INCLUDE "./engine/graphics/sprite/sprite-overlay-pack.asm"
-        
+       
         ; basic object management
         INCLUDE "./engine/object-management/RunObjects.asm"
 
@@ -94,13 +106,12 @@ UserIRQ
         INCLUDE "./engine/ram/ClearDataMemory.asm"
         INCLUDE "./engine/graphics/vbl/WaitVBL.asm"
         INCLUDE "./engine/ram/BankSwitch.asm"
-        INCLUDE "./engine/object-management/RunPgSubRoutine.asm"
         INCLUDE "./engine/joypad/InitJoypads.asm"
         INCLUDE "./engine/joypad/ReadJoypads.asm"
 
-        ; animation
-        INCLUDE "./engine/graphics/animation/AnimateSprite.asm"	
-        INCLUDE "./engine/graphics/image/GetImgIdA.asm"
+        ; gfx rendering
+        INCLUDE "./engine/graphics/Codec/zx0_mega.asm"
+        INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"
 
         ; music and palette
 	; irq
