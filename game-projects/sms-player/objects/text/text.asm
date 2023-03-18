@@ -57,7 +57,11 @@ Text_Main
         bra   @loop
 @draw
         sta   snd_tst_sel_game
-        asla
+        ldb   Fire_Press
+        bitb  #c_button_A_mask|c_button_B_mask
+        beq   >
+        sta   snd_tst_new_game
+!       asla
         ldx   #Txt_Game
         ldy   a,x
         ldx   #fnt_4x6_shd
@@ -144,6 +148,8 @@ GameSelect
         beq   @rts
         ldb   snd_tst_sel_song
         stb   snd_tst_new_song
+        ldb   snd_tst_sel_game
+        stb   snd_tst_new_game
 @rts    rts
 
 ; -------------------------------------
