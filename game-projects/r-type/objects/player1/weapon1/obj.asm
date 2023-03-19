@@ -41,21 +41,19 @@ Init
 
         _Collision_AddAABB AABB_0,AABB_list_friend
         
-        leax  AABB_0,u
         lda   #1                       ; set damage potential for this hitbox
-        sta   AABB.p,x
+        sta   AABB_0+AABB.p,u
         _ldd  3,1                      ; set hitbox xy radius
-        std   AABB.rx,x
+        std   AABB_0+AABB.rx,u
 
         ldd   y_pos,u
         subd  glb_camera_y_pos
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
 
         inc   routine,u
 
 Live
-        leax  AABB_0,u
-        lda   AABB.p,x
+        lda   AABB_0+AABB.p,u
         beq   @delete                  ; delete weapon if something was hit  
         lda   #4
         ldb   Vint_Main_runcount
@@ -63,7 +61,7 @@ Live
         addd  x_pos,u
         std   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
         cmpd  #160-8/2                 ; delete weapon if out of screen range
         ble   >
 @delete lda   #2

@@ -55,17 +55,16 @@ Init
 
         _Collision_AddAABB AABB_0,AABB_list_friend
         
-        leax  AABB_0,u
         lda   #255                     ; set damage potential for this hitbox
-        sta   AABB.p,x
+        sta   AABB_0+AABB.p,u
         _ldd  3,7                      ; set hitbox xy radius
-        std   AABB.rx,x
+        std   AABB_0+AABB.rx,u
 
         inc   routine,u                ; Set routine to InitNextFrame
         lda   is_child,u
         lbne  LiveAsChild
         lda   #1 
-        sta   AABB.p,x
+        sta   AABB_0+AABB.p,u
         ldb   subtype,u
         lda   #speedxp
         bitb  #%01000000
@@ -132,9 +131,8 @@ LiveAsParent
         blt   >
         ldb   #maxvintcount
 !
-        stb   @Vint_Main_runcount_code
-        leax  AABB_0,u        
-        lda   AABB.p,x
+        stb   @Vint_Main_runcount_code       
+        lda   AABB_0+AABB.p,u
         lbeq  @delete                 ; delete weapon if something was hit  
         lda   is_child,u
         bne   >
@@ -145,7 +143,7 @@ LiveAsParent
         addd  x_pos,u
         std   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
         cmpd  #0
         blt   @delete
         cmpd  #144
@@ -156,7 +154,7 @@ LiveAsParent
         sex
         addd  y_pos,u
         std   y_pos,u
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
         cmpd  #191                 
         bge   @delete
         cmpd  #5
@@ -202,9 +200,8 @@ LiveAsParent
         clr   is_child,x         ; Clear is_child ( = head)
         lda   #2                 ; Set child object's routine to LiveAsParent
         sta   routine,x
-        leax  AABB_0,x 
         deca                     ; Set damage to 1
-        sta   AABB.p,x
+        sta   AABB_0+AABB.p,x
 !
         jmp   DeleteObject
 
@@ -231,12 +228,11 @@ LiveAsChild
         std   y_pos,u
         ldd   old_imgset,u
         std   image_set,u
-        leax  AABB_0,u 
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
         ldb   y_pos+1,u
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
         jmp   DisplaySprite
 
 

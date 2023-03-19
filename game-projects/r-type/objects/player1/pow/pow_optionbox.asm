@@ -38,27 +38,25 @@ Init
 
         _Collision_AddAABB AABB_0,AABB_list_bonus
         
-        leax  AABB_0,u
         lda   #1                        ; set damage potential for this hitbox
-        sta   AABB.p,x
+        sta   AABB_0+AABB.p,u
         _ldd  4,7                       ; set hitbox xy radius
-        std   AABB.rx,x
+        std   AABB_0+AABB.rx,u
         ldd   y_pos,u
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
 
 Live
         jsr   ObjectMoveSync
-        leax  AABB_0,u
-        lda   AABB.p,x
+        lda   AABB_0+AABB.p,u
         beq   @captured                ; was touched  
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
         addd  #4                       ; add x radius
         bmi   @delete                  ; branch if out of screen's left
         ldd   y_pos,u
         subd  glb_camera_y_pos
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
         jmp   DisplaySprite
 @captured
         lda   subtype,u
