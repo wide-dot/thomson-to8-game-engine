@@ -7,10 +7,9 @@ SoundTest
         ldy   #MusicList
         aslb
         ldx   b,y
-        ldd   #vgc_stream_buffers
-        * andcc #$fe ; clear carry (no loop)
-        orcc  #1 ; set carry (loop)
-        jmp   vgc_init
+        ldb   #1 ; 0=no loop 1=loop
+        ldy   #0 ; pas de callback
+        jsr   vgc_init
 @rts    rts
 
 MusicList

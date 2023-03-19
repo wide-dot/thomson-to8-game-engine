@@ -45,11 +45,14 @@
         sta   snd_tst_sel_game
         sta   snd_tst_new_game
 
+        ;ldx   #Snd_mon_morceauYM
+        ;ldb   #0 ; 0=no loop 1=loop
+        ;ldy   #0 ; pas de callback
+        ;jsr   YVGM_PlayMusic 
 
-        ldd   #vgc_stream_buffers
         ldx   #Snd_46
-        lda   #1
-        sta   vgc_loop
+        ldb   #1 ; 0=no loop 1=loop
+        ldy   #0 ; pas de callback
         jsr   vgc_init
 
 * user irq
