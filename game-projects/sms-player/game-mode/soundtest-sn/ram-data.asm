@@ -16,8 +16,8 @@ nb_graphical_objects              equ 20 * max 64 total
 Dynamic_Object_RAM            fill  0,nb_dynamic_objects*object_size
 Dynamic_Object_RAM_End
 
-snd_tst_cur_game fcb 0 ; current playing
-snd_tst_cur_song fcb 0
+snd_tst_cur_game fcb -1 ; current playing
+snd_tst_cur_song fcb -1
 snd_tst_new_game fcb 0 ; when a new selection is made
 snd_tst_new_song fcb 0
 snd_tst_sel_game fcb 0 ; current text selection
