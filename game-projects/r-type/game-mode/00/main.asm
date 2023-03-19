@@ -20,10 +20,10 @@ viewport_height equ 180
         jsr   InitJoypads
 
         jsr   WaitVBL
-        ldd   #Pal_game
-        std   Pal_current
-        clr   PalRefresh
-        jsr   PalUpdateNow
+        ;ldd   #Pal_game
+        ;std   Pal_current
+        ;clr   PalRefresh
+        ;jsr   PalUpdateNow
 
 
 ; play music
@@ -40,6 +40,8 @@ viewport_height equ 180
         ldx   #Irq_one_frame
         jsr   IrqSync
         jsr   IrqOn 
+
+	_MountObject ObjID_logo_r
 
         jsr   LoadObject_x
         lda   #ObjID_logo_r
