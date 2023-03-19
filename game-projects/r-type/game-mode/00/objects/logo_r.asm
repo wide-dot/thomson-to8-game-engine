@@ -29,7 +29,7 @@ Init
         sta   render_flags,u
         inc   routine,u
 Live
-        jsr   AnimateMoveSync
+	jsr   AnimateMoveSync
         jmp   DisplaySprite
 AlreadyDeleted
         rts
