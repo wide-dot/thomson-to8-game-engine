@@ -14,6 +14,7 @@ viewport_height equ 180
  ; value in animation script
 
         org   $6100
+
         jsr   InitGlobals
         jsr   InitStack
         jsr   LoadAct
@@ -33,6 +34,8 @@ viewport_height equ 180
         _MusicInit_objvgc #0,#MUSIC_LOOP,#0
 
 ; init user irq
+
+
         jsr   IrqInit
         ldd   #UserIRQ
         std   Irq_user_routine
@@ -41,7 +44,7 @@ viewport_height equ 180
         jsr   IrqSync
         jsr   IrqOn 
 
-	_MountObject ObjID_logo_r
+
 
         jsr   LoadObject_x
         lda   #ObjID_logo_r
@@ -59,7 +62,6 @@ viewport_height equ 180
 TitleMainLoop
         jsr   WaitVBL
         jsr   ReadJoypads
-
         jsr   RunObjects
         jsr   CheckSpritesRefresh
         jsr   EraseSprites
