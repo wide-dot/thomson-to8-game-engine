@@ -57,11 +57,10 @@ Init
 
         _Collision_AddAABB AABB_0,AABB_list_ennemy
         
-        leax  AABB_0,u
         lda   #1                                                       ; set damage potential for this hitbox
-        sta   AABB.p,x
+        sta   AABB_0+AABB.p,u
         _ldd  5,10                                                     ; set hitbox xy radius
-        std   AABB.rx,x
+        std   AABB_0+AABB.rx,u
 
         inc   routine,u
 Live
@@ -70,17 +69,16 @@ Live
         beq   @delete
         jsr   ObjectMove
 ;
-        leax  AABB_0,u
-        lda   AABB.p,x
+        lda   AABB_0+AABB.p,u
         beq   @destroy                  ; was killed  
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
         addd  #5                       ; add x radius
         bmi   @delete                  ; branch if out of screen's left
         ldd   y_pos,u
         subd  glb_camera_y_pos
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
 ;
         ;ldx   #ImageIndex
         ;ldb   anim_frame,u

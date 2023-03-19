@@ -116,9 +116,9 @@ LiveFree
         mul
         sex
         addd  x_pos,u
-        bmi   @delete
         std   x_pos,u
         subd  glb_camera_x_pos
+        bmi   @delete
         stb   AABB_0+AABB.cx,u
         cmpd  #160-8/2                 ; delete weapon if out of screen range
         bgt   @delete
