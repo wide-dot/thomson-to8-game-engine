@@ -7,7 +7,7 @@
 *
 ********************************************************************************
 
-;SOUND_CARD_PROTOTYPE equ 1
+SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"
@@ -21,39 +21,29 @@
 * load object   
 
         jsr   LoadObject_u
-        lda   #ObjID_text
+        lda   #ObjID_textym
         sta   id,u   
 
         jsr   LoadObject_u
-        lda   #ObjID_player
+        lda   #ObjID_playerym
         sta   id,u 
 
         jsr   LoadObject_u
-        lda   #ObjID_img
+        lda   #ObjID_imgym
         sta   id,u   
 
-        ldd   #Pal_default
-        std   Pal_current
-        clr   PalRefresh
-        jsr   PalUpdateNow
-
 * init sound player
-        lda   #46
+        lda   #0
         sta   snd_tst_sel_song
         sta   snd_tst_new_song
-        lda   #4
+        lda   #0
         sta   snd_tst_sel_game
         sta   snd_tst_new_game
 
-        ;ldx   #Snd_mon_morceauYM
-        ;ldb   #0 ; 0=no loop 1=loop
-        ;ldy   #0 ; pas de callback
-        ;jsr   YVGM_PlayMusic 
-
-        ldx   #Snd_46
+        ldx   #Snd_YM01
         ldb   #1 ; 0=no loop 1=loop
         ldy   #0 ; pas de callback
-        jsr   vgc_init
+        jsr   YVGM_PlayMusic
 
 * user irq
         jsr   IrqInit
@@ -88,14 +78,14 @@ LevelMainLoop
 * ==============================================================================
 
 UserIRQ
-	jsr   vgc_update
+	jsr   YVGM_MusicFrame
         rts
 
 * ---------------------------------------------------------------------------
 * Game Mode RAM variables
 * ---------------------------------------------------------------------------
 
-        INCLUDE "./game-mode/soundtest/ram-data.asm"       
+        INCLUDE "./game-mode/soundtest-ym/ram-data.asm"       
         
 * ==============================================================================
 * Routines
@@ -123,9 +113,8 @@ UserIRQ
         INCLUDE "./engine/palette/color/Pal_white.asm"
         INCLUDE "./engine/palette/color/Pal_black.asm"
 
-        ; vgc player
-        INCLUDE "./engine/sound/vgc/lib/vgcplayer.h.asm"
-        INCLUDE "./engine/sound/vgc/lib/vgcplayer.asm"
+        ; ymm player
+        INCLUDE "./engine/sound/YM2413vgm.asm"
 
 * reserve space for the vgm decode buffers (8x256 = 2Kb)
         ALIGN 256
