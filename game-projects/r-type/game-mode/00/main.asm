@@ -20,7 +20,11 @@ viewport_height equ 180
         jsr   InitJoypads
 
         jsr   WaitVBL
-        jsr   RunObjects
+        ldd   #Pal_game
+        std   Pal_current
+        clr   PalRefresh
+        jsr   PalUpdateNow
+
 
 ; play music
         _MountObject ObjID_ymm
@@ -45,6 +49,7 @@ viewport_height equ 180
         ldd   #30
         std   y_pos,x
 
+
 * ---------------------------------------------------------------------------
 * MAIN GAME LOOP
 * ---------------------------------------------------------------------------
@@ -58,7 +63,6 @@ TitleMainLoop
         jsr   EraseSprites
         jsr   UnsetDisplayPriority
         jsr   DrawSprites
-	jsr   Palette_FadeIn
         jmp   TitleMainLoop
 
 * ---------------------------------------------------------------------------
