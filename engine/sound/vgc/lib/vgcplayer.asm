@@ -28,6 +28,7 @@
 ;  X point to the VGC data stream to be played
 ;-------------------------------------------
 vgc_init
+        jsr   IrqPause
         lda   #vgc_stream_buffers/256  ; HI byte of a page aligned 2Kb RAM buffer address
         sta   vgc_buffers              ; stash the 2kb buffer address
         stb   vgc_loop
@@ -43,7 +44,7 @@ vgc_init
         lda   #0
 @a      equ   *-1
         _SetCartPageA
-        rts
+        jmp   IrqUnpause
 
 ;-------------------------------------------
 ; vgc_update
