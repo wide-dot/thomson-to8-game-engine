@@ -20,6 +20,15 @@
 ;  sn_write
 ;--------------------------------------------------
 
+vgc_registers
+        fdb vgc_port_01
+        fdb vgc_port_02
+        fdb vgc_port_03
+        fdb vgc_port_04
+        fdb vgc_port_05
+        fdb vgc_port_06
+        fdb -1
+
 ;-------------------------------------------
 ; vgc_play
 ;-------------------------------------------
@@ -119,12 +128,16 @@ vgc_do_update
 sn_reset
         lda   #$9F
         sta   SN76489.D
+vgc_port_01 equ *-1
         lda   #$BF
-        sta   SN76489.D       
+        sta   SN76489.D     
+vgc_port_02 equ *-1  
         lda   #$DF
         sta   SN76489.D
+vgc_port_03 equ *-1
         lda   #$FF
         sta   SN76489.D  
+vgc_port_04 equ *-1
 	rts
 
 ;-------------------------------------------
@@ -284,6 +297,7 @@ vgc_update_register1
         cmpb  #$ef
         beq   skip_tone3
         stb   <SN76489.D
+vgc_port_05 equ *-1
 skip_tone3
         ; get run length (top 4-bits+1)
         ldb   #0
@@ -311,6 +325,7 @@ vgc_update_register2
 @LoadA  equ   *-1
         jsr   vgc_get_register_data 
 	stb   <SN76489.D
+vgc_port_06 equ *-1
         rts
 
 ;-------------------------------
