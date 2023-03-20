@@ -1,4 +1,4 @@
-DO_NOT_WAIT_VBL equ 1
+
 DEBUG   equ     1
 SOUND_CARD_PROTOTYPE equ 1
 
@@ -46,20 +46,69 @@ viewport_height equ 180
 
 
 
-        jsr   LoadObject_x
+	ldu   #addr_logo
+
+        jsr   LoadObject_x		; Logo R
+	stx   ,u++
         lda   #ObjID_logo_r
         sta   id,x
-        ldd   #70
+
+        jsr   LoadObject_x		; Logo Dot
+	stx   ,u++
+        lda   #ObjID_logo_dot
+        sta   id,x
+
+        jsr   LoadObject_x		; Logo T
+	stx   ,u++
+        lda   #ObjID_logo_t
+        sta   id,x
+
+        jsr   LoadObject_x		; Logo Y
+	stx   ,u++
+        lda   #ObjID_logo_y
+        sta   id,x
+
+        jsr   LoadObject_x		; Logo P
+	stx   ,u++
+        lda   #ObjID_logo_p
+        sta   id,x
+
+
+        jsr   LoadObject_x		; Logo E
+	stx   ,u
+        lda   #ObjID_logo_e
+        sta   id,x
+
+* ---------------------------------------------------------------------------
+* PHASE 1 : Letters move from right to left
+* ---------------------------------------------------------------------------
+
+Phase1Init
+
+	ldu   #addr_logo
+	lda   #6
+	sta   @phase1initloopnum
+Phase1InitLoop
+	ldx   ,u++
+	ldd   #150
         std   x_pos,x
         ldd   #30
         std   y_pos,x
+	ldd   #-$200
+	std   x_vel,x
+	lda   #0
+@phase1initloopnum equ *-1
+	deca
+	sta   @phase1initloopnum
+	bne   Phase1InitLoop
+Phase1Live
 
+	ldu   #addr_logo
+	ldx   ,u
+	ldd   x_pos,x
+	cmpd  #30
+	ble   Phase2Init
 
-* ---------------------------------------------------------------------------
-* MAIN GAME LOOP
-* ---------------------------------------------------------------------------
-
-TitleMainLoop
         jsr   WaitVBL
         jsr   ReadJoypads
         jsr   RunObjects
@@ -67,7 +116,120 @@ TitleMainLoop
         jsr   EraseSprites
         jsr   UnsetDisplayPriority
         jsr   DrawSprites
-        jmp   TitleMainLoop
+        jmp   Phase1Live
+
+* ---------------------------------------------------------------------------
+* PHASE 2 : Letters expand to the right
+* ---------------------------------------------------------------------------
+
+Phase2Init
+	ldy   #logo_xvel
+	lda   #6
+	sta   @phase2initloopnum
+Phase2InitLoop
+	ldx   ,u++
+	ldd   ,y++
+	std   x_vel,x
+	lda   #0
+@phase2initloopnum equ *-1
+	deca
+	sta   @phase2initloopnum
+	bne   Phase2InitLoop
+Phase2Live
+
+	ldu   #addr_logo
+	ldx   2,u
+	ldd   x_pos,x
+	cmpd  #51
+	bge   Phase3Init
+
+        jsr   WaitVBL
+        jsr   ReadJoypads
+        jsr   RunObjects
+        jsr   CheckSpritesRefresh
+        jsr   EraseSprites
+        jsr   UnsetDisplayPriority
+        jsr   DrawSprites
+        jmp   Phase2Live
+
+* ---------------------------------------------------------------------------
+* PHASE 3 : Letters move down
+* ---------------------------------------------------------------------------
+
+Phase3Init
+	ldu   #addr_logo
+	lda   #6
+	sta   @phase3initloopnum
+Phase3InitLoop
+	ldx   ,u++
+	ldd   #0
+	std   x_vel,x
+	ldd   #200
+	std   y_vel,x
+	lda   #0
+@phase3initloopnum equ *-1
+	deca
+	sta   @phase3initloopnum
+	bne   Phase3InitLoop
+Phase3Live
+	ldu   #addr_logo
+	ldx   ,u
+	ldd   y_pos,x
+	cmpd  #70
+	bge   Phase4Init
+
+        jsr   WaitVBL
+        jsr   ReadJoypads
+        jsr   RunObjects
+        jsr   CheckSpritesRefresh
+        jsr   EraseSprites
+        jsr   UnsetDisplayPriority
+        jsr   DrawSprites
+        jmp   Phase3Live
+
+* ---------------------------------------------------------------------------
+* PHASE 4 : Stop the letters
+* ---------------------------------------------------------------------------
+
+Phase4Init
+	ldu   #addr_logo
+	lda   #6
+	sta   @phase4initloopnum
+Phase4InitLoop
+	ldx   ,u++
+	ldd   #0
+	std   y_vel,x
+	lda   #0
+@phase4initloopnum equ *-1
+	deca
+	sta   @phase4initloopnum
+	bne   Phase4InitLoop
+Phase4Live
+
+        jsr   WaitVBL
+        jsr   ReadJoypads
+        jsr   RunObjects
+        jsr   CheckSpritesRefresh
+        jsr   EraseSprites
+        jsr   UnsetDisplayPriority
+        jsr   DrawSprites
+        jmp   Phase4Live
+
+
+addr_logo	fdb 0     * R
+		fdb 0     * Dot
+		fdb 0     * T
+		fdb 0     * Y
+		fdb 0     * P
+		fdb 0     * E
+
+logo_xvel	fdb 0
+		fdb 84
+		fdb 132
+		fdb 216
+		fdb 300
+		fdb 384
+
 
 * ---------------------------------------------------------------------------
 * MAIN IRQ

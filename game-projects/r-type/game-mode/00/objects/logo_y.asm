@@ -20,9 +20,9 @@ Routines
         fdb   Init
         fdb   Live
 Init
-        ldd   #logo_r
+        ldd   #logo_y
         std   image_set,u
-        ldb   #1
+        ldb   #4
         stb   priority,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
