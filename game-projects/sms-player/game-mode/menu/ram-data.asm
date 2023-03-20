@@ -17,5 +17,3 @@ Dynamic_Object_RAM            fill  0,nb_dynamic_objects*object_size
 Dynamic_Object_RAM_End
 
 menu_sel_chip fcb 0
-menu_sel_port fcb 0
-
