@@ -14,9 +14,7 @@ ReadKeyboard
         jsr   GETC       ; read new key code in b
         cmpb  Key_Held
         beq   @rts       ; return if key is already held, Press was cleared, but not Held
-        stb   Key_Held   ; new key code was read
         stb   Key_Press  ; store new key for one main loop
-@rts    rts
 @clearHeld
-        stb   Key_Held   ; no more key pressed
-        rts
+        stb   Key_Held   ; new key code was read
+@rts    rts

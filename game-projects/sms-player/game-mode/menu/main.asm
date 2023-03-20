@@ -38,7 +38,9 @@ SOUND_CARD_PROTOTYPE equ 1
 * ==============================================================================
 LevelMainLoop
         jsr   WaitVBL    
-        jsr   ReadJoypads  
+        jsr   ReadJoypads 
+        jsr   ReadKeyboard 
+        jsr   MapKeyboardToJoypads
         jsr   RunObjects
         jsr   CheckSpritesRefresh
         jsr   EraseSprites
@@ -92,6 +94,8 @@ DoChangeGameMode
         INCLUDE "./engine/ram/BankSwitch.asm"
         INCLUDE "./engine/joypad/InitJoypads.asm"
         INCLUDE "./engine/joypad/ReadJoypads.asm"
+        INCLUDE "./engine/keyboard/ReadKeyboard.asm"
+        INCLUDE "./engine/keyboard/MapKeyboardToJoypads.asm"
 
         ; gfx rendering
         INCLUDE "./engine/graphics/Codec/zx0_mega.asm"
