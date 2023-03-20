@@ -27,7 +27,7 @@ viewport_height equ 180
         ;jsr   PalUpdateNow
 
 
-; play music
+	; play music
         _MountObject ObjID_ymm
         _MusicInit_objymm #0,#MUSIC_LOOP,#0
         _MountObject ObjID_vgc
@@ -86,13 +86,14 @@ viewport_height equ 180
 Phase1Init
 
 	ldu   #addr_logo
+	ldy   #logo_startx
 	lda   #6
 	sta   @phase1initloopnum
 Phase1InitLoop
 	ldx   ,u++
-	ldd   #150
+	ldd   ,y++
         std   x_pos,x
-        ldd   #30
+        ldd   #100
         std   y_pos,x
 	ldd   #-$200
 	std   x_vel,x
@@ -106,7 +107,7 @@ Phase1Live
 	ldu   #addr_logo
 	ldx   ,u
 	ldd   x_pos,x
-	cmpd  #30
+	cmpd  #35
 	ble   Phase2Init
 
         jsr   WaitVBL
@@ -140,7 +141,7 @@ Phase2Live
 	ldu   #addr_logo
 	ldx   2,u
 	ldd   x_pos,x
-	cmpd  #51
+	cmpd  #50
 	bge   Phase3Init
 
         jsr   WaitVBL
@@ -175,7 +176,7 @@ Phase3Live
 	ldu   #addr_logo
 	ldx   ,u
 	ldd   y_pos,x
-	cmpd  #70
+	cmpd  #126
 	bge   Phase4Init
 
         jsr   WaitVBL
@@ -222,6 +223,13 @@ addr_logo	fdb 0     * R
 		fdb 0     * Y
 		fdb 0     * P
 		fdb 0     * E
+
+logo_startx	fdb 150
+		fdb 146
+		fdb 150
+		fdb 150
+		fdb 150
+		fdb 149
 
 logo_xvel	fdb 0
 		fdb 84
