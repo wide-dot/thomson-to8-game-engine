@@ -124,6 +124,10 @@ Phase1Live
 * ---------------------------------------------------------------------------
 
 Phase2Init
+	ldx   ,u
+	ldy   #logo_finalpos
+	ldd   ,y
+	std   x_pos,x
 	ldy   #logo_xvel
 	lda   #6
 	sta   @phase2initloopnum
@@ -159,6 +163,7 @@ Phase2Live
 
 Phase3Init
 	ldu   #addr_logo
+	ldy   #logo_finalpos
 	lda   #6
 	sta   @phase3initloopnum
 Phase3InitLoop
@@ -167,6 +172,8 @@ Phase3InitLoop
 	std   x_vel,x
 	ldd   #200
 	std   y_vel,x
+	ldd   ,y++
+	std   x_pos,x
 	lda   #0
 @phase3initloopnum equ *-1
 	deca
@@ -189,7 +196,7 @@ Phase3Live
         jmp   Phase3Live
 
 * ---------------------------------------------------------------------------
-* PHASE 4 : Stop the letters
+* PHASE 4 : Stop the letters, move the TM
 * ---------------------------------------------------------------------------
 
 Phase4Init
@@ -205,7 +212,26 @@ Phase4InitLoop
 	deca
 	sta   @phase4initloopnum
 	bne   Phase4InitLoop
+
+        jsr   LoadObject_x		; Logo TM
+	stx   addr_tm
+        lda   #ObjID_logo_tm
+        sta   id,x
+	ldd   #0
+	std   x_pos,x
+	std   y_pos,x
+	ldd   #700
+	std   x_vel,x
+	ldd   #800
+	std   y_vel,x
+
 Phase4Live
+
+	ldu   #addr_tm
+	ldx   ,u
+	ldd   y_pos,x
+	cmpd  #155
+	bge   Phase5Init
 
         jsr   WaitVBL
         jsr   ReadJoypads
@@ -217,12 +243,41 @@ Phase4Live
         jmp   Phase4Live
 
 
+* ---------------------------------------------------------------------------
+* PHASE 5 : Stop the TM
+* ---------------------------------------------------------------------------
+
+Phase5Init
+	ldu   #addr_tm
+	ldx   ,u
+	ldd   #0
+	std   y_vel,x
+	std   x_vel,x
+	ldd   #$8A
+	std   x_pos,x
+	ldd   #$9F
+	std   y_pos,x
+
+Phase5Live
+        jsr   WaitVBL
+        jsr   ReadJoypads
+        jsr   RunObjects
+        jsr   CheckSpritesRefresh
+        jsr   EraseSprites
+        jsr   UnsetDisplayPriority
+        jsr   DrawSprites
+        jmp   Phase4Live
+
+
+
 addr_logo	fdb 0     * R
 		fdb 0     * Dot
 		fdb 0     * T
 		fdb 0     * Y
 		fdb 0     * P
 		fdb 0     * E
+
+addr_tm         fdb 0
 
 logo_startx	fdb 150
 		fdb 146
@@ -237,6 +292,13 @@ logo_xvel	fdb 0
 		fdb 216
 		fdb 300
 		fdb 384
+
+logo_finalpos	fdb 32
+		fdb 50
+		fdb 67
+		fdb 90
+		fdb 112
+		fdb 134
 
 
 * ---------------------------------------------------------------------------
