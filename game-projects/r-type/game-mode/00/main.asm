@@ -217,7 +217,6 @@ Phase3Live
 
 Phase4Init
 
-	_breakpoint
 	ldu   #addr_logo
 	lda   #6
 	sta   @phase4initloopnum
@@ -283,6 +282,11 @@ Phase5InitLoop
 	ldd   #0
 	std   y_vel,x
 
+        jsr   LoadObject_x		; Text
+        lda   #ObjID_text
+        sta   id,x
+
+
 ; MUSIC STARTS HERE
 
 
@@ -294,7 +298,7 @@ Phase5Live
         jsr   EraseSprites
         jsr   UnsetDisplayPriority
         jsr   DrawSprites
-        jmp   Phase4Live
+        jmp   Phase5Live
 
 
 
