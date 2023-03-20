@@ -25,7 +25,7 @@ LiveLoop
 LiveEnd
 	rts
 
-string1 fcc '! 127! 127! 127! 127'
+string1 fcc '! 12789127! 127! 127'
         fcb $00
 
 
@@ -53,7 +53,8 @@ letter_addr     fdb letter_space                * 32 = space
                 fdb letter_space                * 53
                 fdb letter_space                * 54
                 fdb letter_7                    * 55 = 7
-
+                fdb letter_8                    * 56 = 8
+                fdb letter_9                    * 57 = 9
 
 
 
@@ -215,6 +216,82 @@ letter_7
 	STA -80,U
 	LEAU -40,U
 
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$9c
+	STA 120,U
+	STA 80,U
+	STA 40,U
+	STA ,U
+	STA -40,U
+	STA -80,U
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$ff
+	STA -120,U
+        puls u,pc
+
+letter_8
+        pshs u
+	LEAU 40,U
+
+	LDA #$99
+	STA 120,U
+	LDA #$9c
+	STA 80,U
+	STA 40,U
+	LDA #$99
+	STA ,U
+	LDA #$9c
+	STA -40,U
+	STA -80,U
+	LDA #$f9
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$ff
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$9c
+	STA 120,U
+	STA 80,U
+	STA 40,U
+	STA ,U
+	STA -40,U
+	STA -80,U
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$ff
+	STA -120,U
+
+        puls u,pc
+
+letter_9
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 80,U
+	STA 40,U
+	LDA #$99
+	STA 120,U
+	STA ,U
+	LDA #$9c
+	STA -40,U
+	STA -80,U
+	LDA #$99
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$ff
 	STA -120,U
 
 	LEAU -$2000,U
