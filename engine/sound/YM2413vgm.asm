@@ -22,6 +22,7 @@ YVGM_callback        fdb   0                ; 0=no calback routine
 ******************************************************************************
 
 YVGM_PlayMusic
+        jsr   IrqPause
         stb   YVGM_loop
         sty   YVGM_callback
         _GetCartPageA
@@ -40,7 +41,7 @@ YVGM_PlayMusic
         lda   #0
 @a      equ   *-1
         _SetCartPageA
-        rts      
+        jmp   IrqUnpause
 
 ******************************************************************************
 * MusicFrame - processes a music frame (VInt)
