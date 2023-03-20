@@ -33,6 +33,7 @@ viewport_height equ 180
         _MountObject ObjID_vgc
         _MusicInit_objvgc #0,#MUSIC_LOOP,#0
 
+	
 ; init user irq
 
 
@@ -158,7 +159,7 @@ Phase2Live
         jmp   Phase2Live
 
 * ---------------------------------------------------------------------------
-* PHASE 3 : Letters move down
+* PHASE 3 : Re-align the logo, move the TM
 * ---------------------------------------------------------------------------
 
 Phase3Init
@@ -170,8 +171,6 @@ Phase3InitLoop
 	ldx   ,u++
 	ldd   #0
 	std   x_vel,x
-	ldd   #200
-	std   y_vel,x
 	ldd   ,y++
 	std   x_pos,x
 	lda   #0
@@ -179,11 +178,28 @@ Phase3InitLoop
 	deca
 	sta   @phase3initloopnum
 	bne   Phase3InitLoop
+
+        jsr   LoadObject_x		; Logo TM
+	stx   addr_tm
+        lda   #ObjID_logo_tm
+        sta   id,x
+	ldd   #0
+	std   x_pos,x
+	std   y_pos,x
+	ldd   #690
+	std   x_vel,x
+	ldd   #650
+	std   y_vel,x
+
 Phase3Live
-	ldu   #addr_logo
+
+	ldu   #addr_tm
 	ldx   ,u
 	ldd   y_pos,x
-	cmpd  #126
+	cmpd  #125
+	bge   Phase4Init
+	ldd   x_pos,x
+	cmpd  #133
 	bge   Phase4Init
 
         jsr   WaitVBL
@@ -196,16 +212,18 @@ Phase3Live
         jmp   Phase3Live
 
 * ---------------------------------------------------------------------------
-* PHASE 4 : Stop the letters, move the TM
+* PHASE 4 : Move the logo and TM down
 * ---------------------------------------------------------------------------
 
 Phase4Init
+
+	_breakpoint
 	ldu   #addr_logo
 	lda   #6
 	sta   @phase4initloopnum
 Phase4InitLoop
 	ldx   ,u++
-	ldd   #0
+	ldd   #200
 	std   y_vel,x
 	lda   #0
 @phase4initloopnum equ *-1
@@ -213,24 +231,23 @@ Phase4InitLoop
 	sta   @phase4initloopnum
 	bne   Phase4InitLoop
 
-        jsr   LoadObject_x		; Logo TM
-	stx   addr_tm
-        lda   #ObjID_logo_tm
-        sta   id,x
+	ldu   #addr_tm
+	ldx   ,u
 	ldd   #0
-	std   x_pos,x
-	std   y_pos,x
-	ldd   #700
 	std   x_vel,x
-	ldd   #800
+	ldd   #200
 	std   y_vel,x
+	ldd   #138
+	std   x_pos,x
+	ldd   #130
+	std   y_pos,x
 
 Phase4Live
 
-	ldu   #addr_tm
+	ldu   #addr_logo
 	ldx   ,u
 	ldd   y_pos,x
-	cmpd  #155
+	cmpd  #126
 	bge   Phase5Init
 
         jsr   WaitVBL
@@ -244,20 +261,27 @@ Phase4Live
 
 
 * ---------------------------------------------------------------------------
-* PHASE 5 : Stop the TM
+* PHASE 5 : Stop the logo and TM
 * ---------------------------------------------------------------------------
 
 Phase5Init
+	ldu   #addr_logo
+	lda   #6
+	sta   @phase5initloopnum
+Phase5InitLoop
+	ldx   ,u++
+	ldd   #0
+	std   y_vel,x
+	lda   #0
+@phase5initloopnum equ *-1
+	deca
+	sta   @phase5initloopnum
+	bne   Phase5InitLoop
+
 	ldu   #addr_tm
 	ldx   ,u
 	ldd   #0
 	std   y_vel,x
-	std   x_vel,x
-	ldd   #$8A
-	std   x_pos,x
-	ldd   #$9F
-	std   y_pos,x
-
 Phase5Live
         jsr   WaitVBL
         jsr   ReadJoypads
