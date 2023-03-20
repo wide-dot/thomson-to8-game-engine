@@ -33,7 +33,7 @@ viewport_height equ 180
         _MountObject ObjID_vgc
         _MusicInit_objvgc #0,#MUSIC_LOOP,#0
 
-	
+
 ; init user irq
 
 
@@ -282,6 +282,10 @@ Phase5InitLoop
 	ldx   ,u
 	ldd   #0
 	std   y_vel,x
+
+; MUSIC STARTS HERE
+
+
 Phase5Live
         jsr   WaitVBL
         jsr   ReadJoypads
