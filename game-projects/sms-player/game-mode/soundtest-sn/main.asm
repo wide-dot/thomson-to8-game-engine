@@ -66,6 +66,8 @@ LevelMainLoop
         jsr   WaitVBL    
         jsr   PalUpdateNow
         jsr   ReadJoypads  
+        jsr   ReadKeyboard 
+        jsr   MapKeyboardToJoypads
 
         _MountObject ObjID_mask
         jsr   ,x
@@ -106,6 +108,8 @@ UserIRQ
         INCLUDE "./engine/ram/BankSwitch.asm"
         INCLUDE "./engine/joypad/InitJoypads.asm"
         INCLUDE "./engine/joypad/ReadJoypads.asm"
+        INCLUDE "./engine/keyboard/ReadKeyboard.asm"
+        INCLUDE "./engine/keyboard/MapKeyboardToJoypads.asm"
 
         ; gfx rendering
         INCLUDE "./engine/graphics/Codec/zx0_mega.asm"
