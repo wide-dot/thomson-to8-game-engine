@@ -79,6 +79,27 @@ IrqOff
         orcc  #$10                     ; tell 6809 to inactivate irq
         rts
 
+IrqPause
+        pshs  a
+        lda   $6019
+        anda  #$20
+        bne   @irqoff
+        lda   #0
+        sta   @irqst
+        bra   >
+@irqoff lda   #1
+        sta   @irqst
+        jsr   IrqOff
+!       puls  a,pc
+IrqUnpause
+        pshs  a
+        lda   #0
+@irqst  equ   *-1
+        beq   >
+        jsr   IrqOn
+!       clr   @irqst
+        puls  a,pc
+
 IrqSync 
         ldb   #$42
         stb   MC6846.TCR
