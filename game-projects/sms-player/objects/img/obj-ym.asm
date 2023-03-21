@@ -31,7 +31,11 @@ SoundTest
 BackPal
         fdb   Pal_OutRun
         fdb   Pal_WBIII
+        fdb   Pal_DD
+        fdb   Pal_Ys
 
 ImageList
         fdb   Img_OutRun
         fdb   Img_WBIII
+        fdb   Img_DD
+        fdb   Img_Ys
