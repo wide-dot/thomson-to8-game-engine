@@ -68,6 +68,7 @@ LevelMainLoop
         jsr   ReadJoypads  
         jsr   ReadKeyboard 
         jsr   MapKeyboardToJoypads
+        jsr   CheckPause
 
         _MountObject ObjID_mask
         jsr   ,x
@@ -87,6 +88,24 @@ LevelMainLoop
 UserIRQ
 	jsr   vgc_update
         rts
+
+CheckPause
+        lda   Key_Press
+        cmpa  #80
+        beq   >
+        cmpa  #112
+        beq   >
+        rts
+!       lda   @pause_state
+        bne   @unpause
+        com   @pause_state
+        jsr   IrqPause
+        jmp   sn_reset
+@unpause
+        com   @pause_state
+        jmp   IrqUnpause
+@pause_state
+        fcb   0
 
 * ---------------------------------------------------------------------------
 * Game Mode RAM variables

@@ -117,6 +117,8 @@ SongSelect
         beq   @rts
         ldb   snd_tst_sel_song
         stb   snd_tst_new_song
+        ldb   #-1
+        stb   snd_tst_cur_song
 @rts    rts
 
 GameSelect
@@ -150,6 +152,8 @@ GameSelect
         stb   snd_tst_new_song
         ldb   snd_tst_sel_game
         stb   snd_tst_new_game
+        ldb   #-1
+        stb   snd_tst_cur_song
 @rts    rts
 
 ; -------------------------------------

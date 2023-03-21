@@ -3,6 +3,7 @@ SoundTest
         ldb   snd_tst_new_song
         cmpb  snd_tst_cur_song
         beq   @rts
+        jsr   IrqUnpause
         stb   snd_tst_cur_song
         ldy   #MusicList
         aslb

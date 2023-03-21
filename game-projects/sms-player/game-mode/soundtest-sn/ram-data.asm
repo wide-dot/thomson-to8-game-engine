@@ -23,4 +23,3 @@ snd_tst_new_song fcb 0
 snd_tst_sel_game fcb 0 ; current text selection
 snd_tst_sel_song fcb 0
 snd_tst_sel_type fcb 0
-
