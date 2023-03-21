@@ -38,6 +38,7 @@ vgc_registers
 ;-------------------------------------------
 vgc_init
         jsr   IrqPause
+        jsr   sn_reset
         lda   #vgc_stream_buffers/256  ; HI byte of a page aligned 2Kb RAM buffer address
         sta   vgc_buffers              ; stash the 2kb buffer address
         stb   vgc_loop
@@ -111,7 +112,6 @@ vgc_do_update
         ; restart if looping
         ldx   vgc_source
         lda   vgc_loop
-        asla ; -> C
         lda   vgc_buffers
         jsr   vgc_stream_mount
         jmp   vgc_update
