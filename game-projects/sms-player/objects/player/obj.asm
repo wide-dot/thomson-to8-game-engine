@@ -5,9 +5,10 @@ SoundTest
         beq   @rts
         jsr   IrqUnpause
         stb   snd_tst_cur_song
-        ldy   #MusicList
+        ldx   #MusicList
         aslb
-        ldx   b,y
+        abx
+        ldx   ,x
         ldb   #2 ; 0=no loop
         ldy   #CallbackRoutine
         jsr   vgc_init
@@ -74,3 +75,13 @@ MusicList
         fdb   Snd_58
         fdb   Snd_59
         fdb   Snd_60
+        fdb   Snd_61
+        fdb   Snd_62
+        fdb   Snd_63
+        fdb   Snd_64
+        fdb   Snd_65
+        fdb   Snd_66
+        fdb   Snd_67
+        fdb   Snd_68
+        fdb   Snd_69
+        fdb   Snd_70

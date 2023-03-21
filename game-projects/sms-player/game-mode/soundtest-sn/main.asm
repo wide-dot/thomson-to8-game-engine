@@ -35,7 +35,7 @@ SOUND_CARD_PROTOTYPE equ 1
         sta   id,u   
 
 * init sound player
-        lda   #46
+        lda   #45
         sta   snd_tst_sel_song
         sta   snd_tst_new_song
         lda   #4
