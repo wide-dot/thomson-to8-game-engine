@@ -12,6 +12,7 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"
         INCLUDE "./global/globals.equ"
+        INCLUDE "./engine/system/to8/macros.asm"
 
         org   $6100
         jsr   InitGlobals
@@ -69,6 +70,8 @@ LevelMainLoop
         jsr   ReadKeyboard 
         jsr   MapKeyboardToJoypads
         jsr   CheckPause
+        jsr   CheckReset
+        jsr   CheckReturnToMenu
 
         _MountObject ObjID_mask
         jsr   ,x
@@ -89,24 +92,6 @@ UserIRQ
 	jsr   vgc_update
         rts
 
-CheckPause
-        lda   Key_Press
-        cmpa  #80
-        beq   >
-        cmpa  #112
-        beq   >
-        rts
-!       lda   @pause_state
-        bne   @unpause
-        com   @pause_state
-        jsr   IrqPause
-        jmp   sn_reset
-@unpause
-        com   @pause_state
-        jmp   IrqUnpause
-@pause_state
-        fcb   0
-
 * ---------------------------------------------------------------------------
 * Game Mode RAM variables
 * ---------------------------------------------------------------------------
@@ -116,7 +101,8 @@ CheckPause
 * ==============================================================================
 * Routines
 * ==============================================================================
-       
+        INCLUDE "./engine/level-management/LoadGameMode.asm"      
+
         ; basic object management
         INCLUDE "./engine/object-management/RunObjects.asm"
 
@@ -157,3 +143,52 @@ vgc_stream_buffers
         fill 0,256
         fill 0,256
         fill 0,256
+
+* ==============================================================================
+* Key Checks
+* ==============================================================================
+
+CheckPause
+        lda   Key_Press
+        cmpa  #80
+        beq   >
+        cmpa  #112
+        beq   >
+        rts
+!       lda   @pause_state
+        bne   @unpause
+        com   @pause_state
+        jsr   IrqPause
+        jmp   sn_reset
+@unpause
+        com   @pause_state
+        jmp   IrqUnpause
+@pause_state
+        fcb   0
+
+CheckReset
+        lda   Key_Press
+        cmpa  #81
+        beq   >
+        cmpa  #113
+        beq   >
+        rts
+!       _system.reboot
+
+CheckReturnToMenu
+        lda   Key_Press
+        cmpa  #30
+        beq   >
+        rts
+!       jsr   IrqOff
+        jsr   sn_reset
+        ldd   #Pal_black
+        std   Pal_current
+        clr   PalRefresh
+	jsr   PalUpdateNow
+        lda   #GmID_menu
+        sta   GameMode
+        ldb   #GmID_snplayer
+        stb   glb_Cur_Game_Mode
+        jsr   LoadGameModeNow 
+        rts
