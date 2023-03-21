@@ -46,11 +46,6 @@ SOUND_CARD_PROTOTYPE equ 1
         ldx   #vgc_registers
         jsr   DynCode_ApplyAToListX
 
-        ldx   #Snd_46
-        ldb   #1 ; 0=no loop 1=loop
-        ldy   #0 ; pas de callback
-        jsr   vgc_init
-
 * user irq
         jsr   IrqInit
         ldd   #UserIRQ
@@ -91,6 +86,21 @@ LevelMainLoop
 UserIRQ
 	jsr   vgc_update
         rts
+
+CallbackRoutine
+        dec   vgc_loop
+        beq   @nextsong
+        ldx   vgc_source
+        lda   vgc_loop
+        lda   vgc_buffers
+        jsr   vgc_stream_mount
+        jmp   vgc_update
+@nextsong 
+        ldb   #c1_button_right_mask
+        stb   Dpad_Press
+        ldb   #c1_button_A_mask
+        stb   Fire_Press
+        rts        
 
 * ---------------------------------------------------------------------------
 * Game Mode RAM variables

@@ -41,11 +41,6 @@ SOUND_CARD_PROTOTYPE equ 1
         sta   snd_tst_sel_game
         sta   snd_tst_new_game
 
-        ldx   #Snd_YM01
-        ldb   #1 ; 0=no loop 1=loop
-        ldy   #0 ; pas de callback
-        jsr   YVGM_PlayMusic
-
 * user irq
         jsr   IrqInit
         ldd   #UserIRQ
@@ -86,6 +81,23 @@ LevelMainLoop
 UserIRQ
 	jsr   YVGM_MusicFrame
         rts
+
+CallbackRoutine
+        dec   YVGM_loop
+        beq   @nextsong
+        lda   #1
+        sta   YVGM_WaitFrame
+        ldx   YVGM_MusicData
+        ldu   #YM2413_buffer
+        stu   YVGM_MusicDataPos
+        jsr   ym2413zx0_decompress    
+        jmp   YVGM_MusicFrame  
+@nextsong 
+        ldb   #c1_button_right_mask
+        stb   Dpad_Press
+        ldb   #c1_button_A_mask
+        stb   Fire_Press
+        rts   
 
 * ---------------------------------------------------------------------------
 * Game Mode RAM variables
