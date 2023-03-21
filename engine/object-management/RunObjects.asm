@@ -88,8 +88,8 @@ LoadObject_x
         rts                            ; return z=1 when not found
 @link
         pshs  u                        ; let's save U
-        leau ,x                        ; X contains de address of the stack, so let's transfer it to U
-        pulu X                         ; get a the free slot from the slot stack, X points this free slot
+        leau 2,x                        ; X contains de address of the stack, so let's transfer it to U
+        ldx ,x                         ; get a the free slot from the slot stack, X points this free slot
         stu STACK_POINTER              ; updating the slot stack pointer
         ldu   object_list_last
         beq   >
