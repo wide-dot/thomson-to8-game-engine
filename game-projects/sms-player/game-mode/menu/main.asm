@@ -11,12 +11,14 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./global/globals.equ"
 
         org   $6100
         jsr   InitGlobals
         jsr   InitStack
         jsr   LoadAct
         jsr   InitJoypads
+        clr   menu_sel_port
 
 * load object   
 
@@ -98,7 +100,7 @@ DoChangeGameMode
         INCLUDE "./engine/keyboard/MapKeyboardToJoypads.asm"
 
         ; gfx rendering
-        INCLUDE "./engine/graphics/Codec/zx0_mega.asm"
+        INCLUDE "./engine/graphics/codec/zx0_mega.asm"
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"
 
         ; music and palette

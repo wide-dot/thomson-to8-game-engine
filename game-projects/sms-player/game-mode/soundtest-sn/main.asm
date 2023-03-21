@@ -11,6 +11,7 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./global/globals.equ"
 
         org   $6100
         jsr   InitGlobals
@@ -40,10 +41,9 @@ SOUND_CARD_PROTOTYPE equ 1
         sta   snd_tst_sel_game
         sta   snd_tst_new_game
 
-        ;ldx   #Snd_mon_morceauYM
-        ;ldb   #0 ; 0=no loop 1=loop
-        ;ldy   #0 ; pas de callback
-        ;jsr   YVGM_PlayMusic 
+        lda   menu_sel_port
+        ldx   #vgc_registers
+        jsr   DynCode_ApplyAToListX
 
         ldx   #Snd_46
         ldb   #1 ; 0=no loop 1=loop
@@ -110,9 +110,10 @@ UserIRQ
         INCLUDE "./engine/joypad/ReadJoypads.asm"
         INCLUDE "./engine/keyboard/ReadKeyboard.asm"
         INCLUDE "./engine/keyboard/MapKeyboardToJoypads.asm"
+        INCLUDE "./engine/ram/DynCode.asm"
 
         ; gfx rendering
-        INCLUDE "./engine/graphics/Codec/zx0_mega.asm"
+        INCLUDE "./engine/graphics/codec/zx0_mega.asm"
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"
 
         ; music and palette

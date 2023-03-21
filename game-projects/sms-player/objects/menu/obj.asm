@@ -81,6 +81,9 @@ Menu_Port
         lda   Fire_Press
         bita  #c_button_A_mask|c_button_B_mask
         beq   >
+        ldx   #PortList
+        ldb   b,x
+        stb   menu_sel_port
         ldb   #GmID_snplayer
         stb   GameMode
         jmp   DoChangeGameMode
@@ -98,4 +101,10 @@ MenuPal
         fdb   Pal_Opt2
         fdb   Pal_Opt3
         fdb   Pal_Opt4
+
+PortList
+        fcb   $F6
+        fcb   $F7
+        fcb   $FE
+        fcb   $FF
 
