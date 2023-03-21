@@ -31,3 +31,17 @@ MusicList
         fdb   Snd_YM16
         fdb   Snd_YM17
         fdb   Snd_YM18
+        fdb   Snd_YM19
+        fdb   Snd_YM20
+        fdb   Snd_YM21
+        fdb   Snd_YM22
+        fdb   Snd_YM24
+        fdb   Snd_YM25
+        fdb   Snd_YM26
+        fdb   Snd_YM27
+        fdb   Snd_YM28
+        fdb   Snd_YM29
+        fdb   Snd_YM30
+        fdb   Snd_YM31
+        fdb   Snd_YM32
+
