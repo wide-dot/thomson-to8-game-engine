@@ -113,7 +113,7 @@ UserIRQ
         INCLUDE "./engine/ram/DynCode.asm"
 
         ; gfx rendering
-        INCLUDE "./engine/graphics/Codec/zx0_mega.asm"
+        INCLUDE "./engine/graphics/codec/zx0_mega.asm"
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"
 
         ; music and palette
