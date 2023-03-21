@@ -26,6 +26,8 @@
 package zx0;
 
 import static java.nio.file.StandardOpenOption.*;
+
+import java.io.File;
 import java.nio.file.*;
 
 public class Main {
@@ -72,6 +74,7 @@ public class Main {
         boolean backwardsMode = false;
         boolean quickMode = false;
         boolean decompress = false;
+        boolean directory = false;
         int skip = 0;
         int i = 0;
         while (i < args.length && (args[i].startsWith("-") || args[i].startsWith("+"))) {
@@ -98,6 +101,9 @@ public class Main {
                     case "-d":
                         decompress = true;
                         break;
+                    case "-dir":
+                        directory = true;
+                        break;
                     default:
                         skip = parseInt(args[i]);
                         if (skip <= 0) {
@@ -113,98 +119,144 @@ public class Main {
             System.err.println("Error: Decompressing with "+(backwardsMode ? "suffix" : "prefix")+" not supported");
             System.exit(1);
         }
-
-        // determine output filename
-        String outputName = null;
-        if (args.length == i+1) {
-            if (!decompress) {
-                outputName = args[i] + ".zx0";
-            } else {
-                if (args[i].length() > 4 && args[i].endsWith(".zx0")) {
-                    outputName = args[i].substring(0, args[i].length()-4);
-                } else {
-                    System.err.println("Error: Cannot infer output filename");
-                    System.exit(1);
-                }
-            }
-        } else if (args.length == i+2) {
-            outputName = args[i + 1];
+        
+        File filesList[] = null;
+        String outputName[] = null;
+        int o = 0;
+        
+        if (directory) {
+	        File directoryPath = new File(args[i]);
+	        filesList = directoryPath.listFiles();
+	        
+	        outputName = new String[filesList.length];
+	        for(File file : filesList) {
+		        // determine output filename
+		        if (args.length == i+1) {
+		            if (!decompress) {
+		                outputName[o] = file.getPath() + ".zx0";
+		            } else {
+		                if (args[i].length() > 4 && file.getPath().endsWith(".zx0")) {
+		                    outputName[o] = file.getPath().substring(0, file.getPath().length()-4);
+		                } else {
+		                    System.err.println("Error: Cannot infer output filename");
+		                    System.exit(1);
+		                }
+		            }
+		        } else {
+		            System.err.println("Usage: java -jar zx0.jar [-pN] [-f] [-c] [-b] [-q] [-d] input [output.zx0]\n" +
+		                    "  -p      Parallel processing with N threads\n" +
+		                    "  -f      Force overwrite of output file\n" +
+		                    "  -c      Classic file format (v1.*)\n" +
+		                    "  -b      Compress backwards\n" +
+		                    "  -q      Quick non-optimal compression\n" +
+		                    "  -d      Decompress" + 
+		                    "  -dir    Compress all files in this directory (no output name allowed)");
+		            System.exit(1);
+		        }	
+		        o += 1;
+	        }
+	        
         } else {
-            System.err.println("Usage: java -jar zx0.jar [-pN] [-f] [-c] [-b] [-q] [-d] input [output.zx0]\n" +
-                    "  -p      Parallel processing with N threads\n" +
-                    "  -f      Force overwrite of output file\n" +
-                    "  -c      Classic file format (v1.*)\n" +
-                    "  -b      Compress backwards\n" +
-                    "  -q      Quick non-optimal compression\n" +
-                    "  -d      Decompress");
-            System.exit(1);
+        	filesList = new File[] {new File (args[i])};
+        	outputName = new String[1];
+        	
+	        // determine output filename
+	        if (args.length == i+1) {
+	            if (!decompress) {
+	                outputName[0] = args[i] + ".zx0";
+	            } else {
+	                if (args[i].length() > 4 && args[i].endsWith(".zx0")) {
+	                    outputName[0] = args[i].substring(0, args[i].length()-4);
+	                } else {
+	                    System.err.println("Error: Cannot infer output filename");
+	                    System.exit(1);
+	                }
+	            }
+	        } else if (args.length == i+2) {
+	            outputName[0] = args[i + 1];
+	        } else {
+	            System.err.println("Usage: java -jar zx0.jar [-pN] [-f] [-c] [-b] [-q] [-d] input [output.zx0]\n" +
+	                    "  -p      Parallel processing with N threads\n" +
+	                    "  -f      Force overwrite of output file\n" +
+	                    "  -c      Classic file format (v1.*)\n" +
+	                    "  -b      Compress backwards\n" +
+	                    "  -q      Quick non-optimal compression\n" +
+	                    "  -d      Decompress");
+	            System.exit(1);
+	        }
         }
-
-        // read input file
-        byte[] input = null;
-        try {
-            input = Files.readAllBytes(Paths.get(args[i]));
-        } catch (Exception e) {
-            System.err.println("Error: Cannot read input file " + args[i]);
-            System.exit(1);
-        }
-
-        // determine input size
-        if (input.length == 0) {
-            System.err.println("Error: Empty input file " + args[i]);
-            System.exit(1);
-        }
-
-        // validate skip against input size
-        if (skip >= input.length) {
-            System.err.println("Error: Skipping entire input file " + args[i]);
-            System.exit(1);
-        }
-
-        // check output file
-        if (!forcedMode && Files.exists(Paths.get(outputName))) {
-            System.err.println("Error: Already existing output file " + outputName);
-            System.exit(1);
-        }
-
-        // conditionally reverse input file
-        if (backwardsMode) {
-            reverse(input);
-        }
-
-        // generate output file
-        byte[] output = null;
-        int[] delta = { 0 };
-
-        if (!decompress) {
-            output = zx0(input, skip, backwardsMode, classicMode, quickMode, threads, true, delta);
-        } else {
-            try {
-                output = dzx0(input, backwardsMode, classicMode);
-            } catch (ArrayIndexOutOfBoundsException e) {
-                System.err.println("Error: Invalid input file " + args[i]);
-                System.exit(1);
-            }
-        }
-
-        // conditionally reverse output file
-        if (backwardsMode) {
-            reverse(output);
-        }
-
-        // write output file
-        try {
-            Files.write(Paths.get(outputName), output, CREATE, forcedMode ? TRUNCATE_EXISTING : CREATE_NEW);
-        } catch (Exception e) {
-            System.err.println("Error: Cannot write output file " + outputName);
-            System.exit(1);
-        }
-
-        // done!
-        if (!decompress) {
-            System.out.println("File " + (skip > 0 ? "partially " : "") + "compressed " + (backwardsMode ? "backwards " : "") + "from " + (input.length-skip) + " to " + output.length + " bytes! (delta " + delta[0] + ")");
-        } else {
-            System.out.println("File decompressed " + (backwardsMode ? "backwards " : "") + "from " + (input.length-skip) + " to " + output.length + " bytes!");
+        
+        o = 0;
+        for(File file : filesList) { 
+	
+	        // read input file
+	        byte[] input = null;
+	        try {
+	            input = Files.readAllBytes(Paths.get(file.getPath()));
+	        } catch (Exception e) {
+	            System.err.println("Error: Cannot read input file " + file.getPath());
+	            System.exit(1);
+	        }
+	
+	        // determine input size
+	        if (input.length == 0) {
+	            System.err.println("Error: Empty input file " + file.getPath());
+	            System.exit(1);
+	        }
+	
+	        // validate skip against input size
+	        if (skip >= input.length) {
+	            System.err.println("Error: Skipping entire input file " + file.getPath());
+	            System.exit(1);
+	        }
+	
+	        // check output file
+	        if (!forcedMode && Files.exists(Paths.get(outputName[o]))) {
+	            System.err.println("Error: Already existing output file " + outputName);
+	            System.exit(1);
+	        }
+	
+	        // conditionally reverse input file
+	        if (backwardsMode) {
+	            reverse(input);
+	        }
+	
+	        // generate output file
+	        byte[] output = null;
+	        int[] delta = { 0 };
+	
+	        if (!decompress) {
+	            output = zx0(input, skip, backwardsMode, classicMode, quickMode, threads, true, delta);
+	        } else {
+	            try {
+	                output = dzx0(input, backwardsMode, classicMode);
+	            } catch (ArrayIndexOutOfBoundsException e) {
+	                System.err.println("Error: Invalid input file " + file.getPath());
+	                System.exit(1);
+	            }
+	        }
+	
+	        // conditionally reverse output file
+	        if (backwardsMode) {
+	            reverse(output);
+	        }
+	
+	        // write output file
+	        try {
+	            Files.write(Paths.get(outputName[o]), output, CREATE, forcedMode ? TRUNCATE_EXISTING : CREATE_NEW);
+	        } catch (Exception e) {
+	            System.err.println("Error: Cannot write output file " + outputName);
+	            System.exit(1);
+	        }
+	
+	        // done!
+	        if (!decompress) {
+	            System.out.println("File " + (skip > 0 ? "partially " : "") + "compressed " + (backwardsMode ? "backwards " : "") + "from " + (input.length-skip) + " to " + output.length + " bytes! (delta " + delta[0] + ")");
+	        } else {
+	            System.out.println("File decompressed " + (backwardsMode ? "backwards " : "") + "from " + (input.length-skip) + " to " + output.length + " bytes!");
+	        }
+	        
+	        o += 1;
         }
     }
 }

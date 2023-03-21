@@ -12,8 +12,8 @@ _DrawTextSetPos MACRO
 
 ; *****************************************************************************
 
-nbgames equ 2
-nbsongs equ 18
+nbgames equ 4
+nbsongs equ 31
 
 Text
         lda   routine,u
@@ -187,14 +187,20 @@ render_line       fcb   0
 Txt_Game
         fdb   Txt_OutRun
         fdb   Txt_WBIII
+        fdb   Txt_DD
+        fdb   Txt_Ys
 
 FirstSongStartIdx
         fcb   0
         fcb   4
+        fcb   18
+        fcb   20
 
 FirstSongIdx
         fcb   3
         fcb   17
+        fcb   19
+        fcb   30
 
 TxtLst_Song
         fdb   Txt_OutRun_01
@@ -215,6 +221,19 @@ TxtLst_Song
         fdb   Txt_WBIII_12
         fdb   Txt_WBIII_13
         fdb   Txt_WBIII_14
+        fdb   Txt_DD_01
+        fdb   Txt_DD_02
+        fdb   Txt_Ys_01
+        fdb   Txt_Ys_02
+        fdb   Txt_Ys_04
+        fdb   Txt_Ys_05
+        fdb   Txt_Ys_06
+        fdb   Txt_Ys_07
+        fdb   Txt_Ys_08
+        fdb   Txt_Ys_09
+        fdb   Txt_Ys_10
+        fdb   Txt_Ys_11
+        fdb   Txt_Ys_12
 
 ; -------------------------------------
 
@@ -290,6 +309,73 @@ Txt_WBIII_14
         fcc   "14 - The Dragon's Trap"
         fcb   $D,$A,0
 
+; -------------------------------------
+
+Txt_DD
+        fcc   "Double Dragon"
+        fcb   $D,$A,0
+        
+Txt_DD_01
+        fcc   "01 - Title"
+        fcb   $D,$A,0
+
+Txt_DD_02
+        fcc   "02 - Mission 1"
+        fcb   $D,$A,0
+
+; -------------------------------------
+
+Txt_Ys
+        fcc   "Ys"
+        fcb   $D,$A,0
+
+Txt_Ys_01
+        fcc   "01 - Feena"
+        fcb   $D,$A,0
+
+Txt_Ys_02
+        fcc   "02 - Fountain of Love"
+        fcb   $D,$A,0
+
+Txt_Ys_03
+        fcc   "04 - The Syonin"
+        fcb   $D,$A,0
+
+Txt_Ys_04
+        fcc   "05 - First Step Towards Wars"
+        fcb   $D,$A,0
+
+Txt_Ys_05
+        fcc   "06 - Palace"
+        fcb   $D,$A,0
+
+Txt_Ys_06
+        fcc   "07 - Holders of Power"
+        fcb   $D,$A,0
+
+Txt_Ys_07
+        fcc   "08 - Palace of Destruction"
+        fcb   $D,$A,0
+
+Txt_Ys_08
+        fcc   "09 -  Beat of the Terror"
+        fcb   $D,$A,0
+
+Txt_Ys_09
+        fcc   "10 - Temple del Sol"
+        fcb   $D,$A,0
+
+Txt_Ys_10
+        fcc   "11 - Tower of the Shadow of Death"
+        fcb   $D,$A,0
+
+Txt_Ys_11
+        fcc   "12 - Devil's Wind"
+        fcb   $D,$A,0
+
+Txt_Ys_12
+        fcc   "13 - The Last Moment of the Dark"
+        fcb   $D,$A,0
 
  INCLUDE "./engine/graphics/font/DrawText/DrawText.asm"
  INCLUDE "./engine/graphics/font/DrawText/3x5_shaded/asm/font_upper.asm"
