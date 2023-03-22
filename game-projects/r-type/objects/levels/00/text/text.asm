@@ -11,6 +11,9 @@
 
 
 Object
+	nop                ; DO NOT MODIFY THIS LINE OR ADD ANY LINE BEFORE
+			   ; THERE IS A DEPENDENCY THAT WILL BE REWRTTENT
+			   ; INTO A RTS WHEN THIS OBJECT IS DONE DOING ITS JOB
         ldy   #allstrings
         ldu   ,y++
         ldx   #letter_addr
@@ -34,25 +37,22 @@ WasNotTheEnd
         leau  1,u
         jmp   LiveLoop
 IsThisTheEnd
-        _breakpoint
         ldu   ,y++
         bne   WasNotTheEnd
-	lda   #0
-@Initlevel    equ *-1
-	beq   @createpushbutton
-LiveEnd
-	rts
-@createpushbutton
-        jsr   LoadObject_x		; Logo R
+        jsr   LoadObject_x		; Animation for PUSH LIVE BUTTON
         lda   #ObjID_push_button
         sta   id,x
 	ldd   #112
 	std   x_pos,x
 	ldd   #62
 	std   y_pos,x
-	lda   #1
-	sta   @Initlevel
+	lda   #$39			; Op-code for RTS
+	sta   Object
 	rts
+LiveEnd
+	rts
+@createpushbutton
+
 
 allstrings 
         fdb $C0F0+15+(40*8*1)
