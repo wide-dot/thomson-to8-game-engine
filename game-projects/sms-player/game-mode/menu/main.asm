@@ -12,6 +12,7 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"
         INCLUDE "./global/globals.equ"
+        INCLUDE "./engine/system/to8/macros.asm"
 
         org   $6100
         jsr   InitGlobals
@@ -43,7 +44,10 @@ LevelMainLoop
         jsr   ReadJoypads 
         jsr   ReadKeyboard 
         jsr   MapKeyboardToJoypads
+        jsr   CheckReset
+
         jsr   RunObjects
+
         jsr   CheckSpritesRefresh
         jsr   EraseSprites
         jsr   UnsetDisplayPriority
@@ -58,6 +62,15 @@ LevelMainLoop
 UserIRQ
 	jsr   PalUpdateNow
         rts
+
+CheckReset
+        lda   Key_Press
+        cmpa  #81
+        beq   >
+        cmpa  #113
+        beq   >
+        rts
+!       _system.reboot
 
 * ==============================================================================
 * Game Mode

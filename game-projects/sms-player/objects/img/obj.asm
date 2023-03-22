@@ -34,6 +34,11 @@ BackPal
         fdb   Pal_SORII
         fdb   Pal_WBIII
         fdb   Pal_WBMW
+        fdb   Pal_Aladdin
+        fdb   Pal_Alex
+        fdb   Pal_Castle
+        fdb   Pal_Chuck
+        fdb   Pal_Shadow
 
 ImageList
         fdb   Img_OutRun
@@ -41,3 +46,8 @@ ImageList
         fdb   Img_SORII
         fdb   Img_WBIII
         fdb   Img_WBMW
+        fdb   Img_Aladdin
+        fdb   Img_Alex
+        fdb   Img_Castle
+        fdb   Img_Chuck
+        fdb   Img_Shadow

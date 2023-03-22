@@ -41,6 +41,7 @@ YVGM_PlayMusic
         lda   #0
 @a      equ   *-1
         _SetCartPageA
+        jsr   YVGM_SilenceAll
         jmp   IrqUnpause
 
 ******************************************************************************

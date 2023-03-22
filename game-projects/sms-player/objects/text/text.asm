@@ -12,6 +12,9 @@ _DrawTextSetPos MACRO
 
 ; *****************************************************************************
 
+nbgames equ 10
+nbsongs equ 70
+
 Text
         lda   routine,u
         asla
@@ -47,33 +50,36 @@ Text_Main
         _DrawTextSetPos 2,0,6
         std   DrawText_pos
 
-        lda   #0
-        ldb   snd_tst_sel_song
+        ldb   #0
+        lda   snd_tst_sel_song
         ldx   #FirstSongIdx
 @loop
-        cmpb  a,x
+        cmpa  b,x
         ble   @draw
-        inca
+        incb
         bra   @loop
 @draw
-        sta   snd_tst_sel_game
-        ldb   Fire_Press
-        bitb  #c_button_A_mask|c_button_B_mask
+        stb   snd_tst_sel_game
+        lda   Fire_Press
+        bita  #c_button_A_mask|c_button_B_mask
         beq   >
-        sta   snd_tst_new_game
-!       asla
+        stb   snd_tst_new_game
+!       
         ldx   #Txt_Game
-        ldy   a,x
+        aslb
+        abx
+        ldy   ,x
         ldx   #fnt_4x6_shd
         jsr   DrawText
 
         _DrawTextSetPos 2,32,6
         std   DrawText_pos
 
-        lda   snd_tst_sel_song
-        asla
+        ldb   snd_tst_sel_song
         ldx   #TxtLst_Song
-        ldy   a,x
+        aslb
+        abx
+        ldy   ,x
         ldx   #fnt_4x6_shd
         jsr   DrawText
 
@@ -99,11 +105,11 @@ SongSelect
         beq   >
         decb
         bpl   >
-        ldb   #59
+        ldb   #nbsongs-1
 !       bita  #c_button_right_mask
         beq   >
         incb
-        cmpb  #60
+        cmpb  #nbsongs
         blo   >
         ldb   #0
 !       stb   snd_tst_sel_song
@@ -117,6 +123,8 @@ SongSelect
         beq   @rts
         ldb   snd_tst_sel_song
         stb   snd_tst_new_song
+        ldb   #-1
+        stb   snd_tst_cur_song
 @rts    rts
 
 GameSelect
@@ -126,12 +134,12 @@ GameSelect
         beq   >
         decb
         bpl   @apply
-        ldb   #4
+        ldb   #nbgames-1
         bra   @apply
 !       bita  #c_button_right_mask
         beq   >
         incb
-        cmpb  #5
+        cmpb  #nbgames
         blo   @apply
         ldb   #0
 @apply  stb   snd_tst_sel_game
@@ -150,6 +158,8 @@ GameSelect
         stb   snd_tst_new_song
         ldb   snd_tst_sel_game
         stb   snd_tst_new_game
+        ldb   #-1
+        stb   snd_tst_cur_song
 @rts    rts
 
 ; -------------------------------------
@@ -187,26 +197,41 @@ Txt_Game
         fdb   Txt_SORII
         fdb   Txt_WBIII
         fdb   Txt_WBMW
+        fdb   Txt_Aladdin
+        fdb   Txt_Alex
+        fdb   Txt_Castle
+        fdb   Txt_Chuck
+        fdb   Txt_Shadow
 
 FirstSongStartIdx
         fcb   0
         fcb   4
         fcb   15
         fcb   30
-        fcb   44
+        fcb   43
+        fcb   57
+        fcb   59
+        fcb   62
+        fcb   67
+        fcb   68
 
 FirstSongIdx
         fcb   3
         fcb   14
         fcb   29
-        fcb   43
-        fcb   60
+        fcb   42
+        fcb   56
+        fcb   58
+        fcb   61
+        fcb   66
+        fcb   67
+        fcb   69
 
 TxtLst_Song
         fdb   Txt_OutRun_01
         fdb   Txt_OutRun_02
         fdb   Txt_OutRun_03
-        fdb   Txt_OutRun_04
+        fdb   Txt_OutRun_04 ;3
         fdb   Txt_SOR_01
         fdb   Txt_SOR_02
         fdb   Txt_SOR_03
@@ -217,7 +242,7 @@ TxtLst_Song
         fdb   Txt_SOR_08
         fdb   Txt_SOR_09
         fdb   Txt_SOR_10
-        fdb   Txt_SOR_11
+        fdb   Txt_SOR_11   ;14
         fdb   Txt_SORII_01
         fdb   Txt_SORII_02
         fdb   Txt_SORII_03
@@ -232,8 +257,7 @@ TxtLst_Song
         fdb   Txt_SORII_13
         fdb   Txt_SORII_14
         fdb   Txt_SORII_15
-        fdb   Txt_SORII_16
-        fdb   Txt_WBIII_01
+        fdb   Txt_SORII_16 ; 29
         fdb   Txt_WBIII_02
         fdb   Txt_WBIII_03
         fdb   Txt_WBIII_04
@@ -246,7 +270,7 @@ TxtLst_Song
         fdb   Txt_WBIII_12
         fdb   Txt_WBIII_13
         fdb   Txt_WBIII_14
-        fdb   Txt_WBIII_15
+        fdb   Txt_WBIII_15 ;42
         fdb   Txt_WBMW_01
         fdb   Txt_WBMW_02
         fdb   Txt_WBMW_03
@@ -260,9 +284,20 @@ TxtLst_Song
         fdb   Txt_WBMW_11
         fdb   Txt_WBMW_12
         fdb   Txt_WBMW_13
-        fdb   Txt_WBMW_14
-        fdb   Txt_WBMW_15
-        fdb   Txt_WBMW_17
+        fdb   Txt_WBMW_14 ;56
+        fdb   Txt_Aladdin_01
+        fdb   Txt_Aladdin_02 ;58
+        fdb   Txt_Alex_01
+        fdb   Txt_Alex_02
+        fdb   Txt_Alex_03 ;61
+        fdb   Txt_Castle_01
+        fdb   Txt_Castle_02
+        fdb   Txt_Castle_03
+        fdb   Txt_Castle_04
+        fdb   Txt_Castle_05 ;66
+        fdb   Txt_Chuck_01  ;67
+        fdb   Txt_Shadow_01
+        fdb   Txt_Shadow_02
 
 ; -------------------------------------
 
@@ -387,9 +422,6 @@ Txt_WBIII
         fcc   "Wonder Boy III"
         fcb   $D,$A,0
         
-Txt_WBIII_01
-        fcc   "01 - Title Screen"
-        fcb   $D,$A,0
 Txt_WBIII_02
         fcc   "02 - The Last Dungeon"
         fcb   $D,$A,0
@@ -476,13 +508,81 @@ Txt_WBMW_13
         fcc   "13 - Inside Pyramid Stage"
         fcb   $D,$A,0
 Txt_WBMW_14
-        fcc   "14 - Boss Stage"
-        fcb   $D,$A,0
-Txt_WBMW_15
         fcc   "15 - Ending"
         fcb   $D,$A,0
-Txt_WBMW_17
-        fcc   "17 - The Last Dungeon Remix (unused)"
+
+; -------------------------------------
+
+Txt_Aladdin
+        fcc   "Aladdin"
+        fcb   $D,$A,0
+
+Txt_Aladdin_01
+        fcc   "01 - Arabian Nights"
+        fcb   $D,$A,0
+Txt_Aladdin_02
+        fcc   "02 - One Jump Ahead "
+        fcb   $D,$A,0
+
+; -------------------------------------
+
+Txt_Alex
+        fcc   "Alex Kidd in Miracle World"
+        fcb   $D,$A,0
+
+Txt_Alex_01
+        fcc   "01 - Title Screen"
+        fcb   $D,$A,0
+Txt_Alex_02
+        fcc   "03 - Main Theme"
+        fcb   $D,$A,0
+Txt_Alex_03
+        fcc   "04 - Underwater"
+        fcb   $D,$A,0
+
+; -------------------------------------
+
+Txt_Castle
+        fcc   "Castle of Illusion"
+        fcb   $D,$A,0
+
+Txt_Castle_01
+        fcc   "01 - Intro"
+        fcb   $D,$A,0
+Txt_Castle_02
+        fcc   "02 - Door Select"
+        fcb   $D,$A,0
+Txt_Castle_03
+        fcc   "03 - Enchanted Forest"
+        fcb   $D,$A,0
+Txt_Castle_04
+        fcc   "04 - Toyland"
+        fcb   $D,$A,0
+Txt_Castle_05
+        fcc   "05 - Dessert Factory"
+        fcb   $D,$A,0
+
+; -------------------------------------
+
+Txt_Chuck
+        fcc   "Chuck Rock"
+        fcb   $D,$A,0
+
+Txt_Chuck_01
+        fcc   "01 - Title Screen"
+        fcb   $D,$A,0
+
+; -------------------------------------
+
+Txt_Shadow
+        fcc   "Shadow of the Beast"
+        fcb   $D,$A,0
+
+Txt_Shadow_01
+        fcc   "01 - Intro"
+        fcb   $D,$A,0
+Txt_Shadow_02
+        fcc   "02 - Welcome"
         fcb   $D,$A,0
 
 ; -------------------------------------

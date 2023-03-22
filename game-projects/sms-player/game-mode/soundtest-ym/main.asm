@@ -11,6 +11,7 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./engine/system/to8/macros.asm"
 
         org   $6100
         jsr   InitGlobals
@@ -40,11 +41,6 @@ SOUND_CARD_PROTOTYPE equ 1
         sta   snd_tst_sel_game
         sta   snd_tst_new_game
 
-        ldx   #Snd_YM01
-        ldb   #1 ; 0=no loop 1=loop
-        ldy   #0 ; pas de callback
-        jsr   YVGM_PlayMusic
-
 * user irq
         jsr   IrqInit
         ldd   #UserIRQ
@@ -63,6 +59,9 @@ LevelMainLoop
         jsr   ReadJoypads  
         jsr   ReadKeyboard 
         jsr   MapKeyboardToJoypads
+        jsr   CheckPause
+        jsr   CheckReset
+        jsr   CheckReturnToMenu
 
         _MountObject ObjID_mask
         jsr   ,x
@@ -83,6 +82,23 @@ UserIRQ
 	jsr   YVGM_MusicFrame
         rts
 
+CallbackRoutine
+        dec   YVGM_loop
+        beq   @nextsong
+        lda   #1
+        sta   YVGM_WaitFrame
+        ldx   YVGM_MusicData
+        ldu   #YM2413_buffer
+        stu   YVGM_MusicDataPos
+        jsr   ym2413zx0_decompress    
+        jmp   YVGM_MusicFrame  
+@nextsong 
+        ldb   #c1_button_right_mask
+        stb   Dpad_Press
+        ldb   #c1_button_A_mask
+        stb   Fire_Press
+        rts   
+
 * ---------------------------------------------------------------------------
 * Game Mode RAM variables
 * ---------------------------------------------------------------------------
@@ -92,7 +108,8 @@ UserIRQ
 * ==============================================================================
 * Routines
 * ==============================================================================
-       
+        INCLUDE "./engine/level-management/LoadGameMode.asm"      
+
         ; basic object management
         INCLUDE "./engine/object-management/RunObjects.asm"
 
@@ -120,14 +137,51 @@ UserIRQ
         ; ymm player
         INCLUDE "./engine/sound/YM2413vgm.asm"
 
-* reserve space for the vgm decode buffers (8x256 = 2Kb)
-        ALIGN 256
-vgc_stream_buffers
-        fill 0,256
-        fill 0,256
-        fill 0,256
-        fill 0,256
-        fill 0,256
-        fill 0,256
-        fill 0,256
-        fill 0,256
+* ==============================================================================
+* Key Checks
+* ==============================================================================
+
+CheckPause
+        lda   Key_Press
+        cmpa  #80
+        beq   >
+        cmpa  #112
+        beq   >
+        rts
+!       lda   @pause_state
+        bne   @unpause
+        com   @pause_state
+        jsr   IrqPause
+        jmp   YVGM_SilenceAll
+@unpause
+        com   @pause_state
+        jmp   IrqUnpause
+@pause_state
+        fcb   0
+
+CheckReset
+        lda   Key_Press
+        cmpa  #81
+        beq   >
+        cmpa  #113
+        beq   >
+        rts
+!       _system.reboot
+
+CheckReturnToMenu
+        lda   Key_Press
+        cmpa  #30
+        beq   >
+        rts
+!       jsr   IrqOff
+        jsr   YVGM_SilenceAll
+        ldd   #Pal_black
+        std   Pal_current
+        clr   PalRefresh
+	jsr   PalUpdateNow
+        lda   #GmID_menu
+        sta   GameMode
+        ldb   #GmID_ymplayer
+        stb   glb_Cur_Game_Mode
+        jsr   LoadGameModeNow 
+        rts
