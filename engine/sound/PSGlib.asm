@@ -317,10 +317,16 @@ PSGSetMusicVolumeAttenuation_end
 PSGSilenceChannels 
         lda   #PSGLatch|PSGChannel0|PSGVolumeData|$0F ; latch channel 0, volume=0xF (silent)
         sta   SN76489.D
+        nop
+        nop
         lda   #PSGLatch|PSGChannel1|PSGVolumeData|$0F ; latch channel 1, volume=0xF (silent)
         sta   SN76489.D
+        nop
+        nop
         lda   #PSGLatch|PSGChannel2|PSGVolumeData|$0F ; latch channel 2, volume=0xF (silent)
         sta   SN76489.D
+        nop
+        nop
         lda   #PSGLatch|PSGChannel3|PSGVolumeData|$0F ; latch channel 3, volume=0xF (silent)
         sta   SN76489.D
         rts

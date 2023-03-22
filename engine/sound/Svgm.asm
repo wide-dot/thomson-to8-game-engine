@@ -117,10 +117,16 @@ YM2413
 PSGSilenceAll
         lda   #$9F
         sta   SN76489.D
+        nop
+        nop
         lda   #$BF
         sta   SN76489.D       
+        nop
+        nop
         lda   #$DF
         sta   SN76489.D
+        nop
+        nop
         lda   #$FF
         sta   SN76489.D                               
         rts  
