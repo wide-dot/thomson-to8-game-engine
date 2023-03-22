@@ -37,7 +37,21 @@ IsThisTheEnd
         _breakpoint
         ldu   ,y++
         bne   WasNotTheEnd
+	lda   #0
+@Initlevel    equ *-1
+	beq   @createpushbutton
 LiveEnd
+	rts
+@createpushbutton
+        jsr   LoadObject_x		; Logo R
+        lda   #ObjID_push_button
+        sta   id,x
+	ldd   #112
+	std   x_pos,x
+	ldd   #62
+	std   y_pos,x
+	lda   #1
+	sta   @Initlevel
 	rts
 
 allstrings 
