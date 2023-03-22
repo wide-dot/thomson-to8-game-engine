@@ -26,13 +26,11 @@ viewport_height equ 180
         ;clr   PalRefresh
         ;jsr   PalUpdateNow
 
-
 	; play music
         _MountObject ObjID_ymm
         _MusicInit_objymm #0,#MUSIC_LOOP,#0
         _MountObject ObjID_vgc
         _MusicInit_objvgc #0,#MUSIC_LOOP,#0
-
 
 ; init user irq
 
@@ -264,6 +262,7 @@ Phase4Live
 * ---------------------------------------------------------------------------
 
 Phase5Init
+
 	ldu   #addr_logo
 	lda   #6
 	sta   @phase5initloopnum
