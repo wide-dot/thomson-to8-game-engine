@@ -3,12 +3,13 @@ SoundTest
         ldb   snd_tst_new_song
         cmpb  snd_tst_cur_song
         beq   @rts
+        jsr   IrqUnpause
         stb   snd_tst_cur_song
         ldy   #MusicList
         aslb
         ldx   b,y
-        ldb   #1 ; 0=no loop 1=loop
-        ldy   #0 ; pas de callback
+        ldb   #2 ; 0=no loop
+        ldy   #CallbackRoutine
         jsr   YVGM_PlayMusic 
 @rts    rts
 
