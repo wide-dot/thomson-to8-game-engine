@@ -260,7 +260,7 @@ empty_tile_loop
 scroll_ml_step2 equ *-2
         deca
         beq   scroll_end_line          ; if no more tiles in line, branch
-        ldb   1,u                      ; process next tile
+        ldb   ,u                       ; process next tile
         beq   >                        ; branch if tile is empty
         sta   scroll_lcnt              ; else render tile
         bra   scroll_lloop
