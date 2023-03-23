@@ -27,10 +27,10 @@ viewport_height equ 180
         ;jsr   PalUpdateNow
 
 	; play music
-        _MountObject ObjID_ymm
-        _MusicInit_objymm #0,#MUSIC_LOOP,#0
-        _MountObject ObjID_vgc
-        _MusicInit_objvgc #0,#MUSIC_LOOP,#0
+        ;_MountObject ObjID_ymm
+        ;_MusicInit_objymm #0,#MUSIC_LOOP,#0
+        ;_MountObject ObjID_vgc
+        ;_MusicInit_objvgc #0,#MUSIC_LOOP,#0
 
 ; init user irq
 
@@ -258,7 +258,7 @@ Phase4Live
 
 
 * ---------------------------------------------------------------------------
-* PHASE 5 : Stop the logo and TM
+* PHASE 5 : Stop the logo and TM. display the text
 * ---------------------------------------------------------------------------
 
 Phase5Init
@@ -288,8 +288,21 @@ Phase5InitLoop
 
 ; MUSIC STARTS HERE
 
+        jsr   IrqOff
+	; play music
+        _MountObject ObjID_ymm
+        _MusicInit_objymm #0,#MUSIC_LOOP,#0
+        _MountObject ObjID_vgc
+        _MusicInit_objvgc #0,#MUSIC_LOOP,#0
+        jsr   IrqOn
+
 
 Phase5Live
+
+        _MountObject ObjID_text
+        lda   ,x                        ; Test if type writer is done
+        cmpa  #$39                      ; Op code for RTS
+        beq   Phase6Live
         jsr   WaitVBL
         jsr   ReadJoypads
         jsr   RunObjects
@@ -299,6 +312,38 @@ Phase5Live
         jsr   DrawSprites
         jmp   Phase5Live
 
+
+* ---------------------------------------------------------------------------
+* PHASE 6 : Check for fire button
+* ---------------------------------------------------------------------------
+
+Phase6Live
+
+        ; press fire
+        lda   Fire_Press
+        anda  #c1_button_A_mask
+        bne   Phase7Live
+        jsr   WaitVBL
+        jsr   ReadJoypads
+        jsr   RunObjects
+        jsr   CheckSpritesRefresh
+        jsr   EraseSprites
+        jsr   UnsetDisplayPriority
+        jsr   DrawSprites
+        jmp   Phase6Live
+
+* ---------------------------------------------------------------------------
+* PHASE 7 : Launch Level 1
+* ---------------------------------------------------------------------------
+
+Phase7Live              
+        jsr   IrqOff
+        ;jsr   sn_reset
+        ;jsr   YVGM_SilenceAll 
+        lda   #GmID_level01
+        sta   GameMode
+        jsr   LoadGameModeNow
+        rts
 
 
 addr_logo	fdb 0     * R
@@ -428,3 +473,5 @@ Palette_FadeCallback
 
         ; should be at the end of includes (ifdef dependencies)
         INCLUDE "./engine/InitGlobals.asm"
+
+        INCLUDE "./engine/level-management/LoadGameMode.asm"
