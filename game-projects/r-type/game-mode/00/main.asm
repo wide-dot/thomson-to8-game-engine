@@ -43,6 +43,9 @@ viewport_height equ 180
         jsr   IrqSync
         jsr   IrqOn 
 
+        lda   #GmID_title
+        sta   glb_Cur_Game_Mode
+
 
 
 	ldu   #addr_logo
@@ -258,7 +261,7 @@ Phase4Live
 
 
 * ---------------------------------------------------------------------------
-* PHASE 5 : Stop the logo and TM. display the text
+* PHASE 5 : Stop the logo and TM. start the music and display the text
 * ---------------------------------------------------------------------------
 
 Phase5Init
@@ -285,16 +288,10 @@ Phase5InitLoop
         lda   #ObjID_text
         sta   id,x
 
-
-; MUSIC STARTS HERE
-
-        jsr   IrqOff
-	; play music
-        _MountObject ObjID_ymm
-        _MusicInit_objymm #0,#MUSIC_LOOP,#0
-        _MountObject ObjID_vgc
-        _MusicInit_objvgc #0,#MUSIC_LOOP,#0
-        jsr   IrqOn
+        ;_MountObject ObjID_ymm
+        ;_MusicInit_objymm #0,#MUSIC_LOOP,#0
+        ;_MountObject ObjID_vgc
+        ;_MusicInit_objvgc #0,#MUSIC_LOOP,#0
 
 
 Phase5Live
@@ -322,7 +319,7 @@ Phase6Live
         ; press fire
         lda   Fire_Press
         anda  #c1_button_A_mask
-        bne   Phase7Live
+        bne   Phase7Init
         jsr   WaitVBL
         jsr   ReadJoypads
         jsr   RunObjects
@@ -335,15 +332,20 @@ Phase6Live
 * ---------------------------------------------------------------------------
 * PHASE 7 : Launch Level 1
 * ---------------------------------------------------------------------------
+Phase7Init
+        ldd   #Pal_black
+        std   Pal_current
+        clr   PalRefresh
+        jsr   PalUpdateNow
 
-Phase7Live              
-        jsr   IrqOff
+        jsr   IrqOff                   ; yes, let's rock 'n roll ! 
         ;jsr   sn_reset
         ;jsr   YVGM_SilenceAll 
         lda   #GmID_level01
         sta   GameMode
         jsr   LoadGameModeNow
-        rts
+
+
 
 
 addr_logo	fdb 0     * R
@@ -377,6 +379,7 @@ logo_finalpos	fdb 32
 		fdb 134
 
 
+
 * ---------------------------------------------------------------------------
 * MAIN IRQ
 * ---------------------------------------------------------------------------
@@ -390,49 +393,6 @@ UserIRQ
         rts
 
 
-* ---------------------------------------------------------------------------
-* Palette_FadeIn
-*
-* ---------------------------------------------------------------------------
-
-Palette_FadeIn
-        ldu   #palettefade
-        clr   routine,u
-        ldd   Pal_current
-        std   o_fade_src,u
-        ldd   #Pal_game
-        std   o_fade_dst,u
-        lda   #6
-        sta   o_fade_wait,u
-        ldd   #Palette_FadeCallback
-        std   o_fade_callback,u
-        rts
-
-* ---------------------------------------------------------------------------
-* Palette_FadeOut
-*
-* ---------------------------------------------------------------------------
-
-Palette_FadeOut
-        ldu   #palettefade
-        clr   routine,u
-        ldd   Pal_current
-        std   o_fade_src,u
-        ldd   #Pal_black
-        std   o_fade_dst,u
-        lda   #0
-        sta   o_fade_wait,u
-        ldd   #Palette_FadeCallback
-        std   o_fade_callback,u
-        rts
-
-* ---------------------------------------------------------------------------
-* Palette_FadeCallback
-*
-* ---------------------------------------------------------------------------
-
-Palette_FadeCallback
-        rts
 
 * ---------------------------------------------------------------------------
 * Game Mode RAM variables
