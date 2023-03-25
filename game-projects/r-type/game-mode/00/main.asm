@@ -279,9 +279,9 @@ Phase5InitLoop
         sta   id,x
 
         jsr   IrqOff
-        _MountObject ObjID_ymm
+        _MountObject ObjID_ymm00
         _MusicInit_objymm #0,#MUSIC_LOOP,#0
-        _MountObject ObjID_vgc
+        _MountObject ObjID_vgc00
         _MusicInit_objvgc #0,#MUSIC_LOOP,#0
         jsr   IrqOn
 
@@ -412,9 +412,9 @@ resetym
 
 UserIRQ
 	jsr   PalUpdateNow
-        _MountObject ObjID_ymm
+        _MountObject ObjID_ymm00
         _MusicFrame_objymm
-        _MountObject ObjID_vgc
+        _MountObject ObjID_vgc00
         _MusicFrame_objvgc
         rts
 
