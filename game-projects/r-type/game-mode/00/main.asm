@@ -21,16 +21,6 @@ viewport_height equ 180
         jsr   InitJoypads
 
         jsr   WaitVBL
-        ;ldd   #Pal_game
-        ;std   Pal_current
-        ;clr   PalRefresh
-        ;jsr   PalUpdateNow
-
-	; play music
-        ;_MountObject ObjID_ymm
-        ;_MusicInit_objymm #0,#MUSIC_LOOP,#0
-        ;_MountObject ObjID_vgc
-        ;_MusicInit_objvgc #0,#MUSIC_LOOP,#0
 
 ; init user irq
 
@@ -288,10 +278,12 @@ Phase5InitLoop
         lda   #ObjID_text
         sta   id,x
 
-        ;_MountObject ObjID_ymm
-        ;_MusicInit_objymm #0,#MUSIC_LOOP,#0
-        ;_MountObject ObjID_vgc
-        ;_MusicInit_objvgc #0,#MUSIC_LOOP,#0
+        jsr   IrqOff
+        _MountObject ObjID_ymm
+        _MusicInit_objymm #0,#MUSIC_LOOP,#0
+        _MountObject ObjID_vgc
+        _MusicInit_objvgc #0,#MUSIC_LOOP,#0
+        jsr   IrqOn
 
 
 Phase5Live
@@ -338,14 +330,12 @@ Phase7Init
         clr   PalRefresh
         jsr   PalUpdateNow
 
-        jsr   IrqOff                   ; yes, let's rock 'n roll ! 
-        ;jsr   sn_reset
-        ;jsr   YVGM_SilenceAll 
+        jsr   IrqOff                    
+        jsr   resetsn
+        jsr   resetym
         lda   #GmID_level01
         sta   GameMode
         jsr   LoadGameModeNow
-
-
 
 
 addr_logo	fdb 0     * R
@@ -379,6 +369,42 @@ logo_finalpos	fdb 32
 		fdb 134
 
 
+* ---------------------------------------------------------------------------
+* MUSIC - RESET SN
+* ---------------------------------------------------------------------------
+
+resetsn
+        lda   #$9F
+        sta   SN76489.D
+        lda   #$BF
+        sta   SN76489.D
+        lda   #$DF
+        sta   SN76489.D
+        lda   #$FF
+        sta   SN76489.D  
+        rts
+
+* ---------------------------------------------------------------------------
+* MUSIC - RESET YM
+* ---------------------------------------------------------------------------
+
+resetym
+        ldd   #$200E
+        stb   YM2413.A
+        nop                            ; (wait of 2 cycles)
+        ldb   #0                       ; (wait of 2 cycles)
+        sta   YM2413.D                 ; note off for all drums     
+        lda   #$20                     ; (wait of 2 cycles)
+        brn   *                        ; (wait of 3 cycles)
+@c      exg   a,b                      ; (wait of 8 cycles)                                      
+        exg   a,b                      ; (wait of 8 cycles)                                      
+        sta   YM2413.A
+        nop
+        inca
+        stb   YM2413.D
+        cmpa  #$29                     ; (wait of 2 cycles)
+        bne   @c                       ; (wait of 3 cycles)
+        rts
 
 * ---------------------------------------------------------------------------
 * MAIN IRQ
@@ -421,7 +447,6 @@ UserIRQ
         INCLUDE "./engine/object-management/RunObjects.asm"
         INCLUDE "./engine/object-management/ObjectMove.asm"
         INCLUDE "./engine/object-management/ObjectMoveSync.asm"
-        INCLUDE "./engine/object-management/ObjectWave-subtype.asm"
         INCLUDE "./engine/object-management/ObjectDp.asm"
 
         ; animation & image
@@ -435,3 +460,4 @@ UserIRQ
         INCLUDE "./engine/InitGlobals.asm"
 
         INCLUDE "./engine/level-management/LoadGameMode.asm"
+
