@@ -8,6 +8,18 @@ DEBUG EQU 1
         opt cd
 
 
+; DEV SCROLL BUFFER
+_mountScrollBuffer MACRO
+       ldb   VS_ObjID\1
+       ldx   #Obj_Index_Page
+       lda   b,x   
+       _SetCartPageA
+       aslb
+       ldx   #Obj_Index_Address
+       ldx   b,x                      ; set buffer code address in x
+       ENDM   
+
+
 * ============================================================================== 
 * Init
 * ============================================================================== 
@@ -31,14 +43,19 @@ DEBUG EQU 1
         lda   #ObjID_scrollB
         sta   VS_ObjIDB
 
-        lda   #2
+        lda   #1
         sta   VS_scroll_step
 
-        lda   #0
+        lda   #10
         sta   VS_viewport_line_pos
-        lda   #190
+        lda   #120
         sta   VS_viewport_size
         jsr   VerticalScrollUpdateViewport
+
+        _mountScrollBuffer A ; X points to the address of the Scroll Buffer A
+        jsr InitScrollBuffer
+        _mountScrollBuffer B ; X points to the address of the Scroll Buffer B
+        jsr InitScrollBuffer
 
 * ============================================================================== * Main Loop
 * ==============================================================================
@@ -55,6 +72,81 @@ UserIRQ
         jsr   PalUpdateNow
         jsr   YVGM_MusicFrame
         jmp   vgc_update
+
+ 
+
+ScrollChunk_Start
+       LDD #$0000
+       LDX #$0000
+       LDY #$0000
+       LDU #$0000
+       PSHS D,X,Y,U
+ScrollChunk_End
+
+currentColor FCB $0F
+
+UpdateScrollChunkColor
+       _breakpoint
+       PSHS D,X
+       LDU #ScrollChunk_Start
+       LDA currentColor
+       LSLA
+       LSLA
+       LSLA
+       LSLA
+       ORA currentColor
+       TFR A,B
+       STD 1,U  ; offset 1
+       STD 4,U  ; offset 4
+       STD 8,U  ; offset 8
+       STD 11,U ; offset 11
+       DEC currentColor
+       BNE @exit
+       LDA #$0F
+       STA currentColor
+@exit  PULS D,X
+       RTS
+
+ 
+
+WriteScrollChunk ; X contains the address to write the scroll chunk
+       LDU #ScrollChunk_Start ; U will iterate over the scroll chunk data
+@loop     
+       LDA ,U+                  ; loading byte         
+       STA ,X+                  ; storing A
+       CMPU #ScrollChunk_End
+       BNE @loop                ; end of the scroll chunk is not reached
+       RTS
+
+WriteScrollLine ; X contains the address to write the scroll chunk
+      JSR UpdateScrollChunkColor
+      LDB #5    ; 5 scroll chunks in a ligne
+
+@loop JSR WriteScrollChunk
+      DECB
+      BNE @loop        
+      RTS
+
+InitScrollBuffer
+      _breakpoint
+      LDA #$0F
+      STA currentColor
+      LDY #VS_buffer_size
+@loop
+      JSR WriteScrollLine
+      LEAY -1,Y
+      BNE @loop
+      LDA #$7E
+      STA ,X+
+      LDD #$0000
+      STD ,X
+      _breakpoint
+      RTS
+
+
+
+     
+                  
 
 * ---------------------------------------------------------------------------
 * Game Mode RAM variables

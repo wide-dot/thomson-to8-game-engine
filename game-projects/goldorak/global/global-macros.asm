@@ -115,6 +115,6 @@ _system.reboot MACRO
         std $60FE
         lda #$40     ; boot signature part 2
         sta $605F
-        com $60D1    ; changing boot signature, to avoid booting to basic after a first boot to disk
+        com $60D1    ; changing boot signature, to avoid booting to basic after a first boot from disk
         jmp [$FFFE]
         ENDM
