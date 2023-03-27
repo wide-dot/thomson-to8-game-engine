@@ -317,8 +317,8 @@ CSR_CheckPosition
         bhi   CSR_SetOutOfRange
         cmpb  #screen_left
         blo   CSR_SetOutOfRange
-        incb
         andb  #%11111110                    ; upper round for background save (byte step)
+        incb
         stb   rsv_x2_pixel,u
         cmpb  rsv_x1_pixel,u                ; check wrapping
         blo   CSR_SetOutOfRange 
@@ -334,8 +334,8 @@ CSR_DontCheckXFrontier
         
         ldy   image_set,u
         addb  image_x_size,y
-        incb
         andb  #%11111110                    ; upper round for background save (byte step)
+        incb
         stb   rsv_x2_pixel,u
 
 CSR_DontCheckXFrontier_end        
