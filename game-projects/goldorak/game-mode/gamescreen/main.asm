@@ -132,6 +132,7 @@ InitScrollBuffer
       LDA #$0F
       STA currentColor
       LDY #VS_buffer_size
+      STX buffer_loop_addr
 @loop
       JSR WriteScrollLine
       LEAY -1,Y
@@ -139,6 +140,7 @@ InitScrollBuffer
       LDA #$7E
       STA ,X+
       LDD #$0000
+buffer_loop_addr EQU *-2      
       STD ,X
       _breakpoint
       RTS
