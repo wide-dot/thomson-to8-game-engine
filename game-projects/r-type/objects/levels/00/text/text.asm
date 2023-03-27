@@ -14,6 +14,7 @@ Object
 	nop                ; DO NOT MODIFY THIS LINE OR ADD ANY LINE BEFORE
 			   ; THERE IS A DEPENDENCY THAT WILL BE REWRTTENT
 			   ; INTO A RTS WHEN THIS OBJECT IS DONE DOING ITS JOB
+	stu   @savedu
         ldy   #allstrings
         ldu   ,y++
         ldx   #letter_addr
@@ -48,7 +49,9 @@ IsThisTheEnd
 	std   y_pos,x
 	lda   #$39			; Op-code for RTS
 	sta   Object
-	rts
+	ldu   #0
+@savedu equ *-2
+	jmp   DeleteObject
 LiveEnd
 	rts
 @createpushbutton
