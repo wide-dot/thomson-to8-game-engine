@@ -12,7 +12,7 @@ _MusicInit_objymm MACRO
         lda   \1
         ldy   \3
         ldb   \2 ; should be placed just before the jsr
-        jsr   ,x 
+        jsr   ,x
         ENDM
 
 _MusicFrame_objvgc MACRO

@@ -21,16 +21,6 @@ viewport_height equ 180
         jsr   InitJoypads
 
         jsr   WaitVBL
-        ;ldd   #Pal_game
-        ;std   Pal_current
-        ;clr   PalRefresh
-        ;jsr   PalUpdateNow
-
-	; play music
-        _MountObject ObjID_ymm
-        _MusicInit_objymm #0,#MUSIC_LOOP,#0
-        _MountObject ObjID_vgc
-        _MusicInit_objvgc #0,#MUSIC_LOOP,#0
 
 ; init user irq
 
@@ -42,6 +32,9 @@ viewport_height equ 180
         ldx   #Irq_one_frame
         jsr   IrqSync
         jsr   IrqOn 
+
+        lda   #GmID_title
+        sta   glb_Cur_Game_Mode
 
 
 
@@ -258,7 +251,7 @@ Phase4Live
 
 
 * ---------------------------------------------------------------------------
-* PHASE 5 : Stop the logo and TM
+* PHASE 5 : Stop the logo and TM. start the music and display the text
 * ---------------------------------------------------------------------------
 
 Phase5Init
@@ -285,11 +278,20 @@ Phase5InitLoop
         lda   #ObjID_text
         sta   id,x
 
-
-; MUSIC STARTS HERE
+        jsr   IrqOff
+        _MountObject ObjID_ymm00
+        _MusicInit_objymm #0,#MUSIC_LOOP,#0
+        _MountObject ObjID_vgc00
+        _MusicInit_objvgc #0,#MUSIC_LOOP,#0
+        jsr   IrqOn
 
 
 Phase5Live
+
+        _MountObject ObjID_text
+        lda   ,x                        ; Test if type writer is done
+        cmpa  #$39                      ; Op code for RTS
+        beq   Phase6Live
         jsr   WaitVBL
         jsr   ReadJoypads
         jsr   RunObjects
@@ -299,6 +301,41 @@ Phase5Live
         jsr   DrawSprites
         jmp   Phase5Live
 
+
+* ---------------------------------------------------------------------------
+* PHASE 6 : Check for fire button
+* ---------------------------------------------------------------------------
+
+Phase6Live
+
+        ; press fire
+        lda   Fire_Press
+        anda  #c1_button_A_mask
+        bne   Phase7Init
+        jsr   WaitVBL
+        jsr   ReadJoypads
+        jsr   RunObjects
+        jsr   CheckSpritesRefresh
+        jsr   EraseSprites
+        jsr   UnsetDisplayPriority
+        jsr   DrawSprites
+        jmp   Phase6Live
+
+* ---------------------------------------------------------------------------
+* PHASE 7 : Launch Level 1
+* ---------------------------------------------------------------------------
+Phase7Init
+        ldd   #Pal_black
+        std   Pal_current
+        clr   PalRefresh
+        jsr   PalUpdateNow
+
+        jsr   IrqOff                    
+        jsr   resetsn
+        jsr   resetym
+        lda   #GmID_level01
+        sta   GameMode
+        jsr   LoadGameModeNow
 
 
 addr_logo	fdb 0     * R
@@ -333,61 +370,55 @@ logo_finalpos	fdb 32
 
 
 * ---------------------------------------------------------------------------
+* MUSIC - RESET SN
+* ---------------------------------------------------------------------------
+
+resetsn
+        lda   #$9F
+        sta   SN76489.D
+        lda   #$BF
+        sta   SN76489.D
+        lda   #$DF
+        sta   SN76489.D
+        lda   #$FF
+        sta   SN76489.D  
+        rts
+
+* ---------------------------------------------------------------------------
+* MUSIC - RESET YM
+* ---------------------------------------------------------------------------
+
+resetym
+        ldd   #$200E
+        stb   YM2413.A
+        nop                            ; (wait of 2 cycles)
+        ldb   #0                       ; (wait of 2 cycles)
+        sta   YM2413.D                 ; note off for all drums     
+        lda   #$20                     ; (wait of 2 cycles)
+        brn   *                        ; (wait of 3 cycles)
+@c      exg   a,b                      ; (wait of 8 cycles)                                      
+        exg   a,b                      ; (wait of 8 cycles)                                      
+        sta   YM2413.A
+        nop
+        inca
+        stb   YM2413.D
+        cmpa  #$29                     ; (wait of 2 cycles)
+        bne   @c                       ; (wait of 3 cycles)
+        rts
+
+* ---------------------------------------------------------------------------
 * MAIN IRQ
 * ---------------------------------------------------------------------------
 
 UserIRQ
 	jsr   PalUpdateNow
-        _MountObject ObjID_ymm
+        _MountObject ObjID_ymm00
         _MusicFrame_objymm
-        _MountObject ObjID_vgc
+        _MountObject ObjID_vgc00
         _MusicFrame_objvgc
         rts
 
 
-* ---------------------------------------------------------------------------
-* Palette_FadeIn
-*
-* ---------------------------------------------------------------------------
-
-Palette_FadeIn
-        ldu   #palettefade
-        clr   routine,u
-        ldd   Pal_current
-        std   o_fade_src,u
-        ldd   #Pal_game
-        std   o_fade_dst,u
-        lda   #6
-        sta   o_fade_wait,u
-        ldd   #Palette_FadeCallback
-        std   o_fade_callback,u
-        rts
-
-* ---------------------------------------------------------------------------
-* Palette_FadeOut
-*
-* ---------------------------------------------------------------------------
-
-Palette_FadeOut
-        ldu   #palettefade
-        clr   routine,u
-        ldd   Pal_current
-        std   o_fade_src,u
-        ldd   #Pal_black
-        std   o_fade_dst,u
-        lda   #0
-        sta   o_fade_wait,u
-        ldd   #Palette_FadeCallback
-        std   o_fade_callback,u
-        rts
-
-* ---------------------------------------------------------------------------
-* Palette_FadeCallback
-*
-* ---------------------------------------------------------------------------
-
-Palette_FadeCallback
-        rts
 
 * ---------------------------------------------------------------------------
 * Game Mode RAM variables
@@ -416,7 +447,6 @@ Palette_FadeCallback
         INCLUDE "./engine/object-management/RunObjects.asm"
         INCLUDE "./engine/object-management/ObjectMove.asm"
         INCLUDE "./engine/object-management/ObjectMoveSync.asm"
-        INCLUDE "./engine/object-management/ObjectWave-subtype.asm"
         INCLUDE "./engine/object-management/ObjectDp.asm"
 
         ; animation & image
@@ -428,3 +458,6 @@ Palette_FadeCallback
 
         ; should be at the end of includes (ifdef dependencies)
         INCLUDE "./engine/InitGlobals.asm"
+
+        INCLUDE "./engine/level-management/LoadGameMode.asm"
+
