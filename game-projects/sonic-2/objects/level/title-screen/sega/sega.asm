@@ -78,7 +78,7 @@ SEGA_Init
         sta   b_nbFrames,u
 
         * Init SEGA logo position
-        ldd   #$807F
+        ldd   #$7F7F
         std   xy_pixel,u
 
         * Disable background save
@@ -89,7 +89,7 @@ SEGA_Init
         * Init all sub objects
         stu   SEGA_Init_01+1
         _ldd  ObjID_SEGA,Sub_Trails
-        ldy   #$F080
+        ldy   #$F280
 
         jsr   LoadObject_x
         stx   Obj_Trails1
@@ -120,7 +120,7 @@ SEGA_Init
         stu   image_set,x
 
         _ldd  ObjID_SEGA,Sub_Sonic
-        ldy   #$F87B
+        ldy   #$FA7B
 
         jsr   LoadObject_x
         stx   Obj_Sonic1

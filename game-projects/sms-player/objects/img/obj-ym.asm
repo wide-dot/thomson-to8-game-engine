@@ -12,7 +12,7 @@ SoundTest
         lda   render_flags,u
         ora   #render_overlay_mask
         sta   render_flags,u
-        ldd   #$807F
+        ldd   #$7F7F
         std   xy_pixel,u
 
         lda   snd_tst_cur_game

@@ -18,7 +18,7 @@ Menu_Init1
         lda   render_flags,u
         ora   #render_overlay_mask
         sta   render_flags,u
-        ldd   #$807F
+        ldd   #$7F7F
         std   xy_pixel,u
         ldx   #Img_Back
         stx   image_set,u

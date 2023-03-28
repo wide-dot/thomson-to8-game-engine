@@ -29,3 +29,9 @@ Object_RAM_End
 
 ; ext_variables_size is for dynamic objects
 ext_variables_size            equ   26
+
+* ===========================================================================
+* Collision lists
+* ===========================================================================
+AABB_list_friend             fdb   0,0
+AABB_list_ennemy             fdb   0,0

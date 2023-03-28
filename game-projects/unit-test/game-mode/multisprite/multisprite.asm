@@ -7,12 +7,13 @@
 *
 ********************************************************************************
 OverlayMode equ 1
-
+        INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"        	
         org   $6100
 
         jsr   InitGlobals
+        jsr   InitStack        
         jsr   LoadAct       
         jsr   ReadJoypads
 
@@ -65,9 +66,11 @@ LevelMainLoop
         jsr   WaitVBL    
         jsr   PalUpdateNow
 
-        lda   $E7C8 ; lecture d'une touche clavier
-        lsra
-        bcc    >
+        jsr   KTST
+        bcc   >
+        jsr   GETC
+        cmpb  #$41 ; touche A
+        bne   >
         lda   #GmID_collision
         sta   GameMode
         jsr   LoadGameModeNow

@@ -6,6 +6,7 @@
 *
 *
 ********************************************************************************
+        INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"        	
         org   $6100
@@ -42,6 +43,9 @@
         bra   @loop
 !
 
+        lda   #GmID_renderb
+        sta   glb_Cur_Game_Mode
+
 * ==============================================================================
 * Main Loop
 * ==============================================================================
@@ -49,6 +53,17 @@ LevelMainLoop
         jsr   WaitVBL    
         jsr   PalUpdateNow
         jsr   ReadJoypads
+
+        jsr   KTST
+        bcc   >
+        jsr   GETC
+        cmpb  #$41 ; touche A
+        bne   >
+        lda   #GmID_atan2
+        sta   GameMode
+        jsr   LoadGameModeNow
+!
+
         jsr   RunObjects
         jsr   CheckSpritesRefresh
         jsr   EraseSprites
@@ -82,3 +97,4 @@ obj_subtype
         INCLUDE "./engine/object-management/RunPgSubRoutine.asm"
         INCLUDE "./engine/joypad/ReadJoypads.asm"
 	INCLUDE "./engine/palette/PalUpdateNow.asm"
+        INCLUDE "./engine/level-management/LoadGameMode.asm"

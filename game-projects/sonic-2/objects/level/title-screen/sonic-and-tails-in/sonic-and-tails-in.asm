@@ -30,7 +30,7 @@ SATI_clearScreen
         ldd   #Img_SonicAndTailsIn
         std   image_set,u
         
-        ldd   #$807F
+        ldd   #$7F7F
         std   xy_pixel,u
         
         lda   render_flags,u

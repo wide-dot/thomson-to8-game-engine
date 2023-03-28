@@ -6,11 +6,13 @@
 *
 *
 ********************************************************************************
+        INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"        	
         org   $6100
 
         jsr   InitGlobals
+        jsr   InitStack        
         jsr   LoadAct       
         jsr   ReadJoypads
 
@@ -51,9 +53,11 @@ LevelMainLoop
         lda   #1
         sta   glb_force_sprite_refresh
 
-        lda   $E7C8 ; lecture d'une touche clavier
-        lsra
-        bcc    >
+        jsr   KTST
+        bcc   >
+        jsr   GETC
+        cmpb  #$41 ; touche A
+        bne   >
         lda   #GmID_multisprite
         sta   GameMode
         jsr   LoadGameModeNow

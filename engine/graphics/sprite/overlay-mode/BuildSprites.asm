@@ -103,7 +103,8 @@ BuildSprites
         sta   _x_size+1
         stb   _y_size+1
         ldb   image_center_offset,x
-        stb   _image_center_parity+1        ; store image center parity
+        sex
+        std   _image_center_parity          ; store image center parity
 ;
 ;       set the active image subset based on mirror flags
         lda   _render_flags
@@ -329,7 +330,8 @@ BuildSprites
         ldx   4,y ; get child imageset
         stx   _image_set
         ldb   image_center_offset,x
-        stb   _image_center_parity+1        ; store image center parity
+        sex
+        std   _image_center_parity          ; store image center parity
         ldb   ,x                            ; ND_ image
         leax  b,x                           ; read imageset index
         stx   _image_subset
