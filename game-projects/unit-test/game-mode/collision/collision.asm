@@ -6,11 +6,13 @@
 *
 *
 ********************************************************************************
+        INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"        	
         org   $6100
 
         jsr   InitGlobals
+        jsr   InitStack        
         jsr   LoadAct       
         jsr   ReadJoypads
 
@@ -63,15 +65,17 @@ LevelMainLoop
         lda   #1
         sta   glb_force_sprite_refresh
 
-        lda   $E7C8 ; lecture d'une touche clavier
-        lsra
-        bcc    >
-        lda   #GmID_atan2
+        jsr   KTST
+        bcc   >
+        jsr   GETC
+        cmpb  #$41 ; touche A
+        bne   >
+        lda   #GmID_renderb
         sta   GameMode
         jsr   LoadGameModeNow
 !
 
-        jsr   DoCollision
+        jsr   Collision_Do
 	jsr   EHZ_Back
         jsr   RunObjects
         jsr   CheckSpritesRefresh
@@ -96,7 +100,7 @@ EHZ_Back
 * Game Mode RAM variables
 * ---------------------------------------------------------------------------
         
-        INCLUDE "./game-mode/multisprite/ram-data.asm"       
+        INCLUDE "./game-mode/collision/ram-data.asm"       
         
 * ==============================================================================
 * Routines

@@ -23,6 +23,7 @@ OverlayMode equ 1
 
         ; init engine globals
         jsr   InitGlobals
+        jsr   InitStack        
         jsr   LoadAct    
         jsr   InitJoypads   
         jsr   ReadJoypads

@@ -42,6 +42,7 @@
         jsr   IrqSync
         jsr   IrqOn 
 
+        jsr   InitStack
         jsr   LoadAct     
 
         ; allocate objects

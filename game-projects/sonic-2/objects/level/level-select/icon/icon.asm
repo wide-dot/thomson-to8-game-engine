@@ -12,7 +12,7 @@ Icon_Routines
         fdb   Icon_Main
 
 Icon_Init    
-        ldd   #$807F
+        ldd   #$7F7F
         std   xy_pixel,u
         ldb   #1
         stb   priority,u  

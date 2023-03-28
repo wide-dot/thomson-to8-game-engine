@@ -17,7 +17,7 @@ LevelSelect_Routines
 LevelSelect_Init
         ldd   #Ani_Wings
         std   anim,u
-        ldd   #$807F
+        ldd   #$7F7F
         std   xy_pixel,u
         ldb   #1
         stb   priority,u  

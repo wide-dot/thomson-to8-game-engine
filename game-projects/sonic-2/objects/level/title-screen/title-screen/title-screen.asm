@@ -36,7 +36,7 @@
 ; x=((x-128)/2)+48
 ; y=y-140+28-1
 ;
-; center : #$807F
+; center : #$7F7F
 ; top left : #$301C
 ; bottom right : #$CFE3
 ;
@@ -679,7 +679,7 @@ EmblemFront_Init                                 *Obj0E_LogoTop_Init:
                                                  *+
         ldb   #$02
         stb   priority,u                         *        move.b  #2,priority(a0)
-        ldd   #$807F
+        ldd   #$7F7F
         std   xy_pixel,u                         *        move.w  #$120,x_pixel(a0)
                                                  *        move.w  #$E8,y_pixel(a0)
                                                  *
@@ -719,7 +719,7 @@ EmblemBack_Init
         sta   render_flags,u
         ldb   #$06
         stb   priority,u
-        ldd   #$807F
+        ldd   #$7F7F
         std   xy_pixel,u
         bra   TitleScreen_NextSubRoutineAndDisplay
 

@@ -39,6 +39,7 @@ OverlayMode equ 1
         jsr   IrqSync
         jsr   IrqOn 
 
+        jsr   InitStack
         jsr   LoadAct    
         jsr   InitJoypads   
         jsr   ReadJoypads

@@ -737,7 +737,7 @@ HalfPipe_Init
         ora   #render_overlay_mask
         sta   render_flags,u        
         
-        ldd   #$807F
+        ldd   #$7F7F
         cmpu  #HalfPipeEven
         beq   @a        
         incb                           ; +1 for odd line

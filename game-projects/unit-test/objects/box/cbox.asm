@@ -1,4 +1,5 @@
         INCLUDE "./engine/macros.asm" 
+        INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
 
 AABB_0  equ ext_variables ; AABB struct (9 bytes)
@@ -33,10 +34,10 @@ Obj01_Init2
         leax  AABB_0,u
         lda   subtype,u
         bne   >
-        jsr   AddPlayerAABB
+        _Collision_AddAABB AABB_0,AABB_list_friend
         inc   routine,u
         bra   @skip
-!       jsr   AddAiAABB
+!       _Collision_AddAABB AABB_0,AABB_list_ennemy
 @skip
         lda   #1
         sta   AABB.p,x
