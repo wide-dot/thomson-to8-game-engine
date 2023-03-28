@@ -149,6 +149,8 @@ InitScoreLoopRAMB
 LiveScoresInit
 	inc   routine,u
 	stu   @savedu
+	lda   #0
+	sta   @livescoresmainreportloop
 LiveScores
 	lda   #0
 	sta   @livescoresmainloop
