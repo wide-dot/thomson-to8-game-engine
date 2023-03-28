@@ -491,13 +491,13 @@ public class SpriteSheet {
 		// Correction positionnement sprite en fonction de la largeur d'image
 		center_offset = subImageWidth % 8;
 		switch (center_offset) {
-			case 0 : center_offset = 0; break;
-			case 1 : center_offset = 1; break;
+			case 0 : center_offset = -1; break;
+			case 1 : center_offset = 0; break;
 			case 2 : center_offset = 0; break;
 			case 3 : center_offset = 1; break;
-			case 4 : center_offset = 2; break;
+			case 4 : center_offset = 1; break;
 			case 5 : center_offset = 2; break;
-			case 6 : center_offset = 3; break;
+			case 6 : center_offset = 2; break;
 			case 7 : center_offset = 3; break;
 		}		
 		
@@ -558,7 +558,7 @@ public class SpriteSheet {
 					if (indexDest*2+page*2-(160*curLine) < x_Min) {
 						x_Min = indexDest*2+page*2-(160*curLine);
 						switch (locationRef) {
-							case CENTER   : x1_offset[position] = x_Min-(subImageWidth/2); break;
+							case CENTER   : x1_offset[position] = x_Min - ((subImageWidth-1)/2); break;
 							case TOP_LEFT : x1_offset[position] = 0; break;
 							case TILE8x16 : x1_offset[position] = 0; break;
 							case TILE16x16 : x1_offset[position] = 0; break;
@@ -617,7 +617,7 @@ public class SpriteSheet {
 						if (indexDest*2+page*2+1-(160*curLine) < x_Min) {
 							x_Min = indexDest*2+page*2+1-(160*curLine);
 							switch (locationRef) {
-								case CENTER   : x1_offset[position] = x_Min-(subImageWidth/2); break;
+								case CENTER   : x1_offset[position] = x_Min-((subImageWidth-1)/2); break;
 								case TOP_LEFT : x1_offset[position] = 0; break;
 								case TILE8x16 : x1_offset[position] = 0; break;
 								case TILE16x16 : x1_offset[position] = 0; break;

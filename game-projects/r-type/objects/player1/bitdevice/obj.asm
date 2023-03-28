@@ -97,8 +97,16 @@ Init
         inca   
         sta   player1+bitdevice
 Live
-        ldd   old_xpos2,u
+        ldd   glb_camera_x_pos
+        subd  glb_camera_x_pos_old
+        addd  old_xpos1,u
+        std  old_xpos1,u
+
+        ldd   glb_camera_x_pos
+        subd  glb_camera_x_pos_old
+        addd  old_xpos2,u
         std   x_pos,u
+
         subd  glb_camera_x_pos
         stb   AABB_0+AABB.cx,u
         ldd   old_ypos2,u
