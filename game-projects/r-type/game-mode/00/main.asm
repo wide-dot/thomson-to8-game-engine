@@ -7,6 +7,7 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/macros.asm"
         INCLUDE "./engine/objects/palette/fade/fade.equ"
         INCLUDE "./global/macro.asm"
+        INCLUDE "./global/variables.asm"
 
 viewport_width  equ 144
 viewport_height equ 180
@@ -38,38 +39,188 @@ viewport_height equ 180
 
 
 
+* ---------------------------------------------------------------------------
+* PHASE 0 : Init all objects
+* ---------------------------------------------------------------------------       
+* Logo letters
+* -------------------------
+
 	ldu   #addr_logo
 
         jsr   LoadObject_x		; Logo R
 	stx   ,u++
-        lda   #ObjID_logo_r
+        lda   #ObjID_logo
         sta   id,x
+        lda   #1
+        sta   subtype,x
 
         jsr   LoadObject_x		; Logo Dot
 	stx   ,u++
-        lda   #ObjID_logo_dot
+        lda   #ObjID_logo
         sta   id,x
+        lda   #2
+        sta   subtype,x
 
         jsr   LoadObject_x		; Logo T
 	stx   ,u++
-        lda   #ObjID_logo_t
+        lda   #ObjID_logo
         sta   id,x
+        lda   #3
+        sta   subtype,x
 
         jsr   LoadObject_x		; Logo Y
 	stx   ,u++
-        lda   #ObjID_logo_y
+        lda   #ObjID_logo
         sta   id,x
+        lda   #4
+        sta   subtype,x
 
         jsr   LoadObject_x		; Logo P
 	stx   ,u++
-        lda   #ObjID_logo_p
+        lda   #ObjID_logo
         sta   id,x
-
+        lda   #5
+        sta   subtype,x
 
         jsr   LoadObject_x		; Logo E
 	stx   ,u
-        lda   #ObjID_logo_e
+        lda   #ObjID_logo
         sta   id,x
+        lda   #6
+        sta   subtype,x
+
+* -------------------------
+* Text Object
+* -------------------------
+
+        _MountObject ObjID_text
+        lda   #$39
+        sta   ,x                        ; Reset the start of the TEXT object to RTS
+
+        jsr   LoadObject_x		; Text
+        stx   addr_text
+        lda   #ObjID_text
+        sta   id,x
+        ldd   #addr_scores
+        std   x_vel,x                   ; Hijacking unused x_vel to store the Score Numbers addr   
+        lda   #0                        ; = Slow text
+        sta   subtype,x
+
+
+* -------------------------
+* Score Number Objects
+* -------------------------
+
+        ldu   #addr_scores
+        jsr   LoadObject_x
+        stx   ,u++
+        lda   #ObjID_scores
+        sta   id,x
+        lda   #$80
+        sta   subtype,x
+        ldd   #45
+        std   x_pos,x
+        ldd   #35
+        std   y_pos,x
+
+        jsr   LoadObject_x
+        stx   ,u++
+        lda   #ObjID_scores
+        sta   id,x
+        lda   #$81
+        sta   subtype,x
+        ldd   #45
+        std   x_pos,x
+        ldd   #49
+        std   y_pos,x
+
+        jsr   LoadObject_x
+        stx   ,u++
+        lda   #ObjID_scores
+        sta   id,x
+        lda   #$82
+        sta   subtype,x
+        ldd   #45
+        std   x_pos,x
+        ldd   #63
+        std   y_pos,x
+
+        jsr   LoadObject_x
+        stx   ,u++
+        lda   #ObjID_scores
+        sta   id,x
+        lda   #$83
+        sta   subtype,x
+        ldd   #45
+        std   x_pos,x
+        ldd   #77
+        std   y_pos,x
+
+        jsr   LoadObject_x
+        stx   ,u++
+        lda   #ObjID_scores
+        sta   id,x
+        lda   #$84
+        sta   subtype,x
+        ldd   #45
+        std   x_pos,x
+        ldd   #91
+        std   y_pos,x
+
+        jsr   LoadObject_x
+        stx   ,u++
+        lda   #ObjID_scores
+        sta   id,x
+        lda   #$85
+        sta   subtype,x
+        ldd   #45
+        std   x_pos,x
+        ldd   #105
+        std   y_pos,x
+
+        jsr   LoadObject_x
+        stx   ,u++
+        lda   #ObjID_scores
+        sta   id,x
+        lda   #$86
+        sta   subtype,x
+        ldd   #45
+        std   x_pos,x
+        ldd   #119
+        std   y_pos,x
+
+        jsr   LoadObject_x
+        stx   ,u++
+        lda   #ObjID_scores
+        sta   id,x
+        lda   #$87
+        sta   subtype,x
+        ldd   #45
+        std   x_pos,x
+        ldd   #133
+        std   y_pos,x
+
+        jsr   LoadObject_x
+        stx   ,u++
+        lda   #ObjID_scores
+        sta   id,x
+        lda   #$88
+        sta   subtype,x
+        ldd   #45
+        std   x_pos,x
+        ldd   #147
+        std   y_pos,x
+
+        jsr   LoadObject_x
+        stx   ,u
+        lda   #ObjID_scores
+        sta   id,x
+        lda   #$89
+        sta   subtype,x
+        ldd   #45
+        std   x_pos,x
+        ldd   #161
+        std   y_pos,x
 
 * ---------------------------------------------------------------------------
 * PHASE 1 : Letters move from right to left
@@ -172,9 +323,10 @@ Phase3InitLoop
 
         jsr   LoadObject_x		; Logo TM
 	stx   addr_tm
-        lda   #ObjID_logo_tm
+        lda   #ObjID_logo
         sta   id,x
 	ldd   #0
+        sta   subtype,x
 	std   x_pos,x
 	std   y_pos,x
 	ldd   #690
@@ -274,9 +426,9 @@ Phase5InitLoop
 	ldd   #0
 	std   y_vel,x
 
-        jsr   LoadObject_x		; Text
-        lda   #ObjID_text
-        sta   id,x
+        _MountObject ObjID_text
+        lda   #$12
+        sta   ,x                        ; Reset the start of the TEXT object to NOP
 
         jsr   IrqOff
         _MountObject ObjID_ymm00
@@ -291,7 +443,7 @@ Phase5Live
         _MountObject ObjID_text
         lda   ,x                        ; Test if type writer is done
         cmpa  #$39                      ; Op code for RTS
-        beq   Phase6Live
+        beq   Phase6Init
         jsr   WaitVBL
         jsr   ReadJoypads
         jsr   RunObjects
@@ -303,15 +455,34 @@ Phase5Live
 
 
 * ---------------------------------------------------------------------------
-* PHASE 6 : Check for fire button
+* PHASE 6 : Starts "Push button" animation, Wait, and check for fire button
 * ---------------------------------------------------------------------------
 
+Phase6Init
+
+        jsr   LoadObject_x		; Animation for PUSH LIVE BUTTON
+        stx   addr_pushbutton
+        lda   #ObjID_push_button
+        sta   id,x
+	ldd   #112
+	std   x_pos,x
+	ldd   #62
+	std   y_pos,x
+
+
+        ldx   #$100
+        stx   @phase6counter
 Phase6Live
+        ldx   #0
+@phase6counter equ *-2
+        beq   Phase7Init   
+        leax  -1,x
+        stx   @phase6counter
 
         ; press fire
         lda   Fire_Press
         anda  #c1_button_A_mask
-        bne   Phase7Init
+        lbne  LaunchGame
         jsr   WaitVBL
         jsr   ReadJoypads
         jsr   RunObjects
@@ -322,9 +493,180 @@ Phase6Live
         jmp   Phase6Live
 
 * ---------------------------------------------------------------------------
-* PHASE 7 : Launch Level 1
+* PHASE 7 : Deactivate PUSH BUTTON and LOGO and run a couple of frames
 * ---------------------------------------------------------------------------
+
 Phase7Init
+
+        _MountObject ObjID_logo
+        lda   #$39
+        sta   ,x                        ; Reset the start of the LOGO object to RTS
+
+        _MountObject ObjID_push_button
+        lda   #$39
+        sta   ,x                        ; Reset the start of the PUSH BUTTON object to RTS
+
+        jsr   WaitVBL
+        jsr   ReadJoypads
+        jsr   RunObjects
+        jsr   CheckSpritesRefresh
+        jsr   EraseSprites
+        jsr   UnsetDisplayPriority
+        jsr   DrawSprites
+
+        jsr   WaitVBL
+        jsr   ReadJoypads
+        jsr   RunObjects
+        jsr   CheckSpritesRefresh
+        jsr   EraseSprites
+        jsr   UnsetDisplayPriority
+        jsr   DrawSprites
+
+
+
+* ---------------------------------------------------------------------------
+* PHASE 8 : Display scores
+* ---------------------------------------------------------------------------
+
+Phase8Init
+
+        jsr   WaitVBL
+        ldx   #0
+        jsr   ClearDataMem
+        jsr   WaitVBL
+        ldx   #0
+        jsr   ClearDataMem
+
+        ldd   #Pal_scores
+        std   Pal_current
+        clr   PalRefresh
+        jsr   PalUpdateNow
+
+        ldx   addr_text
+        lda   #0
+        sta   routine,x
+        lda   #2                        ; = Scores
+        sta   subtype,x
+        _MountObject ObjID_text
+        lda   #$12
+        sta   ,x                        ; Reset the start of the TEXT object to NOP
+
+        ldx   #$50
+        stx   @phase8counter
+Phase8Live
+        ldx   #0
+@phase8counter equ *-2
+        beq   Phase9Init   
+        leax  -1,x
+        stx   @phase8counter
+
+        ; press fire
+        lda   Fire_Press
+        anda  #c1_button_A_mask
+        lbne  LaunchGame
+
+        jsr   WaitVBL
+        jsr   ReadJoypads
+        jsr   RunObjects
+        jsr   CheckSpritesRefresh
+        jsr   EraseSprites
+        jsr   UnsetDisplayPriority
+        jsr   DrawSprites
+        jmp   Phase8Live
+
+* ---------------------------------------------------------------------------
+* PHASE 9 : Display logo and text (high speed)
+* ---------------------------------------------------------------------------
+
+Phase9Init
+        jsr   WaitVBL
+        ldx   #0
+        jsr   ClearDataMem
+        jsr   WaitVBL
+        ldx   #0
+        jsr   ClearDataMem
+
+        ldd   #Pal_game
+        std   Pal_current
+        clr   PalRefresh
+        jsr   PalUpdateNow
+
+
+	ldu   #addr_scores   
+        ldx   ,u++
+        lda   #$80
+	sta   subtype,x
+        ldx   ,u++
+        lda   #$81
+	sta   subtype,x
+        ldx   ,u++
+        lda   #$82
+	sta   subtype,x
+        ldx   ,u++
+        lda   #$83
+	sta   subtype,x
+        ldx   ,u++
+        lda   #$84
+	sta   subtype,x
+        ldx   ,u++
+        lda   #$85
+	sta   subtype,x
+        ldx   ,u++
+        lda   #$86
+	sta   subtype,x
+        ldx   ,u++
+        lda   #$87
+	sta   subtype,x
+        ldx   ,u++
+        lda   #$88
+	sta   subtype,x
+        ldx   ,u++
+        lda   #$89
+	sta   subtype,x
+
+        ldx   addr_text
+        lda   #0
+        sta   routine,x
+        lda   #1                        ; = Text fast
+        sta   subtype,x
+
+        _MountObject ObjID_logo
+        lda   #$A6
+        sta   ,x                        ; Reset the start of the LOGO object to LDA routine,u
+
+        _MountObject ObjID_push_button
+        lda   #$A6
+        sta   ,x                        ; Reset the start of the PUSH BUTTON object to LDA routine,u
+
+        ldx   #$100
+        stx   @phase9counter
+Phase9Live
+        ldx   #0
+@phase9counter equ *-2
+        lbeq  Phase7Init   
+        leax  -1,x
+        stx   @phase9counter
+
+        ; press fire
+        lda   Fire_Press
+        anda  #c1_button_A_mask
+        lbne  LaunchGame
+
+        jsr   WaitVBL
+        jsr   ReadJoypads
+        jsr   RunObjects
+        jsr   CheckSpritesRefresh
+        jsr   EraseSprites
+        jsr   UnsetDisplayPriority
+        jsr   DrawSprites
+        jmp   Phase9Live
+
+
+
+* ---------------------------------------------------------------------------
+* Launch Level 1
+* ---------------------------------------------------------------------------
+LaunchGame
         ldd   #Pal_black
         std   Pal_current
         clr   PalRefresh
@@ -333,7 +675,9 @@ Phase7Init
         jsr   IrqOff                    
         jsr   resetsn
         jsr   resetym
-        lda   #GmID_level01
+        lda   #GmID_title
+        sta   NEXT_GAME_MODE
+        lda   #GmID_loading
         sta   GameMode
         jsr   LoadGameModeNow
 
@@ -345,7 +689,22 @@ addr_logo	fdb 0     * R
 		fdb 0     * P
 		fdb 0     * E
 
+
+addr_scores     fdb 0     * 1
+                fdb 0     * 2
+                fdb 0     * 3
+                fdb 0     * 4
+                fdb 0     * 5
+                fdb 0     * 6
+                fdb 0     * 7
+                fdb 0     * 8
+                fdb 0     * 9
+                fdb 0     * 10
+
 addr_tm         fdb 0
+
+addr_pushbutton fdb 0
+addr_text       fdb 0
 
 logo_startx	fdb 150
 		fdb 146
