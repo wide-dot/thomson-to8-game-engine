@@ -8,7 +8,8 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/objects/palette/fade/fade.equ"
         INCLUDE "./global/macro.asm"
-
+        INCLUDE "./global/variables.asm"
+        
 map_width       equ 1598
 viewport_width  equ 144
 viewport_height equ 180

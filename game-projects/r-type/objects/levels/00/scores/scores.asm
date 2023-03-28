@@ -1,6 +1,6 @@
 
 ; ---------------------------------------------------------------------------
-; Object - Logo_R
+; Object - scores
 ;
 ; input REG : [u] pointer to Object Status Table (OST)
 ; ---------
@@ -8,7 +8,6 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
-
 
 Object
         lda   routine,u
@@ -20,16 +19,32 @@ Routines
         fdb   Init
         fdb   Live
 Init
-        ldd   #logo_tm
-        std   image_set,u
-        ldb   #4
-        stb   priority,u
+	lda   #4
+	sta   priority,u
+        lda   subtype,u
+        asla
+        ldx   #scoreimages
+        ldx   a,x
+	stx   image_set,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
         inc   routine,u
 Live
-	jsr   ObjectMoveSync
+	lda   subtype,u
+	anda  #$80
+	bne   >
         jmp   DisplaySprite
-AlreadyDeleted
+!
         rts
+
+scoreimages     fdb Img_number_01
+                fdb Img_number_02
+		fdb Img_number_03
+		fdb Img_number_04
+		fdb Img_number_05
+		fdb Img_number_06
+		fdb Img_number_07
+		fdb Img_number_08
+		fdb Img_number_09
+		fdb Img_number_10
