@@ -6,6 +6,8 @@
 
         opt   c,ct
 
+        INCLUDE "./engine/sound/ym2413.asm"
+
 YVGM_MusicPage       fcb   0                ; memory page of music data
 YVGM_MusicData       fdb   0                ; address of song data
 YVGM_MusicDataPos    fdb   0                ; current playing position in Music Data
@@ -41,7 +43,7 @@ YVGM_PlayMusic
         lda   #0
 @a      equ   *-1
         _SetCartPageA
-        jsr   YVGM_SilenceAll
+        jsr   ym2413.reset
         jmp   IrqUnpause
 
 ******************************************************************************
@@ -102,7 +104,7 @@ YVGM_do_MusicFrame
 @no_looping
         lda   #0
         sta   YVGM_MusicStatus
-        jsr   YVGM_SilenceAll
+        jsr   ym2413.reset
         rts
 @YM2413
         sta   <YM2413.A
@@ -114,27 +116,6 @@ YVGM_do_MusicFrame
         nop
         nop                            ; tempo (should be 24 cycles between two register writes)
         bra   @UpdateLoop
-******************************************************************************
-* FMSilenceAll
-* destroys A, B, Y
-******************************************************************************
-YVGM_SilenceAll
-        ldd   #$200E
-        stb   YM2413.A
-        nop                            ; (wait of 2 cycles)
-        ldb   #0                       ; (wait of 2 cycles)
-        sta   YM2413.D                ; note off for all drums     
-        lda   #$20                     ; (wait of 2 cycles)
-        brn   *                        ; (wait of 3 cycles)
-@c      exg   a,b                      ; (wait of 8 cycles)                                      
-        exg   a,b                      ; (wait of 8 cycles)                                      
-        sta   YM2413.A
-        nop
-        inca
-        stb   YM2413.D
-        cmpa  #$29                     ; (wait of 2 cycles)
-        bne   @c                       ; (wait of 3 cycles)
-        rts        
 
 ; @zx0_6809_mega.asm - ZX0 decompressor for M6809 - 189 bytes
 ; Written for the LWTOOLS assembler, http://www.lwtools.ca/.
