@@ -89,7 +89,7 @@ SEGA_Init
         * Init all sub objects
         stu   SEGA_Init_01+1
         _ldd  ObjID_SEGA,Sub_Trails
-        ldy   #$F280
+        ldy   #$EF80
 
         jsr   LoadObject_x
         stx   Obj_Trails1
@@ -120,7 +120,7 @@ SEGA_Init
         stu   image_set,x
 
         _ldd  ObjID_SEGA,Sub_Sonic
-        ldy   #$FA7B
+        ldy   #$F77B
 
         jsr   LoadObject_x
         stx   Obj_Sonic1
