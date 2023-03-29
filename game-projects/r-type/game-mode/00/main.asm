@@ -675,7 +675,7 @@ LaunchGame
         jsr   IrqOff                    
         jsr   resetsn
         jsr   resetym
-        lda   #GmID_title
+        lda   #GmID_level01
         sta   NEXT_GAME_MODE
         lda   #GmID_loading
         sta   GameMode
@@ -735,10 +735,16 @@ logo_finalpos	fdb 32
 resetsn
         lda   #$9F
         sta   SN76489.D
+        nop
+        nop
         lda   #$BF
-        sta   SN76489.D
+        sta   SN76489.D  
+        nop
+        nop
         lda   #$DF
         sta   SN76489.D
+        nop
+        nop
         lda   #$FF
         sta   SN76489.D  
         rts
@@ -752,17 +758,18 @@ resetym
         stb   YM2413.A
         nop                            ; (wait of 2 cycles)
         ldb   #0                       ; (wait of 2 cycles)
-        sta   YM2413.D                 ; note off for all drums     
+        sta   YM2413.D                ; note off for all drums     
+
         lda   #$20                     ; (wait of 2 cycles)
         brn   *                        ; (wait of 3 cycles)
-@c      exg   a,b                      ; (wait of 8 cycles)                                      
+@a      exg   a,b                      ; (wait of 8 cycles)                                      
         exg   a,b                      ; (wait of 8 cycles)                                      
         sta   YM2413.A
         nop
         inca
         stb   YM2413.D
         cmpa  #$29                     ; (wait of 2 cycles)
-        bne   @c                       ; (wait of 3 cycles)
+        bne   @a                       ; (wait of 3 cycles)
         rts
 
 * ---------------------------------------------------------------------------
