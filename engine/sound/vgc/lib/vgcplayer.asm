@@ -8,6 +8,8 @@
 ; By Benoit Rousseau
 ;******************************************************************
 
+        INCLUDE "./engine/sound/sn76489.asm"
+
 ;---------------------------------------------------------------
 ; VGM Player Library code
 ;---------------------------------------------------------------
@@ -16,7 +18,7 @@
 ; user callable routines:
 ;  vgc_init
 ;  vgc_update
-;  sn_reset
+;  sn76489.reset
 ;  sn_write
 ;--------------------------------------------------
 
@@ -38,7 +40,7 @@ vgc_registers
 ;-------------------------------------------
 vgc_init
         jsr   IrqPause
-        jsr   sn_reset
+        jsr   sn76489.reset
         lda   #vgc_stream_buffers/256  ; HI byte of a page aligned 2Kb RAM buffer address
         sta   vgc_buffers              ; stash the 2kb buffer address
         stb   vgc_loop
@@ -118,33 +120,7 @@ vgc_do_update
 @no_looping 
         ; no looping so set flag $ stop PSG
         stb   vgc_finished    ; any NZ value is fine, in this case 0x08
-        jmp   sn_reset ; also returns non-zero in A
-
-;-------------------------------------------
-; Sound chip routines
-;-------------------------------------------
-
-; Reset SN76489 sound chip to a default (silent) state
-sn_reset
-        lda   #$9F
-        sta   SN76489.D
-vgc_port_01 equ *-1
-        nop
-        nop
-        lda   #$BF
-        sta   SN76489.D  
-vgc_port_02 equ *-1  
-        nop
-        nop
-        lda   #$DF
-        sta   SN76489.D
-vgc_port_03 equ *-1
-        nop
-        nop
-        lda   #$FF
-        sta   SN76489.D  
-vgc_port_04 equ *-1
-	rts
+        jmp   sn76489.reset   ; also returns non-zero in A
 
 ;-------------------------------------------
 ; VGC internal routines
