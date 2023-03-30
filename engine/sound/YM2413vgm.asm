@@ -8,6 +8,8 @@
 
         INCLUDE "./engine/sound/ym2413.asm"
 
+YVGM_addr equ *
+
 YVGM_MusicPage       fcb   0                ; memory page of music data
 YVGM_MusicData       fdb   0                ; address of song data
 YVGM_MusicDataPos    fdb   0                ; current playing position in Music Data
@@ -266,8 +268,8 @@ ym2413zx0_resume   com @flip
 
 @buffersize equ 512
 @addr equ *
- iflt @addr-@buffersize 
-          fill 0,@buffersize-@addr ; buffer need to be stored at an address >= buffersize
+ iflt @addr-YVGM_addr-@buffersize 
+          fill 0,@buffersize-(@addr-YVGM_addr) ; buffer need to be stored at an address >= buffersize
  endc
 YM2413_buffer
           fill 0,@buffersize
