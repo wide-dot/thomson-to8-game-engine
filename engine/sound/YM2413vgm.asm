@@ -172,8 +172,8 @@ ym2413zx0_decompress
                    tfr d,y              ; setup length
 @zx0_offset        equ *+2
                    leax >$ffff,u        ; calculate offset address
-                   cmpx #YM2413_buffer
-                   bhs >
+                   cmpx #YM2413_buffer  ; this test is a shortcut that need a buffer to be stored
+                   bhs >                ; at an address >= buffer length
                    leax YM2413_buffer_end-YM2413_buffer,x ; cycle buffer
 !                  lda #1
                    sta @mode
@@ -264,6 +264,11 @@ ym2413zx0_resume   com @flip
           fill 0,32
 @stackContext equ *
 
+@buffersize equ 512
+@addr equ *
+ iflt @addr-@buffersize 
+          fill 0,@buffersize-@addr ; buffer need to be stored at an address >= buffersize
+ endc
 YM2413_buffer
-          fill 0,512
+          fill 0,@buffersize
 YM2413_buffer_end
