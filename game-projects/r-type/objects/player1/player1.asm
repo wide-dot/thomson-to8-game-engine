@@ -269,18 +269,18 @@ CheckRange
         std   player1+x_vel
 @y      ldd   player1+y_pos
         subd  glb_camera_y_pos
-        cmpd  #ply_height
+        cmpd  #8+ply_height
         bge   >
         ldd   glb_camera_y_pos
-        addd  #ply_height
+        addd  #8+ply_height
         std   player1+y_pos
         ldd   #0
         std   player1+y_vel
         rts
-!       cmpd  #168-ply_height
+!       cmpd  #188-ply_height
         ble   >
         ldd   glb_camera_y_pos
-        addd  #168
+        addd  #188
         subd  #ply_height
         std   player1+y_pos
         ldd   #0
