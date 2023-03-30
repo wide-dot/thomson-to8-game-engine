@@ -72,8 +72,7 @@ Init
 * ---------------------------------------------------------------------------
 
 UserIRQ
-	jsr   PalUpdateNow
-        rts
+	jmp   PalUpdateNow
 
 
 

@@ -136,7 +136,7 @@ BlasterGetDirection
         addd  #20
         cmpd  y_pos,u
         blt   BlasterGetDirectionNotHorizontal
-        lda   #0
+        clra
         ldx   player1+x_pos            
         cmpx  x_pos,u
         blt   >
