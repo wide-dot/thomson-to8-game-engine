@@ -152,7 +152,7 @@ CheckPause
         bne   @unpause
         com   @pause_state
         jsr   IrqPause
-        jmp   YVGM_SilenceAll
+        jmp   ym2413.reset
 @unpause
         com   @pause_state
         jmp   IrqUnpause
@@ -174,7 +174,7 @@ CheckReturnToMenu
         beq   >
         rts
 !       jsr   IrqOff
-        jsr   YVGM_SilenceAll
+        jsr   ym2413.reset
         ldd   #Pal_black
         std   Pal_current
         clr   PalRefresh
