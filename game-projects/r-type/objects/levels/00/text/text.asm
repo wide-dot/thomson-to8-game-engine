@@ -44,7 +44,7 @@ Init
 ; --------------------------------------------------
 ;
 InitSlow
-	lda   #0
+	clra
 	sta   @Initslowloopcounter
 	inc   routine,u
 LiveSlow
@@ -149,10 +149,10 @@ InitScoreLoopRAMB
 LiveScoresInit
 	inc   routine,u
 	stu   @savedu
-	lda   #0
+	clra
 	sta   @livescoresmainreportloop
 LiveScores
-	lda   #0
+	clra
 	sta   @livescoresmainloop
 LiveScoresContinue
 	lda   #0

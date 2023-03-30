@@ -41,7 +41,7 @@ Init
         ; ...
 
         ldx   #anim_patapata
-        ldb   #0
+        clrb
         jsr   AnimateMoveSyncInit
 
         ; moves skipped frames before object creation

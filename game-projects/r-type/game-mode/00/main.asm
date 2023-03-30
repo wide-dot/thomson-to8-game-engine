@@ -103,8 +103,7 @@ viewport_height equ 180
         sta   id,x
         ldd   #addr_scores
         std   x_vel,x                   ; Hijacking unused x_vel to store the Score Numbers addr   
-        lda   #0                        ; = Slow text
-        sta   subtype,x
+        clr   subtype,x                 ; = Slow text
 
 
 * -------------------------
@@ -543,8 +542,7 @@ Phase8Init
         jsr   PalUpdateNow
 
         ldx   addr_text
-        lda   #0
-        sta   routine,x
+        clr   routine,x
         lda   #2                        ; = Scores
         sta   subtype,x
         _MountObject ObjID_text
@@ -625,8 +623,7 @@ Phase9Init
 	sta   subtype,x
 
         ldx   addr_text
-        lda   #0
-        sta   routine,x
+        clr   routine,x
         lda   #1                        ; = Text fast
         sta   subtype,x
 

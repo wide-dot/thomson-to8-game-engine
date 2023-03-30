@@ -22,6 +22,7 @@ Init
 	lda   #4
 	sta   priority,u
         lda   subtype,u
+	anda  #$7F
         asla
         ldx   #scoreimages
         ldx   a,x
@@ -32,8 +33,7 @@ Init
         inc   routine,u
 Live
 	lda   subtype,u
-	anda  #$80
-	bne   >
+	bmi   >
         jmp   DisplaySprite
 !
         rts

@@ -47,7 +47,6 @@ Live
         cmpd  glb_camera_x_pos
         bge   @destroy
         ldd   y_pos,u
-        cmpd  #0
         ble   @destroy
         cmpd  #160
         bge   @destroy
