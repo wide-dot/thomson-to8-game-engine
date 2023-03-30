@@ -40,29 +40,6 @@
 ********************************************************************************
 
 * ===========================================================================
-* macros
-* ===========================================================================
-
-_gfxlock.init MACRO
-        lda   #-1
-        sta   gfxlock.status
- ENDM
-
-_gfxlock.set MACRO
-        lda   gfxlock.status
-        bne   >
-        jsr   gfxlock.wait
-        ; ... switch buffer and set flags here
-        ; ...
-!       lda   #1
-        sta   gfxlock.status
- ENDM
-
-_gfxlock.unset MACRO
-        clr   gfxlock.status
- ENDM
-
-* ===========================================================================
 * variables
 * ===========================================================================
 
@@ -79,23 +56,46 @@ frame.runcount         fdb   0 ; incremented in 50Hz IRQ
 frame.lastruncount     fdb   0 ; used to compute duration
 
 * ===========================================================================
+* macros
+* ===========================================================================
+
+_gfxlock.Init MACRO
+        lda   #-1
+        sta   gfxlock.status
+ ENDM
+
+_gfxlock.Set MACRO
+        lda   gfxlock.status
+        bne   >
+        jsr   gfxlock.wait
+        ; ... switch buffer and set flags here
+        ; ...
+!       lda   #1
+        sta   gfxlock.status
+ ENDM
+
+_gfxlock.Unset MACRO
+        clr   gfxlock.status
+ ENDM
+
+* ===========================================================================
 * routines
 * ===========================================================================
 
-gfxlock.irq
+gfxlock.Irq
         lda   gfxlock.irq.status
         bne   @irqlock
         lda   gfxlock.status
         bne   >
         jsr   gfxlock.swapbuffer
-        _gfxlock.init
+        _gfxlock.Init
 !       rts
 @irqlock        
         clr   gfxlock.irq.status
         rts
 
 
-gfxlock.swapbuffer
+gfxlock.SwapBuffer
         ldb   @flip
         andb  #%01000000               ; set bit 6 based on flip/flop
         orb   #%10000000               ; set bit 7=1, bit 0-3=frame color
@@ -124,7 +124,7 @@ screen.bordercolor equ *-1
         std   frame.lastruncount
         rts
 
-gfxlock.wait
+gfxlock.Wait
         lda   #1
         sta   gfxlock.wait.status
 !       tst   CF74021.SYS1             ; beam is not visible
