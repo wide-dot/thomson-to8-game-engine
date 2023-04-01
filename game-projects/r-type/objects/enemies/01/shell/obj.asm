@@ -20,7 +20,7 @@ is_destroyed    equ  ext_variables+17
 kill_my_nok     equ  ext_variables+18
 current_p       equ  ext_variables+19
 angle_step equ 16
-center_of_circle equ 883
+center_of_circle equ 906
 
 ; child offsets
 

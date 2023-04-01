@@ -12,6 +12,7 @@
         INCLUDE "./engine/collision/struct_AABB.equ"
 
 AABB_0  equ ext_variables ; AABB struct (9 bytes)
+forcepodaddr equ ext_variables+9 ; 2 bytes (MUST START AT 9, DEPENDENCY WITH FORCEPOD OBJ ASM)
 
 Object
         lda   routine,u
@@ -25,11 +26,10 @@ Routines
         fdb   AlreadyDeleted
 
 Init
-        ldd   x_pos,u
-        addd  #6
+        ldx   forcepodaddr,u
+        ldd   x_pos,x
         std   x_pos,u
-        ldd   y_pos,u
-        addd  #2
+        ldd   y_pos,x
         std   y_pos,u
         ldd   #Img_shootup
         std   image_set,u
