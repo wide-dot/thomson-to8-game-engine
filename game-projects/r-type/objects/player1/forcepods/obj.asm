@@ -19,6 +19,7 @@ canshootweapon    equ ext_variables+12 ; Byte
 
 canshootreboundlasertiming equ 20
 canshootcounterairlasertiming equ 4
+neartrackingzone equ 5
 
 Onject
         lda   routine,u
@@ -29,7 +30,7 @@ Onject
 Routines
         fdb   Init
         fdb   LiveSetTrackSpot
-        fdb   LiveSetTrackSpot
+        fdb   LiveTrackspot
         fdb   LiveTrackPlayer1
         fdb   LiveHookedFront
         fdb   LiveHookedBack
@@ -73,25 +74,37 @@ LiveTrackspot
 @tsvelxplus   equ   *-2
         ldd   #0
 @tsx    equ   *-2                       ; Tracking spot X
+        subd  #neartrackingzone
         cmpd  x_pos,u
-        bgt   @continuetsx
-        ldx   #-100
-@tsvelxmin   equ   *-2
-@continuetsx
+        bgt   >
+        addd  #neartrackingzone*2
+        cmpd  x_pos,u
+        blt   @forcepodontheleft
+        subd  #neartrackingzone         ; We are now tracked on x_pos
+        std   x_pos,u
+        ldx   #0
+        bra   >
+@forcepodontheleft
+        ldx   #0
+@tsvelxmin equ *-2
+!
         stx   x_vel,u
         ldx   #160
         ldd   #0
-@tsy    equ   *-2                       ; Tracking spot Y
+@tsy    equ *-2
+        subd  #neartrackingzone
         cmpd  y_pos,u
-        bgt   @continuetsy
-        ldx   #-160
-        addd  #5
+        bgt   >
+        addd  #neartrackingzone*2
         cmpd  y_pos,u
-        blt   @continuetsy
-        ldd   @tsy
+        blt   @forcepodabove
+        subd  #neartrackingzone         ; We are now tracked on y_pos
         std   y_pos,u
         ldx   #0
-@continuetsy
+        bra   >
+@forcepodabove
+        ldx   #-160
+!
         stx   y_vel,u
         jsr   ObjectMoveSync
         ldd   x_pos,u
@@ -104,10 +117,8 @@ LiveTrackspot
         jmp   DisplaySprite
 LiveTrackPlayer1
         ldd   player1+y_pos
-        addd  #6
         std   @tsy
         ldd   player1+x_pos
-        addd  #6
         std   @tsx
         jmp   LiveTrackspot
 Live
@@ -215,18 +226,12 @@ Live
         beq   >                             ; branch if no more available object slot
         lda   #ObjID_forcepod_straightup    ; fire straight up !
         sta   id,x
-        ldd   x_pos,u
-        std   x_pos,x
-        ldd   y_pos,u
-        std   y_pos,x
+        stu   ext_variables+9,x
         jsr   LoadObject_x
         beq   >                             ; branch if no more available object slot
         lda   #ObjID_forcepod_straightdown  ; fire straight up !
         sta   id,x
-        ldd   x_pos,u
-        std   x_pos,x
-        ldd   y_pos,u
-        std   y_pos,x
+        stu   ext_variables+9,x
 !
         rts
 @continuelivenothookedrecall                                       ; Recalling forcepod

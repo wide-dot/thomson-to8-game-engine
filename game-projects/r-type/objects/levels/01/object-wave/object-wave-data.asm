@@ -40,6 +40,7 @@
 	fcb   $0D,$88,ObjID_pow,$00,$35
 	fcb   $0E,$2C,ObjID_pow,$00,$04
 	fcb   $0E,$50,ObjID_bug,$01,$22
+	fcb   $0E,$80,ObjID_shell,$00,$00
 	fcb   $11,$DA,ObjID_patapata,$00,$2A
 	fcb   $11,$EC,ObjID_patapata,$00,$29
 	fcb   $12,$0A,ObjID_patapata,$00,$3A
@@ -51,3 +52,5 @@
 	fcb   $14,$B8,ObjID_pow,$00,$75
 	fcb   $18,$22,ObjID_pow,$00,$04
 	fdb   $FFFF
+
+
