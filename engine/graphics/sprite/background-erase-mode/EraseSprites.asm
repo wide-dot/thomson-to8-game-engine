@@ -45,7 +45,7 @@ EraseSprites
 	sta   <glb_force_sprite_refresh
 
 ESP_Start
-        lda   glb_Cur_Wrk_Screen_Id         ; read current screen buffer for write operations
+        lda   gfxlock.backBuffer.id         ; read current screen buffer for write operations
         bne   ESP_P1B1
 
 ESP_P1B0

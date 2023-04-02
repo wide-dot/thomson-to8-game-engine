@@ -56,7 +56,7 @@ Live
         lda   AABB_0+AABB.p,u
         beq   @delete                  ; delete weapon if something was hit  
         lda   #4
-        ldb   Vint_Main_runcount
+        ldb   gfxlock.frameDrop.count
         mul
         addd  x_pos,u
         std   x_pos,u

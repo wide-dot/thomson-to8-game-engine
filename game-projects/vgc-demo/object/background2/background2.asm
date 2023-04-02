@@ -37,7 +37,7 @@ Backgrnd_Init
         ora   #render_overlay_mask
         sta   render_flags,u
 
-        ldd   #$807F
+        ldd   #$7F7F
         std   xy_pixel,u
 
         ldd   #Ani_bck_down

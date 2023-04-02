@@ -163,7 +163,7 @@ Obj08_SkidDust                                        * Obj08_SkidDust:
         dec   obj08_dust_timer,u                      *         subq.b  #1,obj08_dust_timer(a0)
         bpl   loc_1DEE0                               *         bpl.s   loc_1DEE0
         lda   #3
-        suba  Vint_Main_runcount
+        suba  gfxlock.frameDrop.count
         sta   obj08_dust_timer,u                      *         move.b  #3,obj08_dust_timer(a0)
         jsr   LoadObject_x                            *         bsr.w   SingleObjLoad
         beq   loc_1DEE0                               *         bne.s   loc_1DEE0

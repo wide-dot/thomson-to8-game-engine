@@ -12,6 +12,7 @@
         org   $6100
 
         jsr   InitGlobals
+        jsr   InitStack        
         jsr   LoadAct
 
 	; objects init

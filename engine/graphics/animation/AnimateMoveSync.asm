@@ -46,7 +46,7 @@ AnimateMoveSyncInit
 ; process animation script for current object
 ;
 AnimateMoveSync
-        ldb   Vint_Main_runcount
+        ldb   gfxlock.frameDrop.count
 AnimateMoveSteps
         _GetCartPageA
         sta   @page2

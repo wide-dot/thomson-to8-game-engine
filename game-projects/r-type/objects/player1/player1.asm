@@ -164,7 +164,7 @@ Live
         cmpa  #beam_sensitivity
         blt   @incharging
                                         ; Start charging animation
-        adda  Vint_Main_runcount
+        adda  gfxlock.frameDrop.count
         sta   player1+beam_value
         sta   player1+is_charging
         jsr   LoadObject_x
@@ -174,7 +174,7 @@ Live
         bra   @testmoving
 @incharging
         lda   player1+beam_value
-        adda  Vint_Main_runcount
+        adda  gfxlock.frameDrop.count
         cmpa  #60                       ; Max value ?
         ble   >
         lda   #60

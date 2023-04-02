@@ -166,7 +166,7 @@ SpecialStage_Init                                     *SpecialStage:
         sta   $E7DD
         anda  #$0F
         adda  #$80
-        sta   glb_screen_border_color+1    ; maj WaitVBL
+        sta   gfxlock.screenBorder.color
         jsr   WaitVBL
         ldb   #$03                     ; load page 3
         stb   $E7E5                    ; data space ($A000-$DFFF)
@@ -745,7 +745,7 @@ HalfPipe_Init
         rts
 @a      std   xy_pixel,u
 
-        ldd   Vint_runcount
+        ldd   gfxlock.frame.count
         std   HalfPipe_Vint_Track_Image          ; store number of vint between two rendered images
         std   HalfPipe_Vint_Main_Loop            ; store number of vint between two main loops execution
         
@@ -782,11 +782,11 @@ HalfPipe_Display
         jmp   DisplaySprite                      ; return
 @a
         
-        ldd   Vint_runcount
+        ldd   gfxlock.frame.count
         subd  HalfPipe_Vint_Main_Loop
         stb   HalfPipe_Nb_Elapsed_Frames         ; ajust object z speed
 
-        ldd   Vint_runcount
+        ldd   gfxlock.frame.count
         std   HalfPipe_Vint_Main_Loop
         subd  HalfPipe_Vint_Track_Image
         stb   SSTrack_drawing_index
@@ -831,7 +831,7 @@ HalfPipe_KeepSameTrackImage
  ENDC
         
 HalfPipe_LoadNewTrackImage
-        ldd   Vint_runcount
+        ldd   gfxlock.frame.count
         std   HalfPipe_Vint_Track_Image
         clr   SSTrack_drawing_index
         jsr   AnimateSprite

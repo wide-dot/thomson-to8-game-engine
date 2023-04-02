@@ -40,7 +40,7 @@ AnimateSpriteAdvSync
 ;
 @Anim_Run
         ldb   anim_frame_duration,u
-        subb  Vint_Main_runcount
+        subb  gfxlock.frameDrop.count
         stb   anim_frame_duration,u
         bpl   @Anim_Rts
 @b      ldb   anim_frame,u

@@ -13,7 +13,8 @@
         INCLUDE "./engine/macros.asm"        
         org   $6100
         
-        jsr   InitGlobals        
+        jsr   InitGlobals     
+        jsr   InitStack           
         jsr   LoadAct
 
         jsr   IrqInit
@@ -81,7 +82,7 @@ InitLevelMainLoop
         sta   $E7DD
         anda  #$0F
         adda  #$80
-        sta   glb_screen_border_color+1    * maj WaitVBL
+        sta   gfxlock.screenBorder.color
         jsr   WaitVBL
         ldb   #$03                     * load page 3
         stb   $E7E5                    * data space ($A000-$DFFF)

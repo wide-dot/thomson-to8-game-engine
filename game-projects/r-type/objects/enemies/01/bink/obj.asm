@@ -106,7 +106,7 @@ Init
         jmp   Object
 
 LiveFall
-        ldx   Vint_Main_runcount_w
+        ldx   gfxlock.frameDrop.count_w
         stx   x_vel,u
         ldx   y_pos,u
         cmpx  #138
@@ -121,7 +121,7 @@ LiveWalk
         lda   shootnoshoot,u
         beq   @noshoot
         ldd   shoottiming,u
-        subd  Vint_Main_runcount_w
+        subd  gfxlock.frameDrop.count_w
         std   shoottiming,u
         bpl   @noshoot
         ldd   shoottiming_value,u

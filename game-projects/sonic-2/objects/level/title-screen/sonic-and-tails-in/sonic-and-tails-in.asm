@@ -60,12 +60,12 @@ SATI_fadeIn
         inc   routine,u
 
         ldd   #$0000
-        std   glb_Main_runcount           
+        std   gfxlock.bufferSwap.count           
               
         jmp   DisplaySprite    
                 
 SATI_fadeOut
-        ldd   glb_Main_runcount
+        ldd   gfxlock.bufferSwap.count
         cmpd  #3*50 ; 3 seconds
         beq   SATI_fadeOut_continue
         rts
@@ -100,7 +100,7 @@ SATI_clearScreen_end
         sta   $E7DD
         anda  #$01                     ; color 1
         adda  #$80
-        sta   glb_screen_border_color+1    * maj WaitVBL
+        sta   gfxlock.screenBorder.color
                      
         inc   routine,u    
         rts            

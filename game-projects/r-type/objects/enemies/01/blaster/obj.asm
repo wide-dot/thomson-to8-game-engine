@@ -69,7 +69,7 @@ Live
         stx   image_set,u
 
         ldd   shoottiming,u                     ; Is it time to shoot ?
-        subd  Vint_Main_runcount_w
+        subd  gfxlock.frameDrop.count_w
         std   shoottiming,u
         bpl   CheckEOL
         ldb   subtype,u                         ; It's time to shoot !

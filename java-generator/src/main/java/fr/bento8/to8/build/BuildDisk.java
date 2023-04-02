@@ -775,7 +775,7 @@ public class BuildDisk
 					asmBuilder.add("        sta   $E7DD");
 					asmBuilder.add("        anda  #$0F");
 					asmBuilder.add("        adda  #$80");
-					asmBuilder.add("        sta   glb_screen_border_color+1    * maj WaitVBL");
+					asmBuilder.add("        sta   gfxlock.screenBorder.color");
 				}
 
 				if (act.bgColorIndex != null || act.bgFileName != null) {

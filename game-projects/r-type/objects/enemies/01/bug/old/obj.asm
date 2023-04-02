@@ -110,7 +110,7 @@ Init
 
 LiveUp
         ldd   amplitude,u
-        subd  Vint_Main_runcount_w
+        subd  gfxlock.frameDrop.count_w
         std   amplitude,u
         bpl   CheckEOL
         inc   routine,u
@@ -123,7 +123,7 @@ LiveUp
 
 LiveDown
         ldd   amplitude,u
-        subd  Vint_Main_runcount_w
+        subd  gfxlock.frameDrop.count_w
         std   amplitude,u
         bpl   CheckEOL
         dec   routine,u
@@ -139,7 +139,7 @@ CheckEOL
         lda   shootnoshoot,u
         beq   @noshoot
         ldd   shoottiming,u
-        subd  Vint_Main_runcount_w
+        subd  gfxlock.frameDrop.count_w
         std   shoottiming,u
         bpl   @noshoot
         ldd   shoottiming_value,u

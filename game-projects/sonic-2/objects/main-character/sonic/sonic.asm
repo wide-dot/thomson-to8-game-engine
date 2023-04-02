@@ -3827,7 +3827,7 @@ SAnim_WalkRun                                         *SAnim_WalkRun:
         stx   anim+dp                                 *  add.b   d3,mapping_frame(a0)
         jsr   SAnim_WalkRun_Sub
         lda   anim_frame_duration+dp
-        suba  Vint_Main_runcount                      *  subq.b  #1,anim_frame_duration(a0)
+        suba  gfxlock.frameDrop.count                 *  subq.b  #1,anim_frame_duration(a0)
         sta   anim_frame_duration+dp
         bpl   return_1B4AC                            *  bpl.s   return_1B4AC
         sta   @delta
@@ -3976,7 +3976,7 @@ loc_1B572                                             *loc_1B572:
                                                       *; loc_1B586:
 SAnim_Roll                                            *SAnim_Roll:
         lda   anim_frame_duration+dp
-        suba  Vint_Main_runcount                      *  subq.b  #1,anim_frame_duration(a0)  ; subtract 1 from frame duration
+        suba  gfxlock.frameDrop.count                 *  subq.b  #1,anim_frame_duration(a0)  ; subtract 1 from frame duration
         sta   anim_frame_duration+dp
         bmi   >                                       *  bpl.w   SAnim_Delay         ; if time remains, branch
         rts

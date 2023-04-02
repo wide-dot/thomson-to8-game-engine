@@ -112,7 +112,7 @@ LiveFreeInitRight
 LiveFree
         lda   #3
 @livefreespeed equ *-1
-        ldb   Vint_Main_runcount
+        ldb   gfxlock.frameDrop.count
         mul
         sex
         addd  x_pos,u

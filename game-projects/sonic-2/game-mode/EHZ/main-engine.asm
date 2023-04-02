@@ -74,10 +74,6 @@ LevelSizeLoad ; todo move to an object
         subd  Camera_Y_pos_bias
         std   <glb_camera_y_pos
 
-        ; global speed setting, animation and movement scale
-        lda   #5
-        sta   Vint_Main_runcount_cap
-
         _RunObjectRoutineA ObjID_EHZ,#0
 
         ; init tile buffer based on camera pos
@@ -208,7 +204,7 @@ ChangeRingFrame                                       *ChangeRingFrame:
                                                       *        andi.b  #7,(Logspike_anim_frame).w
                                                       *+
         lda   Rings_anim_counter
-        suba  Vint_Main_runcount
+        suba  gfxlock.frameDrop.count
         sta   Rings_anim_counter                      *        subq.b  #1,(Rings_anim_counter).w
         bpl   >                                       *        bpl.s   +
         adda  #7

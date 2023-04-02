@@ -101,7 +101,7 @@ Scroll
         bra   @updbuf
 @keyfrm
         lda   scroll_remain_frames
-        suba  Vint_Main_runcount
+        suba  gfxlock.frameDrop.count
         bpl   >
         lda   scroll_wait_frames                 ; next frame will be keyframe
         bra   @nxtkey
@@ -142,7 +142,7 @@ Scroll
 @skipfrm
         incb                                     ; no frame to draw
         lda   scroll_remain_frames
-        suba  Vint_Main_runcount
+        suba  gfxlock.frameDrop.count
         sta   scroll_remain_frames
         bpl   >
         lda   scroll_wait_frames

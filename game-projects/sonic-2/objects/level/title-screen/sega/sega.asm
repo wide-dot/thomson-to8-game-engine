@@ -371,11 +371,11 @@ SEGA_PlaySample
         jsr   IrqOn
 
         ldd   #$0000
-        std   glb_Main_runcount
+        std   gfxlock.bufferSwap.count
         rts
 
 SEGA_Wait
-        ldd   glb_Main_runcount
+        ldd   gfxlock.bufferSwap.count
         cmpd  #3*50 ; 3 seconds
         beq   SEGA_fadeOut
         rts

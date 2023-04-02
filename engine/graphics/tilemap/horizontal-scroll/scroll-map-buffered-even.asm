@@ -93,7 +93,7 @@ Scroll
         ldb   scroll_vel
         sex                            ; velocity is positive or negative, take care of that
         sta   @a
-        lda   Vint_Main_runcount       ; take number of elapsed frame since last render and multiply by velocity
+        lda   gfxlock.frameDrop.count  ; take number of elapsed frame since last render and multiply by velocity
         sta   glb_d0_b
         bne   @loop1
         inc   glb_d0_b
@@ -108,7 +108,7 @@ Scroll
         dec   glb_d0_b
         bne   @loop1 
 ;
-        lda   glb_Cur_Wrk_Screen_Id    ; check if buffer was rendered for this camera position
+        lda   gfxlock.backBuffer.id    ; check if buffer was rendered for this camera position
         asla
         ldu   #buffer_x_pos
         ldx   glb_camera_x_pos

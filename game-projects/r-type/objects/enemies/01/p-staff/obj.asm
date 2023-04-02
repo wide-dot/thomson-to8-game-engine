@@ -54,7 +54,7 @@ Init
 WalkLeft
 
         ldd   mouvement,u
-        subd  Vint_Main_runcount_w
+        subd  gfxlock.frameDrop.count_w
         std   mouvement,u
         bpl   CheckEOL
         inc   routine,u
@@ -75,7 +75,7 @@ ShootLeft
         jsr   FireRocketLeft
 SkipRocketShootLeft
         ldd   mouvement,u
-        subd  Vint_Main_runcount_w
+        subd  gfxlock.frameDrop.count_w
         std   mouvement,u
         bpl   CheckEOL
         ldd   #Ani_pstaff_walk_right
@@ -128,7 +128,7 @@ CheckEOL
 WalkRight
 
         ldd   mouvement,u
-        subd  Vint_Main_runcount_w
+        subd  gfxlock.frameDrop.count_w
         std   mouvement,u
         bpl   CheckEOL
         inc   routine,u
@@ -149,7 +149,7 @@ ShootRight
         jsr   FireRocketRight
 SkipRocketShootRight
         ldd   mouvement,u
-        subd  Vint_Main_runcount_w
+        subd  gfxlock.frameDrop.count_w
         std   mouvement,u
         lbpl   CheckEOL
         ldd   #Ani_pstaff_walk_left

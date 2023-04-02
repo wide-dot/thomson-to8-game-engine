@@ -57,7 +57,7 @@ Live
         subd  glb_camera_x_pos
         stb   AABB.cx,x
         lda   #8
-        ldb   Vint_Main_runcount
+        ldb   gfxlock.frameDrop.count
         mul
         std   @d
         ldd   y_pos,u

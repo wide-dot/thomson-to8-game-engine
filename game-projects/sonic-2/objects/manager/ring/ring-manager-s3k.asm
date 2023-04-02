@@ -181,7 +181,7 @@ Rings_Consume                                         *sub_E994:
         beq   @loop ; branch if not                   *                beq.s   loc_E99E
         ;                                             *                movea.w d0,a1
         lda   ,u
-        suba  Vint_Main_runcount
+        suba  gfxlock.frameDrop.count
         sta   ,u    ; decrement timer                 *                subq.b  #1,(a1)
         bpl   @next ; branch if not ready             *                bne.s   loc_E9C4
         adda  #6                                      *                move.b  #6,(a1)

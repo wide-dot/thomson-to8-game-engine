@@ -7,6 +7,7 @@ ext_variables_size equ 6
 
         org   $6100
         jsr   InitGlobals
+        jsr   InitStack        
         jsr   LoadAct
 
         ; initialize the SN76489 vgm player with a vgc data stream

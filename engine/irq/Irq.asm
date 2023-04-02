@@ -123,9 +123,9 @@ IrqSync
 IrqManager
         sts   @stack                   ; backup system stack
         lds   #Irq_sys_stack           ; set tmp system stack for IRQ 
-        ldd   Vint_runcount
+        ldd   gfxlock.frame.count
         addd  #1
-        std   Vint_runcount
+        std   gfxlock.frame.count
         tst   glb_Page                 ; test special mode (glb_Page==0)
         beq   @smode                   ; branch if rendering tiles - force RAM use instead of testing ROM or RAM
         _GetCartPageB

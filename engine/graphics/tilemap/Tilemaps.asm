@@ -127,7 +127,7 @@ DrawTilemaps
         ; now we have to check if this submap index (register d) was the one already rendered (or not) on this buffer
         ; the goal is to avoid the full redraw of background if it's already there ...
         
-        tst   glb_Cur_Wrk_Screen_Id                   ; read current screen buffer for write operations
+        tst   gfxlock.backBuffer.id                   ; read current screen buffer for write operations
         bne   DTM_Buffer1
                 
 DTM_Buffer0
