@@ -48,6 +48,8 @@ Init
         lda   #1
         sta   currentlevel,u
 
+        clr   Fire_Press ; Bug with Theodore, button B appears to be pressed at the begining of the game
+
         _Collision_AddAABB AABB_0,AABB_list_friend
         
         lda   #255                      ; set damage potential for this hitbox
