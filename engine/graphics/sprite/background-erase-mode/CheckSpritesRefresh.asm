@@ -30,7 +30,7 @@ CSR_Start
         std   cur_ptr_sub_obj_erase
         ldd   #Tbl_Sub_Object_Draw
         std   cur_ptr_sub_obj_draw
-        lda   glb_Cur_Wrk_Screen_Id         ; read current screen buffer for write operations
+        lda   gfxlock.backBuffer.id         ; read current screen buffer for write operations
         bne   CSR_SetBuffer1
         
 CSR_SetBuffer0        
@@ -402,7 +402,7 @@ CSR_SubEraseSpriteSearchInit
         * and displayed at another position : both cases should be tested !
 
         ldx   cur_ptr_sub_obj_erase       
-        lda   glb_Cur_Wrk_Screen_Id         ; read current screen buffer for write operations
+        lda   gfxlock.backBuffer.id         ; read current screen buffer for write operations
         bne   CSR_SubEraseSearchB1
         
 CSR_SubEraseSearchB0

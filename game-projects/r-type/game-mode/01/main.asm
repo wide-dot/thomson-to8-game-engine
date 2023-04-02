@@ -1,4 +1,4 @@
-DO_NOT_WAIT_VBL equ 1
+;DO_NOT_WAIT_VBL equ 1
 DEBUG   equ     1
 SOUND_CARD_PROTOTYPE equ 1
 
@@ -262,8 +262,8 @@ Game_LoadCheckpoint_x
         ; set object wave position based on new camera position
         ldd   #0
 @x      equ   *-2
-        std   Vint_runcount
-        std   Vint_Last_runcount
+        std   gfxlock.frame.count
+        std   gfxlock.frame.lastCount
         jmp   ObjectWave_Init
 
 * ---------------------------------------------------------------------------

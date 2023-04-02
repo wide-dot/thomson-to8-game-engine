@@ -52,7 +52,7 @@ Obj5C_Main                                            *Obj5C_Main:
         jsr   AnimateSpriteSync                       *    jsrto   (AnimateSprite).l, JmpTo16_AnimateSprite
         jsr   ObjectMoveSync                          *    jsrto   (ObjectMove).l, JmpTo22_ObjectMove
         ldd   y_vel,u
-        ldx   Vint_Main_runcount_w
+        ldx   gfxlock.frameDrop.count_w
 !       addd  #$18
         leax  -1,x
         bne   <

@@ -4,7 +4,7 @@
 
 ObjectFallSync
         ldd   x_vel,u
-        ldx   Vint_Main_runcount_w     ; take number of elapsed frame since last render and multiply by gravity
+        ldx   gfxlock.frameDrop.count_w ; take number of elapsed frame since last render and multiply by gravity
         bne   @loop
         ldx   #1
 @loop   
@@ -14,7 +14,7 @@ ObjectFallSync
         std   x_vel,u
 
         ldd   y_vel,u
-        ldx   Vint_Main_runcount_w     ; take number of elapsed frame since last render and multiply by gravity
+        ldx   gfxlock.frameDrop.count_w ; take number of elapsed frame since last render and multiply by gravity
         bne   @loop
         ldx   #1
 @loop   

@@ -963,7 +963,7 @@ SmallStar_Routines                               *off_132A2:      offsetTable
                                                  *; ===========================================================================
                                                  *
 SmallStar_Init                                   *Obj0E_SmallStar_Init:
-        ldd   Vint_runcount
+        ldd   gfxlock.frame.count
         std   w_TitleScr_time_frame_count,u
         inc   routine_secondary,u                *        addq.b  #2,routine_secondary(a0)
         ldd   #Img_star_2
@@ -986,7 +986,7 @@ SmallStar_Move                                   *loc_132D2:
         bpl   SmallStar_MoveContinue
         jmp   DeleteObject                       *        bmi.w   DeleteObject
 SmallStar_MoveContinue
-        ldd   Vint_runcount
+        ldd   gfxlock.frame.count
         subd  w_TitleScr_time_frame_count,u
         stb   SmallStar_MoveContinue_d1+1
         stb   SmallStar_MoveContinue_d2+1
@@ -999,7 +999,7 @@ SmallStar_MoveContinue_d2
         adda  #$00     
         sta   y_pixel,u 
         
-        ldd   Vint_runcount
+        ldd   gfxlock.frame.count
         std   w_TitleScr_time_frame_count,u
         
         * no more offset table                   *        lea     (Ani_obj0E).l,a1
@@ -1205,19 +1205,19 @@ IslandWater_Init
         ldx   Obj_Island
         lda   y_pixel,x
         sta   y_pixel,u
-        lda   Vint_runcount+1
+        lda   gfxlock.frame.count+1
         sta   b_TitleScr_time_frame_count,u
 
 IslandWater_Ripple
         ldx   Obj_Island
 
         ldb   b_TitleScr_ripple_index,u
-        lda   Vint_runcount+1
+        lda   gfxlock.frame.count+1
         suba  b_TitleScr_time_frame_count,u
         cmpa  #8
         blo   IslandWater_continue1
 
-        lda   Vint_runcount+1
+        lda   gfxlock.frame.count+1
         sta   b_TitleScr_time_frame_count,u
         
         incb
@@ -1356,27 +1356,27 @@ PressStart_Init
         sta   priority,u
         ldd   #$80D8
         std   xy_pixel,u
-        ldd   Vint_runcount
+        ldd   gfxlock.frame.count
         std   w_TitleScr_time_frame_count,u
         jmp   DisplaySprite
 
 PressStart_display
-        ldd   Vint_runcount
+        ldd   gfxlock.frame.count
         subd  w_TitleScr_time_frame_count,u
         cmpd  #35                                * 700ms
         lblo  DisplaySprite
         inc   routine_secondary,u
-        ldd   Vint_runcount
+        ldd   gfxlock.frame.count
         std   w_TitleScr_time_frame_count,u
         jmp   DisplaySprite
 
 PressStart_hide
-        ldd   Vint_runcount
+        ldd   gfxlock.frame.count
         subd  w_TitleScr_time_frame_count,u
         cmpd  #35                                * 700ms
         blo   PressStart_hide1
         dec   routine_secondary,u
-        ldd   Vint_runcount
+        ldd   gfxlock.frame.count
         std   w_TitleScr_time_frame_count,u
 PressStart_hide1
         rts

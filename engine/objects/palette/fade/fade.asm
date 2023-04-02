@@ -100,11 +100,11 @@ PaletteFade_Init
         ldd   30,y
         std   30,x     
         ldd   o_fade_sleep,u
-        addd  Vint_runcount 
+        addd  gfxlock.frame.count 
         std   o_fade_sleep,u   
 
 PaletteFade_Wait      
-        ldd Vint_runcount
+        ldd gfxlock.frame.count
         cmpd o_fade_sleep,u
         bhs  >
         rts

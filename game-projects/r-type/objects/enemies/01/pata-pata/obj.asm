@@ -79,7 +79,7 @@ Live
 ;
         ldx   #ImageIndex
         ldb   anim_frame,u
-        addb  Vint_runcount+1
+        addb  gfxlock.frame.count+1
         andb  #$1C
         lsrb
         ldd   b,x

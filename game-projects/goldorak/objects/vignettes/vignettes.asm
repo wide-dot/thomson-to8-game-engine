@@ -1,7 +1,7 @@
         INCLUDE "./global/global-object-preambule-includes.asm"
 
 _WaitAndDisplaySprite MACRO
-                ldd Vint_runcount ; B est à 0 : 256 / 50 Hz == toutes les 8 secondes environ
+                ldd gfxlock.frame.count ; B est à 0 : 256 / 50 Hz == toutes les 8 secondes environ
                 lslb              ; toutes les 4 secondes
                 lslb              ; toutes les 2 secondes        
                 bne @display      ; si ce n'est pas à zéro on part afficher le sprite en cours

@@ -40,7 +40,7 @@ DSP_Start
         andb  #^render_hide_mask            ; unset hide flag
         stb   render_flags,u
 
-        ldb   glb_Cur_Wrk_Screen_Id         ; read current screen buffer for write operations
+        ldb   gfxlock.backBuffer.id         ; read current screen buffer for write operations
         bne   DSP_SetBuffer1
         
 DSP_SetBuffer0        
@@ -80,7 +80,7 @@ DSP_rts
         
 DSP_addToExistingNode
         ldx   a,y                           ; x register now store last object at the priority level of current object
-        ldb   glb_Cur_Wrk_Screen_Id
+        ldb   gfxlock.backBuffer.id
         bne   DSP_LinkBuffer1
         stu   rsv_priority_next_obj_0,x     ; link last object with current object if active screen buffer 0
         stx   rsv_priority_prev_obj_0,u     ; link current object with previous object

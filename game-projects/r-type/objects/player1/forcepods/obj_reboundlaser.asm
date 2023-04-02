@@ -126,19 +126,19 @@ LiveAsParent
         ldd   currentspeedx,u
         std   currentspeedx,x
 !
-        ldb   Vint_Main_runcount
+        ldb   gfxlock.frameDrop.count
         cmpb  #maxvintcount+1
         blt   >
         ldb   #maxvintcount
 !
-        stb   @Vint_Main_runcount_code       
+        stb   @count       
         lda   AABB_0+AABB.p,u
         lbeq  @delete                 ; delete weapon if something was hit  
         lda   is_child,u
         bne   >
         lda   currentspeedx,u
         ldb   #1
-@Vint_Main_runcount_code equ *-1
+@count equ *-1
         mul
         addd  x_pos,u
         std   x_pos,u
@@ -148,7 +148,7 @@ LiveAsParent
         blt   @delete
         cmpd  #144
         bgt   @delete
-        ldb   @Vint_Main_runcount_code
+        ldb   @count
         lda   currentspeedy,u
         mul
         sex

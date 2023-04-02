@@ -42,8 +42,8 @@
 ********************************************************************************
 WaitVBL
  ifdef DO_NOT_WAIT_VBL
-        ldd   Vint_runcount
-        subd  Vint_Last_runcount
+        ldd   gfxlock.frame.count
+        subd  gfxlock.frame.lastCount
 	cmpb  #2
 	bhs   SwapVideoPage
  endc
@@ -57,41 +57,41 @@ WaitVBL
 SwapVideoPage
         ldb   am_SwapVideoPage+1 * charge la valeur du ldb suivant am_SwapVideoPage
         andb  #$40               * alterne bit6=0 et bit6=1 (suivant la valeur B $00 ou $FF)
-glb_screen_border_color        
         orb   #$80               * bit7=1, bit3 a bit0=couleur de cadre (ici 0)
+gfxlock.screenBorder.color equ *-1
         stb   $E7DD              * changement page (2 ou 3) affichee a l'ecran
         com   am_SwapVideoPage+1 * alterne $00 et $FF sur le ldb suivant am_SwapVideoPage
 am_SwapVideoPage
         ldb   #$00
         andb  #$01               * alterne bit0=0 et bit0=1 (suivant la valeur B $00 ou $FF)
-        stb   glb_Cur_Wrk_Screen_Id
+        stb   gfxlock.backBuffer.id
         orb   #$02               * bit1=1
         stb   $E7E5              * changement page (2 ou 3) visible dans l'espace donnees
         ldb   $E7C3              * charge l'identifiant de la demi-page 0 configuree en espace ecran
         eorb  #$01               * alterne bit0 = 0 ou 1 changement demi-page de la page 0 visible dans l'espace ecran
         stb   $E7C3
         
-        inc   glb_Main_runcount+1
+        inc   gfxlock.bufferSwap.count+1
         bne   @a
-        inc   glb_Main_runcount  
+        inc   gfxlock.bufferSwap.count  
 @a
 
-        ldd   Vint_runcount            ; store in Vint_Main_runcount the number of elapsed 50Hz frames
-        subd  Vint_Last_runcount       ; used in AnimateSpriteSync
-	cmpb  Vint_Main_runcount_cap   ; allow to cap Animation and Mvt Sync
+        ldd   gfxlock.frame.count     ; store in gfxlock.frameDrop.count the number of elapsed 50Hz frames
+        subd  gfxlock.frame.lastCount ; used in AnimateSpriteSync
+	cmpb  Vint_Main_runcount_cap      ; allow to cap Animation and Mvt Sync
 	bls   @a
 	ldb   Vint_Main_runcount_cap
-@a      stb   Vint_Main_runcount
+@a      stb   gfxlock.frameDrop.count
 
-        ldd   Vint_runcount
-        std   Vint_Last_runcount
+        ldd   gfxlock.frame.count
+        std   gfxlock.frame.lastCount
 
         rts
         
-glb_Main_runcount      fdb   0 ; page swap counter
-Vint_runcount          fdb   0 ; incremented in 50Hz IRQ
-Vint_Last_runcount     fdb   0
-Vint_Main_runcount_w   fcb   0 ; pad to be able to load Vint_Main_runcount as a word
-Vint_Main_runcount     fcb   0
-Vint_Main_runcount_cap fcb   -1
-glb_Cur_Wrk_Screen_Id  fcb   0 ; screen buffer set to write operations (0 or 1)
+gfxlock.bufferSwap.count  fdb   0 ; page swap counter
+gfxlock.frame.count       fdb   0 ; incremented in 50Hz IRQ
+gfxlock.frame.lastCount   fdb   0
+gfxlock.frameDrop.count_w fcb   0 ; pad to be able to load Vint_Main_runcount as a word
+gfxlock.frameDrop.count   fcb   0
+Vint_Main_runcount_cap    fcb   -1
+gfxlock.backBuffer.id     fcb   0 ; screen buffer set to write operations (0 or 1)

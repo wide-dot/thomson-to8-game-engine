@@ -41,7 +41,7 @@ TileAnimScriptList equ *-2
 @loop	ldy   ,x++                     ; process a script
         beq   @rts                     ; at the end of script list ?
         lda   ZADuration,u
-        suba  Vint_Main_runcount       ; tick down animation frame in sync with elapsed 50hz IRQ
+        suba  gfxlock.frameDrop.count  ; tick down animation frame in sync with elapsed 50hz IRQ
         bcs   @loadScript
         sta   ZADuration,u             ; animation is not over
         leau  ZASize,u

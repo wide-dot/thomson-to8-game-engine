@@ -12,7 +12,7 @@
 DrawSprites
 
 DRS_Start
-        lda   glb_Cur_Wrk_Screen_Id         ; read current screen buffer for write operations
+        lda   gfxlock.backBuffer.id         ; read current screen buffer for write operations
         bne   DRS_P8B1
         
 DRS_P8B0                                    

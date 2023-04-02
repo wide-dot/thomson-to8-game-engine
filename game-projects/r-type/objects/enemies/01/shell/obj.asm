@@ -131,7 +131,7 @@ Init
 Live
         ldx   #Images
 LiveContinue
-        lda   Vint_Main_runcount
+        lda   gfxlock.frameDrop.count
         ldb   #$60
         mul
         addd  angle,u
@@ -275,7 +275,7 @@ Delete
 AlreadyDeleted
         rts
 Destroyed
-        lda   Vint_Main_runcount
+        lda   gfxlock.frameDrop.count
         ldb   #$60
         mul
         addd  angle,u

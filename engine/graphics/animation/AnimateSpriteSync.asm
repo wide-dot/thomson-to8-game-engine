@@ -45,7 +45,7 @@ AnimateSpriteSync                           *AnimateSprite:
                                             *; loc_16560:
 @Anim_Run                                   *Anim_Run:
         ldb   anim_frame_duration,u
-        subb  Vint_Main_runcount
+        subb  gfxlock.frameDrop.count
         stb   anim_frame_duration,u
                                             *    subq.b  #1,anim_frame_duration(a0)   ; subtract 1 from frame duration
         bpl   @Anim_Rts                     *    bpl.s   Anim_Wait                    ; if time remains, branch

@@ -61,14 +61,14 @@ InitMain
                        ; see arcade rom (0x61EB)
         std   x_pos,u
 
-        lda   Vint_Main_runcount
+        lda   gfxlock.frameDrop.count
         sta   timer,u
 
         inc   routine,u
 
 LiveMain
         lda   timer,u
-        suba  Vint_Main_runcount
+        suba  gfxlock.frameDrop.count
         sta   timer,u
         bhi   >
         adda  #$10

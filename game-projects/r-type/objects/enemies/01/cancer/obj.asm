@@ -128,7 +128,7 @@ Live
 !
         stx   y_vel,u
         ldd   shoottiming,u
-        subd  Vint_Main_runcount_w
+        subd  gfxlock.frameDrop.count_w
         std   shoottiming,u
         bpl   @noshoot
         ldd   #160

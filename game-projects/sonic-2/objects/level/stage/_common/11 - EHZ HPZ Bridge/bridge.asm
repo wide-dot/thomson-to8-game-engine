@@ -377,7 +377,7 @@ sub_F912                                              * sub_F912:
                                                       *         moveq   #0,d0
         ldd   dp+x_vel                                *         tst.w   (MainCharacter+x_vel).w
         bne   >                                       *         bne.s   +
-        ldb   Vint_runcount+1 ; vint as anim timer    *         move.b  (Vint_runcount+3).w,d0
+        ldb   gfxlock.frame.count+1 ; vint as anim timer    *         move.b  (Vint_runcount+3).w,d0
         andb  #$1C                                    *         andi.w  #$1C,d0
         lsrb                 ; val 0,2,4,6,8,10,12,14 *         lsr.w   #1,d0
 !       ;                                             * +

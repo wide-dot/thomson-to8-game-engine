@@ -19,7 +19,7 @@ Object
         std   image_set,u
         lda   #1                                 ; frame 0 we want to draw tiles
         sta   <glb_force_sprite_refresh          ; force sprites to do a full refresh (background will be changed)
-        tst   glb_Cur_Wrk_Screen_Id
+        tst   gfxlock.backBuffer.id
         beq   >                                  ; process the previous frame position, so test is inverted
         ldd   xy_pixel,x
         std   old_pos_0,u

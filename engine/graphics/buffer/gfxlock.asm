@@ -21,18 +21,17 @@
 * variables
 * =============================================================================
 
-gfxlock.gfx.status     fcb   0 ; 1: gfx rendering is running
-gfxlock.swap.status    fcb   0 ; -1: a swap buffer was made
-gfxlock.backProcess.status
-                       fcb   0 ; 1: back process status is on
+gfxlock.status             fcb   0 ; 1: gfx rendering is running
+gfxlock.bufferSwap.status  fcb   0 ; -1: a swap buffer was made
+gfxlock.backProcess.status fcb   0 ; 1: a back process is active during wait
 
-buffer.swapCount       fdb   0 ; buffer swap counter
-buffer.back            fcb   0 ; back buffer set to write operations (0 or 1)
+gfxlock.bufferSwap.count   fdb   0 ; buffer swap counter
+gfxlock.backBuffer.id      fcb   0 ; back buffer set to write operations (0 or 1)
 
-frame.dropCount_w      fcb   0 ; zero pad
-frame.dropCount        fcb   0 ; elapsed 50Hz frames since last main game loop
-frame.runCount         fdb   0 ; elapsed 50Hz frames since init
-frame.lastRunCount     fdb   0 ; elapsed 50Hz frames at last main game loop
+gfxlock.frameDrop.count_w  fcb   0 ; zero pad
+gfxlock.frameDrop.count    fcb   0 ; elapsed 50Hz frames since last main game loop
+gfxlock.frame.count        fdb   0 ; elapsed 50Hz frames since init
+gfxlock.frame.lastCount    fdb   0 ; elapsed 50Hz frames at last main game loop
 
 * =============================================================================
 * macros
@@ -71,49 +70,49 @@ _gfxlock.backProcess.off MACRO
 * routines
 * =============================================================================
 
-gfxlock.irq
-        lda   gfxlock.gfx.status
+gfxlock.bufferSwap.check
+        lda   gfxlock.status
         bne   >
-        jsr   gfxlock.swapBuffer       ; swap only when gfx was redered
-        _gfxlock.Init
+        jsr   gfxlock.bufferSwap.do    ; swap only when gfx was redered
+        _gfxlock.init
 !       rts
 
-gfxlock.swapBuffer
+gfxlock.bufferSwap.do
         ldb   @flip
         andb  #%01000000               ; set bit 6 based on flip/flop
         orb   #%10000000               ; set bit 7=1, bit 0-3=frame color
-screen.bordercolor equ *-1
+gfxlock.screenBorder.color equ *-1
         stb   map.CF74021.SYS2         ; set visible video buffer (2 or 3)
         com   @flip
         ldb   #$00
 @flip   equ   *-1
         andb  #%00000001               ; set bit 0 based on flip/flop
-        stb   buffer.back              ; video back buffer is 0 or 1
+        stb   gfxlock.backBuffer.id              ; video back buffer is 0 or 1
         orb   #%00000010               ; set bit 1=1
         stb   map.CF74021.DATA         ; mount working video buffer in visible RAM
         ldb   map.MC6846.PRC
         eorb  #%00000001               ; swap half-page in $4000 $5FFF
         stb   map.MC6846.PRC
         
-        inc   buffer.swapcount+1
+        inc   gfxlock.bufferSwap.count+1
         bne   >
-        inc   buffer.swapcount  
+        inc   gfxlock.bufferSwap.count
 !
-        ldd   frame.runcount
-        subd  frame.lastruncount
-        stb   frame.dropCount           ; store the number of elapsed 50Hz frames since last main game loop
+        ldd   gfxlock.frame.count
+        subd  gfxlock.frame.lastCount
+        stb   gfxlock.frameDrop.count  ; store the number of elapsed 50Hz frames since last main game loop
 
-        ldd   frame.runcount
-        std   frame.lastruncount
+        ldd   gfxlock.frame.count
+        std   gfxlock.frame.lastCount
         com   gfxlock.swap.status
         rts
 
-gfxlock.wait
+gfxlock.bufferSwap.wait
         clr   gfxlock.swap.status
 @loop   tst   gfxlock.backProcess.status
         bne   >
         jsr   #$1234                    ; do some back processing
-gfxlock.backProcess equ *-2
+gfxlock.backProcess.routine equ *-2
 !       tst   gfxlock.swap.status
         beq   @loop                     ; loop until irq make a swap
         rts

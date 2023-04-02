@@ -9,7 +9,7 @@
 
 BgBufferAlloc
         pshs  b,x
-        ldb   glb_Cur_Wrk_Screen_Id         ; read current screen buffer for write operations
+        ldb   gfxlock.backBuffer.id         ; read current screen buffer for write operations
         bne   BBA1                          ; branch if buffer 1 is current
         
 BBA0        

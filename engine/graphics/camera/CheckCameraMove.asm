@@ -3,7 +3,7 @@ CheckCameraMove
 	; and if tiles need an update
 	lda   #0
 	sta   glb_camera_move
-        tst   glb_Cur_Wrk_Screen_Id
+        tst   gfxlock.backBuffer.id
         bne   @b1
 @b0     ldx   <glb_camera_x_pos
 	cmpx  glb_old_camera_x_pos0

@@ -10,7 +10,7 @@ ObjectMoveSync
         sta   @a+1
 ; apply X velocity in sync with framerate
 ; ---------------------------------------
-        ldx   Vint_Main_runcount_w     ; take number of elapsed frame since last render and multiply by velocity
+        ldx   gfxlock.frameDrop.count_w ; take number of elapsed frame since last render and multiply by velocity
         bne   @loop1
         ldx   #1
 @loop1   
@@ -29,7 +29,7 @@ ObjectMoveSync
         sta   @b+1
 ; apply Y velocity in sync with framerate
 ; ---------------------------------------
-        ldx   Vint_Main_runcount_w     ; take number of elapsed frame since last render and multiply by velocity
+        ldx   gfxlock.frameDrop.count_w ; take number of elapsed frame since last render and multiply by velocity
         bne   @loop2
         ldx   #1
 @loop2   
