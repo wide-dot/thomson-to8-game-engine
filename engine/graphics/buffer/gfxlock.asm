@@ -34,39 +34,6 @@ gfxlock.frame.count        fdb   0 ; elapsed 50Hz frames since init
 gfxlock.frame.lastCount    fdb   0 ; elapsed 50Hz frames at last main game loop
 
 * =============================================================================
-* macros
-* =============================================================================
-
-_gfxlock.init MACRO
-        lda   #-1
-        sta   gfxlock.gfx.status
- ENDM
-
-_gfxlock.on MACRO
-        lda   gfxlock.gfx.status
-        bne   >
-        jsr   gfxlock.wait             ; wait if second gfx frame is reached
-!       lda   #1
-        sta   gfxlock.gfx.status
- ENDM
-
-_gfxlock.off MACRO
-        clr   gfxlock.gfx.status
- ENDM
-
-_gfxlock.backProcess.on MACRO
-        ; param 1 : routine address
-        ldd   #\1
-        std   gfxlock.backProcess
-        lda   #1
-        sta   gfxlock.backProcess.status
- ENDM
-
-_gfxlock.backProcess.off MACRO
-        clr   gfxlock.backProcess.status
- ENDM
-
-* =============================================================================
 * routines
 * =============================================================================
 
@@ -104,15 +71,15 @@ gfxlock.screenBorder.color equ *-1
 
         ldd   gfxlock.frame.count
         std   gfxlock.frame.lastCount
-        com   gfxlock.swap.status
+        com   gfxlock.bufferSwap.status
         rts
 
 gfxlock.bufferSwap.wait
-        clr   gfxlock.swap.status
+        clr   gfxlock.bufferSwap.status
 @loop   tst   gfxlock.backProcess.status
         bne   >
-        jsr   #$1234                    ; do some back processing
+        jsr   $1234                     ; do some back processing
 gfxlock.backProcess.routine equ *-2
-!       tst   gfxlock.swap.status
+!       tst   gfxlock.bufferSwap.status
         beq   @loop                     ; loop until irq make a swap
         rts

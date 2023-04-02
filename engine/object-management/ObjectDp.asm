@@ -4,3 +4,4 @@ ObjectDp_Clear
 !       sta   ,x+
         cmpx  #dp_extreg
         bne   <
+        rts
