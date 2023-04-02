@@ -297,7 +297,7 @@ Scroll_PreScrollTo
         std   @limit
 !       jsr   Scroll
         jsr   DrawTiles
-        jsr   SwapVideoPage
+        jsr   gfxlock.bufferSwap.do
         ldd   glb_camera_x_pos
         cmpd  #0
 @limit  equ *-2
