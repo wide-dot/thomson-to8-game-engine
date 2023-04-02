@@ -1,10 +1,10 @@
 _system.reboot MACRO
         jsr   IrqOff
- ifdef sn_reset
-        jsr   sn_reset
+ ifdef sn76489.reset
+        jsr   sn76489.reset
  endc
- ifdef YVGM_SilenceAll
-        jsr   YVGM_SilenceAll
+ ifdef ym2413.reset
+        jsr   ym2413.reset
  endc
         ldd   #$A55A   ; boot signature part 1      
         std   $60FE
