@@ -779,7 +779,12 @@ public class BuildDisk
 				}
 
 				if (act.bgColorIndex != null || act.bgFileName != null) {
-					asmBuilder.add("        jsr   WaitVBL");						
+					asmBuilder.add(" IFDEF gfxlock.bufferSwap.do");
+					asmBuilder.add("        jsr   gfxlock.bufferSwap.do");
+					asmBuilder.add(" ENDC");	
+					asmBuilder.add(" IFDEF WaitVBL");
+					asmBuilder.add("        jsr   WaitVBL");
+					asmBuilder.add(" ENDC");
 					asmBuilder.add("        ldb   #$03                     * load page 3");						
 					asmBuilder.add("        stb   $E7E5                    * data space ($A000-$DFFF)");
 				}
