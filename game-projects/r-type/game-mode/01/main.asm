@@ -3,14 +3,14 @@ DEBUG   equ     1
 SOUND_CARD_PROTOTYPE equ 1
 
         INCLUDE "./engine/system/to8/memory-map.equ"
-        INCLUDE "./engine/system/to8/map.equ"
+        INCLUDE "./engine/system/to8/map.const.asm"
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/objects/palette/fade/fade.equ"
         INCLUDE "./global/macro.asm"
         INCLUDE "./global/variables.asm"
-        INCLUDE "./engine/graphics/buffer/gfxlock-macro.asm"
+        INCLUDE "./engine/graphics/buffer/gfxlock.macro.asm"
         
 map_width       equ 1598
 viewport_width  equ 144
