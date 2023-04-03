@@ -3,12 +3,14 @@ DEBUG   equ     1
 SOUND_CARD_PROTOTYPE equ 1
 
         INCLUDE "./engine/system/to8/memory-map.equ"
+        INCLUDE "./engine/system/to8/map.equ"
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/objects/palette/fade/fade.equ"
         INCLUDE "./global/macro.asm"
         INCLUDE "./global/variables.asm"
+        INCLUDE "./engine/graphics/buffer/gfxlock-macro.asm"
         
 map_width       equ 1598
 viewport_width  equ 144
@@ -48,7 +50,7 @@ CHECKPOINT_01_wave equ (56-2)*12*2
         _MountObject ObjID_LevelWave
         jsr   ,x
 
-        jsr   WaitVBL
+        jsr   gfxlock.bufferSwap.do
         jsr   RunObjects
 
 ; init scroll
@@ -72,6 +74,7 @@ CHECKPOINT_01_wave equ (56-2)*12*2
         lda   #255                     ; set sync out of display (VBL)
         ldx   #Irq_one_frame
         jsr   IrqSync
+        _gfxlock.init
         jsr   IrqOn 
 
 * ---------------------------------------------------------------------------
@@ -79,7 +82,6 @@ CHECKPOINT_01_wave equ (56-2)*12*2
 * ---------------------------------------------------------------------------
 
 LevelMainLoop
-        jsr   WaitVBL
         jsr   ReadJoypads
 
         lda   checkpoint_load          ; load checkpoint requested ?
@@ -109,19 +111,19 @@ LevelMainLoop
         _RunObject ObjID_Player1,#player1
         jsr   RunObjects
         jsr   CheckSpritesRefresh
+
+        _gfxlock.on
         jsr   EraseSprites
         jsr   UnsetDisplayPriority
         jsr   DrawTiles
         jsr   DrawSprites
-
-        ; display overlay mask and hud
-
         _MountObject ObjID_Mask
         jsr   ,x
-
         _MountObject ObjID_hud
         jsr   ,x
+        _gfxlock.off
 
+        _gfxlock.loop
         jmp   LevelMainLoop
 
 * ---------------------------------------------------------------------------
@@ -129,6 +131,7 @@ LevelMainLoop
 * ---------------------------------------------------------------------------
 
 UserIRQ
+        jsr   gfxlock.bufferSwap.check
 	jsr   PalUpdateNow
         _MountObject ObjID_ymm01
         _MusicFrame_objymm
@@ -339,7 +342,7 @@ Palette_FadeCallback
 
         ; common utilities
         INCLUDE "./engine/ram/BankSwitch.asm"
-        INCLUDE "./engine/graphics/vbl/WaitVBL.asm"
+        INCLUDE "./engine/graphics/buffer/gfxlock.asm"
         INCLUDE "./engine/palette/PalUpdateNow.asm"
         INCLUDE "./engine/ram/ClearDataMemory.asm"
         INCLUDE "./engine/irq/Irq.asm"

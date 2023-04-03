@@ -26,7 +26,7 @@ gfxlock.bufferSwap.status  fcb   0 ; -1: a swap buffer was made
 gfxlock.backProcess.status fcb   0 ; 1: a back process is active during wait
 
 gfxlock.bufferSwap.count   fdb   0 ; buffer swap counter
-gfxlock.backBuffer.id      fcb   0 ; back buffer set to write operations (0 or 1)
+gfxlock.backBuffer.id      fcb   0 ; back buffer set to read operations (0 or 1)
 
 gfxlock.frameDrop.count_w  fcb   0 ; zero pad
 gfxlock.frameDrop.count    fcb   0 ; elapsed 50Hz frames since last main game loop
@@ -41,20 +41,20 @@ gfxlock.bufferSwap.check
         lda   gfxlock.status
         bne   >
         jsr   gfxlock.bufferSwap.do    ; swap only when gfx was redered
-        _gfxlock.init
+        lda   #-1
+        sta   gfxlock.status
 !       rts
 
 gfxlock.bufferSwap.do
-        ldb   @flip
+        ldb   gfxlock.backBuffer.status
         andb  #%01000000               ; set bit 6 based on flip/flop
         orb   #%10000000               ; set bit 7=1, bit 0-3=frame color
 gfxlock.screenBorder.color equ *-1
         stb   map.CF74021.SYS2         ; set visible video buffer (2 or 3)
-        com   @flip
+        com   gfxlock.backBuffer.status
         ldb   #$00
-@flip   equ   *-1
+gfxlock.backBuffer.status equ   *-1
         andb  #%00000001               ; set bit 0 based on flip/flop
-        stb   gfxlock.backBuffer.id              ; video back buffer is 0 or 1
         orb   #%00000010               ; set bit 1=1
         stb   map.CF74021.DATA         ; mount working video buffer in visible RAM
         ldb   map.MC6846.PRC
@@ -65,21 +65,17 @@ gfxlock.screenBorder.color equ *-1
         bne   >
         inc   gfxlock.bufferSwap.count
 !
-        ldd   gfxlock.frame.count
-        subd  gfxlock.frame.lastCount
-        stb   gfxlock.frameDrop.count  ; store the number of elapsed 50Hz frames since last main game loop
-
-        ldd   gfxlock.frame.count
-        std   gfxlock.frame.lastCount
         com   gfxlock.bufferSwap.status
         rts
 
 gfxlock.bufferSwap.wait
         clr   gfxlock.bufferSwap.status
 @loop   tst   gfxlock.backProcess.status
-        bne   >
+        beq   >
         jsr   $1234                     ; do some back processing
 gfxlock.backProcess.routine equ *-2
-!       tst   gfxlock.bufferSwap.status
+!       lda   gfxlock.status
+        bne   >
+        tst   gfxlock.bufferSwap.status
         beq   @loop                     ; loop until irq make a swap
-        rts
+!       rts
