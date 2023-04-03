@@ -443,6 +443,12 @@ Phase5Live
         lda   ,x                        ; Test if type writer is done
         cmpa  #$39                      ; Op code for RTS
         beq   Phase6Init
+
+        ; press fire
+        lda   Fire_Press
+        anda  #c1_button_A_mask
+        lbne  LaunchGame
+
         jsr   WaitVBL
         jsr   ReadJoypads
         jsr   RunObjects
