@@ -56,11 +56,6 @@ CHECKPOINT_01_wave equ (56-2)*12*2
 ; init scroll
         jsr   InitScroll
 
-; load checkpoints
-        ldd   #CHECKPOINT_00
-        ldx   #CHECKPOINT_00_wave
-        jsr   Game_LoadCheckpoint_x
-
 ; play music
         _MountObject ObjID_ymm01
         _MusicInit_objymm #0,#MUSIC_NO_LOOP,#MusicCallbackYM  ; initialize the YM2413 player 
@@ -76,6 +71,70 @@ CHECKPOINT_01_wave equ (56-2)*12*2
         jsr   IrqSync
         _gfxlock.init
         jsr   IrqOn 
+
+; load checkpoints
+        ldd   #CHECKPOINT_00
+        ldx   #CHECKPOINT_00_wave
+        jsr   Game_LoadCheckpoint_x
+
+
+* ---------------------------------------------------------------------------
+* PLAYER 1 LEVEL 1 INIT
+* ---------------------------------------------------------------------------
+
+LevelInitPhase0
+
+LevelInitPhase1
+
+        ; Load engine flames
+        jsr   LoadObject_x
+        stx   engineflames
+        lda   #ObjID_engineflames
+        sta   id,x  
+
+        lda   #1
+        sta   player1+subtype    
+        ldd   #250
+        std   player1+x_vel
+
+
+LevelInitPhase1Live
+
+        ldd   player1+x_pos
+        cmpd  #150
+        bgt   LevelInitPhase2
+
+        jsr   LoopRun
+        jmp   LevelInitPhase1Live
+
+LevelInitPhase2
+
+        ldx   #0
+engineflames equ *-2
+        lda   #2
+        sta   routine,x
+        ldd   #150
+        std   player1+x_vel
+LevelInitPhase2Live
+        ldd   player1+x_pos
+        cmpd  #170
+        bgt   LevelInitPhase3
+        jsr   LoopRun
+        jmp   LevelInitPhase2Live
+
+LevelInitPhase3
+        ldd   #-150
+        std   player1+x_vel
+LevelInitPhase3Live
+        ldd   player1+x_pos
+        cmpd  #130
+        blt   LetsStart
+        jsr   LoopRun
+        jmp   LevelInitPhase3Live                
+
+LetsStart
+
+        clr   player1+subtype
 
 * ---------------------------------------------------------------------------
 * MAIN GAME LOOP
@@ -103,27 +162,7 @@ LevelMainLoop
         ;lda   #1
         ;sta   checkpoint_load
 !
-        jsr   Scroll
-        jsr   ObjectWave
-        _Collision_Do AABB_list_friend,AABB_list_ennemy
-        _Collision_Do AABB_list_player,AABB_list_bonus
-        _RunObject ObjID_fade,#palettefade
-        _RunObject ObjID_Player1,#player1
-        jsr   RunObjects
-        jsr   CheckSpritesRefresh
-
-        _gfxlock.on
-        jsr   EraseSprites
-        jsr   UnsetDisplayPriority
-        jsr   DrawTiles
-        jsr   DrawSprites
-        _MountObject ObjID_Mask
-        jsr   ,x
-        _MountObject ObjID_hud
-        jsr   ,x
-        _gfxlock.off
-
-        _gfxlock.loop
+        jsr   LoopRun
         jmp   LevelMainLoop
 
 * ---------------------------------------------------------------------------
@@ -220,6 +259,30 @@ Foeshoottable
         fdb -$80
         fdb -$100
         fdb -$120
+
+
+
+LoopRun
+        jsr   Scroll
+        jsr   ObjectWave
+        _Collision_Do AABB_list_friend,AABB_list_ennemy
+        _Collision_Do AABB_list_player,AABB_list_bonus
+        _RunObject ObjID_fade,#palettefade
+        _RunObject ObjID_Player1,#player1
+        jsr   RunObjects
+        jsr   CheckSpritesRefresh
+        _gfxlock.on
+        jsr   EraseSprites
+        jsr   UnsetDisplayPriority
+        jsr   DrawTiles
+        jsr   DrawSprites
+        _MountObject ObjID_Mask
+        jsr   ,x
+        _MountObject ObjID_hud
+        jsr   ,x
+        _gfxlock.off
+        _gfxlock.loop
+        rts
 
 * ---------------------------------------------------------------------------
 * Game_Checkpoint_x

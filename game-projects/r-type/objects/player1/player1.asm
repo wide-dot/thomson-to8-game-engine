@@ -12,7 +12,6 @@
         INCLUDE "./objects/player1/player1.equ"
         
 AABB_0           equ ext_variables     ; AABB struct (9 bytes)
-
 ply_acceleration equ $20
 ply_deceleration equ $100
 ply_max_vel      equ $100
@@ -32,11 +31,15 @@ Routines
         fdb   Live
 
 Init
-        ldd   #Ani_Player1
-        std   player1+anim
+        ldx   #Ani_Player1_init
+        lda   player1+subtype
+        bne   >
+        ldx   #Ani_Player1
+!
+        stx   player1+anim
         ldb   #3
         stb   player1+priority
-        ldd   #50
+        ldd   #20
         addd  glb_camera_x_pos
         std   player1+x_pos
         ldd   #100
@@ -56,38 +59,30 @@ Init
         ldd   y_pos,u
         stb   AABB.cy,x
 
+
         ; Temporary code to spawn a forcepod and a bit device
-        jsr   LoadObject_x
-        lda   #ObjID_forcepod         
-        sta   id,x      
-        lda   #3
-        sta   player1+forcepodlevel
-        lda   #2
-        sta   player1+forcepodtype
-
-        jsr   LoadObject_x
-        lda   #ObjID_bitdevice        
-        sta   id,x      
-        ldd   player1+x_pos
-        addd  #80
-        std   x_pos,x
-        ldd   player1+y_pos
-        std   y_pos,x
-
-        jsr   LoadObject_x
-        lda   #ObjID_bitdevice        
-        sta   id,x      
-        ldd   player1+x_pos
-        addd  #100
-        std   x_pos,x
-        ldd   player1+y_pos
-        std   y_pos,x
+        ;jsr   LoadObject_x
+        ;lda   #ObjID_forcepod         
+        ;sta   id,x      
+        ;lda   #3
+        ;sta   player1+forcepodlevel
+        ;lda   #2
+        ;sta   player1+forcepodtype
 
         ;jsr   LoadObject_x
         ;lda   #ObjID_bitdevice        
         ;sta   id,x      
         ;ldd   player1+x_pos
-        ;addd  #120
+        ;addd  #80
+        ;std   x_pos,x
+        ;ldd   player1+y_pos
+        ;std   y_pos,x
+
+        ;jsr   LoadObject_x
+        ;lda   #ObjID_bitdevice        
+        ;sta   id,x      
+        ;ldd   player1+x_pos
+        ;addd  #100
         ;std   x_pos,x
         ;ldd   player1+y_pos
         ;std   y_pos,x
@@ -99,6 +94,8 @@ Live
         addd  player1+x_pos
         std   player1+x_pos
 !
+        lda   player1+subtype
+        lbne  SkipPlayer1Controls
         lda   Dpad_Held
         anda  #c1_button_left_mask
         beq   @testRight
@@ -234,6 +231,7 @@ Live
 @store  std   player1+y_vel
 
         ; move and animate
+SkipPlayer1Controls
 !       jsr   AnimateSpriteSync
         jsr   ObjectMoveSync
         jsr   CheckRange
