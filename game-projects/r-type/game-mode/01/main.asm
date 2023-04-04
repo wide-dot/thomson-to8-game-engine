@@ -84,6 +84,28 @@ CHECKPOINT_01_wave equ (56-2)*12*2
 
 LevelInitPhase0
 
+        lda   #50
+        sta   LevelInitPhase0_a
+LevelInitPhase0Live
+        jsr   Scroll
+        _RunObject ObjID_fade,#palettefade
+        _gfxlock.on
+        jsr   UnsetDisplayPriority
+        jsr   DrawTiles
+        _MountObject ObjID_Mask
+        jsr   ,x
+        _MountObject ObjID_hud
+        jsr   ,x
+        _gfxlock.off
+        _gfxlock.loop
+
+        lda   #0
+LevelInitPhase0_a equ *-1
+        beq   LevelInitPhase1
+        deca
+        sta   LevelInitPhase0_a
+        jmp   LevelInitPhase0Live
+
 LevelInitPhase1
 
         ; Load engine flames
@@ -94,14 +116,14 @@ LevelInitPhase1
 
         lda   #1
         sta   player1+subtype    
-        ldd   #250
+        ldd   #280
         std   player1+x_vel
 
 
 LevelInitPhase1Live
 
         ldd   player1+x_pos
-        cmpd  #150
+        cmpd  #180
         bgt   LevelInitPhase2
 
         jsr   LoopRun
@@ -117,13 +139,13 @@ engineflames equ *-2
         std   player1+x_vel
 LevelInitPhase2Live
         ldd   player1+x_pos
-        cmpd  #170
+        cmpd  #200
         bgt   LevelInitPhase3
         jsr   LoopRun
         jmp   LevelInitPhase2Live
 
 LevelInitPhase3
-        ldd   #-150
+        ldd   #-180
         std   player1+x_vel
 LevelInitPhase3Live
         ldd   player1+x_pos
@@ -379,8 +401,7 @@ Palette_FadeOut
         std   o_fade_src,u
         ldd   #Pal_black
         std   o_fade_dst,u
-        lda   #0
-        sta   o_fade_wait,u
+        clr   o_fade_wait,u
         ldd   #Palette_FadeCallback
         std   o_fade_callback,u
         rts
