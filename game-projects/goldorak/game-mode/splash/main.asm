@@ -40,8 +40,8 @@ UserIRQ
 
 DoChangeGameMode
         jsr IrqOff
-        jsr sn_reset
-        jsr YVGM_SilenceAll 
+        jsr sn76489.reset
+        jsr ym2413.reset 
         lda #GmID_gamescreen
         sta NEXT_GAME_MODE
         lda #GmID_loading
