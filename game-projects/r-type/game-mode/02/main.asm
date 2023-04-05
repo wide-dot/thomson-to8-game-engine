@@ -12,7 +12,7 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./global/variables.asm"
         INCLUDE "./engine/graphics/buffer/gfxlock.macro.asm"
         
-map_width       equ 1598
+map_width       equ 1152
 viewport_width  equ 144
 viewport_height equ 180
 
@@ -59,6 +59,11 @@ CHECKPOINT_01_wave equ (56-2)*12*2
 ; init scroll
         jsr   InitScroll
 
+; load checkpoints
+        ldd   #CHECKPOINT_00
+        ldx   #CHECKPOINT_00_wave
+        jsr   Game_LoadCheckpoint_x
+
 ; play music
         _MountObject ObjID_ymm02
         _MusicInit_objymm #0,#MUSIC_NO_LOOP,#MusicCallbackYM  ; initialize the YM2413 player 
@@ -75,10 +80,7 @@ CHECKPOINT_01_wave equ (56-2)*12*2
         _gfxlock.init
         jsr   IrqOn 
 
-; load checkpoints
-        ldd   #CHECKPOINT_00
-        ldx   #CHECKPOINT_00_wave
-        jsr   Game_LoadCheckpoint_x
+
 
 
 * ---------------------------------------------------------------------------
@@ -251,10 +253,10 @@ Game_LoadCheckpoint_x
         jsr   Collision_ClearLists
 ;
         ; clear the two screen buffers to black
-        ldx   #$FFFF
+        ldx   #$0000
         jsr   ClearDataMem
         _SwitchScreenBuffer
-        ldx   #$FFFF
+        ldx   #$0000
         jsr   ClearDataMem
         _SwitchScreenBuffer
 ;
