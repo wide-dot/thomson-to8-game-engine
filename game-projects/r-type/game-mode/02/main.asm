@@ -47,8 +47,11 @@ CHECKPOINT_01_wave equ (56-2)*12*2
         _MountObject ObjID_LevelInit
         jsr   ,x
 
-        _MountObject ObjID_LevelWave
+        _MountObject ObjID_LevelInit_s
         jsr   ,x
+
+        ;_MountObject ObjID_LevelWave
+        ;jsr   ,x
 
         jsr   gfxlock.bufferSwap.do
         jsr   RunObjects
@@ -206,7 +209,7 @@ Foeshoottable
 
 LoopRun
         jsr   Scroll
-        jsr   ObjectWave
+        ;jsr   ObjectWave
         _Collision_Do AABB_list_friend,AABB_list_ennemy
         _Collision_Do AABB_list_player,AABB_list_bonus
         _RunObject ObjID_fade,#palettefade
@@ -272,7 +275,7 @@ Game_LoadCheckpoint_x
 @x      equ   *-2
         std   gfxlock.frame.count
         std   gfxlock.frame.lastCount
-        jmp   ObjectWave_Init
+        ;jmp   ObjectWave_Init
 
 * ---------------------------------------------------------------------------
 * Collision_ClearLists
