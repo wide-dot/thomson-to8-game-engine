@@ -31,10 +31,20 @@ Routines
         fdb   AlreadyDeleted
 
 Init
+
+        ldd   glb_camera_x_pos
+        addd  #144+12
+        std   x_pos,u
+        clra
+        ldb   subtype,u
+        std   y_pos,u
+        ldb   subtype+1,u
+        stb   subtype,u
+
         ldb   #6
         stb   priority,u
-        lda   render_flags,u
-        ora   #render_playfieldcoord_mask
+
+        lda   #render_playfieldcoord_mask
         sta   render_flags,u
 
         _Collision_AddAABB AABB_0,AABB_list_ennemy
@@ -56,6 +66,7 @@ Init
 
 
 Live
+        _breakpoint
         jsr   BlasterGetDirection
         sta   shootdirection,u
         asla

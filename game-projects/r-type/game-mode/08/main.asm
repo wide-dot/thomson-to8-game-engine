@@ -12,7 +12,7 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./global/variables.asm"
         INCLUDE "./engine/graphics/buffer/gfxlock.macro.asm"
         
-map_width       equ 1128
+map_width       equ 720
 viewport_width  equ 144
 viewport_height equ 180
 
@@ -343,7 +343,7 @@ Palette_FadeCallback
 * Game Mode RAM variables
 * ---------------------------------------------------------------------------
 
-        INCLUDE "./game-mode/02/ram_data.asm"
+        INCLUDE "./game-mode/08/ram_data.asm"
 
 * ---------------------------------------------------------------------------
 * ENGINE routines

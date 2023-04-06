@@ -37,8 +37,22 @@
 	fcb   $06,$AC,ObjID_patapata,$00,$05
 	fcb   $08,$8C,ObjID_bug,$01,$34
 	fcb   $09,$4C,ObjID_bug,$00,$36
+
+	fcb   $0B,$86,ObjID_blaster,41,230
+	fcb   $0B,$86,ObjID_blaster,159,241
+	fcb   $0B,$C6,ObjID_blaster,41,250
+	fcb   $0B,$C6,ObjID_blaster,159,221
+	fcb   $0C,$06,ObjID_blaster,53,230
+	fcb   $0C,$06,ObjID_blaster,147,223
+	fcb   $0C,$46,ObjID_blaster,53,230
+	fcb   $0C,$46,ObjID_blaster,147,223
+
+	fcb   $0C,$FE,ObjID_fadetotunnel,0,0
+
 	fcb   $0D,$88,ObjID_pow,$00,$35
+	fcb   $0E,$06,ObjID_blaster,29,220
 	fcb   $0E,$2C,ObjID_pow,$00,$04
+	fcb   $0E,$46,ObjID_blaster,29,250
 	fcb   $0E,$50,ObjID_bug,$01,$22
 	fcb   $0E,$80,ObjID_shell,$00,$00
 	fcb   $11,$DA,ObjID_patapata,$00,$2A
