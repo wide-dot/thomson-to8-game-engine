@@ -12,6 +12,7 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./objects/enemies_properties.asm"
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
 
@@ -49,15 +50,14 @@ Init
 
         _Collision_AddAABB AABB_0,AABB_list_ennemy
         
-        leax  AABB_0,u
-        lda   #1                       ; set damage potential for this hitbox
-        sta   AABB.p,x
-        _ldd  4,7                      ; set hitbox xy radius
-        std   AABB.rx,x
+        lda   #blaster_hitdamage
+        sta   AABB_0+AABB.p,u
+        _ldd  blaster_hitbox_x,blaster_hitbox_y
+        std   AABB_0+AABB.rx,u
 
         ldd   y_pos,u
         subd  glb_camera_y_pos
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
 
         inc   routine,u
         ldb   subtype,u
@@ -66,7 +66,6 @@ Init
 
 
 Live
-        _breakpoint
         jsr   BlasterGetDirection
         sta   shootdirection,u
         asla
@@ -110,16 +109,18 @@ Live
         std   y_vel,x
 
 CheckEOL
-        leax  AABB_0,u
-        lda   AABB.p,x
+        lda   AABB_0+AABB.p,u
         beq   @destroy                  ; was killed  
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
         addd  #4                       ; add x radius
         bmi   @delete                  ; branch if out of screen's left
         jmp   DisplaySprite
-@destroy 
+@destroy
+        ldd   score
+        addd  #blaster_score
+        std   score 
         jsr   LoadObject_x
         beq   @delete
         lda   #ObjID_enemiesblastsmall

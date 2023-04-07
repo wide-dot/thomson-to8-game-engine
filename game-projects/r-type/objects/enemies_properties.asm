@@ -19,3 +19,8 @@ bug_score		equ 2
 bug_hitbox_x	        equ 4
 bug_hitbox_y	        equ 8
 bug_hitdamage	        equ 1
+
+blaster_score           equ 1
+blaster_hitbox_x	equ 4
+blaster_hitbox_y	equ 7
+blaster_hitdamage	equ 1
