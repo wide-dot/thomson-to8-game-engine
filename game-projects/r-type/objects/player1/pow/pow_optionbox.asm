@@ -60,6 +60,18 @@ Live
         jmp   DisplaySprite
 @captured
         lda   subtype,u
+        beq   @forcepod
+        cmpa  #3                        ; Speed ?
+        beq   @speed
+        cmpa  #7                        ; Missiles ?
+        beq   @missiles
+        cmpa  #1                        ; Counter-ground laser ?
+        beq   >
+        lda   #1                        ; Counter-air laser
+        jmp   @forcepod
+!
+        lda   #2                        ; Counter-ground laser
+@forcepod
         sta   player1+forcepodtype
                                         ; Do we need to spawn a force pod ?
         lda   player1+forcepodlevel
@@ -81,12 +93,21 @@ Live
         inc   routine,u     
         _Collision_RemoveAABB AABB_0,AABB_list_bonus
         jmp   DeleteObject
+@speed
+        jmp   @delete
+@missiles
+        jmp   @delete
 AlreadyDeleted
         rts
 
 
 optionboxes
         
-        FDB Img_pow_optionbox_0
-        FDB Img_pow_optionbox_1
-        FDB Img_pow_optionbox_2
+        fdb Img_pow_optionbox_0    ; Bounce laser
+        fdb Img_pow_optionbox_1    ; Counter ground laser
+        fdb 0
+        fdb Img_pow_optionbox_3    ; Speed up
+        fdb Img_pow_optionbox_4    ; Counter air laser
+        fdb 0
+        fdb 0
+        fdb Img_pow_optionbox_7    ; Missiles
