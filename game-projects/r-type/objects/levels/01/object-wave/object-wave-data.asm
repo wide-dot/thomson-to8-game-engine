@@ -55,16 +55,40 @@
 	fcb   $0E,$46,ObjID_blaster,29,250
 	fcb   $0E,$50,ObjID_bug,$01,$22
 	fcb   $0E,$80,ObjID_shell,$00,$00
+
+	fcb   $11,$06,ObjID_blaster,41,230
+	fcb   $11,$46,ObjID_blaster,41,240
+	fcb   $11,$86,ObjID_blaster,29,250
+	fcb   $11,$C6,ObjID_blaster,29,220
 	fcb   $11,$DA,ObjID_patapata,$00,$2A
 	fcb   $11,$EC,ObjID_patapata,$00,$29
+	fcb   $12,$06,ObjID_blaster,29,230
 	fcb   $12,$0A,ObjID_patapata,$00,$3A
+	fcb   $12,$46,ObjID_blaster,29,250
 	fcb   $12,$60,ObjID_patapata,$00,$24
 	fcb   $12,$82,ObjID_pow,$00,$57
+	fcb   $12,$86,ObjID_blaster,29,240
 	fcb   $12,$C4,ObjID_patapata,$00,$08
+	fcb   $12,$C6,ObjID_blaster,29,250
 	fcb   $13,$1E,ObjID_pow,$00,$47
+	fcb   $13,$86,ObjID_blaster,53,230
+	fcb   $13,$86,ObjID_blaster,147,223
+	fcb   $13,$C6,ObjID_blaster,53,230
+	fcb   $13,$C6,ObjID_blaster,147,223
 	fcb   $13,$C8,ObjID_bug,$02,$22
 	fcb   $14,$B8,ObjID_pow,$00,$75
+
+
+	fcb   $16,$06,ObjID_blaster,29,230
+	fcb   $16,$46,ObjID_blaster,29,240
+	fcb   $16,$86,ObjID_blaster,29,250
+	fcb   $16,$c6,ObjID_blaster,29,230
+	fcb   $17,$06,ObjID_blaster,41,240
+	fcb   $17,$46,ObjID_blaster,41,230
 	fcb   $18,$22,ObjID_pow,$00,$04
+
+	fcb   $19,$80,ObjID_fadetotunnel,$01,$00
+
 	fdb   $FFFF
 
 
