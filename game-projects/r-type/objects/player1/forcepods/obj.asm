@@ -36,7 +36,7 @@ Routines
         fdb   LiveHookedBack
 
 Init
-        ldd   #Ani_forcepod_2
+        ldd   #Ani_forcepod_0
         std   anim,u
         ldb   #2
         stb   priority,u
@@ -153,9 +153,13 @@ Live
         dec   canshootweapon,u
         rts
 !
+        lda   currentlevel,u
+        cmpa  #1
+        beq   >
         ldb   Fire_Press
         andb  #c1_button_A_mask
-        lbne  @counterairlaser
+        lbne  @shootlaser
+!
         rts                             
 @continueliveishookedcontinue
         ldx   #10
@@ -268,6 +272,13 @@ Live
 !       
         ldb   #canshootreboundlasertiming
         stb   canshootweapon,u
+        rts
+@shootlaser
+        lda   player1+forcepodtype
+        beq   @reboundlaser
+        cmpa  #1
+        beq   @counterairlaser
+@countergroundlaser
         rts
 @counterairlaser
         jsr   LoadObject_x

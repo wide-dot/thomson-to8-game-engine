@@ -40,6 +40,9 @@ Init
         ; set subtype based on preset
         ; (the bonus to be release)
 
+        ldb   subtype+1,u
+        stb   subtype,u
+
         ; need a test on x (if pow comes from left => anim_pow_1)
         ; require a upgrade of xy preset to 16bits (see converter)
         ldx   #anim_pow_0
@@ -98,16 +101,24 @@ Live
         std   y_pos,x
         jsr   LoadObject_x
         beq   @delete
-        lda   #ObjID_pow_optionbox
-        sta   id,x
+        ldb   #ObjID_pow_optionbox
+        lda   subtype,u
+        asra
+        asra
+        asra
+        asra
+        cmpa  #$05
+        bne   >
+        ldb   #ObjID_bitdevice
+!
+        stb   id,x
+        sta   subtype,x
         ldd   x_pos,u
         std   x_pos,x
         ldd   y_pos,u
         std   y_pos,x
-        lda   subtype,u
-        sta   subtype,x
-@delete lda   #2
-        sta   routine,u      
+@delete 
+        inc   routine,u      
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
         jmp   DeleteObject
 AlreadyDeleted
