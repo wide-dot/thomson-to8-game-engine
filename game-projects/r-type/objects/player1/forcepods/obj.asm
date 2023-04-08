@@ -282,7 +282,7 @@ Live
         rts
 @counterairlaser
         jsr   LoadObject_x
-        lbeq  >                             
+        beq  >                             
         lda   #ObjID_forcepod_counterairlaser
         sta   id,x
         lda   hooked_status,u

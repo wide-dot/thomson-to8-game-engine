@@ -1,3 +1,7 @@
+	fcb   $01,$40,ObjID_pow,$00,$47
+	fcb   $01,$80,ObjID_pow,$00,$47
+	fcb   $01,$c0,ObjID_pow,$00,$47
+
 	fcb   $01,$F8,ObjID_patapata,$00,$04
 	fcb   $02,$06,ObjID_patapata,$00,$03
 	fcb   $02,$1A,ObjID_patapata,$00,$05
