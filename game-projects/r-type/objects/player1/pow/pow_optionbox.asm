@@ -23,7 +23,6 @@ Routines
 	fdb   AlreadyDeleted
 
 Init
-
 	lda   subtype,u
         asla
         ldx   #optionboxes

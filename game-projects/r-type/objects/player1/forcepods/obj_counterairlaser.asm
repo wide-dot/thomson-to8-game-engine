@@ -1,6 +1,6 @@
 
 ; ---------------------------------------------------------------------------
-; Object - Weapon1
+; Object - Couter-air laser
 ;
 ; input REG : [u] pointer to Object Status Table (OST)
 ; ---------
@@ -14,8 +14,9 @@
         INCLUDE "./engine/collision/struct_AABB.equ"
 
 AABB_0   equ ext_variables ; AABB struct (9 bytes)
-caFrame  equ ext_variables+9 ; child's data
-nbChilds equ ext_variables+9 ; parent's data
+caFrame  equ ext_variables+9 ; current frame
+childnum equ ext_variables+10 ; child number
+maxnbchildren equ 3           ; Including 0
 
 Object
         lda   routine,u
@@ -25,39 +26,26 @@ Object
 
 Routines
         fdb   GenChilds
-        fdb   Init
+        fdb   LiveInitLeft
         fdb   LiveLeft
+        fdb   LiveInitRight
         fdb   LiveRight
         fdb   AlreadyDeleted
 
 GenChilds
-        lda   nbChilds,u
-        inca
-        cmpa  #5
-        beq   @destroy
-        sta   nbChilds,u
+        lda   childnum,u
+        cmpa  #maxnbchildren
+        beq   >
         jsr   LoadObject_x
-        beq   @destroy                      
+        beq   >                     
         lda   #ObjID_forcepod_counterairlaser
         sta   id,x
         lda   subtype,u
         sta   subtype,x
-        ldd   glb_camera_x_pos
-        subd  glb_camera_x_pos_old
-        beq   >
-        addd  x_pos,u
-        std   x_pos,u
+        lda   childnum,u
+        inca
+        sta   childnum,x
 !
-        ldd   x_pos,u
-        std   x_pos,x
-        ldd   y_pos,u
-        std   y_pos,x
-        lda   #1
-        sta   routine,x
-        rts
-@destroy
-        jmp   DeleteObject
-Init
         _Collision_AddAABB AABB_0,AABB_list_friend
         
         lda   #255                     ; set damage potential for this hitbox
@@ -69,51 +57,58 @@ Init
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
 
-        ldx   #counterAirImages   
-        clr   caFrame,u
-        ldd   ,x
-        std   image_set,u  
-        ldd   #counterAirHitboxes
-        ldd   ,x
-        std   AABB_0+AABB.rx,u
-
-        lda   subtype,u
-        bita  #1
-        bne   InitLeft
-
-InitRight
         lda   #3
         sta   routine,u
-        ldd   x_pos,u
-	addd  #8
-        bra   InitEnd
-
-InitLeft
+        lda   subtype,u
+        bita  #1
+        beq   LiveInitRight
+        lda   #1
+        sta   routine,u
         lda   render_flags,u
         ora   #render_xmirror_mask
         sta   render_flags,u
-        lda   #2
-        sta   routine,u
-        ldd   x_pos,u
-	subd  #9
-
-InitEnd
-	std   x_pos,u
-        subd  glb_camera_x_pos
-        stb   AABB_0+AABB.cx,u
-	ldd   y_pos,u
-        stb   AABB_0+AABB.cy,u
-        jmp   DisplaySprite
+LiveInitLeft
+        lda   #maxnbchildren
+        suba  caFrame,u
+        suba  childnum,u
+        bne   >
+        inc   routine,u 
+!
+        ldd   player1+y_pos
+        std   y_pos,u
+        lda   #-6
+        ldb   caFrame,u
+        mul
+        addd  player1+x_pos
+        subd  #9
+        bra   Live1
 
 LiveLeft
         ldd   #-6
         bra   Live
+
+LiveInitRight
+        lda   #maxnbchildren
+        suba  caFrame,u
+        suba  childnum,u
+        bne   >
+        inc   routine,u 
+!
+        ldd   player1+y_pos
+        std   y_pos,u
+        lda   #6
+        ldb   caFrame,u
+        mul
+        addd  player1+x_pos
+        addd  #14
+        bra   Live1
 
 LiveRight
         ldd   #6
 
 Live
         addd  x_pos,u
+Live1
         std   x_pos,u
         ldd   glb_camera_x_pos
         subd  glb_camera_x_pos_old
@@ -127,23 +122,26 @@ Live
         stb   AABB_0+AABB.cx,u
         cmpd  #160-8/2                 ; delete weapon if out of screen range
         bgt   @delete
-        ldx   #counterAirImages   
+        ldd   y_pos,u
+        stb   AABB_0+AABB.cy,u
         lda   caFrame,u
+        asla
+        ldx   #counterAirImages   
+        ldx   a,x
+        stx   image_set,u 
+        ldx   #counterAirHitboxes
+        ldx   a,x
+        stx   AABB_0+AABB.rx,u
+        asra
         inca
         cmpa  #8
         bne   >
         lda   #4
 !       sta   caFrame,u
-        asla
-        ldx   a,x
-        stx   image_set,u  
-        ldx   #counterAirHitboxes
-        ldx   a,x
-        stx   AABB_0+AABB.rx,u
         jmp   DisplaySprite
 @delete
         _Collision_RemoveAABB AABB_0,AABB_list_friend
-        lda   #4
+        lda   #5
         sta   routine,u
         jmp   DeleteObject
 AlreadyDeleted
