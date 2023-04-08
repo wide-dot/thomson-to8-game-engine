@@ -101,8 +101,7 @@ InitEnd
 	std   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB_0+AABB.cx,u
-	ldd   player1+y_pos
-	std   y_pos,u
+	ldd   y_pos,u
         stb   AABB_0+AABB.cy,u
         jmp   DisplaySprite
 
