@@ -13,7 +13,9 @@
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
 
-AABB_0  equ ext_variables ; AABB struct (9 bytes)
+AABB_0   equ ext_variables ; AABB struct (9 bytes)
+caFrame  equ ext_variables+9 ; child's data
+nbChilds equ ext_variables+9 ; parent's data
 
 Object
         lda   routine,u
@@ -22,115 +24,148 @@ Object
         jmp   [a,x]
 
 Routines
-        fdb   InitRight
-        fdb   LiveOpeningRight
-        fdb   LiveFreeInitRight
-        fdb   LiveOpeningLeft
-        fdb   LiveFreeInitLeft
-        fdb   LiveFree
+        fdb   GenChilds
+        fdb   Init
+        fdb   LiveLeft
+        fdb   LiveRight
         fdb   AlreadyDeleted
 
-InitRight
-
+GenChilds
+        lda   nbChilds,u
+        inca
+        cmpa  #5
+        beq   @destroy
+        sta   nbChilds,u
+        jsr   LoadObject_x
+        beq   @destroy                      
+        lda   #ObjID_forcepod_counterairlaser
+        sta   id,x
+        lda   subtype,u
+        sta   subtype,x
+        ldd   glb_camera_x_pos
+        subd  glb_camera_x_pos_old
+        beq   >
+        addd  x_pos,u
+        std   x_pos,u
+!
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
+        lda   #1
+        sta   routine,x
+        rts
+@destroy
+        jmp   DeleteObject
+Init
         _Collision_AddAABB AABB_0,AABB_list_friend
         
         lda   #255                     ; set damage potential for this hitbox
         sta   AABB_0+AABB.p,u
-        _ldd  12,24                    ; set hitbox xy radius
-        std   AABB_0+AABB.rx,u
-        inc   routine,u                ; Set routine to LiveOpeningRight
 
-        ldb   #3
+        ldb   #4
         stb   priority,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
 
+        ldx   #counterAirImages   
+        clr   caFrame,u
+        ldd   ,x
+        std   image_set,u  
+        ldd   #counterAirHitboxes
+        ldd   ,x
+        std   AABB_0+AABB.rx,u
+
         lda   subtype,u
         bita  #1
         bne   InitLeft
 
-        ldd   #Ani_counterairlaser_0
-        std   anim,u
-LiveOpeningRight
-        ldd   player1+x_pos
-	addd  #33
-	std   x_pos,u
-        subd  glb_camera_x_pos
-        stb   AABB_0+AABB.cx,u
-	ldd   player1+y_pos
-	std   y_pos,u
-        stb   AABB_0+AABB.cy,u
-        jsr   AnimateSpriteSync
-        jmp   DisplaySprite
-InitLeft
-
-        ldd   #Ani_counterairlaser_2
-        std   anim,u
-        lda   #3                       ; Set routine to LiveOpeningLeft
+InitRight
+        lda   #3
         sta   routine,u
-
-LiveOpeningLeft
-        ldd   player1+x_pos
-	subd  #33
-	std   x_pos,u
-        subd  glb_camera_x_pos
-        stb   AABB_0+AABB.cx,u
-	ldd   player1+y_pos
-	std   y_pos,u
-        stb   AABB_0+AABB.cy,u
-        jsr   AnimateSpriteSync
-        jmp   DisplaySprite
-
-LiveFreeInitLeft
-        _ldd  12,12                    ; set hitbox xy radius
-        std   AABB_0+AABB.rx,u
-        lda   #5                       ; Set routine to LiveFree
-        sta   routine,u
-        ldd   #Ani_counterairlaser_3
-        std   anim,u
-        clr   anim_frame,u
         ldd   x_pos,u
-        subd  #12
-        std   x_pos,u
-        lda   #-2
-        sta   @livefreespeed
-        bra   LiveFree
-LiveFreeInitRight
-        _ldd  12,12                    ; set hitbox xy radius
-        std   AABB_0+AABB.rx,u
-        lda   #5                       ; Set routine to LiveFree
+	addd  #8
+        bra   InitEnd
+
+InitLeft
+        lda   render_flags,u
+        ora   #render_xmirror_mask
+        sta   render_flags,u
+        lda   #2
         sta   routine,u
-        ldd   #Ani_counterairlaser_1
-        std   anim,u
-        clr   anim_frame,u
-        ldd   #12
+        ldd   x_pos,u
+	subd  #9
+
+InitEnd
+	std   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB_0+AABB.cx,u
+	ldd   player1+y_pos
+	std   y_pos,u
+        stb   AABB_0+AABB.cy,u
+        jmp   DisplaySprite
+
+LiveLeft
+        ldd   #-6
+        bra   Live
+
+LiveRight
+        ldd   #6
+
+Live
         addd  x_pos,u
         std   x_pos,u
-        lda   #3
-        sta   @livefreespeed 
-LiveFree
-        lda   #3
-@livefreespeed equ *-1
-        ldb   gfxlock.frameDrop.count
-        mul
-        sex
+        ldd   glb_camera_x_pos
+        subd  glb_camera_x_pos_old
+        beq   >
         addd  x_pos,u
         std   x_pos,u
+!
+        ldd   x_pos,u
         subd  glb_camera_x_pos
         bmi   @delete
         stb   AABB_0+AABB.cx,u
         cmpd  #160-8/2                 ; delete weapon if out of screen range
         bgt   @delete
-	ldb   y_pos+1,u
-        stb   AABB_0+AABB.cy,u
-        jsr   AnimateSpriteSync
+        ldx   #counterAirImages   
+        lda   caFrame,u
+        inca
+        cmpa  #8
+        bne   >
+        lda   #4
+!       sta   caFrame,u
+        asla
+        ldx   a,x
+        stx   image_set,u  
+        ldx   #counterAirHitboxes
+        ldx   a,x
+        stx   AABB_0+AABB.rx,u
         jmp   DisplaySprite
 @delete
         _Collision_RemoveAABB AABB_0,AABB_list_friend
-        lda   #6
+        lda   #4
         sta   routine,u
         jmp   DeleteObject
 AlreadyDeleted
         rts
 
+counterAirImages
+        fdb   Img_counterairlaser_1
+        fdb   Img_counterairlaser_2
+        fdb   Img_counterairlaser_3
+        fdb   Img_counterairlaser_4
+        fdb   Img_counterairlaser_5
+        fdb   Img_counterairlaser_6
+        fdb   Img_counterairlaser_7
+        fdb   Img_counterairlaser_8
+
+counterAirHitboxes
+        fcb   3,19
+        fcb   3,22
+        fcb   3,22
+        fcb   3,19
+        fcb   3,14
+        fcb   3,14
+        fcb   3,14
+        fcb   3,14

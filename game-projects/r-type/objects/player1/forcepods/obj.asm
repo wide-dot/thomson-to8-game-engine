@@ -287,9 +287,9 @@ Live
         sta   id,x
         lda   hooked_status,u
         sta   subtype,x
-        ldd   x_pos,u
+        ldd   player1+x_pos
         std   x_pos,x
-        ldd   y_pos,u
+        ldd   player1+y_pos
         std   y_pos,x
 !       
         ldb   #canshootcounterairlasertiming
