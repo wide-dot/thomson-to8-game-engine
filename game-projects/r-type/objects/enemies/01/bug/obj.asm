@@ -12,6 +12,8 @@
         INCLUDE "./objects/enemies_properties.asm"
         INCLUDE "./objects/animation/anim-data.equ"
 
+LEVEL_1 equ 1
+
 AABB_0  equ ext_variables   ; AABB struct (9 bytes)
 nb_bugs equ ext_variables+9
 timer   equ ext_variables+10
@@ -162,6 +164,24 @@ AlreadyDeleted
         rts
 
 ImageIndex
+ IFDEF LEVEL_1
+        fdb   Img_bug_8
+        fdb   Img_bug_8
+        fdb   Img_bug_8
+        fdb   Img_bug_8
+        fdb   Img_bug_4
+        fdb   Img_bug_5
+        fdb   Img_bug_6
+        fdb   Img_bug_7
+        fdb   Img_bug_8
+        fdb   Img_bug_9
+        fdb   Img_bug_10
+        fdb   Img_bug_11
+        fdb   Img_bug_8
+        fdb   Img_bug_8
+        fdb   Img_bug_8
+        fdb   Img_bug_8
+ ELSE
         fdb   Img_bug_0
         fdb   Img_bug_1
         fdb   Img_bug_2
@@ -178,6 +198,7 @@ ImageIndex
         fdb   Img_bug_13
         fdb   Img_bug_14
         fdb   Img_bug_15
+ ENDC
 
 PresetXYIndex
         INCLUDE "./global/preset-xy.asm"
