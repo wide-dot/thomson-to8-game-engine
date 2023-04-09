@@ -40,7 +40,9 @@
 ;$0E,$7C,ObjID_13,$00,$01
 ;$0E,$88,ObjID_29,$00,$04
 	fcb   $0F,$64,ObjID_pow,$00,$07
+	fcb   $13,$60,ObjID_bossmusic,$00,$00
 ;$13,$60,ObjID_39,$00,$00
 ;$14,$80,ObjID_28,$00,$00
 ;$14,$FC,ObjID_40,$00,$00
+
 	fdb   $FFFF
