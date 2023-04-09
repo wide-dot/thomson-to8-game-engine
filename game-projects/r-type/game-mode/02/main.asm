@@ -23,6 +23,7 @@ CHECKPOINT_01      equ $3802
 CHECKPOINT_01_wave equ (56-2)*12*2
 
         org   $6100
+        clr   NEXT_GAME_MODE
         jsr   InitGlobals
         jsr   InitStack
         jsr   LoadAct
@@ -125,6 +126,18 @@ UserIRQ
         _MusicFrame_objvgc
         rts
 
+
+MusicCallbackYMBoss
+        _MountObject ObjID_ymm02
+        _MusicInit_objymm #2,#MUSIC_LOOP,#0
+        rts
+
+MusicCallbackSNBoss
+        _MountObject ObjID_vgc02
+        _MusicInit_objvgc #2,#MUSIC_LOOP,#0
+        rts
+
+
 * ---------------------------------------------------------------------------
 *
 * Foe shoots, returns x_vel or y_vel values from object stored in u
@@ -219,6 +232,23 @@ LoopRun
         jsr   ,x
         _gfxlock.off
         _gfxlock.loop
+
+        lda  NEXT_GAME_MODE
+        bne  Start_Music_Boss_Routine
+
+        rts
+
+Start_Music_Boss_Routine
+
+        jsr   IrqOff
+        _MountObject ObjID_ymm02
+        _MusicInit_objymm #1,#MUSIC_NO_LOOP,#MusicCallbackYMBoss
+        _MountObject ObjID_vgc02
+        _MusicInit_objvgc #1,#MUSIC_NO_LOOP,#MusicCallbackSNBoss
+        jsr   IrqOn
+
+        clr   NEXT_GAME_MODE
+
         rts
 
 * ---------------------------------------------------------------------------
