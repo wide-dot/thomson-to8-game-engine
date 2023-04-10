@@ -54,7 +54,7 @@ Init
         ldx   #BlasterShootingTiming+2
         ldd   b,x
         std   shoottimingset,u
-        jsr   InitRNG
+        subd  #1
         sta   @randa
         stb   @randb
         jsr   RandomNumber
@@ -248,5 +248,3 @@ BlasterShootingTiming
         fdb   $0040,$0140,$8F90
         fdb   $0040,$0140,$8F90
         fdb   $0040,$0140,$8F90
-
-        INCLUDE "./engine/math/RandomNumber.asm"

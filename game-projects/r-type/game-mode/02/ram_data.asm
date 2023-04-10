@@ -8,8 +8,8 @@ lives                        equ $9E02 ; 2 bytes
 * ===========================================================================
 * Object Constants
 * ===========================================================================
-nb_dynamic_objects           equ 64
-nb_graphical_objects         equ 64 * max 64 total
+nb_dynamic_objects           equ 48
+nb_graphical_objects         equ 48 * max 64 total
 ext_variables_size           equ 20 ; ext_variables_size is for dynamic objects
 
 * ===========================================================================
