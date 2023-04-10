@@ -164,4 +164,4 @@ AlreadyDeleted
 PresetXYIndex
         INCLUDE "./global/preset-xy.asm"
 Preset3034Index
-        INCLUDE "./objects/enemies/01/bug/preset-3034.asm"
+        INCLUDE "./objects/enemies/bug/preset-3034.asm"
