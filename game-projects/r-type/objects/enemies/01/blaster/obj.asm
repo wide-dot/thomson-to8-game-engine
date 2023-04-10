@@ -6,8 +6,8 @@
 ;
 ; Blaster subtype :
 ;       
-;       Bit 0 : 0 => Facing down, 1 => Facing up
-;       All bits : Shooting timing (which includes bit 0)
+;       Bit 0, 1, 2, 3 => Y pos (29, 41, 53, 147, 159, 171)
+;       Bit 4, 5, 6, 7 => Shoot timing (0 = no shoot, 1 = every 2s, 2 = every 1.5s, 3 = every 1s)
 ;
 ; ---------------------------------------------------------------------------
 
@@ -18,7 +18,8 @@
 
 AABB_0                equ ext_variables   ; AABB struct (9 bytes)
 shoottiming           equ ext_variables+9
-shootdirection        equ ext_variables+11
+shoottimingset        equ ext_variables+11
+shootdirection        equ ext_variables+13
 
 Object
         lda   routine,u
@@ -34,13 +35,27 @@ Routines
 Init
 
         ldd   glb_camera_x_pos
-        addd  #144+12
+        addd  #144+10
         std   x_pos,u
+        lda   subtype+1,u
+        sta   subtype,u
+
+        anda  #$0F
+        ldx   #BlasterYTable
+        ldb   a,x
         clra
-        ldb   subtype,u
         std   y_pos,u
-        ldb   subtype+1,u
-        stb   subtype,u
+
+        lda   subtype,u
+        asra
+        asra
+        asra
+        ldb   #3
+        mul
+        ldx   #BlasterShootingTiming+2
+        ldd   b,x
+        std   shoottimingset,u
+        std   shoottiming,u
 
         ldb   #6
         stb   priority,u
@@ -60,10 +75,6 @@ Init
         stb   AABB_0+AABB.cy,u
 
         inc   routine,u
-        ldb   subtype,u
-        clra
-        std   shoottiming,u
-
 
 Live
         jsr   BlasterGetDirection
@@ -71,19 +82,21 @@ Live
         asla
         ldx   #BlasterSpriteTable+10
         ldb   subtype,u
-        bitb  #$01
-        beq   >
+        andb  #$0F
+        cmpb  #3
+        blt   >
         ldx   #BlasterSpriteTable
 !
         ldx   a,x
         stx   image_set,u
 
+        ldd   shoottimingset,u
+        beq   CheckEOL
         ldd   shoottiming,u                     ; Is it time to shoot ?
         subd  gfxlock.frameDrop.count_w
         std   shoottiming,u
         bpl   CheckEOL
-        ldb   subtype,u                         ; It's time to shoot !
-        clra
+        addd  shoottimingset,u
         std   shoottiming,u
         jsr   LoadObject_x                
         beq   CheckEOL      
@@ -96,10 +109,11 @@ Live
         lda   shootdirection,u
         asla
         asla
-        ldb   subtype,u
         ldy   #BlasterShootingTable+20
-        bitb  #$01
-        beq   >
+        ldb   subtype,u
+        andb  #$0F
+        cmpb  #3
+        blt   >
         ldy   #BlasterShootingTable
 !
         leay  a,y
@@ -177,6 +191,14 @@ BlasterGetDirectionNotVertical
         rts
 
 
+BlasterYTable
+        fcb   29
+        fcb   41
+        fcb   53
+        fcb   147
+        fcb   159
+        fcb   171
+
 BlasterSpriteTable
 
         fdb   Img_blaster_0
@@ -201,3 +223,21 @@ BlasterShootingTable
         fdb   $00,$120
         fdb   $80,$80
         fdb   $80,$00
+
+BlasterShootingTiming
+        fdb   $0000,$0000,$0000
+        fdb   $00C0,$0140,$8FD0
+        fdb   $0080,$0100,$9010
+        fdb   $0080,$00C0,$9010
+        fdb   $0040,$0080,$9050
+        fdb   $0040,$0060,$9050
+        fdb   $0030,$0050,$9090
+        fdb   $0018,$0030,$90D0
+        fdb   $0040,$0140,$8F90
+        fdb   $0040,$0140,$8F90
+        fdb   $0040,$0140,$8F90
+        fdb   $0040,$0140,$8F90
+        fdb   $0040,$0140,$8F90
+        fdb   $0040,$0140,$8F90
+        fdb   $0040,$0140,$8F90
+        fdb   $0040,$0140,$8F90
