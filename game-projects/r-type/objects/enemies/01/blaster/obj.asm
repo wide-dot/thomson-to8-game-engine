@@ -33,7 +33,6 @@ Routines
         fdb   AlreadyDeleted
 
 Init
-
         ldd   glb_camera_x_pos
         addd  #144+10
         std   x_pos,u
@@ -55,6 +54,14 @@ Init
         ldx   #BlasterShootingTiming+2
         ldd   b,x
         std   shoottimingset,u
+        jsr   InitRNG
+        sta   @randa
+        stb   @randb
+        jsr   RandomNumber
+        anda  #00
+@randa  equ   *-1   
+        andb  #00
+@randb  equ   *-1
         std   shoottiming,u
 
         ldb   #6
@@ -241,3 +248,5 @@ BlasterShootingTiming
         fdb   $0040,$0140,$8F90
         fdb   $0040,$0140,$8F90
         fdb   $0040,$0140,$8F90
+
+        INCLUDE "./engine/math/RandomNumber.asm"
