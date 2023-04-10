@@ -27,6 +27,7 @@ CHECKPOINT_01_wave equ (56-2)*12*2
         jsr   InitStack
         jsr   LoadAct
         jsr   InitJoypads
+        jsr   InitRNG
 
         ldd   #Pal_black
         std   Pal_current
@@ -456,6 +457,9 @@ Palette_FadeCallback
 
         ; collision
         INCLUDE "./engine/collision/collision.asm"
+
+        ; random numbers
+        INCLUDE "./engine/math/RandomNumber.asm"
 
         ; should be at the end of includes (ifdef dependencies)
         INCLUDE "./engine/InitGlobals.asm"
