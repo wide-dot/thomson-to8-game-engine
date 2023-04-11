@@ -53,7 +53,7 @@ Init
         mul
         ldx   #BlasterShootingTiming
         leax  b,x
-        ldd   ,x++
+        ldd   ,x
         subd  #1
         sta   @randa
         stb   @randb
@@ -63,7 +63,7 @@ Init
         andb  #00
 @randb  equ   *-1
         std   shoottiming,u
-        ldd   ,x
+        ldd   2,x
         std   shoottimingset,u
 
         ldb   #6
