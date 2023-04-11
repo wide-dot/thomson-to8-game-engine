@@ -2,6 +2,7 @@ OverlayMode equ 1
 DEBUG EQU 1
 
         INCLUDE "./global/global-preambule-includes.asm"
+        INCLUDE "./engine/graphics/buffer/gfxlock.macro.asm"
 
         org   $6100
 
@@ -24,6 +25,7 @@ _mountScrollBuffer MACRO
 * Init
 * ============================================================================== 
         _gameMode.init #GmID_gamescreen
+        _gfxlock.init
         _music.init.SN76489 #Vgc_ingameSN,#MUSIC_LOOP,#0                 ; initialize the SN76489 player
         _music.init.YM2413 #Vgc_ingameYM,#MUSIC_LOOP,#0                  ; initialize the YM2413 player 
         _music.init.IRQ #UserIRQ,#OUT_OF_SYNC_VBL,#Irq_one_frame         ; Setting IRQ for music
@@ -63,15 +65,20 @@ LevelMainLoop
         jsr   ReadJoypads
         jsr   RunObjects
         jsr   VerticalScrollMoveUp
+        _gfxlock.on
         jsr   VerticalScroll                        
         jsr   BuildSprites        
-        jsr   WaitVBL
+        _gfxlock.off
+        _gfxlock.loop
         bra   LevelMainLoop
 
-UserIRQ        
+
+UserIRQ
+        jsr   gfxlock.bufferSwap.check
         jsr   PalUpdateNow
         jsr   YVGM_MusicFrame
         jmp   vgc_update
+
 
  
 
@@ -158,13 +165,12 @@ buffer_loop_addr EQU *-2
         
 * ============================================================================== * Routines
 * ==============================================================================
+        INCLUDE "./engine/graphics/buffer/gfxlock.asm"
         INCLUDE "./engine/graphics/sprite/sprite-overlay-pack.asm"
         INCLUDE "./engine/graphics/animation/AnimateSprite.asm"
         INCLUDE "./engine/graphics/codec/DecRLE00.asm"
         INCLUDE "./engine/graphics/codec/zx0_mega.asm" 
         INCLUDE "./engine/graphics/tilemap/vertical-scroll/scrolling.asm"
-
         INCLUDE "./engine/palette/color/Pal_black.asm"
-
         INCLUDE "./global/global-trailer-includes.asm"
         

@@ -1,7 +1,7 @@
 ; common utilities
     INCLUDE "./engine/InitGlobals.asm"
     INCLUDE "./engine/ram/BankSwitch.asm"
-    INCLUDE "./engine/graphics/vbl/WaitVBL.asm"
+    ;INCLUDE "./engine/graphics/vbl/WaitVBL.asm"
     INCLUDE "./engine/palette/PalUpdateNow.asm"
     INCLUDE "./engine/ram/ClearDataMemory.asm"
 
