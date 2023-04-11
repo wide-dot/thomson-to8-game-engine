@@ -51,9 +51,9 @@ Init
         asra
         ldb   #3
         mul
-        ldx   #BlasterShootingTiming+2
-        ldd   b,x
-        std   shoottimingset,u
+        ldx   #BlasterShootingTiming
+        leax  b,x
+        ldd   ,x++
         subd  #1
         sta   @randa
         stb   @randb
@@ -63,6 +63,8 @@ Init
         andb  #00
 @randb  equ   *-1
         std   shoottiming,u
+        ldd   ,x
+        std   shoottimingset,u
 
         ldb   #6
         stb   priority,u
