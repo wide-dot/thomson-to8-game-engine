@@ -9,4 +9,4 @@
         rts
 
 Level_data
-        INCLUDE "./objects/levels/02/object-wave/object-wave-data.asm"
+        INCLUDE "./objects/levels/08/object-wave/object-wave-data.asm"

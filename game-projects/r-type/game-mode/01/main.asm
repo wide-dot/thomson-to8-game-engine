@@ -81,84 +81,12 @@ CHECKPOINT_01_wave equ 0
 
 
 * ---------------------------------------------------------------------------
-* PLAYER 1 LEVEL 1 INIT
+* INIT PLAYER 1 ANIMATION
 * ---------------------------------------------------------------------------
 
-LevelInitPhase0
-
-        lda   #50
-        sta   LevelInitPhase0_a
-LevelInitPhase0Live
-        jsr   Scroll
-        _RunObject ObjID_fade,#palettefade
-        _gfxlock.on
-        jsr   UnsetDisplayPriority
-        jsr   DrawTiles
-        _MountObject ObjID_Mask
-        jsr   ,x
-        _MountObject ObjID_hud
-        jsr   ,x
-        _gfxlock.off
-        _gfxlock.loop
-
-        lda   #0
-LevelInitPhase0_a equ *-1
-        beq   LevelInitPhase1
-        deca
-        sta   LevelInitPhase0_a
-        jmp   LevelInitPhase0Live
-
-LevelInitPhase1
-
-        ; Load engine flames
         jsr   LoadObject_x
-        stx   engineflames
-        lda   #ObjID_engineflames
+        lda   #ObjID_initlevel1
         sta   id,x  
-
-        lda   #1
-        sta   player1+subtype    
-        ldd   #280
-        std   player1+x_vel
-
-
-LevelInitPhase1Live
-
-        ldd   player1+x_pos
-        cmpd  #180
-        bgt   LevelInitPhase2
-
-        jsr   LoopRun
-        jmp   LevelInitPhase1Live
-
-LevelInitPhase2
-
-        ldx   #0
-engineflames equ *-2
-        lda   #2
-        sta   routine,x
-        ldd   #150
-        std   player1+x_vel
-LevelInitPhase2Live
-        ldd   player1+x_pos
-        cmpd  #200
-        bgt   LevelInitPhase3
-        jsr   LoopRun
-        jmp   LevelInitPhase2Live
-
-LevelInitPhase3
-        ldd   #-180
-        std   player1+x_vel
-LevelInitPhase3Live
-        ldd   player1+x_pos
-        cmpd  #130
-        blt   LetsStart
-        jsr   LoopRun
-        jmp   LevelInitPhase3Live                
-
-LetsStart
-
-        clr   player1+subtype
 
 * ---------------------------------------------------------------------------
 * MAIN GAME LOOP
@@ -186,7 +114,25 @@ LevelMainLoop
         lda   #1
         sta   checkpoint_load
 !
-        jsr   LoopRun
+        jsr   Scroll
+        jsr   ObjectWave
+        _Collision_Do AABB_list_friend,AABB_list_ennemy
+        _Collision_Do AABB_list_player,AABB_list_bonus
+        _RunObject ObjID_fade,#palettefade
+        _RunObject ObjID_Player1,#player1
+        jsr   RunObjects
+        jsr   CheckSpritesRefresh
+        _gfxlock.on
+        jsr   EraseSprites
+        jsr   UnsetDisplayPriority
+        jsr   DrawTiles
+        jsr   DrawSprites
+        _MountObject ObjID_Mask
+        jsr   ,x
+        _MountObject ObjID_hud
+        jsr   ,x
+        _gfxlock.off
+        _gfxlock.loop
         jmp   LevelMainLoop
 
 * ---------------------------------------------------------------------------
@@ -286,27 +232,7 @@ Foeshoottable
 
 
 
-LoopRun
-        jsr   Scroll
-        jsr   ObjectWave
-        _Collision_Do AABB_list_friend,AABB_list_ennemy
-        _Collision_Do AABB_list_player,AABB_list_bonus
-        _RunObject ObjID_fade,#palettefade
-        _RunObject ObjID_Player1,#player1
-        jsr   RunObjects
-        jsr   CheckSpritesRefresh
-        _gfxlock.on
-        jsr   EraseSprites
-        jsr   UnsetDisplayPriority
-        jsr   DrawTiles
-        jsr   DrawSprites
-        _MountObject ObjID_Mask
-        jsr   ,x
-        _MountObject ObjID_hud
-        jsr   ,x
-        _gfxlock.off
-        _gfxlock.loop
-        rts
+
 
 * ---------------------------------------------------------------------------
 * Game_Checkpoint_x
