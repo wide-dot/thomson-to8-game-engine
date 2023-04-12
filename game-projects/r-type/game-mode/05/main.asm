@@ -12,7 +12,7 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./global/variables.asm"
         INCLUDE "./engine/graphics/buffer/gfxlock.macro.asm"
         
-map_width       equ 1598
+map_width       equ 1152
 viewport_width  equ 144
 viewport_height equ 180
 
@@ -23,11 +23,11 @@ CHECKPOINT_01      equ $3802
 CHECKPOINT_01_wave equ (56-2)*12*2
 
         org   $6100
+        clr   NEXT_GAME_MODE
         jsr   InitGlobals
         jsr   InitStack
         jsr   LoadAct
         jsr   InitJoypads
-        jsr   InitRNG
 
         ldd   #Pal_black
         std   Pal_current
@@ -48,6 +48,9 @@ CHECKPOINT_01_wave equ (56-2)*12*2
         _MountObject ObjID_LevelInit
         jsr   ,x
 
+        _MountObject ObjID_LevelInit_s
+        jsr   ,x
+
         _MountObject ObjID_LevelWave
         jsr   ,x
 
@@ -57,11 +60,16 @@ CHECKPOINT_01_wave equ (56-2)*12*2
 ; init scroll
         jsr   InitScroll
 
+; load checkpoints
+        ldd   #CHECKPOINT_00
+        ldx   #CHECKPOINT_00_wave
+        jsr   Game_LoadCheckpoint_x
+
 ; play music
-        _MountObject ObjID_ymm01
-        _MusicInit_objymm #0,#MUSIC_NO_LOOP,#MusicCallbackYM  ; initialize the YM2413 player 
-        _MountObject ObjID_vgc01
-        _MusicInit_objvgc #0,#MUSIC_NO_LOOP,#MusicCallbackSN ; initialize the SN76489 vgm player with a vgc data stream
+        _MountObject ObjID_ymm05
+        _MusicInit_objymm #0,#MUSIC_LOOP,#0
+        _MountObject ObjID_vgc05
+        _MusicInit_objvgc #0,#MUSIC_LOOP,#0
 
 ; init user irq
         jsr   IrqInit
@@ -73,19 +81,8 @@ CHECKPOINT_01_wave equ (56-2)*12*2
         _gfxlock.init
         jsr   IrqOn 
 
-; load checkpoints
-        ldd   #CHECKPOINT_00
-        ldx   #CHECKPOINT_00_wave
-        jsr   Game_LoadCheckpoint_x
 
 
-* ---------------------------------------------------------------------------
-* INIT PLAYER 1 ANIMATION
-* ---------------------------------------------------------------------------
-
-        jsr   LoadObject_x
-        lda   #ObjID_initlevel1
-        sta   id,x  
 
 * ---------------------------------------------------------------------------
 * MAIN GAME LOOP
@@ -103,35 +100,17 @@ LevelMainLoop
         ldd   #CHECKPOINT_01           ; yes load checkpoint
         ldx   #CHECKPOINT_01_wave
         jsr   Game_LoadCheckpoint_x
+;!
+        ;jsr   KTST
+        ;bcc   >
+        ;jsr   GETC
+        ;cmpb  #$41 ; touche A
+        ;bne   >
+        ;jsr   Palette_FadeOut
+        ;lda   #1
+        ;sta   checkpoint_load
 !
-        jsr   KTST
-        bcc   >
-        jsr   GETC
-        cmpb  #$41 ; touche A
-        bne   >
-        jsr   Palette_FadeOut
-        lda   #1
-        sta   checkpoint_load
-!
-        jsr   Scroll
-        jsr   ObjectWave
-        _Collision_Do AABB_list_friend,AABB_list_ennemy
-        _Collision_Do AABB_list_player,AABB_list_bonus
-        _RunObject ObjID_fade,#palettefade
-        _RunObject ObjID_Player1,#player1
-        jsr   RunObjects
-        jsr   CheckSpritesRefresh
-        _gfxlock.on
-        jsr   EraseSprites
-        jsr   UnsetDisplayPriority
-        jsr   DrawTiles
-        jsr   DrawSprites
-        _MountObject ObjID_Mask
-        jsr   ,x
-        _MountObject ObjID_hud
-        jsr   ,x
-        _gfxlock.off
-        _gfxlock.loop
+        jsr   LoopRun
         jmp   LevelMainLoop
 
 * ---------------------------------------------------------------------------
@@ -141,21 +120,23 @@ LevelMainLoop
 UserIRQ
         jsr   gfxlock.bufferSwap.check
 	jsr   PalUpdateNow
-        _MountObject ObjID_ymm01
+        _MountObject ObjID_ymm05
         _MusicFrame_objymm
-        _MountObject ObjID_vgc01
+        _MountObject ObjID_vgc05
         _MusicFrame_objvgc
         rts
 
-MusicCallbackYM
-        _MountObject ObjID_ymm01
-        _MusicInit_objymm #1,#MUSIC_LOOP,#0
+
+MusicCallbackYMBoss
+        _MountObject ObjID_ymm05
+        _MusicInit_objymm #2,#MUSIC_LOOP,#0
         rts
 
-MusicCallbackSN
-        _MountObject ObjID_vgc01
-        _MusicInit_objvgc #1,#MUSIC_LOOP,#0
+MusicCallbackSNBoss
+        _MountObject ObjID_vgc05
+        _MusicInit_objvgc #2,#MUSIC_LOOP,#0
         rts
+
 
 * ---------------------------------------------------------------------------
 *
@@ -231,7 +212,44 @@ Foeshoottable
 
 
 
+LoopRun
+        jsr   Scroll
+        jsr   ObjectWave
+        _Collision_Do AABB_list_friend,AABB_list_ennemy
+        _Collision_Do AABB_list_player,AABB_list_bonus
+        _RunObject ObjID_fade,#palettefade
+        _RunObject ObjID_Player1,#player1
+        jsr   RunObjects
+        jsr   CheckSpritesRefresh
+        _gfxlock.on
+        jsr   EraseSprites
+        jsr   UnsetDisplayPriority
+        jsr   DrawTiles
+        jsr   DrawSprites
+        _MountObject ObjID_Mask
+        jsr   ,x
+        _MountObject ObjID_hud
+        jsr   ,x
+        _gfxlock.off
+        _gfxlock.loop
 
+        lda  NEXT_GAME_MODE
+        bne  Start_Music_Boss_Routine
+
+        rts
+
+Start_Music_Boss_Routine
+
+        jsr   IrqOff
+        _MountObject ObjID_ymm05
+        _MusicInit_objymm #1,#MUSIC_NO_LOOP,#MusicCallbackYMBoss
+        _MountObject ObjID_vgc05
+        _MusicInit_objvgc #1,#MUSIC_NO_LOOP,#MusicCallbackSNBoss
+        jsr   IrqOn
+
+        clr   NEXT_GAME_MODE
+
+        rts
 
 * ---------------------------------------------------------------------------
 * Game_Checkpoint_x
@@ -255,10 +273,10 @@ Game_LoadCheckpoint_x
         jsr   Collision_ClearLists
 ;
         ; clear the two screen buffers to black
-        ldx   #$FFFF
+        ldx   #$0000
         jsr   ClearDataMem
         _SwitchScreenBuffer
-        ldx   #$FFFF
+        ldx   #$0000
         jsr   ClearDataMem
         _SwitchScreenBuffer
 ;
@@ -345,7 +363,7 @@ Palette_FadeCallback
 * Game Mode RAM variables
 * ---------------------------------------------------------------------------
 
-        INCLUDE "./game-mode/01/ram_data.asm"
+        INCLUDE "./game-mode/05/ram_data.asm"
 
 * ---------------------------------------------------------------------------
 * ENGINE routines
@@ -383,9 +401,6 @@ Palette_FadeCallback
 
         ; collision
         INCLUDE "./engine/collision/collision.asm"
-
-        ; random numbers
-        INCLUDE "./engine/math/RandomNumber.asm"
 
         ; should be at the end of includes (ifdef dependencies)
         INCLUDE "./engine/InitGlobals.asm"
