@@ -28,8 +28,10 @@ scroll_vel                fdb   0   ; u8.8 scroll speed reference for 1/50s
 buffer_x_pos              fdb   -1,-1
 tile_buffer               fdb   0
 tile_buffer_page          fcb   0
-scroll_tile_pos_offset    fcb   0   ; current camera x position offset from tile_pos
-scroll_map_pos            fdb   0   ; current tile position in the map
+scroll_tile_pos           fcb   0   ; current tile position in the collision map (24px)
+scroll_tile_pos_offset    fcb   0   ; current camera x position offset from tile_pos by 12px
+scroll_tile_pos_offset24  fcb   0   ; current camera x position offset from tile_pos by 24px
+scroll_map_pos            fdb   0   ; current tile position in the map x3
 glb_camera_x_pos_old      fdb   0   ; previous camera x pos
 
 ; tmp variables
@@ -46,6 +48,7 @@ InitScroll
         ldd   #0
         std   glb_camera_x_pos
         std   glb_camera_x_pos_old
+        stb   scroll_tile_pos
         stb   scroll_tile_pos_offset
         subd  #1
         std   buffer_x_pos
@@ -137,6 +140,15 @@ Scroll
 ;
         ldd   glb_camera_x_pos
         subd  glb_camera_x_pos_old
+        stb   @b
+        addb  scroll_tile_pos_offset24           ; compute pos andoffset in terrain collision map
+        cmpb  #24
+        blo   >
+        subb  #24
+        inc   scroll_tile_pos
+!       stb   scroll_tile_pos_offset24
+        ldb   #0
+@b      equ   *-1
         addb  scroll_tile_pos_offset             ; rendering position offset for tiles
         cmpb  scroll_tile_width                  ; test for tile width
         blo   >
@@ -277,6 +289,7 @@ scroll_ml_step2 equ *-2
 Scroll_PreScrollTo
         stb   @prescroll_width
         suba  @prescroll_width
+        sta   scroll_tile_pos
         ldb   scroll_vp_v_tiles
         aslb
         addb  scroll_vp_v_tiles        ; position is x * map vertical height * 3 bytes (page, addr)
