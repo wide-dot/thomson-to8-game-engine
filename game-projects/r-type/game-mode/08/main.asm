@@ -11,22 +11,24 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./global/macro.asm"
         INCLUDE "./global/variables.asm"
         INCLUDE "./engine/graphics/buffer/gfxlock.macro.asm"
+        INCLUDE "./engine/objects/collision/terrainCollision.macro.asm"
         
 map_width       equ 720
 viewport_width  equ 144
 viewport_height equ 180
 
  ; value in animation script
-CHECKPOINT_00      equ $0202
-CHECKPOINT_00_wave equ (2-2)*12*2
-CHECKPOINT_01      equ $3802
-CHECKPOINT_01_wave equ (56-2)*12*2
+CHECKPOINT_00      equ $0000
+CHECKPOINT_00_wave equ 0
+CHECKPOINT_01      equ $0000
+CHECKPOINT_01_wave equ 0
 
         org   $6100
         jsr   InitGlobals
         jsr   InitStack
         jsr   LoadAct
         jsr   InitJoypads
+        _terrainCollision.init ObjID_collision
 
         ldd   #Pal_black
         std   Pal_current
@@ -381,6 +383,7 @@ Palette_FadeCallback
 
         ; collision
         INCLUDE "./engine/collision/collision.asm"
+        INCLUDE "./engine/objects/collision/terrainCollision.main.asm"
 
         ; should be at the end of includes (ifdef dependencies)
         INCLUDE "./engine/InitGlobals.asm"

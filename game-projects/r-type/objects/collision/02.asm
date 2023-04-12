@@ -1,4 +1,4 @@
-lvlMapWidth equ 66 ; stage 01 width
+lvlMapWidth equ 48 ; stage 02 width
 
         INCLUDE "./engine/objects/collision/terrainCollision.asm"
 
@@ -7,7 +7,5 @@ terrainCollision.maps
         fdb   collisionMapForeground
 
 collisionMapBackground
-        INCLUDEBIN "./objects/collision/map/level1_bc.bin"
-
 collisionMapForeground
-        INCLUDEBIN "./objects/collision/map/level1_fc.bin"
+        INCLUDEBIN "./objects/collision/map/level2_fc.bin"
