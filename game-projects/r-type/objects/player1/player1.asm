@@ -4,6 +4,9 @@
 ; input REG : [u] pointer to Object Status Table (OST)
 ; ---------
 ;
+; Subtype : bit 0,7 : If any is 1, player does not have control of player1
+;           bit 7   : If 1, player1 does not display
+;
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
@@ -221,7 +224,9 @@ SkipPlayer1Controls
         ldd   y_pos,u
         subd  glb_camera_y_pos
         stb   AABB.cy,x
-        jmp   DisplaySprite
+        ldb   player1+subtype            ; If bit 7 is 1, don't show player1
+        lbpl  DisplaySprite
+        rts
 
 CheckRange
         ldd   player1+x_pos
