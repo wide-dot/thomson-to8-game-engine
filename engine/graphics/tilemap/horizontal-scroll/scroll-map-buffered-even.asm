@@ -50,6 +50,7 @@ InitScroll
         std   glb_camera_x_pos_old
         stb   scroll_tile_pos
         stb   scroll_tile_pos_offset
+        stb   scroll_tile_pos_offset24
         subd  #1
         std   buffer_x_pos
         std   buffer_x_pos+2
@@ -287,8 +288,9 @@ scroll_ml_step2 equ *-2
 * ---------------------------------------------------------------------------
 
 Scroll_PreScrollTo
-        stb   @prescroll_width
-        suba  @prescroll_width
+        stb   @prescrollWidth
+        suba  #0
+@prescrollWidth equ *-1
         sta   scroll_tile_pos
         ldb   scroll_vp_v_tiles
         aslb
@@ -304,7 +306,7 @@ Scroll_PreScrollTo
         std   buffer_x_pos+2
         clr   scroll_tile_pos_offset
         lda   scroll_tile_width
-        ldb   @prescroll_width
+        ldb   @prescrollWidth
         mul
         addd  glb_camera_x_pos
         std   @limit
@@ -316,4 +318,3 @@ Scroll_PreScrollTo
 @limit  equ *-2
         bmi   <
         rts
-@prescroll_width fcb 0
