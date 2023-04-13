@@ -209,6 +209,12 @@ SkipPlayer1Controls
 !       jsr   AnimateSpriteSync
         jsr   ObjectMoveSync
         jsr   CheckRange
+        ldb   #1 ; foreground
+        jsr   terrainCollision.do
+        tstb
+        beq   >  ; black
+        ldb   #1 ; white
+!       jsr   gfxlock.screenBorder.update
         leax  AABB_0,u
         ;lda   AABB.p,x
         ;beq   @destroy                  ; was killed  
