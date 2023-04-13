@@ -29,9 +29,9 @@ gfxlock.bufferSwap.count   fdb   0 ; buffer swap counter
 gfxlock.backBuffer.id      fcb   0 ; back buffer set to read operations (0 or 1)
 
 gfxlock.frameDrop.count_w  fcb   0 ; zero pad
-gfxlock.frameDrop.count    fcb   0 ; elapsed 50Hz frames since last main game loop
+gfxlock.frameDrop.count    fcb   0 ; elapsed 50Hz frames since last main loop
 gfxlock.frame.count        fdb   0 ; elapsed 50Hz frames since init
-gfxlock.frame.lastCount    fdb   0 ; elapsed 50Hz frames at last main game loop
+gfxlock.frame.lastCount    fdb   0 ; elapsed 50Hz frames at last main loop
 
 * =============================================================================
 * routines
@@ -52,11 +52,11 @@ gfxlock.bufferSwap.do
 gfxlock.screenBorder.color equ *-1
         stb   map.CF74021.SYS2         ; set visible video buffer (2 or 3)
         com   gfxlock.backBuffer.status
-        ldb   #$00
+        ldb   #$00                     ; always 0 or -1 (flip/flop)
 gfxlock.backBuffer.status equ   *-1
         andb  #%00000001               ; set bit 0 based on flip/flop
-        orb   #%00000010               ; set bit 1=1
-        stb   map.CF74021.DATA         ; mount working video buffer in visible RAM
+        orb   #%00000010               ; value should be 2 or 3
+        stb   map.CF74021.DATA         ; mount working video buffer in RAM
         ldb   map.MC6846.PRC
         eorb  #%00000001               ; swap half-page in $4000 $5FFF
         stb   map.MC6846.PRC
@@ -79,3 +79,11 @@ gfxlock.backProcess.routine equ *-2
         tst   gfxlock.bufferSwap.status
         beq   @loop                     ; loop until irq make a swap
 !       rts
+
+; -------------------------------------------------
+
+gfxlock.screenBorder.update
+        andb  #$0F
+        orb   #%10000000
+        stb   gfxlock.screenBorder.color
+        rts
