@@ -2,38 +2,39 @@
 ; Terrain Collision
 ; -----------------
 ; input : U ptr to object
-;         A map id
+;         B map id
 ; 
-; return zero (no collision) or not zero (collision) in A
+; return zero (no collision) or not zero (collision) in B
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
 
-terrainCollision.do
         ldx   #terrainCollision.maps
-        asla
-        ldy   a,x                      ; set ptr to map in x
+        aslb
+        ldy   b,x                      ; set ptr to map in x
 
-        ldx   terrainCollision.yOffset
+        ldx   #terrainCollision.yOffset
         ldd   y_pos,u
         _asld
         ldd   d,x                      ; load precomputed y position in map
         leay  d,y                      ; apply
 
-        ldx   terrainCollision.xOffset
+        ldx   #terrainCollision.xOffset
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        addb  scroll_tile_pos_offset
+        addb  scroll_tile_pos_offset24
         abx
         lda   ,x                       ; load precomputed x position in map
         adda  scroll_tile_pos          ; get already scrolled x collision tiles
 
-        ldx   terrainCollision.xMask
+        ldx   #terrainCollision.xMask
         ldb   b,x                      ; read precomputed mask
         andb  a,y                      ; read collision data and apply against precomputed mask
         rts
 
-terrainCollision.yOffset ; 16bit offset
+
+
+terrainCollision.yOffset equ *-22 ; minus vertical viewport position * 2
         fdb   00*lvlMapWidth,00*lvlMapWidth,00*lvlMapWidth,00*lvlMapWidth,00*lvlMapWidth,00*lvlMapWidth
         fdb   01*lvlMapWidth,01*lvlMapWidth,01*lvlMapWidth,01*lvlMapWidth,01*lvlMapWidth,01*lvlMapWidth
         fdb   02*lvlMapWidth,02*lvlMapWidth,02*lvlMapWidth,02*lvlMapWidth,02*lvlMapWidth,02*lvlMapWidth
@@ -65,7 +66,7 @@ terrainCollision.yOffset ; 16bit offset
         fdb   28*lvlMapWidth,28*lvlMapWidth,28*lvlMapWidth,28*lvlMapWidth,28*lvlMapWidth,28*lvlMapWidth
         fdb   29*lvlMapWidth,29*lvlMapWidth,29*lvlMapWidth,29*lvlMapWidth,29*lvlMapWidth,29*lvlMapWidth
         
-terrainCollision.xOffset
+terrainCollision.xOffset equ *-8 ; minus horizontal viewport position
         fcb   0,0,0 ; x_pos 0
         fcb   0,0,0
         fcb   0,0,0
@@ -123,7 +124,7 @@ terrainCollision.xOffset
         fcb   6,6,6
         fcb   6,6,6
 
-terrainCollision.xMask
+terrainCollision.xMask equ *-8 ; minus horizontal viewport position
         fcb   $80,$80,$80 ; x_pos 0
         fcb   $40,$40,$40
         fcb   $20,$20,$20
