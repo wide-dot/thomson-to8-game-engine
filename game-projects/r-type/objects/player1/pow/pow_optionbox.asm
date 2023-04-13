@@ -82,12 +82,11 @@ Live
         sta   id,x                                        
 !
         lda   player1+forcepodlevel
-        inca
         cmpa  #3
-        ble   >
-        lda   #3
+        beq   >
+        inca  
+        sta   player1+forcepodlevel
 !
-        sta  player1+forcepodlevel
 @delete
         inc   routine,u     
         _Collision_RemoveAABB AABB_0,AABB_list_bonus

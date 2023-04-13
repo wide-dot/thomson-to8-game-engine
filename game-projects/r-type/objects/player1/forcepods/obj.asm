@@ -19,7 +19,14 @@ canshootweapon    equ ext_variables+12 ; Byte
 
 canshootreboundlasertiming equ 20
 canshootcounterairlasertiming equ 4
-neartrackingzone equ 5
+neartrackingzonex equ 4
+neartrackingzoney equ 1
+
+recallxvelplus equ 1
+recallxvelmin  equ 1
+ejectxvelplus  equ 4
+ejectxvelmin   equ 2
+
 
 Onject
         lda   routine,u
@@ -72,42 +79,56 @@ LiveSetTrackSpot
         std   @tsx
 LiveTrackspot
         jsr   Live
-        ldx   #160
-@tsvelxplus   equ   *-2
         ldd   #0
 @tsx    equ   *-2                       ; Tracking spot X
-        subd  #neartrackingzone
+        subd  #neartrackingzonex
         cmpd  x_pos,u
-        bgt   >
-        addd  #neartrackingzone*2
+        bgt   @tsvelxplusmul
+        addd  #neartrackingzonex*2
         cmpd  x_pos,u
-        blt   @forcepodontheleft
-        subd  #neartrackingzone         ; We are now tracked on x_pos
+        blt   @tsvelxminmul
+        subd  #neartrackingzonex         ; We are now tracked on x_pos
         std   x_pos,u
-        ldx   #0
+        bra   @checkypos
+@tsvelxplusmul
+        ldb   #recallxvelplus
+@tsvelxplus   equ   *-1
+        lda   gfxlock.frameDrop.count
+        mul
         bra   >
-@forcepodontheleft
-        ldx   #0
-@tsvelxmin equ *-2
+@tsvelxminmul
+        ldb   #recallxvelmin
+@tsvelxmin equ *-1
+        lda   gfxlock.frameDrop.count
+        mul
+        _negd
 !
-        stx   x_vel,u
-        ldx   #160
+        addd  x_pos,u
+        std   x_pos,u
+@checkypos
         ldd   #0
 @tsy    equ *-2
-        subd  #neartrackingzone
+        subd  #neartrackingzoney
         cmpd  y_pos,u
-        bgt   >
-        addd  #neartrackingzone*2
+        bgt   @tsvelyplusmul
+        addd  #neartrackingzoney*2
         cmpd  y_pos,u
-        blt   @forcepodabove
-        subd  #neartrackingzone         ; We are now tracked on y_pos
+        blt   @tsvelyminmul
+        subd  #neartrackingzoney         ; We are now tracked on y_pos
         std   y_pos,u
-        ldx   #0
+        bra   @postpostracking
+@tsvelyplusmul
+        clra
+        ldb   gfxlock.frameDrop.count
         bra   >
-@forcepodabove
-        ldx   #-160
+@tsvelyminmul
+        clra
+        ldb   gfxlock.frameDrop.count
+        _negd
 !
-        stx   y_vel,u
+        addd  y_pos,u
+        std   y_pos,u
+@postpostracking
         jsr   ObjectMoveSync
         ldd   x_pos,u
         subd  glb_camera_x_pos
@@ -141,12 +162,12 @@ Live
                                         ; Forcepod is hooked
         ldb   Fire_Press
         andb  #c1_button_B_mask
-        bne   @continueliveishookedcontinue     
+        bne   @ejectforcepod     
         jsr   KTST
         bcc   >
         jsr   GETC
         cmpb  #$3E ; touche ">"     
-        beq   @continueliveishookedcontinue
+        beq   @ejectforcepod
 !       
         ldb   canshootweapon,u
         beq   >
@@ -161,17 +182,17 @@ Live
         lbne  @shootlaser
 !
         rts                             
-@continueliveishookedcontinue
-        ldx   #10
+@ejectforcepod
+        ldx   #15
         cmpa  #4
         bne   >                         ; Back hook               
         ldx   #140
 !
         stx   @stsx
-        ldx   #400
-        stx   @tsvelxplus
-        ldx   #-300
-        stx   @tsvelxmin
+        ldb   #ejectxvelplus
+        stb   @tsvelxplus
+        ldb   #ejectxvelmin
+        stb   @tsvelxmin
         ldd   y_pos,u
         std   @tsy
         clr   hooked_status,u           ; Forcepod is free  
@@ -211,16 +232,27 @@ Live
 @hookroutine  equ   *-1
         sta   routine,u
         sta   hooked_status,u
+        ldb   status_flags,u
+        andb  #^status_xflip_mask       ; unset sprite X flip in animation
+        stb   status_flags,u
+        ldb   currentlevel,u
+        cmpd  #2+5*256
+        beq   >
+        rts
+!
+        ldb   status_flags,u
+        orb   #status_xflip_mask        ; set sprite X flip in animation
+        stb   status_flags,u
         rts
 @continuelivenothooked
         lda   Fire_Press
         anda  #c1_button_B_mask
-        bne   @continuelivenothookedrecall
+        bne   @recallforcepod
         jsr   KTST
         bcc   >
         jsr   GETC
         cmpb  #$3E ; touche ">"
-        beq   @continuelivenothookedrecall
+        beq   @recallforcepod
 !
         lda   currentlevel,u
         cmpa  #1
@@ -240,13 +272,13 @@ Live
         stu   ext_variables+9,x
 !
         rts
-@continuelivenothookedrecall                                       ; Recalling forcepod
+@recallforcepod                                       ; Recalling forcepod
         lda   #3
         sta   routine,u
-        ldx   #160
-        stx   @tsvelxplus
-        ldx   #-100
-        stx   @tsvelxmin
+        ldb   #recallxvelplus
+        stb   @tsvelxplus
+        ldb   #recallxvelmin
+        stb   @tsvelxmin
         rts
 @reboundlaser
         jsr   LoadObject_x
