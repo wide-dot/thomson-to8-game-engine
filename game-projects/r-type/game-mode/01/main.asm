@@ -16,11 +16,9 @@ map_width       equ 1584
 viewport_width  equ 144
 viewport_height equ 180
 
- ; value in animation script
-CHECKPOINT_00      equ $0000
-CHECKPOINT_00_wave equ 0
-CHECKPOINT_01      equ $0000
-CHECKPOINT_01_wave equ 0
+ ; checkpoint positions in 24px tiles
+CHECKPOINT_00      equ 0
+CHECKPOINT_01      equ 20
 
         org   $6100
         jsr   InitGlobals
@@ -57,6 +55,8 @@ CHECKPOINT_01_wave equ 0
 
 ; init scroll
         jsr   InitScroll
+        lda   #CHECKPOINT_00
+        jsr   checkpoint.load
 
 ; play music
         _MountObject ObjID_ymm01
@@ -74,12 +74,6 @@ CHECKPOINT_01_wave equ 0
         _gfxlock.init
         jsr   IrqOn 
 
-; load checkpoints
-        ldd   #CHECKPOINT_00
-        ldx   #CHECKPOINT_00_wave
-        jsr   Game_LoadCheckpoint_x
-
-
 * ---------------------------------------------------------------------------
 * INIT PLAYER 1 ANIMATION
 * ---------------------------------------------------------------------------
@@ -95,15 +89,14 @@ CHECKPOINT_01_wave equ 0
 LevelMainLoop
         jsr   ReadJoypads
 
-        lda   checkpoint_load          ; load checkpoint requested ?
+        lda   checkpoint.state          ; load checkpoint requested ?
         beq   >
         ldu   #palettefade             ; yes check palette fade
         lda   routine,u                ; is palette fade over ?
         cmpa  #o_fade_routine_idle
         bne   >
-        ldd   #CHECKPOINT_01           ; yes load checkpoint
-        ldx   #CHECKPOINT_01_wave
-        jsr   Game_LoadCheckpoint_x
+        lda   #CHECKPOINT_01           ; yes load checkpoint
+        jsr   checkpoint.load
 !
         jsr   KTST
         bcc   >
@@ -112,7 +105,7 @@ LevelMainLoop
         bne   >
         jsr   Palette_FadeOut
         lda   #1
-        sta   checkpoint_load
+        sta   checkpoint.state
 !
         jsr   Scroll
         jsr   ObjectWave
@@ -230,58 +223,6 @@ Foeshoottable
         fdb -$100
         fdb -$120
 
-
-
-
-
-* ---------------------------------------------------------------------------
-* Game_Checkpoint_x
-*
-* A blank palette is expected on entry (any color)
-* A = final position in map (in tiles)
-* B = tiles to pre-scroll before position
-* X = position in wave
-* ---------------------------------------------------------------------------
-checkpoint_load fcb 0
-
-Game_LoadCheckpoint_x
-        std   @d
-        stx   @x
-        clr   checkpoint_load
-;
-        ; clear object data
-        jsr   ObjectDp_Clear
-        jsr   ManagedObjects_ClearAll
-        jsr   DisplaySprite_ClearAll
-        jsr   Collision_ClearLists
-;
-        ; clear the two screen buffers to black
-        ldx   #$FFFF
-        jsr   ClearDataMem
-        _SwitchScreenBuffer
-        ldx   #$FFFF
-        jsr   ClearDataMem
-        _SwitchScreenBuffer
-;
-        ; pre scroll to desired position
-        ldd   #0
-@d equ *-2
-        jsr   Scroll_PreScrollTo
-;
-        ; init player one
-        lda   #ObjID_Player1
-        sta   player1+id
-;
-        ; fade in
-        jsr   Palette_FadeIn
-;
-        ; set object wave position based on new camera position
-        ldd   #0
-@x      equ   *-2
-        std   gfxlock.frame.count
-        std   gfxlock.frame.lastCount
-        jmp   ObjectWave_Init
-
 * ---------------------------------------------------------------------------
 * Collision_ClearLists
 *
@@ -345,8 +286,12 @@ Palette_FadeCallback
 * ---------------------------------------------------------------------------
 * Game Mode RAM variables
 * ---------------------------------------------------------------------------
-
         INCLUDE "./game-mode/01/ram_data.asm"
+
+* ---------------------------------------------------------------------------
+* CUSTOM routines
+* ---------------------------------------------------------------------------
+        INCLUDE "./global/checkpoint.asm"
 
 * ---------------------------------------------------------------------------
 * ENGINE routines

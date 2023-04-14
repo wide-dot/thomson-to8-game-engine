@@ -51,6 +51,7 @@ InitScroll
         stb   scroll_tile_pos
         stb   scroll_tile_pos_offset
         stb   scroll_tile_pos_offset24
+        std   scroll_map_pos
         subd  #1
         std   buffer_x_pos
         std   buffer_x_pos+2
@@ -69,9 +70,6 @@ InitScroll
         lda   scroll_vp_x_pos
         anda  #%11111110                         ; this routine only accept even position on screen for tiles
         sta   scroll_vp_x_pos
-
-        ldd   scroll_map_even
-        std   scroll_map_pos
         rts
 
 * ---------------------------------------------------------------------------
@@ -279,42 +277,3 @@ scroll_ml_step2 equ *-2
         bra   scroll_lloop
 !       leau  3,u                      ; move to next tile
         bra   empty_tile_loop
-
-* ---------------------------------------------------------------------------
-* Scroll_JumpToPos
-*
-* A = final position in map (in tiles)
-* B = tiles to pre-scroll before position
-* ---------------------------------------------------------------------------
-
-Scroll_PreScrollTo
-        stb   @prescrollWidth
-        suba  #0
-@prescrollWidth equ *-1
-        sta   scroll_tile_pos
-        ldb   scroll_vp_v_tiles
-        aslb
-        addb  scroll_vp_v_tiles        ; position is x * map vertical height * 3 bytes (page, addr)
-        mul
-        std   scroll_map_pos           ; position in map data
-        ldb   scroll_tile_width
-        mul
-        std   glb_camera_x_pos
-        std   glb_camera_x_pos_old
-        subd  #1
-        std   buffer_x_pos
-        std   buffer_x_pos+2
-        clr   scroll_tile_pos_offset
-        lda   scroll_tile_width
-        ldb   @prescrollWidth
-        mul
-        addd  glb_camera_x_pos
-        std   @limit
-!       jsr   Scroll
-        jsr   DrawTiles
-        _SwitchScreenBuffer
-        ldd   glb_camera_x_pos
-        cmpd  #0
-@limit  equ *-2
-        bmi   <
-        rts

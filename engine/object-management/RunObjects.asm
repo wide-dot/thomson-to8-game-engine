@@ -32,7 +32,7 @@ InitStack
         ldu   #STACK_SLOT_ADDRESS_END  
         ldx   #Dynamic_Object_RAM_End-object_size
 @loop   pshu  x
-        leax -object_size,x
+        leax  -object_size,x
         cmpu  #STACK_SLOT_ADDRESS
         bne   @loop
         stu   STACK_POINTER    
