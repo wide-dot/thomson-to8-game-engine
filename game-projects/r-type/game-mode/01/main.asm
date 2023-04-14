@@ -12,7 +12,7 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/graphics/buffer/gfxlock.macro.asm"
         INCLUDE "./engine/objects/collision/terrainCollision.macro.asm"
         
-map_width       equ 1584
+map_width       equ 1540
 viewport_width  equ 144
 viewport_height equ 180
 
