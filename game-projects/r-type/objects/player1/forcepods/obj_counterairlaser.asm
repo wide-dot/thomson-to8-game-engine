@@ -141,6 +141,10 @@ Live1
         bgt   @delete
         ldb   y_pos+1,u
         stb   AABB_0+AABB.cy,u
+        ldb   #1 ; foreground
+        jsr   terrainCollision.do
+        tstb
+        bne   @delete
         lda   caFrame,u
         asla
         ldx   #counterAirImages   
