@@ -60,7 +60,7 @@ LevelInitPhase1
 LevelInitPhase1Live
 
         ldd   player1+x_pos
-        cmpd  #180
+        cmpd  #140
         bgt   LevelInitPhase2
         rts
 
@@ -75,7 +75,7 @@ engineflames equ *-2
         std   player1+x_vel
 LevelInitPhase2Live
         ldd   player1+x_pos
-        cmpd  #200
+        cmpd  #160
         bgt   LevelInitPhase3
         rts
 
@@ -85,7 +85,7 @@ LevelInitPhase3
         std   player1+x_vel
 LevelInitPhase3Live
         ldd   player1+x_pos
-        cmpd  #130
+        cmpd  #110
         blt   LetsStart
         rts              
 
