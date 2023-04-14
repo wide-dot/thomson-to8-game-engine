@@ -333,7 +333,7 @@ LiveHookedFront
 
         jsr   Live
         ldd   player1+x_pos
-	addd  #9
+	addd  #11
 	std   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB_0+AABB.cx,u

@@ -76,11 +76,12 @@ LiveInitLeft
 !
         ldd   player1+y_pos
         std   y_pos,u
-        lda   #-6
+        lda   #6
         ldb   caFrame,u
         mul
+        _negd
         addd  player1+x_pos
-        subd  #9
+        subd  #11
         bra   Live1
 
 LiveLeft
