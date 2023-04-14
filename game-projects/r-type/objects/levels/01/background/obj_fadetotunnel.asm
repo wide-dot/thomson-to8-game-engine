@@ -43,6 +43,7 @@ Live
         cmpa  #o_fade_routine_idle
         bne   >
         rts        
-!       jmp   DeleteObject
+!       inc   routine,u
+        jmp   DeleteObject
 AlreadyDeleted
         rts

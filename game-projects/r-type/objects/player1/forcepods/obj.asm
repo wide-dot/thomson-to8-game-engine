@@ -313,6 +313,7 @@ Live
 @countergroundlaser
         rts
 @counterairlaser
+        ldd   glb_camera_x_pos
         jsr   LoadObject_x
         beq  >                             
         lda   #ObjID_forcepod_counterairlaser

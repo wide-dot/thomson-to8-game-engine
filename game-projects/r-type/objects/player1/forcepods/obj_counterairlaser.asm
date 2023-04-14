@@ -13,10 +13,12 @@
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
 
-AABB_0   equ ext_variables ; AABB struct (9 bytes)
-caFrame  equ ext_variables+9 ; current frame
-childnum equ ext_variables+10 ; child number
-maxnbchildren equ 3           ; Including 0
+AABB_0    equ ext_variables ; AABB struct (9 bytes)
+caFrame    equ ext_variables+9 ; 1 byte - current frame
+oldcaFrame equ ext_variables+10 ; 1 byte - previous frame
+childnum   equ ext_variables+11 ; 1 byte - child number
+childaddr  equ ext_variables+12 ; 2 bytes - child address
+maxnbchildren equ 4           ; Excluding 0
 
 Object
         lda   routine,u
@@ -34,12 +36,14 @@ Routines
 
 GenChilds
         lda   childnum,u
+        inca                                    ; Num child set at 4 to ensure last child does not get free on first run
         cmpa  #maxnbchildren
         beq   >
         jsr   LoadObject_x
         beq   >                     
         lda   #ObjID_forcepod_counterairlaser
         sta   id,x
+        stx   childaddr,u
         lda   subtype,u
         sta   subtype,x
         lda   childnum,u
@@ -76,6 +80,11 @@ LiveInitLeft
 !
         ldd   player1+y_pos
         std   y_pos,u
+        ldx   childaddr,u
+        beq   >
+        lda   oldcaFrame,u
+        sta   caFrame,x
+!
         lda   #6
         ldb   caFrame,u
         mul
@@ -86,6 +95,7 @@ LiveInitLeft
 
 LiveLeft
         ldd   #-6
+        ;_negd
         bra   Live
 
 LiveInitRight
@@ -97,25 +107,31 @@ LiveInitRight
 !
         ldd   player1+y_pos
         std   y_pos,u
+        ldx   childaddr,u
+        beq   >
+        lda   oldcaFrame,u
+        sta   caFrame,x
+!
         lda   #6
         ldb   caFrame,u
         mul
         addd  player1+x_pos
-        addd  #14
+        addd  #8
         bra   Live1
 
 LiveRight
-        ldd   #6
-
+        lda   #3
+        ldb   gfxlock.frameDrop.count
+        mul
 Live
         addd  x_pos,u
 Live1
         std   x_pos,u
-        ldd   glb_camera_x_pos
-        subd  glb_camera_x_pos_old
-        beq   >
-        addd  x_pos,u
-        std   x_pos,u
+        ;ldd   glb_camera_x_pos
+        ;subd  glb_camera_x_pos_old
+        ;beq   >
+        ;addd  x_pos,u
+        ;std   x_pos,u
 !
         ldd   x_pos,u
         subd  glb_camera_x_pos
@@ -123,7 +139,7 @@ Live1
         stb   AABB_0+AABB.cx,u
         cmpd  #160-8/2                 ; delete weapon if out of screen range
         bgt   @delete
-        ldd   y_pos,u
+        ldb   y_pos+1,u
         stb   AABB_0+AABB.cy,u
         lda   caFrame,u
         asla
@@ -134,6 +150,7 @@ Live1
         ldx   a,x
         stx   AABB_0+AABB.rx,u
         asra
+        sta   oldcaFrame,u
         inca
         cmpa  #8
         bne   >
