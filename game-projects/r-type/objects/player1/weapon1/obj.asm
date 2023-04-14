@@ -53,6 +53,10 @@ Init
         inc   routine,u
 
 Live
+        ldb   #1 ; foreground
+        jsr   terrainCollision.do
+        tstb
+        bne   @delete
         lda   AABB_0+AABB.p,u
         beq   @delete                  ; delete weapon if something was hit  
         lda   #4
