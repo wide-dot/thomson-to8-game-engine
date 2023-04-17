@@ -28,7 +28,8 @@
         adda  scroll_tile_pos          ; get already scrolled x collision tiles
 
         ldx   #terrainCollision.xMask
-        ldb   b,x                      ; read precomputed mask
+        abx
+        ldb   ,x                       ; read precomputed mask
         andb  a,y                      ; read collision data and apply against precomputed mask
         rts
 
