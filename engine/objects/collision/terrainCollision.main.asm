@@ -1,3 +1,6 @@
+terrainCollision.sensor.x fdb 0
+terrainCollision.sensor.y fdb 0
+
 terrainCollision.do
         _GetCartPageA
         sta   @page

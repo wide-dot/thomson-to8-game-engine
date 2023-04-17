@@ -141,10 +141,6 @@ Live1
         bgt   @delete
         ldb   y_pos+1,u
         stb   AABB_0+AABB.cy,u
-        ldb   #1 ; foreground
-        jsr   terrainCollision.do
-        tstb
-        bne   @delete
         lda   caFrame,u
         asla
         ldx   #counterAirImages   
@@ -152,7 +148,7 @@ Live1
         stx   image_set,u 
         ldx   #counterAirHitboxes
         ldx   a,x
-        stx   AABB_0+AABB.rx,u
+        stx   AABB_0+AABB.rx,u         ; and ry
         asra
         sta   oldcaFrame,u
         inca
@@ -160,6 +156,16 @@ Live1
         bne   >
         lda   #4
 !       sta   caFrame,u
+        clra
+        ldb   AABB_0+AABB.rx,u
+        addd  x_pos,u
+        std   terrainCollision.sensor.x
+        ldd   y_pos,u
+        std   terrainCollision.sensor.y
+        ldb   #1 ; foreground
+        jsr   terrainCollision.do
+        tstb
+        bne   @delete
         jmp   DisplaySprite
 @delete
         _Collision_RemoveAABB AABB_0,AABB_list_friend
