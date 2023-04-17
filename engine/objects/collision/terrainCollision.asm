@@ -14,13 +14,13 @@
         ldy   b,x                      ; set ptr to map in x
 
         ldx   #terrainCollision.yOffset
-        ldd   y_pos,u
+        ldd   terrainCollision.sensor.y
         _asld
         ldd   d,x                      ; load precomputed y position in map
         leay  d,y                      ; apply
 
         ldx   #terrainCollision.xOffset
-        ldd   x_pos,u
+        ldd   terrainCollision.sensor.x
         subd  glb_camera_x_pos
         addb  scroll_tile_pos_offset24
         abx
