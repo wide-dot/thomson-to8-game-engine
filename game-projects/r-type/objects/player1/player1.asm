@@ -209,6 +209,10 @@ SkipPlayer1Controls
 !       jsr   AnimateSpriteSync
         jsr   ObjectMoveSync
         jsr   CheckRange
+        ldd   x_pos,u
+        std   terrainCollision.sensor.x
+        ldd   y_pos,u
+        std   terrainCollision.sensor.y
         ldb   #1 ; foreground
         jsr   terrainCollision.do
         tstb
