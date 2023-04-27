@@ -26,7 +26,7 @@ Init
         ldd   Pal_current
         std   o_fade_src,x
         ldy   #Pal_tunnel
-        lda   subtype,u
+        lda   subtype+1,u
         beq   >
         ldy   #Pal_game
 !

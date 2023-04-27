@@ -4,22 +4,6 @@
 ; input REG : [u] pointer to Object Status Table (OST)
 ; ---------
 ;
-; Bink subtype :
-;
-;       Bit 1 : (Shooting timer) 0 => Shoots early, 1=> Shoot late
-;       Bit 2 : (Unused - Shoot frequency) 0 => Shoots fast, 1=> Shoots slow
-;       Bit 3-4 :
-;             0 -> horizontal
-;             1 -> 30% angle (from horizon)
-;             2 -> 60% angle (from horizon)
-;             3 -> vertical
-;       Bit 5 : 0 => kill tracking OFF, 1 => kill tracking ON
-;       Bit 6,7 : 
-;                0 => Walks left 
-;                1 => Walks right
-;                2 => Falls left
-;                3 => Falls right
-;
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
@@ -40,11 +24,31 @@ Object
 
 Routines
         fdb   Init
-        fdb   LiveWalk
+        fdb   LiveWalkLeft
+        fdb   LiveWalkRight
         fdb   LiveFall
         fdb   AlreadyDeleted
 
 Init
+        ldb   subtype_w+1,u            ; load x and y pos based on wave parameter
+        andb  #$0F
+        aslb
+        ldx   #PresetXYIndex
+        abx
+        clra
+        ldb   1,x
+        addb  #$6
+        std   y_pos,u
+        ldb   ,x
+        addd  glb_camera_x_pos
+        std   x_pos,u
+
+        ; set subtype based on preset
+
+        ldb   subtype+1,u
+        stb   subtype,u
+
+
         ldd   #Ani_bink_left
         std   anim,u
         ldb   #6
@@ -64,46 +68,8 @@ Init
         ldd   #$-40
         std   x_vel,u
         inc   routine,u
-        lda   subtype,u
-
-        bita  #128                      ; Walks or falls ?
-        beq   >
-        inc   routine,u                 ; Falls
-        ldx   #Ani_bink_falls_left
-        stx   anim,u
-        clr   x_vel,u
-        ldx   #$100
-        stx   y_vel,u
-!
-        bita  #$01 ; Shoot or no shoot
-        bne   >
         clr   shootnoshoot,u ; No shoot, can skip the end about shooting details
         bra   Object
-!
-        ldb   #1
-        stb   shootnoshoot,u
-
-        ldx   #120
-        bita  #$02 ; Starts shooting late or early ?
-        beq   >
-        ldx   #240  ; Starts late
-!
-        stx   shoottiming,u
-
-        ; This is currently unused, hence set at "less frequently" by default (according to findings on R-Type Dimensions)
-        ;ldx   #60  ; Shoots more frequently or less
-        ;bita  #$04
-        ;beq   >
-        ldx   #120  ; Less frequently
-;!
-        stx   shoottiming_value,u
-
-        asra
-        asra
-        asra
-        anda  #7
-        sta   shootdirection,u
-        jmp   Object
 
 LiveFall
         ldx   gfxlock.frameDrop.count_w
@@ -117,6 +83,40 @@ LiveFall
         ldx   #Ani_bink_stands_left
         stx   anim,u
 !
+LiveWalkLeft
+        ldd   x_pos,u
+        subd  #6
+        std   terrainCollision.sensor.x
+        ldd   y_pos,u
+        addd  #12
+        std   terrainCollision.sensor.y
+        ldb   #1 ; foreground
+        jsr   terrainCollision.do
+        tstb
+        beq   LiveWalk
+        ldd   #Ani_bink_right
+        std   anim,u
+        ldd   #$60
+        std   x_vel,u
+        inc   routine,u
+        bra   LiveWalk
+LiveWalkRight
+        ldd   x_pos,u
+        addd  #6
+        std   terrainCollision.sensor.x
+        ldd   y_pos,u
+        addd  #12
+        std   terrainCollision.sensor.y
+        ldb   #1 ; foreground
+        jsr   terrainCollision.do
+        tstb
+        beq   LiveWalk
+        ldd   #Ani_bink_left
+        std   anim,u
+        ldd   #$-40
+        std   x_vel,u
+        dec   routine,u
+
 LiveWalk
         lda   shootnoshoot,u
         beq   @noshoot
@@ -126,7 +126,7 @@ LiveWalk
         bpl   @noshoot
         ldd   shoottiming_value,u
         std   shoottiming,u
-        jsr   LoadObject_x ; PatapataShoot
+        jsr   LoadObject_x
         beq   @noshoot
         lda   #ObjID_foefire
         sta   id,x
@@ -144,7 +144,7 @@ LiveWalk
         jsr   ObjectMoveSync
         leax  AABB_0,u
         lda   AABB.p,x
-        beq   @dstroy                  ; was killed  
+        beq   @destroy                  ; was killed  
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB.cx,x
@@ -155,7 +155,7 @@ LiveWalk
         stb   AABB.cy,x
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
-@dstroy 
+@destroy 
         ldd   score
         addd  #2
         std   score
@@ -171,9 +171,12 @@ LiveWalk
         std   x_vel,x
         clr   y_vel,x
 @delete 
-        lda   #03
+        lda   #04
         sta   routine,u     
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
         jmp   DeleteObject
 AlreadyDeleted
         rts
+
+PresetXYIndex
+        INCLUDE "./global/preset-xy.asm"
