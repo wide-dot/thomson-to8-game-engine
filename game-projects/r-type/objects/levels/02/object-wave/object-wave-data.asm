@@ -40,8 +40,8 @@
 ;$0E,$7C,ObjID_gouger,$00,$01
 ;$0E,$88,ObjID_outslay,$00,$04
 	fcb   $0F,$64,ObjID_pow,$00,$07
-	fcb   $13,$60,ObjID_bossmusic,$00,$00
+;$13,$60,ObjID_39,$00,$00
 ;$14,$80,ObjID_gomander,$00,$00
-;$14,$FC,ObjID_40,$00,$00
+	fcb   $14,$FC,ObjID_bossmusic,$00,$00
 
 	fdb   $FFFF
