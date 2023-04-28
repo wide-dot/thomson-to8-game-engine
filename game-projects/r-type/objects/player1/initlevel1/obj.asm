@@ -85,7 +85,8 @@ LevelInitPhase3
         std   player1+x_vel
 LevelInitPhase3Live
         ldd   player1+x_pos
-        cmpd  #110
+        subd  glb_camera_x_pos
+        cmpd  #60
         blt   LetsStart
         rts              
 

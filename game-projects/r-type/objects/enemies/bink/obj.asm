@@ -26,7 +26,10 @@ Routines
         fdb   Init
         fdb   LiveWalkLeft
         fdb   LiveWalkRight
-        fdb   LiveFall
+        fdb   LiveFallsLeft
+        fdb   LiveFallsRight
+        fdb   LiveJumpLeft
+        fdb   LiveJumpRight
         fdb   AlreadyDeleted
 
 Init
@@ -48,13 +51,9 @@ Init
         ldb   subtype+1,u
         stb   subtype,u
 
-
-        ldd   #Ani_bink_left
-        std   anim,u
         ldb   #6
         stb   priority,u
-        lda   render_flags,u
-        ora   #render_playfieldcoord_mask
+        lda   #render_playfieldcoord_mask
         sta   render_flags,u
 
         _Collision_AddAABB AABB_0,AABB_list_ennemy
@@ -64,29 +63,42 @@ Init
         sta   AABB.p,x
         _ldd  6,13                      ; set hitbox xy radius
         std   AABB.rx,x
-        
+
+        ; test if bink is spawned airborn
+        ldd   x_pos,u
+        std   terrainCollision.sensor.x
+        ldd   y_pos,u
+        addd  #13
+        std   terrainCollision.sensor.y
+        jsr   terrainCollision.do
+        tstb
+        bne   >
+
+        ; bink is airborn
+
+        ldd   #Ani_bink_falls_left
+        std   anim,u
+        ldd   #$10
+        std   y_vel,u
+        lda   #3
+        sta   routine,u
+        jmp   Object
+!
+
+        ldd   #Ani_bink_left
+        std   anim,u
         ldd   #$-40
         std   x_vel,u
         inc   routine,u
         clr   shootnoshoot,u ; No shoot, can skip the end about shooting details
-        bra   Object
-
-LiveFall
-        ldx   gfxlock.frameDrop.count_w
-        stx   x_vel,u
-        ldx   y_pos,u
-        cmpx  #138
-        ble   >
-        ldx   #138
-        stx   y_pos,u
-        clr   y_vel,u
-        ldx   #Ani_bink_stands_left
-        stx   anim,u
-!
+        jmp   Object
 LiveWalkLeft
         ldd   x_pos,u
         subd  #6
         std   terrainCollision.sensor.x
+        subd  glb_camera_x_pos
+        subd  #8
+        bmi   LiveWalk
         ldd   y_pos,u
         addd  #12
         std   terrainCollision.sensor.y
@@ -150,8 +162,7 @@ LiveWalk
         stb   AABB.cx,x
         addd  #5                       ; add x radius
         bmi   @delete                  ; branch if out of screen's left
-        ldd   y_pos,u
-        subd  glb_camera_y_pos
+        ldb   y_pos+1,u
         stb   AABB.cy,x
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
@@ -171,10 +182,62 @@ LiveWalk
         std   x_vel,x
         clr   y_vel,x
 @delete 
-        lda   #04
+        lda   #7
         sta   routine,u     
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
         jmp   DeleteObject
+LiveFallsLeft
+        jsr   ObjectMoveSync
+        ldd   x_pos,u
+        std   terrainCollision.sensor.x
+        ldd   y_pos,u
+        addd  #14
+        std   terrainCollision.sensor.y
+        ldb   #1 ; foreground
+        jsr   terrainCollision.do
+        tstb
+        bne   >
+        ; not on the ground yet ...
+        leax  AABB_0,u
+        lda   AABB.p,x
+        lbeq  @destroy                  ; was killed  
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB.cx,x
+        addd  #5                       ; add x radius
+        lbmi  @delete                  ; branch if out of screen's left
+        ldb   y_pos+1,u
+        stb   AABB.cy,x
+        jsr   AnimateSpriteSync
+        jmp   DisplaySprite
+!
+        ldd   #Ani_bink_left
+        std   anim,u
+        ldd   #$-40
+        std   x_vel,u
+        lda   #1
+        sta   routine,u
+        ldd   #0
+        std   y_vel,u
+        _breakpoint
+        ldx   #PresetXYIndex+1
+        ldb   y_pos+1,u
+!
+        cmpb  ,x
+        blo   >
+        leax  2,x
+        bra   <
+!
+        ldb   -2,x
+        addb  #$6
+        stb   y_pos+1,u
+        jmp   LiveWalkLeft
+LiveFallsRight
+        rts
+LiveJumpLeft
+        rts
+LiveJumpRight
+        rts
 AlreadyDeleted
         rts
 

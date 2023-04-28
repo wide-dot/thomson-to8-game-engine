@@ -45,7 +45,7 @@ Init
         ldd   #20
         addd  glb_camera_x_pos
         std   player1+x_pos
-        ldd   #100
+        ldd   #93
         std   player1+y_pos
         lda   player1+render_flags
         ora   #render_playfieldcoord_mask
