@@ -40,7 +40,7 @@ Init
         abx
         clra
         ldb   1,x
-        addb  #$6
+        addb  #$7
         std   y_pos,u
         ldb   ,x
         addd  glb_camera_x_pos
@@ -75,10 +75,11 @@ Init
         bne   >
 
         ; bink is airborn
+        _breakpoint
 
         ldd   #Ani_bink_falls_left
         std   anim,u
-        ldd   #$10
+        ldd   #$160
         std   y_vel,u
         lda   #3
         sta   routine,u
@@ -187,20 +188,21 @@ LiveWalk
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
         jmp   DeleteObject
 LiveFallsLeft
+        leax  AABB_0,u
+        lda   AABB.p,x
+        lbeq  @destroy                  ; was killed  
         jsr   ObjectMoveSync
+        _breakpoint
         ldd   x_pos,u
         std   terrainCollision.sensor.x
         ldd   y_pos,u
-        addd  #14
+        addd  #13
         std   terrainCollision.sensor.y
         ldb   #1 ; foreground
         jsr   terrainCollision.do
         tstb
         bne   >
         ; not on the ground yet ...
-        leax  AABB_0,u
-        lda   AABB.p,x
-        lbeq  @destroy                  ; was killed  
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB.cx,x
@@ -219,17 +221,15 @@ LiveFallsLeft
         sta   routine,u
         ldd   #0
         std   y_vel,u
-        _breakpoint
-        ldx   #PresetXYIndex+1
+        ldx   #PresetTileY
         ldb   y_pos+1,u
+        subb  #7
 !
-        cmpb  ,x
-        blo   >
-        leax  2,x
-        bra   <
-!
+        cmpb  ,x+
+        bhi   <
+        _breakpoint
         ldb   -2,x
-        addb  #$6
+        addb  #11
         stb   y_pos+1,u
         jmp   LiveWalkLeft
 LiveFallsRight
@@ -243,3 +243,6 @@ AlreadyDeleted
 
 PresetXYIndex
         INCLUDE "./global/preset-xy.asm"
+
+PresetTileY
+        INCLUDE "./global/preset-tile-y.asm"
