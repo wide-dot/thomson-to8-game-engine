@@ -50,16 +50,23 @@ InitMain
 
         ldb   subtype_w+1,u            ; load x and y pos based on wave parameter
         andb  #$0F
+        stb   @type
         aslb
         ldx   #PresetXYIndex
         abx
         clra
         ldb   1,x
         std   y_pos,u
-        ldb   ,x
+        ldd   #0
+@type   equ   *-2
+        cmpa  #3
+        blo   >
+        cmpa  #9
+        bhs   >
+        ldb   #24                      ; see arcade rom (0x61EB) : ADD word ptr [SI + 0x4],0x40
+!       clra
+        addb  ,x
         addd  glb_camera_x_pos
-        addd  #24  
-                       ; see arcade rom (0x61EB)
         std   x_pos,u
 
         lda   gfxlock.frameDrop.count
@@ -74,9 +81,6 @@ LiveMain
         bhi   >
         adda  #$10
         sta   timer,u
-        nega
-        adda  #$10
-        ;sta   @a                      ; work in progress
         dec   nb_bugs,u
         bmi   @delete
         jsr   LoadObject_x
@@ -87,9 +91,7 @@ LiveMain
         std   x_pos,x
         ldd   y_pos,u
         std   y_pos,x
-        lda   #0
-@a      equ   *-1
-        adda  anim_frame_duration,u
+        lda   anim_frame_duration,u
         sta   anim_frame_duration,x
         lda   #2                       ; set init routine for child bugs
         sta   routine,x

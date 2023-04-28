@@ -27,7 +27,7 @@ Routines
 
 Init
         ldd   glb_camera_x_pos
-        addd  #144+12
+        addd  #144+6 ; 16px ahead (x0.375)
         std   x_pos,u
 
         lda   subtype_w+1,u
