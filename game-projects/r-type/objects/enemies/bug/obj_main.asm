@@ -69,30 +69,38 @@ InitMain
         addd  glb_camera_x_pos
         std   x_pos,u
 
-        lda   gfxlock.frameDrop.count
-        sta   timer,u
-
         inc   routine,u
+
+        lda   #2                       ; see arcade rom (0x61EF) : MOV word ptr [SI + 0x36],0x2
+        suba  anim_frame_duration,u    ; contains late frames from wave
+        sta   timer,u
+        beq   >
+        bmi   >
+        rts
 
 LiveMain
         lda   timer,u
         suba  gfxlock.frameDrop.count
         sta   timer,u
-        bhi   >
+        beq   >
+        bpl   @rts
+!       sta   @late
         adda  #$10
         sta   timer,u
         dec   nb_bugs,u
         bmi   @delete
         jsr   LoadObject_x
-        beq   >
+        beq   @rts
         lda   id,u
         sta   id,x
+        lda   #0
+@late   equ   *-1
+        nega
+        sta   anim_frame_duration,x
         ldd   x_pos,u
         std   x_pos,x
         ldd   y_pos,u
         std   y_pos,x
-        lda   anim_frame_duration,u
-        sta   anim_frame_duration,x
         lda   #2                       ; set init routine for child bugs
         sta   routine,x
         ldb   #6
@@ -103,7 +111,7 @@ LiveMain
         std   anim,x
         ldd   sub_anim,u
         std   sub_anim,x
-!       rts
+@rts    rts
 @delete
         jmp   UnloadObject_u           ; not a sprite we need to use unloadObject
 
@@ -119,10 +127,11 @@ Init
         jsr   AnimateMoveSteps
 
         inc   routine,u
+        bra   >                        ; skip framerate compensation for init
 
 Live
         jsr   AnimateMoveSync
-        ldx   sub_anim,u
+!       ldx   sub_anim,u
         beq   @delete
         jsr   ObjectMove
 ;
