@@ -7,7 +7,7 @@ gm_scrollscreen
         fcb   $07,$05,$00,$4F,$04,$BA,$28
         fcb   $0C,$04,$00,$32,$05,$E0,$00
         fcb   $10,$04,$00,$72,$05,$B8,$43
-        fcb   $04,$08,$01,$40,$01,$BC,$36
+        fcb   $04,$04,$01,$73,$01,$AB,$FF
         fcb   $FF
 Gm_Index
         fdb   gm_scrollscreen

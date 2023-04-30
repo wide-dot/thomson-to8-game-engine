@@ -9,5 +9,3 @@ SOUND_CARD_PROTOTYPE equ 1
     INCLUDE "./global/global-equates.asm"
     INCLUDE "./global/global-macros.asm"
     INCLUDE "./global/global-variables.asm"
-
-    INCLUDE "./engine/objects/palette/fade/fade.equ"

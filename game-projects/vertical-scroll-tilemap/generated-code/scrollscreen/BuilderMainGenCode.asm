@@ -1,7 +1,6 @@
 * Generated Code
 
 Palette_scrollscreen
-        fdb   $0000
         fdb   $0f00
         fdb   $ff0f
         fdb   $0002
@@ -17,6 +16,7 @@ Palette_scrollscreen
         fdb   $2202
         fdb   $020e
         fdb   $200c
+        fdb   $0000
 
 Obj_Index_Page
         fcb   $00
