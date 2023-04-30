@@ -27,7 +27,7 @@ Routines
 
 Init
         ldd   glb_camera_x_pos
-        addd  #144+6 ; 16px ahead (x0.375)
+        addd  #144+8+3 ; 8: left border + 3: (8 px of arcade) see : fc7e MOV word ptr [SI + 0x4],0x2c8
         std   x_pos,u
 
         lda   subtype_w+1,u
