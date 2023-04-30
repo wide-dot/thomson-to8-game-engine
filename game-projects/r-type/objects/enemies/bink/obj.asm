@@ -124,7 +124,7 @@ LiveWalkLeft
         jsr   terrainCollision.do
         tstb
         bne   LiveWalk
-LiveJumpLeft
+LiveJumpLeftInit
 LiveWalkLeftChange
         ldd   #Ani_bink_right
         std   anim,u
@@ -153,7 +153,7 @@ LiveWalkRight
         jsr   terrainCollision.do
         tstb
         bne   LiveWalk
-LiveJumpRight
+LiveJumpRightInit
 LiveWalkRightChange   
         ldd   #Ani_bink_left
         std   anim,u
