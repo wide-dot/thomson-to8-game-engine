@@ -65,17 +65,20 @@ Init
         std   AABB.rx,x
 
         ; test if bink is spawned airborn
+
+        _breakpoint
+
         ldd   x_pos,u
         std   terrainCollision.sensor.x
         ldd   y_pos,u
         addd  #13
         std   terrainCollision.sensor.y
+        ldb   #1 ; foreground
         jsr   terrainCollision.do
         tstb
         bne   >
 
         ; bink is airborn
-        _breakpoint
 
         ldd   #Ani_bink_falls_left
         std   anim,u
@@ -99,14 +102,30 @@ LiveWalkLeft
         std   terrainCollision.sensor.x
         subd  glb_camera_x_pos
         subd  #8
-        bmi   LiveWalk
+        lbmi   LiveWalk                 ; Test if terrain collision is in black border
         ldd   y_pos,u
         addd  #12
         std   terrainCollision.sensor.y
         ldb   #1 ; foreground
         jsr   terrainCollision.do
         tstb
-        beq   LiveWalk
+        bne   LiveWalkLeftChange
+
+        ldd   x_pos,u
+        subd  #6
+        std   terrainCollision.sensor.x
+        subd  glb_camera_x_pos
+        subd  #8
+        lbmi   LiveWalk                 ; Test if terrain collision is in black border
+        ldd   y_pos,u
+        addd  #13
+        std   terrainCollision.sensor.y
+        ldb   #1 ; foreground
+        jsr   terrainCollision.do
+        tstb
+        bne   LiveWalk
+LiveJumpLeft
+LiveWalkLeftChange
         ldd   #Ani_bink_right
         std   anim,u
         ldd   #$60
@@ -123,13 +142,24 @@ LiveWalkRight
         ldb   #1 ; foreground
         jsr   terrainCollision.do
         tstb
-        beq   LiveWalk
+        bne   LiveWalkRightChange
+        ldd   x_pos,u
+        addd  #6
+        std   terrainCollision.sensor.x
+        ldd   y_pos,u
+        addd  #13
+        std   terrainCollision.sensor.y
+        ldb   #1 ; foreground
+        jsr   terrainCollision.do
+        tstb
+        bne   LiveWalk
+LiveJumpRight
+LiveWalkRightChange   
         ldd   #Ani_bink_left
         std   anim,u
         ldd   #$-40
         std   x_vel,u
         dec   routine,u
-
 LiveWalk
         lda   shootnoshoot,u
         beq   @noshoot
