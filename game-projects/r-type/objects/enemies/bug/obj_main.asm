@@ -32,6 +32,7 @@ Routines
 
 InitMain
         ldb   subtype_w,u              ; load nb of sprites in wave
+        andb  #3
         lslb
         lslb
         ldx   #Preset3034Index
@@ -87,8 +88,10 @@ LiveMain
 !       sta   @late
         adda  #$10
         sta   timer,u
-        dec   nb_bugs,u
-        bmi   @delete
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        subd  #6                       ; 0x6204 CMP word ptr [BP + 0x4],0x150 ; left screen limit, will destroy bug creator if crossed (at x=336-320=16)
+        bmi   @delete                  ; branch if out of screen's left
         jsr   LoadObject_x
         beq   @rts
         lda   id,u
@@ -111,6 +114,8 @@ LiveMain
         std   anim,x
         ldd   sub_anim,u
         std   sub_anim,x
+        dec   nb_bugs,u
+        beq   @delete
 @rts    rts
 @delete
         jmp   UnloadObject_u           ; not a sprite we need to use unloadObject
@@ -140,8 +145,11 @@ Live
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB_0+AABB.cx,u
-        addd  #5                       ; add x radius
-        bmi   @delete                  ; branch if out of screen's left
+        ; no delete based on screen position, delete is operated by end of move script
+        ;addd  #5                       ; add x radius
+        ;bmi   @delete                  ; branch if out of screen's left
+        ;subd  #144+5*2
+        ;bpl   @delete                  ; branch if out of screen's right
         ldd   y_pos,u
         subd  glb_camera_y_pos
         stb   AABB_0+AABB.cy,u
