@@ -1,0 +1,698 @@
+                      (/home/robin/githu):00001         ********************************************************************************
+                      (/home/robin/githu):00002         * Chargement de donnees en RAM (TO8 Thomson) - Benoit Rousseau 10/11/2020
+                      (/home/robin/githu):00003         * ------------------------------------------------------------------------------
+                      (/home/robin/githu):00004         *
+                      (/home/robin/githu):00005         * Charge les donnees d'un mode de jeu depuis la disquette
+                      (/home/robin/githu):00006         * decompresse les donnees avec zx0 et copie ces donnees en RAM
+                      (/home/robin/githu):00007         * Les donnees sont stockees par groupe de 7 octets
+                      (/home/robin/githu):00008         * Donnees b: SEC, b: DRV/TRK, b: nb SEC, b: offset de fin, b: dest Page, w: dest Adresse
+                      (/home/robin/githu):00009         * la derniere ligne contient comme premier octet une valeur negative (exemple $FF)
+                      (/home/robin/githu):00010         * Remarque:
+                      (/home/robin/githu):00011         * ---------
+                      (/home/robin/githu):00012         * Les donnees sur la disquette sont continues. Lorsque des donnees se terminent a moitie
+                      (/home/robin/githu):00013         * sur un secteur, les donnees de fin sont ignorees par l'offset. Si les donnees commencent
+                      (/home/robin/githu):00014         * en milieu de secteur, c'est zx0 qui s'arretera. On optimise ainsi l'espace disquette
+                      (/home/robin/githu):00015         * il n'y a pas de separateur ni de blanc entre les donnees.
+                      (/home/robin/githu):00016         *
+                      (/home/robin/githu):00017         ********************************************************************************
+                      (/home/robin/githu):00018         
+                      (/home/robin/githu):00019                 INCLUDE "./engine/constants.asm"
+                      (./engine/constant):00001         * ---------------------------------------------------------------------------
+                      (./engine/constant):00002         * Constants
+                      (./engine/constant):00003         *
+                      (./engine/constant):00004         * Naming convention
+                      (./engine/constant):00005         * -----------------
+                      (./engine/constant):00006         * - lower case
+                      (./engine/constant):00007         * - underscore-separated names
+                      (./engine/constant):00008         *
+                      (./engine/constant):00009         * ---------------------------------------------------------------------------
+                      (./engine/constant):00010         
+                      (./engine/constant):00011          ifndef CONSTANTS_ASM
+     0001             (./engine/constant):00012         CONSTANTS_ASM equ 1
+                      (./engine/constant):00013         
+                      (./engine/constant):00014         * ===========================================================================
+                      (./engine/constant):00015         * TO8 Registers
+                      (./engine/constant):00016         * ===========================================================================
+                      (./engine/constant):00017         
+                      (./engine/constant):00018         ; Disk routine registers (ROM)
+                      (./engine/constant):00019         
+     6049             (./engine/constant):00020         dk_drive                      equ $6049
+     604A             (./engine/constant):00021         dk_track                      equ $604A
+     604B             (./engine/constant):00022         dk_track_lsb                  equ $604B
+     604C             (./engine/constant):00023         dk_sector                     equ $604C
+     604F             (./engine/constant):00024         dk_write_location             equ $604F
+                      (./engine/constant):00025         
+                      (./engine/constant):00026         * ===========================================================================
+                      (./engine/constant):00027         * Globals
+                      (./engine/constant):00028         * ===========================================================================
+                      (./engine/constant):00029         
+                      (./engine/constant):00030         ; WARNING - BuildSprite allow to cross $A000 limit by glb_camera_x_offset/4
+                      (./engine/constant):00031         ; Graphics routines using S to write may cross by 12 bytes
+                      (./engine/constant):00032         ; be sure to compile with enough margin here
+     9FF4             (./engine/constant):00033         glb_ram_end                   equ $A000-12
+                      (./engine/constant):00034         
+                      (./engine/constant):00035         ; compilated sprite
+     9FF2             (./engine/constant):00036         glb_register_s                equ glb_ram_end-2             ; reverved space to store S from ROM routines
+                      (./engine/constant):00037         
+                      (./engine/constant):00038         ; DrawSprites
+     9FF0             (./engine/constant):00039         glb_screen_location_1         equ glb_register_s-2          ; start address for rendering of current sprite Part1     
+     9FEE             (./engine/constant):00040         glb_screen_location_2         equ glb_screen_location_1-2   ; start address for rendering of current sprite Part2 (DEPENDENCY Must follow Part1)
+                      (./engine/constant):00041         
+     9FEC             (./engine/constant):00042         glb_camera_height             equ glb_screen_location_2-2
+     9FEA             (./engine/constant):00043         glb_camera_width              equ glb_camera_height-2
+     9FE8             (./engine/constant):00044         glb_camera_x_pos_coarse       equ glb_camera_width-2        ; ((glb_camera_x_pos - 64) / 64) * 64
+     9FE6             (./engine/constant):00045         glb_camera_x_pos              equ glb_camera_x_pos_coarse-2 ; 16.8 camera x position in palyfield coordinates
+     9FE5             (./engine/constant):00046         glb_camera_x_sub              equ glb_camera_x_pos-1        ; 
+     9FE4             (./engine/constant):00047         glb_camera_y_pos              equ glb_camera_x_pos-2        ; 16.8 camera y position in palyfield coordinates
+     9FE3             (./engine/constant):00048         glb_camera_y_sub              equ glb_camera_y_pos-1        ;
+     9FE2             (./engine/constant):00049         glb_camera_x_min_pos          equ glb_camera_y_pos-2
+     9FE0             (./engine/constant):00050         glb_camera_y_min_pos          equ glb_camera_x_min_pos-2
+     9FDE             (./engine/constant):00051         glb_camera_x_max_pos          equ glb_camera_y_min_pos-2
+     9FDC             (./engine/constant):00052         glb_camera_y_max_pos          equ glb_camera_x_max_pos-2
+     9FDA             (./engine/constant):00053         glb_camera_x_offset           equ glb_camera_y_max_pos-2
+     9FD8             (./engine/constant):00054         glb_camera_y_offset           equ glb_camera_x_offset-2
+     9FD7             (./engine/constant):00055         glb_force_sprite_refresh      equ glb_camera_y_offset-1
+     9FD6             (./engine/constant):00056         glb_camera_move               equ glb_force_sprite_refresh-1
+     9FD5             (./engine/constant):00057         glb_alphaTiles                equ glb_camera_move-1
+     9FD4             (./engine/constant):00058         glb_timer_second              equ glb_alphaTiles-1
+     9FD3             (./engine/constant):00059         glb_timer_minute              equ glb_timer_second-1
+     9FD3             (./engine/constant):00060         glb_timer                     equ glb_timer_minute
+     9FD2             (./engine/constant):00061         glb_timer_frame               equ glb_timer-1
+                      (./engine/constant):00062         
+                      (./engine/constant):00063         ; BankSwitch
+     9FD1             (./engine/constant):00064         glb_Page                      equ glb_timer_frame-1
+     9FB3             (./engine/constant):00065         dp_engine                     equ glb_Page-30  ; engine routines tmp var space
+     9F97             (./engine/constant):00066         dp_extreg                     equ dp_engine-28 ; extra register space (user and engine common)
+     9F00             (./engine/constant):00067         dp                            equ $9F00        ; user space (149 bytes max)
+     9F00             (./engine/constant):00068         glb_system_stack              equ dp
+                      (./engine/constant):00069         
+                      (./engine/constant):00070         ; generic direct page extra registers
+                      (./engine/constant):00071         ; -----------------------------------
+     9F97             (./engine/constant):00072         glb_d0   equ   dp_extreg
+     9F98             (./engine/constant):00073         glb_d0_b equ   dp_extreg+1
+                      (./engine/constant):00074         ; must be a free byte here for 24bits computation
+     9F9A             (./engine/constant):00075         glb_d1   equ   dp_extreg+3
+     9F9B             (./engine/constant):00076         glb_d1_b equ   dp_extreg+4
+                      (./engine/constant):00077         ; must be a free byte here for 24bits computation
+     9F9D             (./engine/constant):00078         glb_d2   equ   dp_extreg+6
+     9F9E             (./engine/constant):00079         glb_d2_b equ   dp_extreg+7
+                      (./engine/constant):00080         ; must be a free byte here for 24bits computation
+     9FA0             (./engine/constant):00081         glb_d3   equ   dp_extreg+9
+     9FA1             (./engine/constant):00082         glb_d3_b equ   dp_extreg+10
+                      (./engine/constant):00083         ; must be a free byte here for 24bits computation
+     9FA3             (./engine/constant):00084         glb_d4   equ   dp_extreg+12
+     9FA4             (./engine/constant):00085         glb_d4_b equ   dp_extreg+13
+     9FA5             (./engine/constant):00086         glb_d5   equ   dp_extreg+14
+     9FA6             (./engine/constant):00087         glb_d5_b equ   dp_extreg+15
+     9FA7             (./engine/constant):00088         glb_d6   equ   dp_extreg+16
+     9FA8             (./engine/constant):00089         glb_d6_b equ   dp_extreg+17
+     9FA9             (./engine/constant):00090         glb_a0   equ   dp_extreg+18
+     9FAA             (./engine/constant):00091         glb_a0_b equ   dp_extreg+19
+     9FAB             (./engine/constant):00092         glb_a1   equ   dp_extreg+20
+     9FAC             (./engine/constant):00093         glb_a1_b equ   dp_extreg+21
+     9FAD             (./engine/constant):00094         glb_a2   equ   dp_extreg+22
+     9FAE             (./engine/constant):00095         glb_a2_b equ   dp_extreg+23
+     9FAF             (./engine/constant):00096         glb_a3   equ   dp_extreg+24
+     9FB0             (./engine/constant):00097         glb_a3_b equ   dp_extreg+25
+     9FB1             (./engine/constant):00098         glb_a4   equ   dp_extreg+26
+     9FB2             (./engine/constant):00099         glb_a4_b equ   dp_extreg+27
+                      (./engine/constant):00100         
+                      (./engine/constant):00101         * ===========================================================================
+                      (./engine/constant):00102         * Display Constants
+                      (./engine/constant):00103         * ===========================================================================
+                      (./engine/constant):00104         
+     00A0             (./engine/constant):00105         screen_width                  equ 160             ; in pixel
+     00C8             (./engine/constant):00106         screen_height                 equ 200             ; in pixel
+     001C             (./engine/constant):00107         screen_top                    equ (256-200)/2     ; in pixel
+     00E3             (./engine/constant):00108         screen_bottom                 equ screen_top+199  ; in pixel
+     0030             (./engine/constant):00109         screen_left                   equ (256-160)/2     ; in pixel
+     00CF             (./engine/constant):00110         screen_right                  equ screen_left+159 ; in pixel
+     0008             (./engine/constant):00111         nb_priority_levels            equ 8               ; number of priority levels (need code change if modified)
+                      (./engine/constant):00112         
+                      (./engine/constant):00113         * ===========================================================================
+                      (./engine/constant):00114         * Images Constants
+                      (./engine/constant):00115         * ===========================================================================
+                      (./engine/constant):00116         
+     0004             (./engine/constant):00117         image_x_size                  equ 4
+     0005             (./engine/constant):00118         image_y_size                  equ 5
+     0006             (./engine/constant):00119         image_center_offset           equ 6
+                      (./engine/constant):00120         
+     0004             (./engine/constant):00121         image_subset_x1_offset        equ 4
+     0005             (./engine/constant):00122         image_subset_y1_offset        equ 5
+                      (./engine/constant):00123         
+     0000             (./engine/constant):00124         page_draw_routine             equ 0
+     0001             (./engine/constant):00125         draw_routine                  equ 1
+     0003             (./engine/constant):00126         page_erase_routine            equ 3
+     0004             (./engine/constant):00127         erase_routine                 equ 4
+     0006             (./engine/constant):00128         erase_nb_cell                 equ 6
+                      (./engine/constant):00129         
+                      (./engine/constant):00130         * ===========================================================================
+                      (./engine/constant):00131         * Sound Constants
+                      (./engine/constant):00132         * ===========================================================================
+                      (./engine/constant):00133         
+     0000             (./engine/constant):00134         sound_page        equ 0
+     0001             (./engine/constant):00135         sound_start_addr  equ 1
+     0003             (./engine/constant):00136         sound_end_addr    equ 3
+     0005             (./engine/constant):00137         sound_meta_size   equ 5
+                      (./engine/constant):00138         
+                      (./engine/constant):00139         * ===========================================================================
+                      (./engine/constant):00140         * Object Constants
+                      (./engine/constant):00141         * ===========================================================================
+                      (./engine/constant):00142         
+                      (./engine/constant):00143         ; ext_variables_size should be declared in game source code
+                      (./engine/constant):00144         
+     0026             (./engine/constant):00145         object_base_size              equ 38  ; the size of an object without rsvd and ext_vars
+                      (./engine/constant):00146          ifndef OverlayMode
+     003B             (./engine/constant):00147         object_rsvd_size              equ 59
+                      (./engine/constant):00148          else
+0000                  (./engine/constant):00149         object_rsvd_size              equ 5
+                      (./engine/constant):00150          endc
+                      (./engine/constant):00151         
+     ????             (./engine/constant):00152         object_rsvd                   equ object_base_size+ext_variables_size
+     ????             (./engine/constant):00153         object_size                   equ object_base_size+ext_variables_size+object_rsvd_size ; the size of a dynamic object
+     ????             (./engine/constant):00154         next_object                   equ object_size
+     0026             (./engine/constant):00155         ext_variables                 equ object_base_size ; start of reserved space for additionnal variables
+                      (./engine/constant):00156         
+     0000             (./engine/constant):00157         id                            equ 0   ; reference to object model id (ObjID_) (0: free slot)
+     0001             (./engine/constant):00158         subtype                       equ 1   ; reference to object subtype (Sub_) DEPENDENCY subtype must follow id
+     0001             (./engine/constant):00159         subtype_w                     equ 1   ; reference to object subtype (Sub_) takes 2 bytes and overlap render_flags DEPENDENCY subtype must follow id
+     0002             (./engine/constant):00160         render_flags                  equ 2
+     0003             (./engine/constant):00161         run_object_prev               equ 3   ; previous object to update when deleting current object
+     0005             (./engine/constant):00162         run_object_next               equ 5   ; next object to run by RunObjects
+                      (./engine/constant):00163         
+                      (./engine/constant):00164          ifndef OverlayMode
+                      (./engine/constant):00165         * --- render_flags bitfield variables --- background erase pack
+     0001             (./engine/constant):00166         render_xmirror_mask           equ $01 ; (bit 0) DEPENDENCY should be bit 0 - tell display engine to mirror sprite on horizontal axis
+     0002             (./engine/constant):00167         render_ymirror_mask           equ $02 ; (bit 1) DEPENDENCY should be bit 1 - tell display engine to mirror sprite on vertical axis
+     0004             (./engine/constant):00168         render_overlay_mask           equ $04 ; (bit 2) DEPENDENCY should be bit 2 - compilated sprite with no background save
+     0008             (./engine/constant):00169         render_playfieldcoord_mask    equ $08 ; (bit 3) tell display engine to use playfield (1) or screen (0) coordinates
+     0010             (./engine/constant):00170         render_xloop_mask             equ $10 ; (bit 4) (in screen coordinate) tell display engine to hide sprite when x is out of screen (0) or to display (1)  
+     0020             (./engine/constant):00171         render_todelete_mask          equ $20 ; (bit 5) tell display engine to delete sprite and clear OST for this object
+     0040             (./engine/constant):00172         render_subobjects_mask        equ $40 ; (bit 6) tell display engine to render subobjects for this object
+     0080             (./engine/constant):00173         render_hide_mask              equ $80 ; (bit 7) tell display engine to hide sprite (keep priority and mapping_frame)
+                      (./engine/constant):00174          else
+                      (./engine/constant):00175         ; --- render_flags bitfield variables --- overlay pack
+0000                  (./engine/constant):00176         render_xmirror_mask           equ $01 ; (bit 0) DEPENDENCY should be bit 0 - tell display engine to mirror sprite on horizontal axis
+0000                  (./engine/constant):00177         render_ymirror_mask           equ $02 ; (bit 1) DEPENDENCY should be bit 1 - tell display engine to mirror sprite on vertical axis
+                      (./engine/constant):00178         
+0000                  (./engine/constant):00179         render_playfieldcoord_mask    equ $08 ; (bit 3) tell display engine to use playfield (1) or screen (0) coordinates
+0000                  (./engine/constant):00180         render_xloop_mask             equ $10 ; (bit 4) (in screen coordinate) tell display engine to hide sprite when x is out of screen (0) or to display (1)  
+0000                  (./engine/constant):00181         render_no_range_ctrl_mask     equ $20 ; (bit 5) tell display engine to skip out of range controls (this may lead to memory corruption BEWARE)
+0000                  (./engine/constant):00182         render_subobjects_mask        equ $40 ; (bit 6) tell display engine to render subobjects for this object
+0000                  (./engine/constant):00183         render_hide_mask              equ $80 ; (bit 7) tell display engine to hide sprite (keep priority and mapping_frame)
+                      (./engine/constant):00184          endc
+                      (./engine/constant):00185         
+     0007             (./engine/constant):00186         priority                      equ 7           ; display priority (0: nothing to display, 1:front, ..., 8:back)
+     0008             (./engine/constant):00187         anim                          equ 8  ; and 9  ; reference to current animation (Ani_)
+     000A             (./engine/constant):00188         prev_anim                     equ 10 ; and 11 ; reference to previous animation (Ani_)
+     000A             (./engine/constant):00189         sub_anim                      equ 10 ; and 11 ; reference to sub animation
+     000C             (./engine/constant):00190         anim_frame                    equ 12          ; index of current frame in animation
+     000D             (./engine/constant):00191         anim_frame_duration           equ 13          ; number of frames for each image in animation, range: 00-7F (0-127), 0 means display only during one frame
+     000E             (./engine/constant):00192         anim_flags                    equ 14          ; byte offset to reference an anim_flags LUT (adv) / store a link flag (non adv)
+                      (./engine/constant):00193         
+                      (./engine/constant):00194         * --- anim_flags bitfield variables ---
+     0001             (./engine/constant):00195         anim_link_mask                equ $01 ; (bit 0) if set, allow the load of a new animation without reseting anim_frame and anim_frame_duration
+                      (./engine/constant):00196         
+     000E             (./engine/constant):00197         status_flags                  equ 14          ; orientation of sprite, is applied to animation xmirror flag during AnimateSprite
+                      (./engine/constant):00198         
+                      (./engine/constant):00199         * --- status_flags bitfield variables ---
+     0001             (./engine/constant):00200         status_xflip_mask             equ $01 ; (bit 0) X Flip
+     0002             (./engine/constant):00201         status_yflip_mask             equ $02 ; (bit 1) Y Flip
+                      (./engine/constant):00202         
+     0010             (./engine/constant):00203         image_set                     equ 16 ; and 17 ; reference to current image (Img_) (0000 if no image)
+     0012             (./engine/constant):00204         x_pos                         equ 18 ; and 19 ; x playfield coordinate
+     0014             (./engine/constant):00205         x_sub                         equ 20          ; x subpixel (1/256 of a pixel), must follow x_pos in data structure
+     0015             (./engine/constant):00206         y_pos                         equ 21 ; and 22 ; y playfield coordinate
+     0017             (./engine/constant):00207         y_sub                         equ 23          ; y subpixel (1/256 of a pixel), must follow y_pos in data structure
+     0018             (./engine/constant):00208         xy_pixel                      equ 24          ; x and y screen coordinate
+     0018             (./engine/constant):00209         x_pixel                       equ 24          ; x screen coordinate
+     0019             (./engine/constant):00210         y_pixel                       equ 25          ; y screen coordinate, must follow x_pixel
+     001A             (./engine/constant):00211         x_vel                         equ 26 ; and 27 ; s8.8 horizontal velocity
+     001C             (./engine/constant):00212         y_vel                         equ 28 ; and 29 ; s8.8 vertical velocity
+     001E             (./engine/constant):00213         x_acl                         equ 30 ; and 31 ; s8.8 horizontal gravity
+     0020             (./engine/constant):00214         y_acl                         equ 32 ; and 33 ; s8.8 vertical gravity
+     0022             (./engine/constant):00215         routine                       equ 34          ; index of current object routine
+     0023             (./engine/constant):00216         routine_secondary             equ 35          ; index of current secondary routine
+     0024             (./engine/constant):00217         routine_tertiary              equ 36          ; index of current tertiary routine
+     0025             (./engine/constant):00218         routine_quaternary            equ 37          ; index of current quaternary routine
+                      (./engine/constant):00219         
+                      (./engine/constant):00220          ifndef OverlayMode
+                      (./engine/constant):00221         * ---------------------------------------------------------------------------
+                      (./engine/constant):00222         * reserved variables (read/write by engine)
+                      (./engine/constant):00223         
+     ????             (./engine/constant):00224         rsv_render_flags              equ object_rsvd
+                      (./engine/constant):00225         
+                      (./engine/constant):00226         * --- rsv_render_flags bitfield variables ---
+     0001             (./engine/constant):00227         rsv_render_checkrefresh_mask  equ $01 ; (bit 0) if erasesprite and display sprite flag are processed for this frame
+     0002             (./engine/constant):00228         rsv_render_erasesprite_mask   equ $02 ; (bit 1) if a sprite need to be cleared on screen
+     0004             (./engine/constant):00229         rsv_render_displaysprite_mask equ $04 ; (bit 2) if a sprite need to be rendered on screen
+     0008             (./engine/constant):00230         rsv_render_outofrange_mask    equ $08 ; (bit 3) if a sprite is out of range for full rendering in screen
+     0080             (./engine/constant):00231         rsv_render_onscreen_mask      equ $80 ; (bit 7) DEPENDENCY should be bit 7 - has been rendered on last screen buffer (may be 0 or 1)
+                      (./engine/constant):00232         
+     ????             (./engine/constant):00233         rsv_prev_anim                 equ object_rsvd+1 ; and +2 ; reference to previous animation (Ani_) w * UTILE ?
+     ????             (./engine/constant):00234         rsv_image_center_offset       equ object_rsvd+3 ; 0 or 1 offset that indicate if image center is even or odd (DRS_XYToAddress)
+     ????             (./engine/constant):00235         rsv_image_subset              equ object_rsvd+4 ; and +5 ; reference to current image regarding mirror flags w
+     ????             (./engine/constant):00236         rsv_mapping_frame             equ object_rsvd+6 ; and +7 ; reference to current image regarding mirror flags, overlay flag and x precision w
+     ????             (./engine/constant):00237         rsv_erase_nb_cell             equ object_rsvd+8 ; b 
+     ????             (./engine/constant):00238         rsv_page_draw_routine         equ object_rsvd+9 ; b
+     ????             (./engine/constant):00239         rsv_draw_routine              equ object_rsvd+10 ; and +11 ; w
+     ????             (./engine/constant):00240         rsv_page_erase_routine        equ object_rsvd+12 ; b
+     ????             (./engine/constant):00241         rsv_erase_routine             equ object_rsvd+13 ; and +14 ; w 
+     ????             (./engine/constant):00242         rsv_xy1_pixel                 equ object_rsvd+15 ;
+     ????             (./engine/constant):00243         rsv_x1_pixel                  equ object_rsvd+15 ; x+x_offset-(x_size/2) screen coordinate
+     ????             (./engine/constant):00244         rsv_y1_pixel                  equ object_rsvd+16 ; y+y_offset-(y_size/2) screen coordinate, must follow rsv_x1_pixel
+     ????             (./engine/constant):00245         rsv_xy2_pixel                 equ object_rsvd+17 ;
+     ????             (./engine/constant):00246         rsv_x2_pixel                  equ object_rsvd+17 ; x+x_offset+(x_size/2) screen coordinate
+     ????             (./engine/constant):00247         rsv_y2_pixel                  equ object_rsvd+18 ; y+y_offset+(y_size/2) screen coordinate, must follow rsv_x2_pixel
+                      (./engine/constant):00248         
+                      (./engine/constant):00249         * ---------------------------------------------------------------------------
+                      (./engine/constant):00250         * reserved variables (engine) - buffer specific
+                      (./engine/constant):00251         
+     ????             (./engine/constant):00252         rsv_buffer_0                  equ object_rsvd+19 ; Start index of buffer 0 variables
+     ????             (./engine/constant):00253         rsv_priority_0                equ object_rsvd+19 ; internal value that hold priority in video buffer 0
+     ????             (./engine/constant):00254         rsv_priority_prev_obj_0       equ object_rsvd+20 ; and +21 ; previous object (OST address) in display priority list for video buffer 0 (0000 if none) w
+     ????             (./engine/constant):00255         rsv_priority_next_obj_0       equ object_rsvd+22 ; and +23 ; next object (OST address) in display priority list for video buffer 0 (0000 if none) w
+     ????             (./engine/constant):00256         rsv_prev_mapping_frame_0      equ object_rsvd+24 ; and +25 ; reference to previous image in video buffer 0 w
+     ????             (./engine/constant):00257         rsv_prev_erase_nb_cell_0      equ object_rsvd+26 : b
+     ????             (./engine/constant):00258         rsv_prev_page_erase_routine_0 equ object_rsvd+27 ; b
+     ????             (./engine/constant):00259         rsv_prev_erase_routine_0      equ object_rsvd+28 ; and +29 ; w
+     ????             (./engine/constant):00260         rsv_bgdata_0                  equ object_rsvd+30 ; and +31 ; address of background data in screen 0 w
+     ????             (./engine/constant):00261         rsv_prev_xy_pixel_0           equ object_rsvd+32 ;
+     ????             (./engine/constant):00262         rsv_prev_x_pixel_0            equ object_rsvd+32 ; previous x screen coordinate b
+     ????             (./engine/constant):00263         rsv_prev_y_pixel_0            equ object_rsvd+33 ; previous y screen coordinate b, must follow x_pixel
+     ????             (./engine/constant):00264         rsv_prev_xy1_pixel_0          equ object_rsvd+34 ;
+     ????             (./engine/constant):00265         rsv_prev_x1_pixel_0           equ object_rsvd+34 ; previous x+x_offset-(x_size/2) screen coordinate b
+     ????             (./engine/constant):00266         rsv_prev_y1_pixel_0           equ object_rsvd+35 ; previous y+y_offset-(y_size/2) screen coordinate b, must follow x1_pixel
+     ????             (./engine/constant):00267         rsv_prev_xy2_pixel_0          equ object_rsvd+36 ;
+     ????             (./engine/constant):00268         rsv_prev_x2_pixel_0           equ object_rsvd+36 ; previous x+x_offset+(x_size/2) screen coordinate b
+     ????             (./engine/constant):00269         rsv_prev_y2_pixel_0           equ object_rsvd+37 ; previous y+y_offset+(y_size/2) screen coordinate b, must follow x2_pixel
+     ????             (./engine/constant):00270         rsv_prev_render_flags_0       equ object_rsvd+38 ;
+                      (./engine/constant):00271         * --- rsv_prev_render_flags_0 bitfield variables ---
+     0001             (./engine/constant):00272         rsv_prev_render_overlay_mask  equ $01 ; (bit 0) if a sprite has been rendered with compilated sprite and no background save on screen buffer 0/1
+     0080             (./engine/constant):00273         rsv_prev_render_onscreen_mask equ $80 ; (bit 7) DEPENDENCY should be bit 7 - has been rendered on screen buffer 0/1
+                      (./engine/constant):00274         
+     ????             (./engine/constant):00275         rsv_buffer_1                  equ object_rsvd+39 ; Start index of buffer 1 variables
+     ????             (./engine/constant):00276         rsv_priority_1                equ object_rsvd+39 ; internal value that hold priority in video buffer 1
+     ????             (./engine/constant):00277         rsv_priority_prev_obj_1       equ object_rsvd+40 ; and +41 ; previous object (OST address) in display priority list for video buffer 1 (0000 if none) w
+     ????             (./engine/constant):00278         rsv_priority_next_obj_1       equ object_rsvd+42 ; and +43 ; next object (OST address) in display priority list for video buffer 1 (0000 if none) w
+     ????             (./engine/constant):00279         rsv_prev_mapping_frame_1      equ object_rsvd+44 ; and +45 ; reference to previous image in video buffer 1 w
+     ????             (./engine/constant):00280         rsv_prev_erase_nb_cell_1      equ object_rsvd+46 ; b
+     ????             (./engine/constant):00281         rsv_prev_page_erase_routine_1 equ object_rsvd+47 ; b
+     ????             (./engine/constant):00282         rsv_prev_erase_routine_1      equ object_rsvd+48 ; and +49 ; w
+     ????             (./engine/constant):00283         rsv_bgdata_1                  equ object_rsvd+50 ; and +51 ; address of background data in screen 1 w
+     ????             (./engine/constant):00284         rsv_prev_xy_pixel_1           equ object_rsvd+52 ;
+     ????             (./engine/constant):00285         rsv_prev_x_pixel_1            equ object_rsvd+52 ; previous x screen coordinate b
+     ????             (./engine/constant):00286         rsv_prev_y_pixel_1            equ object_rsvd+53 ; previous y screen coordinate b, must follow x_pixel
+     ????             (./engine/constant):00287         rsv_prev_xy1_pixel_1          equ object_rsvd+54 ;
+     ????             (./engine/constant):00288         rsv_prev_x1_pixel_1           equ object_rsvd+54 ; previous x+x_size screen coordinate b
+     ????             (./engine/constant):00289         rsv_prev_y1_pixel_1           equ object_rsvd+55 ; previous y+y_size screen coordinate b, must follow x_pixel
+     ????             (./engine/constant):00290         rsv_prev_xy2_pixel_1          equ object_rsvd+56 ;
+     ????             (./engine/constant):00291         rsv_prev_x2_pixel_1           equ object_rsvd+56 ; previous x+x_size screen coordinate b
+     ????             (./engine/constant):00292         rsv_prev_y2_pixel_1           equ object_rsvd+57 ; previous y+y_size screen coordinate b, must follow x_pixel
+     ????             (./engine/constant):00293         rsv_prev_render_flags_1       equ object_rsvd+58 ;
+                      (./engine/constant):00294         
+     0000             (./engine/constant):00295         buf_priority                  equ 0  ; offset for each rsv_buffer variables
+     0001             (./engine/constant):00296         buf_priority_prev_obj         equ 1  ;
+     0003             (./engine/constant):00297         buf_priority_next_obj         equ 3  ;
+     0005             (./engine/constant):00298         buf_prev_mapping_frame        equ 5  ;
+     0007             (./engine/constant):00299         buf_erase_nb_cell             equ 7  ;
+     0008             (./engine/constant):00300         buf_page_erase_routine        equ 8 ;
+     0009             (./engine/constant):00301         buf_erase_routine             equ 9 ;
+     000B             (./engine/constant):00302         buf_bgdata                    equ 11 ;
+     000D             (./engine/constant):00303         buf_prev_xy_pixel             equ 13 ;
+     000D             (./engine/constant):00304         buf_prev_x_pixel              equ 13 ;
+     000E             (./engine/constant):00305         buf_prev_y_pixel              equ 14 ;
+     000F             (./engine/constant):00306         buf_prev_xy1_pixel            equ 15 ;
+     000F             (./engine/constant):00307         buf_prev_x1_pixel             equ 15 ;
+     0010             (./engine/constant):00308         buf_prev_y1_pixel             equ 16 ;
+     0011             (./engine/constant):00309         buf_prev_xy2_pixel            equ 17 ;
+     0011             (./engine/constant):00310         buf_prev_x2_pixel             equ 17 ;
+     0012             (./engine/constant):00311         buf_prev_y2_pixel             equ 18 ;
+     0013             (./engine/constant):00312         buf_prev_render_flags         equ 19 ;
+                      (./engine/constant):00313          else
+                      (./engine/constant):00314         * ---------------------------------------------------------------------------
+                      (./engine/constant):00315         * reserved variables (engine) - buffer specific - overlay pack
+                      (./engine/constant):00316         
+0000                  (./engine/constant):00317         rsv_priority                  equ object_rsvd   ; internal value that hold priority in video buffer 0
+0000                  (./engine/constant):00318         rsv_priority_prev_obj         equ object_rsvd+1 ; and +2 ; previous object (OST address) in display priority list for video buffer 0 (0000 if none) w
+0000                  (./engine/constant):00319         rsv_priority_next_obj         equ object_rsvd+3 ; and +4 ; next object (OST address) in display priority list for video buffer 0 (0000 if none) w
+                      (./engine/constant):00320         
+                      (./engine/constant):00321         ; ---------------------------------------------------------------------------
+                      (./engine/constant):00322         ; when childsprites are activated (i.e. bit #6 of render_flags set)
+                      (./engine/constant):00323         ; object_base_size+ext_variables_size should cover at least 7+56 bytes 
+                      (./engine/constant):00324         ; subtype is recovered
+0000                  (./engine/constant):00325         mainspr_childsprites    equ   subtype         ; amount of child sprites
+0000                  (./engine/constant):00326         mainspr_width           equ   run_object_next+2
+0000                  (./engine/constant):00327         mainspr_height          equ   run_object_next+3
+0000                  (./engine/constant):00328         mainspr_x_pos           equ   mainspr_height+1
+0000                  (./engine/constant):00329         mainspr_y_pos           equ   mainspr_height+3
+0000                  (./engine/constant):00330         mainspr_mapframe        equ   mainspr_height+5
+0000                  (./engine/constant):00331         sub2_x_pos              equ   mainspr_x_pos+6
+0000                  (./engine/constant):00332         sub2_y_pos              equ   mainspr_y_pos+6
+0000                  (./engine/constant):00333         sub2_mapframe           equ   mainspr_mapframe+6
+0000                  (./engine/constant):00334         sub3_x_pos              equ   sub2_x_pos+6
+0000                  (./engine/constant):00335         sub3_y_pos              equ   sub2_y_pos+6
+0000                  (./engine/constant):00336         sub3_mapframe           equ   sub2_mapframe+6
+0000                  (./engine/constant):00337         sub4_x_pos              equ   sub3_x_pos+6
+0000                  (./engine/constant):00338         sub4_y_pos              equ   sub3_y_pos+6
+0000                  (./engine/constant):00339         sub4_mapframe           equ   sub3_mapframe+6
+0000                  (./engine/constant):00340         sub5_x_pos              equ   sub4_x_pos+6
+0000                  (./engine/constant):00341         sub5_y_pos              equ   sub4_y_pos+6
+0000                  (./engine/constant):00342         sub5_mapframe           equ   sub4_mapframe+6
+0000                  (./engine/constant):00343         sub6_x_pos              equ   sub5_x_pos+6
+0000                  (./engine/constant):00344         sub6_y_pos              equ   sub5_y_pos+6
+0000                  (./engine/constant):00345         sub6_mapframe           equ   sub5_mapframe+6
+0000                  (./engine/constant):00346         sub7_x_pos              equ   sub6_x_pos+6
+0000                  (./engine/constant):00347         sub7_y_pos              equ   sub6_y_pos+6
+0000                  (./engine/constant):00348         sub7_mapframe           equ   sub6_mapframe+6
+0000                  (./engine/constant):00349         sub8_x_pos              equ   sub7_x_pos+6
+0000                  (./engine/constant):00350         sub8_y_pos              equ   sub7_y_pos+6
+0000                  (./engine/constant):00351         sub8_mapframe           equ   sub7_mapframe+6
+0000                  (./engine/constant):00352         sub9_x_pos              equ   sub8_x_pos+6
+0000                  (./engine/constant):00353         sub9_y_pos              equ   sub8_y_pos+6
+0000                  (./engine/constant):00354         sub9_mapframe           equ   sub8_mapframe+6
+0000                  (./engine/constant):00355         next_subspr             equ   6 ; size of a subsprite data
+                      (./engine/constant):00356          endc
+                      (./engine/constant):00357          endc
+                      (/home/robin/githu):00020                 
+                      (/home/robin/githu):00021                 org   $4000
+                      (/home/robin/githu):00022                 opt   c,ct
+                      (/home/robin/githu):00023                 
+     0001             (/home/robin/githu):00024                 ZX0_DISABLE_DISABLING_INTERRUPTS equ 1
+                      (/home/robin/githu):00025                 
+4000                  (/home/robin/githu):00026                 start        
+                      (/home/robin/githu):00027                         INCLUDE "./engine/compression/zx0/zx0_6809_mega_back.asm"  
+                      (./engine/compress):00001                 ; zx0_6809_mega_backward.asm - ZX0 decompressor for M6809 - xxx bytes
+                      (./engine/compress):00002                 ; Written for the LWTOOLS assembler, http://www.lwtools.ca/.
+                      (./engine/compress):00003                 ;
+                      (./engine/compress):00004                 ; Copyright (c) 2021 Doug Masten
+                      (./engine/compress):00005                 ; ZX0 compression (c) 2021 Einar Saukas, https://github.com/einar-saukas/ZX0
+                      (./engine/compress):00006                 ;
+                      (./engine/compress):00007                 ; This software is provided 'as-is', without any express or implied
+                      (./engine/compress):00008                 ; warranty. In no event will the authors be held liable for any damages
+                      (./engine/compress):00009                 ; arising from the use of this software.
+                      (./engine/compress):00010                 ;
+                      (./engine/compress):00011                 ; Permission is granted to anyone to use this software for any purpose,
+                      (./engine/compress):00012                 ; including commercial applications, and to alter it and redistribute it
+                      (./engine/compress):00013                 ; freely, subject to the following restrictions:
+                      (./engine/compress):00014                 ;
+                      (./engine/compress):00015                 ; 1. The origin of this software must not be misrepresented; you must not
+                      (./engine/compress):00016                 ;    claim that you wrote the original software. If you use this software
+                      (./engine/compress):00017                 ;    in a product, an acknowledgment in the product documentation would be
+                      (./engine/compress):00018                 ;    appreciated but is not required.
+                      (./engine/compress):00019                 ; 2. Altered source versions must be plainly marked as such, and must not be
+                      (./engine/compress):00020                 ;    misrepresented as being the original software.
+                      (./engine/compress):00021                 ; 3. This notice may not be removed or altered from any source distribution.
+                      (./engine/compress):00022                 
+                      (./engine/compress):00023                 ; only get one bit from stream
+4000                  (./engine/compress):00024                 zx0_get_1bit       macro
+                      (./engine/compress):00025                                    lsla                ; get next bit
+                      (./engine/compress):00026                                    bne done@           ; is bit stream empty? no, branch
+                      (./engine/compress):00027                                    lda ,-x             ; load another group of 8 bits
+                      (./engine/compress):00028                                    rola                ; get next bit
+4000                  (./engine/compress):00029                 done@              equ *
+                      (./engine/compress):00030                                    endm
+                      (./engine/compress):00031                 
+                      (./engine/compress):00032                 ; get elias value
+4000                  (./engine/compress):00033                 zx0_elias_bt       macro
+                      (./engine/compress):00034                                    bcc done@
+4000                  (./engine/compress):00035                 loop@              lsla                ; get next bit
+                      (./engine/compress):00036                                    rolb                ; rotate bit into elias value
+                      (./engine/compress):00037                                    lsla                ; get next bit
+                      (./engine/compress):00038                                    bne >               ; is bit stream empty? no, branch
+                      (./engine/compress):00039                                    bsr zx0_reload      ; process rest of elias until done
+                      (./engine/compress):00040                 !                  bcs loop@           ; loop until done
+4000                  (./engine/compress):00041                 done@              equ *
+                      (./engine/compress):00042                                    endm
+                      (./engine/compress):00043                 
+                      (./engine/compress):00044                 
+                      (./engine/compress):00045                 ;------------------------------------------------------------------------------
+                      (./engine/compress):00046                 ; Function    : zx0_decompress
+                      (./engine/compress):00047                 ; Entry       : Reg X = last start of compressed data + 1
+                      (./engine/compress):00048                 ;             : Reg U = last start of decompression buffer + 1
+                      (./engine/compress):00049                 ; Exit        : Reg X = last end of compressed data
+                      (./engine/compress):00050                 ;             : Reg U = last end of decompression buffer
+                      (./engine/compress):00051                 ; Destroys    : Regs D, Y
+                      (./engine/compress):00052                 ; Description : Decompress ZX0 data (version 1)
+                      (./engine/compress):00053                 ;------------------------------------------------------------------------------
+                      (./engine/compress):00054                 ; Options:
+                      (./engine/compress):00055                 ;
+                      (./engine/compress):00056                 ;   ZX0_ONE_TIME_USE
+                      (./engine/compress):00057                 ;     Defined variable to disable re-initialization of variables. Enable
+                      (./engine/compress):00058                 ;     this option for one-time use of depacker for smaller code size.
+                      (./engine/compress):00059                 ;       ex. ZX0_ONE_TIME_USE equ 1
+                      (./engine/compress):00060                 ;
+                      (./engine/compress):00061                 ;   ZX0_DISABLE_SAVE_REGS
+                      (./engine/compress):00062                 ;     Defined variable to disable saving registers CC and DP. Enable
+                      (./engine/compress):00063                 ;     this option for smaller code size and if calling program will take
+                      (./engine/compress):00064                 ;     care of registers CC and DP.
+                      (./engine/compress):00065                 ;       ex. ZX0_DISABLE_SAVE_REGS equ 1
+                      (./engine/compress):00066                 ;
+                      (./engine/compress):00067                 ;   ZX0_DISABLE_DISABLING_INTERRUPTS
+                      (./engine/compress):00068                 ;     Defined variable to disable the disabling of interrupts. Enable
+                      (./engine/compress):00069                 ;     this option if interrupts are already disable or if IRQ and FIRQ
+                      (./engine/compress):00070                 ;     code won't mind register DP being changed.
+                      (./engine/compress):00071                 ;       ex. ZX0_DISABLE_DISABLING_INTERRUPTS
+                      (./engine/compress):00072                 ;
+4000                  (./engine/compress):00073                 zx0_decompress
+                      (./engine/compress):00074                                    ifndef ZX0_DISABLE_SAVE_REGS
+4000 342F             (./engine/compress):00075 [11]    11                         pshs d,y,cc,dp      ; save registers
+                      (./engine/compress):00076                                    endc
+                      (./engine/compress):00077                 
+                      (./engine/compress):00078                                    ifndef ZX0_DISABLE_DISABLING_INTERRUPTS
+                      (./engine/compress):00079                                    orcc #$50           ; disable interrupts
+                      (./engine/compress):00080                                    endc
+                      (./engine/compress):00081                 
+                      (./engine/compress):00082                                    ifndef ZX0_ONE_TIME_USE
+4002 CC0001           (./engine/compress):00083 [3]     14                         ldd #1              ; init offset = 1
+4005 FD4052           (./engine/compress):00084 [6]     20                         std >zx0_offset+2
+                      (./engine/compress):00085                                    endc
+                      (./engine/compress):00086                 
+     0040             (./engine/compress):00087                 zx0_dp             equ */256
+4008 CC8040           (./engine/compress):00088 [3]     23                         ldd #($80*256)+zx0_dp  ; init bit stream and register DP
+400B 1F9B             (./engine/compress):00089 [6]     29                         tfr b,dp
+     40               (./engine/compress):00090                                    setdp zx0_dp
+400D 2053             (./engine/compress):00091 [3]     32                         bra zx0_literals    ; start with literals
+                      (./engine/compress):00092                 
+                      (./engine/compress):00093                                    ifndef ZX0_DISABLE_SAVE_REGS
+400F 35AF             (./engine/compress):00094 [13]    45      zx0_eof            puls d,y,cc,dp,pc   ; restore registers and exit
+                      (./engine/compress):00095                                    else
+4011                  (./engine/compress):00096                 zx0_eof            equ zx0_rts         ; just exit
+                      (./engine/compress):00097                                    endc
+                      (./engine/compress):00098                 
+                      (./engine/compress):00099                 
+                      (./engine/compress):00100                 ; 1 - copy from new offset (repeat N bytes from new offset)
+4011 C601             (./engine/compress):00101 [2]     47      zx0_new_offset     ldb #1              ; set elias = 1 (not necessary to set MSB)
+                      (./engine/compress):00102                                    zx0_get_1bit        ; obtain MSB offset
+4013 48               (     zx0_get_1bit):00001 [2]     49                         lsla                ; get next bit
+4014 2603             (     zx0_get_1bit):00002 [3]     52                         bne done@           ; is bit stream empty? no, branch
+4016 A682             (     zx0_get_1bit):00003 [6]     58                         lda ,-x             ; load another group of 8 bits
+4018 49               (     zx0_get_1bit):00004 [2]     60                         rola                ; get next bit
+     4019             (     zx0_get_1bit):00005                 done@              equ *
+                      (./engine/compress):00103                                    zx0_elias_bt        ;  "      "   "
+4019 2409             (     zx0_elias_bt):00001 [3]     63                         bcc done@
+401B 48               (     zx0_elias_bt):00002 [2]     65      loop@              lsla                ; get next bit
+401C 59               (     zx0_elias_bt):00003 [2]     67                         rolb                ; rotate bit into elias value
+401D 48               (     zx0_elias_bt):00004 [2]     69                         lsla                ; get next bit
+401E 2602             (     zx0_elias_bt):00005 [3]     72                         bne >               ; is bit stream empty? no, branch
+4020 8D7E             (     zx0_elias_bt):00006 [7]     79                         bsr zx0_reload      ; process rest of elias until done
+4022 25F7             (     zx0_elias_bt):00007 [3]     82      !                  bcs loop@           ; loop until done
+     4024             (     zx0_elias_bt):00008                 done@              equ *
+4024 0F4E             (./engine/compress):00104 [6]     88                         clr <zx0_code+1     ; set MSB elias for below (and clear cc)
+4026 5D               (./engine/compress):00105 [2]     90                         tstb
+4027 27E6             (./engine/compress):00106 [3]     93                         beq zx0_eof         ; not eof (length = 256) ? if so continue
+4029 5A               (./engine/compress):00107 [2]     95                         decb
+402A 56               (./engine/compress):00108 [2]     97                         rorb
+402B D752             (./engine/compress):00109 [4]     101                        stb <zx0_offset+2   ; save MSB offset
+402D E682             (./engine/compress):00110 [6]     107                        ldb ,-x             ; load LSB offset
+402F 56               (./engine/compress):00111 [2]     109                        rorb                ; last offset bit becomes first length bit
+4030 5C               (./engine/compress):00112 [2]     111                        incb
+4031 2602             (./engine/compress):00113 [3]     114                        bne >
+4033 0C52             (./engine/compress):00114 [6]     120                        inc <zx0_offset+2
+4035 D753             (./engine/compress):00115 [4]     124     !                  stb <zx0_offset+3   ; save LSB offset
+4037 C601             (./engine/compress):00116 [2]     126                        ldb #1              ; set elias = 1
+                      (./engine/compress):00117                                    zx0_elias_bt        ; get elias but skip first bit
+4039 2409             (     zx0_elias_bt):00001 [3]     129                        bcc done@
+403B 48               (     zx0_elias_bt):00002 [2]     131     loop@              lsla                ; get next bit
+403C 59               (     zx0_elias_bt):00003 [2]     133                        rolb                ; rotate bit into elias value
+403D 48               (     zx0_elias_bt):00004 [2]     135                        lsla                ; get next bit
+403E 2602             (     zx0_elias_bt):00005 [3]     138                        bne >               ; is bit stream empty? no, branch
+4040 8D5E             (     zx0_elias_bt):00006 [7]     145                        bsr zx0_reload      ; process rest of elias until done
+4042 25F7             (     zx0_elias_bt):00007 [3]     148     !                  bcs loop@           ; loop until done
+     4044             (     zx0_elias_bt):00008                 done@              equ *
+4044 5C               (./engine/compress):00118 [2]     150     skip@              incb                ; elias = elias + 1
+4045 D74F             (./engine/compress):00119 [4]     154                        stb <zx0_code+2     ;  " "
+4047 2602             (./engine/compress):00120 [3]     157                        bne zx0_copy        ;  " "
+4049 0C4E             (./engine/compress):00121 [6]     163                        inc <zx0_code+1     ;  " "
+404B 9F5D             (./engine/compress):00122 [5]     168     zx0_copy           stx <save_x@+1      ; save reg X
+404D 8EFFFF           (./engine/compress):00123 [3]     171     zx0_code           ldx #$ffff          ; setup length
+4050 31C9FFFF         (./engine/compress):00124 [8]     179     zx0_offset         leay >$ffff,u       ; calculate offset address
+4054 E6A2             (./engine/compress):00125 [6]     185     loop@              ldb ,-y             ; copy match
+4056 E7C2             (./engine/compress):00126 [6]     191                        stb ,-u             ;  "    "
+4058 301F             (./engine/compress):00127 [5]     196                        leax -1,x           ; decrement loop counter
+405A 26F8             (./engine/compress):00128 [3]     199                        bne loop@           ; loop until done
+405C 8EFFFF           (./engine/compress):00129 [3]     202     save_x@            ldx #$ffff          ; restore reg X
+405F 48               (./engine/compress):00130 [2]     204                        lsla                ; get next bit
+4060 25AF             (./engine/compress):00131 [3]     207                        bcs zx0_new_offset  ; branch if next block is new offset
+                      (./engine/compress):00132                 
+                      (./engine/compress):00133                 ; 0 - literal (copy next N bytes from compressed data)
+4062 C601             (./engine/compress):00134 [2]     209     zx0_literals       ldb #1              ; set elias = 1
+4064 0F4E             (./engine/compress):00135 [6]     215                        clr <zx0_code+1     ;  "    "
+                      (./engine/compress):00136                                    zx0_get_1bit        ; obtain length
+4066 48               (     zx0_get_1bit):00001 [2]     217                        lsla                ; get next bit
+4067 2603             (     zx0_get_1bit):00002 [3]     220                        bne done@           ; is bit stream empty? no, branch
+4069 A682             (     zx0_get_1bit):00003 [6]     226                        lda ,-x             ; load another group of 8 bits
+406B 49               (     zx0_get_1bit):00004 [2]     228                        rola                ; get next bit
+     406C             (     zx0_get_1bit):00005                 done@              equ *
+                      (./engine/compress):00137                                    zx0_elias_bt        ;  "      "
+406C 2409             (     zx0_elias_bt):00001 [3]     231                        bcc done@
+406E 48               (     zx0_elias_bt):00002 [2]     233     loop@              lsla                ; get next bit
+406F 59               (     zx0_elias_bt):00003 [2]     235                        rolb                ; rotate bit into elias value
+4070 48               (     zx0_elias_bt):00004 [2]     237                        lsla                ; get next bit
+4071 2602             (     zx0_elias_bt):00005 [3]     240                        bne >               ; is bit stream empty? no, branch
+4073 8D2B             (     zx0_elias_bt):00006 [7]     247                        bsr zx0_reload      ; process rest of elias until done
+4075 25F7             (     zx0_elias_bt):00007 [3]     250     !                  bcs loop@           ; loop until done
+     4077             (     zx0_elias_bt):00008                 done@              equ *
+4077 D74F             (./engine/compress):00138 [4]     254                        stb <zx0_code+2     ; save LSB elias
+4079 109E4E           (./engine/compress):00139 [6]     260                        ldy <zx0_code+1     ; setup length
+407C E682             (./engine/compress):00140 [6]     266     loop@              ldb ,-x             ; copy literals
+407E E7C2             (./engine/compress):00141 [6]     272                        stb ,-u             ;  "    "
+4080 313F             (./engine/compress):00142 [5]     277                        leay -1,y           ; decrement loop counter
+4082 26F8             (./engine/compress):00143 [3]     280                        bne loop@           ; loop until done
+4084 48               (./engine/compress):00144 [2]     282                        lsla                ; get next bit
+4085 258A             (./engine/compress):00145 [3]     285                        bcs zx0_new_offset  ; branch if next block is new offset
+                      (./engine/compress):00146                 
+                      (./engine/compress):00147                 ; 0 - copy from last offset (repeat N bytes from last offset)
+4087 C601             (./engine/compress):00148 [2]     287                        ldb #1              ; set elias = 1
+4089 0F4E             (./engine/compress):00149 [6]     293                        clr <zx0_code+1     ;  "    "
+                      (./engine/compress):00150                                    zx0_get_1bit        ; obtain length
+408B 48               (     zx0_get_1bit):00001 [2]     295                        lsla                ; get next bit
+408C 2603             (     zx0_get_1bit):00002 [3]     298                        bne done@           ; is bit stream empty? no, branch
+408E A682             (     zx0_get_1bit):00003 [6]     304                        lda ,-x             ; load another group of 8 bits
+4090 49               (     zx0_get_1bit):00004 [2]     306                        rola                ; get next bit
+     4091             (     zx0_get_1bit):00005                 done@              equ *
+                      (./engine/compress):00151                                    zx0_elias_bt        ;  "      "
+4091 2409             (     zx0_elias_bt):00001 [3]     309                        bcc done@
+4093 48               (     zx0_elias_bt):00002 [2]     311     loop@              lsla                ; get next bit
+4094 59               (     zx0_elias_bt):00003 [2]     313                        rolb                ; rotate bit into elias value
+4095 48               (     zx0_elias_bt):00004 [2]     315                        lsla                ; get next bit
+4096 2602             (     zx0_elias_bt):00005 [3]     318                        bne >               ; is bit stream empty? no, branch
+4098 8D06             (     zx0_elias_bt):00006 [7]     325                        bsr zx0_reload      ; process rest of elias until done
+409A 25F7             (     zx0_elias_bt):00007 [3]     328     !                  bcs loop@           ; loop until done
+     409C             (     zx0_elias_bt):00008                 done@              equ *
+409C D74F             (./engine/compress):00152 [4]     332                        stb <zx0_code+2     ; save LSB elias
+409E 20AB             (./engine/compress):00153 [3]     335                        bra zx0_copy        ; go copy last offset block
+                      (./engine/compress):00154                 
+                      (./engine/compress):00155                 ; interlaced elias gamma coding
+40A0 A682             (./engine/compress):00156 [6]     341     zx0_reload         lda ,-x             ; load another group of 8 bits
+40A2 49               (./engine/compress):00157 [2]     343                        rola                ; are we done?
+40A3 241B             (./engine/compress):00158 [3]     346                        bcc zx0_rts         ; yes, exit
+40A5 48               (./engine/compress):00159 [2]     348                        lsla                ; get next bit
+40A6 59               (./engine/compress):00160 [2]     350                        rolb                ; rotate bit into elias value
+40A7 48               (./engine/compress):00161 [2]     352                        lsla                ; are we done?
+40A8 2416             (./engine/compress):00162 [3]     355                        bcc zx0_rts         ; yes, exit
+40AA 48               (./engine/compress):00163 [2]     357                        lsla                ; get next bit
+40AB 59               (./engine/compress):00164 [2]     359                        rolb                ; rotate bit into elias value
+40AC 48               (./engine/compress):00165 [2]     361                        lsla                ; are we done?
+40AD 2411             (./engine/compress):00166 [3]     364                        bcc zx0_rts         ; yes, exit
+40AF 48               (./engine/compress):00167 [2]     366                        lsla                ; get next bit
+40B0 59               (./engine/compress):00168 [2]     368                        rolb                ; rotate bit into elias value
+40B1 48               (./engine/compress):00169 [2]     370                        lsla                ; are we done?
+40B2 240C             (./engine/compress):00170 [3]     373                        bcc zx0_rts         ; yes, exit
+                      (./engine/compress):00171                 
+                      (./engine/compress):00172                 ; long elias gamma coding
+40B4 48               (./engine/compress):00173 [2]     375     loop@              lsla                ; get next bit
+40B5 59               (./engine/compress):00174 [2]     377                        rolb                ; rotate bit into elias value
+40B6 094E             (./engine/compress):00175 [6]     383                        rol <zx0_code+1     ;  "      "   "    "     "
+40B8 48               (./engine/compress):00176 [2]     385                        lsla                ; is bit stream empty?
+40B9 2603             (./engine/compress):00177 [3]     388                        bne skip@           ; no, branch
+40BB A682             (./engine/compress):00178 [6]     394                        lda ,-x             ; reload bit stream
+40BD 49               (./engine/compress):00179 [2]     396                        rola                ; are we done?
+40BE 25F4             (./engine/compress):00180 [3]     399     skip@              bcs loop@           ; no, loop again
+40C0 39               (./engine/compress):00181 [5]     404     zx0_rts            rts                 ; return
+                      (./engine/compress):00182                 
+                      (./engine/compress):00183                 
+                      (./engine/compress):00184                 ; safety check
+     0040             (./engine/compress):00185                 zx0_dp_end         equ */256
+                      (./engine/compress):00186                                    ifne zx0_dp-zx0_dp_end
+                      (./engine/compress):00187                                    error "zx0_decompress code crossed over DP memory space"
+                      (./engine/compress):00188                                    endc
+                      (/home/robin/githu):00028                 
+40C1                  (/home/robin/githu):00029                 RAMLoader 
+40C1 F6E7E5           (/home/robin/githu):00030 [5]     409             ldb   $E7E5
+40C4 CA60             (/home/robin/githu):00031 [2]     411             orb   #$60                     ; charge la page de travail et la positionne
+40C6 F7E7E6           (/home/robin/githu):00032 [5]     416             stb   $E7E6                    ; dans l'espace cartouche comme buffer pour zx0
+                      (/home/robin/githu):00033                         
+40C9 CE4149           (/home/robin/githu):00034 [3]     419             ldu   #RL_RAM_index
+                      (/home/robin/githu):00035                 
+     60               (/home/robin/githu):00036                         setdp $60
+40CC 8660             (/home/robin/githu):00037 [2]     421             lda   #$60
+40CE 1F8B             (/home/robin/githu):00038 [6]     427             tfr   a,dp                     ; positionne la direct page a 60
+                      (/home/robin/githu):00039                 
+40D0                  (/home/robin/githu):00040                 RAMLoader_continue
+40D0 ECC1             (/home/robin/githu):00041 [8]     435             ldd   ,u++
+40D2 2A0B             (/home/robin/githu):00042 [3]     438             bpl   RL_Continue              ; valeur negative de secteur signifie fin du tableau de donnee
+40D4 10CE9F00         (/home/robin/githu):00043 [4]     442             lds   #glb_system_stack         ; reinit de la pile systeme
+40D8 869F             (/home/robin/githu):00044 [2]     444             lda   #dp/256                  ; set direct page to access globals
+40DA 1F8B             (/home/robin/githu):00045 [6]     450             tfr   a,dp
+40DC 7E6100           (/home/robin/githu):00046 [4]     454             jmp   $6100                    ; on lance le mode de jeu en page 1
+40DF                  (/home/robin/githu):00047                 RL_Continue        
+40DF 974C             (/home/robin/githu):00048 [4]     458             sta   <dk_sector              ; secteur (1-16)
+40E1 F74124           (/home/robin/githu):00049 [5]     463             stb   RL_DKDernierBloc+2       ; nombre de secteurs a lire
+                      (/home/robin/githu):00050                         
+40E4 E6C0             (/home/robin/githu):00051 [6]     469             ldb   ,u+                      ; lecture du lecteur et du secteur
+40E6 1D               (/home/robin/githu):00052 [2]     471             sex                            ; encodes dans un octet :
+40E7 8401             (/home/robin/githu):00053 [2]     473             anda  #$01                     ; d7: lecteur (0-1)
+40E9 C47F             (/home/robin/githu):00054 [2]     475             andb  #$7F                     ; d6-d0: piste (0-79)
+40EB 9749             (/home/robin/githu):00055 [4]     479             sta   <dk_drive
+40ED 8600             (/home/robin/githu):00056 [2]     481             lda   #$00
+40EF DD4A             (/home/robin/githu):00057 [5]     486             std   <dk_track
+                      (/home/robin/githu):00058                         
+40F1 C600             (/home/robin/githu):00059 [2]     488             ldb   #$00                     ; le buffer DKCO est toujours positionne a $0000
+40F3 DD4F             (/home/robin/githu):00060 [5]     493             std   <dk_write_location
+                      (/home/robin/githu):00061                         
+40F5 3726             (/home/robin/githu):00062 [9]     502             pulu  d,y                      ; y adresse de fin des donnees de destination
+40F7 B74134           (/home/robin/githu):00063 [5]     507             sta   RL_NegOffset+3           ; nombre d'octets inutilises dans le dernier secteur disquette
+40FA F74136           (/home/robin/githu):00064 [5]     512             stb   RL_Page+1
+                      (/home/robin/githu):00065                         
+40FD 3440             (/home/robin/githu):00066 [7]     519             pshs  u        
+                      (/home/robin/githu):00067                 
+40FF 8602             (/home/robin/githu):00068 [2]     521             lda   #$02
+4101 9748             (/home/robin/githu):00069 [4]     525             sta   <$6048                   ; DK.OPC $02 Operation - lecture d'un secteur
+4103                  (/home/robin/githu):00070                 RL_DKCO
+4103 BDE82A           (/home/robin/githu):00071 [8]     533             jsr   $E82A                    ; DKCO Appel Moniteur - lecture d'un secteur
+4106 0C4C             (/home/robin/githu):00072 [6]     539             inc   <dk_sector              ; increment du registre Moniteur DK.SEC
+4108 964C             (/home/robin/githu):00073 [4]     543             lda   <dk_sector              ; chargement de DK.SEC
+410A 8110             (/home/robin/githu):00074 [2]     545             cmpa  #$10                     ; si DK.SEC est inferieur ou egal a 16
+410C 2310             (/home/robin/githu):00075 [3]     548             bls   RL_DKContinue            ; on continue le traitement
+410E 8601             (/home/robin/githu):00076 [2]     550             lda   #$01                     ; sinon on a depasse le secteur 16
+4110 974C             (/home/robin/githu):00077 [4]     554             sta   <dk_sector              ; positionnement du secteur a 1
+4112 0C4B             (/home/robin/githu):00078 [6]     560             inc   <dk_track_lsb               ; increment du registre Moniteur DK.TRK
+4114 964B             (/home/robin/githu):00079 [4]     564             lda   <dk_track_lsb
+4116 814F             (/home/robin/githu):00080 [2]     566             cmpa  #$4F                     ; si DK.SEC est inferieur ou egal a 79
+4118 2304             (/home/robin/githu):00081 [3]     569             bls   RL_DKContinue            ; on continue le traitement
+411A 0F4B             (/home/robin/githu):00082 [6]     575             clr   <dk_track_lsb               ; positionnement de la piste a 0
+411C 0C49             (/home/robin/githu):00083 [6]     581             inc   <dk_drive              ; increment du registre Moniteur DK.DRV
+411E                  (/home/robin/githu):00084                 RL_DKContinue                            
+411E 0C4F             (/home/robin/githu):00085 [6]     587             inc   <$604F                   ; increment de 256 octets de la zone a ecrire DK.BUF
+4120 DE4F             (/home/robin/githu):00086 [5]     592             ldu   <$604F                   ; chargement de la zone a ecrire DK.BUF
+4122                  (/home/robin/githu):00087                 RL_DKDernierBloc                        
+4122 11830000         (/home/robin/githu):00088 [5]     597             cmpu  #0                       ; test debut du dernier bloc de 256 octets a ecrire
+4126 23DB             (/home/robin/githu):00089 [3]     600             bls   RL_DKCO                  ; si DK.BUF inferieur ou egal a la limite alors DKCO
+4128 B64134           (/home/robin/githu):00090 [5]     605             lda   RL_NegOffset+3           ; charge l'offset
+412B 2708             (/home/robin/githu):00091 [3]     608             beq   RL_Page                     ; on ne traite que si offset > 0
+412D 33C90100         (/home/robin/githu):00092 [8]     616             leau  $0100,u                  ; astuce pour conserver un code de meme taille sur l'instruction ci dessous peu importe la taille du leau
+4131                  (/home/robin/githu):00093                 RL_NegOffset        
+4131 33C9FE00         (/home/robin/githu):00094 [8]     624             leau  $FE00,u                  ; adresse de fin des donnees compressees - offset - 256 (astuce ci dessus)
+4135                  (/home/robin/githu):00095                 RL_Page
+4135 8600             (/home/robin/githu):00096 [2]     626             lda   #0                       ; page memoire
+4137 B7E7E5           (/home/robin/githu):00097 [5]     631             sta   $E7E5                    ; selection de la page en RAM Donnees (A000-DFFF)
+413A 30C4             (/home/robin/githu):00098 [4]     635             leax  ,u
+413C 33A4             (/home/robin/githu):00099 [4]     639             leau  ,y
+413E BD4000           (/home/robin/githu):00100 [8]     647             jsr   >zx0_decompress          ; decompresse les donnees
+4141 3540             (/home/robin/githu):00101 [7]     654             puls  u
+4143 208B             (/home/robin/githu):00102 [3]     657             bra   RAMLoader_continue
+4145                  (/home/robin/githu):00103                 fill        
+4145 00000000         (/home/robin/githu):00104                         fill  0,7-((fill-start)%7)      ; le code est un multilpe de 7 octets (pour la copie)
+                      (/home/robin/githu):00105                         
+4149                  (/home/robin/githu):00106                 RL_RAM_index 
