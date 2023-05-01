@@ -1,6 +1,8 @@
 OverlayMode equ 1
 DEBUG EQU 1
 
+VS_buffer_size EQU 192 
+
         INCLUDE "./global/global-preambule-includes.asm"
         INCLUDE "./engine/graphics/buffer/gfxlock.macro.asm"
 
@@ -30,7 +32,7 @@ DEBUG EQU 1
 
         lda   #10
         sta   VS_viewport_line_pos
-        lda   #120
+        lda   #190
         sta   VS_viewport_size
         jsr   VerticalScrollUpdateViewport
 
