@@ -6,7 +6,7 @@ OPCODE_JMP_E equ $7E
 VS_line_size equ 75
 
  IFNDEF  VS_buffer_size
-   VS_buffer_size equ 201          ; nb lines in buffer is 201 (0-200 to fit JMP return)
+gVS_buffer_size equ 201          ; nb lines in buffer is 201 (0-200 to fit JMP return)
  ENDC
 
 VS_ObjIDA fcb 0
