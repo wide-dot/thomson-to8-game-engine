@@ -15,27 +15,24 @@ MainCharacter                 equ dp
 Dynamic_Object_RAM            fill  0,(nb_dynamic_objects)*object_size
 Dynamic_Object_RAM_End
 
+TILE_WIDTH EQU 32
+TILE_HEIGHT EQU 32
 
-Tile_Data_RAM_A_Start
-   FDB $1111,$1111,$1111,$1111  ; 32 px x 8 px 
-   FDB $2222,$2222,$2222,$2222  ; 
-   FDB $3333,$3333,$3333,$3333  ; 
-   FDB $4444,$4444,$4444,$4444  ; 
-   FDB $5555,$5555,$5555,$5555  ;
-   FDB $6666,$6666,$6666,$6666  ;
-   FDB $7777,$7777,$7777,$7777  ;
-   FDB $8888,$8888,$8888,$8888  ;
-Tile_Data_RAM_A_End
+TILE_SIZE EQU (TILE_WIDTH/2)*TILE_HEIGHT
 
-Tile_Data_RAM_B_Start
-   FDB $1111,$1111,$1111,$1111  ; 
-   FDB $2222,$2222,$2222,$2222  ; 
-   FDB $3333,$3333,$3333,$3333  ; 
-   FDB $4444,$4444,$4444,$4444  ; 
-   FDB $5555,$5555,$5555,$5555  ;
-   FDB $6666,$6666,$6666,$6666  ;
-   FDB $7777,$7777,$7777,$7777  ;
-   FDB $8888,$8888,$8888,$8888  ;
-Tile_Data_RAM_B_End
+Tile_Set_Data
+Tile_01 FILL $11,TILE_SIZE
+Tile_02 FILL $22,TILE_SIZE
+Tile_03 FILL $33,TILE_SIZE
+Tile_04 FILL $44,TILE_SIZE
+Tile_05 FILL $55,TILE_SIZE
+
+Tile_map_start
+   FDB Tile_01,Tile_02,Tile_03,Tile_04,Tile_05
+   FDB Tile_02,Tile_03,Tile_04,Tile_05,Tile_01
+   FDB Tile_03,Tile_04,Tile_05,Tile_01,Tile_02
+   FDB Tile_04,Tile_05,Tile_01,Tile_02,Tile_03
+   FDB Tile_05,Tile_01,Tile_02,Tile_03,Tile_04
+Tile_map_end
 
 

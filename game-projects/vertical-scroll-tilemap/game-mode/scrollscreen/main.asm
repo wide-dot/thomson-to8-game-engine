@@ -1,4 +1,3 @@
-OverlayMode equ 1
 DEBUG EQU 1
 
 VS_buffer_size EQU 192 
@@ -20,7 +19,6 @@ VS_buffer_size EQU 192
         _palette.set #Palette_scrollscreen
         _palette.show
         
-
 * init scroll
         lda   #ObjID_scrollA
         sta   VS_ObjIDA
@@ -36,21 +34,50 @@ VS_buffer_size EQU 192
         sta   VS_viewport_size
         jsr   VerticalScrollUpdateViewport
 
-* ============================================================================== * Main Loop
-* ==============================================================================
-LevelMainLoop
+Engine.world.updated MACRO
+        jmp   Engine.routines.end_update
+ ENDM
+
+Engine.gfx.rendered MACRO
+        jmp   Engine.routines.end_render
+ ENDM    
+
+Engine.MainLoop.setRoutines MACRO
+        ldd \1
+        std Engine.routines.update
+        ldd \2
+        std Engine.routines.render
+        jmp Engine.MainLoop
+ ENDM
+
+        Engine.MainLoop.setRoutines #UpdateRoutine,#RenderRoutine
+        jmp Engine.MainLoop
+
+UpdateRoutine
         jsr   VerticalScrollMoveUp
-        _gfxlock.on
+        Engine.world.updated
+
+RenderRoutine
         jsr   VerticalScroll                           
-        _gfxlock.off
-        _gfxlock.loop
-        bra   LevelMainLoop
+        Engine.gfx.rendered
 
 
 UserIRQ
         jsr   gfxlock.bufferSwap.check
         rts
 
+
+Engine.MainLoop
+        jmp $1234 ; wll be replaced
+Engine.routines.update EQU *-2
+Engine.routines.end_update
+        _gfxlock.on
+        jmp $1234 : will be replaced
+Engine.routines.render EQU *-2
+Engine.routines.end_render                                  
+        _gfxlock.off
+        _gfxlock.loop     
+        bra Engine.MainLoop   
      
 * ---------------------------------------------------------------------------
 * Game Mode RAM variables
