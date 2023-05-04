@@ -40,7 +40,6 @@ Init
         abx
         clra
         ldb   1,x
-        addb  #$7
         std   y_pos,u
         ldb   ,x
         addd  glb_camera_x_pos
@@ -58,15 +57,12 @@ Init
 
         _Collision_AddAABB AABB_0,AABB_list_ennemy
         
-        leax  AABB_0,u
         lda   #1                       ; set damage potential for this hitbox
-        sta   AABB.p,x
+        sta   AABB_0+AABB.p,u
         _ldd  6,13                      ; set hitbox xy radius
-        std   AABB.rx,x
+        std   AABB_0+AABB.rx,u
 
         ; test if bink is spawned airborn
-
-        _breakpoint
 
         ldd   x_pos,u
         std   terrainCollision.sensor.x
@@ -82,8 +78,6 @@ Init
 
         ldd   #Ani_bink_falls_left
         std   anim,u
-        ldd   #$160
-        std   y_vel,u
         lda   #3
         sta   routine,u
         jmp   Object
@@ -102,7 +96,7 @@ LiveWalkLeft
         std   terrainCollision.sensor.x
         subd  glb_camera_x_pos
         subd  #8
-        lbmi   LiveWalk                 ; Test if terrain collision is in black border
+        lbmi  LiveWalk                 ; Test if terrain collision is in black border
         ldd   y_pos,u
         addd  #12
         std   terrainCollision.sensor.y
@@ -114,9 +108,6 @@ LiveWalkLeft
         ldd   x_pos,u
         subd  #6
         std   terrainCollision.sensor.x
-        subd  glb_camera_x_pos
-        subd  #8
-        lbmi   LiveWalk                 ; Test if terrain collision is in black border
         ldd   y_pos,u
         addd  #13
         std   terrainCollision.sensor.y
@@ -185,16 +176,15 @@ LiveWalk
         std   y_vel,x
 @noshoot
         jsr   ObjectMoveSync
-        leax  AABB_0,u
-        lda   AABB.p,x
+        lda   AABB_0+AABB.p,u
         beq   @destroy                  ; was killed  
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
         addd  #5                       ; add x radius
         bmi   @delete                  ; branch if out of screen's left
         ldb   y_pos+1,u
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
 @destroy 
@@ -218,14 +208,18 @@ LiveWalk
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
         jmp   DeleteObject
 LiveFallsLeft
-        leax  AABB_0,u
-        lda   AABB.p,x
+        lda   AABB_0+AABB.p,u
         lbeq  @destroy                  ; was killed  
         jsr   ObjectMoveSync
-        _breakpoint
         ldd   x_pos,u
         std   terrainCollision.sensor.x
-        ldd   y_pos,u
+        ldd   gfxlock.frame.count
+        cmpd  #3
+        ble   >
+        ldd   #3
+!
+        addd  y_pos,u
+        std   y_pos,u
         addd  #13
         std   terrainCollision.sensor.y
         ldb   #1 ; foreground
@@ -235,11 +229,11 @@ LiveFallsLeft
         ; not on the ground yet ...
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
         addd  #5                       ; add x radius
         lbmi  @delete                  ; branch if out of screen's left
         ldb   y_pos+1,u
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
 !
@@ -249,17 +243,17 @@ LiveFallsLeft
         std   x_vel,u
         lda   #1
         sta   routine,u
-        ldd   #0
-        std   y_vel,u
-        ldx   #PresetTileY
-        ldb   y_pos+1,u
-        subb  #7
-!
-        cmpb  ,x+
-        bhi   <
-        _breakpoint
-        ldb   -2,x
-        addb  #11
+        lda   y_pos+1,u
+                                        ; This is how sam's divides by 6
+        nega
+        adda  #6
+        ldb   #85
+        mul
+        lsra
+        ldb   #6
+        mul
+        negb                            
+                                        ; This was how sam's divided by 6
         stb   y_pos+1,u
         jmp   LiveWalkLeft
 LiveFallsRight
@@ -273,6 +267,3 @@ AlreadyDeleted
 
 PresetXYIndex
         INCLUDE "./global/preset-xy.asm"
-
-PresetTileY
-        INCLUDE "./global/preset-tile-y.asm"
