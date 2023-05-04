@@ -58,13 +58,13 @@
 ;$06,$68,ObjID_18,$00,$47
 ;$06,$A0,ObjID_16,$00,$03
 ;$06,$A2,ObjID_18,$00,$37
-	fcb   $06,$E0,ObjID_bink,$00,$46
-	fcb   $06,$E0,ObjID_bink,$00,$58
+	;fcb   $06,$E0,ObjID_bink,$00,$46
+	;fcb   $06,$E0,ObjID_bink,$00,$58
 ;$07,$48,ObjID_16,$00,$05
-	fcb   $07,$6C,ObjID_bink,$00,$63
-	fcb   $07,$6C,ObjID_bink,$00,$56
-	fcb   $07,$6C,ObjID_bink,$00,$48
-	fcb   $07,$B8,ObjID_bink,$00,$53
+	;fcb   $07,$6C,ObjID_bink,$00,$63
+	;fcb   $07,$6C,ObjID_bink,$00,$56
+	;fcb   $07,$6C,ObjID_bink,$00,$48
+	;fcb   $07,$B8,ObjID_bink,$00,$53
 ;$07,$C8,ObjID_16,$00,$05
 ;$07,$C8,ObjID_16,$00,$04
 	fcb   $07,$D0,ObjID_bink,$00,$33
@@ -172,7 +172,7 @@
 	fcb   $13,$58,ObjID_patapata,$00,$16
 	fcb   $13,$6C,ObjID_patapata,$00,$64
 	fcb   $13,$76,ObjID_patapata,$00,$43
-;$13,$88,ObjID_37,$00,$06
+	fcb   $13,$88,ObjID_scant,$00,$06
 ;$14,$88,ObjID_26,$00,$00
 	fcb   $14,$FC,ObjID_bossmusic,$00,$00
 	fdb   $FFFF

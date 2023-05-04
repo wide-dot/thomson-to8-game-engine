@@ -36,10 +36,28 @@ Routines
         fdb   AlreadyDeleted
 
 Scant_init
+
+
+        ldb   subtype_w+1,u            ; load x and y pos based on wave parameter
+        andb  #$0F
+        aslb
+        ldx   #PresetXYIndex
+        abx
+        clra
+        ldb   1,x
+        std   y_pos,u
+        ldb   ,x
+        addd  glb_camera_x_pos
+        std   x_pos,u
+
+        ; set subtype based on preset
+
+        ldb   subtype+1,u
+        stb   subtype,u
+
         ldb   #6    
         stb   priority,u
-        lda   render_flags,u
-        ora   #render_playfieldcoord_mask
+        lda   #render_playfieldcoord_mask
         sta   render_flags,u
 
         _Collision_AddAABB AABB_0,AABB_list_ennemy
@@ -261,3 +279,5 @@ Scant_initiateshoot
 !
         rts
 
+PresetXYIndex
+        INCLUDE "./global/preset-xy.asm"

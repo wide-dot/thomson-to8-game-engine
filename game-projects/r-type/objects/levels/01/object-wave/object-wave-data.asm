@@ -61,7 +61,7 @@
 	fcb   $06,$AC,ObjID_fadetotunnel,$00,$07
 	fcb   $06,$AC,ObjID_fadetotunnel,$00,$08
 	fcb   $06,$C0,ObjID_bink,$00,$08
-;$06,$FC,ObjID_37,$00,$05
+	fcb   $06,$FC,ObjID_scant,$00,$05
 	fcb   $07,$24,ObjID_bink,$00,$08
 ;$07,$C4,ObjID_21,$00,$08
 	fcb   $07,$D0,ObjID_bink,$00,$08
@@ -153,9 +153,9 @@
 ;$18,$6A,ObjID_11,$00,$06
 	fcb   $19,$68,ObjID_fadetotunnel,$00,$01
 	fcb   $19,$68,ObjID_fadetotunnel,$00,$02
-;$1A,$30,ObjID_39,$00,$00
+	fcb   $1A,$30,ObjID_bossmusic,$00,$00
 ;$1B,$40,ObjID_22,$00,$00
 ;$1D,$14,ObjID_2,$00,$00
 ;$1D,$80,ObjID_26,$00,$00
-	fcb   $1D,$FC,ObjID_bossmusic,$00,$00
+	;fcb   $1D,$FC,ObjID_bossmusic,$00,$00
 	fdb   $FFFF
