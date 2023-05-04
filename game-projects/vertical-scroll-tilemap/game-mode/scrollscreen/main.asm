@@ -34,51 +34,54 @@ VS_buffer_size EQU 192
         sta   VS_viewport_size
         jsr   VerticalScrollUpdateViewport
 
-Engine.world.updated MACRO
-        jmp   Engine.routines.end_update
+_engine.world.updated MACRO
+        jmp   engine.routines.endUpdate
  ENDM
 
-Engine.gfx.rendered MACRO
-        jmp   Engine.routines.end_render
+_engine.gfx.rendered MACRO
+        jmp   engine.routines.endRender
  ENDM    
 
-Engine.MainLoop.setRoutines MACRO
-        ldd \1
-        std Engine.routines.update
-        ldd \2
-        std Engine.routines.render
-        jmp Engine.MainLoop
+_engine.main.setRoutines MACRO
+        ldd #\1
+        std engine.routines.update
+        ldd #\2
+        std engine.routines.render
+        jmp engine.main.loop
  ENDM
 
-        Engine.MainLoop.setRoutines #UpdateRoutine,#RenderRoutine
-        jmp Engine.MainLoop
+        _engine.main.setRoutines gamemode.update,gamemode.render
+        jmp engine.main.loop
 
-UpdateRoutine
+gamemode.update
         jsr   VerticalScrollMoveUp
-        Engine.world.updated
+        _engine.world.updated
 
-RenderRoutine
+gamemode.render
         jsr   VerticalScroll                           
-        Engine.gfx.rendered
+        _engine.gfx.rendered
 
 
+
+
+engine.main.loop
+        jmp $1234 ; wll be replaced
+engine.routines.update EQU *-2
+engine.routines.endUpdate
+        _gfxlock.on
+        jmp $1234 : will be replaced
+engine.routines.render EQU *-2
+engine.routines.endRender                                  
+        _gfxlock.off
+        _gfxlock.loop     
+        bra engine.main.loop   
+
+        
 UserIRQ
         jsr   gfxlock.bufferSwap.check
         rts
 
 
-Engine.MainLoop
-        jmp $1234 ; wll be replaced
-Engine.routines.update EQU *-2
-Engine.routines.end_update
-        _gfxlock.on
-        jmp $1234 : will be replaced
-Engine.routines.render EQU *-2
-Engine.routines.end_render                                  
-        _gfxlock.off
-        _gfxlock.loop     
-        bra Engine.MainLoop   
-     
 * ---------------------------------------------------------------------------
 * Game Mode RAM variables
 * ---------------------------------------------------------------------------
