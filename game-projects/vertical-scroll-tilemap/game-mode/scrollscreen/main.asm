@@ -4,6 +4,7 @@ VS_buffer_size EQU 192
 
         INCLUDE "./global/global-preambule-includes.asm"
         INCLUDE "./engine/graphics/buffer/gfxlock.macro.asm"
+        INCLUDE "./engine/main/main.macro.asm"
 
         org   $6100
 
@@ -34,47 +35,17 @@ VS_buffer_size EQU 192
         sta   VS_viewport_size
         jsr   VerticalScrollUpdateViewport
 
-_engine.world.updated MACRO
-        jmp   engine.routines.endUpdate
- ENDM
-
-_engine.gfx.rendered MACRO
-        jmp   engine.routines.endRender
- ENDM    
-
-_engine.main.setRoutines MACRO
-        ldd #\1
-        std engine.routines.update
-        ldd #\2
-        std engine.routines.render
-        jmp engine.main.loop
- ENDM
-
-        _engine.main.setRoutines gamemode.update,gamemode.render
-        jmp engine.main.loop
+        _main.setUpdateRoutine gamemode.update
+        _main.setRenderRoutine gamemode.render
+        _main.loop.run      
 
 gamemode.update
         jsr   VerticalScrollMoveUp
-        _engine.world.updated
+        _main.update.return
 
 gamemode.render
         jsr   VerticalScroll                           
-        _engine.gfx.rendered
-
-
-
-
-engine.main.loop
-        jmp $1234 ; wll be replaced
-engine.routines.update EQU *-2
-engine.routines.endUpdate
-        _gfxlock.on
-        jmp $1234 : will be replaced
-engine.routines.render EQU *-2
-engine.routines.endRender                                  
-        _gfxlock.off
-        _gfxlock.loop     
-        bra engine.main.loop   
+        _main.render.return
 
         
 UserIRQ
@@ -90,6 +61,7 @@ UserIRQ
         
 * ============================================================================== * Routines
 * ==============================================================================
+        INCLUDE "./engine/main/main.asm"
         INCLUDE "./engine/graphics/buffer/gfxlock.asm"
         INCLUDE "./engine/graphics/tilemap/vertical-scroll/scrolling.asm"
         INCLUDE "./global/global-trailer-includes.asm"
