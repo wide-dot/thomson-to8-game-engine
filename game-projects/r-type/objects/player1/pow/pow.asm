@@ -11,6 +11,7 @@
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./objects/animation/anim-data.equ"
 
+loopcnt equ glb_d0_b      ; should be the same variable as the one used by AnimateMoveSync
 AABB_0  equ ext_variables ; AABB struct (9 bytes)
 
 Object
@@ -85,12 +86,6 @@ init
         ldb   subtype+1,u
         stb   subtype,u
 
-        ; moves skipped frames before object creation
-        ldd   #flyStep
-        std   animateMoveSync.callback
-        ldb   anim_frame_duration,u
-        jsr   AnimateMoveStepsCallback
-
         ; register hit box
         _Collision_AddAABB AABB_0,AABB_list_ennemy
         
@@ -104,6 +99,13 @@ init
         std   image_set,u
         lda   #flyRtn
         sta   routine,u
+
+        ; moves skipped frames before object creation
+        ldd   #flyStep
+        std   animateMoveSync.callback
+        ldb   anim_frame_duration,u
+        jsr   AnimateMoveStepsCallback
+        jsr   updateHitbox
         jmp   DisplaySprite
 
 ; ---------------------------------------------------------------------------
@@ -111,14 +113,15 @@ init
 fall
         lda   gfxlock.frameDrop.count  
         deca
-        sta   counter
-!       inc   y_pos+1,u
+        sta   loopcnt
+!       ldd   y_pos+1,u
+        addd  #$00C0 ; 1px * 3/4
+        std   y_pos+1,u
         jsr   flyStep
-        dec   counter
+        dec   loopcnt
         bpl   <
         jsr   updateHitbox
         jmp   DisplaySprite
-counter fcb   0
 
 ; ---------------------------------------------------------------------------
 
@@ -156,7 +159,7 @@ flyStep
         std   anim,u
         lda   #landRtn                 ; set landing routine
         sta   routine,u
-        clr   counter
+        clr   loopcnt                  ; exit parent loop
         rts
 
 !       ; Terrain Collision - Wall
@@ -177,10 +180,12 @@ flyStep
         beq   >
 
         ; Hit Wall or Ceil
-        clr   counter
 @fall   lda   #fallRtn
+        cmpa  routine,u
+        beq   @rts                     ; not an exit point if already falling
         sta   routine,u
-        rts
+        clr   loopcnt                  ; exit parent loop
+@rts    rts
 !
         ; Terrain Collision - Ceil
         ldd   x_pos,u
@@ -280,7 +285,7 @@ walkTakeOff
 ; ---------------------------------------------------------------------------
 
 takeoff
-        jsr   updateHitbox ; attention ici TODO !!! si delete dans l'updateHitBoxon va revenir à l'animate et au display sprite !!!!!
+        jsr   updateHitbox
         jsr   AnimateSpriteSync ; routine incremented at the end of animation
         jmp   DisplaySprite
 
@@ -338,6 +343,7 @@ delete
         lda   #alreadyDeletedRtn
         sta   routine,u      
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
+        leas  2,s                      ; will exit object's code instead of just returning to updateHitbox
         jmp   DeleteObject
 
 alreadyDeleted
