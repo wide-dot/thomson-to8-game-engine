@@ -85,12 +85,18 @@ Init
 
         ldd   #Ani_bink_left
         std   anim,u
-        ldd   #$-40
-        std   x_vel,u
         inc   routine,u
         clr   shootnoshoot,u ; No shoot, can skip the end about shooting details
         jmp   Object
 LiveWalkLeft
+
+        lda   gfxlock.frameDrop.count
+        ldb   #$90           ; original arcade value is $c0 x 3/4
+        mul
+        _negd
+        addd  gfxlock.frameDrop.count_w
+        jsr   MoveXPos8.8
+
         ldd   x_pos,u
         subd  #6
         std   terrainCollision.sensor.x
@@ -119,11 +125,15 @@ LiveJumpLeftInit
 LiveWalkLeftChange
         ldd   #Ani_bink_right
         std   anim,u
-        ldd   #$60
-        std   x_vel,u
         inc   routine,u
         bra   LiveWalk
 LiveWalkRight
+
+        lda   gfxlock.frameDrop.count
+        ldb   #$90           ; original arcade value is $c0 x 3/4
+        mul
+        jsr   MoveXPos8.8
+
         ldd   x_pos,u
         addd  #6
         std   terrainCollision.sensor.x
@@ -148,8 +158,6 @@ LiveJumpRightInit
 LiveWalkRightChange   
         ldd   #Ani_bink_left
         std   anim,u
-        ldd   #$-40
-        std   x_vel,u
         dec   routine,u
 LiveWalk
         lda   shootnoshoot,u
@@ -199,9 +207,6 @@ LiveWalk
         std   x_pos,x
         ldd   y_pos,u
         std   y_pos,x
-        ldd   x_vel,u
-        std   x_vel,x
-        clr   y_vel,x
 @delete 
         lda   #7
         sta   routine,u     
@@ -239,8 +244,6 @@ LiveFallsLeft
 !
         ldd   #Ani_bink_left
         std   anim,u
-        ldd   #$-40
-        std   x_vel,u
         lda   #1
         sta   routine,u
         lda   y_pos+1,u
@@ -264,6 +267,8 @@ LiveJumpRight
         rts
 AlreadyDeleted
         rts
+
+        INCLUDE "./global/MoveXPos8.8.asm"
 
 PresetXYIndex
         INCLUDE "./global/preset-xy.asm"
