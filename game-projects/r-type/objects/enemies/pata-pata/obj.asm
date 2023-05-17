@@ -61,10 +61,10 @@ Init
         std   AABB_0+AABB.rx,u
 
         inc   routine,u
-
+        bra   >
 Live
         jsr   AnimateMoveSync
-        ldx   sub_anim,u
+!       ldx   sub_anim,u
         beq   @delete
         jsr   ObjectMove
 ;

@@ -105,13 +105,9 @@ LoadObject_x
 
 UnloadObject_u
         pshs  d,x,y,u
-        ; let's update the stack
-        tfr U,D
-        ldu STACK_POINTER
-        pshu D
-        stu STACK_POINTER
-        tfr D,U
-        ; done
+        ldx   STACK_POINTER            ; let's update the stack
+        stu   ,--x
+        stx   STACK_POINTER
         cmpu  object_list_next         ; if current object to delete
         bne   >                        ; is the following to execute
         ldy   run_object_next,u

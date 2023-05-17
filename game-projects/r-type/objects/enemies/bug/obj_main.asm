@@ -90,7 +90,7 @@ LiveMain
         sta   timer,u
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        subd  #6                       ; 0x6204 CMP word ptr [BP + 0x4],0x150 ; left screen limit, will destroy bug creator if crossed (at x=336-320=16)
+        subd  #8+6                     ; 0x6204 CMP word ptr [BP + 0x4],0x150 ; left screen limit, will destroy bug creator if crossed (at x=336-320=16)
         bmi   @delete                  ; branch if out of screen's left
         jsr   LoadObject_x
         beq   @rts
