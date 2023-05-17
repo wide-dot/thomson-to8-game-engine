@@ -95,5 +95,5 @@ map.IRQ.ONE_FRAME     equ 312*64-1  ; one frame timer (lines*cycles_per_lines-1)
 ; -----------------------------------------------------------------------------
 ; mapping to generic names
 
-map.DAC            equ map.mc6821.PRA2
-map.RND            equ map.cf74021.CART
+map.DAC            equ map.MC6821.PRA2
+map.RND            equ map.MC6846.TMSB

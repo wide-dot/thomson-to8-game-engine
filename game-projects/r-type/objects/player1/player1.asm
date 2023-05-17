@@ -270,3 +270,5 @@ CheckRange
         ldd   #0
         std   player1+y_vel
 !       rts
+
+testval fcb 0

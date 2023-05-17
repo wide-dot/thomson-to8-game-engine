@@ -4,6 +4,7 @@ VS_buffer_size EQU 192
 
         INCLUDE "./global/global-preambule-includes.asm"
         INCLUDE "./engine/graphics/buffer/gfxlock.macro.asm"
+        INCLUDE "./engine/main/main.macro.asm"
 
         org   $6100
 
@@ -34,51 +35,24 @@ VS_buffer_size EQU 192
         sta   VS_viewport_size
         jsr   VerticalScrollUpdateViewport
 
-Engine.world.updated MACRO
-        jmp   Engine.routines.end_update
- ENDM
+        _main.setUpdateRoutine gamemode.update
+        _main.setRenderRoutine gamemode.render
+        _main.loop.run      
 
-Engine.gfx.rendered MACRO
-        jmp   Engine.routines.end_render
- ENDM    
-
-Engine.MainLoop.setRoutines MACRO
-        ldd \1
-        std Engine.routines.update
-        ldd \2
-        std Engine.routines.render
-        jmp Engine.MainLoop
- ENDM
-
-        Engine.MainLoop.setRoutines #UpdateRoutine,#RenderRoutine
-        jmp Engine.MainLoop
-
-UpdateRoutine
+gamemode.update
         jsr   VerticalScrollMoveUp
-        Engine.world.updated
+        _main.update.return
 
-RenderRoutine
+gamemode.render
         jsr   VerticalScroll                           
-        Engine.gfx.rendered
+        _main.render.return
 
-
+        
 UserIRQ
         jsr   gfxlock.bufferSwap.check
         rts
 
 
-Engine.MainLoop
-        jmp $1234 ; wll be replaced
-Engine.routines.update EQU *-2
-Engine.routines.end_update
-        _gfxlock.on
-        jmp $1234 : will be replaced
-Engine.routines.render EQU *-2
-Engine.routines.end_render                                  
-        _gfxlock.off
-        _gfxlock.loop     
-        bra Engine.MainLoop   
-     
 * ---------------------------------------------------------------------------
 * Game Mode RAM variables
 * ---------------------------------------------------------------------------
@@ -87,6 +61,7 @@ Engine.routines.end_render
         
 * ============================================================================== * Routines
 * ==============================================================================
+        INCLUDE "./engine/main/main.asm"
         INCLUDE "./engine/graphics/buffer/gfxlock.asm"
         INCLUDE "./engine/graphics/tilemap/vertical-scroll/scrolling.asm"
         INCLUDE "./global/global-trailer-includes.asm"
