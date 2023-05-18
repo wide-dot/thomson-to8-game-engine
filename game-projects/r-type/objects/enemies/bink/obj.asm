@@ -91,7 +91,7 @@ Init
 LiveWalkLeft
 
         lda   gfxlock.frameDrop.count
-        ldb   #$90           ; original arcade value is $c0 x 3/4
+        ldb   #$48           ; original arcade value is $c0 x 3/4 and x 1/2 for the X aspect ratio
         mul
         _negd
         addd  gfxlock.frameDrop.count_w
@@ -130,7 +130,7 @@ LiveWalkLeftChange
 LiveWalkRight
 
         lda   gfxlock.frameDrop.count
-        ldb   #$90           ; original arcade value is $c0 x 3/4
+        ldb   #$48           ; original arcade value is $c0 x 3/4 and x 1/2 for the X aspect ratio
         mul
         jsr   MoveXPos8.8
 
