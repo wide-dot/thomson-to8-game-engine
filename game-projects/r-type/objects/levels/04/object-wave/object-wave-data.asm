@@ -36,15 +36,15 @@
 	fcb   $04,$92,ObjID_patapata,$00,$03
 ;$04,$92,ObjID_14,$00,$A2
 	fcb   $04,$BA,ObjID_patapata,$00,$24
-;$04,$C8,ObjID_5,$00,$48
+	fcb   $04,$C8,ObjID_bink,$00,$48
 	fcb   $04,$DC,ObjID_patapata,$00,$28
 ;$04,$E8,ObjID_14,$00,$05
 	fcb   $04,$F0,ObjID_patapata,$00,$13
 ;$04,$FA,ObjID_21,$00,$08
 	fcb   $05,$54,ObjID_pow,$00,$43
 ;$05,$C8,ObjID_14,$00,$80
-;$05,$C8,ObjID_5,$00,$31
-;$05,$F0,ObjID_5,$01,$21
+	fcb   $05,$C8,ObjID_bink,$00,$31
+	fcb   $05,$F0,ObjID_bink,$01,$21
 ;$05,$F4,ObjID_6,$00,$47
 	fcb   $06,$BC,ObjID_bug,$02,$22
 ;$07,$D8,ObjID_14,$00,$9A
@@ -57,25 +57,25 @@
 ;$08,$7C,ObjID_6,$00,$3D
 ;$08,$88,ObjID_14,$00,$5D
 ;$09,$12,ObjID_14,$00,$05
-;$09,$12,ObjID_5,$01,$10
-;$09,$3A,ObjID_5,$01,$10
-;$09,$62,ObjID_5,$01,$20
-;$09,$62,ObjID_5,$00,$21
+	fcb   $09,$12,ObjID_bink,$01,$10
+	fcb   $09,$3A,ObjID_bink,$01,$10
+	fcb   $09,$62,ObjID_bink,$01,$20
+	fcb   $09,$62,ObjID_bink,$00,$21
 ;$09,$6E,ObjID_14,$00,$06
 	fcb   $09,$A0,ObjID_pow,$00,$54
 	fcb   $0A,$18,ObjID_pow,$00,$78
 ;$0A,$1E,ObjID_20,$00,$02
 ;$0A,$2C,ObjID_14,$00,$04
-;$0A,$7C,ObjID_5,$01,$21
+	fcb   $0A,$7C,ObjID_bink,$01,$21
 ;$0A,$7C,ObjID_14,$00,$5F
-;$0A,$B8,ObjID_5,$00,$38
-;$0A,$E0,ObjID_5,$00,$28
-;$0A,$E0,ObjID_5,$01,$30
-;$0A,$E0,ObjID_5,$01,$2F
+	fcb   $0A,$B8,ObjID_bink,$00,$38
+	fcb   $0A,$E0,ObjID_bink,$00,$28
+	fcb   $0A,$E0,ObjID_bink,$01,$30
+	fcb   $0A,$E0,ObjID_bink,$01,$2F
 ;$0A,$E6,ObjID_21,$00,$08
-;$0A,$F0,ObjID_5,$01,$4C
+	fcb   $0A,$F0,ObjID_bink,$01,$4C
 ;$0A,$F2,ObjID_14,$00,$C2
-;$0A,$F4,ObjID_5,$01,$2C
+	fcb   $0A,$F4,ObjID_bink,$01,$2C
 ;$0A,$F8,ObjID_14,$00,$BD
 ;$0A,$FA,ObjID_21,$00,$0C
 ;$0A,$FC,ObjID_0,$00,$08
@@ -95,8 +95,8 @@
 ;$0C,$AC,ObjID_14,$00,$05
 ;$0C,$C0,ObjID_14,$00,$04
 ;$0C,$E4,ObjID_14,$00,$07
-;$0D,$26,ObjID_5,$00,$22
-;$0D,$3A,ObjID_5,$01,$21
+	fcb   $0D,$26,ObjID_bink,$00,$22
+	fcb   $0D,$3A,ObjID_bink,$01,$21
 	fcb   $0D,$80,ObjID_pow,$00,$35
 ;$0D,$8E,ObjID_6,$00,$2E
 ;$0D,$A2,ObjID_6,$00,$60
@@ -138,5 +138,5 @@
 ;$12,$38,ObjID_39,$00,$00
 ;$15,$70,ObjID_33,$00,$01
 ;$15,$74,ObjID_35,$00,$00
-;$15,$78,ObjID_40,$00,$00
+	fcb   $15,$78,ObjID_bossmusic,$00,$00
 	fdb   $FFFF

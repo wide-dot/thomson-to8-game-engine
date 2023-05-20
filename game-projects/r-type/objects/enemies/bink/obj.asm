@@ -24,10 +24,8 @@ Object
 
 Routines
         fdb   Init
-        fdb   LiveWalkLeft
-        fdb   LiveWalkRight
-        fdb   LiveFallsLeft
-        fdb   LiveFallsRight
+        fdb   FUN_0000_5e2b_RunBink_Walk
+        fdb   RunBink_Fall
         fdb   LiveJumpLeft
         fdb   LiveJumpRight
         fdb   AlreadyDeleted
@@ -45,10 +43,11 @@ Init
         addd  glb_camera_x_pos
         std   x_pos,u
 
-        ; set subtype based on preset
-
         ldb   subtype+1,u
+        andb  #$01
         stb   subtype,u
+
+        ; set subtype based on preset
 
         ldb   #6
         stb   priority,u
@@ -64,6 +63,9 @@ Init
 
         ; test if bink is spawned airborn
 
+        tst   subtype,u
+        bne   Initright
+
         ldd   x_pos,u
         std   terrainCollision.sensor.x
         ldd   y_pos,u
@@ -78,38 +80,78 @@ Init
 
         ldd   #Ani_bink_falls_left
         std   anim,u
-        lda   #3
+        lda   #2
         sta   routine,u
         jmp   Object
 !
-
-        ldd   #Ani_bink_left
-        std   anim,u
         inc   routine,u
         clr   shootnoshoot,u ; No shoot, can skip the end about shooting details
         jmp   Object
-LiveWalkLeft
 
+Initright
+
+        _breakpoint
+        ldd   x_pos,u
+        std   terrainCollision.sensor.x
+        ldd   y_pos,u
+        addd  #13
+        std   terrainCollision.sensor.y
+        ldb   #1 ; foreground
+        jsr   terrainCollision.do
+        tstb
+        bne   >
+
+        ; bink is airborn
+
+        ldd   #Ani_bink_falls_right
+        std   anim,u
+        lda   #2
+        sta   routine,u
+        jmp   Object
+!
+        inc   routine,u
+        clr   shootnoshoot,u ; No shoot, can skip the end about shooting details
+        jmp   Object
+
+FUN_0000_5e2b_RunBink_Walk
+        ldd   #$48           ; original arcade value is $c0 x 3/4 and x 1/2 for the X aspect ratio        
         lda   gfxlock.frameDrop.count
-        ldb   #$48           ; original arcade value is $c0 x 3/4 and x 1/2 for the X aspect ratio
         mul
+        tst   subtype,u
+        bne   LAB_0000_5e40
         _negd
         addd  gfxlock.frameDrop.count_w
+LAB_0000_5e40
         jsr   MoveXPos8.8
+        ldx   #ImageIndex
+        tst   subtype,u
+        beq   LAB_0000_5e4f
+        ldx   #ImageIndex+8
+LAB_0000_5e4f
+        ldb   gfxlock.frame.count+1
+        andb  #$18
+        asrb  
+        asrb
+        ldd   b,x
+        std   image_set,u
 
         ldd   x_pos,u
-        subd  #6
+        subd  #7                       ; Arcade value is 0x12 times 3/4 times 1/2
+        tst   subtype,u
+        beq   LAB_0000_5eb8
+        addd  #14
+LAB_0000_5eb8
         std   terrainCollision.sensor.x
         subd  glb_camera_x_pos
         subd  #8
         lbmi  LiveWalk                 ; Test if terrain collision is in black border
         ldd   y_pos,u
-        addd  #12
+        addd  #9                       ; Arcade value is 0xc times 3/4
         std   terrainCollision.sensor.y
         ldb   #1 ; foreground
         jsr   terrainCollision.do
         tstb
-        bne   LiveWalkLeftChange
+        bne   LiveWalkChangeDirection
 
         ldd   x_pos,u
         subd  #6
@@ -122,43 +164,14 @@ LiveWalkLeft
         tstb
         bne   LiveWalk
 LiveJumpLeftInit
-LiveWalkLeftChange
-        ldd   #Ani_bink_right
-        std   anim,u
-        inc   routine,u
-        bra   LiveWalk
-LiveWalkRight
+LiveWalkChangeDirection
+        ldb   #$01
+        tst   subtype,u
+        beq   LiveWalkChangeDirectionNext
+        clrb
+LiveWalkChangeDirectionNext
 
-        lda   gfxlock.frameDrop.count
-        ldb   #$48           ; original arcade value is $c0 x 3/4 and x 1/2 for the X aspect ratio
-        mul
-        jsr   MoveXPos8.8
-
-        ldd   x_pos,u
-        addd  #6
-        std   terrainCollision.sensor.x
-        ldd   y_pos,u
-        addd  #12
-        std   terrainCollision.sensor.y
-        ldb   #1 ; foreground
-        jsr   terrainCollision.do
-        tstb
-        bne   LiveWalkRightChange
-        ldd   x_pos,u
-        addd  #6
-        std   terrainCollision.sensor.x
-        ldd   y_pos,u
-        addd  #13
-        std   terrainCollision.sensor.y
-        ldb   #1 ; foreground
-        jsr   terrainCollision.do
-        tstb
-        bne   LiveWalk
-LiveJumpRightInit
-LiveWalkRightChange   
-        ldd   #Ani_bink_left
-        std   anim,u
-        dec   routine,u
+        stb   subtype,u
 LiveWalk
         lda   shootnoshoot,u
         beq   @noshoot
@@ -193,7 +206,6 @@ LiveWalk
         bmi   @delete                  ; branch if out of screen's left
         ldb   y_pos+1,u
         stb   AABB_0+AABB.cy,u
-        jsr   AnimateSpriteSync
         jmp   DisplaySprite
 @destroy 
         ldd   score
@@ -208,11 +220,11 @@ LiveWalk
         ldd   y_pos,u
         std   y_pos,x
 @delete 
-        lda   #7
+        lda   #5
         sta   routine,u     
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
         jmp   DeleteObject
-LiveFallsLeft
+RunBink_Fall
         lda   AABB_0+AABB.p,u
         lbeq  @destroy                  ; was killed  
         jsr   ObjectMoveSync
@@ -242,12 +254,10 @@ LiveFallsLeft
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
 !
-        ldd   #Ani_bink_left
-        std   anim,u
         lda   #1
         sta   routine,u
         lda   y_pos+1,u
-                                        ; This is how sam's divides by 6
+                                        ; This is how sam divides by 6
         nega
         adda  #6
         ldb   #85
@@ -256,17 +266,25 @@ LiveFallsLeft
         ldb   #6
         mul
         negb                            
-                                        ; This was how sam's divided by 6
+                                        ; This was how sam divided by 6
         stb   y_pos+1,u
-        jmp   LiveWalkLeft
-LiveFallsRight
-        rts
+        jmp   FUN_0000_5e2b_RunBink_Walk
 LiveJumpLeft
         rts
 LiveJumpRight
         rts
 AlreadyDeleted
         rts
+
+ImageIndex
+        fdb   Img_bink_3
+        fdb   Img_bink_2
+        fdb   Img_bink_3
+        fdb   Img_bink_1
+        fdb   Img_bink_9
+        fdb   Img_bink_8
+        fdb   Img_bink_9
+        fdb   Img_bink_7
 
         INCLUDE "./global/MoveXPos8.8.asm"
 

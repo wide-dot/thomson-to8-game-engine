@@ -680,7 +680,7 @@ LaunchGame
         jsr   resetym
         lda   #GmID_level01
         sta   NEXT_GAME_MODE
-        lda   #GmID_loading
+        lda   #GmID_title
         sta   GameMode
         jsr   LoadGameModeNow
 
