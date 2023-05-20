@@ -10,7 +10,7 @@
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./objects/enemies_properties.asm"
-        INCLUDE "./objects/animation/anim-data.equ"
+        INCLUDE "./objects/animation/index.equ"
 
 AABB_0  equ ext_variables   ; AABB struct (9 bytes)
 
@@ -40,33 +40,41 @@ Init
         ; todo load fire preset
         ; ...
 
-        ldx   #anim_patapata
-        clrb
-        jsr   AnimateMoveSyncInit
-
-        ; moves skipped frames before object creation
-        ldb   anim_frame_duration,u
-        jsr   AnimateMoveSteps
-
+        ; display priority
         ldb   #6
         stb   priority,u
 
         lda   #render_playfieldcoord_mask
         sta   render_flags,u
 
+        ; register hit box
         _Collision_AddAABB AABB_0,AABB_list_ennemy
+
         lda   #patapata_hitdamage
         sta   AABB_0+AABB.p,u
         _ldd  patapata_hitbox_x,patapata_hitbox_y
         std   AABB_0+AABB.rx,u
 
+        ; init animation script
+        ldx   #anim_19ACE
+        jsr   moveByScript.initialize
+
+        ; moves skipped frames before object creation
+        ldd   #endCheck
+        std   moveByScript.callback
+        ldb   anim_frame_duration,u ; b is a parameter to runByB, don't throw it before the call
+        lda   #2
+        sta   anim_frame_duration,u ; now use as animation speed by moveByScript
+        jsr   moveByScript.runByB
+
         inc   routine,u
         bra   >
 Live
-        jsr   AnimateMoveSync
-!       ldx   sub_anim,u
-        beq   @delete
-        jsr   ObjectMove
+        ldd   #endCheck
+        std   moveByScript.callback
+        jsr   moveByScript.runByFrameDrop
+!       lda   moveByScript.anim.end
+        bne   @delete
 ;
         lda   AABB_0+AABB.p,u
         beq   @destroy
@@ -105,6 +113,12 @@ Live
         jmp   DeleteObject
 AlreadyDeleted
         rts
+
+endCheck
+        lda   moveByScript.anim.end
+        beq   >
+        clr   moveByScript.anim.loops  ; exit parent loop
+!       rts
 
 ImageIndex
         fdb   Img_patapata_0
