@@ -192,7 +192,7 @@ anim_frame_duration           equ 13          ; number of frames for each image 
 anim_flags                    equ 14          ; byte offset to reference an anim_flags LUT (adv) / store a link flag (non adv)
 
 * --- anim_flags bitfield variables ---
-anim_link_mask                equ $01 ; (bit 0) if set, allow the load of a new animation without reseting anim_frame and anim_frame_duration
+anim_link_mask                equ $04 ; (bit 2) if set, allow the load of a new animation without reseting anim_frame and anim_frame_duration
 
 status_flags                  equ 14          ; orientation of sprite, is applied to animation xmirror flag during AnimateSprite
 

@@ -53,6 +53,7 @@ AnimateSpriteSync                           *AnimateSprite:
         * anim is the address of anim       *    adda.w  (a1,d0.w),a1                 ; calculate address of appropriate animation script
 @b      ldb   -1,x                            
         addb  anim_frame_duration,u         *    move.b  (a1),anim_frame_duration(a0) ; load frame duration
+        subb  gfxlock.frameDrop.count
         stb   anim_frame_duration,u
         bpl   @Anim_Reload             ; apply skipped frames unless frame drop is too high (cap to zero)
         clr   anim_frame_duration,u

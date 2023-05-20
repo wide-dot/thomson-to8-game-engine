@@ -9,9 +9,8 @@
         INCLUDE "./engine/macros.asm"
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
-        INCLUDE "./objects/animation/anim-data.equ"
+        INCLUDE "./objects/animation/index.equ"
 
-loopcnt equ glb_d0_b      ; should be the same variable as the one used by AnimateMoveSync
 AABB_0  equ ext_variables ; AABB struct (9 bytes)
 
 Object
@@ -59,14 +58,13 @@ init
         ; if created left, use another animation script
         lda   status_flags,u
         ldb   ,x
-        ldx   #anim_pow_0
+        ldx   #anim_19A96
         cmpb  #8+6                       ; 16px in arcade (position $150) 5a08 CMP word ptr [SI + 0x4],0x150
         bhs   >
-        ldx   #anim_pow_1
+        ldx   #anim_19AA2
         ora   #status_xflip_mask
 !       sta   status_flags,u
-        clrb
-        jsr   AnimateMoveSyncInit
+        jsr   moveByScript.initialize
 
         ; init render_flags with status flags
         lda   status_flags,u
@@ -88,7 +86,7 @@ init
 
         ; register hit box
         _Collision_AddAABB AABB_0,AABB_list_ennemy
-        
+
         lda   #1                                                       ; set damage potential for this hitbox
         sta   AABB_0+AABB.p,u
         _ldd  5,10                                                     ; set hitbox xy radius
@@ -102,9 +100,11 @@ init
 
         ; moves skipped frames before object creation
         ldd   #flyStep
-        std   animateMoveSync.callback
-        ldb   anim_frame_duration,u
-        jsr   AnimateMoveStepsCallback
+        std   moveByScript.callback
+        ldb   anim_frame_duration,u ; set by wave loader to give missed frames at object creation
+        lda   #2
+        sta   anim_frame_duration,u ; now use as animation speed by moveByScript
+        jsr   moveByScript.runByB
         jsr   updateHitbox
         jmp   DisplaySprite
 
@@ -113,12 +113,12 @@ init
 fall
         lda   gfxlock.frameDrop.count  
         deca
-        sta   loopcnt
+        sta   moveByScript.anim.loops
 !       ldd   y_pos+1,u
         addd  #$00C0 ; 1px * 3/4
         std   y_pos+1,u
         jsr   flyStep
-        dec   loopcnt
+        dec   moveByScript.anim.loops
         bpl   <
         jsr   updateHitbox
         jmp   DisplaySprite
@@ -127,8 +127,8 @@ fall
 
 fly
         ldd   #flyStep
-        std   animateMoveSync.callback
-        jsr   AnimateMoveSyncCallback
+        std   moveByScript.callback
+        jsr   moveByScript.runByFrameDrop
         jsr   updateHitbox
         jmp   DisplaySprite
 
@@ -157,9 +157,12 @@ flyStep
         stb   y_pos+1,u
         ldd   #Ani_pow_land            ; set landing animation
         std   anim,u
+        ldd   #0
+        std   prev_anim,u
+        stb   anim_frame_duration,u
         lda   #landRtn                 ; set landing routine
         sta   routine,u
-        clr   loopcnt                  ; exit parent loop
+        stb   moveByScript.anim.loops  ; exit parent loop
         rts
 
 !       ; Terrain Collision - Wall
@@ -184,7 +187,7 @@ flyStep
         cmpa  routine,u
         beq   @rts                     ; not an exit point if already falling
         sta   routine,u
-        clr   loopcnt                  ; exit parent loop
+        clr   moveByScript.anim.loops  ; exit parent loop
 @rts    rts
 !
         ; Terrain Collision - Ceil
@@ -211,14 +214,17 @@ land
 initWalk
         ldd   #Ani_pow_walk
         std   anim,u
+        ldd   #0
+        std   prev_anim,u
+        stb   anim_frame_duration,u
         lda   #walkRtn
         sta   routine,u
 
-        ldx   #-$0060 ; speed (1px/frame * 3/4 * 1/2)
+        ldx   #scale.XN1PX
         ldb   render_flags,u
         andb  #render_xmirror_mask
         beq   >
-        ldx   #$0060  ; speed (1px/frame * 3/4 * 1/2)
+        ldx   #scale.XP1PX
 !       stx   x_vel,u
         ldd   #0
         std   y_vel,u
@@ -253,6 +259,9 @@ walkTakeOff
         jsr   AnimateSpriteSync
         ldd   #Ani_pow_takeoff
         std   anim,u
+        ldd   #0
+        std   prev_anim,u
+        stb   anim_frame_duration,u
         jmp   DisplaySprite
 
 !       ; Terrain Collision - Wall
@@ -297,16 +306,17 @@ initfly
         ldd   #Img_pow_fly
         std   image_set,u
 
-        ldx   #anim_pow_2
+        ldx   #anim_19AA2
         ldb   render_flags,u
         andb  #render_xmirror_mask
         beq   >
-        ldx   #anim_pow_1
-!       clrb
-        jsr   AnimateMoveSyncInit
+        ldx   #anim_19AB2
+!       jsr   moveByScript.initialize
         ldd   y_pos,u
         subd  #4
         std   y_pos,u
+        lda   #2                    ; was used by AnimateSpriteSync
+        sta   anim_frame_duration,u ; now use as animation speed by moveByScript
         jmp   fly
 
 ; ---------------------------------------------------------------------------
@@ -358,9 +368,11 @@ updateHitbox
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB_0+AABB.cx,u
-        addd  #5                       ; add x radius
+        addd  #5
         bmi   delete                   ; branch if out of screen's left
-                                       ; **** TODO **** implement out of screen's top/left/bottom/right (common code)
+        subd  #144+5*2+10              ; +10 is a guess value
+        bpl   delete                   ; branch if out of screen's right
+
         ldd   y_pos,u
         subd  glb_camera_y_pos
         stb   AABB_0+AABB.cy,u

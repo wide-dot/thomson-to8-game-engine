@@ -11,7 +11,13 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./global/variables.asm"
         INCLUDE "./engine/graphics/buffer/gfxlock.macro.asm"
         INCLUDE "./engine/objects/collision/terrainCollision.macro.asm"
+        INCLUDE "./global/scale.asm"
         
+moveByScript.NEGXSTEP equ scale.XN1PX
+moveByScript.POSXSTEP equ scale.XP1PX
+moveByScript.NEGYSTEP equ scale.YN1PX
+moveByScript.POSYSTEP equ scale.YP1PX
+
 map_width       equ 1540
 viewport_width  equ 144
 viewport_height equ 180
@@ -35,7 +41,7 @@ CHECKPOINT_01      equ 20
 
 ; register animation data object
         ldb   #ObjID_animation
-        jsr   AnimateMoveSyncRegister
+        jsr   moveByScript.register
 
 ; init score and lives at level 1
         ldd   #0
@@ -319,7 +325,7 @@ Palette_FadeCallback
 
         ; animation & image
         INCLUDE "./engine/graphics/animation/AnimateSpriteSync.asm"
-        INCLUDE "./engine/graphics/animation/AnimateMoveSync.asm"
+        INCLUDE "./engine/graphics/animation/moveByScript.asm"
 
         ; sprite
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"  

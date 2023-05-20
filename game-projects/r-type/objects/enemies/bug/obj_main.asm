@@ -10,7 +10,7 @@
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./objects/enemies_properties.asm"
-        INCLUDE "./objects/animation/anim-data.equ"
+        INCLUDE "./objects/animation/index.equ"
 
 
 AABB_0  equ ext_variables   ; AABB struct (9 bytes)
@@ -39,15 +39,18 @@ InitMain
         abx
         lda   3,x
         sta   nb_bugs,u
-        ; todo load the missing parameter
 
-        ldx   #anim_bug                ; load animation based on wave parameter
+        ; todo load fire preset
+        ; ...
+
+        ldx   #anim_192EC              ; load animation based on wave parameter
         ldb   subtype_w+1,u
         lsrb
         lsrb
         lsrb
         andb  #%00001110
-        jsr   AnimateMoveSyncInit
+        abx
+        jsr   moveByScript.initialize
 
         ldb   subtype_w+1,u            ; load x and y pos based on wave parameter
         andb  #$0F
@@ -121,35 +124,37 @@ LiveMain
         jmp   UnloadObject_u           ; not a sprite we need to use unloadObject
 
 Init
+        ; register hit box
         _Collision_AddAABB AABB_0,AABB_list_ennemy
+
         lda   #bug_hitdamage
         sta   AABB_0+AABB.p,u
         _ldd  bug_hitbox_x,bug_hitbox_y
         std   AABB_0+AABB.rx,u
 
         ; moves skipped frames before object creation
-        ldb   anim_frame_duration,u
-        jsr   AnimateMoveSteps
+        ldd   #endCheck
+        std   moveByScript.callback
+        ldb   anim_frame_duration,u ; b is a parameter to runByB, don't throw it before the call
+        lda   #2
+        sta   anim_frame_duration,u ; now use as animation speed by moveByScript
+        jsr   moveByScript.runByB
 
         inc   routine,u
         bra   >                        ; skip framerate compensation for init
 
 Live
-        jsr   AnimateMoveSync
-!       ldx   sub_anim,u
-        beq   @delete
-        jsr   ObjectMove
+        ldd   #endCheck
+        std   moveByScript.callback
+        jsr   moveByScript.runByFrameDrop
+!       lda   moveByScript.anim.end
+        bne   @delete
 ;
         lda   AABB_0+AABB.p,u
         beq   @destroy
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB_0+AABB.cx,u
-        ; no delete based on screen position, delete is operated by end of move script
-        ;addd  #5                       ; add x radius
-        ;bmi   @delete                  ; branch if out of screen's left
-        ;subd  #144+5*2
-        ;bpl   @delete                  ; branch if out of screen's right
         ldd   y_pos,u
         subd  glb_camera_y_pos
         stb   AABB_0+AABB.cy,u
@@ -180,6 +185,13 @@ Live
         jmp   DeleteObject
 AlreadyDeleted
         rts
+
+endCheck
+        lda   moveByScript.anim.end
+        beq   >
+        clr   moveByScript.anim.loops  ; exit parent loop
+!       rts
+
 PresetXYIndex
         INCLUDE "./global/preset-xy.asm"
 Preset3034Index
