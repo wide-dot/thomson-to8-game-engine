@@ -136,4 +136,4 @@ PresetShooting
         fdb   $0040,$0140,$8F90
 
 PresetYIndex
-        INCLUDE "./objects/enemies/01/pata-pata/preset-y.asm"
+        INCLUDE "./global/preset/preset-y.asm"

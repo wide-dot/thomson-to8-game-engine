@@ -193,6 +193,6 @@ endCheck
 !       rts
 
 PresetXYIndex
-        INCLUDE "./global/preset-xy.asm"
+        INCLUDE "./global/preset/preset-xy.asm"
 Preset3034Index
-        INCLUDE "./objects/enemies/bug/preset-3034.asm"
+        INCLUDE "./global/preset/preset-bug.asm"

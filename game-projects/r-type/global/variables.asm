@@ -4,5 +4,6 @@ GLOBAL_VARIABLES EQU $9E00
 NEXT_GAME_MODE   EQU GLOBAL_VARIABLES+0 ; 1 byte
 score            EQU GLOBAL_VARIABLES+1 ; 2 bytes
 lives            EQU GLOBAL_VARIABLES+3 ; 2 bytes
+globals.backgroundSolid  EQU GLOBAL_VARIABLES+5 ; 1 byte
 
  ENDC

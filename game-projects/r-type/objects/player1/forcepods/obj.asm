@@ -57,7 +57,7 @@ Init
 
         clr   Fire_Press ; Bug with Theodore, button B appears to be pressed at the begining of the game
 
-        _Collision_AddAABB AABB_0,AABB_list_friend
+        _Collision_AddAABB AABB_0,AABB_list_forcepod
         
         lda   #255                      ; set damage potential for this hitbox
         sta   AABB_0+AABB.p,u
