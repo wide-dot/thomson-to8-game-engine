@@ -9,6 +9,7 @@
         INCLUDE "./engine/macros.asm"
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
+        INCLUDE "./objects/enemies_properties.asm"
 
 AABB_0            equ ext_variables   ; AABB struct (9 bytes)
 shoottiming       equ ext_variables+9
@@ -56,9 +57,9 @@ Init
 
         _Collision_AddAABB AABB_0,AABB_list_ennemy
         
-        lda   #1                       ; set damage potential for this hitbox
+        lda   #bink_hitdamage                   ; set damage potential for this hitbox
         sta   AABB_0+AABB.p,u
-        _ldd  6,13                      ; set hitbox xy radius
+        _ldd  bink_hitbox_x,bink_hitbox_y       ; set hitbox xy radius
         std   AABB_0+AABB.rx,u
 
         ; test if bink is spawned airborn
@@ -90,7 +91,6 @@ Init
 
 Initright
 
-        _breakpoint
         ldd   x_pos,u
         std   terrainCollision.sensor.x
         ldd   y_pos,u
@@ -114,7 +114,7 @@ Initright
         jmp   Object
 
 FUN_0000_5e2b_RunBink_Walk
-        ldd   #$48           ; original arcade value is $c0 x 3/4 and x 1/2 for the X aspect ratio        
+        ldb   #($c0*scale.XP1PX)/256
         lda   gfxlock.frameDrop.count
         mul
         tst   subtype,u
@@ -133,70 +133,53 @@ LAB_0000_5e4f
         asrb  
         asrb
         ldd   b,x
-        std   image_set,u
-
+        std   image_set,u                 
+        ldd   x_pos,u                   ; Disables terrain detection if in black border
+        subd  glb_camera_x_pos
+        subd  #8
+        lbmi  LiveWalk                  ; In black border, no detection
+LAB_0000_5e7d
         ldd   x_pos,u
-        subd  #7                       ; Arcade value is 0x12 times 3/4 times 1/2
+        subd  #($10*scale.XP1PX)/256
+        tst   subtype,u
+        beq   LAB_0000_5e88
+        addd  #(($10*scale.XP1PX)/256)*2
+LAB_0000_5e88
+        std   terrainCollision.sensor.x
+        ldd   y_pos,u
+        addd  #($14*scale.YP1PX)/256
+        std   terrainCollision.sensor.y
+        ldb   #1 ; foreground
+        jsr   terrainCollision.do
+        tstb
+        beq   RunBink_InititiateJump
+        ldd   x_pos,u
+        subd  #($12*scale.XP1PX)/256                    
         tst   subtype,u
         beq   LAB_0000_5eb8
-        addd  #14
+        addd  #(($12*scale.XP1PX)/256)*2
 LAB_0000_5eb8
         std   terrainCollision.sensor.x
         subd  glb_camera_x_pos
         subd  #8
         lbmi  LiveWalk                 ; Test if terrain collision is in black border
         ldd   y_pos,u
-        addd  #9                       ; Arcade value is 0xc times 3/4
+        addd  #($0c*scale.XP1PX)/256
         std   terrainCollision.sensor.y
         ldb   #1 ; foreground
         jsr   terrainCollision.do
         tstb
-        bne   LiveWalkChangeDirection
-
-        ldd   x_pos,u
-        subd  #6
-        std   terrainCollision.sensor.x
-        ldd   y_pos,u
-        addd  #13
-        std   terrainCollision.sensor.y
-        ldb   #1 ; foreground
-        jsr   terrainCollision.do
-        tstb
-        bne   LiveWalk
-LiveJumpLeftInit
-LiveWalkChangeDirection
+        bne   RunBink_ChangeDirection
+        bra   LiveWalk
+RunBink_InititiateJump
+RunBink_ChangeDirection
         ldb   #$01
         tst   subtype,u
-        beq   LiveWalkChangeDirectionNext
+        beq   >
         clrb
-LiveWalkChangeDirectionNext
-
+!
         stb   subtype,u
 LiveWalk
-        lda   shootnoshoot,u
-        beq   @noshoot
-        ldd   shoottiming,u
-        subd  gfxlock.frameDrop.count_w
-        std   shoottiming,u
-        bpl   @noshoot
-        ldd   shoottiming_value,u
-        std   shoottiming,u
-        jsr   LoadObject_x
-        beq   @noshoot
-        lda   #ObjID_foefire
-        sta   id,x
-        ldd   x_pos,u
-        std   x_pos,x
-        ldd   y_pos,u
-        std   y_pos,x
-        lda   shootdirection,u
-        jsr   ReturnShootDirection_X
-        std   x_vel,x
-        lda   shootdirection,u
-        jsr   ReturnShootDirection_Y
-        std   y_vel,x
-@noshoot
-        jsr   ObjectMoveSync
         lda   AABB_0+AABB.p,u
         beq   @destroy                  ; was killed  
         ldd   x_pos,u
@@ -209,7 +192,7 @@ LiveWalk
         jmp   DisplaySprite
 @destroy 
         ldd   score
-        addd  #2
+        addd  #bink_score
         std   score
         jsr   LoadObject_x
         beq   @delete
