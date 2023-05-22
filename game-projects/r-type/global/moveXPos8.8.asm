@@ -1,4 +1,4 @@
-MoveXPos8.8
+moveXPos8.8
 	bita  #$80
 	bne   LAB_0000_0a80
 	addd  x_pos+1,u

@@ -122,7 +122,7 @@ FUN_0000_5e2b_RunBink_Walk
         _negd
         addd  gfxlock.frameDrop.count_w
 LAB_0000_5e40
-        jsr   MoveXPos8.8
+        jsr   moveXPos8.8
         ldx   #ImageIndex
         tst   subtype,u
         beq   LAB_0000_5e4f
@@ -268,8 +268,6 @@ ImageIndex
         fdb   Img_bink_8
         fdb   Img_bink_9
         fdb   Img_bink_7
-
-        INCLUDE "./global/MoveXPos8.8.asm"
 
 PresetXYIndex
         INCLUDE "./global/preset/preset-xy.asm"

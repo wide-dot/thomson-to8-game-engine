@@ -13,6 +13,7 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/graphics/buffer/gfxlock.macro.asm"
         INCLUDE "./engine/objects/collision/terrainCollision.macro.asm"
         INCLUDE "./global/scale.asm"
+        INCLUDE "./global/object.const.asm"
         
 moveByScript.NEGXSTEP equ scale.XN1PX
 moveByScript.POSXSTEP equ scale.XP1PX
@@ -214,8 +215,13 @@ Foeshoottable
 LoopRun
         jsr   Scroll
         jsr   ObjectWave
+
         _Collision_Do AABB_list_friend,AABB_list_ennemy
         _Collision_Do AABB_list_player,AABB_list_bonus
+        _Collision_Do AABB_list_player,AABB_list_foefire
+        _Collision_Do AABB_list_forcepod,AABB_list_foefire
+        _Collision_Do AABB_list_forcepod,AABB_list_ennemy
+
         _RunObject ObjID_fade,#palettefade
         _RunObject ObjID_Player1,#player1
         jsr   RunObjects
@@ -257,14 +263,11 @@ Start_Music_Boss_Routine
 
 Collision_ClearLists
         ldd   #0
-        std   AABB_list_friend
-        std   AABB_list_friend+2
-        std   AABB_list_ennemy
-        std   AABB_list_ennemy+2
-        std   AABB_list_player
-        std   AABB_list_player+2
-        std   AABB_list_bonus
-        std   AABB_list_bonus+2
+        ldy   #AABB_lists
+        ldx   #AABB_lists.nb
+!       std   ,y++
+        leax  -1,x
+        bne   <
         rts
 
 * ---------------------------------------------------------------------------
@@ -343,6 +346,8 @@ Palette_FadeCallback
         INCLUDE "./engine/object-management/ObjectMoveSync.asm"
         INCLUDE "./engine/object-management/ObjectWave-subtype.asm"
         INCLUDE "./engine/object-management/ObjectDp.asm"
+        INCLUDE "./global/moveXPos8.8.asm"
+        INCLUDE "./global/moveYPos8.8.asm"
 
         ; animation & image
         INCLUDE "./engine/graphics/animation/AnimateSpriteSync.asm"

@@ -131,4 +131,4 @@ ImageIndex
         fdb   Img_patapata_7
 
 PresetYIndex
-        INCLUDE "./objects/enemies/pata-pata/preset-y.asm"
+        INCLUDE "./global/preset/preset-y.asm"

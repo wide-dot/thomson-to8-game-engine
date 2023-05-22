@@ -18,7 +18,12 @@ Dynamic_Object_RAM_End
 * ===========================================================================
 * Collision lists
 * ===========================================================================
+AABB_lists.nb                equ   (AABB_endLists-AABB_lists)/2
+AABB_lists
 AABB_list_friend             fdb   0,0
 AABB_list_ennemy             fdb   0,0
 AABB_list_player             fdb   0,0
 AABB_list_bonus              fdb   0,0
+AABB_list_foefire            fdb   0,0
+AABB_list_forcepod           fdb   0,0
+AABB_endLists
