@@ -8,7 +8,7 @@ VS_buffer_size EQU 192
 
         org   $6100
 
-        opt cd
+        opt cd,cc
 
 
 * ============================================================================== 
@@ -26,8 +26,8 @@ VS_buffer_size EQU 192
         lda   #ObjID_scrollB
         sta   VS_ObjIDB
 
-        lda   #1
-        sta   VS_scroll_step
+        ldd   #$0080
+        std   VS_scroll_step
 
         lda   #10
         sta   VS_viewport_line_pos
