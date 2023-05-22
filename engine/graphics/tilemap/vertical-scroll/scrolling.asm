@@ -11,7 +11,9 @@ VS_buffer_size equ 201          ; nb lines in buffer is 201 (0-200 to fit JMP re
 
 VS_ObjIDA fcb 0
 VS_ObjIDB fcb 0
-VS_scroll_step fcb 0
+
+VS_scroll_step fdb $0000
+VS_scroll_frameDrop fcb $00
 
 VerticalScrollUpdateViewport
         lda   #0
@@ -24,13 +26,17 @@ VS_viewport_line_pos equ *-1
         rts
 
 VerticalScrollMoveUp
-        ; TODO update buffer code with tilemap
-        ldb   VS_cur_line
-        addb  VS_scroll_step
-        cmpb  #VS_buffer_size
+        lda   gfxlock.frameDrop.count
+        sta   VS_scroll_frameDrop
+        ldd   #$0000
+@loop   addd  VS_scroll_step
+        dec   VS_scroll_frameDrop
+        bne   @loop
+        adda  VS_cur_line
+        cmpa  #VS_buffer_size
         bls   >
-        subd  #VS_buffer_size           ; cycling in buffer
-!       stb   VS_cur_line
+        suba  #VS_buffer_size           ; cycling in buffer
+!       sta   VS_cur_line
         rts
 
 VerticalScrollMoveDown
