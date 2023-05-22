@@ -24,3 +24,8 @@ blaster_score           equ 1
 blaster_hitbox_x	equ 4
 blaster_hitbox_y	equ 7
 blaster_hitdamage	equ 1
+
+bink_score		equ 2
+bink_hitbox_x		equ 6
+bink_hitbox_y		equ 13
+bink_hitdamage		equ 1
