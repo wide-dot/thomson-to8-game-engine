@@ -289,4 +289,4 @@ ImageIndex
         INCLUDE "./global/MoveXPos8.8.asm"
 
 PresetXYIndex
-        INCLUDE "./global/preset-xy.asm"
+        INCLUDE "./global/preset/preset-xy.asm"
