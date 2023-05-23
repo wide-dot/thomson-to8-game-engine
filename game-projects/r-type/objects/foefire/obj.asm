@@ -132,7 +132,7 @@ foefireExplosion
         ; auto destruction à la fin de l'animation
 
         inc   routine,u
-        _Collision_RemoveAABB AABB_0,AABB_list_ennemy
+        _Collision_RemoveAABB AABB_0,AABB_list_foefire
         jmp   DeleteObject
 
 alreadyDeleted
