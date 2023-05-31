@@ -3,7 +3,7 @@
 * ------------
 * Subroutine to run a another Sub Routine in a different Memory Page
 *
-* input : PSR_Page and PSR_Address
+* input : PSR_Page, PSR_Address, PSR_Param
 * ---------------------------------------------------------------------------
 
 RunPgSubRoutine 
@@ -12,6 +12,8 @@ RunPgSubRoutine
         lda   #0
 PSR_Page equ *-1
         _SetCartPageA                  ; set data page for sub routine to call
+        lda   #0
+PSR_Param equ *-1
         jsr   >0
 PSR_Address equ *-2
 RunPgSubRoutine_return        
