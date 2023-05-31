@@ -280,4 +280,4 @@ Scant_initiateshoot
         rts
 
 PresetXYIndex
-        INCLUDE "./global/preset/preset-xy.asm"
+        INCLUDE "./global/preset/18dd0_preset-xy.asm"
