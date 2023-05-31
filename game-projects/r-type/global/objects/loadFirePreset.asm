@@ -19,10 +19,6 @@ loadFirePreset ; 0xfca7
         andb  #$f0
         lsrb
         lsrb
-        stb   @b
-        lsrb
-        addb  #0
-@b      equ   *-1
         abx
 
         lda   #4*16                    ; 4 bytes by 16 presets
