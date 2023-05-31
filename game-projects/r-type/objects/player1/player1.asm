@@ -55,12 +55,10 @@ Init
         _Collision_AddAABB AABB_0,AABB_list_player
         
         ldx   #player1+AABB_0
-        lda   #-1                       ; set damage potential for this hitbox
+        lda   #1                        ; set damage potential for this hitbox
         sta   AABB.p,x
         _ldd  4,4                       ; set hitbox xy radius
         std   AABB.rx,x
-        ldd   player1+y_pos
-        stb   AABB.cy,x
 Live
         ldd   glb_camera_x_pos
         subd  glb_camera_x_pos_old
@@ -210,14 +208,6 @@ SkipPlayer1Controls
         jsr   ObjectMoveSync
         jsr   CheckRange
 
-        ; update hitbox position
-        ldd   player1+x_pos
-        subd  glb_camera_x_pos
-        stb   AABB.cx,x
-        ldd   player1+y_pos
-        subd  glb_camera_y_pos
-        stb   AABB.cy,x
-
         ; terrain collision
         ldd   player1+x_pos
         std   terrainCollision.sensor.x
@@ -243,6 +233,13 @@ SkipPlayer1Controls
         ldx   #player1+AABB_0
         lda   AABB.p,x
         beq   destroy
+        ; update hitbox position
+        ldd   player1+x_pos
+        subd  glb_camera_x_pos
+        stb   AABB.cx,x
+        ldd   player1+y_pos
+        subd  glb_camera_y_pos
+        stb   AABB.cy,x
 
         ; black screen border
         ldb   #0
