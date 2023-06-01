@@ -11,11 +11,13 @@
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./objects/enemies_properties.asm"
         INCLUDE "./objects/animation/index.equ"
+        INCLUDE "./global/projectile.macro.asm"
 
-
-AABB_0  equ ext_variables   ; AABB struct (9 bytes)
-nb_bugs equ ext_variables+9
-timer   equ ext_variables+10
+AABB_0        equ ext_variables   ; AABB struct (9 bytes)
+nb_bugs       equ ext_variables+9
+preset        equ ext_variables+10
+presetOffset  equ ext_variables+11
+timer         equ ext_variables+12
 
 Object
         lda   routine,u
@@ -24,27 +26,23 @@ Object
         jmp   [a,x]
 
 Routines
-        fdb   InitMain
-        fdb   LiveMain
+        fdb   InitCreator
+        fdb   LiveCreator
         fdb   Init
         fdb   Live
         fdb   AlreadyDeleted
 
-InitMain
-        ldb   subtype_w,u              ; load nb of sprites in wave
+InitCreator
+        ldb   subtype,u                ; load nb of sprites in wave
         andb  #3
         lslb
-        lslb
-        ldx   #Preset3034Index
-        abx
-        lda   3,x
-        sta   nb_bugs,u
-
-        ; todo load fire preset
-        ; ...
+        ldx   #Preset19250
+        ldd   b,x
+        sta   presetOffset,u
+        stb   nb_bugs,u
 
         ldx   #anim_192EC              ; load animation based on wave parameter
-        ldb   subtype_w+1,u
+        ldb   subtype+1,u
         lsrb
         lsrb
         lsrb
@@ -52,7 +50,7 @@ InitMain
         abx
         jsr   moveByScript.initialize
 
-        ldb   subtype_w+1,u            ; load x and y pos based on wave parameter
+        ldb   subtype+1,u              ; load x and y pos based on wave parameter
         andb  #$0F
         stb   @type
         aslb
@@ -82,7 +80,7 @@ InitMain
         bmi   >
         rts
 
-LiveMain
+LiveCreator
         lda   timer,u
         suba  gfxlock.frameDrop.count
         sta   timer,u
@@ -111,12 +109,23 @@ LiveMain
         sta   routine,x
         ldb   #6
         stb   priority,x
-        lda   #render_playfieldcoord_mask
-        sta   render_flags,x
         ldd   anim,u
         std   anim,x
         ldd   sub_anim,u
         std   sub_anim,x
+        ldb   presetOffset,u
+        addb  preset,u
+        ldy   #Preset19260
+        ldb   b,y
+        _loadFirePresetBug
+        ldb   preset,u
+        incb
+        cmpb  #5
+        bne   >
+        ldb   #0
+!       stb   preset,u
+        lda   #render_playfieldcoord_mask
+        sta   render_flags,x
         dec   nb_bugs,u
         beq   @delete
 @rts    rts
@@ -149,6 +158,8 @@ Live
         jsr   moveByScript.runByFrameDrop
 !       lda   moveByScript.anim.end
         bne   @delete
+;
+        jsr   tryFoeFire
 ;
         lda   AABB_0+AABB.p,u
         beq   @destroy
@@ -193,6 +204,8 @@ endCheck
 !       rts
 
 PresetXYIndex
-        INCLUDE "./global/preset/preset-xy.asm"
-Preset3034Index
-        INCLUDE "./global/preset/preset-bug.asm"
+        INCLUDE "./global/preset/18dd0_preset-xy.asm"
+Preset19250
+        INCLUDE "./global/preset/19250_preset-bug.asm"
+Preset19260
+        INCLUDE "./global/preset/19260_preset-bug.asm"

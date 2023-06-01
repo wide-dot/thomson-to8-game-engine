@@ -15,11 +15,9 @@
         INCLUDE "./objects/enemies_properties.asm"
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
+        INCLUDE "./global/projectile.macro.asm"
 
-AABB_0                equ ext_variables   ; AABB struct (9 bytes)
-shoottiming           equ ext_variables+9
-shoottimingset        equ ext_variables+11
-shootdirection        equ ext_variables+13
+AABB_0  equ ext_variables   ; AABB struct (9 bytes)
 
 Object
         lda   routine,u
@@ -33,41 +31,28 @@ Routines
         fdb   AlreadyDeleted
 
 Init
-        ldd   glb_camera_x_pos
-        addd  #144+10
-        std   x_pos,u
-        lda   subtype+1,u
-        sta   subtype,u
+        ldb   subtype_w+1,u
+        _loadFirePreset
 
-        anda  #$0F
-        ldx   #BlasterYTable
-        ldb   a,x
+        ldb   subtype_w+1,u
+        andb  #$0F
+        ldx   #PresetYIndex
         clra
+        ldb   b,x
+        bmi   >
+        ldx   #UpperBlasterSpriteTable
         std   y_pos,u
-
-        lda   subtype,u
-        asra
-        asra
-        asra
-        ldb   #3
-        mul
-        ldx   #BlasterShootingTiming
-        leax  b,x
-        ldd   ,x
-        subd  #1
-        sta   @randa
-        stb   @randb
-        jsr   RandomNumber
-        anda  #00
-@randa  equ   *-1   
-        andb  #00
-@randb  equ   *-1
-        std   shoottiming,u
-        ldd   2,x
-        std   shoottimingset,u
+        bra   @end
+!       ldx   #LowerBlasterSpriteTable
+        std   y_pos,u
+@end    stx   anim,u
 
         ldb   #6
         stb   priority,u
+
+        ldd   glb_camera_x_pos
+        addd  #144+10
+        std   x_pos,u
 
         lda   #render_playfieldcoord_mask
         sta   render_flags,u
@@ -86,52 +71,6 @@ Init
         inc   routine,u
 
 Live
-        jsr   BlasterGetDirection
-        sta   shootdirection,u
-        asla
-        ldx   #BlasterSpriteTable+10
-        ldb   subtype,u
-        andb  #$0F
-        cmpb  #3
-        blt   >
-        ldx   #BlasterSpriteTable
-!
-        ldx   a,x
-        stx   image_set,u
-
-        ldd   shoottimingset,u
-        beq   CheckEOL
-        ldd   shoottiming,u                     ; Is it time to shoot ?
-        subd  gfxlock.frameDrop.count_w
-        std   shoottiming,u
-        bpl   CheckEOL
-        addd  shoottimingset,u
-        std   shoottiming,u
-        jsr   LoadObject_x                
-        beq   CheckEOL      
-        lda   #ObjID_foefire
-        sta   id,x
-        ldd   x_pos,u
-        std   x_pos,x
-        ldd   y_pos,u
-        std   y_pos,x
-        lda   shootdirection,u
-        asla
-        asla
-        ldy   #BlasterShootingTable+20
-        ldb   subtype,u
-        andb  #$0F
-        cmpb  #3
-        blt   >
-        ldy   #BlasterShootingTable
-!
-        leay  a,y
-        ldd   ,y
-        std   x_vel,x
-        ldd   2,y
-        std   y_vel,x
-
-CheckEOL
         lda   AABB_0+AABB.p,u
         beq   @destroy                  ; was killed  
         ldd   x_pos,u
@@ -139,6 +78,16 @@ CheckEOL
         stb   AABB_0+AABB.cx,u
         addd  #4                       ; add x radius
         bmi   @delete                  ; branch if out of screen's left
+;
+        ldx   #player1
+        jsr   setDirectionTo
+        tfr   y,d
+        asrb
+        ldx   anim,u
+        ldd   b,x
+        std   image_set,u
+        jsr   tryFoeFire
+;
         jmp   DisplaySprite
 @destroy
         ldd   score
@@ -152,8 +101,6 @@ CheckEOL
         std   x_pos,x
         ldd   y_pos,u
         std   y_pos,x
-        clr   x_vel,x
-        clr   y_vel,x
 @delete 
         inc   routine,u      
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
@@ -161,92 +108,41 @@ CheckEOL
 AlreadyDeleted
         rts
 
+LowerBlasterSpriteTable
+        fdb   Img_blaster_l3 ; 0x00
+        fdb   Img_blaster_l4 ; 0x04
+        fdb   Img_blaster_l4 ; 0x08
+        fdb   Img_blaster_l4 ; 0x0c
+        fdb   Img_blaster_l5 ; 0x10
+        fdb   Img_blaster_l5 ; 0x14
+        fdb   Img_blaster_l5 ; 0x18
+        fdb   Img_blaster_l5 ; 0x1c
+        fdb   Img_blaster_l5 ; 0x20
+        fdb   Img_blaster_l1 ; 0x24
+        fdb   Img_blaster_l1 ; 0x28
+        fdb   Img_blaster_l1 ; 0x2c
+        fdb   Img_blaster_l1 ; 0x30
+        fdb   Img_blaster_l2 ; 0x34
+        fdb   Img_blaster_l2 ; 0x38
+        fdb   Img_blaster_l2 ; 0x3c
 
-BlasterGetDirection
+UpperBlasterSpriteTable
+        fdb   Img_blaster_u5 ; 0x00
+        fdb   Img_blaster_u1 ; 0x04
+        fdb   Img_blaster_u1 ; 0x08
+        fdb   Img_blaster_u1 ; 0x0c
+        fdb   Img_blaster_u1 ; 0x10
+        fdb   Img_blaster_u2 ; 0x14
+        fdb   Img_blaster_u2 ; 0x18
+        fdb   Img_blaster_u2 ; 0x1c
+        fdb   Img_blaster_u3 ; 0x20
+        fdb   Img_blaster_u4 ; 0x24
+        fdb   Img_blaster_u4 ; 0x28
+        fdb   Img_blaster_u4 ; 0x2c
+        fdb   Img_blaster_u5 ; 0x30
+        fdb   Img_blaster_u5 ; 0x34
+        fdb   Img_blaster_u5 ; 0x38
+        fdb   Img_blaster_u5 ; 0x3c
 
-        ldd   player1+y_pos  
-        subd  #10          
-        cmpd  y_pos,u
-        bgt   BlasterGetDirectionNotHorizontal
-        addd  #20
-        cmpd  y_pos,u
-        blt   BlasterGetDirectionNotHorizontal
-        clra
-        ldx   player1+x_pos            
-        cmpx  x_pos,u
-        blt   >
-        lda   #4
-!
-        rts
-BlasterGetDirectionNotHorizontal
-
-        ldd   player1+x_pos
-        subd  #15          
-        cmpd  x_pos,u
-        bgt   BlasterGetDirectionNotVertical
-        addd  #30
-        cmpd  x_pos,u
-        blt   BlasterGetDirectionNotVertical
-        lda   #2
-        rts
-
-BlasterGetDirectionNotVertical
-        lda   #1
-        ldx   player1+x_pos            
-        cmpx  x_pos,u
-        blt   >
-        lda   #3
-!
-        rts
-
-
-BlasterYTable
-        fcb   29
-        fcb   41
-        fcb   53
-        fcb   147
-        fcb   159
-        fcb   171
-
-BlasterSpriteTable
-
-        fdb   Img_blaster_0
-        fdb   Img_blaster_1
-        fdb   Img_blaster_2
-        fdb   Img_blaster_3
-        fdb   Img_blaster_4
-        fdb   Img_blaster_5
-        fdb   Img_blaster_6
-        fdb   Img_blaster_7
-        fdb   Img_blaster_8
-        fdb   Img_blaster_9
-
-BlasterShootingTable
-        fdb   -$80,$00
-        fdb   -$80,-$80
-        fdb   $00,-$120
-        fdb   $80,-$80
-        fdb   $80,$00
-        fdb   -$80,$00
-        fdb   -$80,$80
-        fdb   $00,$120
-        fdb   $80,$80
-        fdb   $80,$00
-
-BlasterShootingTiming
-        fdb   $0000,$0000,$0000
-        fdb   $00C0,$0140,$8FD0
-        fdb   $0080,$0100,$9010
-        fdb   $0080,$00C0,$9010
-        fdb   $0040,$0080,$9050
-        fdb   $0040,$0060,$9050
-        fdb   $0030,$0050,$9090
-        fdb   $0018,$0030,$90D0
-        fdb   $0040,$0140,$8F90
-        fdb   $0040,$0140,$8F90
-        fdb   $0040,$0140,$8F90
-        fdb   $0040,$0140,$8F90
-        fdb   $0040,$0140,$8F90
-        fdb   $0040,$0140,$8F90
-        fdb   $0040,$0140,$8F90
-        fdb   $0040,$0140,$8F90
+PresetYIndex ; 0x1930c
+        INCLUDE "./global/preset/1930c_preset-y.asm"

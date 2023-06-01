@@ -54,13 +54,11 @@ Init
 
         _Collision_AddAABB AABB_0,AABB_list_player
         
-        leax  AABB_0,u
-        lda   #255                      ; set damage potential for this hitbox
+        ldx   #player1+AABB_0
+        lda   #1                        ; set damage potential for this hitbox
         sta   AABB.p,x
         _ldd  4,4                       ; set hitbox xy radius
         std   AABB.rx,x
-        ldd   y_pos,u
-        stb   AABB.cy,x
 Live
         ldd   glb_camera_x_pos
         subd  glb_camera_x_pos_old
@@ -209,28 +207,60 @@ SkipPlayer1Controls
 !       jsr   AnimateSpriteSync
         jsr   ObjectMoveSync
         jsr   CheckRange
-        ldd   x_pos,u
+
+        ; terrain collision
+        ldd   player1+x_pos
         std   terrainCollision.sensor.x
-        ldd   y_pos,u
+        ldd   player1+y_pos
         std   terrainCollision.sensor.y
         ldb   #1 ; foreground
         jsr   terrainCollision.do
         tstb
-        beq   >  ; black
-        ldb   #1 ; white
-!       jsr   gfxlock.screenBorder.update
-        leax  AABB_0,u
-        ;lda   AABB.p,x
-        ;beq   @destroy                  ; was killed  
-        ldd   x_pos,u
+        bne   destroy
+
+        lda   globals.backgroundSolid
+        beq   >
+        ldd   player1+x_pos
+        std   terrainCollision.sensor.x
+        ldd   player1+y_pos
+        std   terrainCollision.sensor.y
+        ldb   #0 ; background
+        jsr   terrainCollision.do
+        tstb
+        bne   destroy
+!
+        ; collision to Player
+        ldx   #player1+AABB_0
+        lda   AABB.p,x
+        beq   destroy
+        ; update hitbox position
+        ldd   player1+x_pos
         subd  glb_camera_x_pos
         stb   AABB.cx,x
-        ldd   y_pos,u
+        ldd   player1+y_pos
         subd  glb_camera_y_pos
         stb   AABB.cy,x
+
+        ; black screen border
+        ldb   #0
+        jsr   gfxlock.screenBorder.update
+
+display
         ldb   player1+subtype            ; If bit 7 is 1, don't show player1
-        lbpl  DisplaySprite
-        rts
+        bmi   >
+        jmp   DisplaySprite
+!       rts
+
+destroy
+        ; reset damage potential
+        ldx   #player1+AABB_0
+        lda   #1
+        sta   AABB.p,x
+
+        ; white screen border
+        ldb   #1
+        jsr   gfxlock.screenBorder.update
+        bra   display
 
 CheckRange
         ldd   player1+x_pos

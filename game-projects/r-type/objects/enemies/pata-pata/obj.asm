@@ -11,6 +11,7 @@
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./objects/enemies_properties.asm"
         INCLUDE "./objects/animation/index.equ"
+        INCLUDE "./global/projectile.macro.asm"
 
 AABB_0  equ ext_variables   ; AABB struct (9 bytes)
 
@@ -37,8 +38,9 @@ Init
         clra
         std   y_pos,u
 
-        ; todo load fire preset
-        ; ...
+        ; load fire preset
+        ldb   subtype_w+1,u
+        _loadFirePreset
 
         ; display priority
         ldb   #6
@@ -75,6 +77,8 @@ Live
         jsr   moveByScript.runByFrameDrop
 !       lda   moveByScript.anim.end
         bne   @delete
+;
+        jsr   tryFoeFire
 ;
         lda   AABB_0+AABB.p,u
         beq   @destroy
@@ -130,5 +134,5 @@ ImageIndex
         fdb   Img_patapata_6
         fdb   Img_patapata_7
 
-PresetYIndex
-        INCLUDE "./global/preset/preset-y.asm"
+PresetYIndex ; 0x18db0
+        INCLUDE "./global/preset/18db0_preset-y.asm"
