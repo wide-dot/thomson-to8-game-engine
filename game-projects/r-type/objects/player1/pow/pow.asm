@@ -113,12 +113,12 @@ init
 fall
         lda   gfxlock.frameDrop.count  
         deca
-        sta   moveByScript.anim.loops
+        sta   glb_d0_b
 !       ldd   y_pos+1,u
         addd  #$00C0 ; 1px * 3/4
         std   y_pos+1,u
         jsr   flyStep
-        dec   moveByScript.anim.loops
+        dec   glb_d0_b
         bpl   <
         jsr   updateHitbox
         jmp   DisplaySprite
@@ -381,4 +381,4 @@ updateHitbox
 ; ---------------------------------------------------------------------------
 
 PresetXYIndex
-        INCLUDE "./global/preset/preset-xy.asm"
+        INCLUDE "./global/preset/18dd0_preset-xy.asm"

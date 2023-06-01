@@ -127,28 +127,8 @@ Live
         ldx   #verticalspeedpos
 !
         stx   y_vel,u
-        ldd   shoottiming,u
-        subd  gfxlock.frameDrop.count_w
-        std   shoottiming,u
-        bpl   @noshoot
-        ldd   #160
-        std   shoottiming,u
-        jsr   LoadObject_x
-        beq   @noshoot
-        lda   #ObjID_foefire
-        sta   id,x
-        ldd   x_pos,u
-        std   x_pos,x
-        ldd   y_pos,u
-        std   y_pos,x
-        lda   shootdirection,u
-        jsr   ReturnShootDirection_X
-        std   x_vel,x
-        lda   shootdirection,u
-        jsr   ReturnShootDirection_Y
-        std   y_vel,x
-@noshoot
         jsr   ObjectMoveSync
+        jsr   createFoeFire
         leax  AABB_0,u
         lda   AABB.p,x
         beq   @destroy                  ; was killed  

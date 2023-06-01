@@ -24,7 +24,7 @@ Routines
 init
         ldd   #Img_foefire_0
         std   image_set,u
-        ldb   #6
+        ldb   #2
         stb   priority,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
@@ -54,8 +54,7 @@ live
         ldd   #0
 !       addd  y_vel,u
         dec   glb_d0_b
-        bne   < 
-        ldd   y_vel,u
+        bne   <
         jsr   moveYPos8.8              ; apply Y velocity in sync with framerate
 
         ; arcade dead code ?
@@ -63,9 +62,12 @@ live
         ;JZ         LAB_0000_ea23
 
         ; make bullet visible only after the timer is over
-        lda   fireDisplayDelay,u
+        ldb   gfxlock.frameDrop.count
+!       lda   fireDisplayDelay,u
         beq   LAB_0000_ea23
         dec   fireDisplayDelay,u
+        decb
+        bne   <
         bra   LAB_0000_ea42
 
 LAB_0000_ea23 
