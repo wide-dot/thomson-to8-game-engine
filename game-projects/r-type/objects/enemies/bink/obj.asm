@@ -29,7 +29,7 @@ Object
 Routines
         fdb   Init
         fdb   FUN_0000_5e2b_RunBink_Walk
-        fdb   RunBink_Fall
+        fdb   FUN_0000_5fa4_RunBink_Fall
         fdb   LAB_0000_60a0_RunBink_StaticAndTrackP1
         fdb   LAB_0000_5ee9_RunBink_StartJumpSequence
         fdb   LAB_0000_5f4d_RunBink_RunJump
@@ -47,83 +47,21 @@ Init
         ldb   ,x
         addd  glb_camera_x_pos
         std   x_pos,u
-
         ldb   subtype,u
         andb  #$01
         stb   subtype,u
-
         ; set subtype based on preset
-
         ldb   #6
         stb   priority,u
         lda   #render_playfieldcoord_mask
         sta   render_flags,u
-
         _Collision_AddAABB AABB_0,AABB_list_ennemy
-        
         lda   #bink_hitdamage                   ; set damage potential for this hitbox
         sta   AABB_0+AABB.p,u
         _ldd  bink_hitbox_x,bink_hitbox_y       ; set hitbox xy radius
         std   AABB_0+AABB.rx,u
-
-        ; test if bink is spawned airborn
-
-        tst   subtype,u
-        bne   Initright
-
-        ldd   x_pos,u
-        std   terrainCollision.sensor.x
-        ldd   y_pos,u
-        addd  #13
-        std   terrainCollision.sensor.y
-        ldb   #1 ; foreground
-        jsr   terrainCollision.do
-        tstb
-        bne   >
-
-        ; bink is airborn
-
-
-InitFallLeft
-        ldd   #Ani_bink_falls_left
-        std   anim,u
-        lda   #2
-        sta   routine,u
-        jmp   Object
-!
-        inc   routine,u
-        clr   shootnoshoot,u ; No shoot, can skip the end about shooting details
-        jmp   Object
-
-Initright
-
-        _breakpoint
-        ldb   subtype,u
-
-        ldd   x_pos,u
-        std   terrainCollision.sensor.x
-        ldd   y_pos,u
-        addd  #13
-        std   terrainCollision.sensor.y
-        ldb   #1 ; foreground
-        jsr   terrainCollision.do
-        tstb
-        bne   >
-
-        ; bink is airborn
-
-
-        ldd   #Ani_bink_falls_right
-        std   anim,u
-        lda   #2
-        sta   routine,u
-        jmp   Object
-!
-        inc   routine,u
-        clr   shootnoshoot,u ; No shoot, can skip the end about shooting details
-        jmp   Object
-
-
+        clr   shootnoshoot,u
+        jmp   LAB_0000_5f9f_RunBink_Fall_Init
 LAB_0000_5ee9_RunBink_StartJumpSequence
 
         jmp   LAB_0000_5f16
@@ -146,8 +84,8 @@ LAB_0000_5ef8
         sta   bink_0x22,u
         jmp   DisplaySprite
 LAB_0000_5f16
-        ;lda   #4
-        ;sta   routine,u
+        lda   #4
+        sta   routine,u
 LAB_0000_5f2e_RunBink_InitJump
         ldx   #anim_19B0A
         tst   subtype,u
@@ -163,7 +101,7 @@ LAB_0000_5f4d_RunBink_RunJump
         ldd   #binkjumpendcheck
         std   moveByScript.callback
         jsr   moveByScript.runByFrameDrop
-        lbcc  InitFallLeft
+        lbcc  LAB_0000_5f9f_RunBink_Fall_Init
         ldx   #ImageIndex+16
         tst   subtype,u
         bne   LAB_0000_5f67
@@ -179,7 +117,7 @@ LAB_0000_5f72
         ldd   ,x
         std   image_set,u
         lda   AABB_0+AABB.p,u
-        lbeq   @destroy                  ; was killed  
+        lbeq  @destroy                  ; was killed  
         ldb   x_pos+1,u
         subb  glb_camera_x_pos+1
         stb   AABB_0+AABB.cx,u
@@ -255,9 +193,69 @@ LAB_0000_5eb8
         ldb   #1 ; foreground
         jsr   terrainCollision.do
         tstb
-        beq   LiveWalk
+        lbeq  LiveWalk
         lda   #3
         sta   routine,u
+        jmp   LAB_0000_60a0_RunBink_StaticAndTrackP1
+LAB_0000_5f9f_RunBink_Fall_Init
+        lda   #2
+        sta   routine,u
+FUN_0000_5fa4_RunBink_Fall
+        lda   #($03*scale.YP1PX)/256
+        ldb   gfxlock.frameDrop.count
+        mul
+        addd  y_pos,u
+        std   y_pos,u
+        ldx   #ImageIndex+16
+        tst   subtype,u
+        bne   LAB_0000_5fbd
+        ldx   #ImageIndex+20
+LAB_0000_5fbd
+        ldb   gfxlock.frame.count+1
+        andb  #$08
+        asrb  
+        asrb
+        ldd   b,x
+        std   image_set,u                 
+        lda   AABB_0+AABB.p,u
+        lbeq  @destroy                  ; was killed  
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB_0+AABB.cx,u
+        addd  #5                       ; add x radius
+        lbmi  @delete                  ; branch if out of screen's left
+        ldd   #($08*scale.XP1PX)/256
+        tst   subtype,u
+        bne   LAB_0000_6006
+        subd  #(($08*scale.XP1PX)/256)*2
+LAB_0000_6006
+        addd  x_pos,u
+        std   terrainCollision.sensor.x
+        ldd   y_pos,u
+        stb   AABB_0+AABB.cy,u
+        addd  #($10*scale.YP1PX)/256
+        std   terrainCollision.sensor.y
+        ldb   #1 ; foreground
+        jsr   terrainCollision.do
+        tstb
+        bne   LAB_0000_601c
+        jmp   DisplaySprite
+LAB_0000_601c
+        lda   y_pos+1,u
+                                        ; This is how sam divides by 6
+        nega
+        adda  #6
+        ldb   #85
+        mul
+        lsra
+        ldb   #6
+        mul
+        negb                            
+                                        ; This was how sam divided by 6
+        stb   y_pos+1,u
+        lda   #1
+        sta   routine,u
+        jmp   FUN_0000_5e2b_RunBink_Walk
 LAB_0000_60a0_RunBink_StaticAndTrackP1
         ldx   #Img_bink_0
         ldd   player1+x_pos
@@ -302,53 +300,6 @@ LiveWalk
         sta   routine,u     
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
         jmp   DeleteObject
-RunBink_Fall
-        lda   AABB_0+AABB.p,u
-        lbeq  @destroy                  ; was killed  
-        jsr   ObjectMoveSync
-        ldd   x_pos,u
-        std   terrainCollision.sensor.x
-        ldd   gfxlock.frame.count
-        cmpd  #3
-        ble   >
-        ldd   #3
-!
-        addd  y_pos,u
-        std   y_pos,u
-        addd  #13
-        std   terrainCollision.sensor.y
-        ldb   #1 ; foreground
-        jsr   terrainCollision.do
-        tstb
-        bne   >
-        ; not on the ground yet ...
-        ldd   x_pos,u
-        subd  glb_camera_x_pos
-        stb   AABB_0+AABB.cx,u
-        addd  #5                       ; add x radius
-        lbmi  @delete                  ; branch if out of screen's left
-        ldb   y_pos+1,u
-        stb   AABB_0+AABB.cy,u
-        jsr   AnimateSpriteSync
-        jmp   DisplaySprite
-!
-        lda   #1
-        sta   routine,u
-        lda   y_pos+1,u
-                                        ; This is how sam divides by 6
-        nega
-        adda  #6
-        ldb   #85
-        mul
-        lsra
-        ldb   #6
-        mul
-        negb                            
-                                        ; This was how sam divided by 6
-        stb   y_pos+1,u
-        jmp   FUN_0000_5e2b_RunBink_Walk
-LiveJumpLeft
-        rts
 AlreadyDeleted
         rts
 
