@@ -64,13 +64,13 @@ Init
         jmp   LAB_0000_5f9f_RunBink_Fall_Init
 LAB_0000_5ee9_RunBink_StartJumpSequence
 
-        jmp   LAB_0000_5f16
-        ldd   #Img_bink_3
-        tst   subtype,u
+        ;jmp   LAB_0000_5f16
+        ldx   #Img_bink_3
+        ldb   subtype,u                 ; Same as tst subtype,u
         bne   LAB_0000_5ef8
-        ldd   #Img_bink_9
+        ldx   #Img_bink_9
 LAB_0000_5ef8
-        std   image_set,u
+        stx   image_set,u
         lda   AABB_0+AABB.p,u
         lbeq  @destroy                  ; was killed  
         ldb   x_pos+1,u
@@ -88,7 +88,7 @@ LAB_0000_5f16
         sta   routine,u
 LAB_0000_5f2e_RunBink_InitJump
         ldx   #anim_19B0A
-        tst   subtype,u
+        lda   subtype,u                 ; Same as tst subtype,u
         bne   LAB_0000_5f3a
         ldx   #anim_19AF8
 LAB_0000_5f3a
@@ -103,11 +103,12 @@ LAB_0000_5f4d_RunBink_RunJump
         jsr   moveByScript.runByFrameDrop
         lbcc  LAB_0000_5f9f_RunBink_Fall_Init
         ldx   #ImageIndex+16
-        tst   subtype,u
+        ldb   subtype,u                 ; Same as tst subtype,u
         bne   LAB_0000_5f67
         ldx   #ImageIndex+20
-        ldd   x_pos,u
-        addd  gfxlock.frameDrop.count_w
+        ;ldd   x_pos,u
+        ;addd  gfxlock.frameDrop.count_w
+        ;std   x_pos,u
 LAB_0000_5f67
         ldb   gfxlock.frame.count+1
         andb  #$08
@@ -136,14 +137,21 @@ FUN_0000_5e2b_RunBink_Walk
         ldb   #($c0*scale.XP1PX)/256
         lda   gfxlock.frameDrop.count
         mul
-        tst   subtype,u
-        bne   LAB_0000_5e40
         _negd
-        addd  gfxlock.frameDrop.count_w
+        tst   subtype,u
+        beq   LAB_0000_5e40
+        _negd
+        std   @d
+        ldd   x_pos,u
+        addd  glb_camera_x_pos
+        subd  glb_camera_x_pos_old
+        std   x_pos,u
+        ldd   #0
+@d      equ *-2
 LAB_0000_5e40
         jsr   moveXPos8.8
         ldx   #ImageIndex
-        tst   subtype,u
+        ldb   subtype,u                 ; Same as tst subtype,u
         beq   LAB_0000_5e4f
         ldx   #ImageIndex+8
 LAB_0000_5e4f
@@ -207,7 +215,7 @@ FUN_0000_5fa4_RunBink_Fall
         addd  y_pos,u
         std   y_pos,u
         ldx   #ImageIndex+16
-        tst   subtype,u
+        ldb   subtype,u                 ; Same as tst subtype,u
         bne   LAB_0000_5fbd
         ldx   #ImageIndex+20
 LAB_0000_5fbd
@@ -227,7 +235,7 @@ LAB_0000_5fbd
         ldd   #($08*scale.XP1PX)/256
         tst   subtype,u
         bne   LAB_0000_6006
-        subd  #(($08*scale.XP1PX)/256)*2
+        _negd
 LAB_0000_6006
         addd  x_pos,u
         std   terrainCollision.sensor.x
