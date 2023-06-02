@@ -64,7 +64,7 @@ Init
         jmp   LAB_0000_5f9f_RunBink_Fall_Init
 LAB_0000_5ee9_RunBink_StartJumpSequence
 
-        ;jmp   LAB_0000_5f16
+        jmp   LAB_0000_5f16
         ldx   #Img_bink_3
         ldb   subtype,u                 ; Same as tst subtype,u
         bne   LAB_0000_5ef8
@@ -106,9 +106,10 @@ LAB_0000_5f4d_RunBink_RunJump
         ldb   subtype,u                 ; Same as tst subtype,u
         bne   LAB_0000_5f67
         ldx   #ImageIndex+20
-        ;ldd   x_pos,u
-        ;addd  gfxlock.frameDrop.count_w
-        ;std   x_pos,u
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        addd  glb_camera_x_pos_old
+        std   x_pos,u
 LAB_0000_5f67
         ldb   gfxlock.frame.count+1
         andb  #$08
@@ -209,8 +210,12 @@ LAB_0000_5f9f_RunBink_Fall_Init
         lda   #2
         sta   routine,u
 FUN_0000_5fa4_RunBink_Fall
-        lda   #($03*scale.YP1PX)/256
         ldb   gfxlock.frameDrop.count
+        cmpb  #3
+        ble   >
+        ldb   #3
+!
+        lda   #($03*scale.YP1PX)/256
         mul
         addd  y_pos,u
         std   y_pos,u
