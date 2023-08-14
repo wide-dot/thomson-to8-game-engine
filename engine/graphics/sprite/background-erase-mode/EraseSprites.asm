@@ -298,6 +298,8 @@ BBF_prev       fdb   $0000
 
 BgBufferFree        
         beq   BBF_AddLastEntry
+        ldd   #0
+        std   BBF_prev
 BBF_SearchPos 
         ldx   cell_end,u
         cmpx  BBF_cell_end
@@ -326,6 +328,7 @@ BBF_CombineNext
         
 BBF_CombineNextAndPrev
         ldy   BBF_prev
+        beq   BBF_rts
         cmpx  cell_start,y
         bne   BBF_rts
         ldx   cell_start,u
