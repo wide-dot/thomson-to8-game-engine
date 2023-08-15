@@ -350,6 +350,7 @@ BBF_CombinePrevNoNext
         std   BBF_SetNewEntryNextentry+1
 BBF_CombinePrev
         ldx   BBF_cell_end
+        ldu   BBF_prev
         cmpx  cell_start,u
         bne   BBF_AddNewEntry
         ldx   BBF_cell_start
