@@ -3201,7 +3201,7 @@ public class BuildDisk
 		String lstFile = asmFileName + ".lst";
 		String glbFile = asmFileName + ".glb";			
 		String glbTmpFile = asmFileName + ".tmp";	
-		String mapFile = asmFileName + ".map";
+		String mapFile = asmFileName + ".lwmap";
 		
 		if (mode==MEGAROM_T2)
 			dynamicContentT2.patchSource(path);
