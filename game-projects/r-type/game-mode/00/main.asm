@@ -820,7 +820,7 @@ UserIRQ
 
         ; animation & image
         INCLUDE "./engine/graphics/animation/AnimateSpriteSync.asm"
-        INCLUDE "./engine/graphics/animation/AnimateMoveSync.asm"
+        #INCLUDE "./engine/graphics/animation/moveByScript.asm"
 
         ; sprite
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"  
