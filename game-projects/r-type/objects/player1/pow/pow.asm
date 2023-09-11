@@ -44,6 +44,7 @@ alreadyDeletedRtn   equ 8
 
 init
         ldb   subtype_w+1,u            ; load x and y pos based on wave parameter
+        stb   subtype,u
         andb  #$0F
         aslb
         ldx   #PresetXYIndex
@@ -78,11 +79,6 @@ init
         ; display priority
         lda   #6
         sta   priority,u
-
-        ; set subtype based on preset
-        ; (the bonus to be release)
-        ldb   subtype+1,u
-        stb   subtype,u
 
         ; register hit box
         _Collision_AddAABB AABB_0,AABB_list_ennemy
