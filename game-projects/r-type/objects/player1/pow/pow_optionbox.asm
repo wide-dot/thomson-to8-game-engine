@@ -47,7 +47,7 @@ Init
 Live
         jsr   ObjectMoveSync
         lda   AABB_0+AABB.p,u
-        beq   @captured                ; was touched  
+        beq   @captured                ; was captured  
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB_0+AABB.cx,u
@@ -59,18 +59,15 @@ Live
         jmp   DisplaySprite
 @captured
         lda   subtype,u
-        beq   @forcepod
+        beq   >
         cmpa  #3                        ; Speed ?
         beq   @speed
         cmpa  #7                        ; Missiles ?
         beq   @missiles
         cmpa  #1                        ; Counter-ground laser ?
         beq   >
-        lda   #1                        ; Counter-air laser
-        jmp   @forcepod
+        lda   #2                        ; Counter-air laser
 !
-        lda   #2                        ; Counter-ground laser
-@forcepod
         sta   player1+forcepodtype
                                         ; Do we need to spawn a force pod ?
         lda   player1+forcepodlevel
