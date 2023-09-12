@@ -13,37 +13,46 @@
 
 ; constants
 ; -----------------------------------------------------------------------------
-m6809.OPCODE_JMP_E     equ   $7E
+m6809.OPCODE_JMP_E          equ   $7E
 
-vscroll.LINE_SIZE      equ   75
+vscroll.LINE_SIZE           equ   75
  IFNDEF  vscroll.BUFFER_LINES
-vscroll.BUFFER_LINES   equ   201   ; nb lines in buffer is 201 (0-200 to fit JMP return)
+vscroll.BUFFER_LINES        equ   201  ; nb lines in buffer is 201 (0-200 to fit JMP return)
  ENDC
 
 ; parameters
 ; -----------------------------------------------------------------------------
 ; scroll data is split in 5 pages
-vscroll.obj.map        fcb   0
-vscroll.obj.tileA      fcb   0
-vscroll.obj.tileB      fcb   0
-vscroll.obj.bufferA    fcb   0
-vscroll.obj.bufferB    fcb   0
-vscroll.camera.speed   fdb   0     ; (signed 8.8 fixed point) nb of pixels/50hz
+vscroll.obj.map.page        fcb   0
+vscroll.obj.map.address     fdb   0
+vscroll.obj.tileA.page      fcb   0
+vscroll.obj.tileA.address   fdb   0
+vscroll.obj.tileB.page      fcb   0
+vscroll.obj.tileB.address   fdb   0
+vscroll.obj.bufferA.page    fcb   0
+vscroll.obj.bufferA.address fdb   0
+vscroll.obj.bufferB.page    fcb   0
+vscroll.obj.bufferB.address fdb   0
+vscroll.camera.speed        fdb   0    ; (signed 8.8 fixed point) nb of pixels/50hz
 
 ; private variables
 ; -----------------------------------------------------------------------------
-vscroll.speed          fcb   0     ; (signed) nb of line to scroll in current frame
-vscroll.map.cache.y    fdb   -1    ; current cached map line
-vscroll.map.cache      fill  0,40  ; a full unpacked map line with 20x tile ids
-vscroll.viewport.y     fcb   0     ; y position of viewport on screen
-vscroll.camera.lastY   fdb   0     ; last camera position in map
+vscroll.speed               fcb   0    ; (signed) nb of line to scroll in current frame
+vscroll.map.cache.y         fdb   -1   ; current cached map line
+vscroll.map.cache           fill  0,40 ; a full unpacked map line with 20x tile ids
+vscroll.viewport.y          fcb   0    ; y position of viewport on screen
+vscroll.camera.y            fdb   0    ; camera position in map
+vscroll.camera.lastY        fdb   0    ; last camera position in map
 
 ; -----------------------------------------------------------------------------
 ; vscroll.move
 ; -----------------------------------------------------------------------------
 ; input  REG : none
 ; -----------------------------------------------------------------------------
-vscroll.loop_cnt equ dp_extreg
+vscroll.loop_cnt            equ dp_extreg
+vscroll.backBuffer          equ dp_extreg+1
+vscroll.camera.renderY      equ dp_extreg+2
+
 vscroll.move
 
 ; update position in map and buffer
@@ -53,7 +62,7 @@ vscroll.move
         rts
 !       sta   <vscroll.loop_cnt
         ldd   #$0000
-@loop   addd  vscroll.camera.speed            ; mult speed by frame drop
+@loop   addd  vscroll.camera.speed           ; mult speed by frame drop
         dec   <vscroll.loop_cnt
         bne   @loop
         sta   vscroll.speed                  ; set int part of 8.8
@@ -73,26 +82,55 @@ vscroll.move
         ldb   vscroll.speed                  ; get int part of 8.8
         negb
         leax  b,x                            ; do not use abx, b is signed
-        stx   vscroll.camera.y
+        stx   vscroll.camera.yvscroll.camera.renderY
+
+; update gfx in buffer code
+; -------------------------
+vscroll.updategfx
+        ldb   map.CF74021.DATA
+        stb   <vscroll.backBuffer            ; backup back video buffer
+        ldd   vscroll.camera.lastY
+        std   <vscroll.camera.renderY        ; get number of lines to process
+@loop
+        jsr   vscroll.updateTileCache        ; check cache for this line number (in d)
+        lda   vscroll.obj.bufferA.page
+        _SetCartPageA                        ; mount in cartridge space
+        ldu   vscroll.obj.bufferA.address
+        lda   vscroll.obj.tileA.page
+        sta   map.CF74021.DATA               ; mount in data space
+        ldy   vscroll.obj.tileA.address
+        jsr   vscroll.copyBitmap             ; copy bitmap for buffer A
+        lda   vscroll.obj.bufferB.page
+        _SetCartPageA                        ; mount in cartridge space
+        ldu   vscroll.obj.bufferB.address
+        lda   vscroll.obj.tileB.page
+        sta   map.CF74021.DATA               ; mount in data space
+        ldy   vscroll.obj.tileB.address
+        jsr   vscroll.copyBitmap             ; copy bitmap for buffer B
+        ldd   <vscroll.camera.renderY        ; move to next line
+        subd  #1                             ; TODO IMPLEMENT OPPOSITE SCROLL
+        std   <vscroll.camera.renderY
+        cmpd  vscroll.camera.y
+        bhs   @loop                          ; TODO IMPLEMENT OPPOSITE SCROLL
+
+        ldb   <vscroll.backBuffer            ; restore back video buffer
+        stb   map.CF74021.DATA
+        rts
 
 ; update the horizontal line of tile id in map cache
 ; --------------------------------------------------
-        ldd   #0
-vscroll.camera.y equ *-2               ; y position in map
+vscroll.updateTileCache
         _lsrd
         _lsrd
         _lsrd
         _lsrd                          ; tile height is 16px
         cmpd  vscroll.map.cache.y
-        beq   @updategfx               ; cache match current position in map
-        std   vscroll.map.cache.y      ; load cache at a new position
-        ldb   vscroll.obj.map
-        ldx   #Obj_Index_Page
-        lda   b,x   
+        bne   >
+        rts                            ; return, cache is already up to date
+!       std   vscroll.map.cache.y      ; load cache at a new position
+        lda   vscroll.obj.map.page
         _SetCartPageA                  ; mount page that contain map data
-        aslb
-        ldx   #Obj_Index_Address
-        ldx   b,x
+        ldx   vscroll.obj.map.address
         lda   vscroll.map.cache.y      ; handle up to 512 lines in map
         beq   >                        ; multiply map vertical pos (9bits)
         lda   #30                      ; by 30 bytes (12bits id * 20 tiles)
@@ -114,23 +152,36 @@ vscroll.camera.y equ *-2               ; y position in map
         std   ,y++
         dec   <vscroll.loop_cnt
         bne   @loop
-;
-; update gfx in buffer code
-; -------------------------
-@updategfx
         rts
-        ; mount bufferA in cartridge space
 
-        ; mount tilesetA in cartridge space
-
-        ; process lines
-
-        ; mount bufferB in cartridge space
-
-        ; mount tilesetB in cartridge space
-
-        ; process lines
-
+; copy the tile bitmap to the code buffer
+; ---------------------------------------
+vscroll.copyBitmap
+        ; TODO compute destination location in d
+        ; based on camera line and cursor in buffer
+        ; xxxxxxxx
+        leay  d,u
+        ldx   #vscroll.map.cache
+        ; TODO compute tile line and mult by 1024 in d
+        ; xxxxxxxx
+        leay  d,y
+@loop
+        ldd   ,x                       ; load tile id
+        ldd   d,y                      ; load 4 pixels of this tile line
+        std   1,u                      ; fill the LDD
+        ldd   2,x                      ; load tile id
+        ldd   d,y                      ; load 4 pixels of this tile line
+        std   4,u                      ; fill the LDX
+        ldd   4,x                      ; load tile id
+        ldd   d,y                      ; load 4 pixels of this tile line
+        std   8,u                      ; fill the LDY
+        ldd   6,x                      ; load tile id
+        ldd   d,y                      ; load 4 pixels of this tile line
+        std   11,u                     ; fill the LDU
+        leau  15,u                     ; move to next dest block in code buffer
+        leax  8,x                      ; move to next tile id in cache
+        cmpx  #vscroll.map.cache+40
+        bne   <@loop
         rts
 
 ; -----------------------------------------------------------------------------
@@ -145,13 +196,9 @@ vscroll.camera.y equ *-2               ; y position in map
 ; unsed
 ; -----------------------------------------------------------------------------
 vscroll.do
-        ldb   vscroll.obj.bufferA
-@loop   ldx   #Obj_Index_Page
-        lda   b,x   
-        _SetCartPageA                  ; mount page that contain buffer code
-        aslb
-        ldx   #Obj_Index_Address
-        ldx   b,x                      ; set buffer code address in x
+        lda   vscroll.obj.bufferA.page
+        ldx   vscroll.obj.bufferA.address
+@loop   _SetCartPageA                  ; mount page that contain buffer code
         ldb   vscroll.cursor           ; screen start line (0-199)
         addb  #200                     ; viewport size (1-200)
 vscroll.viewport.height equ *-1
@@ -189,7 +236,8 @@ vscroll.cursor equ *-1
         bhs   >                        ; exit if second buffer code as been executed
         adda  #$20                     ; else execute second buffer code
         sta   vscroll.viewport.ram
-        ldb   vscroll.obj.bufferB
+        lda   vscroll.obj.bufferB.page
+        ldx   vscroll.obj.bufferB.address
         bra   @loop
 !       lda   vscroll.viewport.ram
         suba  #$20

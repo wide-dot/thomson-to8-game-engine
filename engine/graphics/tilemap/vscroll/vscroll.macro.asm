@@ -4,8 +4,14 @@
 ; input : object id of map
 ; -----------------------------------------------------------------------------
 _vscroll.setMap MACRO
-        lda   \1
-        sta   vscroll.obj.map
+        ldb   \1
+        ldx   #Obj_Index_Page
+        lda   b,x   
+        sta   vscroll.obj.map.page
+        aslb
+        ldx   #Obj_Index_Address
+        ldx   b,x
+        stx   vscroll.obj.map.address
  ENDM
 
 ; -----------------------------------------------------------------------------
@@ -15,10 +21,22 @@ _vscroll.setMap MACRO
 ; input : object id of tileset B
 ; -----------------------------------------------------------------------------
 _vscroll.setTileset MACRO
-        lda   \1
-        sta   vscroll.obj.tileA
-        lda   \2
-        sta   vscroll.obj.tileB
+        ldx   #Obj_Index_Page
+        ldy   #Obj_Index_Address
+        ldb   \1
+        lda   b,x   
+        sta   vscroll.obj.tileA.page
+        aslb
+        ldu   b,y
+        leau  $A000,u
+        stu   vscroll.obj.tileA.address
+        ldb   \2
+        lda   b,x   
+        sta   vscroll.obj.tileB.page
+        aslb
+        ldu   b,y
+        leau  $A000,u
+        stu   vscroll.obj.tileB.address
  ENDM
 
 ; -----------------------------------------------------------------------------
@@ -28,10 +46,20 @@ _vscroll.setTileset MACRO
 ; input : object id of vscroll code buffer B
 ; -----------------------------------------------------------------------------
 _vscroll.setBuffer MACRO
-        lda   \1
-        sta   vscroll.obj.bufferA
-        lda   \2
-        sta   vscroll.obj.bufferB
+        ldx   #Obj_Index_Page
+        ldy   #Obj_Index_Address
+        ldb   \1
+        lda   b,x   
+        sta   vscroll.obj.bufferA.page
+        aslb
+        ldu   b,y
+        stu   vscroll.obj.bufferA.address
+        ldb   \2
+        lda   b,x   
+        sta   vscroll.obj.bufferB.page
+        aslb
+        ldu   b,y
+        stu   vscroll.obj.bufferB.address
  ENDM
 
 ; -----------------------------------------------------------------------------
