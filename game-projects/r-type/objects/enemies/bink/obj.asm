@@ -7,18 +7,15 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./objects/enemies_properties.asm"
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
-        INCLUDE "./objects/enemies_properties.asm"
         INCLUDE "./objects/animation/index.equ"
+        INCLUDE "./global/projectile.macro.asm"
 
 
 AABB_0            equ ext_variables   ; AABB struct (9 bytes)
-shoottiming       equ ext_variables+9
-shoottiming_value equ ext_variables+11
-shootnoshoot      equ ext_variables+13
-shootdirection    equ ext_variables+14
-bink_0x22         equ ext_variables+15
+bink_0x22         equ ext_variables+9
 
 Object
         lda   routine,u
@@ -36,7 +33,10 @@ Routines
         fdb   AlreadyDeleted
 
 Init
-        ldb   subtype_w+1,u            ; load x and y pos based on wave parameter
+        ldb   subtype_w+1,u
+        _loadFirePreset
+
+        ldb   subtype_w+1,u
         andb  #$0F
         aslb
         ldx   #PresetXYIndex
@@ -60,10 +60,10 @@ Init
         sta   AABB_0+AABB.p,u
         _ldd  bink_hitbox_x,bink_hitbox_y       ; set hitbox xy radius
         std   AABB_0+AABB.rx,u
-        clr   shootnoshoot,u
         jmp   LAB_0000_5f9f_RunBink_Fall_Init
 LAB_0000_5ee9_RunBink_StartJumpSequence
 
+        jsr   tryFoeFire
         jmp   LAB_0000_5f16
         ldx   #Img_bink_3
         ldb   subtype,u                 ; Same as tst subtype,u
@@ -98,6 +98,7 @@ LAB_0000_5f3a
         lda   #5
         sta   routine,u
 LAB_0000_5f4d_RunBink_RunJump
+        jsr   tryFoeFire
         ldd   #binkjumpendcheck
         std   moveByScript.callback
         jsr   moveByScript.runByFrameDrop
@@ -135,6 +136,7 @@ binkjumpendcheck
 !
         rts
 FUN_0000_5e2b_RunBink_Walk
+        jsr   tryFoeFire
         ldb   #($c0*scale.XP1PX)/256
         lda   gfxlock.frameDrop.count
         mul
@@ -210,6 +212,7 @@ LAB_0000_5f9f_RunBink_Fall_Init
         lda   #2
         sta   routine,u
 FUN_0000_5fa4_RunBink_Fall
+        jsr   tryFoeFire
         ldb   gfxlock.frameDrop.count
         cmpb  #3
         ble   >
@@ -270,6 +273,7 @@ LAB_0000_601c
         sta   routine,u
         jmp   FUN_0000_5e2b_RunBink_Walk
 LAB_0000_60a0_RunBink_StaticAndTrackP1
+        jsr   tryFoeFire
         ldx   #Img_bink_0
         ldd   player1+x_pos
         cmpd  x_pos,u
