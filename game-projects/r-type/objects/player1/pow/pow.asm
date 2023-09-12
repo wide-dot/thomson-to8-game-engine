@@ -44,7 +44,7 @@ alreadyDeletedRtn   equ 8
 
 init
         ldb   subtype_w+1,u            ; load x and y pos based on wave parameter
-        stb   subtype,u
+        stb   subtype,u                ; saving subtype 16 bits to subtype 8 bits to leave room for render flag
         andb  #$0F
         aslb
         ldx   #PresetXYIndex
@@ -330,13 +330,13 @@ destroy
         beq   delete
         ldb   #ObjID_pow_optionbox
         lda   subtype,u
-        asra
-        asra
-        asra
-        asra
-        cmpa  #$05
+        asra                            ; option box type is on bits 4,5,6,7 of the subtype
+        asra                            ; hence shifting everything to the right 4 times
+        asra                            
+        asra                
+        cmpa  #$05                      ; $05 is a bit device, not an option box
         bne   >
-        ldb   #ObjID_bitdevice
+        ldb   #ObjID_bitdevice          ; set the bit device object ID instead
 !
         stb   id,x
         sta   subtype,x

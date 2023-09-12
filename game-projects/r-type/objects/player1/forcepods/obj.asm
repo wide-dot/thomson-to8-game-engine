@@ -308,7 +308,7 @@ Live
 @shootlaser
         lda   player1+forcepodtype
         beq   @reboundlaser
-        cmpa  #1
+        cmpa  #2
         beq   @counterairlaser
 @countergroundlaser
         rts
