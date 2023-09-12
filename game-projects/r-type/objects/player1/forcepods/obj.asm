@@ -315,7 +315,7 @@ Live
 @counterairlaser
         ldd   glb_camera_x_pos
         jsr   LoadObject_x
-        beq  >                             
+        beq   >                             
         lda   #ObjID_forcepod_counterairlaser
         sta   id,x
         lda   hooked_status,u

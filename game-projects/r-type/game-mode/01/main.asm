@@ -29,6 +29,10 @@ CHECKPOINT_01      equ 20
 
         org   $6100
         jsr   InitGlobals
+
+        lda   #1
+        sta   globals.difficulty
+
         jsr   InitStack
         jsr   LoadAct
         jsr   InitJoypads
