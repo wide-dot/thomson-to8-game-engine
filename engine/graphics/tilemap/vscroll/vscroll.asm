@@ -40,6 +40,7 @@ vscroll.camera.speed        fdb   0    ; (signed 8.8 fixed point) nb of pixels/5
 vscroll.speed               fcb   0    ; (signed) nb of line to scroll in current frame
 vscroll.map.cache.y         fdb   -1   ; current cached map line
 vscroll.map.cache           fill  0,40 ; a full unpacked map line with 20x tile ids
+vscroll.map.cache.end       equ   *
 vscroll.viewport.y          fcb   0    ; y position of viewport on screen
 vscroll.camera.y            fdb   0    ; camera position in map
 vscroll.camera.lastY        fdb   0    ; last camera position in map
@@ -49,9 +50,12 @@ vscroll.camera.lastY        fdb   0    ; last camera position in map
 ; -----------------------------------------------------------------------------
 ; input  REG : none
 ; -----------------------------------------------------------------------------
-vscroll.loop_cnt            equ dp_extreg
-vscroll.backBuffer          equ dp_extreg+1
-vscroll.camera.renderY      equ dp_extreg+2
+vscroll.loop_cnt            equ dp_extreg    ; BYTE
+vscroll.backBuffer          equ dp_extreg+1  ; BYTE
+vscroll.buffer.wAddressA    equ dp_extreg+2  ; WORD
+vscroll.buffer.wAddressB    equ dp_extreg+4  ; WORD
+vscroll.tileset.cursor      equ dp_extreg+6  ; WORD
+vscroll.loop.counter        equ dp_extreg+8  ; BYTE
 
 vscroll.move
 
@@ -80,38 +84,58 @@ vscroll.move
         ldx   vscroll.camera.y               ; update camera position in map
         stx   vscroll.camera.lastY
         ldb   vscroll.speed                  ; get int part of 8.8
-        negb
         leax  b,x                            ; do not use abx, b is signed
-        stx   vscroll.camera.yvscroll.camera.renderY
+        stx   vscroll.camera.y
 
 ; update gfx in buffer code
 ; -------------------------
 vscroll.updategfx
+        ldx   vscroll.obj.bufferA.address
+        jsr   vscroll.computeBufferWAddress
+        stx   vscroll.buffer.wAddressA
+        ldx   vscroll.obj.bufferB.address
+        jsr   vscroll.computeBufferWAddress
+        stx   vscroll.buffer.wAddressB
+
         ldb   map.CF74021.DATA
         stb   <vscroll.backBuffer            ; backup back video buffer
-        ldd   vscroll.camera.lastY
-        std   <vscroll.camera.renderY        ; get number of lines to process
+        lda   vscroll.camera.lastY           ; load MSB only, TODO !!! direction
+        deca                                 ; next line
+        anda  #$0f                           ; modulo on tile height 0-15
+        asla
+        asla
+        clrb                                 ; tileset for each line are 512*2 bytes long
+        std   <vscroll.tileset.cursor
 @loop
         jsr   vscroll.updateTileCache        ; check cache for this line number (in d)
         lda   vscroll.obj.bufferA.page
         _SetCartPageA                        ; mount in cartridge space
-        ldu   vscroll.obj.bufferA.address
         lda   vscroll.obj.tileA.page
         sta   map.CF74021.DATA               ; mount in data space
+        ldu   vscroll.buffer.wAddressA
         ldy   vscroll.obj.tileA.address
+        ldd   <vscroll.tileset.cursor
+        leay  d,y                            ; move y to start of tileset for this line
         jsr   vscroll.copyBitmap             ; copy bitmap for buffer A
+;
         lda   vscroll.obj.bufferB.page
         _SetCartPageA                        ; mount in cartridge space
-        ldu   vscroll.obj.bufferB.address
         lda   vscroll.obj.tileB.page
         sta   map.CF74021.DATA               ; mount in data space
+        ldu   vscroll.buffer.wAddressB
         ldy   vscroll.obj.tileB.address
+        ldd   <vscroll.tileset.cursor
+        leay  d,y                            ; move y to start of tileset for this line
         jsr   vscroll.copyBitmap             ; copy bitmap for buffer B
-        ldd   <vscroll.camera.renderY        ; move to next line
-        subd  #1                             ; TODO IMPLEMENT OPPOSITE SCROLL
-        std   <vscroll.camera.renderY
-        cmpd  vscroll.camera.y
-        bhs   @loop                          ; TODO IMPLEMENT OPPOSITE SCROLL
+;
+        ldd   <vscroll.tileset.cursor        ; increment cursor in tiles
+        subd  #$400                          ; TODO !!! direction
+        anda  #$3f                           ; modulo on tileset
+        andb  #$ff
+        std   <vscroll.tileset.cursor
+;
+        dec   <vscroll.loop.counter
+        bne   @loop
 
         ldb   <vscroll.backBuffer            ; restore back video buffer
         stb   map.CF74021.DATA
@@ -157,31 +181,46 @@ vscroll.updateTileCache
 ; copy the tile bitmap to the code buffer
 ; ---------------------------------------
 vscroll.copyBitmap
-        ; TODO compute destination location in d
-        ; based on camera line and cursor in buffer
-        ; xxxxxxxx
-        leay  d,u
-        ldx   #vscroll.map.cache
-        ; TODO compute tile line and mult by 1024 in d
-        ; xxxxxxxx
-        leay  d,y
+        ldx   #vscroll.map.cache.end   ; read tiles in reverse order (from right to left)
 @loop
-        ldd   ,x                       ; load tile id
+        leax  -8,x                     ; move to next tile id in cache (to the left)
+        ldd   6,x                      ; load tile id
         ldd   d,y                      ; load 4 pixels of this tile line
         std   1,u                      ; fill the LDD
-        ldd   2,x                      ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   4,u                      ; fill the LDX
         ldd   4,x                      ; load tile id
         ldd   d,y                      ; load 4 pixels of this tile line
+        std   4,u                      ; fill the LDX
+        ldd   2,x                      ; load tile id
+        ldd   d,y                      ; load 4 pixels of this tile line
         std   8,u                      ; fill the LDY
-        ldd   6,x                      ; load tile id
+        ldd   ,x                       ; load tile id
         ldd   d,y                      ; load 4 pixels of this tile line
         std   11,u                     ; fill the LDU
         leau  15,u                     ; move to next dest block in code buffer
-        leax  8,x                      ; move to next tile id in cache
-        cmpx  #vscroll.map.cache+40
-        bne   <@loop
+        cmpx  #vscroll.map.cache
+        bne   @loop
+        rts
+
+; compute write location in buffer
+; --------------------------------
+vscroll.computeBufferWAddress
+        ldb   vscroll.speed
+        bpl   >
+        negb                           ; absolute value
+!       cmpb  vscroll.viewport.height  ; compare to viewport height
+        bls   >
+        ldb   vscroll.viewport.height
+!       stb   <vscroll.loop.counter    ; setup nb of line to render
+        negb                           ; keep lowest value and substract it to cursor + viewport height
+        addb  vscroll.cursor
+        addb  vscroll.viewport.height
+        bcs   @cycle
+        cmpb  #vscroll.BUFFER_LINES
+        bls   >
+@cycle  subb  #vscroll.BUFFER_LINES    ; cycling in buffer
+!       lda   #vscroll.LINE_SIZE
+        mul
+        leax  d,x                      ; x is write location in buffer
         rts
 
 ; -----------------------------------------------------------------------------
@@ -202,16 +241,16 @@ vscroll.do
         ldb   vscroll.cursor           ; screen start line (0-199)
         addb  #200                     ; viewport size (1-200)
 vscroll.viewport.height equ *-1
-        bcs   @undo
+        bcs   @cycle
         cmpb  #vscroll.BUFFER_LINES
         bls   >
-@undo   subb  #vscroll.BUFFER_LINES    ; cycling in buffer
+@cycle  subb  #vscroll.BUFFER_LINES    ; cycling in buffer
 !       lda   #vscroll.LINE_SIZE
         mul
         leau  d,x                      ; set u where a jump should be placed for return to caller
-        pulu  a,y
+        pulu  a,y                      ; save 3 bytes in buffer that will be erased by the jmp return
         stu   @save_u
-        pshs  a,y                      ; save 3 bytes in buffer that will be erased by the jmp return
+        pshs  a,y
         lda   #m6809.OPCODE_JMP_E      ; build jmp instruction
         ldy   #@ret                    ; this works even at the end of table because there is 
         sta   -3,u                     ; already a jmp for looping into the buffer
