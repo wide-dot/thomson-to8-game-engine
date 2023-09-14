@@ -72,41 +72,41 @@
 	fcb   $09,$4C,ObjID_bug,$00,$36
  	fcb   $09,$8C,ObjID_bink,$01,$1C
  	fcb   $09,$8C,ObjID_bink,$00,$12
-;$0A,$12,ObjID_6,$00,$06
-;$0A,$44,ObjID_6,$00,$24
-;$0A,$92,ObjID_6,$00,$07
-;$0A,$A4,ObjID_6,$00,$03
-;$0A,$B4,ObjID_6,$00,$05
-;$0A,$CC,ObjID_6,$00,$06
-;$0A,$E4,ObjID_6,$00,$03
-;$0A,$FE,ObjID_6,$00,$06
-;$0B,$08,ObjID_6,$00,$05
-;$0B,$08,ObjID_6,$00,$07
-;$0B,$1C,ObjID_6,$00,$13
-;$0B,$26,ObjID_6,$00,$04
-;$0B,$3A,ObjID_6,$00,$07
-;$0B,$58,ObjID_6,$00,$05
-;$0B,$6C,ObjID_6,$00,$03
-;$0B,$80,ObjID_6,$00,$06
+	fcb   $0A,$12,ObjID_cancer,$00,$06
+	fcb   $0A,$44,ObjID_cancer,$00,$24
+	fcb   $0A,$92,ObjID_cancer,$00,$07
+	fcb   $0A,$A4,ObjID_cancer,$00,$03
+	fcb   $0A,$B4,ObjID_cancer,$00,$05
+	fcb   $0A,$CC,ObjID_cancer,$00,$06
+	fcb   $0A,$E4,ObjID_cancer,$00,$03
+	fcb   $0A,$FE,ObjID_cancer,$00,$06
+	fcb   $0B,$08,ObjID_cancer,$00,$05
+	fcb   $0B,$08,ObjID_cancer,$00,$07
+	fcb   $0B,$1C,ObjID_cancer,$00,$13
+	fcb   $0B,$26,ObjID_cancer,$00,$04
+	fcb   $0B,$3A,ObjID_cancer,$00,$07
+	fcb   $0B,$58,ObjID_cancer,$00,$05
+	fcb   $0B,$6C,ObjID_cancer,$00,$03
+	fcb   $0B,$80,ObjID_cancer,$00,$06
 	fcb   $0B,$90,ObjID_blaster,$00,$11
 	fcb   $0B,$90,ObjID_blaster,$00,$04
-;$0B,$92,ObjID_6,$00,$03
-;$0B,$9E,ObjID_6,$00,$06
-;$0B,$B8,ObjID_6,$00,$03
+	fcb   $0B,$92,ObjID_cancer,$00,$03
+	fcb   $0B,$9E,ObjID_cancer,$00,$06
+	fcb   $0B,$B8,ObjID_cancer,$00,$03
 	fcb   $0B,$D0,ObjID_blaster,$00,$01
 	fcb   $0B,$D0,ObjID_blaster,$00,$04
-;$0B,$DE,ObjID_6,$00,$16
+	fcb   $0B,$DE,ObjID_cancer,$00,$16
  	fcb   $0B,$E4,ObjID_bink,$00,$07
-;$0B,$FC,ObjID_6,$00,$03
-;$0C,$0C,ObjID_6,$00,$06
+	fcb   $0B,$FC,ObjID_cancer,$00,$03
+	fcb   $0C,$0C,ObjID_cancer,$00,$06
 	fcb   $0C,$10,ObjID_blaster,$00,$12
 	fcb   $0C,$10,ObjID_blaster,$00,$03
 	fcb   $0C,$50,ObjID_blaster,$00,$02
 	fcb   $0C,$50,ObjID_blaster,$00,$03
-;$0C,$5C,ObjID_6,$00,$24
+	fcb   $0C,$5C,ObjID_cancer,$00,$24
  	fcb   $0C,$5E,ObjID_bink,$00,$17
 	fcb   $0C,$80,ObjID_fadetotunnel,$00,$00
-;$0C,$F8,ObjID_6,$00,$27
+	fcb   $0C,$F8,ObjID_cancer,$00,$27
 ;$0C,$FC,ObjID_21,$00,$08
  	fcb   $0D,$88,ObjID_pow,$00,$35
 	fcb   $0E,$10,ObjID_blaster,$00,$00
