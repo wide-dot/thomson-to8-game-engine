@@ -29,3 +29,8 @@ bink_score		equ 2
 bink_hitbox_x		equ 6
 bink_hitbox_y		equ 13
 bink_hitdamage		equ 1
+
+cancer_score		equ 3
+cancer_hitbox_x		equ 6
+cancer_hitbox_y		equ 13
+cancer_hitdamage	equ 1
