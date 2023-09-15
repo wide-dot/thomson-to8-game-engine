@@ -33,8 +33,8 @@ Object
 
 Routines
         fdb   Init
-        fdb   FUN_0000_8db0_RunCancerAutoPilot
-        fdb   FUN_0000_8eee_RunCancerPlayer1Tracking
+        fdb   FUN_0000_8db0_RunCancerMode1
+        fdb   FUN_0000_8db0_RunCancerMode2
         fdb   AlreadyDeleted
 
 Init
@@ -88,7 +88,7 @@ Init
         lda   #1
         sta   routine,u
 
-FUN_0000_8db0_RunCancerAutoPilot
+FUN_0000_8db0_RunCancerMode1
 
         jsr   tryFoeFire
 
@@ -336,7 +336,7 @@ LAB_0000_8e7b
         ;                            LAB_0000_8eb8                                   XREF[1]:     0000:8eb3(j)  
         ;0000:8eb8 c3              RET
         ;                            LAB_0000_8eb9                                   XREF[1]:     0000:8eb5(j)  
-        ;0000:8eb9 c7 46 00        MOV        word ptr [BP + 0x0],0x8aee  -> FUN_0000_8eee_RunCancerPlayer1Tracking 
+        ;0000:8eb9 c7 46 00        MOV        word ptr [BP + 0x0],0x8aee  -> FUN_0000_8db0_RunCancerMode2 
         ;0000:8ebe c7 46 22        MOV        word ptr [BP + 0x22],0x3ff
 
 LAB_0000_8eaf
@@ -350,7 +350,7 @@ LAB_0000_8eb9
         std   cancer_0x22,u
         jmp   Live
 
-       ;                              FUN_0000_8eee_RunCancerPlayer1Tracking
+       ;                              FUN_0000_8db0_RunCancerMode1
        ;0000:8eee e8 49 6b        CALL       FUN_0000_fa3a_TryFoeFire                         undefined FUN_0000_fa3a_TryFoeFi
        ;0000:8ef1 ff 46 20        INC        word ptr [BP + 0x20]
        ;0000:8ef4 8b 46 30        MOV        AX,word ptr [BP + 0x30]
@@ -365,7 +365,7 @@ LAB_0000_8eb9
        ;0000:8f0c 73 02           JNC        LAB_0000_8f10
        ;0000:8f0e b3 02           MOV        BL,0x2
 
-FUN_0000_8eee_RunCancerPlayer1Tracking
+FUN_0000_8db0_RunCancerMode1
 
         jsr   tryFoeFire
 
@@ -596,11 +596,10 @@ LAB_0000_8fc9
         ;0000:9009 74 01           JZ         LAB_0000_900c
         ;0000:900b c3              RET
         ;                            LAB_0000_900c                                   XREF[2]:     0000:9003(j), 0000:9009(j)  
-        ;0000:900c c7 46 00        MOV        word ptr [BP + 0x0],LAB_0000_89b0   --> FUN_0000_8db0_RunCancerAutoPilot
+        ;0000:900c c7 46 00        MOV        word ptr [BP + 0x0],LAB_0000_89b0   --> FUN_0000_8db0_RunCancerMode1
 
 LAB_0000_8ffd
 
-        _breakPoint
         ldb   cancer_0x1e,u
         cmpb  #$02
         beq   LAB_0000_900c
