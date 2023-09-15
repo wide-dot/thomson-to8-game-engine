@@ -81,6 +81,8 @@ _vscroll.setCameraPos MACRO
 _vscroll.setCameraSpeed MACRO
         ldd   \1
         std   vscroll.camera.speed
+        ldd   #0
+        std   vscroll.speed
  ENDM
 
 ; -----------------------------------------------------------------------------

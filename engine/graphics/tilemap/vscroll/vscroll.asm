@@ -37,7 +37,7 @@ vscroll.camera.speed        fdb   0    ; (signed 8.8 fixed point) nb of pixels/5
 
 ; private variables
 ; -----------------------------------------------------------------------------
-vscroll.speed               fcb   0    ; (signed) nb of line to scroll in current frame
+vscroll.speed               fdb   0    ; (signed 8.8 fixed point) nb of line to scroll
 vscroll.map.cache.y         fdb   -1   ; current cached map line
 vscroll.map.cache           fill  0,40 ; a full unpacked map line with 20x tile ids
 vscroll.map.cache.end       equ   *
@@ -56,6 +56,7 @@ vscroll.buffer.wAddressA    equ dp_extreg+2  ; WORD
 vscroll.buffer.wAddressB    equ dp_extreg+4  ; WORD
 vscroll.tileset.cursor      equ dp_extreg+6  ; WORD
 vscroll.loop.counter        equ dp_extreg+8  ; BYTE
+vscroll.camera.currentY     equ dp_extreg+9  ; WORD
 
 vscroll.move
 
@@ -65,11 +66,12 @@ vscroll.move
         bne   >
         rts
 !       sta   <vscroll.loop_cnt
-        ldd   #$0000
-@loop   addd  vscroll.camera.speed           ; mult speed by frame drop
+        ldd   vscroll.speed                  ; load speed value of previous frame
+        clra                                 ; clear integer part (nb line moved in last frame), and keep only remainer
+@loop   subd  vscroll.camera.speed           ; mult speed by frame drop
         dec   <vscroll.loop_cnt
         bne   @loop
-        sta   vscroll.speed                  ; set int part of 8.8
+        std   vscroll.speed
         bmi   @neg
         adda  vscroll.cursor              
         cmpa  #vscroll.BUFFER_LINES
@@ -99,14 +101,17 @@ vscroll.updategfx
 
         ldb   map.CF74021.DATA
         stb   <vscroll.backBuffer            ; backup back video buffer
-        lda   vscroll.camera.lastY           ; load MSB only, TODO !!! direction
-        deca                                 ; next line
-        anda  #$0f                           ; modulo on tile height 0-15
+        lda   vscroll.camera.lastY+1         ; LSB only, TODO !!! direction
+        deca                                 ; prev line
+        anda  #$0f                           ; modulo to keep 0-15
         asla
         asla
         clrb                                 ; tileset for each line are 512*2 bytes long
         std   <vscroll.tileset.cursor
-@loop
+        ldd   vscroll.camera.lastY
+@loop   
+        subd  #1
+        std   <vscroll.camera.currentY
         jsr   vscroll.updateTileCache        ; check cache for this line number (in d)
         lda   vscroll.obj.bufferA.page
         _SetCartPageA                        ; mount in cartridge space
@@ -134,6 +139,7 @@ vscroll.updategfx
         andb  #$ff
         std   <vscroll.tileset.cursor
 ;
+        ldd   <vscroll.camera.currentY
         dec   <vscroll.loop.counter
         bne   @loop
 
@@ -144,10 +150,7 @@ vscroll.updategfx
 ; update the horizontal line of tile id in map cache
 ; --------------------------------------------------
 vscroll.updateTileCache
-        _lsrd
-        _lsrd
-        _lsrd
-        _lsrd                          ; tile height is 16px
+        andb  #$f0                     ; tile height is 16px, faster check here than _asrd*4
         cmpd  vscroll.map.cache.y
         bne   >
         rts                            ; return, cache is already up to date
@@ -156,10 +159,13 @@ vscroll.updateTileCache
         _SetCartPageA                  ; mount page that contain map data
         ldx   vscroll.obj.map.address
         lda   vscroll.map.cache.y      ; handle up to 512 lines in map
+        _asrd
+        _asrd
+        _asrd
+        _asrd
         beq   >                        ; multiply map vertical pos (9bits)
         lda   #30                      ; by 30 bytes (12bits id * 20 tiles)
 !       adda  #30
-        ldb   vscroll.map.cache.y+1
         mul
         leax  d,x                      ; x point to desired map line
         ldy   #vscroll.map.cache
