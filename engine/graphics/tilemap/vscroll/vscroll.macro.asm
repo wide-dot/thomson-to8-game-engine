@@ -81,8 +81,12 @@ _vscroll.setCameraPos MACRO
 _vscroll.setCameraSpeed MACRO
         ldd   \1
         std   vscroll.camera.speed
-        ldd   #0
-        std   vscroll.speed
+        eora  vscroll.speed            ; check direction change
+        anda  #%10000000               ; by comparing sign bit
+        beq   @end                     ; eor return 0 if both bit are identical
+        ldd   #0                       ; if direction change, get rid of remainer
+        std   vscroll.speed            ; otherwise it may gives an unwanted
+@end    equ   *                        ; boost on first frame
  ENDM
 
 ; -----------------------------------------------------------------------------
