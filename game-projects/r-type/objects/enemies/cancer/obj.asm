@@ -14,17 +14,16 @@
         INCLUDE "./global/projectile.macro.asm"
 
 AABB_0                  equ ext_variables    ; AABB struct (9 bytes)
-cancer_0x1e             equ ext_variables+9  ; 1 byte
-cancer_0x20             equ ext_variables+10 ; 2 bytes
+cancer_0x1e             equ ext_variables+9  ; 1 byte, movement indicator ($02 = has not moved, other value = has moved)
+cancer_0x20             equ ext_variables+10 ; 2 bytes, player 1 tracking reactivity setting (also renders Cancer inactive if > $400)
 cancer_0x22             equ ext_variables+12 ; 2 bytes
-;cancer_0x24             equ ext_variables+14 ; 2 bytes
-cancer_0x28             equ ext_variables+14 ; 2 bytes
-cancer_0x2e             equ ext_variables+16 ; 1 byte, horitzontal and vertical direction
+cancer_0x2e             equ ext_variables+14 ; 1 byte, horizontal and vertical direction
                                              ; bit 0 = going up
                                              ; bit 1 = goind down
                                              ; bit 2 = going left
                                              ; bit 3 = going right
-cancer_0x30             equ ext_variables+17 ; 2 bytes
+cancer_0x30             equ ext_variables+15 ; 2 bytes, reactivity degree (the smaller the more reactive)
+firsttime               equ ext_variables+17 ; 1 bytes (=0 has not run yet, =1 has run)
 
 Object
         lda   routine,u
@@ -34,8 +33,8 @@ Object
 
 Routines
         fdb   Init
-        fdb   FUN_0000_8db0_FirstRunCancer
-        fdb   FUN_0000_8eee_RunCancer
+        fdb   FUN_0000_8db0_RunCancerMode1
+        fdb   FUN_0000_8db0_RunCancerMode2
         fdb   AlreadyDeleted
 
 Init
@@ -65,7 +64,7 @@ Init
         _Collision_AddAABB AABB_0,AABB_list_ennemy
         lda   #bink_hitdamage                   ; set damage potential for this hitbox
         sta   AABB_0+AABB.p,u
-        _ldd  bink_hitbox_x,bink_hitbox_y       ; set hitbox xy radius
+        _ldd  cancer_hitbox_x,cancer_hitbox_y       ; set hitbox xy radius
         std   AABB_0+AABB.rx,u
         
 
@@ -75,9 +74,6 @@ Init
        ;0000:8d9c 03 db           ADD        BX,BX
        ;0000:8d9e 26 8b 87        MOV        AX,word ptr ES:[BX + 0x3c1a]
 
-
-        _breakPoint
-
         ldd   #$7f
         std   cancer_0x20,u
         ldb   globals.difficulty
@@ -86,15 +82,18 @@ Init
         ldx   #cancer_0x3c1a
         ldd   d,x
 
-        ldd   #$80
+        ;ldd   #$90              ; manually override (not in original source code)
         std   cancer_0x30,u
 
         lda   #1
         sta   routine,u
 
-FUN_0000_8db0_FirstRunCancer
+FUN_0000_8db0_RunCancerMode1
 
         jsr   tryFoeFire
+
+        lda   firsttime,u
+        beq   skip_reactivity
 
        ;0000:8db3 ff 46 20        INC        word ptr [BP + 0x20]
        ;0000:8db6 8b 46 30        MOV        AX,word ptr [BP + 0x30]
@@ -104,17 +103,21 @@ FUN_0000_8db0_FirstRunCancer
        ;          00 04
        ;0000:8dc3 73 22           JNC        LAB_0000_8de7
 
-        ldd   cancer_0x20,u
-        addd  #1
+        ldd   gfxlock.frameDrop.count_w
+        clra
+        addd  cancer_0x20,u
         std   cancer_0x20,u
-
-        ldx   cancer_0x30,u
-        cmpx  cancer_0x20,u
+        anda  cancer_0x30,u
+        andb  cancer_0x30+1,u
+        std   -2,s
         bne   LAB_0000_8de7
-        
-        ldx   cancer_0x20,u
-        cmpx  #$400
-        bpl   LAB_0000_8de7
+        cmpd  #$400
+        bge   LAB_0000_8de7
+
+skip_reactivity
+
+        lda   #1
+        sta   firsttime,u        
 
 
        ;0000:8dc5 b3 01           MOV        BL,0x1
@@ -123,10 +126,12 @@ FUN_0000_8db0_FirstRunCancer
        ;0000:8dce 72 02           JC         LAB_0000_8dd2
        ;0000:8dd0 b3 02           MOV        BL,0x2
 
+LAB_0000_8dc5
+
         ldb   #$01
-        ldx   y_pos,u
-        cmpx  cancer_0x28,u
-        bmi   LAB_0000_8dd2
+        ldx   player1+y_pos
+        cmpx  y_pos,u
+        bmi   LAB_0000_8dd2             
         ldb   #$02
 
 LAB_0000_8dd2
@@ -142,9 +147,9 @@ LAB_0000_8dd2
        ;0000:8de4 88 5e 2e        MOV        byte ptr [BP + 0x2e],BL
 
 
-        ;ldx   x_pos,u
-        ;cmpx  cancer_0x24,u
-        ;bmi   LAB_0000_8de1
+        ldx   player1+x_pos
+        cmpx  x_pos,u
+        bpl   LAB_0000_8de1
         orb   #$04
         jmp   LAB_0000_8de4
 
@@ -169,7 +174,7 @@ LAB_0000_8de4
        ;0000:8e06 b8 c0 00        MOV        AX,0xc0
        ;0000:8e09 e8 7d 7c        CALL       FUN_0000_0a89_MoveYPos8.8                        undefined FUN_0000_0a89_MoveYPos
 
-LAB_0000_8de7
+LAB_0000_8de7                           ; Going down ?
         ldb   #$02
         stb   cancer_0x1e,u
         ldb   cancer_0x2e,u
@@ -205,7 +210,7 @@ LAB_0000_8de7
        ;0000:8e2a e8 5c 7c        CALL       FUN_0000_0a89_MoveYPos8.8                        undefined FUN_0000_0a89_MoveYPos
 
 
-LAB_0000_8e0c
+LAB_0000_8e0c                           ; Going up ?
         ldb   cancer_0x2e,u
         andb  #$01                      ; originally $02 but Y axis inverted on Arcade
         beq   LAB_0000_8e2d
@@ -240,7 +245,7 @@ LAB_0000_8e15
        ;0000:8e48 b8 40 ff        MOV        AX,0xff40
        ;0000:8e4b e8 24 7c        CALL       FUN_0000_0a72_MoveXPos8.8                        undefined FUN_0000_0a72_MoveXPos
 
-LAB_0000_8e2d
+LAB_0000_8e2d                           ; Going left ?
         ldb   cancer_0x2e,u
         andb  #$04
         beq   LAB_0000_8e4e
@@ -274,7 +279,7 @@ LAB_0000_8e2d
        ;0000:8e69 b8 c0 00        MOV        AX,0xc0
        ;0000:8e6c e8 03 7c        CALL       FUN_0000_0a72_MoveXPos8.8                        undefined FUN_0000_0a72_MoveXPos
 
-LAB_0000_8e4e
+LAB_0000_8e4e                           ; Going right ?
         ldb   cancer_0x2e,u
         andb  #$08
         beq   LAB_0000_8e6f
@@ -331,19 +336,21 @@ LAB_0000_8e7b
         ;                            LAB_0000_8eb8                                   XREF[1]:     0000:8eb3(j)  
         ;0000:8eb8 c3              RET
         ;                            LAB_0000_8eb9                                   XREF[1]:     0000:8eb5(j)  
-        ;0000:8eb9 c7 46 00        MOV        word ptr [BP + 0x0],0x8aee  -> FUN_0000_8eee_RunCancer 
+        ;0000:8eb9 c7 46 00        MOV        word ptr [BP + 0x0],0x8aee  -> FUN_0000_8db0_RunCancerMode2 
         ;0000:8ebe c7 46 22        MOV        word ptr [BP + 0x22],0x3ff
 
 LAB_0000_8eaf
         ldb   cancer_0x1e,u
-        lbeq   Live
+        cmpb  #$02
+        lbne  Live
+LAB_0000_8eb9
         lda   #2
         sta   routine,u
         ldd   #$3ff
         std   cancer_0x22,u
         jmp   Live
 
-       ;                              FUN_0000_8eee_RunCancer
+       ;                              FUN_0000_8db0_RunCancerMode1
        ;0000:8eee e8 49 6b        CALL       FUN_0000_fa3a_TryFoeFire                         undefined FUN_0000_fa3a_TryFoeFi
        ;0000:8ef1 ff 46 20        INC        word ptr [BP + 0x20]
        ;0000:8ef4 8b 46 30        MOV        AX,word ptr [BP + 0x30]
@@ -358,23 +365,25 @@ LAB_0000_8eaf
        ;0000:8f0c 73 02           JNC        LAB_0000_8f10
        ;0000:8f0e b3 02           MOV        BL,0x2
 
-FUN_0000_8eee_RunCancer
+FUN_0000_8db0_RunCancerMode1
 
         jsr   tryFoeFire
 
-        ldd   cancer_0x20,u
-        addd  #1
+        ldd   gfxlock.frameDrop.count_w
+        clra
+        addd  cancer_0x20,u
         std   cancer_0x20,u
-        ldx   cancer_0x30,u
-        cmpx  cancer_0x20,u
+        anda  cancer_0x30,u
+        andb  cancer_0x30+1,u
+        std   -2,s
         bne   LAB_0000_8f25
         cmpd  #$400
         bpl   LAB_0000_8f25
 
         ldb   #$01
-        ldx   y_pos,u
-        cmpx  cancer_0x28,u
-        bpl   LAB_0000_8f10
+        ldx   player1+y_pos
+        cmpx  y_pos,u
+        bmi   LAB_0000_8f10
         ldb   #$02
 
        ;                      LAB_0000_8f10                                   XREF[1]:     0000:8f0c(j)  
@@ -390,9 +399,9 @@ FUN_0000_8eee_RunCancer
 
 LAB_0000_8f10
 
-        ;ldx   x_pos,u
-        ;cmpx  cancer_0x24,u
-        ;bmi   LAB_0000_8f1f
+        ldx   player1+x_pos
+        cmpx  x_pos,u
+        bpl   LAB_0000_8f1f
         orb   #$04
         jmp   LAB_0000_8f22
 LAB_0000_8f1f
@@ -458,7 +467,7 @@ LAB_0000_8f4d
         stx   cancer_0x22,u
 LAB_0000_8f52
         ldb   cancer_0x2e,u
-        andb  #$02
+        andb  #$02                      ; originally $02 but Y axis inverted on Arcade
         beq   LAB_0000_8f76
         ldd   y_pos,u
         subd  #($18*scale.YP1PX)/256
@@ -587,15 +596,18 @@ LAB_0000_8fc9
         ;0000:9009 74 01           JZ         LAB_0000_900c
         ;0000:900b c3              RET
         ;                            LAB_0000_900c                                   XREF[2]:     0000:9003(j), 0000:9009(j)  
-        ;0000:900c c7 46 00        MOV        word ptr [BP + 0x0],LAB_0000_89b0   --> FUN_0000_8db0_FirstRunCancer
+        ;0000:900c c7 46 00        MOV        word ptr [BP + 0x0],LAB_0000_89b0   --> FUN_0000_8db0_RunCancerMode1
 
 LAB_0000_8ffd
+
         ldb   cancer_0x1e,u
         cmpb  #$02
         beq   LAB_0000_900c
+LAB_0000_9006
         ldd   cancer_0x22,u
-        subd  #$01
-        bne   Live
+        subd  gfxlock.frameDrop.count_w
+        std   cancer_0x22,u
+        bpl   Live
 LAB_0000_900c
         lda   #1
         sta   routine,u   
@@ -616,6 +628,9 @@ Live
         stb   AABB_0+AABB.cy,u
         jmp   DisplaySprite
 @destroy 
+        ldd   score
+        addd  #cancer_score
+        std   score
         jsr   LoadObject_x ; make then die early ... to be removed
         beq   @delete
         lda   #ObjID_enemiesblastsmall
@@ -647,10 +662,10 @@ ImageIndex
 
 
 cancer_0x3c1a
-        fdb   $007f
-        fdb   $001f
-        fdb   $000f
-        fdb   $0007
+        fdb   $000f ;$007f
+        fdb   $0007 ;$001f 
+        fdb   $0003 ;$000f
+        fdb   $0001 ;$0007
 
 PresetXYIndex
         INCLUDE "./global/preset/18dd0_preset-xy.asm"
