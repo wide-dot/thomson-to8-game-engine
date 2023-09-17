@@ -54,12 +54,16 @@ _vscroll.setBuffer MACRO
         aslb
         ldu   b,y
         stu   vscroll.obj.bufferA.address
+        leau  vscroll.BUFFER_LINES*vscroll.LINE_SIZE,u
+        stu   vscroll.obj.bufferA.end
         ldb   \2
         lda   b,x   
         sta   vscroll.obj.bufferB.page
         aslb
         ldu   b,y
         stu   vscroll.obj.bufferB.address
+        leau  vscroll.BUFFER_LINES*vscroll.LINE_SIZE,u
+        stu   vscroll.obj.bufferB.end
  ENDM
 
 ; -----------------------------------------------------------------------------
