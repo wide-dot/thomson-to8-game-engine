@@ -28,6 +28,7 @@ DEBUG EQU 1
 
 * init scroll
         _vscroll.setMap #ObjID_level1Map
+        _vscroll.setMapHeight #240*16
         _vscroll.setTileset #ObjID_level1TileA,#ObjID_level1TileB
         _vscroll.setBuffer #ObjID_scrollA,#ObjID_scrollB
         _vscroll.setCameraPos #240*16-200

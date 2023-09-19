@@ -21,9 +21,9 @@
 
 - génération des buffers de départ
     
-    La commande suivante va générer deux buffers contenant du code et des données. Il s'agit d'encoder l'image qui sert de point de départ au scroll. L'image png en entrée de la conversion doit etre de taille 160x201 pour un scroll plein écran. La derniere ligne sera invisible, l'image doit être calée en haut. Si votre viewport est plus petit en hauteur, il faut tout de même donner une image d'une ligne de pixels supplémentaires en hauteur.
+    La commande suivante va générer deux buffers contenant du code et des données. Il s'agit d'encoder l'image qui sert de point de départ au scroll. L'image png en entrée de la conversion doit etre de taille 160x200 pour un scroll plein écran (peut être plus petit en fonction du viewport désiré).
 
-		png2bin -f C:\Users\bhrou\git\thomson-to8-game-engine\game-projects\goldorak\objects\scroll\pro-motion\level1.start.png -lb 4 -pb 8 -p 2 -pd 4 -vs -slc
+		png2bin -f C:\Users\bhrou\git\thomson-to8-game-engine\game-projects\goldorak\objects\scroll\level1\level1.start.png -lb 4 -pb 8 -p 2 -pd 4 -vs -slc
 
     Signification des paramètres :
 
@@ -33,6 +33,15 @@
     * pd  : pixel depth, number of bits per pixel = 4
     * vs  : output data buffer for Vertical Scroll
     * slc : shift colors indexes to the left by one position
+
+    Le code suivant sera déclaré dans les deux objets portant les buffer de code. La ligne supplémentaire est incluse par macro en fin de buffer :
+
+
+            INCLUDE "./engine/graphics/tilemap/vscroll/vscroll.macro.asm"
+        @loop
+            INCLUDEBIN "./objects/scroll/level1/level1.start.0.0.bin.vscroll"
+            _vscroll.buffer.line
+            jmp   @loop
 
 - génération du tileset
 

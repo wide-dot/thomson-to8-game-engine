@@ -11,6 +11,8 @@
 ; - handle up to 512 lines in map
 ; -----------------------------------------------------------------------------
 
+        opt c
+
 ; constants
 ; -----------------------------------------------------------------------------
 m6809.OPCODE_JMP_E          equ   $7E
@@ -42,6 +44,7 @@ vscroll.camera.speed        fdb   0    ; (signed 8.8 fixed point) nb of pixels/5
 vscroll.cursor.w            fcb   0    ; padding for 16 bit operations
 vscroll.cursor              fcb   0
 vscroll.speed               fdb   0    ; (signed 8.8 fixed point) nb of line to scroll
+vscroll.map.height          fdb   0    ; map height in pixels
 vscroll.map.cache.y         fdb   -1   ; current cached map line
 vscroll.map.cache           fill  0,40 ; a full unpacked map line with 20x tile ids
 vscroll.map.cache.end       equ   *
@@ -65,62 +68,126 @@ vscroll.buffer.wAddressA    equ dp_extreg+3  ; WORD
 vscroll.buffer.wAddressB    equ dp_extreg+5  ; WORD
 vscroll.tileset.cursor      equ dp_extreg+7  ; WORD
 vscroll.camera.currentY     equ dp_extreg+9  ; WORD
-vscroll.tmp                 equ dp_extreg+11 ; BYTE
+vscroll.tmp.word            equ dp_extreg+11 ; WORD
 
 vscroll.move
 
 ; update position in map and buffer
 ; ---------------------------------
+
+        ; check for elapsed frames
         lda   gfxlock.frameDrop.count
         bne   >
-        rts
+@exit   rts
+;
+        ; compute frame compensated speed
 !       sta   <vscroll.loop.counter
         ldd   vscroll.speed                  ; load speed value of previous frame
-        clra                                 ; clear integer part (nb line moved in last frame), and keep only remainer
-@loop   addd  vscroll.camera.speed           ; mult speed by frame drop
+!       addd  vscroll.camera.speed           ; mult speed by frame drop
         dec   <vscroll.loop.counter
-        bne   @loop
-        std   vscroll.speed
-        nega                                 ; cursor goes the opposite direction of y in buffer
+        bne   <
+;
+        ; exit if speed is too small (subpixel)
+        stb   vscroll.speed+1
+        sta   vscroll.speed
+        adda  #128 ; this cryptic code negate integer part of a 8.8 value
+        eora  #127 ; and round by floor
+        sbca  #255 ; cursor goes the opposite direction of y in buffer
+        beq   @exit
+
+        ; compute cursor in cycling buffer code (modulo)
         tfr   a,b
         sex
+        bpl   @goUp
+@goDown
+        addd  vscroll.cursor.w
+        bpl   @end
+!       addd  #vscroll.BUFFER_LINES
+        bmi   <
+        bra   @end
+@goUp
         addd  vscroll.cursor.w
         cmpd  #vscroll.BUFFER_LINES
-        blo   >
-@loop2
-        subd  #vscroll.BUFFER_LINES          ; cycling in buffer
+        blo   @end
+!       subd  #vscroll.BUFFER_LINES
         cmpd  #vscroll.BUFFER_LINES
-        bhs   @loop2
-!       stb   vscroll.cursor
-        ldx   vscroll.camera.y               ; update camera position in map
+        bhs   <
+@end    stb   vscroll.cursor
+
+        ; compute position in map
+        ldx   vscroll.camera.y
         stx   vscroll.camera.lastY
         ldb   vscroll.speed                  ; get int part of 8.8
-        leax  b,x                            ; do not use abx, b is signed
-        stx   vscroll.camera.y
+        bpl   >
+        incb                                 ; by truncating, negative is floor and positive is ceil, so make it ceil also for negative
+!       leax  b,x                            ; do not use abx, b is signed, speed is implicitly caped to a choppy 127px by frame
+
+        ; wrap camera position in map (infinite level loop)
+        tfr   x,d
+        cmpx  vscroll.map.height
+        bge   >
+        tsta
+        bpl   @end
+        addd  vscroll.map.height
+        bra   @end
+!       subd  vscroll.map.height
+@end    std   vscroll.camera.y
 
 ; update gfx in buffer code
 ; -------------------------
 vscroll.updategfx
-        ldx   vscroll.obj.bufferA.address
         jsr   vscroll.computeBufferWAddress
+        ldx   vscroll.obj.bufferA.address
+        leax  d,x
         stx   <vscroll.buffer.wAddressA
         ldx   vscroll.obj.bufferB.address
-        jsr   vscroll.computeBufferWAddress
+        leax  d,x
         stx   <vscroll.buffer.wAddressB
 
+        ; compute current line in tile
         ldb   map.CF74021.DATA
         stb   <vscroll.backBuffer            ; backup back video buffer
         lda   vscroll.camera.lastY+1         ; LSB only
-        deca                                 ; prev line TODO DIRECTION
-        anda  #$0f                           ; modulo to keep 0-15
+        ; todo adda nb skip lines (outside viewport)
+        ldb   vscroll.speed
+        bpl   >
+        deca                                 ; next line in tile
+        ldx   #-1
+        ldb   #-4
+        ldu   #0
+        ldy   #0
+        bra   @mod
+!       adda  vscroll.viewport.height
+        inca                                 ; previous line in tile
+        ldx   #1
+        ldb   #4
+        ldu   vscroll.viewport.height.w
+        ldy   #-vscroll.LINE_SIZE*2
+@mod    anda  #$0f                           ; modulo to keep 0-15
         asla
         asla
+        stx   @direction
+        stb   @direction2
+        stu   @direction3
+        sty   @direction4
+        sty   @direction5
         clrb                                 ; tileset for each line are 512*2 bytes long
         std   <vscroll.tileset.cursor
         ldd   vscroll.camera.lastY
+        addd  #0                             ; add viewport when going down
+@direction3 equ *-2
 @loop   
-        subd  #1                             ; TODO DIRECTION
-        std   <vscroll.camera.currentY       ; TODO make the map infinite by looping
+        addd  #0
+@direction equ *-2
+        cmpd  vscroll.map.height
+        bhs   >
+        tsta
+        bpl   @end1
+        addd  vscroll.map.height
+        bra   @end1
+!       subd  vscroll.map.height
+@end1   std   <vscroll.camera.currentY
+;
         jsr   vscroll.updateTileCache        ; check cache for this line number (in d)
         lda   vscroll.obj.bufferA.page
         _SetCartPageA                        ; mount in cartridge space
@@ -131,9 +198,15 @@ vscroll.updategfx
         ldd   <vscroll.tileset.cursor
         leay  d,y                            ; move y to start of tileset for this line
         jsr   vscroll.copyBitmap             ; copy bitmap for buffer A
-        cmpu  vscroll.obj.bufferA.end
-        blo   >
-        ldu   vscroll.obj.bufferA.address
+        leau  -vscroll.LINE_SIZE*2,u
+@direction4 equ *-2
+        cmpu  vscroll.obj.bufferA.address
+        bge   @tendA
+        leau  vscroll.BUFFER_LINES*vscroll.LINE_SIZE,u
+        bra   >
+@tendA  cmpu  vscroll.obj.bufferA.end
+        blt   >
+        leau  -vscroll.BUFFER_LINES*vscroll.LINE_SIZE,u
 !       stu   <vscroll.buffer.wAddressA
 ;
         lda   vscroll.obj.bufferB.page
@@ -145,21 +218,34 @@ vscroll.updategfx
         ldd   <vscroll.tileset.cursor
         leay  d,y                            ; move y to start of tileset for this line
         jsr   vscroll.copyBitmap             ; copy bitmap for buffer B
-        cmpu  vscroll.obj.bufferB.end
-        blo   >
-        ldu   vscroll.obj.bufferB.address
+        leau  -vscroll.LINE_SIZE*2,u
+@direction5 equ *-2
+        cmpu  vscroll.obj.bufferB.address
+        bge   @tendB
+        leau  vscroll.BUFFER_LINES*vscroll.LINE_SIZE,u
+        bra   >
+@tendB  cmpu  vscroll.obj.bufferB.end
+        blt   >
+        leau  -vscroll.BUFFER_LINES*vscroll.LINE_SIZE,u
 !       stu   <vscroll.buffer.wAddressB
 ;
         ldd   <vscroll.tileset.cursor        ; increment cursor in tiles
-        subd  #$400                          ; TODO !!! direction
+        addd  #$400
+@direction2 equ *-2
         anda  #$3f                           ; modulo on tileset
         andb  #$ff
         std   <vscroll.tileset.cursor
 ;
         ldd   <vscroll.camera.currentY
         dec   <vscroll.loop.counter
-        bne   @loop
-
+        lbne  @loop
+@exit
+        ldb   vscroll.speed
+        bpl   >
+        ldb   #$ff
+        bra   @end2
+!       clrb
+@end2   stb   vscroll.speed
         ldb   <vscroll.backBuffer            ; restore back video buffer
         stb   map.CF74021.DATA
         rts
@@ -176,17 +262,16 @@ vscroll.updateTileCache
         _SetCartPageA                  ; mount page that contain map data
         ldx   vscroll.obj.map.address
         lda   vscroll.map.cache.y      ; handle up to 512 lines in map, b already loaded
-        _asrd
-        _asrd
-        _asrd
-        _asrd
-        sta   <vscroll.tmp             ; keep bit 8
-        lda   #30                      ; multiply map vertical pos (first 8 bits: 0-7)
-        mul                            ; by 30 bytes (12bits id * 20 tiles)
-        tst   <vscroll.tmp
-        beq   >
-        addd  #256*30                  ; complete the mult with bit8 value
-!       leax  d,x                      ; x point to desired map line
+        _lsrd                          ; divide
+        _lsrd                          ; by
+        _lsrd                          ; 16 to get
+        _lsrd                          ; line number in map
+        _lsrd                          ; divide line in map by two
+        bcc   >                        ; branch if line in map is even
+        leax  30,x                     ; if line in map is odd, offset position in map by 30 bytes (12bits id * 20 tiles)
+!       lda   #60                      ; 2 lines of 30 bytes (12bits id * 20 tiles)
+        mul                            ; mult by line/2
+        leax  d,x                      ; x point to desired data map line
         ldy   #vscroll.map.cache
         lda   #20/2                    ; nb byte to load/2
         sta   <vscroll.loop.counter2
@@ -229,27 +314,49 @@ vscroll.copyBitmap
 ; compute write location in buffer
 ; --------------------------------
 vscroll.computeBufferWAddress
-        clra
+
+        ; compute number of lines to render
+        ldd   #0
+        std   <vscroll.tmp.word        ; init tmp value
         ldb   vscroll.speed
         bpl   >
-        negb                           ; absolute value
+        comb                           ; by truncating, negative is floor and positive is ceil, so make it ceil also for negative
 !       cmpb  vscroll.viewport.height  ; compare to viewport height
         bls   >
+        subb  vscroll.viewport.height
+        stb   <vscroll.tmp.word+1      ; number of skipped lines (outside of viewport)
         ldb   vscroll.viewport.height  ; keep lowest value
 !       stb   <vscroll.loop.counter    ; setup nb of line to render
+
+        ; compute write location in code buffer
+        tst   vscroll.speed
+        bmi   @goUp
+@goDown
+        addd  vscroll.cursor.w
+        subd  #1
+        subd  <vscroll.tmp.word        ; skip lines if needed
+        bmi   @loop
+        cmpd  #vscroll.BUFFER_LINES
+        bhs   @loop2
+        bra   >
+@loop
+        addd  #vscroll.BUFFER_LINES    ; cycling in buffer
+        bmi   @loop
+        bra   >
+@goUp
         negb                           ; substract it to cursor + viewport height
         sex                            ; omg !
         addd  vscroll.cursor.w
         addd  vscroll.viewport.height.w
+        addd  <vscroll.tmp.word
         cmpd  #vscroll.BUFFER_LINES
         blo   >
-@loop
+@loop2
         subd  #vscroll.BUFFER_LINES    ; cycling in buffer
         cmpd  #vscroll.BUFFER_LINES
-        bhs   @loop
+        bhs   @loop2
 !       lda   #vscroll.LINE_SIZE
         mul
-        leax  d,x                      ; x is write location in buffer
         rts
 
 ; -----------------------------------------------------------------------------

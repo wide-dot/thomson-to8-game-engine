@@ -15,6 +15,16 @@ _vscroll.setMap MACRO
  ENDM
 
 ; -----------------------------------------------------------------------------
+; _vscroll.setMapHeight
+; -----------------------------------------------------------------------------
+; input : map height in pixels
+; -----------------------------------------------------------------------------
+_vscroll.setMapHeight MACRO
+        ldd   \1
+        std   vscroll.map.height
+ ENDM
+
+; -----------------------------------------------------------------------------
 ; _vscroll.setTileset
 ; -----------------------------------------------------------------------------
 ; input : object id of tileset A
@@ -109,4 +119,37 @@ _vscroll.setViewport MACRO
         mul
         addd  #$A000                         ; video ram start location
         std   vscroll.viewport.ram
+ ENDM
+
+; -----------------------------------------------------------------------------
+; _vscroll.buffer
+; -----------------------------------------------------------------------------
+; data structure for buffer code
+; -----------------------------------------------------------------------------
+
+_vscroll.buffer.chunk MACRO
+        ldd   #0
+        ldx   #0
+        ldy   #0
+        ldu   #0
+        pshs  d,x,y,u
+ ENDM
+
+_vscroll.buffer.line MACRO
+        _vscroll.buffer.chunk
+        _vscroll.buffer.chunk
+        _vscroll.buffer.chunk
+        _vscroll.buffer.chunk
+        _vscroll.buffer.chunk
+ ENDM
+
+_vscroll.buffer.linex8 MACRO
+        _vscroll.buffer.line
+        _vscroll.buffer.line
+        _vscroll.buffer.line
+        _vscroll.buffer.line
+        _vscroll.buffer.line
+        _vscroll.buffer.line
+        _vscroll.buffer.line
+        _vscroll.buffer.line
  ENDM
