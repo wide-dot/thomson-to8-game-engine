@@ -180,7 +180,7 @@ vscroll.updategfx
         addd  #0
 @direction equ *-2
         cmpd  vscroll.map.height
-        bhs   >
+        bge   >
         tsta
         bpl   @end1
         addd  vscroll.map.height
