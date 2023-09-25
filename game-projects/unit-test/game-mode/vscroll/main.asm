@@ -14,12 +14,13 @@
         jsr   InitJoypads
 
         ; scroll setup
-        _vscroll.setMap #ObjID_level1Map
-        _vscroll.setMapHeight #158*16
-        _vscroll.setTileset #ObjID_level1TileA,#ObjID_level1TileB
+        _vscroll.setMap #ObjID_levelMap
+        _vscroll.setMapHeight #512*16
+        _vscroll.setTileset2048 ObjID_levelTileA0,ObjID_levelTileB0,ObjID_levelTileA1,ObjID_levelTileB1,ObjID_levelTileA2,ObjID_levelTileB2,ObjID_levelTileA3,ObjID_levelTileB3
+        _vscroll.setTileNb #1672
         _vscroll.setBuffer #ObjID_scrollA,#ObjID_scrollB
-        _vscroll.setCameraPos #158*16-200
-        _vscroll.setCameraSpeed #ctrlspeed
+        _vscroll.setCameraPos #512*16-200
+        _vscroll.setCameraSpeed ctrlspeed
         _vscroll.setViewport #0,#200
 
         ; irq setup
@@ -39,21 +40,22 @@ LevelMainLoop
         jsr   ReadJoypads
         jsr   RunObjects
 
-        lda   Dpad_Press
+        lda   Dpad_Held
 TestUp
         bita  #c1_button_up_mask
         beq   TestDown   
         ldx   ctrlspeed
-        leax  -$0005,x
+        leax  -$0010,x
         stx   ctrlspeed
         bra   >
 TestDown
         bita  #c1_button_down_mask
-        beq   >
+        beq   @exit
         ldx   ctrlspeed
-        leax  $0005,x
+        leax  $0010,x
         stx   ctrlspeed
-!       _vscroll.setCameraSpeed ctrlspeed
+!        _vscroll.setCameraSpeed ctrlspeed
+@exit
 
         _gfxlock.on
         jsr   vscroll.do
@@ -61,7 +63,7 @@ TestDown
         _gfxlock.off
 
         _gfxlock.loop
-        bra   LevelMainLoop
+        jmp   LevelMainLoop
 
 ctrlspeed fdb $ff80
 

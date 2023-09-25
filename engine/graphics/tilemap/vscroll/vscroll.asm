@@ -27,10 +27,9 @@ vscroll.BUFFER_LINES        equ   201  ; nb lines in buffer is 201 (0-200 to fit
 ; scroll data is split in 5 pages
 vscroll.obj.map.page        fcb   0
 vscroll.obj.map.address     fdb   0
-vscroll.obj.tileA.page      fcb   0
-vscroll.obj.tileA.address   fdb   0
-vscroll.obj.tileB.page      fcb   0
-vscroll.obj.tileB.address   fdb   0
+vscroll.obj.tile.pages      fill  0,32 ; pages for every line tileset A and B
+vscroll.obj.tile.adresses   fill  0,32 ; starting position for every line tileset (generic)
+vscroll.obj.tile.nbx2       fdb   0
 vscroll.obj.bufferA.page    fcb   0
 vscroll.obj.bufferA.address fdb   0
 vscroll.obj.bufferA.end     fdb   0
@@ -66,9 +65,9 @@ vscroll.loop.counter2       equ dp_extreg+1  ; BYTE
 vscroll.backBuffer          equ dp_extreg+2  ; BYTE
 vscroll.buffer.wAddressA    equ dp_extreg+3  ; WORD
 vscroll.buffer.wAddressB    equ dp_extreg+5  ; WORD
-vscroll.tileset.cursor      equ dp_extreg+7  ; WORD
-vscroll.camera.currentY     equ dp_extreg+9  ; WORD
-vscroll.tmp.word            equ dp_extreg+11 ; WORD
+vscroll.camera.currentY     equ dp_extreg+7  ; WORD
+vscroll.skippedLines        equ dp_extreg+9  ; WORD
+vscroll.tileset.line        equ dp_extreg+11 ; BYTE
 
 vscroll.move
 
@@ -137,42 +136,42 @@ vscroll.move
 ; -------------------------
 vscroll.updategfx
         jsr   vscroll.computeBufferWAddress
+        tst   <vscroll.loop.counter
+        lbeq  @exit                          ; when viewport shrink nothing to render
         ldx   vscroll.obj.bufferA.address
         leax  d,x
         stx   <vscroll.buffer.wAddressA
         ldx   vscroll.obj.bufferB.address
         leax  d,x
         stx   <vscroll.buffer.wAddressB
-
         ; compute current line in tile
         ldb   map.CF74021.DATA
         stb   <vscroll.backBuffer            ; backup back video buffer
         lda   vscroll.camera.lastY+1         ; LSB only
-        ; todo adda nb skip lines (outside viewport)
+        adda  <vscroll.skippedLines          ; nb skip lines (outside viewport)
         ldb   vscroll.speed
         bpl   >
         deca                                 ; next line in tile
-        ldx   #-1
-        ldb   #-4
+        ldb   #$4A ; deca
         ldu   #0
-        ldy   #0
+        ldx   #0
+        ldy   #-1
         bra   @mod
 !       adda  vscroll.viewport.height
         inca                                 ; previous line in tile
-        ldx   #1
-        ldb   #4
+        ldb   #$4C ; inca
         ldu   vscroll.viewport.height.w
-        ldy   #-vscroll.LINE_SIZE*2
-@mod    anda  #$0f                           ; modulo to keep 0-15
-        asla
-        asla
-        stx   @direction
+        ldx   #-vscroll.LINE_SIZE*2
+        ldy   #1
+@mod
+        anda  #$0f                           ; modulo to keep 0-15      
+        sta   <vscroll.tileset.line
+        ; setup dynamic code in main scroll loop
+        sty   @direction
         stb   @direction2
         stu   @direction3
-        sty   @direction4
-        sty   @direction5
-        clrb                                 ; tileset for each line are 512*2 bytes long
-        std   <vscroll.tileset.cursor
+        stx   @direction4
+        stx   @direction5
         ldd   vscroll.camera.lastY
         addd  #0                             ; add viewport when going down
 @direction3 equ *-2
@@ -191,12 +190,14 @@ vscroll.updategfx
         jsr   vscroll.updateTileCache        ; check cache for this line number (in d)
         lda   vscroll.obj.bufferA.page
         _SetCartPageA                        ; mount in cartridge space
-        lda   vscroll.obj.tileA.page
+        lda   <vscroll.tileset.line
+        lsla
+        ldx   #vscroll.obj.tile.adresses     ; load A tileset addr
+        ldy   a,x
+        ldx   #vscroll.obj.tile.pages        ; load A tileset page
+        lda   a,x
         sta   map.CF74021.DATA               ; mount in data space
         ldu   <vscroll.buffer.wAddressA
-        ldy   vscroll.obj.tileA.address
-        ldd   <vscroll.tileset.cursor
-        leay  d,y                            ; move y to start of tileset for this line
         jsr   vscroll.copyBitmap             ; copy bitmap for buffer A
         leau  -vscroll.LINE_SIZE*2,u
 @direction4 equ *-2
@@ -211,12 +212,15 @@ vscroll.updategfx
 ;
         lda   vscroll.obj.bufferB.page
         _SetCartPageA                        ; mount in cartridge space
-        lda   vscroll.obj.tileB.page
+        lda   <vscroll.tileset.line
+        lsla
+        ldx   #vscroll.obj.tile.adresses     ; load B tileset addr
+        ldy   a,x
+        inca                                 ; load B tileset page
+        ldx   #vscroll.obj.tile.pages
+        lda   a,x
         sta   map.CF74021.DATA               ; mount in data space
         ldu   <vscroll.buffer.wAddressB
-        ldy   vscroll.obj.tileB.address
-        ldd   <vscroll.tileset.cursor
-        leay  d,y                            ; move y to start of tileset for this line
         jsr   vscroll.copyBitmap             ; copy bitmap for buffer B
         leau  -vscroll.LINE_SIZE*2,u
 @direction5 equ *-2
@@ -229,12 +233,11 @@ vscroll.updategfx
         leau  -vscroll.BUFFER_LINES*vscroll.LINE_SIZE,u
 !       stu   <vscroll.buffer.wAddressB
 ;
-        ldd   <vscroll.tileset.cursor        ; increment cursor in tiles
-        addd  #$400
-@direction2 equ *-2
-        anda  #$3f                           ; modulo on tileset
-        andb  #$ff
-        std   <vscroll.tileset.cursor
+        lda   <vscroll.tileset.line
+        inca
+@direction2 equ *-1
+        anda  #$0f
+        sta   <vscroll.tileset.line
 ;
         ldd   <vscroll.camera.currentY
         dec   <vscroll.loop.counter
@@ -317,24 +320,24 @@ vscroll.computeBufferWAddress
 
         ; compute number of lines to render
         ldd   #0
-        std   <vscroll.tmp.word        ; init tmp value
+        std   <vscroll.skippedLines        ; init tmp value
         ldb   vscroll.speed
         bpl   >
-        comb                           ; by truncating, negative is floor and positive is ceil, so make it ceil also for negative
-!       cmpb  vscroll.viewport.height  ; compare to viewport height
+        comb                               ; by truncating, negative is floor and positive is ceil, so make it ceil also for negative
+!       cmpb  vscroll.viewport.height      ; compare to viewport height
         bls   >
         subb  vscroll.viewport.height
-        stb   <vscroll.tmp.word+1      ; number of skipped lines (outside of viewport)
-        ldb   vscroll.viewport.height  ; keep lowest value
-!       stb   <vscroll.loop.counter    ; setup nb of line to render
+        stb   <vscroll.skippedLines+1      ; number of skipped lines (outside of viewport)
+        ldb   vscroll.viewport.height      ; keep lowest value
+!       stb   <vscroll.loop.counter        ; setup nb of line to render
 
-        ; compute write location in code buffer
+        ; compute relative write location in code buffer
         tst   vscroll.speed
         bmi   @goUp
 @goDown
         addd  vscroll.cursor.w
         subd  #1
-        subd  <vscroll.tmp.word        ; skip lines if needed
+        subd  <vscroll.skippedLines        ; skip lines if needed
         bmi   @loop
         cmpd  #vscroll.BUFFER_LINES
         bhs   @loop2
@@ -348,7 +351,7 @@ vscroll.computeBufferWAddress
         sex                            ; omg !
         addd  vscroll.cursor.w
         addd  vscroll.viewport.height.w
-        addd  <vscroll.tmp.word
+        addd  <vscroll.skippedLines
         cmpd  #vscroll.BUFFER_LINES
         blo   >
 @loop2
