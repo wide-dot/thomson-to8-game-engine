@@ -30,23 +30,99 @@ _vscroll.setMapHeight MACRO
 ; input : object id of tileset A
 ; input : object id of tileset B
 ; -----------------------------------------------------------------------------
+
 _vscroll.setTileset MACRO
+        lda   #4
+        sta   <dp_extreg
+        ldu   #@list
         ldx   #Obj_Index_Page
-        ldy   #Obj_Index_Address
-        ldb   \1
-        lda   b,x   
-        sta   vscroll.obj.tileA.page
-        aslb
-        ldu   b,y
-        leau  $A000,u
-        stu   vscroll.obj.tileA.address
-        ldb   \2
-        lda   b,x   
-        sta   vscroll.obj.tileB.page
-        aslb
-        ldu   b,y
-        leau  $A000,u
-        stu   vscroll.obj.tileB.address
+        ldy   #vscroll.obj.tile.pages
+@loop   equ   *
+        ldd   ,u++
+        lda   a,x   
+        ldb   b,x   
+        sta   ,y+
+        stb   ,y+
+        sta   ,y+
+        stb   ,y+
+        sta   ,y+
+        stb   ,y+
+        sta   ,y+
+        stb   ,y+
+        dec   <dp_extreg
+        bne   @loop
+        bra   @list+8
+@list   equ   *
+ ENDM
+
+_vscroll.setTileset256 MACRO
+        _vscroll.setTileset
+        fcb   \1
+        fcb   \2
+        fcb   \1
+        fcb   \2
+        fcb   \1
+        fcb   \2
+        fcb   \1
+        fcb   \2
+ ENDM
+
+_vscroll.setTileset512 MACRO
+        _vscroll.setTileset256
+ ENDM
+
+_vscroll.setTileset1024 MACRO
+        _vscroll.setTileset
+        fcb   \1
+        fcb   \2
+        fcb   \3
+        fcb   \4
+        fcb   \1
+        fcb   \2
+        fcb   \3
+        fcb   \4
+ ENDM
+
+_vscroll.setTileset2048 MACRO
+        _vscroll.setTileset
+        fcb   \1
+        fcb   \2
+        fcb   \3
+        fcb   \4
+        fcb   \5
+        fcb   \6
+        fcb   \7
+        fcb   \8
+ ENDM
+
+; -----------------------------------------------------------------------------
+; _vscroll.setTileNb
+; -----------------------------------------------------------------------------
+; input : number of tiles
+; -----------------------------------------------------------------------------
+_vscroll.setTileNb MACRO
+
+        ldd   \1
+        _asld
+        std   vscroll.obj.tile.nbx2
+        _negd
+        addd  #$A000+$4000
+        std   @test
+        ; compute lut for each starting address of the 16 line tilesets
+        lda   #16
+        sta   <dp_extreg
+        ldx   #vscroll.obj.tile.adresses
+        ldd   #$A000
+@loop   equ   *
+        std   ,x++
+        addd  vscroll.obj.tile.nbx2
+        cmpd  #$A000+4000
+@test   equ   *-2
+        blo   >
+        ldd   #$A000
+!       dec   <dp_extreg
+        bne   @loop
+
  ENDM
 
 ; -----------------------------------------------------------------------------
@@ -106,13 +182,13 @@ _vscroll.setCameraSpeed MACRO
 ; -----------------------------------------------------------------------------
 ; _vscroll.setViewport
 ; -----------------------------------------------------------------------------
-; input : viewport height (in pixel)
 ; input : viewport line start from top of screen (in pixel)
+; input : viewport height (in pixel)
 ; -----------------------------------------------------------------------------
 _vscroll.setViewport MACRO
+        lda   \2
+        sta   vscroll.viewport.height
         lda   \1
-        ldb   \2
-        stb   vscroll.viewport.height
         sta   vscroll.viewport.y
         adda  vscroll.viewport.height
         ldb   #40                            ; nb of bytes in a line
