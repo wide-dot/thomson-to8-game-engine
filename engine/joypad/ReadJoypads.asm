@@ -116,7 +116,7 @@ ReadJoypads                            *ReadJoypads:
         comb                           *    not.b   d0
         std   Joypads_Read        
         ldd   Joypads_Held             *    move.b  (a0),d1           ; Get held button data
-        eora  Dpad_Read                *    eor.b   d0,d1             ; Toggle off buttons that are being held                       
+        eora  Dpad_Read                *    eor.b   d0,d1             ; Toggle off buttons that were previously being held                  
         eorb  Fire_Read
                                        *    move.b  d0,(a0)+          ; Put raw controller input (for held buttons) in F604/F606
         anda  Dpad_Read                *    and.b   d0,d1

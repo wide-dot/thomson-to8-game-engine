@@ -5,6 +5,7 @@
         INCLUDE "./engine/macros.asm"
         INCLUDE "./engine/graphics/buffer/gfxlock.macro.asm"
         INCLUDE "./engine/graphics/tilemap/vscroll/vscroll.macro.asm"
+        INCLUDE "./engine/object-management/objectWave.macro.asm"
 
         ; global init
         org   $6100
@@ -23,6 +24,9 @@
         _vscroll.setCameraSpeed ctrlspeed
         _vscroll.setViewport #0,#200
 
+        ; object wave setup
+        _objectWave.init vscroll.camera.y
+
         ; irq setup
         ldd   #UserIRQ
         std   Irq_user_routine
@@ -37,9 +41,10 @@
 * Main Loop
 * ==========================================================================
 LevelMainLoop
-        jsr   ReadJoypads
-        jsr   RunObjects
 
+        ; direction control based on joypad
+        ; ---------------------------------
+        jsr   ReadJoypads
         lda   Dpad_Held
 TestUp
         bita  #c1_button_up_mask
@@ -57,6 +62,16 @@ TestDown
 !        _vscroll.setCameraSpeed ctrlspeed
 @exit
 
+        ; object instanciation based on camera position
+        ; ---------------------------------------------
+        _objectWave.do vscroll.camera.y
+
+        ; object execution
+        ; ----------------
+        jsr   RunObjects
+
+        ; gfx write
+        ; ---------
         _gfxlock.on
         jsr   vscroll.do
         jsr   vscroll.move
@@ -93,6 +108,7 @@ UserIRQ
         INCLUDE "./engine/joypad/ReadJoypads.asm"
         INCLUDE "./engine/object-management/RunObjects.asm"
         INCLUDE "./engine/object-management/RunPgSubRoutine.asm"
+        INCLUDE "./engine/object-management/objectWaveReverse.asm"
         INCLUDE "./engine/ram/ClearDataMemory.asm"
         INCLUDE "./engine/InitGlobals.asm"
         INCLUDE "./engine/graphics/tilemap/vscroll/vscroll.asm"

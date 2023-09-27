@@ -4,7 +4,7 @@
 ; system addresses
 
 ; mc6846
-map.MC6846.CSR      equ $E7C0
+map.MC6846.CSR      equ $E7C0 ; (bit2) set mute
 map.MC6846.CRC      equ $E7C1
 map.MC6846.DDRC     equ $E7C2
 map.MC6846.PRC      equ $E7C3 ; (bit0) set half ram page 0 (low or high) in video area ($4000-$5FFF)
