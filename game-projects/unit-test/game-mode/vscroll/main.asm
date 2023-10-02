@@ -20,12 +20,12 @@
         _vscroll.setTileset2048 ObjID_levelTileA0,ObjID_levelTileB0,ObjID_levelTileA1,ObjID_levelTileB1,ObjID_levelTileA2,ObjID_levelTileB2,ObjID_levelTileA3,ObjID_levelTileB3
         _vscroll.setTileNb #1672
         _vscroll.setBuffer #ObjID_scrollA,#ObjID_scrollB
-        _vscroll.setCameraPos #512*16-200
+        _vscroll.setCameraPos #0
         _vscroll.setCameraSpeed ctrlspeed
         _vscroll.setViewport #0,#200
 
         ; object wave setup
-        _objectWave.init vscroll.camera.y
+        _objectWave.init #ObjID_levelWave,vscroll.camera.y
 
         ; irq setup
         ldd   #UserIRQ
@@ -80,7 +80,7 @@ TestDown
         _gfxlock.loop
         jmp   LevelMainLoop
 
-ctrlspeed fdb $ff80
+ctrlspeed fdb $0080
 
 * ---------------------------------------------------------------------------
 * MAIN IRQ
@@ -108,7 +108,7 @@ UserIRQ
         INCLUDE "./engine/joypad/ReadJoypads.asm"
         INCLUDE "./engine/object-management/RunObjects.asm"
         INCLUDE "./engine/object-management/RunPgSubRoutine.asm"
-        INCLUDE "./engine/object-management/objectWaveReverse.asm"
+        INCLUDE "./engine/object-management/objectWave.asm"
         INCLUDE "./engine/ram/ClearDataMemory.asm"
         INCLUDE "./engine/InitGlobals.asm"
         INCLUDE "./engine/graphics/tilemap/vscroll/vscroll.asm"

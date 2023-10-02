@@ -4,7 +4,13 @@
 ; input : cursor position
 ; -----------------------------------------------------------------------------
 _objectWave.init MACRO
-        ldx   \1
+        ldb   \1
+        ldx   #Obj_Index_Page
+        lda   b,x   
+        aslb
+        ldx   #Obj_Index_Address
+        ldy   b,x
+        ldx   \2
         jsr   objectWave.init
  ENDM
 
