@@ -22,6 +22,8 @@ objectWave.data.page equ *-1           ; wave data page
 objectWave.data.cursor equ *-2         ; current position in wave data
 !       cmpx  ,y
         blo   @rts
+        cmpx  #$FFFF
+        beq   @rts                     ; end marker
         pshs  x,y
         jsr   LoadObject_u
         puls  x,y                      ; puls does not change zero
@@ -40,20 +42,21 @@ objectWave.data.cursor equ *-2         ; current position in wave data
 ; -----------------------------------------------------------------------------
 ; objectWave.init
 ; -----------------------------------------------------------------------------
+; input  REG : [A] data page
+; input  REG : [X] data address
 ; input  REG : [X] time
 ; -----------------------------------------------------------------------------
 ; move to desired position in wave
 ; -----------------------------------------------------------------------------
 objectWave.init
-        pshs  a,x,y
-        lda   objectWave.data.page
+        sta   objectWave.data.page
         _SetCartPageA
-        ldy   objectWave.data.address
+        sty   objectWave.data.address
 !       cmpx  ,y
         blo   @end
         leay  8,y
         bra   <
 @end    sty   objectWave.data.cursor
-        puls  a,x,y,pc
+        rts
 
 objectWave.data.address fdb 0
