@@ -31,7 +31,7 @@ _vscroll.setMapHeight MACRO
 ; input : object id of tileset B
 ; -----------------------------------------------------------------------------
 
-_vscroll.setTileset MACRO
+_vscroll.setTileset_ MACRO
         lda   #4
         sta   <dp_extreg
         ldu   #@list
@@ -56,7 +56,7 @@ _vscroll.setTileset MACRO
  ENDM
 
 _vscroll.setTileset256 MACRO
-        _vscroll.setTileset
+        _vscroll.setTileset_
         fcb   \1
         fcb   \2
         fcb   \1
@@ -68,11 +68,11 @@ _vscroll.setTileset256 MACRO
  ENDM
 
 _vscroll.setTileset512 MACRO
-        _vscroll.setTileset256
+        _vscroll.setTileset256 \1,\2
  ENDM
 
 _vscroll.setTileset1024 MACRO
-        _vscroll.setTileset
+        _vscroll.setTileset_
         fcb   \1
         fcb   \2
         fcb   \3
@@ -84,7 +84,7 @@ _vscroll.setTileset1024 MACRO
  ENDM
 
 _vscroll.setTileset2048 MACRO
-        _vscroll.setTileset
+        _vscroll.setTileset_
         fcb   \1
         fcb   \2
         fcb   \3
