@@ -4,7 +4,7 @@
 * Routine to instanciate objects based on a 16bit meter
 * expected data sequence :
 * AAAA (time meter) BB (id objet) CC (subtype) DDDD (x_pos) EEEE (y_pos) 
-* end marker : $FFFF
+* end marker : 0
 * ---------------------------------------------------------------------------
 
 ; -----------------------------------------------------------------------------
@@ -20,10 +20,10 @@ objectWave.data.page equ *-1           ; wave data page
         _SetCartPageA
         ldy   #0
 objectWave.data.cursor equ *-2         ; current position in wave data
-!       cmpx  ,y
+!       ldd   ,y                       
+        beq   @rts                     ; end marker found
+        cmpx  ,y
         bhi   @rts
-        cmpx  #$FFFF
-        beq   @rts                     ; end marker
         pshs  x,y
         jsr   LoadObject_u
         puls  x,y                      ; puls does not change zero
@@ -43,7 +43,7 @@ objectWave.data.cursor equ *-2         ; current position in wave data
 ; objectWave.init
 ; -----------------------------------------------------------------------------
 ; input  REG : [A] data page
-; input  REG : [X] data address
+; input  REG : [Y] data address
 ; input  REG : [X] time
 ; -----------------------------------------------------------------------------
 ; move to desired position in wave
