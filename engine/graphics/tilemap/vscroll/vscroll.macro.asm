@@ -118,7 +118,7 @@ _vscroll.setTileNb MACRO
         addd  vscroll.obj.tile.nbx2
         cmpd  #$A000+4000
 @test   equ   *-2
-        blo   >
+        bls   >
         ldd   #$A000
 !       dec   <dp_extreg
         bne   @loop
