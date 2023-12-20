@@ -8,19 +8,21 @@
 
         INCLUDE "./engine/macros.asm" 
 
-Init_routine   equ 0
-Ground_routine equ 1
-Jump_routine   equ 2
-Fall_routine   equ 3
+Init_routine       equ 0
+Ground_routine     equ 1
+Jump_routine       equ 2
+Fall_routine       equ 3
+FallSlowly_routine equ 4
 
-top_speed        equ $200
-acceleration     equ $C0
-deceleration     equ $80
+h_top_speed      equ $A0
+h_fallslow_speed equ $40
+v_top_speed      equ $400
+v_fallslow_acl   equ $180
 gravity          equ $40
-vel_jump         equ $04D0
-init_y_pos       equ $00B8
-init_x_pos       equ $001B
-bottom_sensor    equ 8
+vel_jump         equ $4D0
+init_y_pos       equ $B8
+init_x_pos       equ $1B
+bottom_sensor    equ 9
 left_sensor      equ 3
 right_sensor     equ 4
 room_x_offset    equ 16
@@ -36,6 +38,7 @@ Player_Routines
         fdb   Ground
         fdb   Jump
         fdb   Fall
+        fdb   FallSlowly
 
 Init
         ldd   #Ani_Player_Wait
@@ -57,9 +60,6 @@ Init
         ldd   #init_y_pos
         std   y_pos,u
 
-        ldd   #gravity
-        std   y_acl,u
-
         lda   #Ground_routine
         sta   routine,u
         
@@ -76,8 +76,12 @@ Ground
         std   anim,u
         jmp   Jump
 
+!       ; init x_vel
+        ldd   #0
+        std   x_vel,u
+
         ; test left
-!       lda   Dpad_Held
+        lda   Dpad_Held
         bita  #c1_button_left_mask
         beq   >   
 
@@ -86,7 +90,7 @@ Ground
         sta   status_flags,u
         ldd   #Ani_Player_Run
         std   anim,u
-        ldd   #-acceleration
+        ldd   #-h_top_speed
         std   x_vel,u
         bra   GroundAnim
 
@@ -99,7 +103,7 @@ Ground
         sta   status_flags,u
         ldd   #Ani_Player_Run
         std   anim,u
-        ldd   #acceleration
+        ldd   #h_top_speed
         std   x_vel,u
         bra   GroundAnim
 
@@ -112,12 +116,16 @@ Ground
 GroundAnim
         jsr   AnimateSpriteSync   
         jsr   ObjectMoveSync
-        jsr   CheckFloor
+        jsr   CheckFalling
         jsr   CheckWallLeft
         jsr   CheckWallRight
         jmp   DisplaySprite
 
 Jump
+        ; init x_vel
+        ldd   #0
+        std   x_vel,u
+
         ; test left
         lda   Dpad_Held
         bita  #c1_button_left_mask
@@ -126,7 +134,7 @@ Jump
         lda   status_flags,u
         anda  #^status_xflip_mask
         sta   status_flags,u
-        ldd   #-acceleration
+        ldd   #-h_top_speed
         std   x_vel,u
         bra   JumpAnim
 
@@ -137,11 +145,13 @@ Jump
         lda   status_flags,u
         ora   #status_xflip_mask
         sta   status_flags,u
-        ldd   #acceleration
+        ldd   #h_top_speed
         std   x_vel,u
 
 JumpAnim
         jsr   AnimateSpriteSync   
+        ldd   #gravity
+        std   y_acl,u
         jsr   ObjectFallSync
         jsr   ObjectMoveSync
 
@@ -159,13 +169,22 @@ JumpAnim
         bhi   >
         lda   #room_x_offset+4*2+left_sensor
         sta   x_pos+1,u
+        ldd   #0
+        std   x_vel,u
+        jmp   DisplaySprite
 !       cmpa  #room_x_offset+4*30-right_sensor
         blo   >
         lda   #room_x_offset+4*30-right_sensor
         sta   x_pos+1,u
+        ldd   #0
+        std   x_vel,u
 !       jmp   DisplaySprite
 
 Fall
+        ; init x_vel
+        ldd   #0
+        std   x_vel,u
+
         ; test left
         lda   Dpad_Held
         bita  #c1_button_left_mask
@@ -174,7 +193,7 @@ Fall
         lda   status_flags,u
         anda  #^status_xflip_mask
         sta   status_flags,u
-        ldd   #-acceleration
+        ldd   #-h_top_speed
         std   x_vel,u
         bra   FallAnim
 
@@ -185,27 +204,82 @@ Fall
         lda   status_flags,u
         ora   #status_xflip_mask
         sta   status_flags,u
-        ldd   #acceleration
+        ldd   #h_top_speed
         std   x_vel,u
 
 FallAnim
-        jsr   AnimateSpriteSync   
+        jsr   AnimateSpriteSync
+        ldd   #v_top_speed
+        cmpd  y_vel,u
+        bhi   >
+        lda   #FallSlowly_routine
+        sta   routine,u
+!       ldd   #gravity
+        std   y_acl,u
         jsr   ObjectFallSync
         jsr   ObjectMoveSync
-        jsr   CheckFloor
         jsr   CheckWallLeft
         jsr   CheckWallRight
+        jsr   CheckLanding
         jmp   DisplaySprite
 
-CheckFloor
+FallSlowly
+        ; init x_vel
+        ldd   #0
+        std   x_vel,u
+
+        ; test left
+        lda   Dpad_Held
+        bita  #c1_button_left_mask
+        beq   >   
+
+        lda   status_flags,u
+        anda  #^status_xflip_mask
+        sta   status_flags,u
+        ldd   #-h_fallslow_speed
+        std   x_vel,u
+        bra   FallSlowlyAnim
+
+        ; test right
+!       bita  #c1_button_right_mask
+        beq   FallSlowlyAnim
+
+        lda   status_flags,u
+        ora   #status_xflip_mask
+        sta   status_flags,u
+        ldd   #h_fallslow_speed
+        std   x_vel,u
+
+FallSlowlyAnim
+        jsr   AnimateSpriteSync
+        ldd   #0
+        std   y_vel,u
+        ldd   #v_fallslow_acl
+        std   y_acl,u
+        jsr   ObjectFallSync
+        jsr   ObjectMoveSync
+        jsr   CheckWallLeft
+        jsr   CheckWallRight
+        jsr   CheckLanding
+        jmp   DisplaySprite
+
+CheckLanding
         lda   x_pos+1,u
-        suba  #room_x_offset
+        adda  #-left_sensor-room_x_offset+1
         ldb   y_pos+1,u
         addb  #bottom_sensor
         ldx   #Level1
         jsr   room.checkSolid
-        beq   >
+        bne   >
 
+        lda   x_pos+1,u
+        adda  #right_sensor-room_x_offset-1
+        ldb   y_pos+1,u
+        addb  #bottom_sensor
+        ldx   #Level1
+        jsr   room.checkSolid
+        beq   @rts
+!
         ; landing
         ldd   y_pos,u
         addd  #bottom_sensor
@@ -216,14 +290,30 @@ CheckFloor
         std   y_vel,u
         lda   #Ground_routine
         sta   routine,u
-        rts
+@rts    rts
 
-        ; falling
-!       lda   #Fall_routine
+CheckFalling
+        lda   x_pos+1,u
+        adda  #-left_sensor-room_x_offset+1
+        ldb   y_pos+1,u
+        addb  #bottom_sensor
+        ldx   #Level1
+        jsr   room.checkSolid
+        bne   >
+
+        lda   x_pos+1,u
+        adda  #right_sensor-room_x_offset-1
+        ldb   y_pos+1,u
+        addb  #bottom_sensor
+        ldx   #Level1
+        jsr   room.checkSolid
+        bne   >
+
+        lda   #FallSlowly_routine
         sta   routine,u
         ldd   #Ani_Player_Fall
         std   anim,u
-        rts
+!       rts
 
 CheckWallLeft
         lda   x_pos+1,u
