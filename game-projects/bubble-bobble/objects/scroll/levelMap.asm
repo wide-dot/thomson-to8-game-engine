@@ -1,0 +1,1 @@
+        INCLUDEBIN "./objects/scroll/map.0.bin"
