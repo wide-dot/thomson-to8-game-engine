@@ -63,6 +63,10 @@ zx0_decompress
                    std >zx0_offset+2
                    endc
 
+                   ifndef ZX0_DISABLE_ALIGN
+                   align  (*/256)*256+256
+                   endc
+
 zx0_dp             equ */256
                    ldd #($80*256)+zx0_dp  ; init bit stream and register DP
                    tfr b,dp

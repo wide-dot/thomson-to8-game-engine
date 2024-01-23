@@ -1,6 +1,7 @@
         opt   c,ct
 
-SOUND_CARD_PROTOTYPE equ 1 ;ancien port carte sons
+SOUND_CARD_PROTOTYPE equ 1 ; ancien port carte son SN79486
+SN76489_JUMPER_LOW equ 1 ; jumper set (low address)
         INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/system/to8/map.const.asm"
         INCLUDE "./engine/constants.asm"
@@ -51,9 +52,9 @@ _MusicFrame_objymm MACRO
 
         ; init music
         _MountObject ObjID_ymm01
-        _MusicInit_objymm #0,#MUSIC_LOOP,#0  ; initialize the YM2413 player 
+        _MusicInit_objymm #0,#MUSIC_NO_LOOP,#0  ; initialize the YM2413 player 
         _MountObject ObjID_vgc01
-        _MusicInit_objvgc #0,#MUSIC_LOOP,#0  ; initialize the SN76489 vgm player with a vgc data stream
+        _MusicInit_objvgc #0,#MUSIC_NO_LOOP,#0  ; initialize the SN76489 vgm player with a vgc data stream
 
         ; init user irq
         jsr   IrqInit
