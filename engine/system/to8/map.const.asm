@@ -47,8 +47,8 @@ map.CF74021.LGAMOD  equ $E7DC
 map.CF74021.SYS2    equ $E7DD ; (bit0-3) set screen border color, (bit6-7) set onscreen video memory page
 map.CF74021.COM     equ $E7E4
 map.CF74021.DATA    equ $E7E5 ; (bit0-4) set ram page in data area ($A000-$DFFF)
-map.CF74021.CART    equ $E7E6 ; (bit0-4) set page in cartridge area ($0000-$3FFF), (bit5) ram over cartridge, (bit6) write enable
-map.CF74021.SYS1    equ $E7E7
+map.CF74021.CART    equ $E7E6 ; (bit0-4) set page in cartridge area ($0000-$3FFF), (bit5) set ram over cartridge, (bit6) enable write
+map.CF74021.SYS1    equ $E7E7 ; (bit4) set ram over data area
 
 ; extension port
 map.EXTPORT         equ $E7
@@ -58,22 +58,46 @@ map.EF5860.TX       equ $E7F3 ; MIDI
  ifndef SOUND_CARD_PROTOTYPE
 map.YM2413.A        equ $E7FC
 map.YM2413.D        equ $E7FD
+ ifndef SN76489_JUMPER_LOW
 map.SN76489.D       equ $E7F7
+ else
+map.SN76489.D       equ $E7F6
+ endc
  else
 map.YM2413.A        equ $E7FC
 map.YM2413.D        equ $E7FD
+ ifndef SN76489_JUMPER_LOW
 map.SN76489.D       equ $E7FF
+ else
+map.SN76489.D       equ $E7FE
+ endc
  endc
 map.MEA8000.D       equ $E7FE
 map.MEA8000.A       equ $E7FF
 
 ; ROM routines
+map.DKCONT          equ $E004 ; TO:DKCO, MO:SWI $26
+map.DKBOOT          equ $E007 ; boot
+map.DKFMT           equ $E00A ; format
+map.LECFA           equ $E00D ; read FAT
+map.RECFI           equ $E010 ; search file
+map.RECUP           equ $E010 ; clear file
+map.ECRSE           equ $E010 ; sector write
+map.ALLOD           equ $E019 ; catalog file allocation
+map.ALLOB           equ $E01C ; bloc allocation
+map.MAJCL           equ $E01F ; cluster update
+map.FINTR           equ $E022 ; transfert end
+map.QDDSTD          equ $E025 ; QDD std functions
+map.QDDSYS          equ $E028 ; QDD sys functions
+
+map.PUTC            equ $E803
 map.GETC            equ $E806
 map.KTST            equ $E809
 map.DKCO            equ $E82A ; read or write floppy disk routine
 map.IRQ.EXIT        equ $E830 ; to exit an irq
 
-; system variables
+; system monitor registers
+map.REG.DP          equ $20   ; direct page for system monitor registers
 map.STATUS          equ $6019 ; status bitfield
 map.DK.OPC          equ $6048 ; operation
 map.DK.DRV          equ $6049 ; drive

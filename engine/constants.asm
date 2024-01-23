@@ -8,8 +8,8 @@
 *
 * ---------------------------------------------------------------------------
 
- ifndef CONSTANTS_ASM
-CONSTANTS_ASM equ 1
+ ifndef constants.asm
+constants.asm equ 1
 
 * ===========================================================================
 * TO8 Registers
