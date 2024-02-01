@@ -6,6 +6,7 @@
 * Init
 * ============================================================================== 
     _gameMode.init #GmID_loading
+    jsr   InitDrawSprites
     _objectManager.new.u #ObjID_Loading    
     _palette.set #Pal_loading
     _palette.show

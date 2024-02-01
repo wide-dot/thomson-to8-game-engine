@@ -8,7 +8,14 @@
 *
 * input REG : none
 * ---------------------------------------------------------------------------
-                                                                           
+
+InitDrawSprites
+        ldd   #screen_left
+        std   glb_camera_x_offset
+        ldd   #screen_top
+        std   glb_camera_y_offset
+        rts
+
 DrawSprites
 
 DRS_Start

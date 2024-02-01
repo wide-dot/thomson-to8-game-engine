@@ -12,6 +12,7 @@
         INCLUDE "./engine/macros.asm"        
         org   $6100
         jsr   InitGlobals
+        jsr   InitDrawSprites
 
         jsr   LoadObject_u
         lda   #ObjID_Coffee

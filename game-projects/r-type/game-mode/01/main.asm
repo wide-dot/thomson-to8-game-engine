@@ -29,6 +29,7 @@ CHECKPOINT_01      equ 20
 
         org   $6100
         jsr   InitGlobals
+        jsr   InitDrawSprites
 
         lda   #1
         sta   globals.difficulty

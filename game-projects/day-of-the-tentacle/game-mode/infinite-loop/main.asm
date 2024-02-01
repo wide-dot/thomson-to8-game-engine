@@ -5,6 +5,7 @@ ext_variables_size equ 6
 
         org   $6100
         jsr   InitGlobals
+        jsr   InitDrawSprites
         jsr   LoadAct
 
         jsr   ResetMidi

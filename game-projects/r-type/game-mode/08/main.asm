@@ -23,6 +23,7 @@ CHECKPOINT_01      equ 24
 
         org   $6100
         jsr   InitGlobals
+        jsr   InitDrawSprites
         jsr   InitStack
         jsr   LoadAct
         jsr   InitJoypads
