@@ -14,6 +14,7 @@
         org   $6100
         
         jsr   InitGlobals     
+        jsr   InitDrawSprites
         jsr   InitStack           
         jsr   LoadAct
 

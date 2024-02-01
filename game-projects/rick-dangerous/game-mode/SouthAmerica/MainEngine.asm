@@ -12,6 +12,7 @@
         org   $6100
 			
         jsr   InitGlobals
+        jsr   InitDrawSprites
         jsr   InitStack        
         jsr   LoadAct
         _RunObjectRoutineA ObjID_Tilemap,glb_current_submap     

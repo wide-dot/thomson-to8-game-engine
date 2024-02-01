@@ -12,7 +12,8 @@
         INCLUDE "./engine/macros.asm"        
         org   $6100
         jsr   InitGlobals
-
+		jsr   InitDrawSprites
+		
         lda   #GmID_SpecialStage
         sta   glb_Cur_Game_Mode
 		sta   glb_Next_Game_Mode

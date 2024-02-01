@@ -6,6 +6,7 @@
 * Init
 * ============================================================================== 
     _gameMode.init #GmID_splash
+    jsr   InitDrawSprites
     _music.init.SN76489 #Vgc_introSN,#MUSIC_LOOP,#0                  ; initialize the SN76489 player
     _music.init.YM2413 #Vgc_introYM,#MUSIC_LOOP,#0                   ; initialize the YM2413 player 
     _music.init.IRQ #UserIRQ,#OUT_OF_SYNC_VBL,#Irq_one_frame         ; Setting IRQ for music

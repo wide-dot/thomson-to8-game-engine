@@ -39,6 +39,7 @@ _MusicFrame_objymm MACRO
 
         org   $6100
         jsr   InitGlobals
+        jsr   InitDrawSprites
         jsr   InitStack
         jsr   LoadAct
         jsr   PalUpdateNow
