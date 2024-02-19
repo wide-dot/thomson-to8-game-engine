@@ -26,7 +26,7 @@
         rts
 @UpdateMusic
         ldx   YVGM_MusicData
-        bne   YVGM_do_MusicFrame
+        lbne  YVGM_do_MusicFrame
         rts
 
         INCLUDE "./engine/sound/YM2413vgm.asm"

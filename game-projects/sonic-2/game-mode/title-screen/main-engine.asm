@@ -21,7 +21,6 @@
 
         ; init engine globals
         jsr   InitGlobals	
-        jsr   InitDrawSprites
 
 	; game mode
         lda   #GmID_TitleScreen

@@ -1,10 +1,12 @@
+        INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/constants.asm"
-	INCLUDE "./engine/macros.asm"   
+        INCLUDE "./engine/macros.asm"   
 
 ext_variables_size equ 6
 
         org   $6100
         jsr   InitGlobals
+		jsr   InitDrawSprites
         jsr   InitDrawSprites
         jsr   LoadAct
 

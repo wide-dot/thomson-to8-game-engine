@@ -350,7 +350,7 @@ LAB_0000_8eb9
         std   cancer_0x22,u
         jmp   Live
 
-       ;                              FUN_0000_8db0_RunCancerMode1
+       ;                              FUN_0000_8db0_RunCancerMode2
        ;0000:8eee e8 49 6b        CALL       FUN_0000_fa3a_TryFoeFire                         undefined FUN_0000_fa3a_TryFoeFi
        ;0000:8ef1 ff 46 20        INC        word ptr [BP + 0x20]
        ;0000:8ef4 8b 46 30        MOV        AX,word ptr [BP + 0x30]
@@ -365,7 +365,7 @@ LAB_0000_8eb9
        ;0000:8f0c 73 02           JNC        LAB_0000_8f10
        ;0000:8f0e b3 02           MOV        BL,0x2
 
-FUN_0000_8db0_RunCancerMode1
+FUN_0000_8db0_RunCancerMode2
 
         jsr   tryFoeFire
 

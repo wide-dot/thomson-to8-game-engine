@@ -13,8 +13,8 @@
         INCLUDE "./engine/macros.asm"        
         org   $6100
         
-        jsr   InitGlobals     
-        jsr   InitDrawSprites
+        jsr   InitGlobals   
+		jsr   InitDrawSprites
         jsr   InitStack           
         jsr   LoadAct
 
