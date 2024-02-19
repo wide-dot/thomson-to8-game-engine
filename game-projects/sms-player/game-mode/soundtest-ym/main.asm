@@ -15,7 +15,7 @@ SOUND_CARD_PROTOTYPE equ 1
 
         org   $6100
         jsr   InitGlobals
-        jsr   InitDrawSprites
+		jsr   InitDrawSprites
         jsr   InitStack
         jsr   LoadAct
         jsr   InitJoypads

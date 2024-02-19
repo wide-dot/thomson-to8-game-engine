@@ -17,6 +17,6 @@ zx0_6809_mega_wrap
 @rts    rts
 
 ZX0_DISABLE_DISABLING_INTERRUPTS equ 1
-        fill   0,256-(*-((*/256)*256)) padding for dp
+        fill   0,256-(*-(*/256)*256) padding for dp
         INCLUDE "./engine/compression/zx0/zx0_6809_mega.asm"
         setdp   dp/256

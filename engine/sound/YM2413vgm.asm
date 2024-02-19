@@ -22,10 +22,10 @@ YVGM_callback        fdb   0                ; 0=no calback routine
 * PlayMusic - Load a new music and init all tracks
 *
 * receives in X the address of the song
-* destroys X,A
 ******************************************************************************
 
 YVGM_PlayMusic
+		pshs  d,x,y,u  
         jsr   IrqPause
         stb   YVGM_loop
         sty   YVGM_callback
@@ -46,7 +46,8 @@ YVGM_PlayMusic
 @a      equ   *-1
         _SetCartPageA
         jsr   ym2413.reset
-        jmp   IrqUnpause
+        jsr   IrqUnpause
+        puls  d,x,y,u,pc
 
 ******************************************************************************
 * MusicFrame - processes a music frame (VInt)
