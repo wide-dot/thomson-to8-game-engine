@@ -470,10 +470,10 @@ Phase6Init
         stx   addr_pushbutton
         lda   #ObjID_push_button
         sta   id,x
-	ldd   #110
-	std   x_pos,x
-	ldd   #62
-	std   y_pos,x
+	    ldd   #110
+	    std   x_pos,x
+	    ldd   #62
+	    std   y_pos,x
 
 
         ldx   #$100

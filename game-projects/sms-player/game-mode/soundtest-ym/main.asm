@@ -89,6 +89,12 @@ CallbackRoutine
         lda   #1
         sta   YVGM_WaitFrame
         ldx   YVGM_MusicData
+        ldd   ,x
+        cmpd  #2                    ; song with no loop, play only once
+        bne   >
+        clr   YVGM_loop
+        bra   @nextsong
+!       leax  d,x                   ; move to loop point
         ldu   #YM2413_buffer
         stu   YVGM_MusicDataPos
         jsr   ym2413zx0_decompress    

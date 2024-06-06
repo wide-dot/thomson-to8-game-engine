@@ -1,17 +1,19 @@
 
 SoundTest
+        pshs  u
         ldb   snd_tst_new_song
         cmpb  snd_tst_cur_song
         beq   @rts
         jsr   IrqUnpause
         stb   snd_tst_cur_song
-        ldy   #MusicList
+        ldx   #MusicList
         aslb
-        ldx   b,y
-        ldb   #2 ; 0=no loop
+        abx
+        ldx   ,x
+        ldb   #3 ; play intro x1 and theme x2
         ldy   #CallbackRoutine
         jsr   YVGM_PlayMusic 
-@rts    rts
+@rts    puls  u,pc
 
 MusicList
         fdb   Snd_YM01
@@ -36,6 +38,7 @@ MusicList
         fdb   Snd_YM20
         fdb   Snd_YM21
         fdb   Snd_YM22
+        fdb   Snd_YM23
         fdb   Snd_YM24
         fdb   Snd_YM25
         fdb   Snd_YM26

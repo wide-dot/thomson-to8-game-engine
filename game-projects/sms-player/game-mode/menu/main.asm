@@ -118,8 +118,8 @@ DoChangeGameMode
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"
 
         ; music and palette
-	; irq
+        ; irq
         INCLUDE "./engine/irq/Irq.asm"
-	INCLUDE "./engine/palette/PalUpdateNow.asm"
+        INCLUDE "./engine/palette/PalUpdateNow.asm"
         INCLUDE "./engine/palette/color/Pal_white.asm"
         INCLUDE "./engine/palette/color/Pal_black.asm"

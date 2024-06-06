@@ -1,7 +1,7 @@
 ;SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/constants.asm"
-	INCLUDE "./engine/macros.asm"   
+	    INCLUDE "./engine/macros.asm"   
 
 ext_variables_size equ 6
 
@@ -12,16 +12,15 @@ ext_variables_size equ 6
         jsr   LoadAct
 
         ; initialize the SN76489 vgm player with a vgc data stream
-        ldd   #vgc_stream_buffers
         ldx   #Vgc_intro
-        ;andcc #$fe ; clear carry (no loop)
-        orcc  #1 ; set carry (loop)
+        ldb   #1 ; loop
+        ldy   #0 ; no callback
         jsr   vgc_init 
 
         ; init YM2413 music
         ldx   #Vgc_introYM
-        ;andcc #$fe ; clear carry (no loop)
-        orcc  #1 ; set carry (loop)
+        ldb   #1 ; loop
+        ldy   #0 ; no callback
         jsr   YVGM_PlayMusic
 
         jsr   LoadObject_u
@@ -63,8 +62,8 @@ Dynamic_Object_RAM
         fill  0,nb_dynamic_objects*object_size
 Dynamic_Object_RAM_End
 
-nb_dynamic_objects                 equ 2 ; dynamic allocation
-nb_graphical_objects               equ 2 ; only count objects that will be rendered on screen (max 64 total)
+nb_dynamic_objects   equ 2 ; dynamic allocation
+nb_graphical_objects equ 2 ; only count objects that will be rendered on screen (max 64 total)
 
 UserIRQ
         jsr   PalUpdateNow

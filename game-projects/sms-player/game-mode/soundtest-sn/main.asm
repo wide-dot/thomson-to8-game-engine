@@ -92,6 +92,12 @@ CallbackRoutine
         dec   vgc_loop
         beq   @nextsong
         ldx   vgc_source
+        ldd   ,x
+        cmpd  #2                    ; song with no loop, play only once
+        bne   >
+        clr   vgc_loop
+        bra   @nextsong
+!       leax  d,x                   ; move to loop point
         lda   vgc_loop
         lda   vgc_buffers
         jsr   vgc_stream_mount
@@ -133,9 +139,9 @@ CallbackRoutine
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"
 
         ; music and palette
-	; irq
+        ; irq
         INCLUDE "./engine/irq/Irq.asm"
-	INCLUDE "./engine/palette/PalUpdateNow.asm"
+        INCLUDE "./engine/palette/PalUpdateNow.asm"
         INCLUDE "./engine/palette/color/Pal_white.asm"
         INCLUDE "./engine/palette/color/Pal_black.asm"
 
@@ -196,7 +202,7 @@ CheckReturnToMenu
         ldd   #Pal_black
         std   Pal_current
         clr   PalRefresh
-	jsr   PalUpdateNow
+        jsr   PalUpdateNow
         lda   #GmID_menu
         sta   GameMode
         ldb   #GmID_snplayer

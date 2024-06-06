@@ -1,5 +1,6 @@
 
 SoundTest
+        pshs  u
         ldb   snd_tst_new_song
         cmpb  snd_tst_cur_song
         beq   @rts
@@ -9,10 +10,10 @@ SoundTest
         aslb
         abx
         ldx   ,x
-        ldb   #2 ; 0=no loop
+        ldb   #3 ; play intro x1 and theme x2
         ldy   #CallbackRoutine
         jsr   vgc_init
-@rts    rts
+@rts    puls  u,pc
 
 MusicList
         fdb   Snd_01

@@ -1,0 +1,137 @@
+<configuration>
+    <target name="fd">
+        <default name="floppydisk.storage" value="engine/config/storage.xml"/>
+        <floppydisk model="fd640">
+
+            <section name="SCENE" track="0" face="1" sector="16"/>
+            <section name="DATA"  track="1" face="0" sector="1"/>
+
+            <directory id="0" section="INDEX" genbinary="gen/directories/disk0/directory.bin" gensymbols="gen/directories/disk0/entries.asm">
+                <default name="direntry.section"      value="DATA"/>
+                <default name="direntry.maxsize"      value="0x4000"/>
+                <default name="lwasm.format"          value="obj"/>
+
+                <define symbol="loader.PAGE" value="4"/>
+                <define symbol="loader.ADDRESS" value="$A000"/>
+
+                <!-- Title - game mode -->
+                <!-- ******************************************************* -->
+                <direntry name="assets.gm.title" codec="zx0" loadtimelink="LINK">
+                    <lwasm gensource="gen/assets/game-modes/to8/title/main.asm">
+                        <asm filename="gen/directories/disk0/entries.asm"/>
+                        <asm filename="src/assets/game-modes/to8/title/main.asm"/>
+                    </lwasm>
+                </direntry>
+
+                <!-- Title - sound player -->
+                <!-- ******************************************************* -->
+                <direntry name="engine.object.sound.ymm" codec="zx0" loadtimelink="LINK">
+                    <lwasm>
+                        <asm filename="engine/sound/ymm.asm"/>
+                    </lwasm>
+                </direntry>
+
+                <direntry name="engine.object.sound.vgc" codec="zx0" loadtimelink="LINK">
+                    <lwasm>
+                        <asm filename="engine/sound/vgc.buffers.asm"/>
+                        <asm filename="engine/sound/vgc.asm"/>
+                    </lwasm>
+                </direntry>
+
+                <!-- Title - sound data -->
+                <!-- ******************************************************* -->
+                <direntry name="assets.sounds.title.ymm" loadtimelink="LINK">
+                    <lwasm>
+                        <label name="sounds.title.ymm"/>
+                    </lwasm>
+                    <vgm2ymm filename="src/assets/sounds/title/resources/rtype-title.vgm" genbinary="src/assets/sounds/title/music.ymm" codec="zx0"/>
+                </direntry>
+
+                <direntry name="assets.sounds.title.vgc" loadtimelink="LINK">
+                    <lwasm>
+                        <label name="sounds.title.vgc"/>
+                    </lwasm>
+                        <vgm2vgc filename="src/assets/sounds/title/resources/rtype-title.vgm" genbinary="src/assets/sounds/title/music.vgc"/>
+                </direntry>
+
+                <!-- Title - sound player dynamic port -->
+                <!-- ******************************************************* -->
+                <direntry name="engine.system.to8.sound.ym.const" loadtimelink="LINK">
+                    <lwasm>
+                        <asm filename="engine/system/to8/sound/ym.2.const.asm"/>
+                    </lwasm>
+                </direntry>
+
+                <direntry name="engine.system.to8.sound.sn.const" loadtimelink="LINK">
+                    <lwasm>
+                        <asm filename="engine/system/to8/sound/sn.2.const.asm"/>
+                    </lwasm>
+                </direntry>
+
+                <!-- Level1 - sound data -->
+                <!-- ******************************************************* -->
+                <direntry name="assets.sounds.level1.ymm" loadtimelink="LINK">
+                    <lwasm>
+                        <label name="sounds.level1.ymm"/>
+                    </lwasm>
+                    <vgm2ymm filename="src/assets/sounds/level1/resources/rtype-level1.vgm" genbinary="src/assets/sounds/level1/music.ymm" codec="zx0"/>
+                </direntry>
+
+                <direntry name="assets.sounds.level1.vgc" loadtimelink="LINK">
+                    <lwasm>
+                        <label name="sounds.level1.vgc"/>
+                    </lwasm>
+                        <vgm2vgc filename="src/assets/sounds/level1/resources/rtype-level1.vgm" genbinary="src/assets/sounds/level1/music.vgc"/>
+                </direntry>
+
+                <!-- Scenes -->
+                <!-- ******************************************************* -->
+                <direntry name="scenes.title" section="SCENE">
+                    <lwasm format="raw" gensource="gen/scenes/title.asm">
+                        <asm filename="gen/directories/disk0/entries.asm"/>
+                        <asm filename="src/scenes/to8/title/scene.asm"/>
+                    </lwasm>
+                </direntry>
+
+                <direntry name="scenes.level1" section="SCENE">
+                    <lwasm format="raw" gensource="gen/scenes/level1.asm">
+                        <asm filename="gen/directories/disk0/entries.asm"/>
+                        <asm filename="src/scenes/to8/level1/scene.asm"/>
+                    </lwasm>
+                </direntry>
+
+            </directory>
+
+            <!-- Boot loader -->
+            <!-- *********************************************************** -->
+            <define symbol="loader.DEFAULT_DYNAMIC_MEMORY_SIZE" value="$1000"/>
+
+            <define symbol="boot.CHECK_MEMORY_EXT"/>
+
+            <data section="LOADER">
+                <lwasm format="raw" gensource="gen/bootloader/loader.asm">
+                    <asm filename="gen/directories/disk0/entries.asm"/>
+                    <asm xml:space="preserve">loader.DEFAULT_SCENE_DIR_ID    equ 0</asm>
+                    <asm xml:space="preserve">loader.DEFAULT_SCENE_EXEC_PAGE equ 1</asm>
+                    <asm xml:space="preserve">loader.DEFAULT_SCENE_EXEC_ADDR equ $6100</asm>
+                    <asm xml:space="preserve">loader.DEFAULT_SCENE_FILE_ID   equ scenes.title</asm>
+                    <asm filename="engine/system/to8/bootloader/loader.asm"/>
+                </lwasm>
+            </data>
+
+            <data section="BOOT" maxsize="0x100">   
+                <cksumfd640>
+                    <lwasm format="raw">
+                        <asm filename="engine/system/to8/bootloader/boot.asm"/>
+                    </lwasm>
+                </cksumfd640>
+            </data>
+
+            <fd  filename="to8.fd"/>
+            <sd  filename="to8.sd"/>
+            <sap filename="to8.sap"/>
+            <hfe filename="to8.hfe"/>
+        </floppydisk>
+    </target>
+</configuration>
+
