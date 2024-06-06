@@ -52,6 +52,7 @@ vgc_init
         _SetCartPageA
         ldx   1,x                      ; get ptr to track data
         stx   vgc_source               ; stash the data source addr for looping
+        leax  2,x                      ; skip first two bytes (offset for looping)
         jsr   vgc_stream_mount         ; Prepare the data for streaming (passed in X)
         lda   #0
 @a      equ   *-1
@@ -68,11 +69,12 @@ vgc_init
 ;-------------------------------------------
 vgc_update
         lda   vgc_finished
-        bne   @exit        
-        lda   vgc_source_page
-        bne   @a
+        beq   >
+        rts
+!       lda   vgc_source_page
+        bne   >
         rts                            ; no music to play
-@a      _SetCartPageA
+!       _SetCartPageA
         ; SN76489 data register format is %1cctdddd where cc=channel, t=0=tone, t=1=volume, dddd=data
         ; The data is run length encoded.
         ; Get Channel 3 tone first because that contains the EOF marker        
@@ -81,11 +83,9 @@ vgc_do_update
         lda   #3
         jsr   vgc_update_register1  ; on exit C set if data changed, B is last value
         bcc   @more_updates
-        ;
         ldb   skip_tone3+1
         cmpb  #$08     ; EOF marker? (0x08 is an invalid tone 3 value)
         beq   @finished
-        ; 
 @more_updates
         lda   #7
         jsr   vgc_update_register1  ; Volume3
@@ -100,10 +100,7 @@ vgc_do_update
         lda   #2
         jsr   vgc_update_register2  ; Tone2
         lda   #6
-        jsr   vgc_update_register1  ; Volume2
-@exit
-        rts
-        ;
+        jmp   vgc_update_register1  ; Volume2
 @finished
         ; end of tune reached
         ldx   vgc_callback             ; check callback routine
@@ -113,8 +110,8 @@ vgc_do_update
         beq   @no_looping
         ; restart if looping
         ldx   vgc_source
-        lda   vgc_loop
-        lda   vgc_buffers
+        ldd   ,x
+        leax  d,x                   ; move to loop point
         jsr   vgc_stream_mount
         jmp   vgc_update
 @no_looping 
@@ -370,10 +367,10 @@ fetchByte2
         stb   stashB+1                 ; **SELF MODIFICATION**
 
         ; using inverted counter
-        inc vgc_literal_cnt+1
-        bne >
-        inc vgc_literal_cnt
-!       bne end_literal
+        inc   vgc_literal_cnt+1
+        bne   >
+        inc   vgc_literal_cnt
+!       bne   end_literal
 
 begin_matches
         ; literals run completed

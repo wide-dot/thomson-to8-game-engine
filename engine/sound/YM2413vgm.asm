@@ -5,7 +5,7 @@
 * ---------------------------------------------------------------------------
 
         opt   c,ct
-
+YVGM_org equ *
         INCLUDE "./engine/sound/ym2413.asm"
 
 YVGM_addr equ *
@@ -41,6 +41,7 @@ YVGM_PlayMusic
         stx   YVGM_MusicData
         ldu   #YM2413_buffer
         stu   YVGM_MusicDataPos
+        leax  2,x
         jsr   ym2413zx0_decompress
         lda   #0
 @a      equ   *-1
@@ -66,9 +67,7 @@ YVGM_MusicFrame
         lda   YVGM_MusicStatus
         bne   @a
         rts    
-@a      lda   YVGM_WaitFrame
-        deca
-        sta   YVGM_WaitFrame
+@a      dec   YVGM_WaitFrame
         beq   @UpdateMusic
         rts
 @UpdateMusic
@@ -97,9 +96,11 @@ YVGM_do_MusicFrame
         jmp   ,x
 !       lda   YVGM_loop
         beq   @no_looping
-        lda   #3 ; fix ? should be 1 ?
-        sta   YVGM_WaitFrame
+        ldb   #1
+        stb   YVGM_WaitFrame
         ldx   YVGM_MusicData
+        ldd   ,x
+        leax  d,x                      ; move to loop point
         ldu   #YM2413_buffer
         stu   YVGM_MusicDataPos
         jsr   ym2413zx0_decompress    
@@ -221,7 +222,7 @@ ym2413zx0_decompress
 @saveA             equ *-1
                    endc
 @zx0_elias_bt      bcc @zx0_elias_loop  ; loop until done
-@zx0_eof           rts                  ; return
+                   rts
 ; copy Y bytes from X to U and get next bit
 @zx0_copy_bytes    ldb ,x+              ; copy byte
                    bra >
@@ -241,7 +242,7 @@ ym2413zx0_decompress
 ; save context for next byte ... and exit
                    pshs d,x,y,u
                    sts @stackContextPos
-                   lds #0
+@zx0_eof           lds #0
 @saveS1            equ *-2
                    rts
 ; next call will resume here ...
@@ -269,9 +270,11 @@ ym2413zx0_resume   com @flip
 
 @buffersize equ 512
 @addr equ *
- iflt @addr-YVGM_addr-@buffersize 
-          fill 0,@buffersize-(@addr-YVGM_addr) ; buffer need to be stored at an address >= buffersize
+; !!! WARNING !!! buffer must be placed at absolute addr > buffer size
+; if buffer is 512 bytes, buffer should be placed >= $0200
+ iflt (@addr-YVGM_org)-@buffersize
+        fill 0,@buffersize-(@addr-YVGM_org)
  endc
 YM2413_buffer
-          fill 0,@buffersize
+        fill 0,@buffersize
 YM2413_buffer_end

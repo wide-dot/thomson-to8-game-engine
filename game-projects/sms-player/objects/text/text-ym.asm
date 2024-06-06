@@ -13,7 +13,7 @@ _DrawTextSetPos MACRO
 ; *****************************************************************************
 
 nbgames equ 4
-nbsongs equ 31
+nbsongs equ 32
 
 Text
         lda   routine,u
@@ -204,7 +204,7 @@ FirstSongIdx
         fcb   3
         fcb   17
         fcb   19
-        fcb   30
+        fcb   31
 
 TxtLst_Song
         fdb   Txt_OutRun_01
@@ -229,6 +229,7 @@ TxtLst_Song
         fdb   Txt_DD_02
         fdb   Txt_Ys_01
         fdb   Txt_Ys_02
+        fdb   Txt_Ys_03
         fdb   Txt_Ys_04
         fdb   Txt_Ys_05
         fdb   Txt_Ys_06
@@ -342,7 +343,7 @@ Txt_Ys_02
         fcb   $D,$A,0
 
 Txt_Ys_03
-        fcc   "04 - The Syonin"
+        fcc   "03 - Tears of Sylph"
         fcb   $D,$A,0
 
 Txt_Ys_04

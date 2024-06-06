@@ -2,6 +2,7 @@
         INCLUDE "./engine/macros.asm"
 
         bmi   @update
+        pshs  u
         ldx   #Snd_index
         asla
         ldx   a,x
@@ -9,15 +10,21 @@
         stb   vgc_loop
         stx   vgc_source               ; stash the data source addr for looping
         sty   vgc_callback             ; bind the callback routine
+        _GetCartPageA
+        sta   vgc_source_page
         lda   #vgc_stream_buffers/256  ; HI byte of a page aligned 2Kb RAM buffer address
         sta   vgc_buffers              ; stash the 2kb buffer address
-        jmp   vgc_stream_mount         ; Prepare the data for streaming (passed in X)
+        leax  2,x                      ; skip first two bytes (offset for looping)
+        jsr   vgc_stream_mount         ; prepare the data for streaming (passed in X)
+        puls  u,pc
 @update
+        pshs  u
         lda   vgc_finished
         bne   @rts    
         ldx   vgc_source
-        bne   vgc_do_update
-@rts    rts                            ; no music to play
+        beq   @rts
+        jsr   vgc_do_update
+@rts    puls  u,pc
 
         INCLUDE "./engine/sound/vgc/lib/vgcplayer.h.asm"
         INCLUDE "./engine/sound/vgc/lib/vgcplayer.asm"
