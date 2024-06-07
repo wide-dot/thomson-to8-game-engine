@@ -1,4 +1,3 @@
-;DO_NOT_WAIT_VBL equ 1
 DEBUG   equ     1
 SOUND_CARD_PROTOTYPE equ 1
 
@@ -12,8 +11,14 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./global/variables.asm"
         INCLUDE "./engine/graphics/buffer/gfxlock.macro.asm"
         INCLUDE "./engine/objects/collision/terrainCollision.macro.asm"
+        INCLUDE "./global/scale.asm"
         INCLUDE "./global/object.const.asm"
         
+moveByScript.NEGXSTEP equ scale.XN1PX
+moveByScript.POSXSTEP equ scale.XP1PX
+moveByScript.NEGYSTEP equ scale.YN1PX
+moveByScript.POSYSTEP equ scale.YP1PX
+
 map_width       equ 1128
 viewport_width  equ 144
 viewport_height equ 180
@@ -26,25 +31,30 @@ CHECKPOINT_01      equ 24
         clr   NEXT_GAME_MODE
         jsr   InitGlobals
 		jsr   InitDrawSprites
+        lda   #1
+        sta   globals.difficulty
         jsr   InitStack
         jsr   LoadAct
         jsr   InitJoypads
+        jsr   InitRNG
         _terrainCollision.init ObjID_collision
 
         ldd   #Pal_black
         std   Pal_current
         clr   PalRefresh
-	jsr   PalUpdateNow
+	    jsr   PalUpdateNow
 
 ; register animation data object
         ldb   #ObjID_animation
-        jsr   AnimateMoveSyncRegister
+        jsr   moveByScript.register
 
 ; init score and lives at level 1
         ldd   #0
         std   score
         ldd   #2
         std   lives
+        lda   #0
+        sta   globals.backgroundSolid
 
 ; register map locations for scroll
         _MountObject ObjID_LevelInit
@@ -105,109 +115,6 @@ LevelMainLoop
         lda   #1
         sta   checkpoint.state
 !
-        jsr   LoopRun
-        jmp   LevelMainLoop
-
-* ---------------------------------------------------------------------------
-* MAIN IRQ
-* ---------------------------------------------------------------------------
-
-UserIRQ
-        jsr   gfxlock.bufferSwap.check
-	jsr   PalUpdateNow
-        _MountObject ObjID_ymm02
-        _MusicFrame_objymm
-        _MountObject ObjID_vgc02
-        _MusicFrame_objvgc
-        rts
-
-
-MusicCallbackYMBoss
-        _MountObject ObjID_ymm02
-        _MusicInit_objymm #2,#MUSIC_LOOP,#0
-        rts
-
-MusicCallbackSNBoss
-        _MountObject ObjID_vgc02
-        _MusicInit_objvgc #2,#MUSIC_LOOP,#0
-        rts
-
-
-* ---------------------------------------------------------------------------
-*
-* Foe shoots, returns x_vel or y_vel values from object stored in u
-*
-* Entry : a = direction (a will be destroyed during the process)
-*             Bit 0-1
-*             0 -> horizontal
-*             1 -> 30% angle (from horizon)
-*             2 -> 60% angle (from horizon)
-*             3 -> vertical
-*             Bit 2 : 
-*             0 -> kill tracking OFF
-*             1 -> kill tracking ON
-* Rerturn : d = x_vel or y_vel (depending of the function called)
-*
-* ---------------------------------------------------------------------------
-
-ReturnShootDirection_X
-        pshs  y
-        ldy   player1+x_pos
-        bita  #$04
-        bne   @xkilltrackingcontinue
-        ldy   glb_camera_x_pos
-        leay  70,y
-@xkilltrackingcontinue
-        cmpy  x_pos,u
-        blt   @xpos
-        ldy   #Foeshoottable
-        jmp   @xcontinue
-@xpos
-        ldy   #Foeshoottable+14
-@xcontinue
-        anda  #$03
-        asla
-        ldd   a,y
-        puls  y,pc
-
-ReturnShootDirection_Y
-        pshs  y
-        ldy   player1+y_pos
-        bita  #$04
-        bne   @ykilltrackingcontinue
-        ldy   #84                       ; Center screen y (168 / 2)
-@ykilltrackingcontinue
-        cmpy  y_pos,u
-        blt   @ypos
-        ldy   #Foeshoottable+6
-        jmp   @ycontinue
-@ypos
-        ldy   #Foeshoottable+20
-@ycontinue
-        anda  #$03
-        asla
-        ldd   a,y
-        puls  y,pc
-
-Foeshoottable
-        fdb $120
-        fdb $100
-        fdb $80
-        fdb $0
-        fdb $80
-        fdb $100
-        fdb $120
-        fdb -$120
-        fdb -$100
-        fdb -$80
-        fdb -$0
-        fdb -$80
-        fdb -$100
-        fdb -$120
-
-
-
-LoopRun
         jsr   Scroll
         jsr   ObjectWave
 
@@ -237,21 +144,28 @@ LoopRun
         _gfxlock.loop
 
         lda  NEXT_GAME_MODE
-        bne  Start_Music_Boss_Routine
-
-        rts
-
-Start_Music_Boss_Routine
-
+        beq  >
         jsr   IrqOff
         _MountObject ObjID_ymm02
-        _MusicInit_objymm #1,#MUSIC_NO_LOOP,#MusicCallbackYMBoss
+        _MusicInit_objymm #1,#MUSIC_LOOP,#0
         _MountObject ObjID_vgc02
-        _MusicInit_objvgc #1,#MUSIC_NO_LOOP,#MusicCallbackSNBoss
+        _MusicInit_objvgc #1,#MUSIC_LOOP,#0
         jsr   IrqOn
-
         clr   NEXT_GAME_MODE
+!
+        jmp   LevelMainLoop
 
+* ---------------------------------------------------------------------------
+* MAIN IRQ
+* ---------------------------------------------------------------------------
+
+UserIRQ
+        jsr   gfxlock.bufferSwap.check
+    	jsr   PalUpdateNow
+        _MountObject ObjID_ymm02
+        _MusicFrame_objymm
+        _MountObject ObjID_vgc02
+        _MusicFrame_objvgc
         rts
 
 * ---------------------------------------------------------------------------
@@ -320,6 +234,10 @@ Palette_FadeCallback
 * CUSTOM routines
 * ---------------------------------------------------------------------------
         INCLUDE "./global/checkpoint.asm"
+        INCLUDE "./global/moveXPos8.8.asm"
+        INCLUDE "./global/moveYPos8.8.asm"
+        INCLUDE "./global/projectile.asm"
+        INCLUDE "./global/setDirectionTo.asm"
 
 * ---------------------------------------------------------------------------
 * ENGINE routines
@@ -344,12 +262,11 @@ Palette_FadeCallback
         INCLUDE "./engine/object-management/ObjectMoveSync.asm"
         INCLUDE "./engine/object-management/ObjectWave-subtype.asm"
         INCLUDE "./engine/object-management/ObjectDp.asm"
-        INCLUDE "./global/moveXPos8.8.asm"
-        INCLUDE "./global/moveYPos8.8.asm"
+        INCLUDE "./engine/object-management/RunPgSubRoutine.asm"
 
         ; animation & image
         INCLUDE "./engine/graphics/animation/AnimateSpriteSync.asm"
-        INCLUDE "./engine/graphics/animation/AnimateMoveSync.asm"
+        INCLUDE "./engine/graphics/animation/moveByScript.asm"
 
         ; sprite
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"  
@@ -360,6 +277,9 @@ Palette_FadeCallback
         ; collision
         INCLUDE "./engine/collision/collision.asm"
         INCLUDE "./engine/objects/collision/terrainCollision.main.asm"
+
+        ; random numbers
+        INCLUDE "./engine/math/RandomNumber.asm"
 
         ; should be at the end of includes (ifdef dependencies)
         INCLUDE "./engine/InitGlobals.asm"

@@ -42,7 +42,7 @@ CHECKPOINT_01      equ 20
         ldd   #Pal_black
         std   Pal_current
         clr   PalRefresh
-	jsr   PalUpdateNow
+	    jsr   PalUpdateNow
 
 ; register animation data object
         ldb   #ObjID_animation
@@ -155,7 +155,7 @@ LevelMainLoop
 
 UserIRQ
         jsr   gfxlock.bufferSwap.check
-	jsr   PalUpdateNow
+	    jsr   PalUpdateNow
         _MountObject ObjID_ymm01
         _MusicFrame_objymm
         _MountObject ObjID_vgc01
