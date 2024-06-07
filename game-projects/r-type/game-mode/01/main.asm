@@ -73,9 +73,9 @@ CHECKPOINT_01      equ 20
 
 ; play music
         _MountObject ObjID_ymm01
-        _MusicInit_objymm #0,#MUSIC_NO_LOOP,#MusicCallbackYM  ; initialize the YM2413 player 
+        _MusicInit_objymm #0,#MUSIC_LOOP,#0  ; initialize the YM2413 player 
         _MountObject ObjID_vgc01
-        _MusicInit_objvgc #0,#MUSIC_NO_LOOP,#MusicCallbackSN ; initialize the SN76489 vgm player with a vgc data stream
+        _MusicInit_objvgc #0,#MUSIC_LOOP,#0 ; initialize the SN76489 vgm player with a vgc data stream
 
 ; init user irq
         jsr   IrqInit
@@ -160,16 +160,6 @@ UserIRQ
         _MusicFrame_objymm
         _MountObject ObjID_vgc01
         _MusicFrame_objvgc
-        rts
-
-MusicCallbackYM
-        _MountObject ObjID_ymm01
-        _MusicInit_objymm #1,#MUSIC_LOOP,#0
-        rts
-
-MusicCallbackSN
-        _MountObject ObjID_vgc01
-        _MusicInit_objvgc #1,#MUSIC_LOOP,#0
         rts
 
 * ---------------------------------------------------------------------------
