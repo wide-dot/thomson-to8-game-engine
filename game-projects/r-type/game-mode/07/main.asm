@@ -101,15 +101,16 @@ LevelMainLoop
         lda   #CHECKPOINT_01           ; yes load checkpoint
         jsr   checkpoint.load
 !
-        jsr   KTST
-        bcc   >
-        jsr   GETC
-        cmpb  #$41 ; touche A
-        bne   >
-        jsr   Palette_FadeOut
-        lda   #1
-        sta   checkpoint.state
-!
+; GETC may crash IRQ double buffering if used ($E7C3 update)
+;        jsr   KTST
+;        bcc   >
+;        jsr   GETC
+;        cmpb  #$41 ; touche A
+;        bne   >
+;        jsr   Palette_FadeOut
+;        lda   #1
+;        sta   checkpoint.state
+;!
         jsr   LoopRun
         jmp   LevelMainLoop
 
