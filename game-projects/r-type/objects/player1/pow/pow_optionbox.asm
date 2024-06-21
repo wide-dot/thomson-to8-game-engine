@@ -20,11 +20,14 @@ Object
 Routines
         fdb   Init
         fdb   Live
-	fdb   AlreadyDeleted
+	    fdb   AlreadyDeleted
 
 Init
-	lda   subtype,u
-        asla
+	    lda   subtype,u
+        bne   >  ; rebound laser code is unfinished
+        lda   #1 ; replace by counter-air
+        sta   subtype,u
+!       asla
         ldx   #optionboxes
         ldd   a,x
         std   image_set,u
@@ -33,11 +36,11 @@ Init
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
-	inc   routine,u
+	    inc   routine,u
 
         _Collision_AddAABB AABB_0,AABB_list_bonus
         
-        lda   #1                        ; set damage potential for this hitbox
+        lda   #127                      ; set weak hitbox type
         sta   AABB_0+AABB.p,u
         _ldd  4,7                       ; set hitbox xy radius
         std   AABB_0+AABB.rx,u
@@ -58,7 +61,7 @@ Live
         stb   AABB_0+AABB.cy,u
         jmp   DisplaySprite
 @captured
-        lda   subtype,u
+        lda   subtype,u                 ; Rebound laser ?
         beq   >
         cmpa  #3                        ; Speed ?
         beq   @speed

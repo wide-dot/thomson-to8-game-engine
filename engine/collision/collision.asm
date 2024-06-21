@@ -1,7 +1,7 @@
         INCLUDE "./engine/collision/struct_AABB.equ"
 
 ; use ./engine/collision/macros.asm
-; --------------------------------------
+; ------------------------------------------------------------------------------
 
 Collision_AddAABB
         ldu   2,y
@@ -14,7 +14,7 @@ Collision_AddAABB
         stx   ,y
         rts
 
-; --------------------------------------
+; ------------------------------------------------------------------------------
 
 Collision_RemoveAABB
         ldy   AABB.next,x 
@@ -37,17 +37,24 @@ Collision_Remove_2 equ *-2
 Collision_Remove_3 equ *-2
 @end    rts
 
-; --------------------------------------
+; ------------------------------------------------------------------------------
+; hitbox types is based on potential :
+;
+; -128 to -1 : invincible hitbox, potential is never changed
+; 0          : disabled hitbox
+; 1 to 126   : hitbox with remaining potential, when collide potential decrease (min 0)
+; 127        : weak hitbox, when collide hitbox is directly disabled and do no harm to other hitbox
+; ------------------------------------------------------------------------------
 
 Collision_Do
         ldu   #0                       ; all pairs testing
 Collision_Do_1 equ *-2
-        beq   @rts                     ; no AABB in the player AABB list, quit
+        beq   @rts                     ; no AABB in the first AABB list, quit
 @loopu  ldb   AABB.p,u
         beq   @skipu                   ; no more potential, skip this AABB
         ldx   #0
 Collision_Do_2 equ *-2
-        beq   @rts                     ; no AABB in the ai AABB list, quit
+        beq   @rts                     ; no AABB in the second AABB list, quit
 @loopx  ldb   AABB.p,x
         beq   @skipx                   ; no more potential, skip this AABB
 ;
@@ -71,19 +78,27 @@ Collision_Do_2 equ *-2
         cmpa  #0
 @ry     equ *-1 
         bhi   @continue
-!
+;
 ; compute collision damage
-        lda   AABB.p,u
-        bmi   @u_invincibility
         ldb   AABB.p,x
-        bmi   @x_invincibility
+        bpl   >
+        ldb   AABB.p,u
+        bmi   @continue                 ; X and U are invincible, no changes
+        clr   AABB.p,u                  ; X is invincible, U Loose
+        bra   @continue
+!       lda   AABB.p,u
+        bpl   >
+@xWeak  clr   AABB.p,x                  ; U is invincible, X Loose
+        bra   @continue
+!       cmpb  #127
+        beq   @xWeak
         clrb 
         suba  AABB.p,x
         bmi   @loose
-@win    sta   AABB.p,u                 ; win or draw
+@win    sta   AABB.p,u                ; win or draw
         stb   AABB.p,x
         bra   @continue
-@loose  nega                           ; loose
+@loose  nega                          ; loose
         sta   AABB.p,x
         stb   AABB.p,u
 @continue
@@ -92,18 +107,4 @@ Collision_Do_2 equ *-2
 @skipu  ldu   AABB.next,u
         bne   @loopu
 @rts    rts
-;
-@u_invincibility
-        lda   AABB.p,x
-        bmi   @continue                ; two invincible hitboxes
-        suba  AABB.p,u
-        bcc   >
-!       clr   AABB.p,x                 ; cap lowest value to 0
-        bra   @continue
-;
-@x_invincibility
-        lda   AABB.p,u
-        suba  AABB.p,x
-        bcc   >
-!       clr   AABB.p,u                 ; cap lowest value to 0
-        bra   @continue
+

@@ -5,10 +5,12 @@
 ; - spritename_score     : Number of points (multiples of 100) to increment the score with
 ; - spritename_hitbox_x  : X radius of collision sensibility
 ; - spritename_hitbox_y  : Y radius of collision sensibility
-; - spritename_hitdamage : Damage sensibility (e.g. 255 = no damage, 1= simple player 1 fire ...) 
-
+; - spritename_hitdamage : Damage sensibility
+;                          -128 to -1 : invincible hitbox, potential is never changed
+;                          0          : disabled hitbox
+;                          1 to 126   : hitbox with remaining potential, when collide potential decrease (min 0)
+;                          127        : weak hitbox, when collide hitbox is directly disabled and do no harm to other hitbox
 ; ***********************************************************************************************
-; Patapata
 
 patapata_score		equ 2
 patapata_hitbox_x	equ 4
