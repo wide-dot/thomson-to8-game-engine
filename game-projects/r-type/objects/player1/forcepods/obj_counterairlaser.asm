@@ -63,6 +63,8 @@ InitFirstChild
         stb   priority,u
         lda   #255                     ; set damage potential for this hitbox
         sta   AABB_0+AABB.p,u
+        _ldd  3,14                     ; set hitbox xy radius
+        std   AABB_0+AABB.rx,u
         _Collision_AddAABB AABB_0,AABB_list_friend
         ldb   render_flags,u
         lda   subtype,u
@@ -114,6 +116,8 @@ GenChild
         sta   caFrame,x   
         lda   AABB_0+AABB.p,u
         sta   AABB_0+AABB.p,x
+        ldd   AABB_0+AABB.rx,u         ; set hitbox xy radius
+        std   AABB_0+AABB.rx,x         ; by copying 2 bytes
         ldd   x_pos,u
         addd  glb_d2
         std   x_pos,x
