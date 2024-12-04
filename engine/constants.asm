@@ -189,6 +189,7 @@ prev_anim                     equ 10 ; and 11 ; reference to previous animation 
 sub_anim                      equ 10 ; and 11 ; reference to sub animation
 anim_frame                    equ 12          ; index of current frame in animation
 anim_frame_duration           equ 13          ; number of frames for each image in animation, range: 00-7F (0-127), 0 means display only during one frame
+wave_frame_drop               equ 13          ; share the same position as anim_frame_duration, used by object wave management to keep object creation frame drop
 anim_flags                    equ 14          ; byte offset to reference an anim_flags LUT (adv) / store a link flag (non adv)
 
 * --- anim_flags bitfield variables ---

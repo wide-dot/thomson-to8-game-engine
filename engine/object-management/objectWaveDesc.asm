@@ -34,6 +34,9 @@ objectWave.data.cursor equ *-2         ; current position in wave data
         std   x_pos,u
         ldd   6,y
         std   y_pos,u
+        ldd   ,y                       ; compute missed frames for this object (the time apparition for this object)
+        subd  -4,s                     ; use x value previously pshs/puls on stack (the current time)
+        stb   wave_frame_drop,u        ; store delta time in frames
 @bypass leay  8,y
         bra   <
 @rts    sty   objectWave.data.cursor

@@ -6,7 +6,7 @@
 * AAAA (timestamp) BB (id objet) CCCC (subtype)
 * end marker : $FFFF
 *
-* store missed frames to anim_frame_duration value
+* store missed frames to wave_frame_drop/anim_frame_duration value
 * WARNING : subtype is stored as a 16 bit value, thus overlapping render_flags
 * ---------
 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -33,7 +33,7 @@ object_wave_data equ *-2               ; current position in wave data
         std   subtype_w,u
         ldd   gfxlock.frame.count
         subd  ,y
-        stb   anim_frame_duration,u
+        stb   wave_frame_drop,u
 @bypass leay  5,y
         bra   <
 @rts    sty   object_wave_data
