@@ -75,10 +75,10 @@ _vscroll.setTileset1024 MACRO
         _vscroll.setTileset_
         fcb   \1
         fcb   \2
-        fcb   \3
-        fcb   \4
         fcb   \1
         fcb   \2
+        fcb   \3
+        fcb   \4
         fcb   \3
         fcb   \4
  ENDM
@@ -98,7 +98,7 @@ _vscroll.setTileset2048 MACRO
 ; -----------------------------------------------------------------------------
 ; _vscroll.setTileNb
 ; -----------------------------------------------------------------------------
-; input : number of tiles
+; input : number of tiles : 256, 512, 1024 or 2048
 ; -----------------------------------------------------------------------------
 _vscroll.setTileNb MACRO
 
