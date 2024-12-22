@@ -8,7 +8,7 @@
 ; - buffer is only updated few lines per frame (only the new lines)
 ; - scroll is bi-directionnal
 ; - speed is a fixed point value and adjusted in regard of frame drop
-; - handle up to 512 lines in map
+; - handle up to 512 lines of tiles in a map
 ; -----------------------------------------------------------------------------
 
         opt c
