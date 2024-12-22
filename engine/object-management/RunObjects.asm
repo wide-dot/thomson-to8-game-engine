@@ -69,10 +69,10 @@ LoadObject_u
         bne @link                      ; Yes a slot is free, let's get it and link it
         rts                            ; return z=1 when not found
 @link
-        pulu D                         ; get a the free slot from the slot stack
-        stu STACK_POINTER              ; updating the slot stack pointer
-        tfr D,U                        ; U is now pointing to the free slot address        
         pshs  x
+        leax  2,u                      ; get a the free slot from the slot stack
+        stx   STACK_POINTER            ; updating the slot stack pointer
+        ldu   ,u                       ; U is now pointing to the free slot address  
         ldx   object_list_last
         beq   >
         stu   run_object_next,x
@@ -89,10 +89,10 @@ LoadObject_x
         bne @link                      ; Yes a slot is free, let's get it and link it
         rts                            ; return z=1 when not found
 @link
-        pshs  u                        ; let's save U
-        leau 2,x                        ; X contains de address of the stack, so let's transfer it to U
-        ldx ,x                         ; get a the free slot from the slot stack, X points this free slot
-        stu STACK_POINTER              ; updating the slot stack pointer
+        pshs  u
+        leau  2,x                      ; get a the free slot from the slot stack
+        stu   STACK_POINTER            ; updating the slot stack pointer
+        ldx   ,x                       ; X is now pointing to the free slot address  
         ldu   object_list_last
         beq   >
         stx   run_object_next,u
