@@ -44,6 +44,9 @@ vscroll.cursor.w            fcb   0         ; padding for 16 bit operations
 vscroll.cursor              fcb   0
 vscroll.speed               fdb   0         ; (signed 8.8 fixed point) nb of line to scroll
 vscroll.map.height          fdb   0         ; map height in pixels
+vscroll.map.cache.y         fdb   -1        ; current cached map line
+vscroll.map.cache           fill  0,20*2    ; tile ids reflecting scroll buffer
+vscroll.map.cache.end       equ   *
 vscroll.map.cacheA.y        fdb   -1        ; current cached map line
 vscroll.map.cacheA          fill  0,20*13*2 ; tile ids reflecting scroll buffer
 vscroll.map.cacheA.end      equ   *
@@ -190,7 +193,7 @@ vscroll.updategfx
 !       subd  vscroll.map.height
 @end1   std   <vscroll.camera.currentY
 ;
-        jsr   vscroll.updateTileCacheA       ; check cache for this line number (in d)
+        jsr   vscroll.updateTileCache        ; check cache for this line number (in d)
         lda   vscroll.obj.bufferA.page
         _SetCartPageA                        ; mount in cartridge space
         lda   <vscroll.tileset.line
@@ -201,7 +204,7 @@ vscroll.updategfx
         lda   a,x
         sta   map.CF74021.DATA               ; mount in data space
         ldu   <vscroll.buffer.wAddressA
-        jsr   vscroll.copyBitmapA            ; copy bitmap for buffer A
+        jsr   vscroll.copyBitmap             ; copy bitmap for buffer A
         leau  -vscroll.LINE_SIZE*2,u
 @direction4 equ *-2
         cmpu  vscroll.obj.bufferA.address
@@ -224,7 +227,7 @@ vscroll.updategfx
         lda   a,x
         sta   map.CF74021.DATA               ; mount in data space
         ldu   <vscroll.buffer.wAddressB
-        jsr   vscroll.copyBitmapA            ; copy bitmap for buffer B
+        jsr   vscroll.copyBitmap             ; copy bitmap for buffer B
         leau  -vscroll.LINE_SIZE*2,u
 @direction5 equ *-2
         cmpu  vscroll.obj.bufferB.address
@@ -258,16 +261,16 @@ vscroll.updategfx
 
 ; update the horizontal line of tile id in map cache
 ; --------------------------------------------------
-vscroll.updateTileCacheA
+vscroll.updateTileCache
         andb  #$f0                     ; tile height is 16px, faster check here than _asrd*4
-        cmpd  vscroll.map.cacheA.y
+        cmpd  vscroll.map.cache.y
         bne   >
         rts                            ; return, cache is already up to date
-!       std   vscroll.map.cacheA.y     ; load cache at a new position
+!       std   vscroll.map.cache.y      ; load cache at a new position
         lda   vscroll.obj.map.page
         _SetCartPageA                  ; mount page that contain map data
         ldx   vscroll.obj.map.address
-        lda   vscroll.map.cacheA.y     ; handle up to 512 lines in map, b already loaded
+        lda   vscroll.map.cache.y      ; handle up to 512 lines in map, b already loaded
         _lsrd                          ; divide
         _lsrd                          ; by
         _lsrd                          ; 16 to get
@@ -278,7 +281,7 @@ vscroll.updateTileCacheA
 !       lda   #60                      ; 2 lines of 30 bytes (12bits id * 20 tiles)
         mul                            ; mult by line/2
         leax  d,x                      ; x point to desired data map line
-        ldy   #vscroll.map.cacheA
+        ldy   #vscroll.map.cache
         lda   #20/2                    ; nb bytes to load/2
         sta   <vscroll.loop.counter2
 @loop   ldd   ,x+                      ; load cache by unpacking tile id
@@ -294,46 +297,10 @@ vscroll.updateTileCacheA
         bne   @loop
         rts
 
-vscroll.updateTileCacheB
-        andb  #$f0                     ; tile height is 16px, faster check here than _asrd*4
-        cmpd  vscroll.map.cacheB.y
-        bne   >
-        rts                            ; return, cache is already up to date
-!       std   vscroll.map.cacheB.y     ; load cache at a new position
-        lda   vscroll.obj.map.page
-        _SetCartPageA                  ; mount page that contain map data
-        ldx   vscroll.obj.map.address
-        lda   vscroll.map.cacheB.y     ; handle up to 512 lines in map, b already loaded
-        _lsrd                          ; divide
-        _lsrd                          ; by
-        _lsrd                          ; 16 to get
-        _lsrd                          ; line number in map
-        _lsrd                          ; divide line in map by two
-        bcc   >                        ; branch if line in map is even
-        leax  30,x                     ; if line in map is odd, offset position in map by 30 bytes (12bits id * 20 tiles)
-!       lda   #60                      ; 2 lines of 30 bytes (12bits id * 20 tiles)
-        mul                            ; mult by line/2
-        leax  d,x                      ; x point to desired data map line
-        ldy   #vscroll.map.cacheB
-        lda   #20/2                    ; nb bytes to load/2
-        sta   <vscroll.loop.counter2
-@loop   ldd   ,x+                      ; load cache by unpacking tile ids (2 tile ids in 3 bytes)
-        _lsrd                          ; first id : from 12bit to 16bit
-        _lsrd                          ; by shifting
-        _lsrd
-        _lsrd
-        std   ,y++                     
-        ldd   ,x++                     ; second id : from 12bit to 16bit
-        anda  #$0F                     ; by masking
-        std   ,y++
-        dec   <vscroll.loop.counter2
-        bne   @loop
-        rts
-
 ; copy the tile bitmap to the code buffer
 ; ---------------------------------------
-vscroll.copyBitmapA
-        ldx   #vscroll.map.cacheA.end  ; read tiles in reverse order (from right to left)
+vscroll.copyBitmap
+        ldx   #vscroll.map.cache.end   ; read tiles in reverse order (from right to left)
 @loop
         leax  -8,x                     ; move to next tile id in cache (to the left)
         ldd   6,x                      ; load tile id
@@ -349,28 +316,7 @@ vscroll.copyBitmapA
         ldd   d,y                      ; load 4 pixels of this tile line
         std   1,u                      ; fill the LDD
         leau  15,u                     ; move to next dest block in code buffer
-        cmpx  #vscroll.map.cacheA
-        bne   @loop
-        rts
-
-vscroll.copyBitmapB
-        ldx   #vscroll.map.cacheB.end  ; read tiles in reverse order (from right to left)
-@loop
-        leax  -8,x                     ; move to next tile id in cache (to the left)
-        ldd   6,x                      ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   11,u                     ; fill the LDU
-        ldd   4,x                      ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   8,u                      ; fill the LDY
-        ldd   2,x                      ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   4,u                      ; fill the LDX
-        ldd   ,x                       ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   1,u                      ; fill the LDD
-        leau  15,u                     ; move to next dest block in code buffer
-        cmpx  #vscroll.map.cacheB
+        cmpx  #vscroll.map.cache
         bne   @loop
         rts
 
