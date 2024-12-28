@@ -17,7 +17,8 @@
 ; -----------------------------------------------------------------------------
 m6809.OPCODE_JMP_E          equ   $7E
 
-vscroll.LINE_SIZE           equ   75
+vscroll.CHUNCK_SIZE         equ   15
+vscroll.LINE_SIZE           equ   5*15
  IFNDEF  vscroll.BUFFER_LINES
 vscroll.BUFFER_LINES        equ   201  ; nb lines in buffer is 201 (0-200 to fit JMP return)
  ENDC
@@ -222,8 +223,7 @@ vscroll.updategfx
         lsla
         ldx   #vscroll.obj.tile.adresses     ; load B tileset addr
         ldy   a,x
-        inca                                 ; load B tileset page
-        ldx   #vscroll.obj.tile.pages
+        ldx   #vscroll.obj.tile.pages+1      ; load B tileset page
         lda   a,x
         sta   map.CF74021.DATA               ; mount in data space
         ldu   <vscroll.buffer.wAddressB
