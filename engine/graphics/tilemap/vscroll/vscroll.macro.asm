@@ -55,7 +55,19 @@ _vscroll.setTileset_ MACRO
 @list   equ   *
  ENDM
 
+_vscroll.setUpdateRoutine_ MACRO
+        sta   vscroll.tiles.nbLinesByPage
+        asra
+        ldx   #@dyncall
+        ldx   a,x
+        stx   vscroll.tiles.updateTilesForNLines.address
+ ENDM
+
 _vscroll.setTileset256 MACRO
+ IFDEF vscroll.tiles.nbLinesByPage
+        lda   #16
+        _vscroll.setUpdateRoutine_
+ ENDC
         _vscroll.setTileset_
         fcb   \1
         fcb   \2
@@ -68,10 +80,18 @@ _vscroll.setTileset256 MACRO
  ENDM
 
 _vscroll.setTileset512 MACRO
+ IFDEF vscroll.tiles.nbLinesByPage
+        lda   #16
+        _vscroll.setUpdateRoutine_
+ ENDC
         _vscroll.setTileset256 \1,\2
  ENDM
 
 _vscroll.setTileset1024 MACRO
+ IFDEF vscroll.tiles.nbLinesByPage
+        lda   #8
+        _vscroll.setUpdateRoutine_
+ ENDC
         _vscroll.setTileset_
         fcb   \1
         fcb   \2
@@ -84,6 +104,10 @@ _vscroll.setTileset1024 MACRO
  ENDM
 
 _vscroll.setTileset2048 MACRO
+ IFDEF vscroll.tiles.nbLinesByPage
+        lda   #4
+        _vscroll.setUpdateRoutine_
+ ENDC
         _vscroll.setTileset_
         fcb   \1
         fcb   \2
