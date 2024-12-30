@@ -11,6 +11,11 @@
 ;              [y] ptr to sprite tile mapping data
 ; -----------------------------------------------------------------------------
 
+vscroll.tiles.state.start      equ dp_extreg+13 ; WORD
+vscroll.buffer.wAddress        equ dp_extreg+15 ; WORD
+vscroll.buffer.currentPosition equ dp_extreg+17 ; WORD
+vscroll.tileset.remainingLines equ dp_extreg+19 ; BYTE
+
  IFNDEF vscroll.tiles.nbMaxUpdates
 vscroll.tiles.nbMaxUpdates equ 16 ; by default 16 sprites can be added to tile update list
  ENDC
@@ -93,17 +98,26 @@ vscroll.tiles.resetFrame
         std   ,x
         rts
 
-
-; copy the tile bitmap to the code buffer
-; by reading tiles in reverse order (from right to left)
-; ---------------------------------------
-
-vscroll.tiles.state.start      equ dp_extreg+12 ; WORD
-vscroll.buffer.wAddress        equ dp_extreg+14 ; WORD
-vscroll.buffer.currentPosition equ dp_extreg+16 ; WORD
-vscroll.tileset.remainingLines equ dp_extreg+18 ; BYTE
+; -----------------------------------------------------------------------------
+; vscroll.tiles.updateTiles
+;
+; -----------------------------------------------------------------------------
+; input  REG : none
+; -----------------------------------------------------------------------------
 
 vscroll.tiles.updateTiles
+
+; Part1 ---------------------------------
+; For each of the two update lists (old then new) :
+; - read list, apply changes to level tilemap
+; - compare the tile with current one in vscroll.tiles.bufferA/B
+; - if different set the corresponding bit in vscroll.tiles.state
+
+        ; implement
+
+; Part2 ---------------------------------
+; copy the tile bitmap to the code buffer
+; by reading tiles in reverse order (from right to left)
 
         ; One Run for buffer A
         lda   vscroll.obj.bufferA.page
@@ -122,6 +136,12 @@ vscroll.tiles.updateTiles
         addd  #1                             ; add offset specific to B buffer
         std   vscroll.tiles.tilePages
         ldy   #vscroll.tiles.bufferB
+
+        ; TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        ; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        ; REMPLACER La LECTURE DEPUIS le vscroll.tiles.bufferA/B/ par la LECTURE DEPUIS LA TILEMAP
+        ; AJOUTER LA MAJ vscroll.tiles.bufferA/B avec id tilemap pour chaque tile traité
+        ; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 vscroll.tiles.updateTilesForOneBuffer
         stu   <vscroll.buffer.currentPosition
@@ -166,6 +186,7 @@ vscroll.tiles.updateTilesForOneBuffer
 @exit   rts
 
 vscroll.tiles.updateTilesForOneGroup
+        clr   -1,x                                      ; clear current state byte
         pshs  x
         ldx   #vscroll.tiles.copyRoutines               ; compute dynamic routine for this group
         aslb
