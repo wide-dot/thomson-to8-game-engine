@@ -25,5 +25,5 @@
         _vscroll.buffer.linex8
         _vscroll.buffer.linex8
         _vscroll.buffer.linex8
-        _vscroll.buffer.line
+        _vscroll.buffer.linex8
         jmp   @loop
