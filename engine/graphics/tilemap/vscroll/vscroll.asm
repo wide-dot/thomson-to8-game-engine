@@ -160,14 +160,14 @@ vscroll.updategfx
         deca                                 ; next line in tile
         ldb   #$4A ; deca
         ldu   #0
-        ldx   #0
+        ldx   #vscroll.LINE_SIZE
         ldy   #-1
         bra   @mod
 !       adda  vscroll.viewport.height
         inca                                 ; previous line in tile
         ldb   #$4C ; inca
         ldu   vscroll.viewport.height.w
-        ldx   #-vscroll.LINE_SIZE*2
+        ldx   #-vscroll.LINE_SIZE
         ldy   #1
 @mod
         anda  #$0f                           ; modulo to keep 0-15      
@@ -175,10 +175,10 @@ vscroll.updategfx
         ; setup dynamic code in main scroll loop
         sty   @direction
         stb   @direction2
-        stb   @direction6
         stu   @direction3
         stx   @direction4
         stx   @direction5
+        stb   @direction6
         ldd   vscroll.camera.lastY
         addd  #0                             ; add viewport when going down
 @direction3 equ *-2
@@ -206,9 +206,8 @@ vscroll.updategfx
         lda   <vscroll.buffer.line
         lsra
         lsra
-        lsra
-        lsra
-        ldb   #vscroll.map.cache.LINE_SIZE
+        anda  #%11111100
+        ldb   #vscroll.map.cache.LINE_SIZE/4 ; /4 saves two lsra but add one anda
         mul
         leay  d,y
         sty   vscroll.map.cache.cursor
@@ -226,9 +225,8 @@ vscroll.updategfx
         sta   map.CF74021.DATA               ; mount in data space
         ldu   <vscroll.buffer.wAddressA
         ldx   vscroll.map.cache.cursor
-        leax  vscroll.map.cache.LINE_SIZE,x
         jsr   vscroll.copyBitmap             ; copy bitmap for buffer A
-        leau  -vscroll.LINE_SIZE*2,u
+        leau  1234,u
 @direction4 equ *-2
         cmpu  vscroll.obj.bufferA.address
         bge   @tendA
@@ -252,12 +250,11 @@ vscroll.updategfx
         sta   map.CF74021.DATA               ; mount in data space
         ldu   <vscroll.buffer.wAddressB
         ldx   vscroll.map.cache.cursor
-        leax  vscroll.map.cache.LINE_SIZE,x
         jsr   vscroll.copyBitmap             ; copy bitmap for buffer B
         lda   <vscroll.buffer.line
         inca
 @direction6 equ *-1
-        leau  -vscroll.LINE_SIZE*2,u
+        leau  1234,u
 @direction5 equ *-2
         cmpu  vscroll.obj.bufferB.address
         bge   @tendB
@@ -327,88 +324,70 @@ vscroll.updateTileCache
 ; read tiles in reverse order (from right to left)
 ; ---------------------------------------
 vscroll.copyBitmap
-
-        ; TODO
-        ; optimiser ici en retirant les leax et leau et en adaptant les offsets
-        ; gain 50 cycles par ligne, moins le surcout des nouveaux offsets
-        ; x range : 40
-        ; u range : 75
-
-        leax  -8,x                     ; [5] move to next tile id in cache (to the left)
-        ldd   6,x                      ; [6] load tile id
+        ldd   38,x                     ; [6] load tile id
         ldd   d,y                      ; [9] load 4 pixels of this tile line
         std   11,u                     ; [6] fill the LDU
-        ldd   4,x                      ; [6] load tile id
+        ldd   36,x                     ; [6] load tile id
         ldd   d,y                      ; [9] load 4 pixels of this tile line
         std   8,u                      ; [6] fill the LDY
-        ldd   2,x                      ; [6] load tile id
+        ldd   34,x                     ; [6] load tile id
         ldd   d,y                      ; [9] load 4 pixels of this tile line
         std   4,u                      ; [6] fill the LDX
-        ldd   ,x                       ; [5] load tile id
+        ldd   32,x                     ; [6] load tile id
         ldd   d,y                      ; [9] load 4 pixels of this tile line
         std   1,u                      ; [6] fill the LDD
-        leau  15,u                     ; [5] move to next dest block in code buffer
-                                       ; = [93]
 
-        leax  -8,x                     ; move to next tile id in cache (to the left)
-        ldd   6,x                      ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   11,u                     ; fill the LDU
-        ldd   4,x                      ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   8,u                      ; fill the LDY
-        ldd   2,x                      ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   4,u                      ; fill the LDX
-        ldd   ,x                       ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   1,u                      ; fill the LDD
-        leau  15,u                     ; move to next dest block in code buffer
+        ldd   30,x
+        ldd   d,y
+        std   26,u
+        ldd   28,x
+        ldd   d,y
+        std   23,u
+        ldd   26,x
+        ldd   d,y
+        std   19,u
+        ldd   24,x
+        ldd   d,y
+        std   16,u
 
-        leax  -8,x                     ; move to next tile id in cache (to the left)
-        ldd   6,x                      ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   11,u                     ; fill the LDU
-        ldd   4,x                      ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   8,u                      ; fill the LDY
-        ldd   2,x                      ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   4,u                      ; fill the LDX
-        ldd   ,x                       ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   1,u                      ; fill the LDD
-        leau  15,u                     ; move to next dest block in code buffer
+        ldd   22,x
+        ldd   d,y
+        std   41,u
+        ldd   20,x
+        ldd   d,y
+        std   38,u
+        ldd   18,x
+        ldd   d,y
+        std   34,u
+        ldd   16,x
+        ldd   d,y
+        std   31,u
 
-        leax  -8,x                     ; move to next tile id in cache (to the left)
-        ldd   6,x                      ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   11,u                     ; fill the LDU
-        ldd   4,x                      ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   8,u                      ; fill the LDY
-        ldd   2,x                      ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   4,u                      ; fill the LDX
-        ldd   ,x                       ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   1,u                      ; fill the LDD
-        leau  15,u                     ; move to next dest block in code buffer
+        ldd   14,x
+        ldd   d,y
+        std   56,u
+        ldd   12,x
+        ldd   d,y
+        std   53,u
+        ldd   10,x
+        ldd   d,y
+        std   49,u
+        ldd   8,x
+        ldd   d,y
+        std   46,u
 
-        leax  -8,x                     ; move to next tile id in cache (to the left)
-        ldd   6,x                      ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   11,u                     ; fill the LDU
-        ldd   4,x                      ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   8,u                      ; fill the LDY
-        ldd   2,x                      ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   4,u                      ; fill the LDX
-        ldd   ,x                       ; load tile id
-        ldd   d,y                      ; load 4 pixels of this tile line
-        std   1,u                      ; fill the LDD
-        leau  15,u                     ; move to next dest block in code buffer
+        ldd   6,x
+        ldd   d,y
+        std   71,u
+        ldd   4,x
+        ldd   d,y
+        std   68,u
+        ldd   2,x
+        ldd   d,y
+        std   64,u
+        ldd   ,x                       ; [5] load tile id
+        ldd   d,y
+        std   61,u
         rts
 
 ; compute write location in buffer
