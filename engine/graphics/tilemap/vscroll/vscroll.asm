@@ -178,6 +178,7 @@ vscroll.updategfx
         stu   @direction3
         stx   @direction4
         stx   @direction5
+        eorb  #%00000110                     ; inverse deca/inca instruction
         stb   @direction6
         ldd   vscroll.camera.lastY
         addd  #0                             ; add viewport when going down
@@ -196,7 +197,6 @@ vscroll.updategfx
 ;
 ; PROCESS BUFFER A
 ; ----------------
-        ldd   <vscroll.camera.currentY
         andb  #$f0                           ; tile height is 16px, faster check here than _asrd*4
         cmpd  vscroll.map.cache.y
         beq  >
@@ -258,12 +258,12 @@ vscroll.updategfx
 @direction5 equ *-2
         cmpu  vscroll.obj.bufferB.address
         bge   @tendB
-        lda   #0
+        lda   #vscroll.BUFFER_LINES-1
         leau  vscroll.BUFFER_LINES*vscroll.LINE_SIZE,u
         bra   >
 @tendB  cmpu  vscroll.obj.bufferB.end
         blt   >
-        lda   #vscroll.BUFFER_LINES-1
+        lda   #0
         leau  -vscroll.BUFFER_LINES*vscroll.LINE_SIZE,u
 !       stu   <vscroll.buffer.wAddressB
 ;
