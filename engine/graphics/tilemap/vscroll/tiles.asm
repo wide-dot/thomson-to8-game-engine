@@ -11,29 +11,34 @@
 ;              [y] ptr to sprite tile mapping data
 ; -----------------------------------------------------------------------------
 
-vscroll.tiles.state.start      equ dp_extreg+13 ; WORD
-vscroll.buffer.wAddress        equ dp_extreg+15 ; WORD
-vscroll.buffer.currentPosition equ dp_extreg+17 ; WORD
-vscroll.tileset.remainingLines equ dp_extreg+19 ; BYTE
+; temporary variables
+; -------------------
+vscroll.buffer.wAddress                 equ dp_extreg+13 ; WORD
+vscroll.buffer.currentPosition          equ dp_extreg+15 ; WORD
+vscroll.tileset.remainingLines          equ dp_extreg+17 ; BYTE
+vscroll.tiles.updateList.remainingBytes equ dp_extreg+18 ; WORD
+vscroll.tiles.tilemap.cursor            equ dp_extreg+20 ; WORD
+vscroll.tiles.tilegroup.wh              equ dp_extreg+22 ; WORD (alias to w and h)
+vscroll.tiles.tilegroup.w               equ dp_extreg+22 ; BYTE
+vscroll.tiles.tilegroup.h               equ dp_extreg+23 ; BYTE
+vscroll.tiles.tilegroup.x               equ dp_extreg+24 ; BYTE
+vscroll.tiles.tilegroup.y               equ dp_extreg+25 ; WORD
+vscroll.tiles.updateFlag                equ dp_extreg+27 ; BYTE
+; last available byte in dp is at dp_extreg+27
 
+; constants
+; -------------------
  IFNDEF vscroll.tiles.nbMaxUpdates
 vscroll.tiles.nbMaxUpdates equ 16 ; by default 16 sprites can be added to tile update list
  ENDC
+vscroll.tiles.updateListElementSize equ 5
 
-vscroll.tiles.bufferElementSize equ 5
-
-vscroll.tiles.buffer
-        fdb   vscroll.tiles.bufferA
-        fdb   vscroll.tiles.bufferB
-
-vscroll.tiles.bufferA
-        fill  0,(vscroll.tiles.nbMaxUpdates*vscroll.tiles.bufferElementSize+2)
-
-vscroll.tiles.bufferB
-        fill  0,(vscroll.tiles.nbMaxUpdates*vscroll.tiles.bufferElementSize+2)
-
-vscroll.tiles.state
-        fill  0,5*13 ; 5 group of 4 tiles for each of the 13 tile lines, only a nibble used for each byte.
+; variables
+; -------------------
+vscroll.camera.tile.y.start fdb   0      ; camera start position in map (in tiles)
+vscroll.camera.tile.y.end   fdb   0      ; camera end position in map (in tiles)
+vscroll.tiles.updateList    fill  0,(vscroll.tiles.nbMaxUpdates*vscroll.tiles.updateListElementSize+2)
+vscroll.tiles.state         fill  0,5*13 ; 5 group of 4 tiles for each of the 13 tile lines, only a nibble used for each byte.
 vscroll.tiles.state.end
 
 vscroll.tiles.draw
@@ -63,20 +68,15 @@ vscroll.tiles.draw
         addd  @y
         std   @y
         ; copy data to draw list
-        ldb   gfxlock.backBuffer.id ; alternate buffer based on in/active double buffering RAM
-        aslb
-        ldx   #vscroll.tiles.buffer
-        abx
-        ldx   ,x
-        ; update size of array
+        ldx   #vscroll.tiles.updateList
         ldd   ,x
-        addd  #vscroll.tiles.bufferElementSize
-        cmpd  #vscroll.tiles.nbMaxUpdates*vscroll.tiles.bufferElementSize
+        addd  #vscroll.tiles.updateListElementSize
+        cmpd  #vscroll.tiles.nbMaxUpdates*vscroll.tiles.updateListElementSize
         bls   >
         orcc  #%00000001 ; return KO
         rts              ; array is full
-!       std   ,x
-        subd  #vscroll.tiles.bufferElementSize-2  ; skip header (size data)
+!       std   ,x         ; update size of array
+        subd  #vscroll.tiles.updateListElementSize-2  ; skip header (size data)
         leax  d,x ; go to first free element of the array
         ldb   #0
 @x      equ   *-1
@@ -88,16 +88,6 @@ vscroll.tiles.draw
         andcc #%11111110
         rts       ; return OK
 
-vscroll.tiles.resetFrame
-        ldb   gfxlock.backBuffer.id ; alternate buffer based on in/active double buffering RAM
-        aslb
-        ldx   #vscroll.tiles.buffer
-        abx
-        ldx   ,x
-        ldd   #0                    ; clear the array
-        std   ,x
-        rts
-
 ; -----------------------------------------------------------------------------
 ; vscroll.tiles.updateTiles
 ;
@@ -108,16 +98,208 @@ vscroll.tiles.resetFrame
 vscroll.tiles.updateTiles
 
 ; Part1 ---------------------------------
-; For each of the two update lists (old then new) :
-; - read list, apply changes to level tilemap
-; - compare the tile with current one in vscroll.tiles.bufferA/B
-; - if different set the corresponding bit in vscroll.tiles.state
+; update tilemap, map.cache with new tile ids
+; set state bitfield for part2
 
-        ; implement
+        ;
+        ; compare the tile of vscroll.tiles.updateList with the one in tilemap
+        ; --------------------------------------------------------------------
+        ldd   vscroll.tiles.updateList
+        bne   >
+        rts
+!
+        std   <vscroll.tiles.updateList.remainingBytes
+        lda   #-1
+        sta   <vscroll.tiles.updateFlag ; this flag will skip part 2 if all tiles are already updated
+
+        ldd   vscroll.camera.currentY   ; compute camera start and end position in tilemap (visible range)
+        _lsrd                           ; a tile is 16px high
+        _lsrd
+        _lsrd
+        _lsrd
+        std   vscroll.camera.tile.y.start
+
+        ldd   vscroll.camera.currentY   ; compute camera start and end position in tilemap (visible range)
+        addd  vscroll.viewport.height.w ; add viewport height to get end of visible range
+        _lsrd                           ; a tile is 16px high
+        _lsrd
+        _lsrd
+        _lsrd
+        std   vscroll.camera.tile.y.end
+
+        lda   vscroll.obj.map.page
+        _SetCartPageA                  ; mount page that contain map data
+        ldy   vscroll.obj.map.address  ; handle up to 512 lines in map
+        ldx   #vscroll.tiles.updateList+2
+@loopUpdateList
+        ;
+        ; load tile group data
+        ; --------------------
+        ldu   3,x                      ; tile group address
+        ldd   ,u++                     ; 8bits: nb lines, 8bits: nb columns
+        std   <vscroll.tiles.tilegroup.wh
+        sta   @width
+        ; process line
+        ; ------------
+        ldd   1,x                      ; read tile line number in map
+        std   <vscroll.tiles.tilegroup.y
+        _lsrd                          ; max line number is 511, cannot use mult as is. Divide line in map by two
+        bcc   >                        ; branch if line/2 is even
+        leay  30,y                     ; if line/2 is odd, offset position in map by 30 bytes (12bits id * 20 tiles)
+!       lda   #60                      ; 2 lines of 30 bytes (12bits id * 20 tiles)
+        mul                            ; mult by line/2
+        leay  d,y                      ; y point to desired data map line
+        sty   <vscroll.tiles.tilemap.cursor
+        ; process column
+        ; --------------
+        ldb   ,x                       ; read tile column number in map
+        stb   <vscroll.tiles.tilegroup.x
+@loopTileGroup
+        lsrb                           ; unpacking tile id
+        bcs   >                        ; from 12bit to 16bit
+        ; read even tile
+        ; --------------
+        addb  ,x                       ; b is now mult. by 1.5x
+        incb
+        leay  b,y
+        ldd   ,y                       ; get the first packed word
+        andb  #$0F
+        stb   @b
+        _lsrd   
+        _lsrd
+        _lsrd
+        _lsrd
+        bra   @endif
+!       ; read odd tile
+        ; -------------
+        addb  ,x                       ; b is now mult. by 1.5x
+        leay  b,y
+        ldd   ,y
+        anda  #$F0
+        sta   @a
+        lda   ,y
+        anda  #$0F
+@endif
+        cmpd  ,u++                     ; tile id (tilemap) is now in d, compare to the one in update list
+        beq   @continue                ; branch if no update needed
+        clr   <vscroll.tiles.updateFlag ; set update flag
+        ;
+        ; update tilemap (tile is different)
+        ; ----------------------------------
+        ldb   <vscroll.tiles.tilegroup.x
+        lsrb                           ; unpacking tile id
+        bcs   >                        ; from 12bit to 16bit
+        ; write even tile
+        ; ---------------
+        ldd   -2,u
+        _lsld
+        _lsld
+        _lsld
+        _lsld
+        eorb  #0
+@b      equ   *-1
+        std   ,y
+        bra   @endif2
+!       ; write odd tile
+        ; --------------
+        ldd   -2,u
+        eora  #0
+@a      equ   *-1
+        std   ,y
+@endif2
+        ;
+        ; check if tile line is in visible range
+        ; --------------------------------------
+        ldd   <vscroll.tiles.tilegroup.y                   ; actual tile line position in map
+        cmpd  vscroll.camera.tile.y.end
+        bhi   @continue
+        subd  vscroll.camera.tile.y.start
+        bcs   @continue
+        ;
+        ; apply changes to vscroll.map.cache
+        ; ----------------------------------
+        pshs  x
+        lda   #vscroll.map.cache.LINE_SIZE
+        ; b: tile line from camera start
+        mul
+        ldx   vscroll.map.cache.cursor
+        leax  d,x
+        cmpx  #vscroll.map.cache.END                       ; cycling cache
+        blo   >
+        leax  -vscroll.map.cache.SIZE,x
+        subb  #vscroll.map.cache.NB_LINES
+!       stb   @cursor                                      ; tile line in cycling state/cache
+        ldd   <vscroll.tiles.tilegroup.x
+        _asld                                              ; two bytes for each tileid in cache
+        ldy   -2,u                                         ; reload tile_id
+        sty   d,x                                          ; store new tile_id in cache
+        ;
+        ; set the corresponding bit in vscroll.tiles.state
+        ; ------------------------------------------------
+        ; one byte store a bitfield for 4 consecutive tiles
+        ; there are 4 usefull state bits in a byte
+        ; 0000 1000 : tile 0
+        ; 0000 0100 : tile 1
+        ; 0000 0010 : tile 2
+        ; 0000 0001 : tile 3
+        lda   #5                                           ; there are 5 bytes per row in state array
+        ldb   #0
+@cursor equ   *-1
+        mul
+        ldx   #vscroll.tiles.state
+        abx
+        lda   #8
+        ldb   <vscroll.tiles.tilegroup.x
+        lsrb
+        bcc   >
+        lsra                                               ; tranform value 0-3 to a bitfield
+!       lsrb
+        bcc   >
+        lsra
+        lsra
+!       abx
+        eora  ,x
+        sta   ,x
+        puls  x
+        ;
+@continue
+        ldy   <vscroll.tiles.tilemap.cursor
+        inc   <vscroll.tiles.tilegroup.x
+        ldb   <vscroll.tiles.tilegroup.x
+        dec   <vscroll.tiles.tilegroup.w
+        lbne  @loopTileGroup        
+        dec   <vscroll.tiles.tilegroup.h
+        beq   @nextUpdateList
+        leay  30,y                                         ; move to next line in tilemap
+        sty   <vscroll.tiles.tilemap.cursor
+        lda   #0                                           ; reload width
+@width  equ *-1
+        sta   <vscroll.tiles.tilegroup.w
+        ldb   ,x                                           ; reload start position for x in tilemap
+        stb   <vscroll.tiles.tilegroup.x
+        inc   <vscroll.tiles.tilegroup.y+1                 ; move for next line position in tilemap
+        bcc   >
+        inc   <vscroll.tiles.tilegroup.y
+!       jmp   @loopTileGroup
+@nextUpdateList
+        ldd   <vscroll.tiles.updateList.remainingBytes
+        subd  #vscroll.tiles.updateListElementSize
+        std   <vscroll.tiles.updateList.remainingBytes
+        beq   @clearUpdateList
+        leax  5,x                                          ; move to next element in update list
+        jmp   @loopUpdateList
+@clearUpdateList
+        ldd   #0
+        std   vscroll.tiles.updateList                     ; clear the array
 
 ; Part2 ---------------------------------
-; copy the tile bitmap to the code buffer
-; by reading tiles in reverse order (from right to left)
+; draw in code buffer
+
+        ; Check if at least one element has changed
+        tst   <vscroll.tiles.updateFlag
+        bne   >
+        rts
+!
 
         ; One Run for buffer A
         lda   vscroll.obj.bufferA.page
@@ -125,7 +307,7 @@ vscroll.tiles.updateTiles
         ldu   vscroll.obj.bufferA.address
         ldd   #vscroll.obj.tile.pages
         std   vscroll.tiles.tilePages        
-        ldy   #vscroll.tiles.bufferA
+        ldy   #vscroll.map.cache
         jsr   vscroll.tiles.updateTilesForOneBuffer
 
         ; One Run for buffer B
@@ -135,13 +317,7 @@ vscroll.tiles.updateTiles
         ldd   #vscroll.obj.tile.pages
         addd  #1                             ; add offset specific to B buffer
         std   vscroll.tiles.tilePages
-        ldy   #vscroll.tiles.bufferB
-
-        ; TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        ; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        ; REMPLACER La LECTURE DEPUIS le vscroll.tiles.bufferA/B/ par la LECTURE DEPUIS LA TILEMAP
-        ; AJOUTER LA MAJ vscroll.tiles.bufferA/B avec id tilemap pour chaque tile traité
-        ; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        ldy   #vscroll.map.cache
 
 vscroll.tiles.updateTilesForOneBuffer
         stu   <vscroll.buffer.currentPosition
@@ -152,7 +328,7 @@ vscroll.tiles.updateTilesForOneBuffer
         ldb   ,x+
         beq   >
         jsr   vscroll.tiles.updateTilesForOneGroup
-!       leay  16,y                                      ; TODO: check fastest way, change for the same as ldu leau in this loop ?
+!       leay  16,y
         ldb   ,x+
         beq   >
         ldu   <vscroll.buffer.currentPosition

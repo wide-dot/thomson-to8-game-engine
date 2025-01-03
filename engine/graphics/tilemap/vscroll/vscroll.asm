@@ -46,7 +46,8 @@ vscroll.cursor              fcb   0
 vscroll.speed               fdb   0                                ; (signed 8.8 fixed point) nb of line to scroll
 vscroll.map.height          fdb   0                                ; map height in pixels
 vscroll.map.cache.LINE_SIZE equ   20*2
-vscroll.map.cache.SIZE      equ   vscroll.map.cache.LINE_SIZE*13
+vscroll.map.cache.NB_LINES  equ   13
+vscroll.map.cache.SIZE      equ   vscroll.map.cache.LINE_SIZE*vscroll.map.cache.NB_LINES
 vscroll.map.cache.y         fdb   -1                               ; camera range for the current cached tile line
 vscroll.map.cache.cursor    fdb   0                                ; position in cache buffer
 vscroll.map.cache           fill  0,vscroll.map.cache.SIZE         ; tile ids reflecting scroll buffer
@@ -54,8 +55,8 @@ vscroll.map.cache.END       equ   *
 vscroll.viewport.height.w   fcb   0                                ; padding for 16 bit operations
 vscroll.viewport.height     fcb   0
 vscroll.viewport.y          fcb   0                                ; y position of viewport on screen
-vscroll.camera.y            fdb   0                                ; camera position in map
-vscroll.camera.lastY        fdb   0                                ; last camera position in map
+vscroll.camera.y            fdb   0                                ; camera position in map (in pixels)
+vscroll.camera.lastY        fdb   0                                ; last camera position in map (in pixels)
 
 ; -----------------------------------------------------------------------------
 ; vscroll.move
@@ -290,6 +291,18 @@ vscroll.updategfx
 
 ; update the horizontal line of tile id in map cache
 ; --------------------------------------------------
+
+; TODO : test this solution :
+;        _lsld                          ; divide by 16 to get 
+;        _lsld                          ; line number in map 
+;        lslb                                
+;        bpl >
+;        leax  30,x                     ; if line in map is odd, offset  position in map by 30 bytes (12bits id * 20 tiles)
+;!       rola              
+;        ldb   #60                      ; 2 lines of 30 bytes (12bits id * 20 tiles)
+;        mul                            ; mult by line/2
+;        leax  d,x                      ; x point to desired data map line
+
 vscroll.updateTileCache
         ldx   vscroll.obj.map.address  ; handle up to 512 lines in map
         _lsrd                          ; divide
