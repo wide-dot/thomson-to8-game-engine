@@ -58,13 +58,13 @@ _vscroll.setTileset_ MACRO
 _vscroll.setUpdateRoutine_ MACRO
         sta   vscroll.tiles.nbLinesByPage
         asra
-        ldx   #@dyncall
+        ldx   #vscroll.tiles.dyncall
         ldx   a,x
         stx   vscroll.tiles.updateTilesForNLines.address
  ENDM
 
 _vscroll.setTileset256 MACRO
- IFDEF vscroll.tiles.nbLinesByPage
+ IFDEF vscroll.tiles.DEFINED
         lda   #16
         _vscroll.setUpdateRoutine_
  ENDC
@@ -80,7 +80,7 @@ _vscroll.setTileset256 MACRO
  ENDM
 
 _vscroll.setTileset512 MACRO
- IFDEF vscroll.tiles.nbLinesByPage
+ IFDEF vscroll.tiles.DEFINED
         lda   #16
         _vscroll.setUpdateRoutine_
  ENDC
@@ -88,8 +88,8 @@ _vscroll.setTileset512 MACRO
  ENDM
 
 _vscroll.setTileset1024 MACRO
- IFDEF vscroll.tiles.nbLinesByPage
-        lda   #8
+ IFDEF vscroll.tiles.DEFINED
+        lda   #8        
         _vscroll.setUpdateRoutine_
  ENDC
         _vscroll.setTileset_
@@ -104,7 +104,7 @@ _vscroll.setTileset1024 MACRO
  ENDM
 
 _vscroll.setTileset2048 MACRO
- IFDEF vscroll.tiles.nbLinesByPage
+ IFDEF vscroll.tiles.DEFINED
         lda   #4
         _vscroll.setUpdateRoutine_
  ENDC
