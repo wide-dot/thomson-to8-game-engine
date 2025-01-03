@@ -49,7 +49,8 @@ vscroll.map.cache.LINE_SIZE equ   20*2
 vscroll.map.cache.NB_LINES  equ   13
 vscroll.map.cache.SIZE      equ   vscroll.map.cache.LINE_SIZE*vscroll.map.cache.NB_LINES
 vscroll.map.cache.y         fdb   -1                               ; camera range for the current cached tile line
-vscroll.map.cache.cursor    fdb   0                                ; position in cache buffer
+vscroll.map.cache.cursor    fdb   0                                ; position in cache buffer (adress)
+vscroll.map.cache.line      fdb   0                                ; position in cache buffer (in lines)
 vscroll.map.cache           fill  0,vscroll.map.cache.SIZE         ; tile ids reflecting scroll buffer
 vscroll.map.cache.END       equ   *
 vscroll.viewport.height.w   fcb   0                                ; padding for 16 bit operations
@@ -207,8 +208,10 @@ vscroll.updategfx
         lda   <vscroll.buffer.line
         lsra
         lsra
-        anda  #%11111100
-        ldb   #vscroll.map.cache.LINE_SIZE/4 ; /4 saves two lsra but add one anda
+        lsra
+        lsra
+        sta   vscroll.map.cache.line
+        ldb   #vscroll.map.cache.LINE_SIZE
         mul
         leay  d,y
         sty   vscroll.map.cache.cursor

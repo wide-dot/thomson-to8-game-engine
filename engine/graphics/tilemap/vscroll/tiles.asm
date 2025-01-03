@@ -219,20 +219,20 @@ vscroll.tiles.updateTiles
         ; apply changes to vscroll.map.cache
         ; ----------------------------------
         pshs  x
-        lda   #vscroll.map.cache.LINE_SIZE
-        ; b: tile line from camera start
-        mul
-        ldx   vscroll.map.cache.cursor
-        leax  d,x
-        cmpx  #vscroll.map.cache.END                       ; cycling cache
+        addb  vscroll.map.cache.line                       ; b already loaded with tile line from camera start
+        cmpb  #vscroll.map.cache.NB_LINES
         blo   >
-        leax  -vscroll.map.cache.SIZE,x
-        subb  #vscroll.map.cache.NB_LINES
-!       stb   @cursor                                      ; tile line in cycling state/cache
-        ldd   <vscroll.tiles.tilegroup.x
-        _asld                                              ; two bytes for each tileid in cache
+        subb  #vscroll.map.cache.NB_LINES                  ; cycling cache
+!
+        stb   @cursor                                      ; tile line in cycling state/cache
+        lda   #vscroll.map.cache.LINE_SIZE
+        mul
+        ldx   #vscroll.map.cache
+        leax  d,x
+        ldb   <vscroll.tiles.tilegroup.x
+        aslb                                               ; two bytes for each tileid in cache
         ldy   -2,u                                         ; reload tile_id
-        sty   d,x                                          ; store new tile_id in cache
+        sty   b,x                                          ; store new tile_id in cache
         ;
         ; set the corresponding bit in vscroll.tiles.state
         ; ------------------------------------------------
@@ -297,7 +297,7 @@ vscroll.tiles.updateTiles
 
         ; Check if at least one element has changed
         tst   <vscroll.tiles.updateFlag
-        bne   >
+        beq   >
         rts
 !
 
@@ -380,7 +380,7 @@ vscroll.tiles.updateTilesForNLines.address equ *-2
         jsr   vscroll.tiles.updateTilesForNLines
 @dyncall0
         puls  x,pc
-@dyncall
+vscroll.tiles.dyncall
         fdb   @dyncall0 ; unused
         fdb   @dyncall4
         fdb   @dyncall2
