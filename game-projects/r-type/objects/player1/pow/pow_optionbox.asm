@@ -23,9 +23,9 @@ Routines
 	    fdb   AlreadyDeleted
 
 Init
-	    lda   subtype,u
+	lda   subtype,u
         bne   >  ; rebound laser code is unfinished
-        lda   #1 ; replace by counter-air
+        lda   #4 ; replace by counter-air
         sta   subtype,u
 !       asla
         ldx   #optionboxes
