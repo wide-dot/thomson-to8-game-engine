@@ -13,17 +13,15 @@
 
 ; temporary variables
 ; -------------------
-vscroll.buffer.wAddress                 equ dp_extreg+13 ; WORD
-vscroll.buffer.currentPosition          equ dp_extreg+15 ; WORD
-vscroll.tileset.remainingLines          equ dp_extreg+17 ; BYTE
-vscroll.tiles.updateList.remainingBytes equ dp_extreg+18 ; WORD
-vscroll.tiles.tilemap.cursor            equ dp_extreg+20 ; WORD
-vscroll.tiles.tilegroup.wh              equ dp_extreg+22 ; WORD (alias to w and h)
-vscroll.tiles.tilegroup.w               equ dp_extreg+22 ; BYTE
-vscroll.tiles.tilegroup.h               equ dp_extreg+23 ; BYTE
-vscroll.tiles.tilegroup.x               equ dp_extreg+24 ; BYTE
-vscroll.tiles.tilegroup.y               equ dp_extreg+25 ; WORD
-vscroll.tiles.updateFlag                equ dp_extreg+27 ; BYTE
+vscroll.tileset.remainingLines          equ dp_extreg+13 ; BYTE
+vscroll.tiles.updateList.remainingBytes equ dp_extreg+14 ; WORD
+vscroll.tiles.tilemap.cursor            equ dp_extreg+16 ; WORD
+vscroll.tiles.tilegroup.wh              equ dp_extreg+18 ; WORD (alias to w and h)
+vscroll.tiles.tilegroup.w               equ dp_extreg+18 ; BYTE
+vscroll.tiles.tilegroup.h               equ dp_extreg+19 ; BYTE
+vscroll.tiles.tilegroup.x               equ dp_extreg+20 ; BYTE
+vscroll.tiles.tilegroup.y               equ dp_extreg+21 ; WORD
+vscroll.tiles.updateFlag                equ dp_extreg+23 ; BYTE
 ; last available byte in dp is at dp_extreg+27
 
 ; constants
@@ -219,10 +217,12 @@ vscroll.tiles.updateTiles
         ; apply changes to vscroll.map.cache
         ; ----------------------------------
         pshs  x
-        addb  vscroll.map.cache.line                       ; b already loaded with tile line from camera start
-        cmpb  #vscroll.map.cache.NB_LINES
-        blo   >
-        subb  #vscroll.map.cache.NB_LINES                  ; cycling cache
+        stb   @line
+        ldb   vscroll.map.cache.line
+        subb  #0
+@line   equ   *-1
+        bpl   >
+        addb  #vscroll.map.cache.NB_LINES                  ; cycling cache
 !
         stb   @cursor                                      ; tile line in cycling state/cache
         lda   #vscroll.map.cache.LINE_SIZE
@@ -230,7 +230,7 @@ vscroll.tiles.updateTiles
         ldx   #vscroll.map.cache
         leax  d,x
         ldb   <vscroll.tiles.tilegroup.x
-        aslb                                               ; two bytes for each tileid in cache
+        lslb                                               ; two bytes for each tileid in cache
         ldy   -2,u                                         ; reload tile_id
         sty   b,x                                          ; store new tile_id in cache
         ;
@@ -306,7 +306,6 @@ vscroll.tiles.updateTiles
         lda   vscroll.obj.bufferA.page
         _SetCartPageA                        ; mount scroll buffer in cartridge space
         ldu   vscroll.obj.bufferA.address
-        leau  vscroll.BUFFER_LINES*vscroll.LINE_SIZE,u
         ldd   #vscroll.obj.tile.pages
         std   vscroll.tiles.tilePages        
         ldy   #vscroll.map.cache
@@ -317,19 +316,15 @@ vscroll.tiles.updateTiles
         lda   vscroll.obj.bufferB.page
         _SetCartPageA                        ; mount scroll buffer in cartridge space
         ldu   vscroll.obj.bufferB.address
-        leau  vscroll.BUFFER_LINES*vscroll.LINE_SIZE,u
         ldd   #vscroll.obj.tile.pages
         addd  #1                             ; add offset specific to B buffer
         std   vscroll.tiles.tilePages
         ldy   #vscroll.map.cache
 
 vscroll.tiles.updateTilesForOneBuffer
-        stu   <vscroll.buffer.currentPosition
-        stu   <vscroll.buffer.wAddress
         ldx   #vscroll.tiles.state
-
+        leau  4*vscroll.CHUNCK_SIZE,u
 @loop
-        leau  -vscroll.CHUNCK_SIZE,u
         ldb   ,x+
         beq   >
         jsr   vscroll.tiles.updateTilesForOneGroup
@@ -356,7 +351,7 @@ vscroll.tiles.updateTilesForOneBuffer
 !       cmpx  #vscroll.tiles.state.end
         beq   @exit
         leay  8,y
-        leau  -vscroll.LINE_SIZE*15,u
+        leau  vscroll.LINE_SIZE*16+vscroll.CHUNCK_SIZE*4,u
         bra   @loop
 @exit   rts
 
@@ -365,12 +360,13 @@ vscroll.tiles.updateTilesForOneGroup
 vscroll.tiles.currentBuffer equ *-1
         beq   >
         clr   -1,x                                         ; clear current state byte only with buffer B
-!       pshs  x,y
+!       pshs  x,u
         ldx   #vscroll.tiles.copyRoutines                  ; compute dynamic routine for this group
         aslb
         ldd   b,x
         std   vscroll.tiles.copyRoutine
-        clr   <vscroll.tileset.line
+        ldb   #15*2
+        stb   <vscroll.tileset.line
         jmp   >*
 vscroll.tiles.updateTilesForNLines.address equ *-2
 @dyncall4
@@ -381,7 +377,7 @@ vscroll.tiles.updateTilesForNLines.address equ *-2
 @dyncall1
         jsr   vscroll.tiles.updateTilesForNLines
 @dyncall0
-        puls  x,y,pc
+        puls  x,u,pc
 vscroll.tiles.dyncall
         fdb   @dyncall0 ; unused
         fdb   @dyncall4
@@ -402,9 +398,9 @@ vscroll.tiles.tilePages equ *-2
         ldx   a,x
         jsr   >*                             ; copy bitmap for buffer A
 vscroll.tiles.copyRoutine equ *-2
-        leau  -vscroll.LINE_SIZE,u           ; go to next screen line in code buffer
+        leau  vscroll.LINE_SIZE,u            ; go to next screen line in code buffer
         lda   <vscroll.tileset.line
-        adda  #2
+        suba  #2
         sta   <vscroll.tileset.line
         dec   <vscroll.tileset.remainingLines
         bne   <
