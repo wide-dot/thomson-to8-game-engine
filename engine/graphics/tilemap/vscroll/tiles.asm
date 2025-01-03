@@ -302,18 +302,22 @@ vscroll.tiles.updateTiles
 !
 
         ; One Run for buffer A
+        clr   vscroll.tiles.currentBuffer
         lda   vscroll.obj.bufferA.page
         _SetCartPageA                        ; mount scroll buffer in cartridge space
         ldu   vscroll.obj.bufferA.address
+        leau  vscroll.BUFFER_LINES*vscroll.LINE_SIZE,u
         ldd   #vscroll.obj.tile.pages
         std   vscroll.tiles.tilePages        
         ldy   #vscroll.map.cache
         jsr   vscroll.tiles.updateTilesForOneBuffer
 
         ; One Run for buffer B
+        inc   vscroll.tiles.currentBuffer
         lda   vscroll.obj.bufferB.page
         _SetCartPageA                        ; mount scroll buffer in cartridge space
         ldu   vscroll.obj.bufferB.address
+        leau  vscroll.BUFFER_LINES*vscroll.LINE_SIZE,u
         ldd   #vscroll.obj.tile.pages
         addd  #1                             ; add offset specific to B buffer
         std   vscroll.tiles.tilePages
@@ -325,46 +329,44 @@ vscroll.tiles.updateTilesForOneBuffer
         ldx   #vscroll.tiles.state
 
 @loop
+        leau  -vscroll.CHUNCK_SIZE,u
         ldb   ,x+
         beq   >
         jsr   vscroll.tiles.updateTilesForOneGroup
-!       leay  16,y
+!       leay  8,y
+        leau  -vscroll.CHUNCK_SIZE,u
         ldb   ,x+
         beq   >
-        ldu   <vscroll.buffer.currentPosition
-        leau  1*vscroll.CHUNCK_SIZE,u
         jsr   vscroll.tiles.updateTilesForOneGroup
-!       leay  16,y
+!       leay  8,y
+        leau  -vscroll.CHUNCK_SIZE,u
         ldb   ,x+
         beq   >
-        ldu   <vscroll.buffer.currentPosition
-        leau  2*vscroll.CHUNCK_SIZE,u
         jsr   vscroll.tiles.updateTilesForOneGroup
-!       leay  16,y
+!       leay  8,y
+        leau  -vscroll.CHUNCK_SIZE,u
         ldb   ,x+
         beq   >
-        ldu   <vscroll.buffer.currentPosition
-        leau  3*vscroll.CHUNCK_SIZE,u
         jsr   vscroll.tiles.updateTilesForOneGroup
-!       leay  16,y
+!       leay  8,y
+        leau  -vscroll.CHUNCK_SIZE,u
         ldb   ,x+
         beq   >
-        ldu   <vscroll.buffer.currentPosition
-        leau  4*vscroll.CHUNCK_SIZE,u
         jsr   vscroll.tiles.updateTilesForOneGroup
-!      
-        cmpx  #vscroll.tiles.state.end
+!       cmpx  #vscroll.tiles.state.end
         beq   @exit
-        leau  vscroll.LINE_SIZE,u
-        stu   <vscroll.buffer.currentPosition
-        leay  16,y
+        leay  8,y
+        leau  -vscroll.LINE_SIZE*15,u
         bra   @loop
 @exit   rts
 
 vscroll.tiles.updateTilesForOneGroup
-        clr   -1,x                                      ; clear current state byte
-        pshs  x
-        ldx   #vscroll.tiles.copyRoutines               ; compute dynamic routine for this group
+        lda   #0
+vscroll.tiles.currentBuffer equ *-1
+        beq   >
+        clr   -1,x                                         ; clear current state byte only with buffer B
+!       pshs  x,y
+        ldx   #vscroll.tiles.copyRoutines                  ; compute dynamic routine for this group
         aslb
         ldd   b,x
         std   vscroll.tiles.copyRoutine
@@ -379,7 +381,7 @@ vscroll.tiles.updateTilesForNLines.address equ *-2
 @dyncall1
         jsr   vscroll.tiles.updateTilesForNLines
 @dyncall0
-        puls  x,pc
+        puls  x,y,pc
 vscroll.tiles.dyncall
         fdb   @dyncall0 ; unused
         fdb   @dyncall4
@@ -394,14 +396,13 @@ vscroll.tiles.nbLinesByPage equ *-1
         lda   <vscroll.tileset.line
         ldx   #0                             ; load tileset page
 vscroll.tiles.tilePages equ *-2
-        lda   a,x
-        sta   map.CF74021.DATA               ; mount in data space
-!
-        ldx   #vscroll.obj.tile.adresses     ; load tileset addr
+        ldb   a,x
+        stb   map.CF74021.DATA               ; mount in data space
+!       ldx   #vscroll.obj.tile.adresses     ; load A tileset addr
         ldx   a,x
         jsr   >*                             ; copy bitmap for buffer A
 vscroll.tiles.copyRoutine equ *-2
-        leau  vscroll.LINE_SIZE,u            ; go to next screen line in code buffer
+        leau  -vscroll.LINE_SIZE,u           ; go to next screen line in code buffer
         lda   <vscroll.tileset.line
         adda  #2
         sta   <vscroll.tileset.line
