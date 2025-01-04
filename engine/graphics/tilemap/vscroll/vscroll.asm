@@ -294,33 +294,19 @@ vscroll.updategfx
 
 ; update the horizontal line of tile id in map cache
 ; --------------------------------------------------
-
-; TODO : test this solution :
-;        _lsld                          ; divide by 16 to get 
-;        _lsld                          ; line number in map 
-;        lslb                                
-;        bpl >
-;        leax  30,x                     ; if line in map is odd, offset  position in map by 30 bytes (12bits id * 20 tiles)
-;!       rola              
-;        ldb   #60                      ; 2 lines of 30 bytes (12bits id * 20 tiles)
-;        mul                            ; mult by line/2
-;        leax  d,x                      ; x point to desired data map line
-
 vscroll.updateTileCache
         ldx   vscroll.obj.map.address  ; handle up to 512 lines in map
-        _lsrd                          ; divide
-        _lsrd                          ; by
-        _lsrd                          ; 16 to get
-        _lsrd                          ; line number in map
-        _lsrd                          ; divide line in map by two
-        bcc   >                        ; branch if line in map is even
-        leax  30,x                     ; if line in map is odd, offset position in map by 30 bytes (12bits id * 20 tiles)
-!       
-        lda   vscroll.obj.map.page
-        _SetCartPageA                  ; mount page that contain map data
-        lda   #60                      ; 2 lines of 30 bytes (12bits id * 20 tiles)
+        _lsld                          ; divide by 16 to get 
+        _lsld                          ; line number in map 
+        lslb                                
+        bpl >
+        leax  30,x                     ; if line in map is odd, offset  position in map by 30 bytes (12bits id * 20 tiles)
+!       rola              
+        ldb   #60                      ; 2 lines of 30 bytes (12bits id * 20 tiles)
         mul                            ; mult by line/2
         leax  d,x                      ; x point to desired data map line
+        lda   vscroll.obj.map.page
+        _SetCartPageA                  ; mount page that contain map data
         lda   #20/2                    ; nb bytes to load/2
         sta   <vscroll.loop.counter2
 @loop   ldd   ,x+                      ; load cache by unpacking tile id
