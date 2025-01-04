@@ -22,6 +22,7 @@ vscroll.tiles.tilegroup.h               equ dp_extreg+19 ; BYTE
 vscroll.tiles.tilegroup.x               equ dp_extreg+20 ; BYTE
 vscroll.tiles.tilegroup.y               equ dp_extreg+21 ; WORD
 vscroll.tiles.updateFlag                equ dp_extreg+23 ; BYTE
+vscroll.tiles.backBuffer                equ dp_extreg+24 ; BYTE
 ; last available byte in dp is at dp_extreg+27
 
 ; constants
@@ -300,6 +301,8 @@ vscroll.tiles.updateTiles
         beq   >
         rts
 !
+        ldb   map.CF74021.DATA
+        stb   <vscroll.tiles.backBuffer      ; backup back video buffer
 
         ; One Run for buffer A
         clr   vscroll.tiles.currentBuffer
@@ -320,6 +323,11 @@ vscroll.tiles.updateTiles
         addd  #1                             ; add offset specific to B buffer
         std   vscroll.tiles.tilePages
         ldy   #vscroll.map.cache
+        jsr   vscroll.tiles.updateTilesForOneBuffer
+
+        ldb   <vscroll.tiles.backBuffer      ; restore video buffer
+        stb   map.CF74021.DATA
+        rts
 
 vscroll.tiles.updateTilesForOneBuffer
         ldx   #vscroll.tiles.state
