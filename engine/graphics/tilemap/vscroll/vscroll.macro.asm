@@ -61,6 +61,23 @@ _vscroll.setUpdateRoutine_ MACRO
         ldx   #vscroll.tiles.dyncall
         ldx   a,x
         stx   vscroll.tiles.updateTilesForNLines.address
+        lda   vscroll.tiles.nbLinesByPage
+        asla
+        sta   vscroll.tiles.nbLinesByPage.x2.0001
+        sta   vscroll.tiles.nbLinesByPage.x2.0010
+        sta   vscroll.tiles.nbLinesByPage.x2.0011
+        sta   vscroll.tiles.nbLinesByPage.x2.0100
+        sta   vscroll.tiles.nbLinesByPage.x2.0101
+        sta   vscroll.tiles.nbLinesByPage.x2.0110
+        sta   vscroll.tiles.nbLinesByPage.x2.0111
+        sta   vscroll.tiles.nbLinesByPage.x2.1000
+        sta   vscroll.tiles.nbLinesByPage.x2.1001
+        sta   vscroll.tiles.nbLinesByPage.x2.1010
+        sta   vscroll.tiles.nbLinesByPage.x2.1011
+        sta   vscroll.tiles.nbLinesByPage.x2.1100
+        sta   vscroll.tiles.nbLinesByPage.x2.1101
+        sta   vscroll.tiles.nbLinesByPage.x2.1110
+        sta   vscroll.tiles.nbLinesByPage.x2.1111
  ENDM
 
 _vscroll.setTileset256 MACRO
@@ -130,6 +147,23 @@ _vscroll.setTileNb MACRO
         _asld
         std   vscroll.obj.tile.nbx2
         _negd
+ IFDEF vscroll.tiles.DEFINED
+        std vscroll.tiles.nb.neg.x2.0001
+        std vscroll.tiles.nb.neg.x2.0010
+        std vscroll.tiles.nb.neg.x2.0011
+        std vscroll.tiles.nb.neg.x2.0100
+        std vscroll.tiles.nb.neg.x2.0101
+        std vscroll.tiles.nb.neg.x2.0110
+        std vscroll.tiles.nb.neg.x2.0111
+        std vscroll.tiles.nb.neg.x2.1000
+        std vscroll.tiles.nb.neg.x2.1001
+        std vscroll.tiles.nb.neg.x2.1010
+        std vscroll.tiles.nb.neg.x2.1011
+        std vscroll.tiles.nb.neg.x2.1100
+        std vscroll.tiles.nb.neg.x2.1101
+        std vscroll.tiles.nb.neg.x2.1110
+        std vscroll.tiles.nb.neg.x2.1111
+ ENDC
         addd  #$A000+$4000
         std   @test
         ; compute lut for each starting address of the 16 line tilesets
