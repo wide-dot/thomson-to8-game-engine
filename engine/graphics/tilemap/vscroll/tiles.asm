@@ -156,13 +156,13 @@ vscroll.tiles.draw
         rts       ; return OK
 
 ; -----------------------------------------------------------------------------
-; vscroll.tiles.prepareUpdate
+; vscroll.tiles.Update
 ;
 ; -----------------------------------------------------------------------------
 ; input  REG : none
 ; -----------------------------------------------------------------------------
 
-vscroll.tiles.prepareUpdate
+vscroll.tiles.update
 
 ; Part1 ---------------------------------
 ; update tilemap, map.cache with new tile ids
@@ -171,13 +171,13 @@ vscroll.tiles.prepareUpdate
         ;
         ; compare the tile of vscroll.tiles.updateList with the one in tilemap
         ; --------------------------------------------------------------------
-        lda   #-1
-        sta   vscroll.tiles.updateFlag  ; this flag will skip part 2 if all tiles are already updated
         ldd   vscroll.tiles.updateList
         bne   >
         rts
 !
         std   <vscroll.tiles.updateList.remainingBytes
+        lda   #1
+        sta   vscroll.tiles.updateFlag
 
         ldd   vscroll.camera.currentY   ; compute camera start and end position in tilemap (visible range)
         _lsrd                           ; a tile is 16px high
@@ -360,9 +360,7 @@ vscroll.tiles.prepareUpdate
 @clearUpdateList
         ldd   #0
         std   vscroll.tiles.updateList                     ; clear the array
-        rts
 
-vscroll.tiles.drawUpdate
 ; Part2 ---------------------------------
 ; draw in code buffer
 
