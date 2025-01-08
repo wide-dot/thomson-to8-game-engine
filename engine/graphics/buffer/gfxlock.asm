@@ -27,6 +27,7 @@ gfxlock.backProcess.status fcb   0 ; 1: a back process is active during wait
 
 gfxlock.bufferSwap.count   fdb   0 ; buffer swap counter
 gfxlock.backBuffer.id      fcb   0 ; back buffer set to read operations (0 or 1)
+gfxlock.backBuffer.status  fcb   0 ; always 0 or -1 (flip/flop)
 
 gfxlock.frameDrop.count_w  fcb   0 ; zero pad
 gfxlock.frameDrop.count    fcb   0 ; elapsed 50Hz frames since last main loop
@@ -52,15 +53,6 @@ gfxlock.bufferSwap.do
 gfxlock.screenBorder.color equ *-1
         stb   map.CF74021.SYS2         ; set visible video buffer (2 or 3)
         com   gfxlock.backBuffer.status
-        ldb   #$00                     ; always 0 or -1 (flip/flop)
-gfxlock.backBuffer.status equ   *-1
-        andb  #%00000001               ; set bit 0 based on flip/flop
-        orb   #%00000010               ; value should be 2 or 3
-        stb   map.CF74021.DATA         ; mount working video buffer in RAM
-        ldb   map.MC6846.PRC
-        eorb  #%00000001               ; swap half-page in $4000 $5FFF
-        stb   map.MC6846.PRC
-        
         inc   gfxlock.bufferSwap.count+1
         bne   >
         inc   gfxlock.bufferSwap.count
