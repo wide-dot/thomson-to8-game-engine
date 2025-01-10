@@ -30,10 +30,13 @@ CHECKPOINT_01      equ 24
         org   $6100
         clr   NEXT_GAME_MODE
         jsr   InitGlobals
-		jsr   InitDrawSprites
+	jsr   InitDrawSprites
+        lda   #1
+        sta   globals.difficulty
         jsr   InitStack
         jsr   LoadAct
         jsr   InitJoypads
+        jsr   InitRNG
         _terrainCollision.init ObjID_collision
 
         ldd   #Pal_black
@@ -50,6 +53,8 @@ CHECKPOINT_01      equ 24
         std   score
         ldd   #2
         std   lives
+        lda   #0
+        sta   globals.backgroundSolid
 
 ; register map locations for scroll
         _MountObject ObjID_LevelInit
@@ -92,7 +97,7 @@ CHECKPOINT_01      equ 24
 LevelMainLoop
         jsr   ReadJoypads
 
-        lda   checkpoint.state          ; load checkpoint requested ?
+        lda   checkpoint.state         ; load checkpoint requested ?
         beq   >
         ldu   #palettefade             ; yes check palette fade
         lda   routine,u                ; is palette fade over ?
@@ -111,34 +116,6 @@ LevelMainLoop
 ;        lda   #1
 ;        sta   checkpoint.state
 ;!
-        jsr   LoopRun
-        jmp   LevelMainLoop
-
-* ---------------------------------------------------------------------------
-* MAIN IRQ
-* ---------------------------------------------------------------------------
-
-UserIRQ
-        jsr   gfxlock.bufferSwap.check
-	jsr   PalUpdateNow
-        _MountObject ObjID_ymm07
-        _MusicFrame_objymm
-        _MountObject ObjID_vgc07
-        _MusicFrame_objvgc
-        rts
-
-
-MusicCallbackYMBoss
-        _MountObject ObjID_ymm07
-        _MusicInit_objymm #2,#MUSIC_LOOP,#0
-        rts
-
-MusicCallbackSNBoss
-        _MountObject ObjID_vgc07
-        _MusicInit_objvgc #2,#MUSIC_LOOP,#0
-        rts
-
-LoopRun
         jsr   Scroll
         jsr   ObjectWave
 
@@ -168,21 +145,28 @@ LoopRun
         _gfxlock.loop
 
         lda  NEXT_GAME_MODE
-        bne  Start_Music_Boss_Routine
-
-        rts
-
-Start_Music_Boss_Routine
-
+        beq  >
         jsr   IrqOff
         _MountObject ObjID_ymm07
-        _MusicInit_objymm #1,#MUSIC_NO_LOOP,#MusicCallbackYMBoss
+        _MusicInit_objymm #1,#MUSIC_LOOP,#0
         _MountObject ObjID_vgc07
-        _MusicInit_objvgc #1,#MUSIC_NO_LOOP,#MusicCallbackSNBoss
+        _MusicInit_objvgc #1,#MUSIC_LOOP,#0
         jsr   IrqOn
-
         clr   NEXT_GAME_MODE
+!
+        jmp   LevelMainLoop
 
+* ---------------------------------------------------------------------------
+* MAIN IRQ
+* ---------------------------------------------------------------------------
+
+UserIRQ
+        jsr   gfxlock.bufferSwap.check
+    	jsr   PalUpdateNow
+        _MountObject ObjID_ymm07
+        _MusicFrame_objymm
+        _MountObject ObjID_vgc07
+        _MusicFrame_objvgc
         rts
 
 * ---------------------------------------------------------------------------
