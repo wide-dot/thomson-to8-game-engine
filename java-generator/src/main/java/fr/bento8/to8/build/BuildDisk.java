@@ -306,6 +306,22 @@ public class BuildDisk
 		logger.info("Set GameMode Id as Globals ...");
 
 		int gmIndex = 0;
+		
+		// check if boot game mode exist
+		boolean exists = false;
+		for(Entry<String, GameMode> gameMode : game.gameModes.entrySet()) {
+			if (gameMode.getValue().name.contentEquals(game.gameModeBoot)) {
+				exists = true;
+			}
+		}
+		
+		if (!exists || game.gameModeBoot.isEmpty()) {
+			String s = "Did not found gameModeBoot " + game.gameModeBoot + " in declared game modes";
+			logger.error(s);
+			throw new Exception (s);
+		}
+		
+		gmIndex = 0;
 		for(Entry<String, GameMode> gameMode : game.gameModes.entrySet()) {
 			gmIndex = generateGameModeIDs(gameMode.getValue(), gmIndex);
 			game.glb.flush();
