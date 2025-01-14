@@ -28,8 +28,9 @@ CHECKPOINT_00      equ 0
 CHECKPOINT_01      equ 20
 
         org   $6100
+        clr   NEXT_GAME_MODE
         jsr   InitGlobals
-		jsr   InitDrawSprites
+	jsr   InitDrawSprites
         lda   #1
         sta   globals.difficulty
 
@@ -42,7 +43,7 @@ CHECKPOINT_01      equ 20
         ldd   #Pal_black
         std   Pal_current
         clr   PalRefresh
-	    jsr   PalUpdateNow
+	jsr   PalUpdateNow
 
 ; register animation data object
         ldb   #ObjID_animation
@@ -149,6 +150,19 @@ LevelMainLoop
         jsr   ,x
         _gfxlock.off
         _gfxlock.loop
+
+        ; boss music
+        lda  NEXT_GAME_MODE
+        beq  >
+        jsr   IrqOff
+        _MountObject ObjID_ymm01
+        _MusicInit_objymm #1,#MUSIC_LOOP,#0
+        _MountObject ObjID_vgc01
+        _MusicInit_objvgc #1,#MUSIC_LOOP,#0
+        jsr   IrqOn
+        clr   NEXT_GAME_MODE
+!
+
         jmp   LevelMainLoop
 
 * ---------------------------------------------------------------------------
@@ -157,7 +171,7 @@ LevelMainLoop
 
 UserIRQ
         jsr   gfxlock.bufferSwap.check
-	    jsr   PalUpdateNow
+	jsr   PalUpdateNow
         _MountObject ObjID_ymm01
         _MusicFrame_objymm
         _MountObject ObjID_vgc01

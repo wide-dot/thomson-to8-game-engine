@@ -154,7 +154,14 @@
 	fcb   $19,$68,ObjID_fadetotunnel,$00,$01
 	fcb   $19,$68,ObjID_fadetotunnel,$00,$02
 	fcb   $1A,$30,ObjID_bossmusic,$00,$00
-;$1B,$40,ObjID_22,$00,$00
+;$1B,$40,ObjID_22,$00,$00 (dobkeratops)
+	; following objects are created outside initial dobkeratops for display reason (x position loop)
+	; by creating the sprites just when needed, it is possible to set the first image in black borders
+	fcb   $1B,$D0,ObjID_dobkeratops,$00,$00
+	fcb   $1B,$DF,ObjID_dobkeratops_jaw,$00,$00
+	fcb   $1C,$20,ObjID_dobkeratops,$00,$01
+	fcb   $1C,$70,ObjID_dobkeratops,$00,$02
+	fcb   $1C,$C0,ObjID_dobkeratops,$00,$03
 ;$1D,$14,ObjID_2,$00,$00
 ;$1D,$80,ObjID_26,$00,$00
 	;fcb   $1D,$FC,ObjID_bossmusic,$00,$00
