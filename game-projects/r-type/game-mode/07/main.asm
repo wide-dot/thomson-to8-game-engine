@@ -31,7 +31,7 @@ CHECKPOINT_01      equ 24
         clr   NEXT_GAME_MODE
         jsr   InitGlobals
 	jsr   InitDrawSprites
-        lda   #1
+        lda   #0
         sta   globals.difficulty
         jsr   InitStack
         jsr   LoadAct
