@@ -5,7 +5,7 @@ Snd_index
         fdb   Snd_boss_sn
 
 Snd_07_sn
-        INCLUDEBIN "objects/levels/07/music/adnz/vgc/theme.vgc"
+        INCLUDEBIN "objects/levels/07/music/adnz/vgc/rtype-stage4.vgc"
 
 Snd_boss_sn
         INCLUDEBIN "objects/levels/bossmusic/music/vgc/music.vgc"
