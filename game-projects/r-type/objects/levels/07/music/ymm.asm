@@ -5,7 +5,7 @@ Snd_index
         fdb   Snd_boss_ym
 
 Snd_07_ym
-        INCLUDEBIN "objects/levels/07/music/adnz/ymm/theme.ymm.zx0"
+        INCLUDEBIN "objects/levels/07/music/adnz/ymm/rtype-stage4.ymm"
 
 Snd_boss_ym
         INCLUDEBIN "objects/levels/bossmusic/music/ymm/music.ymm"
