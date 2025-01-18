@@ -12,6 +12,7 @@
         INCLUDE "./objects/enemies_properties.asm"
         INCLUDE "./objects/animation/index.equ"
         INCLUDE "./global/projectile.macro.asm"
+        INCLUDE "./objects/explosion/explosion.const.asm"
 
 AABB_0        equ ext_variables   ; AABB struct (9 bytes)
 nb_bugs       equ ext_variables+9
@@ -183,8 +184,8 @@ Live
         std   score
         jsr   LoadObject_x
         beq   @delete
-        lda   #ObjID_enemiesblastsmall
-        sta   id,x
+        _ldd   ObjID_explosion,explosion.subtype.smallx2
+        std   id,x
         ldd   x_pos,u
         std   x_pos,x
         ldd   y_pos,u

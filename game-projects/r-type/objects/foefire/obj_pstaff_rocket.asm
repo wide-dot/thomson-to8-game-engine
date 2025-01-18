@@ -7,6 +7,7 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./objects/explosion/explosion.const.asm"
 
 origin equ ext_variables ; missile origin
 
@@ -91,8 +92,8 @@ PStaffRocketRight
 PStaffRocketDestroy
         jsr   LoadObject_x ; Explosion
         beq   >
-        lda   #ObjID_enemiesfirework
-        sta   id,x
+        _ldd   ObjID_explosion,explosion.subtype.fwk
+        std   id,x
         ldd   x_pos,u
         std   x_pos,x
         ldd   y_pos,u

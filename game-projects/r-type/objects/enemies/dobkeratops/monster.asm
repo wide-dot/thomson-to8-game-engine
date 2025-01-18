@@ -8,6 +8,7 @@
 
         INCLUDE "./engine/macros.asm"
         INCLUDE "./engine/math/rnd.macro.asm"
+        INCLUDE "./objects/explosion/explosion.const.asm"
 
 ; temporary variables
 explosion.instances equ dp_extreg
@@ -66,9 +67,8 @@ Intro
         bne   >
         jmp   InstanceEnd
 !
-        _ldd   ObjID_enemiesblastsmall,1
-        sta   id,x
-        stb   subtype,x
+        _ldd   ObjID_explosion,explosion.subtype.smallx3
+        std   id,x
         _rnda 0,12
         suba  #6
         ldy   x_pos,u

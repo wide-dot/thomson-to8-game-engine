@@ -9,6 +9,7 @@
         INCLUDE "./engine/macros.asm"
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
+        INCLUDE "./objects/explosion/explosion.const.asm"
 
 AABB_0            equ ext_variables   ; AABB struct (9 bytes)
 Object
@@ -61,8 +62,8 @@ Live
 @destroy 
         jsr   LoadObject_x
         beq   @delete
-        lda   #ObjID_enemiesblastsmall
-        sta   id,x
+        _ldd   ObjID_explosion,explosion.subtype.smallx2
+        std   id,x
         ldd   x_pos,u
         std   x_pos,x
         ldd   y_pos,u
