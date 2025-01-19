@@ -331,10 +331,10 @@ destroy
         beq   delete
         ldb   #ObjID_pow_optionbox
         lda   subtype,u
-        asra                            ; option box type is on bits 4,5,6,7 of the subtype
-        asra                            ; hence shifting everything to the right 4 times
-        asra                            
-        asra                
+        lsra                            ; option box type is on bits 4,5,6,7 of the subtype
+        lsra                            ; hence shifting everything to the right 4 times
+        lsra                            
+        lsra                
         cmpa  #$05                      ; $05 is a bit device, not an option box
         bne   >
         ldb   #ObjID_bitdevice          ; set the bit device object ID instead
