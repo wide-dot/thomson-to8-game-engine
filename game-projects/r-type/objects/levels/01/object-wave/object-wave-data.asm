@@ -113,7 +113,7 @@
  	fcb   $0E,$2C,ObjID_pow,$00,$04
 	fcb   $0E,$50,ObjID_bug,$01,$22
 	fcb   $0E,$50,ObjID_blaster,$00,$00
- 	;fcb   $0E,$58,ObjID_shell,$00,$00
+ 	fcb   $0E,$58,ObjID_shell,$00,$00
 ;$0E,$80,ObjID_32,$00,$00
 	fcb   $11,$10,ObjID_blaster,$00,$01
 	fcb   $11,$50,ObjID_blaster,$00,$01
@@ -159,7 +159,6 @@
 	; by creating the sprites just when needed, it is possible to set the first image in black borders
 	fcb   $1B,$D0,ObjID_dobkeratops,$00,$00
 	fcb   $1B,$DF,ObjID_dobkeratops_jaw,$00,$00
-	fcb   $1B,$DF,ObjID_dobkeratops_monster,$00,$00
 	fcb   $1C,$20,ObjID_dobkeratops,$00,$01
 	fcb   $1C,$70,ObjID_dobkeratops,$00,$02
 	fcb   $1C,$C0,ObjID_dobkeratops,$00,$03
