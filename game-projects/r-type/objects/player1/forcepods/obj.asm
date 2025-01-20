@@ -306,6 +306,7 @@ Live
         stb   canshootweapon,u
         rts
 @shootlaser
+        jmp   @counterairlaser ; only counter air available at the moment
         lda   player1+forcepodtype
         beq   @reboundlaser
         cmpa  #2
