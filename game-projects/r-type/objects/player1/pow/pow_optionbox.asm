@@ -24,10 +24,10 @@ Routines
 
 Init
 	lda   subtype,u
-        bne   >  ; rebound laser code is unfinished
-        lda   #4 ; replace by counter-air
-        sta   subtype,u
-!       asla
+        ;bne   >  ; rebound laser code is unfinished
+        ;lda   #4 ; replace by counter-air
+        ;sta   subtype,u
+!       lsla
         ldx   #optionboxes
         ldd   a,x
         std   image_set,u
