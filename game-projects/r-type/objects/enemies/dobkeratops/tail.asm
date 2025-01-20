@@ -54,7 +54,7 @@ tail.curPriority equ *-1
         inc   tail.curPriority
 
         ; display priority
-        ldb   #6
+        ldb   #4
         stb   priority,x
 
         ; init sprite position
