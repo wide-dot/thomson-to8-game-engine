@@ -24,7 +24,7 @@ Routines
         fdb   Intro
         fdb   WaitExplosions
         fdb   MonsterOut
-        fdb   Run
+        fdb   MonsterMouth
 
 Init
         ; init sprite position
@@ -67,7 +67,7 @@ Intro
         bne   >
         jmp   InstanceEnd
 !
-        _ldd   ObjID_explosion,explosion.subtype.smallx3
+        _ldd  ObjID_explosion,explosion.subtype.smallx3
         std   id,x
         _rnda 0,12
         suba  #6
@@ -107,6 +107,7 @@ MonsterOut
         subb  gfxlock.frameDrop.count
         bhi   >
         inc   routine,u
+        ldb   #$c0
 !       stb   anim_frame+1,u
         jmp   DisplaySprite
 
@@ -116,5 +117,47 @@ monster.getout.images
         fdb   Img_dobkeratops_monster_2
         fdb   Img_dobkeratops_monster_1
 
-Run
+MonsterMouth
+        lda   gfxlock.frameDrop.count
+        ldb   anim_frame+1,u
+@loop   decb
+        andb  #$7f ; 111 1111
+        stb   anim_frame+1,u
+        cmpb  #$30 ; 011 0000
+        bne   >
+        jsr   CreateSawChain
+!       deca
+        bne   @loop
+        andb  #$70 ; 111 0000
+        lsrb
+        lsrb
+        lsrb
+        ldx   #monster.fire.images
+        ldd   b,x
+        std   image_set,u
         jmp   DisplaySprite
+
+CreateSawChain
+        pshs  d
+        jsr   LoadObject_x
+        beq   >
+        _ldd  ObjID_dobkeratops_saw,0
+        sta   id,x
+        stb   routine,x
+        ldd   x_pos,u
+        subd  #6
+        std   x_pos,x
+        ldd   y_pos,u
+        addd  #9
+        std   y_pos,x
+!       puls  d,pc
+
+monster.fire.images
+        fdb   Img_dobkeratops_monster_4
+        fdb   Img_dobkeratops_monster_5
+        fdb   Img_dobkeratops_monster_6
+        fdb   Img_dobkeratops_monster_5
+        fdb   Img_dobkeratops_monster_4
+        fdb   Img_dobkeratops_monster_4
+        fdb   Img_dobkeratops_monster_4
+        fdb   Img_dobkeratops_monster_4
