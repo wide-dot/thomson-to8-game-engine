@@ -36,3 +36,12 @@ cancer_score		equ 3
 cancer_hitbox_x		equ 6
 cancer_hitbox_y		equ 13
 cancer_hitdamage	equ 1
+
+dobkeratops_tail_hitbox_x  equ 2
+dobkeratops_tail_hitbox_y  equ 4
+dobkeratops_tail_hitdamage equ -128
+
+dobkeratops_saw_score     equ 1
+dobkeratops_saw_hitbox_x  equ 3
+dobkeratops_saw_hitbox_y  equ 6
+dobkeratops_saw_hitdamage equ -128
