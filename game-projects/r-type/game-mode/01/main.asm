@@ -130,6 +130,7 @@ LevelMainLoop
 
         _Collision_Do AABB_list_player,AABB_list_bonus
         _Collision_Do AABB_list_player,AABB_list_foefire
+        _Collision_Do AABB_list_player,AABB_list_ennemy_unkillable        
         _Collision_Do AABB_list_player,AABB_list_ennemy
 
         _Collision_Do AABB_list_forcepod,AABB_list_foefire

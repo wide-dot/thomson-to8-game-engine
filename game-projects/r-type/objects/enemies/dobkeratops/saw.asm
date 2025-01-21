@@ -7,6 +7,9 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./engine/collision/macros.asm"
+        INCLUDE "./engine/collision/struct_AABB.equ"
+        INCLUDE "./objects/enemies_properties.asm"
 
 x_pos_origin  equ ext_variables
 y_pos_origin  equ ext_variables+2
@@ -15,6 +18,7 @@ y_vel_step    equ ext_variables+5
 parent        equ ext_variables+7
 missed_frames equ ext_variables+9
 child_frame   equ ext_variables+10
+AABB_0        equ ext_variables+11   ; AABB struct (9 bytes)
 
 Object
         lda   routine,u
@@ -46,7 +50,13 @@ InitCommon
         sta   render_flags,u
         ldd   #-$0180
         std   x_vel,u
-        rts
+
+        _Collision_AddAABB AABB_0,AABB_list_ennemy_unkillable
+        lda   #dobkeratops_saw_hitdamage
+        sta   AABB_0+AABB.p,u
+        _ldd  dobkeratops_saw_hitbox_x,dobkeratops_saw_hitbox_y
+        std   AABB_0+AABB.rx,u
+        jmp   UpdateHitBox        
 
 RunMaster
         lda   gfxlock.frameDrop.count
@@ -64,6 +74,7 @@ RunMaster
         bne   @loop
 
 !       jsr   UpdateFrame
+        jsr   UpdateHitBox
         jmp   DisplaySprite
 
 RunMaster2
@@ -143,8 +154,10 @@ RunCommon
         addd  #8
         cmpd  glb_camera_x_pos
         bhi   >
+        _Collision_RemoveAABB AABB_0,AABB_list_ennemy_unkillable
         jmp   DeleteObject
 !       jsr   UpdateFrame
+        jsr   UpdateHitBox
         jmp   DisplaySprite
 
 InitSlave
@@ -161,6 +174,7 @@ RunSlave
 !       deca
         bne   @loop
         jsr   UpdateFrame
+        jsr   UpdateHitBox
         clr   missed_frames,u
         jmp   DisplaySprite
 
@@ -223,3 +237,21 @@ saw.images
         fdb   Img_dobkeratops_saw_1
         fdb   Img_dobkeratops_saw_2
         fdb   Img_dobkeratops_saw_3
+
+UpdateHitBox
+        lda   AABB_0+AABB.p,u
+        beq   @destroy
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB_0+AABB.cx,u
+        ldd   y_pos,u
+        subd  glb_camera_y_pos
+        stb   AABB_0+AABB.cy,u
+        rts
+@destroy
+        ldd   score
+        addd  #dobkeratops_saw_score
+        std   score
+        _Collision_RemoveAABB AABB_0,AABB_list_ennemy_unkillable
+        leas  2,s
+        jmp   DeleteObject
