@@ -239,8 +239,6 @@ saw.images
         fdb   Img_dobkeratops_saw_3
 
 UpdateHitBox
-        lda   AABB_0+AABB.p,u
-        beq   @destroy
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB_0+AABB.cx,u
@@ -248,10 +246,3 @@ UpdateHitBox
         subd  glb_camera_y_pos
         stb   AABB_0+AABB.cy,u
         rts
-@destroy
-        ldd   score
-        addd  #dobkeratops_saw_score
-        std   score
-        _Collision_RemoveAABB AABB_0,AABB_list_ennemy_unkillable
-        leas  2,s
-        jmp   DeleteObject

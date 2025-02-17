@@ -9,9 +9,13 @@
         INCLUDE "./engine/macros.asm"
         INCLUDE "./engine/math/rnd.macro.asm"
         INCLUDE "./objects/explosion/explosion.const.asm"
+        INCLUDE "./engine/collision/macros.asm"
+        INCLUDE "./engine/collision/struct_AABB.equ"
+        INCLUDE "./objects/enemies_properties.asm"
 
 ; temporary variables
-explosion.instances equ dp_extreg
+AABB_0              equ ext_variables   ; AABB struct (9 bytes)
+explosion.instances equ dp_extreg+9
 
 Object
         lda   routine,u
@@ -48,6 +52,12 @@ Init
         ; init image
         ldx   #0
         stx   image_set,u
+
+        _Collision_AddAABB AABB_0,AABB_list_ennemy
+        lda   #dobkeratops_monster_hitdamage
+        sta   AABB_0+AABB.p,u
+        _ldd  dobkeratops_monster_hitbox_x,dobkeratops_monster_hitbox_y
+        std   AABB_0+AABB.rx,u
 
         inc   routine,u
 
@@ -135,6 +145,7 @@ MonsterMouth
         ldx   #monster.fire.images
         ldd   b,x
         std   image_set,u
+        jsr   UpdateHitBox
         jmp   DisplaySprite
 
 CreateSawChain
@@ -161,3 +172,31 @@ monster.fire.images
         fdb   Img_dobkeratops_monster_4
         fdb   Img_dobkeratops_monster_4
         fdb   Img_dobkeratops_monster_4
+
+UpdateHitBox
+        lda   AABB_0+AABB.p,u
+        beq   @destroy
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB_0+AABB.cx,u
+        ldd   y_pos,u
+        subd  glb_camera_y_pos
+        stb   AABB_0+AABB.cy,u
+        rts
+@destroy 
+        ldd   score
+        addd  #dobkeratops_monster_score
+        std   score
+        jsr   LoadObject_x
+        beq   @delete
+        _ldd   ObjID_explosion,explosion.subtype.smallx3
+        std   id,x
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
+@delete
+        lda   #2
+        sta   routine,u      
+        _Collision_RemoveAABB AABB_0,AABB_list_ennemy
+        jmp   DeleteObject
