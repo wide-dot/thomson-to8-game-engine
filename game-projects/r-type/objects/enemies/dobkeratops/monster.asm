@@ -9,9 +9,13 @@
         INCLUDE "./engine/macros.asm"
         INCLUDE "./engine/math/rnd.macro.asm"
         INCLUDE "./objects/explosion/explosion.const.asm"
+        INCLUDE "./engine/collision/macros.asm"
+        INCLUDE "./engine/collision/struct_AABB.equ"
+        INCLUDE "./objects/enemies_properties.asm"
 
 ; temporary variables
-explosion.instances equ dp_extreg
+AABB_0              equ ext_variables   ; AABB struct (9 bytes)
+explosion.instances equ dp_extreg+9
 
 Object
         lda   routine,u
@@ -24,7 +28,7 @@ Routines
         fdb   Intro
         fdb   WaitExplosions
         fdb   MonsterOut
-        fdb   Run
+        fdb   MonsterMouth
 
 Init
         ; init sprite position
@@ -49,6 +53,12 @@ Init
         ldx   #0
         stx   image_set,u
 
+        _Collision_AddAABB AABB_0,AABB_list_ennemy
+        lda   #dobkeratops_monster_hitdamage
+        sta   AABB_0+AABB.p,u
+        _ldd  dobkeratops_monster_hitbox_x,dobkeratops_monster_hitbox_y
+        std   AABB_0+AABB.rx,u
+
         inc   routine,u
 
 Intro
@@ -67,7 +77,7 @@ Intro
         bne   >
         jmp   InstanceEnd
 !
-        _ldd   ObjID_explosion,explosion.subtype.smallx3
+        _ldd  ObjID_explosion,explosion.subtype.smallx3
         std   id,x
         _rnda 0,12
         suba  #6
@@ -107,6 +117,7 @@ MonsterOut
         subb  gfxlock.frameDrop.count
         bhi   >
         inc   routine,u
+        ldb   #$c0
 !       stb   anim_frame+1,u
         jmp   DisplaySprite
 
@@ -116,5 +127,76 @@ monster.getout.images
         fdb   Img_dobkeratops_monster_2
         fdb   Img_dobkeratops_monster_1
 
-Run
+MonsterMouth
+        lda   gfxlock.frameDrop.count
+        ldb   anim_frame+1,u
+@loop   decb
+        andb  #$7f ; 111 1111
+        stb   anim_frame+1,u
+        cmpb  #$30 ; 011 0000
+        bne   >
+        jsr   CreateSawChain
+!       deca
+        bne   @loop
+        andb  #$70 ; 111 0000
+        lsrb
+        lsrb
+        lsrb
+        ldx   #monster.fire.images
+        ldd   b,x
+        std   image_set,u
+        jsr   UpdateHitBox
         jmp   DisplaySprite
+
+CreateSawChain
+        pshs  d
+        jsr   LoadObject_x
+        beq   >
+        _ldd  ObjID_dobkeratops_saw,0
+        sta   id,x
+        stb   routine,x
+        ldd   x_pos,u
+        subd  #6
+        std   x_pos,x
+        ldd   y_pos,u
+        addd  #9
+        std   y_pos,x
+!       puls  d,pc
+
+monster.fire.images
+        fdb   Img_dobkeratops_monster_4
+        fdb   Img_dobkeratops_monster_5
+        fdb   Img_dobkeratops_monster_6
+        fdb   Img_dobkeratops_monster_5
+        fdb   Img_dobkeratops_monster_4
+        fdb   Img_dobkeratops_monster_4
+        fdb   Img_dobkeratops_monster_4
+        fdb   Img_dobkeratops_monster_4
+
+UpdateHitBox
+        lda   AABB_0+AABB.p,u
+        beq   @destroy
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB_0+AABB.cx,u
+        ldd   y_pos,u
+        subd  glb_camera_y_pos
+        stb   AABB_0+AABB.cy,u
+        rts
+@destroy 
+        ldd   score
+        addd  #dobkeratops_monster_score
+        std   score
+        jsr   LoadObject_x
+        beq   @delete
+        _ldd   ObjID_explosion,explosion.subtype.smallx3
+        std   id,x
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
+@delete
+        lda   #2
+        sta   routine,u      
+        _Collision_RemoveAABB AABB_0,AABB_list_ennemy
+        jmp   DeleteObject

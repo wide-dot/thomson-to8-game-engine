@@ -7,6 +7,9 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./engine/collision/macros.asm"
+        INCLUDE "./engine/collision/struct_AABB.equ"
+        INCLUDE "./objects/enemies_properties.asm"
 
 AABB_0            equ ext_variables   ; AABB struct (9 bytes)
 tail.priority     equ ext_variables+9
@@ -54,7 +57,7 @@ tail.curPriority equ *-1
         inc   tail.curPriority
 
         ; display priority
-        ldb   #6
+        ldb   #4
         stb   priority,x
 
         ; init sprite position
@@ -96,6 +99,18 @@ curExplodeDelay equ *-1
         ; display settings
         lda   #render_playfieldcoord_mask
         sta   render_flags,x
+
+        lda   <tail.instances
+        anda  #1
+        beq   >
+        ; register hit box
+        _Collision_AddAABB_x AABB_0,AABB_list_ennemy
+
+        lda   #dobkeratops_tail_hitdamage
+        sta   AABB_0+AABB.p,x
+        _ldd  dobkeratops_tail_hitbox_x,dobkeratops_tail_hitbox_y
+        std   AABB_0+AABB.rx,x
+!
 
         ; move to next preset
         leay   5,y
@@ -154,6 +169,17 @@ Run
         leay  -1,y
         bne   @loop
 @end        
+
+        ; update hitbox
+        lda   AABB_0+AABB.p,u
+        beq   >
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB_0+AABB.cx,u
+        ldd   y_pos,u
+        subd  glb_camera_y_pos
+        stb   AABB_0+AABB.cy,u
+!
         jmp   DisplaySprite
 
 MoveOut
@@ -165,6 +191,10 @@ MoveOut
         cmpd  glb_camera_x_pos
         ble   >
         jmp   Run
+!
+        lda   AABB_0+AABB.p,u
+        beq   >
+        _Collision_RemoveAABB AABB_0,AABB_list_ennemy
 !       jmp   DeleteObject
 
 tail.images

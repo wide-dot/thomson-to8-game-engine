@@ -22,9 +22,9 @@ Routines
 
 Init
         ; init sprite position
-        ldd   #1498
+        ldd   #1497
         std   x_pos,u
-        ldd   #75
+        ldd   #77
         std   y_pos,u
 
         ; display priority
