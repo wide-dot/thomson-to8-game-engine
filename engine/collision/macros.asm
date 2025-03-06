@@ -27,6 +27,14 @@ _Collision_AddAABB MACRO
         puls  u,x,y
  ENDM
 
+_Collision_AddAABB_x MACRO
+        pshs  u,x,y
+        leax  \1,x
+        ldy   #\2
+        jsr   Collision_AddAABB
+        puls  u,x,y
+ ENDM
+
 ; --------------------------------------
 
 _Collision_RemoveAABB MACRO

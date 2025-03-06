@@ -321,19 +321,18 @@ AlreadyDeleted
         rts
 
 ImageIndex
-        fdb   Img_bink_3
+        fdb   Img_bink_0
         fdb   Img_bink_2
-        fdb   Img_bink_3
+        fdb   Img_bink_0
         fdb   Img_bink_1
-        fdb   Img_bink_9
+        fdb   Img_bink_6
         fdb   Img_bink_8
-        fdb   Img_bink_9
+        fdb   Img_bink_6
         fdb   Img_bink_7
         fdb   Img_bink_10
         fdb   Img_bink_11
         fdb   Img_bink_4
         fdb   Img_bink_5
-
 
 PresetXYIndex
         INCLUDE "./global/preset/18dd0_preset-xy.asm"
