@@ -24,34 +24,59 @@ Init
         ldx   #SubImages
         ldb   subtype+1,u
         aslb
-        ldd   b,x
-        std   image_set,u
+        ldx   b,x
+        stx   image_set,u
 
         ; init sprite position
-        lda   #16 ; sprite width
-        ldb   subtype+1,u
-        mul
-        addd  #1491
+        ldd   #1507
         std   x_pos,u
         ldd   #100
         std   y_pos,u
 
         ; display priority
-        ldb   #8
+        ldb   subtype,u
         stb   priority,u
 
         ; display settings
-        lda   #render_playfieldcoord_mask|render_overlay_mask|render_xloop_mask
-        sta   render_flags,u
+        lda   #render_playfieldcoord_mask|render_xloop_mask
+        ldb   subtype+1,u
+        cmpb  #7
+        blo   >
+        ora   #render_overlay_mask
+!       sta   render_flags,u
 
         inc   routine,u
         jmp   DisplaySprite
 
 SubImages
-        fdb   Img_dobkeratops_0
-        fdb   Img_dobkeratops_1
-        fdb   Img_dobkeratops_2
-        fdb   Img_dobkeratops_3
+        fdb   Img_dobkeratops_eye00
+        fdb   Img_dobkeratops_eye01
+        fdb   Img_dobkeratops_eye10
+        fdb   Img_dobkeratops_eye20
+        fdb   Img_dobkeratops_eye30
+        fdb   Img_dobkeratops_eye31
+        fdb   Img_dobkeratops_eye32
+
+        fdb   Img_dobkeratops_alienN0
+        fdb   Img_dobkeratops_alienN1
+        fdb   Img_dobkeratops_alienN2
+        fdb   Img_dobkeratops_alienN3
+
+        fdb   Img_dobkeratops_erase00
+        fdb   Img_dobkeratops_erase01
+        fdb   Img_dobkeratops_erase02
+        fdb   Img_dobkeratops_erase10
+        fdb   Img_dobkeratops_erase11
+        fdb   Img_dobkeratops_erase20
+        fdb   Img_dobkeratops_erase21
+        fdb   Img_dobkeratops_erase30
+        fdb   Img_dobkeratops_erase31
+        fdb   Img_dobkeratops_erase32
+
+        fdb   Img_dobkeratops_alien0
+        fdb   Img_dobkeratops_alien1
+        fdb   Img_dobkeratops_alien2
+        fdb   Img_dobkeratops_alien3
 
 Run
         jmp   DisplaySprite
