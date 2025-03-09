@@ -294,16 +294,18 @@ ApplyJoypadInput
         lslb
         ldx   #speed.preset
         abx                   ; add offset to table base
+        ldd   player1+speedlevel
+        leax  d,x
         ; Load velocities
-        ldd   ,x               ; load X velocity
+        ldd   ,x              ; load X velocity
         std   player1+x_vel
-        ldd   2,x              ; load Y velocity
+        ldd   2,x             ; load Y velocity
         std   player1+y_vel
         ; Set animation based on vertical direction
         puls  b               ; restore original direction bits
-        bitb  #%0001         ; test UP bit
+        bitb  #%0001          ; test UP bit
         bne   @animUp
-        bitb  #%0010         ; test DOWN bit
+        bitb  #%0010          ; test DOWN bit
         bne   @animDown
         bra   @exit
 @animUp
