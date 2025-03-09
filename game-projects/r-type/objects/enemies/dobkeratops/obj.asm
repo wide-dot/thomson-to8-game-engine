@@ -7,6 +7,10 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./engine/collision/macros.asm"
+        INCLUDE "./engine/collision/struct_AABB.equ"
+
+AABB_0  equ ext_variables   ; AABB struct (9 bytes)
 
 Object
         lda   routine,u
@@ -20,40 +24,47 @@ Routines
         fdb   MoveOut
 
 Init
-        ; setup image
-        ldx   #SubImages
-        ldb   subtype+1,u
-        aslb
-        ldx   b,x
-        stx   image_set,u
-
         ; init sprite position
         ldd   #1507
         std   x_pos,u
         ldd   #100
         std   y_pos,u
 
-        ; display priority
-        ldb   subtype,u
+        ; display priority and setup image
+        ldd   subtype,u
         stb   priority,u
+        ldx   #SubImages
+        asla
+        ldx   a,x
+        stx   image_set,u
 
         ; display settings
         lda   #render_playfieldcoord_mask|render_xloop_mask
-        ldb   subtype+1,u
+        ldb   subtype,u
         cmpb  #7
         blo   >
         ora   #render_overlay_mask
 !       sta   render_flags,u
+
+        *         ; init AABB only for eyes
+        *         cmpb  #3
+        *         bhi   >
+        *         _Collision_AddAABB AABB_0,AABB_list_ennemy
+        *         lda   #24                      ; set damage potential for this hitbox
+        *         sta   AABB_0+AABB.p,u
+        *         _ldd  12,25                    ; set hitbox xy radius
+        *         std   AABB_0+AABB.rx,u
+        * !
 
         inc   routine,u
         jmp   DisplaySprite
 
 SubImages
         fdb   Img_dobkeratops_eye00
-        fdb   Img_dobkeratops_eye01
         fdb   Img_dobkeratops_eye10
         fdb   Img_dobkeratops_eye20
         fdb   Img_dobkeratops_eye30
+        fdb   Img_dobkeratops_eye01
         fdb   Img_dobkeratops_eye31
         fdb   Img_dobkeratops_eye32
 

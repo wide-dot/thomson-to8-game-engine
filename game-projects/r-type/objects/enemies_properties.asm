@@ -50,3 +50,8 @@ dobkeratops_saw_score     equ 1
 dobkeratops_saw_hitbox_x  equ 3
 dobkeratops_saw_hitbox_y  equ 6
 dobkeratops_saw_hitdamage equ -128
+
+dobkeratops_eye_score     equ 5
+dobkeratops_eye_hitbox_x  equ 4
+dobkeratops_eye_hitbox_y  equ 8
+dobkeratops_eye_hitdamage equ 1
