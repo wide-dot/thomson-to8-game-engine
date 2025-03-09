@@ -20,6 +20,8 @@ missed_frames equ ext_variables+9
 child_frame   equ ext_variables+10
 AABB_0        equ ext_variables+11   ; AABB struct (9 bytes)
 
+XVEL          equ -$0180
+
 Object
         lda   routine,u
         asla
@@ -48,7 +50,7 @@ InitCommon
         stb   priority,u
         lda   #render_playfieldcoord_mask
         sta   render_flags,u
-        ldd   #-$0180
+        ldd   #XVEL
         std   x_vel,u
 
         _Collision_AddAABB AABB_0,AABB_list_ennemy_unkillable
@@ -109,44 +111,55 @@ CreateSlave
 
 SawMoveXLeft
         pshs  d
-        ldd   x_vel,u
-        addd  x_pos+1,u                ; x_pos must be followed by x_sub in memory
-        std   x_pos+1,u                ; update low byte of x_pos and x_sub byte
-        lda   x_pos,u
-        adca  #$FF                     ; parameter is modified by the result of sign extend
-        sta   x_pos,u                  ; update high byte of x_pos
-        puls  d,pc
+        ldd   #-$0180
+        addd  x_pos+1,u             
+        std   x_pos+1,u              
+        bcs   >
+        dec   x_pos,u
+!       puls  d,pc
 
 SawMoveY
         pshs  d
-        ldb   y_vel,u
-        sex                            ; velocity is positive or negative, take care of that
-        sta   @b
-        ldd   y_pos+1,u                ; y_pos must be followed by y_sub in memory
-        addd  y_vel,u
-        std   y_pos+1,u                ; update low byte of y_pos and y_sub byte
-        lda   y_pos,u
-        adca  #$00                     ; (dynamic) parameter is modified by the result of sign extend
-@b      equ   *-1
-        sta   y_pos,u                  ; update high byte of y_pos
+        ldx   y_vel_step,u
         ldd   y_vel,u
-        addd  y_vel_step,u             ; special code here, build up x_vel
-        std   y_vel,u
+        leax  d,x
+        bmi   @neg
+        addd  y_pos+1,u                      
+        bcc   >
+        inc   y_pos,u
+!       std   y_pos+1,u       
+        stx   y_vel,u
+        puls  d,pc
+@neg    addd  y_pos+1,u                     
+        bcs   <
+        dec   y_pos,u
+        std   y_pos+1,u         
+        stx   y_vel,u
         puls  d,pc
 
 CheckPlayerOnePos
-        pshs  d
-        ldd   #-12                    ; set a velocity value based on y position of player one
-        ldx   <player1+y_pos          ; on arcade velocity is $20, but added one frame on 2
-        cmpx  #102                    ; so after scale (*.75) and /2 (every frame, gives 12
-        bls   @end   
-        ldd   #0
-        cmpx  #115
-        bls   @end   
-        ldd   #12
-@end    std   y_vel_step,u
-        inc   routine,u
-        puls  d,pc
+; set a velocity value based on y position of player one
+; on arcade velocity is $20, but added one frame on 2
+; so after scale (*.75) and /2 (every frame, gives 12
+        ldx <player1+y_pos
+        cmpx #102
+        bls @neg
+        cmpx #115
+        bls @zero
+        ldx #12
+        stx y_vel_step,u
+        inc routine,u
+        rts
+@neg
+        ldx #-12
+        stx y_vel_step,u
+        inc routine,u
+        rts
+@zero
+        ldx #0
+        stx y_vel_step,u
+        inc routine,u
+        rts
 
 RunCommon
         jsr   SawMoveSync
@@ -190,37 +203,42 @@ GetParentVel
 SawMoveSync
 ; apply XY velocity in sync with framerate
 ; ----------------------------------------
-        ldx   gfxlock.frameDrop.count_w ; take number of elapsed frame since last render and multiply by velocity
+        ldb   gfxlock.frameDrop.count_w+1
+        bne   >
+        incb
+!       stb   ,-s  
+
+        * compteur boucle sur pile : même coût que x, mais le libère 
+        ldb   y_vel_step+1,u
+        stb   @a-1
+        ldx   y_vel,u ; on garde y_vel dans un reg
+@loop1
+        ldd   x_pos+1,u
+        addd  #XVEL
+        bcs   >       ; bcc si x_vel>0
+        dec   x_pos,u ; dec si x_vel>0
+!       std   x_pos+1,u
+        tfr   x,d
+        leax  111,x
+@a      tsta 
+        bmi   @neg
+        addd  y_pos+1,u
+        std   y_pos+1,u
+        bcc   >
+        inc   y_pos,u
+!       dec   ,s
         bne   @loop1
-        ldx   #1
-@loop1   
-        ldb   x_vel,u
-        sex                            ; velocity is positive or negative, take care of that
-        sta   @a+1
-        ldd   x_pos+1,u                ; x_pos must be followed by x_sub in memory
-        addd  x_vel,u
-        std   x_pos+1,u                ; update low byte of x_pos and x_sub byte
-        lda   x_pos,u
-@a
-        adca  #$00                     ; (dynamic) parameter is modified by the result of sign extend
-        sta   x_pos,u                  ; update high byte of x_pos
-;
-        ldb   y_vel,u
-        sex                            ; velocity is positive or negative, take care of that
-        sta   @b+1
-        ldd   y_pos+1,u                ; y_pos must be followed by y_sub in memory
-        addd  y_vel,u
-        std   y_pos+1,u                ; update low byte of y_pos and y_sub byte
-        lda   y_pos,u
-@b
-        adca  #$00                     ; (dynamic) parameter is modified by the result of sign extend
-        sta   y_pos,u                  ; update high byte of y_pos
-        ldd   y_vel,u
-        addd  y_vel_step,u             ; special code here, build up x_vel
-        std   y_vel,u
-        leax  -1,x
+        stx   y_vel,u ; mis â jour
+        puls  b,pc ; fix compteur + retour
+@neg
+        addd  y_pos+1,u
+        std   y_pos+1,u
+        bcs   >
+        dec   y_pos,u
+!       dec   ,s
         bne   @loop1
-        rts
+        stx   y_vel,u ; mis â jour
+        puls  b,pc ; fix compteur + retour
 
 UpdateFrame
         ldb   frame,u        ; original code use global counter
