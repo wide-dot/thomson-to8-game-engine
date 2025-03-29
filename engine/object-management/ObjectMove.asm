@@ -14,12 +14,12 @@ ObjectMove                             *ObjectMove:
                                        *    add.l   d0,d2   ; add to x-axis position    ; note this affects the subpixel position x_sub(a0) = 2+x_pos(a0)
         ldb   x_vel,u
         sex                            ; velocity is positive or negative, take care of that
-        sta   am_ObjectMove_01+1
+        sta   @a+1
         ldd   x_vel,u
         addd  x_pos+1,u                ; x_pos must be followed by x_sub in memory
         std   x_pos+1,u                ; update low byte of x_pos and x_sub byte
         lda   x_pos,u
-am_ObjectMove_01
+@a
         adca  #$00                     ; parameter is modified by the result of sign extend
         sta   x_pos,u                  ; update high byte of x_pos
         
@@ -31,12 +31,12 @@ am_ObjectMove_01
                                        *    move.l  d3,y_pos(a0)    ; update y-axis position
         ldb   y_vel,u
         sex                            ; velocity is positive or negative, take care of that
-        sta   am_ObjectMove_02+1
+        sta   @b+1
         ldd   y_vel,u
         addd  y_pos+1,u                ; y_pos must be followed by y_sub in memory
         std   y_pos+1,u                ; update low byte of y_pos and y_sub byte
         lda   y_pos,u
-am_ObjectMove_02
+@b
         adca  #$00                     ; parameter is modified by the result of sign extend
         sta   y_pos,u                  ; update high byte of y_pos
         rts                            *    rts

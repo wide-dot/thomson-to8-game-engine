@@ -36,7 +36,10 @@ DisplaySprite                               ; u : ptr object RAM
         lda   priority,u                    ; read priority set for this object
         
 DSP_Start
-        ldb   render_flags,u
+        ldx   image_set,u
+        bne   >
+        puls  d,x,u,pc
+!       ldb   render_flags,u
         andb  #^render_hide_mask            ; unset hide flag
         stb   render_flags,u
 

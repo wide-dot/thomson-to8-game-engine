@@ -156,23 +156,25 @@
 	fcb   $1A,$30,ObjID_bossmusic,$00,$00
 	fcb   $1B,$40,ObjID_dobkeratops_tail,$00,$00 ; (original dobkeratops)
 
-	fcb   $1B,$90,ObjID_dobkeratops,$00,$01 ; eye 00
-	fcb   $1B,$90,ObjID_dobkeratops,$03,$01 ; eye 30
-	fcb   $1B,$CA,ObjID_dobkeratops,$04,$01 ; eye 01
-	fcb   $1B,$CA,ObjID_dobkeratops,$05,$01 ; eye 31
-	fcb   $1B,$CA,ObjID_dobkeratops,$07,$08 ; alien and nerves 0
+	fcb   $1B,$7C,ObjID_dobkeratops,$00,$07 ; eraser 0
+	fcb   $1B,$7C,ObjID_dobkeratops,$01,$07 ; eraser 1
+	fcb   $1B,$7C,ObjID_dobkeratops,$02,$07 ; eraser 2
+	fcb   $1B,$7C,ObjID_dobkeratops,$03,$07 ; eraser 3
+	fcb   $1B,$7C,ObjID_dobkeratops,$08,$08 ; alien and nerves 0
+	fcb   $1B,$90,ObjID_dobkeratops,$05,$01 ; eye 30
+	fcb   $1B,$CA,ObjID_dobkeratops,$06,$01 ; eye 31
+	fcb   $1B,$CA,ObjID_dobkeratops,$09,$08 ; alien and nerves 1
 
 	fcb   $1B,$DF,ObjID_dobkeratops_jaw,$00,$00
 	fcb   $1B,$DF,ObjID_dobkeratops_monster,$00,$00
 
-	fcb   $1C,$18,ObjID_dobkeratops,$08,$08 ; alien and nerves 1
-	fcb   $1C,$20,ObjID_dobkeratops,$06,$01 ; eye 32
-	fcb   $1C,$38,ObjID_dobkeratops,$01,$01 ; eye 10
-	fcb   $1C,$38,ObjID_dobkeratops,$02,$01 ; eye 20
+	fcb   $1C,$18,ObjID_dobkeratops,$0a,$08 ; alien and nerves 2
+	fcb   $1C,$22,ObjID_dobkeratops,$07,$01 ; eye 32
+	fcb   $1C,$3A,ObjID_dobkeratops,$04,$01 ; eye 10
 
-	fcb   $1C,$6C,ObjID_dobkeratops,$09,$08 ; alien and nerves 2
+	fcb   $1C,$6C,ObjID_dobkeratops,$0b,$08 ; alien and nerves 3
 
-	fcb   $1C,$AA,ObjID_dobkeratops,$0A,$08 ; alien and nerves 3
+	fcb   $1C,$AA,ObjID_dobkeratops,$0c,$08 ; alien and nerves 4
 
 ;$1D,$14,ObjID_2,$00,$00
 ;$1D,$80,ObjID_26,$00,$00

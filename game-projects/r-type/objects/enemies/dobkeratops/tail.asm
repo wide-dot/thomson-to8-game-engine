@@ -124,52 +124,134 @@ InstanceEnd
 Run
         ; apply velocity by script in sync with framerate
         ; -----------------------------------------------
-        ldy   gfxlock.frameDrop.count_w ; take number of elapsed frame since last render and apply all moves
-        beq   @end
-@loop
-        ldd   x_pos+1,u                ; x_pos must be followed by x_sub in memory
-        addd  x_vel,u
-        std   x_pos+1,u                ; update low byte of x_pos and x_sub byte
-        lda   x_pos,u
-        adca  tail.xVelSign,u
-        sta   x_pos,u                  ; update high byte of x_pos
-;
-        ldd   y_pos+1,u                ; y_pos must be followed by y_sub in memory
-        addd  y_vel,u
-        std   y_pos+1,u                ; update low byte of y_pos and y_sub byte
-        lda   y_pos,u
-        adca  tail.yVelSign,u
-        sta   y_pos,u                  ; update high byte of y_pos
-;
-        dec   anim_frame,u
-        bne   @continue
-;
-        ldb   #$10
-        stb   anim_frame,u
-        ldx   anim,u                   ; load next preset
-        lda   ,x
-        cmpa  #$80                     ; end marker
-        bne   >
-        ldx   prev_anim,u              ; reinit animation
-        stx   anim,u
+        ldy gfxlock.frameDrop.count_w ; ta@e number of elapsed frame since last render and apply all moves
+        bne @setup
+        ldy #1
+@setup
+        ldd x_vel,u
+        bmi @setup1
+        ldx y_vel,u
+        bmi @setup01
+@setup00
+        stx @loopy00+1
+        std @loopx00+1
+@loopx00
+        ldd #0
+        addd x_pos+1,u
+        std x_pos+1,u
+        bcc @loopy00
+        inc x_pos,u
+@loopy00
+         ldd #0
+         addd y_pos+1,u
+         std y_pos+1,u
+         bcc >
+         inc y_pos,u
 !
-        ldd   ,x
-        std   x_vel,u
-        tfr   a,b
-        sex                            ; velocity is positive or negative, take care of that
-        sta   tail.xVelSign,u
-        ldd   2,x
-        std   y_vel,u
-        tfr   a,b
-        sex                            ; velocity is positive or negative, take care of that
-        sta   tail.yVelSign,u
-        leax  4,x
-        stx   anim,u
-@continue
-        leay  -1,y
-        bne   @loop
-@end        
-
+         dec anim_frame,u
+         beq @next
+         leay -1,y
+         bne @loopx00
+         jmp @end
+;
+@setup01
+        stx @loopy01+1
+        std @loopx01+1
+@loopx01
+        ldd #0
+        addd x_pos+1,u
+        std x_pos+1,u
+        bcc @loopy01
+        inc x_pos,u
+@loopy01
+        ldd #0
+        addd y_pos+1,u
+        std y_pos+1,u
+        bcs >
+        dec y_pos,u
+!
+        dec anim_frame,u
+        beq @next
+        leay -1,y
+        bne @loopx01
+        jmp @end     
+;
+@setup1
+        ldx y_vel,u
+        bmi @setup11
+@setup10
+        stx @loopy10+1
+        std @loopx10+1
+@loopx10
+        ldd #0
+        addd x_pos+1,u
+        std x_pos+1,u
+        bcs @loopy10
+        dec x_pos,u
+@loopy10
+        ldd #0
+        addd y_pos+1,u
+        std y_pos+1,u
+        bcc >
+        inc y_pos,u
+!
+        dec anim_frame,u
+        beq @next
+        leay -1,y
+        bne @loopx10
+        bra @end
+;
+@setup0
+        stx y_vel,u
+        bmi @setup01
+        jmp @setup00
+;
+@next
+        lda #$10
+        sta anim_frame,u
+        ldx anim,u
+        ldd ,x
+        cmpa #$80
+        bne >
+        ldx prev_anim,u
+        ldd ,x
+!
+        leax 4,x
+        stx anim,u
+        ldx -2,x
+        leay -1,y
+        beq @end1
+        std x_vel,u
+        bpl @setup0
+        stx y_vel,u
+        bpl @setup10
+;
+@setup11
+        stx @loopy11+1
+        std @loopx11+1
+@loopx11
+        ldd #0
+        addd x_pos+1,u
+        std x_pos+1,u
+        bcs @loopy11
+        dec x_pos,u
+@loopy11
+        ldd #0
+        addd y_pos+1,u
+        std y_pos+1,u
+        bcs >
+        dec y_pos,u
+!
+        dec anim_frame,u
+        beq @next
+        leay -1,y
+        bne @loopx11
+        bra @end     
+;
+@end1
+       std x_vel,u
+       stx y_vel,u
+@end
         ; update hitbox
         lda   AABB_0+AABB.p,u
         beq   >

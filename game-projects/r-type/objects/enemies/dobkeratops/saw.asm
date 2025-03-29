@@ -32,8 +32,10 @@ Routines
         fdb   InitMaster  ; 0
         fdb   RunMaster   ; 1
         fdb   RunCommon   ; 2
-        fdb   InitSlave   ; 3
+        fdb   InitCommon  ; 3
         fdb   RunSlave    ; 4
+
+saw.instanceParity fcb 0
 
 InitMaster
         ldd   x_pos,u
@@ -53,7 +55,10 @@ InitCommon
         ldd   #XVEL
         std   x_vel,u
 
-        _Collision_AddAABB AABB_0,AABB_list_ennemy_unkillable
+        com   saw.instanceParity
+        beq   >
+        rts
+!       _Collision_AddAABB AABB_0,AABB_list_ennemy_unkillable
         lda   #dobkeratops_saw_hitdamage
         sta   AABB_0+AABB.p,u
         _ldd  dobkeratops_saw_hitbox_x,dobkeratops_saw_hitbox_y
@@ -90,7 +95,7 @@ CreateSlave
         pshs  d
         jsr   LoadObject_x
         beq   >
-        _ldd  ObjID_dobkeratops_saw,3 ; InitSlave
+        _ldd  ObjID_dobkeratops_saw,3 ; InitCommon
         sta   id,x
         stb   routine,x
         ldd   x_pos_origin,u
@@ -167,14 +172,13 @@ RunCommon
         addd  #8
         cmpd  glb_camera_x_pos
         bhi   >
+        lda   AABB_0+AABB.p,u
+        beq   @del
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy_unkillable
-        jmp   DeleteObject
+@del    jmp   DeleteObject
 !       jsr   UpdateFrame
         jsr   UpdateHitBox
         jmp   DisplaySprite
-
-InitSlave
-        jmp   InitCommon
 
 RunSlave
         lda   gfxlock.frameDrop.count
@@ -257,10 +261,12 @@ saw.images
         fdb   Img_dobkeratops_saw_3
 
 UpdateHitBox
+        lda   AABB_0+AABB.p,u
+        beq   >
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB_0+AABB.cx,u
         ldd   y_pos,u
         subd  glb_camera_y_pos
         stb   AABB_0+AABB.cy,u
-        rts
+!       rts
