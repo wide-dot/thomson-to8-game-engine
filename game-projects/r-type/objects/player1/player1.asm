@@ -132,7 +132,7 @@ Live
         ; move and animate
 SkipPlayer1Controls
 !       jsr   AnimateSpriteSync
-        jsr   ObjectMoveSync
+        jsr   ObjectMove
         jsr   CheckRange
 
         ; terrain collision
@@ -235,17 +235,30 @@ testval fcb 0
 ; Table is organized by valid joypad combinations (8 entries per config)
 ; Each entry is 4 bytes: 2 bytes X velocity, 2 bytes Y velocity
 ApplyJoypadInput
-        lda   Dpad_Held         ; load current held buttons
-        anda  #%00001111        ; mask only direction bits
-        bne   @hasDirection     ; if any direction, process it
-        ; No direction pressed, reset velocities to 0
-        clrb
+        ldd   #0                ; reset velocities to 0
         std   player1+x_vel
         std   player1+y_vel
-        ldd   #Ani_Player1
-        std   player1+anim
+
+@loop   jsr   joypad.buffer.getDirection
+        cmpa  #$FF
+        bne   >
+        ; Set animation Ani_Player1, Ani_Player1_up or Ani_Player1_down based on velocity
+        ldd   player1+y_vel              ; load y velocity
+        bgt   @moveDown                  ; if positive, moving down
+        blt   @moveUp                    ; if negative, moving up
+        ldx   #Ani_Player1               ; neutral position
+        bra   @setAnim
+@moveDown
+        ldx   #Ani_Player1_down         ; downward animation
+        bra   @setAnim
+@moveUp
+        ldx   #Ani_Player1_up           ; upward animation
+@setAnim
+        stx   player1+anim              ; store animation pointer
         rts
-@hasDirection
+!
+        anda  #c1_dpad                               ; mask only direction bits for joypad 1
+        beq   @loop
         ; Convert joypad bits to table offset using binary logic
         ; Input bits: RLDU (Right Left Down Up)
         ; First calculates 1-based index (1-8), then converts to 0-based (0-7):
@@ -257,65 +270,51 @@ ApplyJoypadInput
         ; %1000 (Right)     -> 6 -> 5
         ; %1001 (Up+Right)  -> 7 -> 6
         ; %1010 (Down+Right)-> 8 -> 7
-        pshs  a                 ; save original value
         ; Convert RLDU to index using binary logic:
         ; 1. Check vertical (U+D): gives base 1 or 2
         ; 2. Check horizontal (R or L): adds offset +6 or +3
         ; 3. Subtract 1 to convert to 0-based index
-        ldb   ,s               ; copy input to B
-        andb  #%00000011       ; keep only U+D in B
+        tfr   a,b                                    ; copy input to B
+        andb  #c1_button_up_mask|c1_button_down_mask ; keep only U+D in B
         ; Convert vertical bits to base index:
         ; %01 (Up) -> 1
         ; %10 (Down) -> 2
         ; %00 (None) -> 0 (will be adjusted by horizontal)
-        cmpb  #%00000001       ; test for UP
+        cmpb  #c1_button_up_mask                     ; test for UP
         bne   @notUp
-        ldb   #1              ; UP = index 1
+        ldb   #1                                     ; UP = index 1
         bra   @testHoriz
 @notUp
-        cmpb  #%00000010       ; test for DOWN
+        cmpb  #c1_button_down_mask                   ; test for DOWN
         bne   @testHoriz
-        ldb   #2              ; DOWN = index 2
+        ldb   #2                                     ; DOWN = index 2
 @testHoriz
         ; Add horizontal offset:
         ; RIGHT (+6): indices 6,7,8 for Right, Up+Right, Down+Right
         ; LEFT (+3): indices 3,4,5 for Left, Up+Left, Down+Left
-        bita  #%1000          ; test RIGHT
+        bita  #c1_button_right_mask                  ; test RIGHT
         beq   @notRight
-        addb  #6              ; RIGHT base offset
+        addb  #6                                     ; RIGHT base offset
         bra   @computeOffset
 @notRight
-        bita  #%0100          ; test LEFT
+        bita  #c1_button_left_mask                   ; test LEFT
         beq   @computeOffset
-        addb  #3              ; LEFT base offset
+        addb  #3                                     ; LEFT base offset
 @computeOffset
-        subb  #1              ; convert 1-based to 0-based index
-        lslb                  ; multiply by 4 (each entry is 4 bytes)
+        decb                                         ; convert 1-based to 0-based index
+        lslb                                         ; multiply by 4 (each entry is 4 bytes)
         lslb
-        ldx   #speed.preset
-        abx                   ; add offset to table base
-        ldd   player1+speedlevel
-        leax  d,x
+        ldx   player1+speedlevel
+        abx
+        leax  speed.preset,x
         ; Load velocities
-        ldd   ,x              ; load X velocity
+        ldd   player1+x_vel
+        addd  ,x                                     ; load X velocity
         std   player1+x_vel
-        ldd   2,x             ; load Y velocity
+        ldd   player1+y_vel
+        addd  2,x                                    ; load Y velocity
         std   player1+y_vel
-        ; Set animation based on vertical direction
-        puls  b               ; restore original direction bits
-        bitb  #%0001          ; test UP bit
-        bne   @animUp
-        bitb  #%0010          ; test DOWN bit
-        bne   @animDown
-        bra   @exit
-@animUp
-        ldd   #Ani_Player1_up
-        std   player1+anim
-        bra   @exit
-@animDown
-        ldd   #Ani_Player1_down
-        std   player1+anim
-@exit   rts
+        bra   @loop
 
 ; Speed presets for player movement
 ; Each configuration contains only the 8 valid combinations
@@ -370,3 +369,5 @@ speed.preset
         fdb $0300,$0000         ; Right
         fdb $021c,$fc40         ; Up+Right
         fdb $021c,$03c0         ; Down+Right
+
+        INCLUDE "./engine/object-management/ObjectMove.asm"

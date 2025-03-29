@@ -1,3 +1,5 @@
+ opt c
+
 DEBUG   equ     1
 SOUND_CARD_PROTOTYPE equ 1
 
@@ -173,6 +175,7 @@ LevelMainLoop
 UserIRQ
         jsr   gfxlock.bufferSwap.check
 	jsr   PalUpdateNow
+        jsr   joypad.buffer.addDirection
         _MountObject ObjID_ymm01
         _MusicFrame_objymm
         _MountObject ObjID_vgc01
@@ -266,10 +269,10 @@ Palette_FadeCallback
         ; joystick
         INCLUDE "./engine/joypad/InitJoypads.asm"
         INCLUDE "./engine/joypad/ReadJoypads.asm"
+        INCLUDE "./engine/joypad/joypad.buffer.asm"
 
         ; object management
         INCLUDE "./engine/object-management/RunObjects.asm"
-        INCLUDE "./engine/object-management/ObjectMove.asm"
         INCLUDE "./engine/object-management/ObjectMoveSync.asm"
         INCLUDE "./engine/object-management/ObjectWave-subtype.asm"
         INCLUDE "./engine/object-management/ObjectDp.asm"

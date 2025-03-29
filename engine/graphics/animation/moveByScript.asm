@@ -146,7 +146,28 @@ LAB_0000_fa2b
         lda   #1
         sta   moveByScript.anim.end                           ; set end to 1 to tell caller that script has ended
 @end    
-        jsr   ObjectMove                                      ; apply velocity to position
+        ldb   x_vel,u
+        sex                            ; velocity is positive or negative, take care of that
+        sta   @a+1
+        ldd   x_vel,u
+        addd  x_pos+1,u                ; x_pos must be followed by x_sub in memory
+        std   x_pos+1,u                ; update low byte of x_pos and x_sub byte
+        lda   x_pos,u
+@a
+        adca  #$00                     ; parameter is modified by the result of sign extend
+        sta   x_pos,u                  ; update high byte of x_pos
+;
+        ldb   y_vel,u
+        sex                            ; velocity is positive or negative, take care of that
+        sta   @b+1
+        ldd   y_vel,u
+        addd  y_pos+1,u                ; y_pos must be followed by y_sub in memory
+        std   y_pos+1,u                ; update low byte of y_pos and y_sub byte
+        lda   y_pos,u
+@b
+        adca  #$00                     ; parameter is modified by the result of sign extend
+        sta   y_pos,u                  ; update high byte of y_pos
+ ;
         ldx   #0                                              ; before each callback
         stx   x_vel,u
         stx   y_vel,u
