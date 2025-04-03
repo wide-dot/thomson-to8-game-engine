@@ -17,6 +17,8 @@
 AABB_0              equ ext_variables   ; AABB struct (9 bytes)
 explosion.instances equ dp_extreg+9
 
+rtnid.WaitEndStage equ 5
+
 Object
         lda   routine,u
         asla
@@ -29,6 +31,7 @@ Routines
         fdb   WaitExplosions
         fdb   MonsterOut
         fdb   MonsterMouth
+        fdb   WaitEndStage
 
 Init
         ; init sprite position
@@ -128,6 +131,18 @@ monster.getout.images
         fdb   Img_dobkeratops_monster_1
 
 MonsterMouth
+        ldx   gfxlock.frame.count
+        cmpx  #timestamp.MOVE_ALIEN_START
+        blo   >
+        ldd   x_pos,u
+        subd  #2
+        std   x_pos,u
+        cmpx  #timestamp.MOVE_ALIEN_END
+        blo   >
+        lda   #rtnid.WaitEndStage
+        sta   routine,u
+!
+WaitEndStage
         lda   gfxlock.frameDrop.count
         ldb   anim_frame+1,u
 @loop   decb
@@ -175,7 +190,7 @@ monster.fire.images
 
 UpdateHitBox
         lda   AABB_0+AABB.p,u
-        beq   @destroy
+        beq   DeleteMonster
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB_0+AABB.cx,u
@@ -183,7 +198,8 @@ UpdateHitBox
         subd  glb_camera_y_pos
         stb   AABB_0+AABB.cy,u
         rts
-@destroy 
+
+DeleteMonster 
         ldd   score
         addd  #dobkeratops_monster_score
         std   score
@@ -196,7 +212,5 @@ UpdateHitBox
         ldd   y_pos,u
         std   y_pos,x
 @delete
-        lda   #2
-        sta   routine,u      
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
         jmp   DeleteObject

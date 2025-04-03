@@ -15,7 +15,11 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/objects/collision/terrainCollision.macro.asm"
         INCLUDE "./global/scale.asm"
         INCLUDE "./global/object.const.asm"
-        
+
+timestamp.ERASE_NERV_START equ $2000
+timestamp.MOVE_ALIEN_START equ $2000+140
+timestamp.MOVE_ALIEN_END   equ $2000+220+140
+
 moveByScript.NEGXSTEP equ scale.XN1PX
 moveByScript.POSXSTEP equ scale.XP1PX
 moveByScript.NEGYSTEP equ scale.YN1PX
