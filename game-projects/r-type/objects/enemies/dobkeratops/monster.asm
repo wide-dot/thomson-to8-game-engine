@@ -135,7 +135,7 @@ MonsterMouth
         cmpx  #timestamp.MOVE_ALIEN_START
         blo   >
         ldd   x_pos,u
-        subd  #2
+        subd  #1
         std   x_pos,u
         cmpx  #timestamp.MOVE_ALIEN_END
         blo   >
