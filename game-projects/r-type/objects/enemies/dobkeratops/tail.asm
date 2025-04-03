@@ -10,12 +10,15 @@
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./objects/enemies_properties.asm"
+        INCLUDE "./objects/explosion/explosion.const.asm"
 
 AABB_0            equ ext_variables   ; AABB struct (9 bytes)
 tail.priority     equ ext_variables+9
 tail.explodeDelay equ ext_variables+10
 tail.xVelSign     equ ext_variables+11
 tail.yVelSign     equ ext_variables+12
+
+rtnid.WaitEndStage equ 2
 
 ; temporary variables
 tail.instances    equ dp_extreg
@@ -29,7 +32,7 @@ Object
 Routines
         fdb   InstanciateTail ; reserved for parent object only
         fdb   Run             ; start routine for tails elements
-        fdb   MoveOut
+        fdb   WaitEndStage
 
 InstanciateTail
         ; init presets
@@ -122,6 +125,18 @@ InstanceEnd
         jmp   UnloadObject_u
 
 Run
+        ldx   gfxlock.frame.count
+        cmpx  #timestamp.MOVE_ALIEN_START
+        blo   >
+        ldd   x_pos,u
+        subd  #2
+        std   x_pos,u
+        cmpx  #timestamp.MOVE_ALIEN_END
+        blo   >
+        lda   #rtnid.WaitEndStage
+        sta   routine,u
+!
+WaitEndStage
         ; apply velocity by script in sync with framerate
         ; -----------------------------------------------
         ldy gfxlock.frameDrop.count_w ; ta@e number of elapsed frame since last render and apply all moves
@@ -264,20 +279,9 @@ Run
 !
         jmp   DisplaySprite
 
-MoveOut
-        ldd   x_vel,u
-        addd  #$-20
-        std   x_vel,u
-        jsr   ObjectMoveSync
-        ldd   x_pos,u
-        cmpd  glb_camera_x_pos
-        ble   >
-        jmp   Run
-!
-        lda   AABB_0+AABB.p,u
-        beq   >
+DeleteTail
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
-!       jmp   DeleteObject
+        jmp   DeleteObject
 
 tail.images
         fdb   Img_dobkeratops_tail_0

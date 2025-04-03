@@ -174,7 +174,7 @@
 
 	fcb   $1C,$6C,ObjID_dobkeratops,$0b,$08 ; alien and nerves 3
 
-	fcb   $1C,$AA,ObjID_dobkeratops,$0c,$08 ; alien and nerves 4
+	fcb   $1C,$B0,ObjID_dobkeratops,$0c,$08 ; alien and nerves 4 
 
 ;$1D,$14,ObjID_2,$00,$00
 ;$1D,$80,ObjID_26,$00,$00
