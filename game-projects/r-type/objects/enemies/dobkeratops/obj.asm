@@ -114,12 +114,6 @@ SubImages
         fdb   Img_dobkeratops_alienN3
         fdb   Img_dobkeratops_alienN4
 
-AlienMoveOutImages
-        fdb   Img_dobkeratops_alien0
-        fdb   Img_dobkeratops_alien1
-        fdb   Img_dobkeratops_alien2
-        fdb   Img_dobkeratops_alien3
-
 AABBOffsets
         fdb   -32,-60
         fdb     1,-12
@@ -130,25 +124,18 @@ Run
         ldb   subtype,u
         cmpb  #8
         beq   @alienN0
-        bhi   @alienN1_4
+        bhi   @alienNx
         jmp   DisplaySprite
-@alienN0
+@alienNx
         ldx   gfxlock.frame.count
-        cmpx  #$1D80
+        cmpx  #timestamp.DELETE_ALIEN_BODY
         blo   >
         jsr   DeleteObject
 !       jmp   DisplaySprite
-@alienN1_4
+@alienN0
         ldx   gfxlock.frame.count
         cmpx  #timestamp.ERASE_NERV_START
         blo   >
-        ; move alien out without nerves
-        lda   #rtnid.MoveAlien
-        sta   routine,u
-
-        ldb   subtype,u
-        cmpb  #9
-        bne   >
         ; remove eyes hitboxes only once (with arbitrary alien instance)
         ldx   EraserObjects
         clr   AABB_0+AABB.p,x
@@ -158,6 +145,11 @@ Run
         clr   AABB_0+AABB.p,x
         ldx   EraserObjects+6
         clr   AABB_0+AABB.p,x
+        ; move alien out without nerves
+        lda   #rtnid.MoveAlien
+        sta   routine,u
+        ldd   #Img_dobkeratops_alien
+        std   image_set,u
 !
         jmp   DisplaySprite
 
@@ -260,14 +252,8 @@ MoveAlien
         ldx   gfxlock.frame.count
         cmpx  #timestamp.MOVE_ALIEN_START
         blo   >
-        ldx   #AlienMoveOutImages
-        ldb   subtype,u
-        subb  #9
-        aslb
-        ldd   b,x
-        std   image_set,u
         ldd   x_pos,u
-        subd  #2
+        subd  #1
         std   x_pos,u
         ldx   gfxlock.frame.count
         cmpx  #timestamp.MOVE_ALIEN_END

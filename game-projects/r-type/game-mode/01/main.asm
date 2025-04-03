@@ -16,9 +16,10 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./global/scale.asm"
         INCLUDE "./global/object.const.asm"
 
+timestamp.DELETE_ALIEN_BODY equ $1D80
 timestamp.ERASE_NERV_START equ $2000
 timestamp.MOVE_ALIEN_START equ $2000+140
-timestamp.MOVE_ALIEN_END   equ $2000+220+140
+timestamp.MOVE_ALIEN_END   equ $2000+440+140
 
 moveByScript.NEGXSTEP equ scale.XN1PX
 moveByScript.POSXSTEP equ scale.XP1PX
