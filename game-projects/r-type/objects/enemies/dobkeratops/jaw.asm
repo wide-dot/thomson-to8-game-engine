@@ -63,9 +63,7 @@ Run
         ldx   gfxlock.frame.count
         cmpx  #timestamp.MOVE_ALIEN_START
         blo   >
-        ldd   x_pos,u
-        subd  #1
-        std   x_pos,u
+        jsr   main.followDobkeratops
         cmpx  #timestamp.MOVE_ALIEN_END
         blo   >
         lda   #rtnid.DeleteJaw

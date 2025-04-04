@@ -19,7 +19,7 @@ SOUND_CARD_PROTOTYPE equ 1
 timestamp.DELETE_ALIEN_BODY equ $1D80
 timestamp.ERASE_NERV_START equ $2000
 timestamp.MOVE_ALIEN_START equ $2000+140
-timestamp.MOVE_ALIEN_END   equ $2000+440+140
+timestamp.MOVE_ALIEN_END   equ $2000+880+140
 
 moveByScript.NEGXSTEP equ scale.XN1PX
 moveByScript.POSXSTEP equ scale.XP1PX
@@ -242,6 +242,23 @@ Palette_FadeOut
 * ---------------------------------------------------------------------------
 
 Palette_FadeCallback
+        rts
+
+* ---------------------------------------------------------------------------
+* followDobkeratops
+*
+* ---------------------------------------------------------------------------
+
+main.followDobkeratops
+        lda   gfxlock.frameDrop.count
+        ldb   #$18                     ; 8.8 fixed point offset
+        mul
+        _negd
+        addd  x_pos+1,u                ; x_pos must be followed by x_sub in memory
+        std   x_pos+1,u                ; update low byte of x_pos and x_sub byte
+        lda   x_pos,u
+        adca  #-1
+        sta   x_pos,u                  ; update high byte of x_pos
         rts
 
 * ---------------------------------------------------------------------------

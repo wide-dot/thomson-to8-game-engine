@@ -148,8 +148,8 @@ Run
         ; move alien out without nerves
         lda   #rtnid.MoveAlien
         sta   routine,u
-        ldd   #Img_dobkeratops_alien
-        std   image_set,u
+        ldd   #-$0018
+        std   x_vel,u
 !
         jmp   DisplaySprite
 
@@ -252,9 +252,9 @@ MoveAlien
         ldx   gfxlock.frame.count
         cmpx  #timestamp.MOVE_ALIEN_START
         blo   >
-        ldd   x_pos,u
-        subd  #1
-        std   x_pos,u
+        ldd   #Img_dobkeratops_alien
+        std   image_set,u
+        jsr   main.followDobkeratops
         ldx   gfxlock.frame.count
         cmpx  #timestamp.MOVE_ALIEN_END
         blo   >

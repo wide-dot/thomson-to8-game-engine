@@ -128,9 +128,7 @@ Run
         ldx   gfxlock.frame.count
         cmpx  #timestamp.MOVE_ALIEN_START
         blo   >
-        ldd   x_pos,u
-        subd  #1
-        std   x_pos,u
+        jsr   main.followDobkeratops
         cmpx  #timestamp.MOVE_ALIEN_END
         blo   >
         lda   #rtnid.WaitEndStage
@@ -139,7 +137,7 @@ Run
 WaitEndStage
         ; apply velocity by script in sync with framerate
         ; -----------------------------------------------
-        ldy gfxlock.frameDrop.count_w ; ta@e number of elapsed frame since last render and apply all moves
+        ldy gfxlock.frameDrop.count_w ; take number of elapsed frame since last render and apply all moves
         bne @setup
         ldy #1
 @setup
