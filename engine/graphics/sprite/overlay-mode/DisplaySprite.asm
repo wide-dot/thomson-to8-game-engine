@@ -38,6 +38,9 @@ DisplaySprite2
         bra   >
 DisplaySprite                               ; u : ptr object RAM
         pshs  d,x,u
+!       ldx   image_set,u
+        bne   >
+        puls  d,x,u,pc
 !       lda   priority,u                    ; read priority set for this object
         sta   @prio
 @Start

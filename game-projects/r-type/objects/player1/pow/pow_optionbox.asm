@@ -92,6 +92,12 @@ Live
         _Collision_RemoveAABB AABB_0,AABB_list_bonus
         jmp   DeleteObject
 @speed
+        ldd   player1+speedlevel
+        addd  #32
+        cmpd  #32*4
+        beq   >
+        std   player1+speedlevel
+!
         jmp   @delete
 @missiles
         jmp   @delete
