@@ -7,6 +7,9 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./objects/explosion/explosion.const.asm"
+
+rtnid.DeleteJaw equ 3
 
 Object
         lda   routine,u
@@ -18,7 +21,7 @@ Routines
         fdb   Init
         fdb   Wait
         fdb   Run
-        fdb   MoveOut
+        fdb   WaitEndStage
 
 Init
         ; init sprite position
@@ -57,17 +60,17 @@ Wait
         jmp   DisplaySprite
 
 Run
+        ldx   gfxlock.frame.count
+        cmpx  #timestamp.MOVE_ALIEN_START
+        blo   >
+        jsr   main.followDobkeratops
+        cmpx  #timestamp.MOVE_ALIEN_END
+        blo   >
+        lda   #rtnid.DeleteJaw
+        sta   routine,u
+!
+WaitEndStage
         jmp   Animate
-
-MoveOut
-        ldd   #$-20
-        std   x_vel,u
-        jsr   ObjectMoveSync
-        ldd   x_pos,u
-        cmpd  glb_camera_x_pos
-        ble   >
-        jmp   Animate
-!       jmp   DeleteObject
 
 Animate
         ldd   anim_frame,u

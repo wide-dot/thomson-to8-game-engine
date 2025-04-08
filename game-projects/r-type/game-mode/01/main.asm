@@ -1,3 +1,5 @@
+ opt c
+
 DEBUG   equ     1
 SOUND_CARD_PROTOTYPE equ 1
 
@@ -13,7 +15,12 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/objects/collision/terrainCollision.macro.asm"
         INCLUDE "./global/scale.asm"
         INCLUDE "./global/object.const.asm"
-        
+
+timestamp.DELETE_ALIEN_BODY equ $1D80
+timestamp.ERASE_NERV_START equ $2000
+timestamp.MOVE_ALIEN_START equ $2000+140
+timestamp.MOVE_ALIEN_END   equ $2000+880+140
+
 moveByScript.NEGXSTEP equ scale.XN1PX
 moveByScript.POSXSTEP equ scale.XP1PX
 moveByScript.NEGYSTEP equ scale.YN1PX
@@ -173,6 +180,7 @@ LevelMainLoop
 UserIRQ
         jsr   gfxlock.bufferSwap.check
 	jsr   PalUpdateNow
+        jsr   joypad.buffer.addDirection
         _MountObject ObjID_ymm01
         _MusicFrame_objymm
         _MountObject ObjID_vgc01
@@ -237,6 +245,23 @@ Palette_FadeCallback
         rts
 
 * ---------------------------------------------------------------------------
+* followDobkeratops
+*
+* ---------------------------------------------------------------------------
+
+main.followDobkeratops
+        lda   gfxlock.frameDrop.count
+        ldb   #$18                     ; 8.8 fixed point offset
+        mul
+        _negd
+        addd  x_pos+1,u                ; x_pos must be followed by x_sub in memory
+        std   x_pos+1,u                ; update low byte of x_pos and x_sub byte
+        lda   x_pos,u
+        adca  #-1
+        sta   x_pos,u                  ; update high byte of x_pos
+        rts
+
+* ---------------------------------------------------------------------------
 * Game Mode RAM variables
 * ---------------------------------------------------------------------------
         INCLUDE "./game-mode/01/ram_data.asm"
@@ -266,10 +291,10 @@ Palette_FadeCallback
         ; joystick
         INCLUDE "./engine/joypad/InitJoypads.asm"
         INCLUDE "./engine/joypad/ReadJoypads.asm"
+        INCLUDE "./engine/joypad/joypad.buffer.asm"
 
         ; object management
         INCLUDE "./engine/object-management/RunObjects.asm"
-        INCLUDE "./engine/object-management/ObjectMove.asm"
         INCLUDE "./engine/object-management/ObjectMoveSync.asm"
         INCLUDE "./engine/object-management/ObjectWave-subtype.asm"
         INCLUDE "./engine/object-management/ObjectDp.asm"

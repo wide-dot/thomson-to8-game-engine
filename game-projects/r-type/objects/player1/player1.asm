@@ -15,10 +15,6 @@
         INCLUDE "./objects/player1/player1.equ"
         
 AABB_0           equ ext_variables     ; AABB struct (9 bytes)
-ply_acceleration equ $20
-ply_deceleration equ $100
-ply_max_vel      equ $100
-ply_max_vel_neg  equ $-100
 ply_width        equ 12/2
 ply_height       equ 16/2
 beam_sensitivity equ 8   
@@ -68,47 +64,7 @@ Live
 !
         lda   player1+subtype
         lbne  SkipPlayer1Controls
-        lda   Dpad_Held
-        anda  #c1_button_left_mask
-        beq   @testRight
-        ldd   player1+x_vel
-        subd  #ply_acceleration
-        cmpd  #ply_max_vel_neg
-        ble   @testUp
-        std   player1+x_vel
-        bra   @testUp
-@testRight
-        lda   Dpad_Held
-        anda  #c1_button_right_mask
-        beq   @testUp
-        ldd   player1+x_vel
-        addd  #ply_acceleration
-        cmpd  #ply_max_vel
-        bge   @testUp
-        std   player1+x_vel
-@testUp
-        lda   Dpad_Held
-        anda  #c1_button_up_mask
-        beq   @testDown
-        ldd   player1+y_vel
-        subd  #ply_acceleration*2
-        cmpd  #ply_max_vel_neg*2
-        ble   @testFire
-        std   player1+y_vel
-        ldd   #Ani_Player1_up
-        std   player1+anim
-        bra   @testFire
-@testDown
-        lda   Dpad_Held
-        anda  #c1_button_down_mask
-        beq   @testFire
-        ldd   player1+y_vel
-        addd  #ply_acceleration*2
-        cmpd  #ply_max_vel*2
-        bge   @testFire
-        std   player1+y_vel
-        ldd   #Ani_Player1_down
-        std   player1+anim
+        jsr   ApplyJoypadInput
 @testFire
         ; press fire
         lda   Fire_Press
@@ -137,10 +93,10 @@ Live
         sta   player1+beam_value
         sta   player1+is_charging
         jsr   LoadObject_x
-        beq   @testmoving               ; branch if no more available object slot
+        beq   @end               ; branch if no more available object slot
         lda   #ObjID_beamcharge         ; Charge anim
         sta   id,x
-        bra   @testmoving
+        bra   @end
 @incharging
         lda   player1+beam_value
         adda  gfxlock.frameDrop.count
@@ -149,10 +105,10 @@ Live
         lda   #60
 !
         sta   player1+beam_value
-        bra   @testmoving
+        bra   @end
 @wasbuttonhdeld
         lda   player1+beam_value
-        beq   @testmoving
+        beq   @end
         cmpa  #beam_sensitivity
         ble   @resetbeam  
         adda  #4
@@ -171,41 +127,12 @@ Live
 @resetbeam
         ldd   #0
         std   player1+beam_value
-@testmoving
-        ; decelerate player on x
-        ldd   Dpad_Held
-        anda  #c1_button_left_mask|c1_button_right_mask ; check if not moving left or right
-        bne   >
-        ldd   player1+x_vel            ; decelerate on x axis
-        bmi   @neg
-        subd  #ply_deceleration
-        bpl   @store
-        bra   @cap
-@neg    addd  #ply_deceleration
-        bmi   @store
-@cap    ldd   #0
-@store  std   player1+x_vel
-
-        ; decelerate player on y
-!       ldd   Dpad_Held
-        anda  #c1_button_up_mask|c1_button_down_mask ; check if not moving up or down
-        bne   >
-        ldd   #Ani_Player1             ; set normal image
-        std   player1+anim
-        ldd   player1+y_vel            ; decelerate on y axis
-        bmi   @neg
-        subd  #ply_deceleration
-        bpl   @store
-        bra   @cap
-@neg    addd  #ply_deceleration
-        bmi   @store
-@cap    ldd   #0
-@store  std   player1+y_vel
+@end
 
         ; move and animate
 SkipPlayer1Controls
 !       jsr   AnimateSpriteSync
-        jsr   ObjectMoveSync
+        jsr   ObjectMove
         jsr   CheckRange
 
         ; terrain collision
@@ -302,3 +229,145 @@ CheckRange
 !       rts
 
 testval fcb 0
+
+; Apply joypad input to player velocity and position
+; Uses the speed.preset table to determine velocities based on direction
+; Table is organized by valid joypad combinations (8 entries per config)
+; Each entry is 4 bytes: 2 bytes X velocity, 2 bytes Y velocity
+ApplyJoypadInput
+        ldd   #0                ; reset velocities to 0
+        std   player1+x_vel
+        std   player1+y_vel
+
+@loop   jsr   joypad.buffer.getDirection
+        cmpa  #$FF
+        bne   >
+        ; Set animation Ani_Player1, Ani_Player1_up or Ani_Player1_down based on velocity
+        ldd   player1+y_vel              ; load y velocity
+        bgt   @moveDown                  ; if positive, moving down
+        blt   @moveUp                    ; if negative, moving up
+        ldx   #Ani_Player1               ; neutral position
+        bra   @setAnim
+@moveDown
+        ldx   #Ani_Player1_down         ; downward animation
+        bra   @setAnim
+@moveUp
+        ldx   #Ani_Player1_up           ; upward animation
+@setAnim
+        stx   player1+anim              ; store animation pointer
+        rts
+!
+        anda  #c1_dpad                               ; mask only direction bits for joypad 1
+        beq   @loop
+        ; Convert joypad bits to table offset using binary logic
+        ; Input bits: RLDU (Right Left Down Up)
+        ; First calculates 1-based index (1-8), then converts to 0-based (0-7):
+        ; %0001 (Up)        -> 1 -> 0
+        ; %0010 (Down)      -> 2 -> 1
+        ; %0100 (Left)      -> 3 -> 2
+        ; %0101 (Up+Left)   -> 4 -> 3
+        ; %0110 (Down+Left) -> 5 -> 4
+        ; %1000 (Right)     -> 6 -> 5
+        ; %1001 (Up+Right)  -> 7 -> 6
+        ; %1010 (Down+Right)-> 8 -> 7
+        ; Convert RLDU to index using binary logic:
+        ; 1. Check vertical (U+D): gives base 1 or 2
+        ; 2. Check horizontal (R or L): adds offset +6 or +3
+        ; 3. Subtract 1 to convert to 0-based index
+        tfr   a,b                                    ; copy input to B
+        andb  #c1_button_up_mask|c1_button_down_mask ; keep only U+D in B
+        ; Convert vertical bits to base index:
+        ; %01 (Up) -> 1
+        ; %10 (Down) -> 2
+        ; %00 (None) -> 0 (will be adjusted by horizontal)
+        cmpb  #c1_button_up_mask                     ; test for UP
+        bne   @notUp
+        ldb   #1                                     ; UP = index 1
+        bra   @testHoriz
+@notUp
+        cmpb  #c1_button_down_mask                   ; test for DOWN
+        bne   @testHoriz
+        ldb   #2                                     ; DOWN = index 2
+@testHoriz
+        ; Add horizontal offset:
+        ; RIGHT (+6): indices 6,7,8 for Right, Up+Right, Down+Right
+        ; LEFT (+3): indices 3,4,5 for Left, Up+Left, Down+Left
+        bita  #c1_button_right_mask                  ; test RIGHT
+        beq   @notRight
+        addb  #6                                     ; RIGHT base offset
+        bra   @computeOffset
+@notRight
+        bita  #c1_button_left_mask                   ; test LEFT
+        beq   @computeOffset
+        addb  #3                                     ; LEFT base offset
+@computeOffset
+        decb                                         ; convert 1-based to 0-based index
+        lslb                                         ; multiply by 4 (each entry is 4 bytes)
+        lslb
+        ldx   player1+speedlevel
+        abx
+        leax  speed.preset,x
+        ; Load velocities
+        ldd   player1+x_vel
+        addd  ,x                                     ; load X velocity
+        std   player1+x_vel
+        ldd   player1+y_vel
+        addd  2,x                                    ; load Y velocity
+        std   player1+y_vel
+        bra   @loop
+
+; Speed presets for player movement
+; Each configuration contains only the 8 valid combinations
+; Values are paired as (x velocity, y velocity) in 8.8 fixed point format
+speed.preset
+        ; Configuration 1
+        fdb $0000,$febc         ; Up
+        fdb $0000,$0144         ; Down
+        fdb $ff40,$0000         ; Left
+        fdb $ff7c,$ff10         ; Up+Left
+        fdb $ff7c,$00f0         ; Down+Left
+        fdb $00C0,$0000         ; Right
+        fdb $0084,$ff10         ; Up+Right
+        fdb $0084,$00f0         ; Down+Right
+
+        ; Configuration 2
+        fdb $0000,$fe08         ; Up
+        fdb $0000,$01f8         ; Down
+        fdb $fee0,$0000         ; Left
+        fdb $ff3a,$fe98         ; Up+Left
+        fdb $ff3a,$0168         ; Down+Left
+        fdb $0120,$0000         ; Right
+        fdb $00c6,$fe98         ; Up+Right
+        fdb $00c6,$0168         ; Down+Right
+
+        ; Configuration 3
+        fdb $0000,$fd60         ; Up
+        fdb $0000,$02a0         ; Down
+        fdb $fe80,$0000         ; Left
+        fdb $fef2,$fe20         ; Up+Left
+        fdb $fef2,$01e0         ; Down+Left
+        fdb $0180,$0000         ; Right
+        fdb $010E,$fe20         ; Up+Right
+        fdb $010E,$01e0         ; Down+Right
+
+        ; Configuration 4
+        fdb $0000,$fc28         ; Up
+        fdb $0000,$03d8         ; Down
+        fdb $fdc0,$0000         ; Left
+        fdb $fe68,$fd48         ; Up+Left
+        fdb $fe68,$02b8         ; Down+Left
+        fdb $0240,$0000         ; Right
+        fdb $0198,$fd48         ; Up+Right
+        fdb $0198,$02b8         ; Down+Right
+
+        ; Configuration 5
+        fdb $0000,$fac0         ; Up
+        fdb $0000,$0540         ; Down
+        fdb $fd00,$0000         ; Left
+        fdb $fde4,$fc40         ; Up+Left
+        fdb $fde4,$03c0         ; Down+Left
+        fdb $0300,$0000         ; Right
+        fdb $021c,$fc40         ; Up+Right
+        fdb $021c,$03c0         ; Down+Right
+
+        INCLUDE "./engine/object-management/ObjectMove.asm"
