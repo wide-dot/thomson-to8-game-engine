@@ -181,12 +181,12 @@ UserIRQ
         jsr   gfxlock.bufferSwap.check
 	jsr   PalUpdateNow
         jsr   joypad.buffer.addDirection
-        _MountObject ObjID_ymm01
-        _MusicFrame_objymm
-        _MountObject ObjID_vgc01
-        _MusicFrame_objvgc
-        rts
-
+        ;_MountObject ObjID_ymm01
+        ;_MusicFrame_objymm
+        ;_MountObject ObjID_vgc01
+        ;_MusicFrame_objvgc
+        _MountObject ObjID_soundfx
+        jmp   ,x ; call soundfx driver
 * ---------------------------------------------------------------------------
 * Collision_ClearLists
 *
@@ -316,6 +316,9 @@ main.followDobkeratops
 
         ; random numbers
         INCLUDE "./engine/math/RandomNumber.asm"
+
+        ; sound fx
+        INCLUDE "./engine/sound/soundfx.data.asm"
 
         ; should be at the end of includes (ifdef dependencies)
         INCLUDE "./engine/InitGlobals.asm"

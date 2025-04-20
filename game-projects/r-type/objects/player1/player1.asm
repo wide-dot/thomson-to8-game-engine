@@ -72,6 +72,7 @@ Live
         beq   @testHoldFire
         jsr   LoadObject_x
         beq   @testHoldFire            ; branch if no more available object slot
+        clr   soundFxDriver.newSound
         lda   #ObjID_Weapon1           ; fire !
         sta   id,x
         ldd   player1+x_pos
