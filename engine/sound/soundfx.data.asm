@@ -1,0 +1,1 @@
+soundFxDriver.newSound   fcb     $FF        ; New sound ID to play ($FF = none)
