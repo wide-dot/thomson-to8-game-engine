@@ -6,7 +6,7 @@
                 jmp     SoundFxIRQ
 
 ; Sound IDs
-SOUND_COUNT     equ     1       ; Total number of sounds
+SOUND_COUNT     equ     2       ; Total number of sounds
 SOUND_NONE      equ     $FF     ; No sound to play
 
 ; <YM2413 register base addresses
@@ -136,9 +136,6 @@ SoundFxIRQ
             lda     1,x         ; Get data (5 cycles)
             sta     <YM2413.D   ; Write data (4 cycles)
             ;
-            ; Update delay counter
-            lda     2,x         ; Get delay
-            ;
 @EndCommand
             ; Update command pointer
             leax    3,x         ; Point to next command
@@ -146,8 +143,10 @@ SoundFxIRQ
             beq     @StopSound  ; If zero, stop
             ;
             ; Check if delay is 0, and if so, process the next command
-            sta     delay_cnt
+            lda     -1,x        ; Get delay of last command
             beq     @ProcessLoop
+            deca                ; Decrement counter
+            sta     delay_cnt
             stx     sound_ptr
             puls    d,x,y,u,pc
             ;
@@ -167,6 +166,7 @@ SoundFxIRQ
 ; Sound data lookup table
 SoundTable
             fdb     FireSound
+            fdb     ExplosionSound
 
 ; Sound data format:
 ; ------------------
@@ -187,60 +187,131 @@ SoundTable
 ; Byte 0: $FF, Bytes 1-2: Custom instrument data address
 
 FireSound
-            ; header
-            fcb     11          ; Number of commands
-            fcb     5           ; Channel number (5)
+        ; header
+        fcb     25          ; Number of commands
+        fcb     5           ; Channel number (5)
 
-            ; Custom instrument settings
-            fcb     $FF         ; special command
-            fdb     FireInst    ; Custom instrument data address (0 if not needed)
+        ; Custom instrument settings
+        ;fcb     $FF         ; special command
+        ;fdb     FireInst    ; Custom instrument data address (0 if not needed)
             
-            ; Initial pitch (F-Number = 407, Block = 4)
-            fcb     $10,$97,0   ; F-Number LSB
-            fcb     $20,$09,0   ; Block 4 + F-Number MSB
-            
-            ; Attack phase
-            fcb     $30,$A0,0   ; Custom instrument, Full volume
-            fcb     $20,$39,1   ; Key-on
-            
-            ; Pitch bend
-            fcb     $10,$57,1   ; F-Number 343
-            fcb     $10,$27,1   ; F-Number 295
-            fcb     $10,$07,1   ; F-Number 263
-            
-            ; Volume decay
-            fcb     $30,$A4,1   ; Custom instrument, Volume 12
-            fcb     $30,$A8,1   ; Custom instrument, Volume 8
-            fcb     $30,$AC,1   ; Custom instrument, Volume 4
+        fcb     $30,$F2,0
+        fcb     $20,$19,0
+        fcb     $10,$01,1
 
-; Instrument IDs
-; 0 = Custom instrument (followed by 2 bytes with instrument data address)
-; 1-15 = Standard <YM2413 instruments:
-; 1 = Violin (smooth string sound)
-; 2 = Guitar (sharp attack, plucked string)
-; 3 = Piano (soft bell-like piano)
-; 4 = Flute (gentle airy tone)
-; 5 = Clarinet (reed-like, woody tone)
-; 6 = Oboe (nasal wind instrument)
-; 7 = Trumpet (bright, brassy tone)
-; 8 = Organ (hollow sustained tone)
-; 9 = Horn (mellow brass sound)
-; 10 = Synthesizer (classic synthy feel)
-; 11 = Harpsichord (metallic pluck)
-; 12 = Vibraphone (soft metallic bell)
-; 13 = Synth Bass (deep bassy synth)
-; 14 = Wood Bass (acoustic upright bass)
-; 15 = Electric Guitar (muted string pluck)
+        fcb     $20,$17,0
+        fcb     $10,$81,1
+
+        fcb     $20,$17,0
+        fcb     $10,$20,1
+
+        fcb     $20,$15,0
+        fcb     $10,$E5,1
+
+        fcb     $20,$1D,0
+        fcb     $10,$01,1
+
+        fcb     $20,$1B,0
+        fcb     $10,$B0,1
+
+        fcb     $20,$1B,0
+        fcb     $10,$57,1
+
+        fcb     $20,$1B,0
+        fcb     $10,$43,1
+
+        fcb     $20,$1B,0
+        fcb     $10,$01,1
+
+        fcb     $20,$19,0
+        fcb     $10,$20,1
+
+        fcb     $20,$17,0
+        fcb     $10,$E5,1
+
+        fcb     $20,$15,0
+        fcb     $10,$20
+
+ExplosionSound
+    ; Header
+    fcb    39                    ; Nombre de commandes augmenté
+    fcb    3                     ; Channel number (5)
+
+        fcb     $30,$24,0
+        fcb     $20,$19,0
+        fcb     $10,$10,1
+
+        fcb     $20,$19,0
+        fcb     $10,$6B,1
+
+        fcb     $20,$19,0
+        fcb     $10,$CA,1
+
+        fcb     $20,$1F,0
+        fcb     $10,$6B,1
+
+        fcb     $20,$1F,0
+        fcb     $10,$FC,1
+
+        fcb     $20,$1D,0
+        fcb     $10,$6B,1
+
+        fcb     $20,$1D,0
+        fcb     $10,$01,1
+
+        fcb     $20,$1B,0
+        fcb     $10,$57,1
+
+        fcb     $20,$1D,0
+        fcb     $10,$10,1
+
+        fcb     $20,$1F,0
+        fcb     $10,$31,1
+
+        fcb     $20,$1F,0
+        fcb     $10,$98,1
+
+        fcb     $20,$1F,0
+        fcb     $10,$CA,1
+
+        fcb     $20,$1F,0
+        fcb     $10,$31,1
+
+        fcb     $20,$1D,0
+        fcb     $10,$6B,1
+
+        fcb     $20,$1D,0
+        fcb     $10,$10,1
+
+        fcb     $20,$1B,0
+        fcb     $10,$98,1
+
+        fcb     $20,$1D,0
+        fcb     $10,$31,1
+
+        fcb     $20,$1F,0
+        fcb     $10,$01,1
+
+        fcb     $20,$1F,0
+        fcb     $10,$CA
 
 ; Custom instrument definitions
 FireInst
-            ; Modulator
-            fcb     $41
-            fcb     $64
-            fcb     $0B
-            fcb     $18
-            ; Carrier
-            fcb     $85
-            fcb     $F7
-            fcb     $71
-            fcb     $07
+            fcb     $2D,$13,$02,$15,$A2,$F4,$00,$F5
+
+; YM2413 instruments settings
+; 1 | 71 61 1E 17 D0 78 00 17 | Violin
+; 2 | 13 41 1A 0D D8 F7 23 13 | Guitar
+; 3 | 13 01 99 00 F2 C4 11 23 | Piano
+; 4 | 31 61 0E 07 A8 64 70 27 | Flute
+; 5 | 32 21 1E 06 E0 76 00 28 | Clarinet
+; 6 | 31 22 16 05 E0 71 00 18 | Oboe
+; 7 | 21 61 1D 07 82 81 10 07 | Trumpet
+; 8 | 23 21 2D 14 A2 72 00 07 | Organ
+; 9 | 61 61 1B 06 64 65 10 17 | Horn
+; A | 41 61 0B 18 85 F7 71 07 | Synthesizer
+; B | 13 01 83 11 FA E4 10 04 | Harpsichord
+; C | 17 C1 24 07 F8 F8 22 12 | Vibraphone (same)
+; D | 61 50 0C 05 C2 F5 20 42 | Synthesizer Bass
+; E | 01 01 55 03 C9 95 03 02 | Acoustic Bass
+; F | 61 41 89 03 F1 E4 40 13 | Electric Guitar
