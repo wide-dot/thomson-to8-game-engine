@@ -25,6 +25,7 @@ Weapon10_Routines
         fdb   AlreadyDeleted
 
 Init
+        clr   soundFxDriver.newSound
         ldd   x_pos,u
         addd  #6
         std   x_pos,u
