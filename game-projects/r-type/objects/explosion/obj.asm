@@ -19,6 +19,8 @@ Routines
         fdb   Live
 
 Init
+        lda   #1
+        sta   soundFxDriver.newSound
         ldb   subtype,u
         ldx   #exp.animations
         ldx   b,x

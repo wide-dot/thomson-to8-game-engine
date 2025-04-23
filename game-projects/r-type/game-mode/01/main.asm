@@ -181,10 +181,10 @@ UserIRQ
         jsr   gfxlock.bufferSwap.check
 	jsr   PalUpdateNow
         jsr   joypad.buffer.addDirection
-        ;_MountObject ObjID_ymm01
-        ;_MusicFrame_objymm
-        ;_MountObject ObjID_vgc01
-        ;_MusicFrame_objvgc
+        _MountObject ObjID_ymm01
+        _MusicFrame_objymm
+        _MountObject ObjID_vgc01
+        _MusicFrame_objvgc
         _MountObject ObjID_soundfx
         jmp   ,x ; call soundfx driver
 * ---------------------------------------------------------------------------
