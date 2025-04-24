@@ -2,6 +2,7 @@
 1. Lancer r-type avec un point d'arrêt de type "EXEC" sur 01DA. Cela nous amener à un certain endroit du début du jeu.
 2. A partir de là, on lance la production d'une trace de 32s, et DCMoto produit un fichier `dcmoto_trace.txt` 
 3. lancer l'analyse de ce fichier depuis la racine "r-type" avec par un truc genre: 
+
 ```
 Samuel@LENOVO-PC MINGW64 /e/Users/Samuel/dev/thomson-to8-game-engine/game-projects/r-type (main)
 $ ../../../DCMoto_MemMap/lua.exe ../../../DCMoto_MemMap/memmap.lua \
@@ -14,6 +15,7 @@ Created HTML writer.
 Created Parallel writer.
 Finding hot spots.
 ```
+
 4. Un fichier HTML est produit qui contient des infos utiles pour l'optimisation. 
 En particulier l'option `-times=LevelMainLoop` mesure empiriquement le temps moyen passé entre chaque appel de la boucle principale. On peut en déduire le FPS moyen sur ces 32 secondes tracées. L'info est présente dans le tableau.
 5. Modifier l'asm en conséquence de l'analyse
@@ -49,3 +51,4 @@ Pour cela on utilisera les pragma [autobranchlength](http://www.lwtools.ca/manua
 
 # mesure no 2
 TBD.
+    
