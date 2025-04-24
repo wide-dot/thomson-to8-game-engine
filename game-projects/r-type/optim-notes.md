@@ -2,7 +2,7 @@
 1. Lancer r-type avec un point d'arrêt de type "EXEC" sur 01DA. Cela nous amener à un certain endroit du début du jeu.
 2. A partir de là, on lance la production d'une trace de 32s, et DCMoto produit un fichier `dcmoto_trace.txt` 
 3. lancer l'analyse de ce fichier depuis la racine "r-type" avec par un truc genre: 
-```console
+```
 Samuel@LENOVO-PC MINGW64 /e/Users/Samuel/dev/thomson-to8-game-engine/game-projects/r-type (main)
 $ ../../../DCMoto_MemMap/lua.exe ../../../DCMoto_MemMap/memmap.lua \
  	-trace=<chemin/vers/dcmoto>/dcmoto_trace.txt \
