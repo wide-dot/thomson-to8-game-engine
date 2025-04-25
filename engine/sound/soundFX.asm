@@ -3,10 +3,9 @@
 ; 50Hz IRQ-driven playback
 ; ----------------------------------------
 
-                jmp     SoundFxIRQ
+                jmp     soundFX.playIRQ
 
 ; Sound IDs
-SOUND_COUNT     equ     2       ; Total number of sounds
 SOUND_NONE      equ     $FF     ; No sound to play
 
 ; <YM2413 register base addresses
@@ -21,19 +20,19 @@ CMD_DELAY     equ     2           ; Delay offset
 CMD_SIZE      equ     3           ; Size of each command
 
 ; Sound variables
-sound_stat    fcb     0          ; Sound status (0=idle, 1=playing)
-sound_ptr     fdb     0          ; Current sound data pointer
-cmd_count     fcb     0          ; Command count
-delay_cnt     fcb     0          ; Delay counter (in IRQ ticks)
-curr_chan     fcb     0          ; Current channel number
-curr_sound    fcb     0          ; Current sound ID being played
+soundFX.soundStat    fcb     0          ; Sound status (0=idle, 1=playing)
+soundFX.soundPtr     fdb     0          ; Current sound data pointer
+soundFX.cmdCount     fcb     0          ; Command count
+soundFX.delayCnt     fcb     0          ; Delay counter (in IRQ ticks)
+soundFX.currChan     fcb     0          ; Current channel number
+soundFX.currSound    fcb     0          ; Current sound ID being played
 
-PlaySoundFx
-            lda     sound_stat  ; Check if already playing
+soundFX.play
+            lda     soundFX.soundStat  ; Check if already playing
             beq     @NotPlaying
             ;
             ; Sound is already playing, send note off to current channel
-            lda     curr_chan   ; Get current channel
+            lda     soundFX.currChan   ; Get current channel
             adda    #YM_FREQ_MSB_BASE ; Add channel base address
             sta     <YM2413.A   ; Set address (4 cycles)
             nop                 ; (2 cycles)
@@ -42,28 +41,26 @@ PlaySoundFx
             ;
 @NotPlaying
             ; Validate sound ID
-            ldb     soundFxDriver.newSound
-            cmpb    #SOUND_COUNT
-            bhs     @Exit       ; Invalid ID, exit
-            stb     curr_sound
+            ldb     soundFX.newSound
+            stb     soundFX.currSound
             ;
             ; Get sound data address
             aslb                ; Multiply by 2 for word offset
-            ldx     #SoundTable ; Point to sound table
+            ldx     #soundFX.soundTable ; Point to sound table
             abx                 ; Add offset (128 values, otherwise 64 if you use b,x for reading)
             ldx     ,x          ; Get sound data address
             ;
             ; Get command count and channel from sound data
             ldd     ,x++        ; Get command count
-            sta     cmd_count
-            beq     @Exit       ; If no command count, keep sound_stat = 0
-            stb     curr_chan   ; Store channel number
+            sta     soundFX.cmdCount
+            beq     @Exit       ; If no command count, keep soundStat = 0
+            stb     soundFX.currChan   ; Store channel number
             ;
             ; Initialize playback
-            stx     sound_ptr   ; Save pointer
+            stx     soundFX.soundPtr   ; Save pointer
             ldd     #1
-            sta     delay_cnt
-            stb     sound_stat  ; Set playing flag
+            sta     soundFX.delayCnt
+            stb     soundFX.soundStat  ; Set playing flag
             ;
 @Exit
             rts
@@ -72,30 +69,30 @@ PlaySoundFx
 ; Call every 1/50 second (20ms)
 ; Preserves all registers
 ; Takes max 100 cycles (100µs @ 1MHz)
-SoundFxIRQ
+soundFX.playIRQ
             pshs    d,x,y,u     ; Save registers
             ;
             ; Check for new sound to play
-            lda     soundFxDriver.newSound   ; Get new sound ID
+            lda     soundFX.newSound   ; Get new sound ID
             cmpa    #SOUND_NONE ; Is there a new sound?
             beq     @CheckPlaying ; No, check if already playing
             ;
             ; Play the new sound
-            jsr     PlaySoundFx ; Play the sound
+            jsr     soundFX.play ; Play the sound
             lda     #SOUND_NONE ; Reset new sound ID
-            sta     soundFxDriver.newSound   ; to indicate no new sound
+            sta     soundFX.newSound   ; to indicate no new sound
             ;
 @CheckPlaying
-            lda     sound_stat  ; Check if playing
+            lda     soundFX.soundStat  ; Check if playing
             beq     @Exit
-            lda     delay_cnt   ; Check delay counter
+            lda     soundFX.delayCnt   ; Check delay counter
             beq     @Process
             deca                ; Decrement counter
-            sta     delay_cnt
+            sta     soundFX.delayCnt
 @Exit       puls    d,x,y,u,pc
             ;
 @Process
-            ldx     sound_ptr
+            ldx     soundFX.soundPtr
             ;
 @ProcessLoop   
             ; Process command
@@ -117,7 +114,7 @@ SoundFxIRQ
             bpl     @InstLoop   ; Done ? if not, continue
             ;
             ; Select custom instrument
-            ldb     curr_chan   ; Get channel number
+            ldb     soundFX.currChan   ; Get channel number
             addb    #YM_INST_BASE ; Add instrument base address
             stb     <YM2413.A   ; Set instrument command for channel number
             nop
@@ -131,7 +128,7 @@ SoundFxIRQ
 @NotCustom
             cmpa    #$0F
             bls     >
-            adda    curr_chan   ; Apply channel number
+            adda    soundFX.currChan   ; Apply channel number
 !           sta     <YM2413.A   ; Set address (4 cycles)
             lda     1,x         ; Get data (5 cycles)
             sta     <YM2413.D   ; Write data (4 cycles)
@@ -139,34 +136,42 @@ SoundFxIRQ
 @EndCommand
             ; Update command pointer
             leax    3,x         ; Point to next command
-            dec     cmd_count
+            dec     soundFX.cmdCount
             beq     @StopSound  ; If zero, stop
             ;
             ; Check if delay is 0, and if so, process the next command
             lda     -1,x        ; Get delay of last command
             beq     @ProcessLoop
             deca                ; Decrement counter
-            sta     delay_cnt
-            stx     sound_ptr
+            sta     soundFX.delayCnt
+            stx     soundFX.soundPtr
             puls    d,x,y,u,pc
             ;
 @StopSound
             ; Clear key-on
-            lda     curr_chan   ; Get current channel
+            lda     soundFX.currChan   ; Get current channel
             adda    #YM_FREQ_MSB_BASE ; Add channel base address
             sta     <YM2413.A   ; Set address (4 cycles)
             nop                 ; (2 cycles)
             clra                ; (2 cycles)
             sta     <YM2413.D   ; Clear sustain, key-on, freq msb bits (2 cycles)
             ;            
-            sta     sound_stat  ; Clear playing flag
+            sta     soundFX.soundStat  ; Clear playing flag
             ;
             puls    d,x,y,u,pc
 
+; After including the soundFX.data.asm file, user should define soundFX.soundTable
+
 ; Sound data lookup table
-SoundTable
-            fdb     FireSound
-            fdb     ExplosionSound
+; ------------------------
+;soundFX.soundTable
+;            fdb     soundFX.FireSound
+;            fdb     soundFX.ExplosionSound
+;            fdb     soundFX.BonusSound
+;            fdb     soundFX.PodAttachSound
+
+; soundFX.FireSound
+; ...
 
 ; Sound data format:
 ; ------------------
@@ -185,119 +190,6 @@ SoundTable
 ; special command
 ; ---------------
 ; Byte 0: $FF, Bytes 1-2: Custom instrument data address
-
-FireSound
-        ; header
-        fcb     25          ; Number of commands
-        fcb     5           ; Channel number (5)
-
-        ; Custom instrument settings
-        ;fcb     $FF         ; special command
-        ;fdb     FireInst    ; Custom instrument data address (0 if not needed)
-            
-        fcb     $30,$F2,0
-        fcb     $20,$19,0
-        fcb     $10,$01,1
-
-        fcb     $20,$17,0
-        fcb     $10,$81,1
-
-        fcb     $20,$17,0
-        fcb     $10,$20,1
-
-        fcb     $20,$15,0
-        fcb     $10,$E5,1
-
-        fcb     $20,$1D,0
-        fcb     $10,$01,1
-
-        fcb     $20,$1B,0
-        fcb     $10,$B0,1
-
-        fcb     $20,$1B,0
-        fcb     $10,$57,1
-
-        fcb     $20,$1B,0
-        fcb     $10,$43,1
-
-        fcb     $20,$1B,0
-        fcb     $10,$01,1
-
-        fcb     $20,$19,0
-        fcb     $10,$20,1
-
-        fcb     $20,$17,0
-        fcb     $10,$E5,1
-
-        fcb     $20,$15,0
-        fcb     $10,$20
-
-ExplosionSound
-    ; Header
-    fcb    39                    ; Nombre de commandes augmenté
-    fcb    3                     ; Channel number (5)
-
-        fcb     $30,$24,0
-        fcb     $20,$19,0
-        fcb     $10,$10,1
-
-        fcb     $20,$19,0
-        fcb     $10,$6B,1
-
-        fcb     $20,$19,0
-        fcb     $10,$CA,1
-
-        fcb     $20,$1F,0
-        fcb     $10,$6B,1
-
-        fcb     $20,$1F,0
-        fcb     $10,$FC,1
-
-        fcb     $20,$1D,0
-        fcb     $10,$6B,1
-
-        fcb     $20,$1D,0
-        fcb     $10,$01,1
-
-        fcb     $20,$1B,0
-        fcb     $10,$57,1
-
-        fcb     $20,$1D,0
-        fcb     $10,$10,1
-
-        fcb     $20,$1F,0
-        fcb     $10,$31,1
-
-        fcb     $20,$1F,0
-        fcb     $10,$98,1
-
-        fcb     $20,$1F,0
-        fcb     $10,$CA,1
-
-        fcb     $20,$1F,0
-        fcb     $10,$31,1
-
-        fcb     $20,$1D,0
-        fcb     $10,$6B,1
-
-        fcb     $20,$1D,0
-        fcb     $10,$10,1
-
-        fcb     $20,$1B,0
-        fcb     $10,$98,1
-
-        fcb     $20,$1D,0
-        fcb     $10,$31,1
-
-        fcb     $20,$1F,0
-        fcb     $10,$01,1
-
-        fcb     $20,$1F,0
-        fcb     $10,$CA
-
-; Custom instrument definitions
-FireInst
-            fcb     $2D,$13,$02,$15,$A2,$F4,$00,$F5
 
 ; YM2413 instruments settings
 ; 1 | 71 61 1E 17 D0 78 00 17 | Violin
