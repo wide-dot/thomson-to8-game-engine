@@ -7,6 +7,7 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./objects/soundFX/soundFX.const.asm"
 
 Onject
         lda   routine,u
@@ -19,8 +20,8 @@ Routines
         fdb   Live
 
 Init
-        lda   #1
-        sta   soundFxDriver.newSound
+        lda   #soundFX.ExplosionSound
+        sta   soundFX.newSound
         ldb   subtype,u
         ldx   #exp.animations
         ldx   b,x

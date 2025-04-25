@@ -10,6 +10,7 @@
         INCLUDE "./engine/macros.asm"
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
+        INCLUDE "./objects/soundFX/soundFX.const.asm"
 
 AABB_0  equ ext_variables ; AABB struct (9 bytes)
 
@@ -25,7 +26,8 @@ Weapon10_Routines
         fdb   AlreadyDeleted
 
 Init
-        clr   soundFxDriver.newSound
+        lda   #soundFX.FireSound
+        sta   soundFX.newSound
         ldd   x_pos,u
         addd  #6
         std   x_pos,u
