@@ -53,8 +53,6 @@ RunObjects
         ldd   run_object_next,u        ; in case of self-deletion by current object
         std   object_list_next         ; we need to save the next object in run list
         jsr   [,x]              
-        ldu   run_object_next,u
-        bne   <
         ldu   #0
 object_list_next equ   *-2    
         bne   <         

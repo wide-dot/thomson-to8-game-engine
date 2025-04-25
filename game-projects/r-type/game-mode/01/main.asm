@@ -82,8 +82,8 @@ CHECKPOINT_01      equ 20
 ; play music
         _MountObject ObjID_ymm01
         _MusicInit_objymm #0,#MUSIC_LOOP,#0  ; initialize the YM2413 player 
-        _MountObject ObjID_vgc01
-        _MusicInit_objvgc #0,#MUSIC_LOOP,#0 ; initialize the SN76489 vgm player with a vgc data stream
+        ;_MountObject ObjID_vgc01
+        ;_MusicInit_objvgc #0,#MUSIC_LOOP,#0 ; initialize the SN76489 vgm player with a vgc data stream
 
 ; init user irq
         jsr   IrqInit
@@ -165,8 +165,8 @@ LevelMainLoop
         jsr   IrqOff
         _MountObject ObjID_ymm01
         _MusicInit_objymm #1,#MUSIC_LOOP,#0
-        _MountObject ObjID_vgc01
-        _MusicInit_objvgc #1,#MUSIC_LOOP,#0
+        ;_MountObject ObjID_vgc01
+        ;_MusicInit_objvgc #1,#MUSIC_LOOP,#0
         jsr   IrqOn
         clr   NEXT_GAME_MODE
 !
@@ -183,10 +183,10 @@ UserIRQ
         jsr   joypad.buffer.addDirection
         _MountObject ObjID_ymm01
         _MusicFrame_objymm
-        _MountObject ObjID_vgc01
-        _MusicFrame_objvgc
-        _MountObject ObjID_soundfx
-        jmp   ,x ; call soundfx driver
+        ;_MountObject ObjID_vgc01
+        ;_MusicFrame_objvgc
+        _MountObject ObjID_soundFX
+        jmp   ,x ; call soundFX driver
 * ---------------------------------------------------------------------------
 * Collision_ClearLists
 *
@@ -318,7 +318,7 @@ main.followDobkeratops
         INCLUDE "./engine/math/RandomNumber.asm"
 
         ; sound fx
-        INCLUDE "./engine/sound/soundfx.data.asm"
+        INCLUDE "./engine/sound/soundFX.data.asm"
 
         ; should be at the end of includes (ifdef dependencies)
         INCLUDE "./engine/InitGlobals.asm"

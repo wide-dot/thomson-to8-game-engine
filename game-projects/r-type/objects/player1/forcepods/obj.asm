@@ -10,6 +10,7 @@
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./objects/player1/player1.equ"
+        INCLUDE "./objects/soundFX/soundFX.const.asm"
 
 AABB_0            equ ext_variables   ; AABB struct (9 bytes)
 currentlevel      equ ext_variables+9 ; Byte
@@ -232,6 +233,8 @@ Live
 @hookroutine  equ   *-1
         sta   routine,u
         sta   hooked_status,u
+        ldb   #soundFX.PodAttachSound
+        stb   soundFX.newSound
         ldb   status_flags,u
         andb  #^status_xflip_mask       ; unset sprite X flip in animation
         stb   status_flags,u
