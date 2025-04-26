@@ -11,6 +11,7 @@
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./objects/soundFX/soundFX.const.asm"
+        INCLUDE "./engine/sound/soundFX.macro.asm"
 
 AABB_0  equ ext_variables ; AABB struct (9 bytes)
 damage  equ 6
@@ -27,8 +28,7 @@ Routines
         fdb   AlreadyDeleted
 
 Init
-        ldb   #soundFX.FireBlastSound
-        stb   soundFX.newSound
+        _soundFX.play soundFX.FireBlastSound,2
 	ldd   #Ani_beamp0
         std   anim,u
         ldb   #4

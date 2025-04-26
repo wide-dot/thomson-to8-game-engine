@@ -14,6 +14,7 @@
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./objects/player1/player1.equ"
         INCLUDE "./objects/soundfx/soundfx.const.asm"
+        INCLUDE "./engine/sound/soundFX.macro.asm"
         
 AABB_0           equ ext_variables     ; AABB struct (9 bytes)
 ply_width        equ 12/2
@@ -186,8 +187,7 @@ destroy
         sta   AABB.p,x
 
         ; hit sound
-        ldb   #soundFX.PlayerHitSound
-        stb   soundFX.newSound
+        _soundFX.play soundFX.PlayerHitSound,$85
 
         ; white screen border
         ldb   #1

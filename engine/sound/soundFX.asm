@@ -5,8 +5,7 @@
 
                 jmp     soundFX.playIRQ
 
-; Sound IDs
-SOUND_NONE      equ     $FF     ; No sound to play
+soundFX.NO_SOUND      equ     $FF00    ; No sound
 
 ; <YM2413 register base addresses
 YM_FREQ_LSB_BASE equ     $10     ; Base address for frequency LSB registers
@@ -73,21 +72,36 @@ soundFX.playIRQ
             pshs    d,x,y,u     ; Save registers
             ;
             ; Check for new sound to play
-            lda     soundFX.newSound   ; Get new sound ID
-            cmpa    #SOUND_NONE ; Is there a new sound?
-            beq     @CheckPlaying ; No, check if already playing
+            ldd     soundFX.newSound
+            cmpd    #soundFX.NO_SOUND
+            beq     @playCurSound
+            andb    #$7f
+            stb     @newPri
             ;
+            lda     soundFX.curSound+1
+            anda    #$7f
+            cmpa    #0
+@newPri     equ     *-1
+            blo     @playNewSound
+            bhi     @playCurSound
+            ; if same sound priority and current sound is locked, skip playing the new sound
+            lda     soundFX.curSound+1
+            bita    #$80
+            bne     @playCurSound
+@playNewSound
             ; Play the new sound
             jsr     soundFX.play ; Play the sound
-            lda     #SOUND_NONE ; Reset new sound ID
-            sta     soundFX.newSound   ; to indicate no new sound
+            ldd     soundFX.newSound
+            std     soundFX.curSound ; Update current sound
+            ldd     #soundFX.NO_SOUND
+            std     soundFX.newSound ; Reset new sound ID
             ;
-@CheckPlaying
-            lda     soundFX.soundStat  ; Check if playing
+@playCurSound
+            lda     soundFX.soundStat ; Check if playing
             beq     @Exit
-            lda     soundFX.delayCnt   ; Check delay counter
+            lda     soundFX.delayCnt ; Check delay counter
             beq     @Process
-            deca                ; Decrement counter
+            deca
             sta     soundFX.delayCnt
 @Exit       puls    d,x,y,u,pc
             ;
@@ -157,6 +171,8 @@ soundFX.playIRQ
             sta     <YM2413.D   ; Clear sustain, key-on, freq msb bits (2 cycles)
             ;            
             sta     soundFX.soundStat  ; Clear playing flag
+            ldd     #soundFX.NO_SOUND
+            std     soundFX.curSound ; Update current sound
             ;
             puls    d,x,y,u,pc
 
