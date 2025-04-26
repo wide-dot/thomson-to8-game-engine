@@ -1220,7 +1220,11 @@ public class BuildDisk
 			if (!firstLoop) {
 				rImg.curPage++;
 				if (rImg.isOutOfMemory()) {
-					logger.fatal("C'est un peu trop ambitieux ... plus de place en RAM !");
+					int remainingSize = 0;
+					for (Item item : items) {
+						remainingSize += item.weight;
+					}
+					logger.fatal("C'est un peu trop ambitieux ... plus de place en RAM ! Il manque " + remainingSize + " octets");
 					return 0;
 				}
 				rImg.startAddress[rImg.curPage] = 0;

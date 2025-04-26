@@ -11,6 +11,7 @@
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./objects/player1/player1.equ"
         INCLUDE "./objects/soundFX/soundFX.const.asm"
+        INCLUDE "./engine/sound/soundFX.macro.asm"
 
 AABB_0            equ ext_variables   ; AABB struct (9 bytes)
 Object
@@ -89,9 +90,8 @@ Live
         inca  
         sta   player1+forcepodlevel
 !
+        _soundFX.play soundFX.BonusSound,4
 @delete
-        lda   #soundFX.BonusSound
-        sta   soundFX.newSound
         inc   routine,u     
         _Collision_RemoveAABB AABB_0,AABB_list_bonus
         jmp   DeleteObject
