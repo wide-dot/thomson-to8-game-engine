@@ -154,6 +154,10 @@ Init
         bra   >                        ; skip framerate compensation for init
 
 Live
+        ldd   x_pos,u
+        addd  #8 ; left black border width
+        cmpd  glb_camera_x_pos
+        bls   @delete ; end script can lead to long object dealocation, so we delete it if it's out of screen range.
         ldd   #endCheck
         std   moveByScript.callback
         jsr   moveByScript.runByFrameDrop
