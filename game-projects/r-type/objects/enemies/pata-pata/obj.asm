@@ -70,9 +70,18 @@ Init
         sta   anim_frame_duration,u ; now use as animation speed by moveByScript
         jsr   moveByScript.runByB
 
+        ; random init start image
+        jsr   RandomNumber
+        anda  #$1C
+        sta   anim_frame,u
+
         inc   routine,u
         bra   >
 Live
+        ldd   x_pos,u
+        addd  #8 ; left black border width
+        cmpd  glb_camera_x_pos
+        bls   @delete ; end script can lead to long object dealocation, so we delete it if it's out of screen range.
         ldd   #endCheck
         std   moveByScript.callback
         jsr   moveByScript.runByFrameDrop
