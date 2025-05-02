@@ -3508,6 +3508,9 @@ public class BuildDisk
 		public forEach_PS(PrintStream deleg) {
 			super(new OS());
 			this.os = (OS)out;
+			while(deleg instanceof forEach_PS) {
+				deleg = ((forEach_PS)deleg).deleg;
+			}
 			this.deleg = deleg;
 		}
 
