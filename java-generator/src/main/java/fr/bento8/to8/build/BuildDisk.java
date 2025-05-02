@@ -2,10 +2,13 @@ package fr.bento8.to8.build;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
@@ -17,12 +20,16 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -36,6 +43,7 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 
+import fr.bento8.to8.InstructionSet.Register;
 import fr.bento8.to8.audio.Sound;
 import fr.bento8.to8.audio.SoundBin;
 import fr.bento8.to8.boot.Bootloader;
@@ -43,9 +51,9 @@ import fr.bento8.to8.compiledSprite.backupDrawErase.AssemblyGenerator;
 import fr.bento8.to8.compiledSprite.draw.SimpleAssemblyGenerator;
 import fr.bento8.to8.image.Animation;
 import fr.bento8.to8.image.AnimationBin;
-import fr.bento8.to8.image.PngToBottomUpB16Bin;
 import fr.bento8.to8.image.ImageSetBin;
 import fr.bento8.to8.image.PaletteTO8;
+import fr.bento8.to8.image.PngToBottomUpB16Bin;
 import fr.bento8.to8.image.Sprite;
 import fr.bento8.to8.image.SpriteSheet;
 import fr.bento8.to8.image.SubSprite;
@@ -215,6 +223,10 @@ public class BuildDisk
 		}			
 		
 		logger.debug(prelog);
+
+				// work around static attributes not being fully initialized
+		// in multithread context
+		if(game.parallelBuild) Class.forName(Register.class.getName()); 
 	}
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -350,27 +362,24 @@ public class BuildDisk
 		// ---------------------------------------------
 
 		// Parcours de tous les objets de chaque Game Mode
-		for (Entry<String, GameMode> gameMode : game.gameModes.entrySet()) {
+		forEachSeq(game.gameModes.entrySet(), gameMode -> {
 			logger.debug("\tGame Mode: "+gameMode.getKey());
+
+			List<Object> list = new ArrayList<>();
 
 			// Game Mode Common
 			for (GameModeCommon common : gameMode.getValue().gameModeCommon) {
-				if (common != null) {
-					for (Object object : common.objects) {
-						processSounds(gameMode.getValue(), object);
-					}
-				}
+				if (common != null) list.addAll(common.objects);
 			}			
-			
-			for (Object object : gameMode.getValue().objects) {
-				processSounds(gameMode.getValue(), object);
-			}
-		}
+			list.addAll(gameMode.getValue().objects);
+
+			forEach(list, object->processSounds(gameMode.getValue(), object));
+		});
 	}
 	
 	private static void processSounds(GameMode gameMode, Object object) throws Exception {
 		// Parcours des données audio de l'objet
-		for (Entry<String, String[]> soundsProperties : object.soundsProperties.entrySet()) {
+		forEach (object.soundsProperties.entrySet(),  soundsProperties -> {
 
 			logger.debug("\t\tSound: "+soundsProperties.getKey());
 			
@@ -382,7 +391,7 @@ public class BuildDisk
 			
 			sound.setAllBinaries(sound.soundFile, inRAM);
 			object.sounds.add(sound);
-		}
+		});
 	}
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -391,10 +400,10 @@ public class BuildDisk
 		logger.info("Process Background Images ...");
 
 		// Parcours de tous les objets de chaque Game Mode
-		for (Entry<String, GameMode> gameMode : game.gameModes.entrySet()) {
+		forEach(game.gameModes.entrySet(), gameMode -> {
 			logger.debug("\tGame Mode: "+gameMode.getKey());
 			processBackgroundImages(gameMode.getValue());
-		}
+		});
 	}
 	
 	private static void processBackgroundImages(GameMode gameMode) throws Exception {
@@ -427,23 +436,24 @@ public class BuildDisk
 		// -------------------------------------------------
 
 		// Parcours de tous les objets de manière unitaire
-		for (Entry<String, Object> object : Game.allObjects.entrySet()) {
-				generateSprites(object.getValue());
-		}
+		//for (Entry<String, Object> object : Game.allObjects.entrySet()) {
+		//		generateSprites(object.getValue());
+		//}
+		forEach(Game.allObjects.values(), o->generateSprites(o));
 	}
 	
 	private static void generateSprites(Object object) throws Exception {
-		AssemblyGenerator asm;
-		Encoder easm;
-
-		// génération du sprite compilé
-		SubSprite curSubSprite;	
-		String associatedIdx = null;
-		BufferedImage imgCumulative = null;
-		
 		// Parcours des images de l'objet et compilation de l'image
 		AsmSourceCode asmImgIndex = new AsmSourceCode(createFile(object.imageSet.fileName, object.name));
-		for (Entry<String, String[]> spriteProperties : object.spritesProperties.entrySet()) {
+		//for (Entry<String, String[]> spriteProperties : object.spritesProperties.entrySet()) {
+		forEach(object.spritesProperties.entrySet(), spriteProperties -> {
+			AssemblyGenerator asm;
+			Encoder easm;
+
+			// génération du sprite compilé
+			SubSprite curSubSprite;	
+			String associatedIdx = null;
+			BufferedImage imgCumulative = null;
 
 			Sprite sprite = new Sprite(spriteProperties.getKey());
 			String spriteFileRef;
@@ -547,7 +557,7 @@ public class BuildDisk
 			object.imageSet.uncompressedSize += writeImgIndex(asmImgIndex, null, sprite, UNDEFINED);
 			associatedIdx = sprite.associatedIdx;
 			imgCumulative = sprite.imgCumulative;
-		}
+		});
 		
 		object.imageSet.bin = new byte[object.imageSet.uncompressedSize];
 		AsmSourceCode asmAniIndex = new AsmSourceCode(createFile(object.animation.fileName, object.name));
@@ -564,17 +574,12 @@ public class BuildDisk
 		// -------------------------------------------------
 
 		// Parcours de tous les objets de manière unitaire
-		for (Entry<String, Object> object : Game.allObjects.entrySet()) {
-			generateTilesets(object.getValue());
-		}
+		forEachSeq (Game.allObjects.values(), v->generateTilesets(v));
 	}
 	
-	private static void generateTilesets(Object object) throws Exception {
-		SimpleAssemblyGenerator sasm;	
-		
+	private static void generateTilesets(Object object) throws Exception {		
 		// Parcours des tileset de l'objet et compilation des images de tiles
-		for (Entry<String, String[]> tilesetProperties : object.tilesetsProperties.entrySet()) {
-
+		forEachSeq(object.tilesetsProperties.entrySet(), tilesetProperties -> {
 			Tileset tileset = new Tileset(tilesetProperties.getKey());
 			tileset.fileName = tilesetProperties.getValue()[0];
 			tileset.nbTiles = Integer.parseInt(tilesetProperties.getValue()[1].split(",")[0]);
@@ -601,58 +606,71 @@ public class BuildDisk
 			// Parcours des différents tiles du tileset
 			logger.debug("\t"+object.name+" tileset: " + tileset.name);
 			SpriteSheet ss = new SpriteSheet(tileset.name, tileset.fileName, tileset.nbTiles, tileset.nbColumns, tileset.nbRows, tileset.centerMode);
-			int tileId;
-			for (tileId = 0; tileId < tileset.nbTiles; tileId++) {
-				logger.debug("\t\t"+object.name+" Compile tile: " + tileId);
+			// pour facilier la recherche d'une rtile identique
+			class Aux {
+				public final byte[] pixels0, pixels1; 
+				public int tileId;
+				public TileBin bin;
 
-					// search for an identical tile
-					boolean isSame = false;
-					int s;
-					
-					for (s = 0; s < tileId; s++) {
-						isSame = true;
-						if ((ss.getSubImagePixels(tileId, 0).length != tileset.tiles.get(s).pixels0.length) ||
-							(ss.getSubImagePixels(tileId, 1).length != tileset.tiles.get(s).pixels1.length)){
-							isSame = false;
-						} else {
-							for (int b = 0; b < ss.getSubImagePixels(tileId, 0).length; b++) {
-								if ((ss.getSubImagePixels(tileId, 0)[b] != tileset.tiles.get(s).pixels0[b]) ||
-									(ss.getSubImagePixels(tileId, 1)[b] != tileset.tiles.get(s).pixels1[b])){
-									isSame = false;
-									break;
-								}
-							}
-						}
-						if (isSame) {
-							break;
-						}
-					}
-					
-					if (isSame) {
-						// for this tile index, use an identical tile
-						// at index construction, the same page/addr will be referenced
-						// tile will not be added to object thus no duplicate compilated sprite							
-						tileset.tiles.add(tileset.tiles.get(s));	
-						logger.info("Found duplicate tile for index: "+tileId+", will use index: "+s);
+				public Aux(int tileId) {
+					this.bin = null;
+					this.tileId = tileId;
+					this.pixels0 = ss.getSubImagePixels(tileId, 0);
+					this.pixels1 = ss.getSubImagePixels(tileId, 1);
+				}
+				
+				public boolean equals(java.lang.Object o) {
+					if (!(o instanceof Aux)) return false;
+					Aux other = (Aux) o;
+					return Arrays.equals(pixels0, other.pixels0) &&
+							Arrays.equals(pixels1, other.pixels1);
+				}
+
+				public int hashCode() {
+					return Arrays.hashCode(pixels0)*31 + Arrays.hashCode(pixels1);
+				}
+
+				public void initBin() throws Exception {
+				var sasm = new SimpleAssemblyGenerator(ss, Game.generatedCodeDirName + object.name, tileId, SimpleAssemblyGenerator._ODD_ALPHA);
+					sasm.compileCode("A000");		
+					bin = new TileBin(tileset);
+					bin.setName(tileset.name + "-" + tileId);
+					bin.bin = Files.readAllBytes(Paths.get(sasm.getDrawBINFile()));
+					bin.uncompressedSize = sasm.getDSize();
+					bin.inRAM = tileset.inRAM;
+					bin.pixels0 = pixels0;						
+					bin.pixels1 = pixels1;
+				}
+			};
+			// concurrent car ca peut être rempli en parallèle
+			Aux[] byId = new Aux[tileset.nbTiles];
+			forEach(range(0,tileset.nbTiles), 
+					tileId -> byId[tileId] = new Aux(tileId));
+			Map<Aux, Aux> uniq = new HashMap<>(); 
+			for(int i=0; i<byId.length; ++i) {
+				Aux aux = byId[i];
+				aux = uniq.putIfAbsent(aux, aux);
+				if(aux != null) {
+					assert(aux.tileId < i);
+					byId[i] = aux;
+				}
+			}
+			forEach(uniq.keySet(), Aux::initBin);
+			int tileId;
+			for(tileId=0; tileId<byId.length; ++tileId) {
+				Aux aux = byId[tileId];
+				if(aux.tileId != tileId) {
+					tileset.tiles.add(aux.bin);
+					logger.info("Found duplicate tile for index: "+tileId+", will use index: "+aux.tileId);
 //						logger.debug("Tile: "+tileId);
 //						logger.debug(SimpleAssemblyGenerator.debug80Col(ss.getSubImagePixels(tileId, 0)));
 //						logger.debug("Index: "+s);
 //						logger.debug(SimpleAssemblyGenerator.debug80Col(tileset.tiles.get(s).pixels));						
-						
-					} else {
-						sasm = new SimpleAssemblyGenerator(ss, Game.generatedCodeDirName + object.name, tileId, SimpleAssemblyGenerator._ODD_ALPHA);
-						sasm.compileCode("A000");						
 
-						TileBin tileBin = new TileBin(tileset);
-						tileBin.setName(tileset.name + "-" + tileId);
-						tileBin.bin = Files.readAllBytes(Paths.get(sasm.getDrawBINFile()));
-						tileBin.uncompressedSize = sasm.getDSize();
-						tileBin.inRAM = tileset.inRAM;
-						tileBin.pixels0 = ss.getSubImagePixels(tileId, 0);						
-						tileBin.pixels1 = ss.getSubImagePixels(tileId, 1);
-						tileset.tiles.add(tileBin);
-						object.tilesBin.add(tileBin);
-					}
+				} else {
+					tileset.tiles.add(aux.bin);
+					object.tilesBin.add(aux.bin);
+				}
 			}
 
 			object.tilesets.put(tileset.name, tileset);
@@ -666,9 +684,9 @@ public class BuildDisk
 				dynamicContentFD.set(tileset.name, "buffer", tileset.bufferLength);
 				dynamicContentT2.set(tileset.name, "buffer", tileset.bufferLength);
 			}
-		}
-	}	
-	
+		});	
+	}
+
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	private static void compileMainEngines(boolean writeIdx) throws Throwable {
@@ -678,11 +696,11 @@ public class BuildDisk
 		}
 		compileMainEngines(MEGAROM_T2, writeIdx);
 	}
-	
+
 	private static void compileMainEngines(int mode, boolean writeIdx) throws Throwable {
 		logger.info("Compile Main Engines for " + MODE_LABEL[mode] + "...");
 		
-		for(Entry<String, GameMode> gameMode : game.gameModes.entrySet()) {
+		forEach(game.gameModes.entrySet(), gameMode -> {
 			logger.debug("\tGame Mode : " + gameMode.getKey());
 			
 			String prepend = "\tINCLUDE \"" + Game.generatedCodeDirName + gameMode.getKey() + "/" + FileNames.OBJECTID+"\"\n";
@@ -747,7 +765,7 @@ public class BuildDisk
 					gameMode.getValue().t2Idx.add(rli); // Seconde passe
 				}
 			}
-		}
+		});
 	}	
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
@@ -832,24 +850,18 @@ public class BuildDisk
 	private static void compileObjects() throws Exception {
 		logger.info("Compile Objects ...");
 		
-		// Parcours de tous les objets de chaque Game Mode
-		for (Entry<String, GameMode> gameMode : game.gameModes.entrySet()) {
-			
+		forEachSeq(game.gameModes.entrySet(), gameMode -> {			
 			logger.info("\t"+gameMode.getKey()+":");
 			
+			List<Object> objects = new ArrayList<>();
 			// Game Mode Common
 			for (GameModeCommon common : gameMode.getValue().gameModeCommon) {
-				if (common != null) {
-					for (Object object : common.objects) {
-						compileObject(gameMode.getValue(), object, 0);
-					}
-				}
+				if (common != null) objects.addAll(common.objects);
 			}
-						
-			for (Object object : gameMode.getValue().objects) {
-				compileObject(gameMode.getValue(), object, 0);
-			}		
-		}		
+			objects.addAll(gameMode.getValue().objects);
+			
+			forEach(objects, object -> compileObject(gameMode.getValue(), object, 0));
+		});
 	}	
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
@@ -1175,7 +1187,7 @@ public class BuildDisk
 		// Compte le nombre d'objets a traiter
 		for (GameModeCommon common : gm.gameModeCommon) {
 			if (common != null) {
-				for (Object object : common.objects) {
+				for (@SuppressWarnings("unused") Object object : common.objects) {
 
 					// Ajoute les items du commun de type code objet
 					nbGameModeItems++;
@@ -1683,24 +1695,21 @@ public class BuildDisk
 	private static void generateImgAniIndex() throws Exception {
 		logger.info("Generate Image index and Animation script index ...");
 		
-		for (Entry<String, GameMode> gameMode : game.gameModes.entrySet()) {
+		forEachSeq(game.gameModes.entrySet(), gameMode -> {
 			logger.debug("\nGame Mode : " + gameMode.getKey());
 			GameMode gm = gameMode.getValue();
+
+			List<Object> list = new ArrayList<>();
 			
 			// Objets Communs au Game Mode
 			for (GameModeCommon common : gm.gameModeCommon) {
-				if (common != null) {
-					for (Object object : common.objects) {
-						generateImgAniIndex(gameMode.getValue(), object);
-					}
-				}
+				if (common != null) list.addAll(common.objects);
 			}
-			
 			// Objets du Game Mode
-			for (Object object : gm.objects) {
-				generateImgAniIndex(gameMode.getValue(), object);
-			}
-		}
+			list.addAll(gm.objects);
+
+			forEach(list, object -> generateImgAniIndex(gameMode.getValue(), object));
+		});
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
@@ -3084,13 +3093,13 @@ public class BuildDisk
 	private static void compressData() throws Exception {
 		logger.info("Compress data ...");
 		
-		for(Entry<String, GameMode> gm : game.gameModes.entrySet()) {
+		forEach(game.gameModes.entrySet(), gm-> {
 			logger.info("\t"+gm.getValue().name);
 			if (!abortFloppyDisk) {	
 				compressData(FLOPPY_DISK, gm.getValue().ramFD, gm.getValue().fdIdx, gm.getValue().name);
 			}
 			compressData(MEGAROM_T2, gm.getValue().ramT2, gm.getValue().t2Idx, gm.getValue().name);
-		}
+		});
 	}
 	
 	private static void compressData(int mode, RamImage ram, List<RAMLoaderIndex> ldi, String gmName) throws Exception {
@@ -3440,4 +3449,108 @@ public class BuildDisk
 		
 		return Paths.get(newFileName);
 	}		
+
+	// sam parallelism
+	static interface Consumer<T> { // hélas l'iterface onsumer standard ne signale pas Throwable
+		void accept(T t) throws Throwable; // donc on fait la notre.
+	}
+	public static <T> void forEach(Collection<T> col, Consumer<? super T> consumer) {
+		if(!game.parallelBuild || col.size()<=2) {
+			forEachSeq(col, consumer);
+		} else {
+			AtomicReference<Throwable> ex = new AtomicReference<>();
+			forEach_PS out,err;
+			System.setOut(out = new forEach_PS(System.out));
+			System.setErr(err = new forEach_PS(System.err));
+			col.parallelStream().forEach(t -> {
+				// on stoppe à la 1ere erreur
+				if(ex.get()==null) try {
+					consumer.accept(t);
+				} catch(Throwable e) {
+					ex.compareAndSet(null, e);
+				}
+			});
+			System.setOut(out.end());
+			System.setErr(err.end());
+			Throwable e = ex.get();
+			if(e!=null) throw new RuntimeException(e);
+		}
+	}
+	public static <T> void forEachSeq(Collection<T> col, Consumer<? super T> consumer) {
+		if(!col.isEmpty()) try {
+			double s1 = 0, s2 = 0;
+			for (T t : col) {
+				double nano = System.nanoTime();
+				consumer.accept(t);
+				nano = System.nanoTime() - nano;
+				s1 += nano;	s2 += nano * nano;
+			}
+			s1 /= col.size(); s2 /= col.size();
+			// --- sensible caller
+			Exception ex = new RuntimeException(); ex.fillInStackTrace();
+			StackTraceElement st_tab[] = ex.getStackTrace(), st;
+			for(int i=0; (st=st_tab[i]).getMethodName().contains("forEach") && i<st_tab.length; ++i);
+			logger.info(String.format("Time/loop at %s.%s(%s:%d): %.2fms +/- %.2fms (%d loops)",
+				st.getClassName(),st.getMethodName(),
+				st.getFileName(), st.getLineNumber(),
+				s1/1_000_000, Math.sqrt(s2 - s1 * s1)/1_000_000, col.size()));
+		} catch(Throwable e) {
+			logger.catching(e);
+			OutputStream os = new ByteArrayOutputStream();
+			e.printStackTrace(new PrintStream(os));
+			var dbg = os.toString();
+			throw new RuntimeException(e);
+		} 
+	}
+	static class forEach_PS extends PrintStream {
+		final PrintStream deleg;
+		final OS os;
+		public forEach_PS(PrintStream deleg) {
+			super(new OS());
+			this.os = (OS)out;
+			this.deleg = deleg;
+		}
+
+		static class OS extends OutputStream {
+			final Map<Thread, ByteArrayOutputStream> map = new ConcurrentHashMap<>();
+
+			OutputStream os() {
+				return map.computeIfAbsent(Thread.currentThread(), 
+					ignored -> new ByteArrayOutputStream());
+			}
+	
+			public void write(int b) throws IOException {
+				os().write(b);					
+			}
+			public void write(byte[] b, int off, int len) throws IOException {
+				os().write(b, off, len);
+			}
+
+			void end(PrintStream deleg) {
+				try {
+					synchronized(map) {
+						for (ByteArrayOutputStream bos : map.values()) {
+							deleg.write(bos.toByteArray());
+							deleg.flush();
+							bos.reset();
+						}
+					}
+					close();
+				} catch(IOException ex) {
+					ex.printStackTrace(deleg);
+					logger.catching(ex);
+				}
+			}
+		}
+		public PrintStream end() {
+			os.end(deleg);
+			close();
+			return deleg;
+		}
+	}
+	static List<Integer> range(int from, int toExclusive) {
+		List<Integer> ret = new ArrayList<>(toExclusive-from);
+		for(int i=from; i<toExclusive; ++i) ret.add(i);
+		return ret;
+	}
 }

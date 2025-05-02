@@ -61,7 +61,7 @@ public class SimpleAssemblyGenerator extends Encoder{
 	public static final int _ODD_ALPHA = 2;
 	public static final int _EVEN_ALPHA = 3;
 	
-	private static boolean alpha = false;
+	private boolean alpha = false;
 	
 	public SimpleAssemblyGenerator(SpriteSheet spriteSheet, String destDir, int imageNum, int alphaOption) throws Exception {
 		this.imageNum = imageNum;
@@ -244,8 +244,8 @@ public class SimpleAssemblyGenerator extends Encoder{
 		} 
 		catch (Exception e)
 		{
-			e.printStackTrace(); 
-			System.out.println(e); 
+			logger.catching(e);
+			throw new RuntimeException(e);
 		}
 	}
 
