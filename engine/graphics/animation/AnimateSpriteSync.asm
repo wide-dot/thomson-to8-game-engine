@@ -84,8 +84,10 @@ AnimateSpriteSync                           *AnimateSprite:
         inc   anim_frame,u                  *    addq.b  #1,anim_frame(a0)     ; next frame number
         leay  2,y                           ; fix the last image being displayed
         ldd   ,y                            ; one frame too much
-        cmpa  #$FA                          ; ...
-        bhs   @Anim_End_FF                  ; ...
+        inca
+        inca                                ; skip anim next command types (FF, FE)
+        cmpa  #$FC                          ; FA => FC (2 codes skipped)
+        bhs   @Anim_End_FD                  ; FF => FD
                                             *; return_1659A:
 @Anim_Rts                                   *Anim_Wait:
         lda   #$00                          ; (dynamic)

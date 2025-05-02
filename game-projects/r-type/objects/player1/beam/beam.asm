@@ -45,24 +45,29 @@ Init
 
         _Collision_AddAABB AABB_0,AABB_list_friend
         
+        ; hitbox potential
         lda   subtype,u                ; set damage potential for this hitbox
 	asla
 	adda  #6                       ; not the real values here just estimates
         sta   AABB_0+AABB.p,u
-        ;lda   subtype,u                ; set damage potential for this hitbox
-	;asla
-	;adda  subtype,u                ; mult by 3
-	;adda  #3                       ; set hitbox x radius (3 6 9 12 15)
-        ;ldb   #6                       ; set hitbox y radius
-        _ldd  15,6                      ; set hitbox xy radius (x should be dynamic, but deactivatedfor framerate compensation)
+
+        ; hitbox size
+        _ldd  15,6                     ; set hitbox xy radius (x should be dynamic, but deactivatedfor framerate compensation)
         std   AABB_0+AABB.rx,u
+
+        ; compute x position
+        lda   subtype,u
+	asla
+	adda  subtype,u                ; mult by 3
+	adda  #3                       ; set hitbox x radius (3 6 9 12 15)
 	clr   halfWidth,u
 	sta   halfWidth+1,u
-	adda  #8                       ; starship width/2
 	adda  x_pos+1,u
 	bcc   >
 	inc   x_pos,u
 !	sta   x_pos+1,u
+
+        ; compute y position
         ldd   y_pos,u
         addd  #2
         std   y_pos,u
