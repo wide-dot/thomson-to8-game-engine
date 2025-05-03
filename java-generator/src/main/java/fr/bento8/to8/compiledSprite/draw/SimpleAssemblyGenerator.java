@@ -221,7 +221,10 @@ public class SimpleAssemblyGenerator extends Encoder{
 			p = new ProcessBuilder(command).inheritIO().start();
 			
 			int result = p.waitFor();
-
+			if(result!=0) {
+				String s = new String(p.getErrorStream().readAllBytes());
+				throw new RuntimeException("Failed with error: " + result + "\nfor "+String.join(" ", command) + "\n" + s);
+			}
 
 			// Load binary code
 			content = Files.readAllBytes(Paths.get(binDrawFileName));	
