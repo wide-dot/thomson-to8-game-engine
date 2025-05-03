@@ -117,25 +117,25 @@ public class Optimizer {
     }
 
     private Block processTask(int initialOffset, int finalOffset, int index, int skip, byte[] input) {
-        int bestLengthSize = 2;
-        Block optimalBlock = null;
-        for (int offset = initialOffset; offset <= finalOffset; offset++) {
+        int bestLengthSize = 2, ml;
+        Block optimalBlock = null, lm;
+        for (int offset = initialOffset; offset <= finalOffset; ++offset) {
             if (index != skip && index >= offset && input[index] == input[index-offset]) {
                 // copy from last offset
-                if (lastLiteral[offset] != null) {
-                    int length = index-lastLiteral[offset].getIndex();
-                    int bits = lastLiteral[offset].getBits() + 1 + eliasGammaBits(length);
-                    lastMatch[offset] = new Block(bits, index, offset, lastLiteral[offset]);
+                if ((lm=lastLiteral[offset]) != null) {
+                    int length = index-lm.getIndex();
+                    int bits = lm.getBits() + 1 + eliasGammaBits(length);
+                    lm = lastMatch[offset] = new Block(bits, index, offset, lm);
                     if (optimalBlock == null || optimalBlock.getBits() > bits) {
-                        optimalBlock = lastMatch[offset];
+                        optimalBlock = lm;
                     }
                 }
                 // copy from new offset
-                if (++matchLength[offset] > 1) {
-                    if (bestLengthSize < matchLength[offset]) {
+                if ((ml = ++matchLength[offset]) > 1) {
+                    if (bestLengthSize < ml) {
                         int bits = optimal[index-bestLength[bestLengthSize]].getBits() + eliasGammaBits(bestLength[bestLengthSize]-1);
                         do {
-                            bestLengthSize++;
+                            ++bestLengthSize;
                             int bits2 = optimal[index-bestLengthSize].getBits() + eliasGammaBits(bestLengthSize-1);
                             if (bits2 <= bits) {
                                 bestLength[bestLengthSize] = bestLengthSize;
@@ -143,26 +143,26 @@ public class Optimizer {
                             } else {
                                 bestLength[bestLengthSize] = bestLength[bestLengthSize-1];
                             }
-                        } while(bestLengthSize < matchLength[offset]);
+                        } while(bestLengthSize < ml);
                     }
-                    int length = bestLength[matchLength[offset]];
+                    int length = bestLength[ml];
                     int bits = optimal[index-length].getBits() + 8 + eliasGammaBits((offset-1)/128+1) + eliasGammaBits(length-1);
-                    if (lastMatch[offset] == null || lastMatch[offset].getIndex() != index || lastMatch[offset].getBits() > bits) {
-                        lastMatch[offset] = new Block(bits, index, offset, optimal[index-length]);
+                    if ((lm = lastMatch[offset]) == null || lm.getIndex() != index || lm.getBits() > bits) {
+                        lm = lastMatch[offset] = new Block(bits, index, offset, optimal[index-length]);
                         if (optimalBlock == null || optimalBlock.getBits() > bits) {
-                            optimalBlock = lastMatch[offset];
+                            optimalBlock = lm;
                         }
                     }
                 }
             } else {
                 // copy literals
                 matchLength[offset] = 0;
-                if (lastMatch[offset] != null) {
-                    int length = index-lastMatch[offset].getIndex();
-                    int bits = lastMatch[offset].getBits() + 1 + eliasGammaBits(length) + length*8;
-                    lastLiteral[offset] = new Block(bits, index, 0, lastMatch[offset]);
+                if ((lm = lastMatch[offset]) != null) {
+                    int length = index-lm.getIndex();
+                    int bits = lm.getBits() + 1 + eliasGammaBits(length) + length*8;
+                    lm = lastLiteral[offset] = new Block(bits, index, 0, lm);
                     if (optimalBlock == null || optimalBlock.getBits() > bits) {
-                        optimalBlock = lastLiteral[offset];
+                        optimalBlock = lm;
                     }
                 }
             }
