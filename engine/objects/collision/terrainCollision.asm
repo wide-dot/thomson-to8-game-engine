@@ -9,6 +9,10 @@
 
         INCLUDE "./engine/macros.asm"
 
+        jmp   terrainCollision.checkPosition
+        jmp   terrainCollision.checkXaxis
+
+terrainCollision.checkPosition
         ldx   #terrainCollision.maps
         aslb
         ldy   b,x                      ; set ptr to map in x
@@ -33,7 +37,91 @@
         andb  a,y                      ; read collision data and apply against precomputed mask
         rts
 
+terrainCollision.checkXaxis
+        ldx   #terrainCollision.maps
+        aslb
+        ldy   b,x                      ; set ptr to map in x
 
+        ldx   #terrainCollision.yOffset
+        ldd   terrainCollision.sensor.y
+        _asld
+        ldd   d,x                      ; load precomputed y position in map
+        leay  d,y                      ; apply
+
+        ldx   #terrainCollision.xOffset
+        ldd   terrainCollision.sensor.x
+        subd  glb_camera_x_pos
+        addb  scroll_tile_pos_offset24
+        abx
+        lda   ,x                       ; load precomputed x position in map
+        adda  scroll_tile_pos          ; get already scrolled x collision tiles
+
+        ldx   #terrainCollision.xMask
+        abx
+        ldb   ,x                       ; read precomputed mask
+
+        ; next code is divergant from the original code
+        ; it scans all the tiles in the current row
+        ; and stops at the first solid tile
+        lslb                           ; set all bits on the right ...
+        decb                           ; ... of bit set to 1
+        andb  a,y                      ; read collision data and apply against precomputed mask
+        bne   @impact
+        inca
+        ldb   a,y
+        bne   @impact
+        inca
+        ldb   a,y
+        bne   @impact
+        inca
+        ldb   a,y
+        bne   @impact
+        inca
+        ldb   a,y
+        bne   @impact
+        inca
+        ldb   a,y
+        bne   @impact
+        inca
+        ldb   a,y
+        bne   @impact
+        bra   @noImpact
+@impact
+        ; compute x_pos of left edge of solid tile
+        ; from value in a (tile block index) and b (in-block tile index)
+        stb   @inBlockTileIndex
+        ldb   #24 ; a block is 24px wide
+        mul
+        std   @tileBlockOffset
+        lda   #0
+@inBlockTileIndex equ *-1
+        ; inverted bsr to get position in tile block
+        clrb
+        bita  #$f0
+        bne   >
+        addb  #4
+        lsla
+        lsla
+        lsla
+        lsla
+!       bita  #$c0
+        bne   >
+        addb  #2
+        lsla
+        lsla
+!       bmi   >
+        incb
+!       lda   #3 ; a tile is 3px wide
+        mul
+        addd  #0
+@tileBlockOffset equ *-2
+        addd  #8 ; screen border offset
+        cmpd  #map_width
+        bls   >
+@noImpact
+        ldd   #0
+!       std   terrainCollision.impact.x
+        rts
 
 terrainCollision.yOffset equ *-22 ; minus vertical viewport position * 2
         fdb   00*lvlMapWidth,00*lvlMapWidth,00*lvlMapWidth,00*lvlMapWidth,00*lvlMapWidth,00*lvlMapWidth
