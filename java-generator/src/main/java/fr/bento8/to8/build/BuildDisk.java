@@ -25,10 +25,10 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -128,7 +128,14 @@ public class BuildDisk
 	 * @param args nom du fichier properties contenant les données de configuration
 	 * @throws Throwable 
 	 */
-	
+
+	 static long start_ms = System.currentTimeMillis();
+	 static void dbg() {
+		Exception ex = new RuntimeException();
+		ex.fillInStackTrace();
+		System.err.println(ex.getStackTrace()[1].getMethodName() + " @ " + (System.currentTimeMillis() - start_ms) + "ms");
+	 }
+
 	public static void main(String[] args) throws Throwable
 	{
 		try {
@@ -190,6 +197,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	private static void initT2() throws Exception {
+		dbg();
 		Game.bootSizeT2 = getBINSize(game.engineAsmBootT2);
 		game.glb.addConstant("Build_RAMLoaderManager", String.format("$%1$04X", Game.bootSizeT2));
 		game.glb.flush();
@@ -232,6 +240,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	private static void compileRAMLoader() throws Exception {
+		dbg();
 		compileRAMLoader(FLOPPY_DISK);
 		Files.deleteIfExists(Paths.get(Game.generatedCodeDirName + FileNames.FILE_INDEX_FD));
 		compileRAMLoader(MEGAROM_T2);
@@ -270,6 +279,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
 	private static void generateObjectIDs() throws Exception {
+		dbg();
 		logger.info("Set Objects Id as Globals ...");
 				
 		// GLOBALS - Génération des identifiants d'objets pour l'ensemble des game modes
@@ -315,6 +325,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
 	private static void generateGameModeIDs() throws Exception {
+		dbg();
 		logger.info("Set GameMode Id as Globals ...");
 
 		int gmIndex = 0;
@@ -356,6 +367,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	 
 	private static void processSounds() throws Exception {
+		dbg();
 		logger.info("Process Sounds ...");
 
 		// Chargement des données audio
@@ -397,6 +409,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	 
 	private static void processBackgroundImages() throws Exception {
+		dbg();
 		logger.info("Process Background Images ...");
 
 		// Parcours de tous les objets de chaque Game Mode
@@ -430,6 +443,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	private static void generateSprites() throws Exception {
+		dbg();
 		logger.info("Generate Sprites ...");
 
 		// Génération des sprites compilés pour chaque objet
@@ -446,7 +460,7 @@ public class BuildDisk
 		// Parcours des images de l'objet et compilation de l'image
 		AsmSourceCode asmImgIndex = new AsmSourceCode(createFile(object.imageSet.fileName, object.name));
 		//for (Entry<String, String[]> spriteProperties : object.spritesProperties.entrySet()) {
-		forEach(object.spritesProperties.entrySet(), spriteProperties -> {
+		forEachSeq(object.spritesProperties.entrySet(), spriteProperties -> {
 			AssemblyGenerator asm;
 			Encoder easm;
 
@@ -568,6 +582,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	private static void generateTilesets() throws Exception {
+		dbg();
 		logger.info("Generate Tilesets ...");
 
 		// Génération des tilesets pour chaque objet
@@ -690,6 +705,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	private static void compileMainEngines(boolean writeIdx) throws Throwable {
+		dbg();
 		logger.info("Compile Main Engines ...");
 		if (!abortFloppyDisk) {	
 			compileMainEngines(FLOPPY_DISK, writeIdx);
@@ -848,6 +864,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
 	private static void compileObjects() throws Exception {
+		dbg();
 		logger.info("Compile Objects ...");
 		
 		forEachSeq(game.gameModes.entrySet(), gameMode -> {			
@@ -925,7 +942,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
 	private static void computeRamAddress() throws Exception {
-		
+		dbg();
 		logger.debug("computeRamAddress ...");
 		
 		// La taille des index fichier du RAMLoader dépend du nombre de pages utilisées par chaque Game Loader
@@ -1357,7 +1374,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
 	private static void computeRomAddress() throws Exception {
-		
+		dbg();
 		logger.debug("computeRomAddress ...");
 		
 		game.romT2.curPage = 0;
@@ -1514,6 +1531,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
 	private static void generateDynamicContent() throws Exception {
+		dbg();
 		logger.info("Generate dynamic content ...");
 		
 		for (Entry<String, GameMode> gameMode : game.gameModes.entrySet()) {
@@ -1670,6 +1688,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
 	private static void applyDynamicContent() throws Exception {
+		dbg();
 		logger.info("Apply dynamic content ...");
 		
 		for (Entry<String, String[]> tag : dynamicContentFD.tags.entrySet()) {
@@ -1693,6 +1712,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
 	private static void generateImgAniIndex() throws Exception {
+		dbg();
 		logger.info("Generate Image index and Animation script index ...");
 		
 		forEachSeq(game.gameModes.entrySet(), gameMode -> {
@@ -1863,6 +1883,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
 	
 	private static void writeObjectsFd() {
+		dbg();
 		logger.info("Write Objects to FLOPPY_DISK image ...");
 		int index;
 		
@@ -1919,6 +1940,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
 	
 	private static void writeObjectsT2() throws Exception {
+		dbg();
 		logger.info("Write Objects to MEGAROM_T2 image ...");
 
 		// Compte le nombre d'objets a traiter
@@ -2106,6 +2128,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 
 	private static void compileRAMLoaderManager() throws Exception {
+		dbg();
 		if (!abortFloppyDisk) {	
 			compileAndWriteRAMLoaderManager(FLOPPY_DISK);
 		}
@@ -2247,6 +2270,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
 	private static void compileAndWriteBootFd() throws Exception {
+		dbg();
 		logger.info("Compile boot for FLOPPY_DISK ...");
 		if (!abortFloppyDisk) {		
 			String RAMLoaderManagerGlobals = FileUtil.removeExtension(Paths.get(game.engineAsmRAMLoaderManagerFd).getFileName().toString())+".glb";
@@ -2293,6 +2317,7 @@ public class BuildDisk
 	}
 	
 	private static void compileAndWriteBootT2() throws Exception {
+		dbg();
 		logger.info("Compile boot for MEGAROM_T2 ...");
 		
 		String prepend = "\tINCLUDE \"" + Game.generatedCodeDirName + FileNames.GAME_GLOBALS + "\"\n";
@@ -2316,6 +2341,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
 	private static void buildT2Flash() throws Exception {
+		dbg();
 		logger.info("Build T2 Loader for SDDRIVE ...");
 		
 		String tmpFile = duplicateFile(game.engineAsmBootT2Flash);
@@ -3091,9 +3117,10 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
 	private static void compressData() throws Exception {
+		dbg();
 		logger.info("Compress data ...");
 		
-		forEach(game.gameModes.entrySet(), gm-> {
+		forEachSeq(game.gameModes.entrySet(), gm-> {
 			logger.info("\t"+gm.getValue().name);
 			if (!abortFloppyDisk) {	
 				compressData(FLOPPY_DISK, gm.getValue().ramFD, gm.getValue().fdIdx, gm.getValue().name);
@@ -3455,17 +3482,20 @@ public class BuildDisk
 		void accept(T t) throws Throwable; // donc on fait la notre.
 	}
 	public static <T> void forEach(Collection<T> col, Consumer<? super T> consumer) {
-		if(!game.parallelBuild || col.size()<=2) {
+		if(!game.parallelBuild || col.size()<2) {
 			forEachSeq(col, consumer);
 		} else {
 			AtomicReference<Throwable> ex = new AtomicReference<>();
 			forEach_PS out,err;
-			System.setOut(out = new forEach_PS(System.out));
-			System.setErr(err = new forEach_PS(System.err));
+			System.setOut(out = new forEach_PS(System.out, false));
+			System.setErr(err = new forEach_PS(System.err, true));
 			col.parallelStream().forEach(t -> {
 				// on stoppe à la 1ere erreur
 				if(ex.get()==null) try {
 					consumer.accept(t);
+					// flush after each loop ??
+					out.flush();
+					err.flush();
 				} catch(Throwable e) {
 					ex.compareAndSet(null, e);
 				}
@@ -3505,8 +3535,8 @@ public class BuildDisk
 	static class forEach_PS extends PrintStream {
 		final PrintStream deleg;
 		final OS os;
-		public forEach_PS(PrintStream deleg) {
-			super(new OS());
+		public forEach_PS(PrintStream deleg, boolean autoFlush) {
+			super(new OS(), autoFlush);
 			this.os = (OS)out;
 			while(deleg instanceof forEach_PS) {
 				deleg = ((forEach_PS)deleg).deleg;
@@ -3515,9 +3545,9 @@ public class BuildDisk
 		}
 
 		static class OS extends OutputStream {
-			final Map<Thread, ByteArrayOutputStream> map = new ConcurrentHashMap<>();
+			final Map<Thread, ByteArrayOutputStream> map = Collections.synchronizedMap(new LinkedHashMap<>());
 
-			OutputStream os() {
+			ByteArrayOutputStream os() {
 				return map.computeIfAbsent(Thread.currentThread(), 
 					ignored -> new ByteArrayOutputStream());
 			}
@@ -3529,24 +3559,42 @@ public class BuildDisk
 				os().write(b, off, len);
 			}
 
-			void end(PrintStream deleg) {
+			void flush(ByteArrayOutputStream bos, PrintStream deleg) {
 				try {
-					synchronized(map) {
-						for (ByteArrayOutputStream bos : map.values()) {
-							deleg.write(bos.toByteArray());
-							deleg.flush();
-							bos.reset();
-						}
-					}
-					close();
+					deleg.write(bos.toByteArray());
 				} catch(IOException ex) {
 					ex.printStackTrace(deleg);
 					logger.catching(ex);
+				}		
+				deleg.flush();
+				bos.reset();
+			}
+
+			public void flush(PrintStream deleg) {
+				flush(os(), deleg);
+			}
+
+			public void flushAll(PrintStream deleg) {
+				synchronized(map) {
+					for (ByteArrayOutputStream bos : map.values()) {
+						flush(bos, deleg);
+					}
 				}
 			}
 		}
+
+		@Override
+		public void flush() {
+			os.flush(deleg);
+		}
+
+		@Override
+		public void close() {
+			os.flushAll(deleg);
+			super.close();
+		}
+	
 		public PrintStream end() {
-			os.end(deleg);
 			close();
 			return deleg;
 		}
