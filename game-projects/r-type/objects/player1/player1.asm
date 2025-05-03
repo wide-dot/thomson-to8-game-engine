@@ -19,7 +19,6 @@
 AABB_0           equ ext_variables     ; AABB struct (9 bytes)
 ply_width        equ 12/2
 ply_height       equ 16/2
-beam_sensitivity equ 8   
 
 Player
         lda   player1+routine
@@ -74,7 +73,7 @@ Live
         beq   @testHoldFire
         jsr   LoadObject_x
         beq   @testHoldFire            ; branch if no more available object slot
-        lda   #ObjID_Weapon1           ; fire !
+        lda   #ObjID_Weapon            ; fire !
         sta   id,x
         ldd   player1+x_pos
         std   x_pos,x
@@ -84,18 +83,18 @@ Live
         ; holding fire ?
         lda   Fire_Held
         anda  #c1_button_A_mask
-        beq   @wasbuttonhdeld           ; Nop, but let's check if it was held
-        ldd   player1+beam_value
+        beq   @wasbuttonhdeld           ; branch if button not held, so released ?
+        ldd   player1+beam_value        : beam_value / is_charging
         tstb
         bne   @incharging
-        cmpa  #beam_sensitivity
-        blt   @incharging
-                                        ; Start charging animation
+        ; Start charging animation
         adda  gfxlock.frameDrop.count
         sta   player1+beam_value
+        cmpa  #15                       ; arcade value (0xf)
+        blo   @end                      ; branch if threshold not reached
         sta   player1+is_charging
         jsr   LoadObject_x
-        beq   @end               ; branch if no more available object slot
+        beq   @end                      ; branch if no more available object slot
         lda   #ObjID_beamcharge         ; Charge anim
         sta   id,x
         bra   @end
@@ -105,23 +104,39 @@ Live
         cmpa  #60                       ; Max value ?
         ble   >
         lda   #60
-!
-        sta   player1+beam_value
+!       sta   player1+beam_value
         bra   @end
 @wasbuttonhdeld
+        ; original arcade values (at speed of 2 per frame):
+        ; no beam: <24 => <12
+        ; beam 0: <48 => <23
+        ; beam 1: <72 => <34
+        ; beam 2: <80 => <38
+        ; beam 3: <104 => <49
+        ; beam 4: <=128 => <=60
         lda   player1+beam_value
-        beq   @end
-        cmpa  #beam_sensitivity
-        ble   @resetbeam  
-        adda  #4
-        lsra
-        lsra
-        lsra
-        lsra
-        adda  #ObjID_beamp0
+        ldb   #-1
+        cmpa  #12
+        blo   @resetbeam
+        incb
+        cmpa  #23
+        blo   @createBeam
+        incb
+        cmpa  #34
+        blo   @createBeam
+        incb
+        cmpa  #38
+        blo   @createBeam
+        incb
+        cmpa  #49
+        blo   @createBeam
+        incb
+@createBeam
+        lda   #ObjID_beamp
         jsr   LoadObject_x
         beq   @resetbeam                ; branch if no more available object slot
         sta   id,x
+        stb   subtype,x
         ldd   player1+x_pos
         std   x_pos,x
         ldd   player1+y_pos

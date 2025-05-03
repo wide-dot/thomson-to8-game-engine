@@ -63,7 +63,7 @@ Init
         
         lda   #255                      ; set damage potential for this hitbox
         sta   AABB_0+AABB.p,u
-        _ldd  7,10                       ; set hitbox xy radius
+        _ldd  4,5                       ; set hitbox xy radius
         std   AABB_0+AABB.rx,u
         ldd   y_pos,u
         stb   AABB_0+AABB.cy,u

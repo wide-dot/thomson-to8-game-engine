@@ -59,7 +59,7 @@ AnimateSpriteSync                           *AnimateSprite:
         clr   anim_frame_duration,u
 @Anim_Reload                                *    moveq   #0,d1
         ldb   anim_frame,u                  *    move.b  anim_frame(a0),d1 ; load current frame number
-        lda   #0
+        clra
         _asld
         leay  d,x
         ldd   ,y                            *    move.b  1(a1,d1.w),d0 ; read sprite number from script
@@ -82,6 +82,12 @@ AnimateSpriteSync                           *AnimateSprite:
                                             *    andi.b  #$FC,render_flags(a0)
                                             *    or.b    d1,render_flags(a0)
         inc   anim_frame,u                  *    addq.b  #1,anim_frame(a0)     ; next frame number
+        leay  2,y                           ; fix the last image being displayed
+        ldd   ,y                            ; one frame too much
+        inca
+        inca                                ; skip anim next command types (FF, FE)
+        cmpa  #$FC                          ; FA => FC (2 codes skipped)
+        bhs   @Anim_End_FD                  ; FF => FD
                                             *; return_1659A:
 @Anim_Rts                                   *Anim_Wait:
         lda   #$00                          ; (dynamic)
@@ -125,7 +131,7 @@ AnimateSpriteSync                           *AnimateSprite:
         inca                                *    addq.b  #1,d0          ; is the end flag = $FC ?
         bne   @Anim_End_FB                  *    bne.s   Anim_End_FB    ; if not, branch
         inc   routine,u                     *    addq.b  #2,routine(a0) ; jump to next routine
-        lda   #0                            
+        clra
         sta   anim_frame_duration,u         *    move.b  #0,anim_frame_duration(a0)
         inc   anim_frame,u                  *    addq.b  #1,anim_frame(a0)
         bra   @Anim_Rts                     *    rts
@@ -134,7 +140,7 @@ AnimateSpriteSync                           *AnimateSprite:
 @Anim_End_FB                                *Anim_End_FB:
         inca                                *    addq.b  #1,d0                 ; is the end flag = $FB ?
         bne   @Anim_End_FA                  *    bne.s   Anim_End_FA           ; if not, branch
-        lda   #0                            
+        clra
         sta   anim_frame,u                  *    move.b  #0,anim_frame(a0)     ; reset animation
         sta   routine_secondary,u           *    clr.b   routine_secondary(a0) ; reset 2nd routine counter
         bra   @Anim_Rts                     *    rts
