@@ -73,7 +73,7 @@ Init
 
         ; random init start image
         jsr   RandomNumber
-        andb  #%00000111
+        andb  #%00001110
         sta   imgIdx,u
 
         inc   routine,u
@@ -99,9 +99,8 @@ Live
         ldx   #ImageIndex
         ldb   imgIdx,u
         incb
-        andb  #%00000111
         stb   imgIdx,u
-        lslb
+        andb  #%00001110
         ldd   b,x
         std   image_set,u
 ;
