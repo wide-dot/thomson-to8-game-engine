@@ -75,6 +75,8 @@ public class Game {
 	public byte[] engineAsmRAMLoaderBytes;	
 	public byte[] mainEXOBytes;
 	public byte[] bootLoaderBytes;
+
+	public boolean parallelBuild;
 	
 	public Game() throws Exception {	
 	}
@@ -231,6 +233,10 @@ public class Game {
 				throw new Exception("builder.logToConsole not found in "+file);
 			}
 			logToConsole = (prop.getProperty("builder.logToConsole").contentEquals("Y")?true:false);
+
+			if (prop.getProperty("builder.parallel") == null) 
+				throw new Exception("builder.parallel not found in "+file);
+			else parallelBuild = prop.getProperty("builder.parallel").contentEquals("Y");
 
 			t2Name = prop.getProperty("builder.t2Name").trim();
      		t2Name = StringUtils.left(t2Name, 22); // 22 caractères uniquement, max.

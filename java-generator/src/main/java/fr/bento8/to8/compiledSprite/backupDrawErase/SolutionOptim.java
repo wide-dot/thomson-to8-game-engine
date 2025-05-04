@@ -302,6 +302,7 @@ public class SolutionOptim{
 						break;
 					}
 				}
+				if(!isValidSolution) break;
 			}
 			
 			// allow to override maxTries/essais until a solution is found
@@ -427,29 +428,31 @@ public class SolutionOptim{
 				int g = 0;
 				Integer value1 = null, value2 = null, value3 = null, value4 = null;
 				while (i < solution.patterns.size() && currentNode == solution.computedNodes.get(i)) {
-
+					Integer leauOffset = solution.computedLeau.getOrDefault(currentNode, 0);
 					// Ecriture du LEAU				
 					if (currentNode != lastLeau // le noeud courant est différent de celui du dernier LEAU
-							&& solution.computedLeau.containsKey(solution.computedNodes.get(i)) // Le noeud courant est un noeud de LEAU
-							&& solution.computedLeau.get(solution.computedNodes.get(i)) != 0) { // Ignore les LEAU avec offset de 0
-						asmCode.add("\tLEAU "+solution.computedLeau.get(solution.computedNodes.get(i))+",U");
+					// && solution.computedLeau.containsKey(solution.computedNodes.get(i)) // Le noeud courant est un noeud de LEAU
+					// && solution.computedLeau.get(solution.computedNodes.get(i)) != 0) { // Ignore les LEAU avec offset de 0
+					&& leauOffset!=0) {
+						asmCode.add("\tLEAU "+leauOffset+",U");
 						asmCode.add("");
-						asmCodeCycles += Register.costIndexedLEA + Register.getIndexedOffsetCost(solution.computedLeau.get(solution.computedNodes.get(i)));
-						asmCodeSize += Register.sizeIndexedLEA + Register.getIndexedOffsetSize(solution.computedLeau.get(solution.computedNodes.get(i)));
-						lastLeau = solution.computedNodes.get(i);
+						asmCodeCycles += Register.costIndexedLEA + Register.getIndexedOffsetCost(leauOffset);
+						asmCodeSize += Register.sizeIndexedLEA + Register.getIndexedOffsetSize(leauOffset);
+						lastLeau = currentNode;
 						saveU = true; // On enregistre le fait qu'un LEAU a été produit pour ce noeud
 					}
 
 					// Parcours des patterns et assignation d'un groupe
 					// Split des patterns en deux (sauvegadre fond et écriture)
-					if (!solution.patterns.get(i).isBackgroundBackupAndDrawDissociable() && solution.patterns.get(i).useIndexedAddressing()) {
+					Pattern currentPattern = solution.patterns.get(i);
+					if (!currentPattern.isBackgroundBackupAndDrawDissociable() && currentPattern.useIndexedAddressing()) {
 						value1 = null;
 						value2 = null;
 						value3 = null;
 						value4 = null;
-						hash = Objects.hash(0, solution.patterns.get(i).getNbBytes(),
-								solution.patterns.get(i).isBackgroundBackupAndDrawDissociable(),
-								Arrays.deepToString(solution.patterns.get(i).getResetRegisters().toArray()), value1, value2, value3, value4);
+						hash = Objects.hash(0, currentPattern.getNbBytes(),
+								currentPattern.isBackgroundBackupAndDrawDissociable(),
+								Arrays.deepToString(currentPattern.getResetRegisters().toArray()), value1, value2, value3, value4);
 						Integer n = hm.get(hash);
 						if (n == null){
 							hm.put(hash, g);
@@ -459,7 +462,7 @@ public class SolutionOptim{
 						}
 						patterns.get(n).add(new Integer[] {i, i});
 
-					} else if (!solution.patterns.get(i).useIndexedAddressing()) {
+					} else if (!currentPattern.useIndexedAddressing()) {
 						// Le stack blast doit être positionné en fin de noeud pour être exécuté en début de rétablissement de fond
 						// en particulier il doit être joué juste après le premier PULS ...,U car le PSHU va décaler le pointeur U
 						// et le positonner correctement pour les accès mémoire indexées.
@@ -476,14 +479,14 @@ public class SolutionOptim{
 						//						Integer n = hm.get(hash);
 						Integer n = null;
 						if (n == null){
-							//hm.put(hash, g);
 							n = g;
+							//hm.put(hash, g);
 							patterns.add(new ArrayList<Integer[]>());
 							g++;
 						}
 						patterns.get(n).add(new Integer[] {i, null});
 
-						if (solution.patterns.get(i).getNbBytes() == 1) {
+						if (currentPattern.getNbBytes() == 1) {
 							value1 = (int)data[(solution.positions.get(i)*2)];
 							value2 = (int)data[(solution.positions.get(i)*2)+1];
 							value3 = null;
