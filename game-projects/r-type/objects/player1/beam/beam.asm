@@ -15,6 +15,8 @@
 AABB_0    equ ext_variables ; AABB struct (9 bytes)
 halfWidth equ ext_variables+9 ; half width of the beam
 impactX   equ ext_variables+11 ; impact x position
+imgIdx    equ ext_variables+13 ; image index
+
 ; temporary estimateddamage : 6,8,10,12,14 (TODO should get the real value from arcade)
 
 Beam
@@ -113,10 +115,10 @@ Live
         subd  #3 ; half width of the beam
         addd  impactX,u
         std   x_pos,u
-        ldd   #Ani_beam_impact
-        std   anim,u
+        ldd   #Img_beam_impact_0
+        std   image_set,u
         inc   routine,u
-        bra   Impact
+        jmp   DisplaySprite
 !
         ; update hitbox position
         ldd   x_pos,u
@@ -126,11 +128,20 @@ Live
         ; delete beam if out of screen range
         cmpd  #160-8/2                 ; delete beam if out of screen range
         bhs   Delete
-	;jsr   AnimateSpriteSync       ; optim ... same code as Impact 
-        ;jmp   DisplaySprite
+        ldx   anim,u
+        ldb   imgIdx,u
+        incb
+        andb  #%00000001
+        stb   imgIdx,u
+        aslb
+        ldd   b,x
+        std   image_set,u
+        jmp   DisplaySprite
 
 Impact
-        jsr   AnimateSpriteSync
+        inc   routine,u
+        ldd   #Img_beam_impact_4
+        std   image_set,u
         jmp   DisplaySprite
 
 Delete 
@@ -148,3 +159,23 @@ Ani_Beams
         fdb   Ani_beam2
         fdb   Ani_beam3
         fdb   Ani_beam4
+
+Ani_beam0
+        fdb   Img_beam0_1
+        fdb   Img_beam0_0
+
+Ani_beam1
+        fdb   Img_beam1_1
+        fdb   Img_beam1_0
+
+Ani_beam2
+        fdb   Img_beam2_1
+        fdb   Img_beam2_0
+
+Ani_beam3
+        fdb   Img_beam3_1
+        fdb   Img_beam3_0
+
+Ani_beam4
+        fdb   Img_beam4_1
+        fdb   Img_beam4_0
