@@ -16,6 +16,9 @@ AABB_0        equ ext_variables    ; AABB struct (9 bytes)
 caFrame       equ ext_variables+9  ; 1 byte - current frame
 slave         equ ext_variables+10 ; 1 byte - pos related to player one
 xPosOld       equ ext_variables+11 ; 2 bytes - old player one x_pos
+impactX       equ ext_variables+13 ; 2 bytes - impact x position
+dir           equ ext_variables+15 ; 1 byte - direction
+
 stepMove      equ 6                ; number of pixels in horizontal axis 
 leftOffset    equ 11               ; init position when left
 rightOffset   equ 8                ; init position when left
@@ -76,6 +79,7 @@ InitFirstChild
         stb   render_flags,u
         ldd   #stepMove
         std   glb_d1
+        stb   dir,u
         ldd   player1+x_pos
         subd  #leftOffset
         bra   @end
@@ -84,10 +88,20 @@ InitFirstChild
         stb   render_flags,u
         ldd   #-stepMove
         std   glb_d1
+        stb   dir,u
         ldd   player1+x_pos
         addd  #rightOffset
 @end
         std   x_pos,u
+        ; compute wall hit destiny
+        std   terrainCollision.sensor.x
+        ldd   y_pos,u
+        std   terrainCollision.sensor.y
+        ldb   #1 ; foreground
+        jsr   terrainCollision.xAxis.do
+        ldd   terrainCollision.impact.x
+        std   impactX,u
+        ;
         lda   #6
         sta   slave,u
         lda   #7
@@ -125,6 +139,8 @@ GenChild
         sta   slave,x
         ldd   xPosOld,u
         std   xPosOld,x
+        ldd   impactX,u
+        std   impactX,x
         pshs  u
         leau  ,x                       ; Collision routine use u as object pointer
         _Collision_AddAABB AABB_0,AABB_list_friend
@@ -148,7 +164,7 @@ Live
         ; compute position and hitbox
         lda   render_flags,u
         anda  #render_xmirror_mask
-        bne   >                        ; going left
+        bne   >                        ; branch going left
         lda   #6                       ; image width
         mul                            ; process horizontal speed
         bra   @a
@@ -196,25 +212,29 @@ Live
         subd  glb_camera_x_pos
         bmi   @delete                  ; out of range on left
         stb   AABB_0+AABB.cx,u
-        cmpd  #160-8/2                 ; delete weapon if out of screen range on right
+        cmpd  #160-8/2                 ; out of screen range on right
         bgt   @delete
 ;
+        ; check wall collision
+        ldd   impactX,u
+        beq   > ; no wall collision
+        tst   dir,u
+        bmi   @goingLeft
+        subd  #3 ; half width of the weapon, to check collision on the right side of sprite
+        cmpd  x_pos,u
+        bls   @delete
+        bra   >
+@goingLeft
+        addd  #3+3 ; tile width + half width of the weapon, to check collision on the left side of sprite
+        cmpd  x_pos,u
+        bhs   @delete
+!
         ; compute current frame
         lda   caFrame,u
         ldx   #counterAirImages
         asla
         ldx   a,x
         stx   image_set,u 
-;
-        ; check terrain collision
-        ldd   x_pos,u
-        std   terrainCollision.sensor.x
-        ldd   y_pos,u
-        std   terrainCollision.sensor.y
-        ldb   #1                       ; foreground
-        jsr   terrainCollision.do
-        tstb
-        bne   @delete
 ;
         jmp   DisplaySprite
 @delete

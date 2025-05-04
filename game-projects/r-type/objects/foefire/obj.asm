@@ -10,6 +10,8 @@
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
 AABB_0                  equ ext_variables   ; AABB struct (9 bytes)
+imgIdx                  equ ext_variables+9 ; random number (1 bytes)
+
 Object
         lda   routine,u
         asla
@@ -39,9 +41,11 @@ init
 
 live
         ldx   #Images
-        ldb   gfxlock.frame.count+1
+        ldb   imgIdx,u
+        incb
         andb  #%00000011
-        aslb
+        stb   imgIdx,u
+        lslb
         ldd   b,x
         std   image_set,u
         ; apply velocity toposition
