@@ -48,6 +48,8 @@
  	fcb   $05,$7A,ObjID_patapata,$00,$09
  	fcb   $05,$88,ObjID_pow,$00,$06
  	fcb   $05,$88,ObjID_patapata,$00,$07
+	fcb   $05,$A0,ObjID_pow,$00,$04 ; DEBUG ONLY
+	fcb   $05,$B8,ObjID_pow,$00,$04 ; DEBUG ONLY
  	fcb   $05,$C6,ObjID_patapata,$00,$06
  	fcb   $06,$0C,ObjID_bink,$00,$88
  	fcb   $06,$2C,ObjID_patapata,$00,$04
