@@ -77,7 +77,7 @@ public class Optimizer {
         ForkJoinPool pool = threads<=1 ? null : ForkJoinPool.commonPool();
         for (int index = skip; index < input.length; index++) {
             int maxOffset = offsetCeiling(index, offsetLimit);
-            int taskSize = maxOffset/Math.max(threads, pool.getParallelism())+1;
+            int taskSize = maxOffset/Math.max(threads, pool.getPoolSize())+1;
             if (pool == null || 1+taskSize>maxOffset) {
                 optimal[index] = processTask(1, maxOffset, index, skip, input);
             } else {
