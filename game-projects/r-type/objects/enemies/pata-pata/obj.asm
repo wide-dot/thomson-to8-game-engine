@@ -73,7 +73,11 @@ Init
 
         ; random init start image
         jsr   RandomNumber
+<<<<<<< HEAD
         andb  #%00001110
+=======
+        andb  #%00000111
+>>>>>>> branch 'soundfx' of ssh://git@github.com/wide-dot/thomson-to8-game-engine
         sta   imgIdx,u
 
         inc   routine,u
@@ -99,8 +103,14 @@ Live
         ldx   #ImageIndex
         ldb   imgIdx,u
         incb
+<<<<<<< HEAD
         stb   imgIdx,u
         andb  #%00001110
+=======
+        andb  #%00000111
+        stb   imgIdx,u
+        lslb
+>>>>>>> branch 'soundfx' of ssh://git@github.com/wide-dot/thomson-to8-game-engine
         ldd   b,x
         std   image_set,u
 ;
