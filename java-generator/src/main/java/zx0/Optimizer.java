@@ -74,7 +74,7 @@ public class Optimizer {
         }
 
         // process remaining bytes
-        ForkJoinPool pool = threads<=1 ? null : ForkJoinPool.commonPool(); 
+        ForkJoinPool pool = threads<=1 ? null : ForkJoinPool.commonPool();
         for (int index = skip; index < input.length; index++) {
             int maxOffset = offsetCeiling(index, offsetLimit);
             int taskSize = maxOffset/Math.max(threads, pool.getParallelism())+1;
@@ -108,7 +108,7 @@ public class Optimizer {
                 dots++;
             }
         }
-        
+
         if (verbose) {
             System.out.println("]");
         }
