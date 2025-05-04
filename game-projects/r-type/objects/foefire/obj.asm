@@ -22,8 +22,6 @@ Routines
         fdb   alreadyDeleted
 
 init
-        ldd   #Img_foefire_0
-        std   image_set,u
         ldb   #2
         stb   priority,u
         lda   render_flags,u
@@ -40,6 +38,12 @@ init
         std   AABB.rx,x
 
 live
+        ldx   #Images
+        ldb   gfxlock.frame.count+1
+        andb  #%00000011
+        aslb
+        ldd   b,x
+        std   image_set,u
         ; apply velocity toposition
         lda   gfxlock.frameDrop.count
         sta   glb_d0_b
@@ -139,3 +143,9 @@ foefireExplosion
 
 alreadyDeleted
         rts
+
+Images
+        fdb   Img_foefire_0
+        fdb   Img_foefire_1
+        fdb   Img_foefire_2
+        fdb   Img_foefire_3
