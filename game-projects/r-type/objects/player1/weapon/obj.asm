@@ -95,10 +95,10 @@ Live
         subd  #3 ; half width of the weapon
         addd  impactX,u
         std   x_pos,u
-        ldd   #Ani_weapon_impact
-        std   anim,u
+        ldd   #Img_weapon_impact0
+        std   image_set,u
         inc   routine,u
-        bra   Impact
+        jmp   DisplaySprite
 !
         ; update hitbox position
         ldd   x_pos,u
@@ -111,7 +111,9 @@ Live
         jmp   DisplaySprite
 
 Impact
-        jsr   AnimateSpriteSync
+        inc   routine,u
+        ldd   #Img_weapon_impact3
+        std   image_set,u
         jmp   DisplaySprite
 
 Delete 

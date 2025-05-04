@@ -15,6 +15,7 @@
         INCLUDE "./objects/explosion/explosion.const.asm"
 
 AABB_0  equ ext_variables   ; AABB struct (9 bytes)
+imgIdx  equ ext_variables+9 ; random number (1 bytes)
 
 Object
         lda   routine,u
@@ -72,16 +73,16 @@ Init
 
         ; random init start image
         jsr   RandomNumber
-        anda  #$1C
-        sta   anim_frame,u
+<<<<<<< HEAD
+        andb  #%00001110
+=======
+        andb  #%00000111
+>>>>>>> branch 'soundfx' of ssh://git@github.com/wide-dot/thomson-to8-game-engine
+        sta   imgIdx,u
 
         inc   routine,u
         bra   >
 Live
-        ldd   x_pos,u
-        addd  #8 ; left black border width
-        cmpd  glb_camera_x_pos
-        bls   @delete ; end script can lead to long object dealocation, so we delete it if it's out of screen range.
         ldd   #endCheck
         std   moveByScript.callback
         jsr   moveByScript.runByFrameDrop
@@ -100,10 +101,16 @@ Live
         stb   AABB_0+AABB.cy,u
 ;
         ldx   #ImageIndex
-        ldb   anim_frame,u
-        addb  gfxlock.frame.count+1
-        andb  #$1C
-        lsrb
+        ldb   imgIdx,u
+        incb
+<<<<<<< HEAD
+        stb   imgIdx,u
+        andb  #%00001110
+=======
+        andb  #%00000111
+        stb   imgIdx,u
+        lslb
+>>>>>>> branch 'soundfx' of ssh://git@github.com/wide-dot/thomson-to8-game-engine
         ldd   b,x
         std   image_set,u
 ;
