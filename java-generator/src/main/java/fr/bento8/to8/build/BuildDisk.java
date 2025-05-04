@@ -2103,12 +2103,7 @@ public class BuildDisk
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	private static void compileRAMLoaderManager() throws Exception {
-<<<<<<< HEAD
 		if (!abortFloppyDisk) {	
-=======
-		dbg();
-		if (!abortFloppyDisk) {
->>>>>>> c95e1fbfbd78d14acaf945ef667a39e60f0ca253
 			compileAndWriteRAMLoaderManager(FLOPPY_DISK);
 		}
 		compileAndWriteRAMLoaderManager(MEGAROM_T2);
