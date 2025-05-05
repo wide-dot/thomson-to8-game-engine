@@ -13,7 +13,7 @@
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./objects/player1/player1.equ"
-        INCLUDE "./objects/soundfx/soundfx.const.asm"
+        INCLUDE "./objects/soundFX/soundFX.const.asm"
         INCLUDE "./engine/sound/soundFX.macro.asm"
         
 AABB_0           equ ext_variables     ; AABB struct (9 bytes)
