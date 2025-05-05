@@ -17,7 +17,6 @@ caFrame       equ ext_variables+9  ; 1 byte - current frame
 slave         equ ext_variables+10 ; 1 byte - pos related to player one
 xPosOld       equ ext_variables+11 ; 2 bytes - old player one x_pos
 impactX       equ ext_variables+13 ; 2 bytes - impact x position
-dir           equ ext_variables+15 ; 1 byte - direction
 
 stepMove      equ 6                ; number of pixels in horizontal axis 
 leftOffset    equ 11               ; init position when left
@@ -57,6 +56,7 @@ GenChilds
         addd  glb_d1
         std   glb_d2
         jsr   GenChild
+        
         jmp   LiveInit
 
 InitFirstChild                   
@@ -70,37 +70,39 @@ InitFirstChild
         std   AABB_0+AABB.rx,u
         _Collision_AddAABB AABB_0,AABB_list_friend
         ldb   render_flags,u
-        lda   subtype,u
+        lda   subtype,u                ; 4: pod hooked right, 5: pod hooked left
         anda  #1
         beq   @goRight
 @goLeft
         orb   #render_xmirror_mask     ; use mirrored images when going left
         orb   #render_playfieldcoord_mask
         stb   render_flags,u
-        ldd   #stepMove
+        ldd   #stepMove                ; sprites are prepared on the opposite side of the direction
         std   glb_d1
-        stb   dir,u
+        _negd
+        stb   x_vel,u
         ldd   player1+x_pos
         subd  #leftOffset
         bra   @end
 @goRight
         orb   #render_playfieldcoord_mask
         stb   render_flags,u
-        ldd   #-stepMove
+        ldd   #-stepMove               ; sprites are prepared on the opposite side of the direction
         std   glb_d1
-        stb   dir,u
+        _negd
+        std   x_vel,u
         ldd   player1+x_pos
         addd  #rightOffset
 @end
-        std   x_pos,u
-        ; compute wall hit destiny
-        std   terrainCollision.sensor.x
-        ldd   y_pos,u
-        std   terrainCollision.sensor.y
-        ldb   #1 ; foreground
-        jsr   terrainCollision.xAxis.do
-        ldd   terrainCollision.impact.x
-        std   impactX,u
+;        std   x_pos,u
+;        ; compute wall hit destiny
+;        std   terrainCollision.sensor.x
+;        ldd   y_pos,u
+;        std   terrainCollision.sensor.y
+;        ldb   #1 ; foreground
+;        jsr   terrainCollision.xAxis.do
+;        ldd   terrainCollision.impact.x
+;        std   impactX,u
         ;
         lda   #6
         sta   slave,u
@@ -115,7 +117,7 @@ GenChild
         jsr   LoadObject_x
         bne   >
         leas  2,s                      ; skip return to caller
-        jmp   LiveInit                 ; skip child objects creation if no more object slots
+        jmp   LiveInit
 !       lda   id,u
         sta   id,x
         lda   subtype,u
@@ -133,8 +135,10 @@ GenChild
         ldd   AABB_0+AABB.rx,u         ; set hitbox xy radius
         std   AABB_0+AABB.rx,x         ; by copying 2 bytes
         ldd   x_pos,u
-        addd  glb_d2
+        addd  glb_d2                   ; sprites are prepared on the opposite side of the direction
         std   x_pos,x
+        ldd   x_vel,u
+        std   x_vel,x
         lda   slave,u
         sta   slave,x
         ldd   xPosOld,u
@@ -162,23 +166,14 @@ Live
 @save   stb   counterAirLaser.frameDrop
 ;
         ; compute position and hitbox
-        lda   render_flags,u
-        anda  #render_xmirror_mask
-        bne   >                        ; branch going left
-        lda   #6                       ; image width
+        lda   #stepMove                ; image width
         mul                            ; process horizontal speed
-        bra   @a
-!       lda   #6                       ; image width
-        mul                            ; process horizontal speed
+        tst   x_vel,u
+        bpl   >                        ; branch going right
         _negd
-@a
-        addd  x_pos,u   
-        std   x_pos,u
-;
-        ldd   glb_camera_x_pos         ; adjust scroll
+!       addd  x_pos,u   
+        addd  glb_camera_x_pos         ; adjust scroll
         subd  glb_camera_x_pos_old
-        beq   >
-        addd  x_pos,u
         std   x_pos,u
 !
         ; check if laser is always attached to player one
@@ -216,27 +211,28 @@ Live
         bgt   @delete
 ;
         ; check wall collision
-        ldd   impactX,u
-        beq   > ; no wall collision
-        tst   dir,u
-        bmi   @goingLeft
-        subd  #3 ; half width of the weapon, to check collision on the right side of sprite
-        cmpd  x_pos,u
-        bls   @delete
-        bra   >
-@goingLeft
-        addd  #3+3 ; tile width + half width of the weapon, to check collision on the left side of sprite
-        cmpd  x_pos,u
-        bhs   @delete
-!
+;        ldd   impactX,u
+;        beq   > ; no wall collision
+;        tst   dir,u
+;        bmi   @goingLeft
+;        subd  #3 ; half width of the weapon, to check collision on the right side of sprite
+;        cmpd  x_pos,u
+;        bls   @delete
+;        bra   >
+;@goingLeft
+;        addd  #3+3 ; tile width + half width of the weapon, to check collision on the left side of sprite
+;        cmpd  x_pos,u
+;        bhs   @delete
+;!
         ; compute current frame
         lda   caFrame,u
         ldx   #counterAirImages
         asla
         ldx   a,x
-        stx   image_set,u 
-;
-        jmp   DisplaySprite
+        stx   image_set,u
+        bne   >
+        rts
+!       jmp   DisplaySprite
 @delete
         _Collision_RemoveAABB AABB_0,AABB_list_friend
         lda   #3
