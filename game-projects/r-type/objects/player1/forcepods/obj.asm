@@ -165,11 +165,11 @@ Live
         ldb   Fire_Press
         andb  #c1_button_B_mask
         bne   @ejectforcepod     
-        jsr   KTST
-        bcc   >
-        jsr   GETC
-        cmpb  #$3E ; touche ">"     
-        beq   @ejectforcepod
+        ;jsr   KTST ; TODO custom ? E7C3 update leads to double buffer bug
+        ;bcc   >
+        ;jsr   GETC
+        ;cmpb  #$3E ; touche ">"     
+        ;beq   @ejectforcepod
 !       
         ldb   canshootweapon,u
         beq   >
@@ -353,7 +353,7 @@ LiveHookedBack
 
         jsr   Live
         ldd   player1+x_pos
-	subd  #11
+	subd  #9
 	std   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB_0+AABB.cx,u

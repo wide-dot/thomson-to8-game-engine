@@ -15,14 +15,27 @@ terrainCollision.main.address equ *-2
         _SetCartPageA
         rts
 
-terrainCollision.xAxis.do
+terrainCollision.xAxis.doRight
         _GetCartPageA
         sta   @page
         lda   #0
-terrainCollision.main.xAxis.page equ *-1
+terrainCollision.main.xAxis.doRight.page equ *-1
         _SetCartPageA
         jsr   >0
-terrainCollision.main.xAxis.address equ *-2
+terrainCollision.main.xAxis.doRight.address equ *-2
+        lda   #0
+@page   equ *-1
+        _SetCartPageA
+        rts
+
+terrainCollision.xAxis.doLeft
+        _GetCartPageA
+        sta   @page
+        lda   #0
+terrainCollision.main.xAxis.doLeft.page equ *-1
+        _SetCartPageA
+        jsr   >0
+terrainCollision.main.xAxis.doLeft.address equ *-2
         lda   #0
 @page   equ *-1
         _SetCartPageA

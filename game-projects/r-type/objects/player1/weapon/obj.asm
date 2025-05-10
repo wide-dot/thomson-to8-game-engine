@@ -62,7 +62,7 @@ Init
         ldd   y_pos,u
         std   terrainCollision.sensor.y
         ldb   #1 ; foreground
-        jsr   terrainCollision.xAxis.do
+        jsr   terrainCollision.xAxis.doRight
         ldd   terrainCollision.impact.x
         std   impactX,u
         inc   routine,u
