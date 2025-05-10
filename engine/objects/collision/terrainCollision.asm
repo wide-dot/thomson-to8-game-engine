@@ -10,9 +10,10 @@
         INCLUDE "./engine/macros.asm"
 
         jmp   terrainCollision.checkPosition
-        jmp   terrainCollision.checkXaxis
+        jmp   terrainCollision.checkXaxisRight
+        jmp   terrainCollision.checkXaxisLeft
 
-terrainCollision.checkPosition
+terrainCollision.loadMap
         ldx   #terrainCollision.maps
         aslb
         ldy   b,x                      ; set ptr to map in x
@@ -34,35 +35,18 @@ terrainCollision.checkPosition
         ldx   #terrainCollision.xMask
         abx
         ldb   ,x                       ; read precomputed mask
+        rts
+
+terrainCollision.checkPosition
+        jsr   terrainCollision.loadMap
         andb  a,y                      ; read collision data and apply against precomputed mask
         rts
 
-terrainCollision.checkXaxis
-        ldx   #terrainCollision.maps
-        aslb
-        ldy   b,x                      ; set ptr to map in x
-
-        ldx   #terrainCollision.yOffset
-        ldd   terrainCollision.sensor.y
-        _asld
-        ldd   d,x                      ; load precomputed y position in map
-        leay  d,y                      ; apply
-
-        ldx   #terrainCollision.xOffset
-        ldd   terrainCollision.sensor.x
-        subd  glb_camera_x_pos
-        addb  scroll_tile_pos_offset24
-        abx
-        lda   ,x                       ; load precomputed x position in map
-        adda  scroll_tile_pos          ; get already scrolled x collision tiles
-
-        ldx   #terrainCollision.xMask
-        abx
-        ldb   ,x                       ; read precomputed mask
-
-        ; next code is divergant from the original code
-        ; it scans all the tiles in the current row
+terrainCollision.checkXaxisRight
+        ; scans all the tiles in the current row
         ; and stops at the first solid tile
+
+        jsr   terrainCollision.loadMap
         lslb                           ; set all bits on the right ...
         decb                           ; ... of bit set to 1
         andb  a,y                      ; read collision data and apply against precomputed mask
@@ -111,13 +95,86 @@ terrainCollision.checkXaxis
         lsla
 !       bmi   >
         incb
-!       lda   #3 ; a tile is 3px wide
+!
+        lda   #3 ; a tile is 3px wide
         mul
         addd  #0
 @tileBlockOffset equ *-2
-        addd  #8 ; screen border offset
+        addd  #8 ; screen border offset ? don't know why
         cmpd  #map_width
         bls   >
+@noImpact
+        ldd   #0
+!       std   terrainCollision.impact.x
+        rts
+
+terrainCollision.checkXaxisLeft
+        ; scans all the tiles in the current row
+        ; and stops at the first solid tile
+
+        jsr   terrainCollision.loadMap
+        decb                           ; set all bits on the left ...
+        comb                           ; ... of bit set to 1
+        andb  a,y                      ; read collision data and apply against precomputed mask
+        bne   @impact
+        deca
+        bmi   @noImpact
+        ldb   a,y
+        bne   @impact
+        deca
+        bmi   @noImpact
+        ldb   a,y
+        bne   @impact
+        deca
+        bmi   @noImpact
+        ldb   a,y
+        bne   @impact
+        deca
+        bmi   @noImpact
+        ldb   a,y
+        bne   @impact
+        deca
+        bmi   @noImpact
+        ldb   a,y
+        bne   @impact
+        deca
+        bmi   @noImpact
+        ldb   a,y
+        bne   @impact
+        bra   @noImpact
+@impact
+        ; compute x_pos of right edge of solid tile
+        ; from value in a (tile block index) and b (in-block tile index)
+        stb   @inBlockTileIndex
+        ldb   #24 ; a block is 24px wide
+        mul
+        std   @tileBlockOffset
+        lda   #0
+@inBlockTileIndex equ *-1
+        ; inverted ctz to get position in tile block
+        ldb   #7
+        bita  #$0f
+        bne   >
+        subb  #4
+        lsra
+        lsra
+        lsra
+        lsra
+!       bita  #$03
+        bne   >
+        subb  #2
+        lsra
+        lsra
+!       bita  #$01
+        bne   >
+        decb
+!
+        lda   #3 ; a tile is 3px wide
+        mul
+        addd  #0
+@tileBlockOffset equ *-2
+        addd  #8+3-1 ; screen border offset + tile width -1
+        bra   >
 @noImpact
         ldd   #0
 !       std   terrainCollision.impact.x
