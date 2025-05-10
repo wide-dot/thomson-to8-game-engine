@@ -181,7 +181,7 @@ SkipPlayer1Controls
         bne   destroy
 !
         ; collision to Player
-        lda   player1+AABB_0+AABB.p,x
+        lda   player1+AABB_0+AABB.p
         beq   destroy
 
         ; black screen border
