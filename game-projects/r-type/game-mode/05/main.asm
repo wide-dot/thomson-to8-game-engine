@@ -33,6 +33,8 @@ CHECKPOINT_01      equ 24
 	jsr   InitDrawSprites
         lda   #1
         sta   globals.difficulty
+        ldd   #0
+        std   objects.forcepod
         jsr   InitStack
         jsr   LoadAct
         jsr   InitJoypads

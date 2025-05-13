@@ -30,7 +30,11 @@ CHECKPOINT_01      equ 24
         org   $6100
         clr   NEXT_GAME_MODE
         jsr   InitGlobals
-		jsr   InitDrawSprites
+	jsr   InitDrawSprites
+        lda   #1
+        sta   globals.difficulty
+        ldd   #0
+        std   objects.forcepod
         jsr   InitStack
         jsr   LoadAct
         jsr   InitJoypads

@@ -403,6 +403,7 @@ public class SpriteSheet {
 			}
 
 		} catch (Exception e) {
+			System.out.println("file: " + sprite.spriteFile);
 			e.printStackTrace();
 			System.out.println(e);
 		}

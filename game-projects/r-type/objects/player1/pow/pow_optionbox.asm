@@ -82,7 +82,8 @@ Live
         jsr   LoadObject_x
         beq   >                         ; branch if no more available object slot
         lda   #ObjID_forcepod           ; Charge anim
-        sta   id,x                                        
+        sta   id,x
+        stx   objects.forcepod          ; register the new force pod as global variable
 !
         lda   player1+forcepodlevel
         cmpa  #3
