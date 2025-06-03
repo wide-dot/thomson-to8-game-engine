@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import fr.bento8.to8.image.PngToBottomUpB16Bin;
 import fr.bento8.to8.ram.RamImage;
@@ -22,11 +23,11 @@ public class GameMode {
 	public String engineAsmMainEngine;
 	public List<GameModeCommon> gameModeCommon = new ArrayList<GameModeCommon>();	
 	public List<Object> objects = new ArrayList<Object>();
-	public List<String> objectsName = new ArrayList<String>();
-	public HashMap<Object, Integer> objectsId = new HashMap<Object, Integer>();
-	public HashMap<String, Palette> palettes = new HashMap<String, Palette>();
-	public HashMap<String, Act> acts = new HashMap<String, Act>(); 
-	public HashMap<Act, PngToBottomUpB16Bin> backgroundImages = new HashMap<Act, PngToBottomUpB16Bin>();
+	protected List<String> objectsName = new ArrayList<String>();
+	public Map<Object, Integer> objectsId = new ConcurrentHashMap<Object, Integer>();
+	public Map<String, Palette> palettes = new HashMap<String, Palette>();
+	public Map<String, Act> acts = new HashMap<String, Act>(); 
+	public Map<Act, PngToBottomUpB16Bin> backgroundImages = new ConcurrentHashMap<Act, PngToBottomUpB16Bin>();
 	public String actBoot;
 	public AsmSourceCode glb;
 	
