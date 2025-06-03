@@ -20,27 +20,27 @@ public class AsmSourceCode
 	public AsmSourceCode() throws Exception {
 	}		
 	
-	public void add(String text) {
+	synchronized public void add(String text) {
 		content += "\n"+text;
 	}		
 
-	public void appendComment(String comment) {
+	synchronized public void appendComment(String comment) {
 		content += " * "+comment;
 	}
 	
-	public void addCommentLine(String comment) {
+	synchronized public void addCommentLine(String comment) {
 		content += "\n* "+comment;
 	}		
 	
-	public void addConstant(String name, String value) {
+	synchronized public void addConstant(String name, String value) {
 		content += "\n" + name + " equ " + value; 
 	}
 
-	public void addLabel(String value) { 
+	synchronized public void addLabel(String value) { 
 		content += "\n" + value; 
 	}
 
-	public void addFdb(String[] value) {
+	synchronized public void addFdb(String[] value) {
 		boolean firstpass = true;
 		content += "\n        fdb   "; 
 		for (int i = 0; i < value.length; i++ ) {
@@ -53,7 +53,7 @@ public class AsmSourceCode
 		}
 	}
 
-	public void addFcb(String[] value) {
+	synchronized public void addFcb(String[] value) {
 		boolean firstpass = true;
 		int i = 0;
 		while (i < value.length) {
@@ -72,7 +72,7 @@ public class AsmSourceCode
 		}
 	}
 	
-	public void addFcb(byte[] value) {
+	synchronized public void addFcb(byte[] value) {
 		boolean firstpass = true;
 		int i = 0;
 		while (i < value.length) {
@@ -91,7 +91,7 @@ public class AsmSourceCode
 		}
 	}
 
-	public void flush() {
+	synchronized public void flush() {
 		if(Files.exists(path)) {
 			try {
 				Files.write(path, content.getBytes(StandardCharsets.ISO_8859_1), StandardOpenOption.APPEND);
