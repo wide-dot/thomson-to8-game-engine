@@ -1,6 +1,7 @@
 package fr.bento8.to8.image;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Tileset {
@@ -20,6 +21,6 @@ public class Tileset {
 
 	public Tileset(String name) {
 		this.name = name;
-		this.tiles = new ArrayList<TileBin>();
+		this.tiles = Collections.synchronizedList(new ArrayList<TileBin>());
 	}
 }

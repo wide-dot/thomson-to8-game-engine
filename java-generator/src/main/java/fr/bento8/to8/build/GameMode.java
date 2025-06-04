@@ -3,6 +3,7 @@ package fr.bento8.to8.build;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,8 +40,8 @@ public class GameMode {
 	public int indexSizeT2;
 
 	// Storage Index
-	public List<RAMLoaderIndex> fdIdx = new ArrayList<RAMLoaderIndex>();
-	public List<RAMLoaderIndex> t2Idx = new ArrayList<RAMLoaderIndex>();
+	public List<RAMLoaderIndex> fdIdx = Collections.synchronizedList(new ArrayList<RAMLoaderIndex>());
+	public List<RAMLoaderIndex> t2Idx = Collections.synchronizedList(new ArrayList<RAMLoaderIndex>());
 	
 	public GameMode(String gameModeName, String fileName) throws Exception {
 		

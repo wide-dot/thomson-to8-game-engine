@@ -3,6 +3,7 @@ package fr.bento8.to8.build;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -25,14 +26,14 @@ public class Object {
 	
 	public HashMap<GameMode, ObjectCode> gmCode = new HashMap<GameMode, ObjectCode>();
 	public HashMap<String, Sprite> sprites = new HashMap<String, Sprite>();
-	public List<SubSpriteBin> subSpritesBin = new ArrayList<SubSpriteBin>();
+	public List<SubSpriteBin> subSpritesBin = Collections.synchronizedList(new ArrayList<SubSpriteBin>());
 	public HashMap<String, Tileset> tilesets = new HashMap<String, Tileset>();
-	public List<TileBin> tilesBin = new ArrayList<TileBin>();
+	public List<TileBin> tilesBin = Collections.synchronizedList(new ArrayList<TileBin>());
 	public AnimationBin animation;
 	public boolean animationInRAM = false;	
 	public ImageSetBin imageSet;
 	public boolean imageSetInRAM = false;	
-	public List<Sound> sounds = new ArrayList<Sound>();
+	public List<Sound> sounds = Collections.synchronizedList(new ArrayList<Sound>());
 	
 	public HashMap<String, String[]> spritesProperties;
 	public HashMap<String, String[]> animationsProperties;	
