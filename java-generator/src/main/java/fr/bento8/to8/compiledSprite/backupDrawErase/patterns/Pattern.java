@@ -248,7 +248,11 @@ public abstract class Pattern {
 	}
 
 	public static int getEraseCodeBufCycles (List<Snippet> solution, List<Integer> regE, List<Integer> offsetE) throws Exception {
-		int cycles = 0;
+		return getEraseCodeBufCycles_(solution, regE, offsetE, 0, Integer.MAX_VALUE);
+	}
+
+	public static int getEraseCodeBufCycles_ (List<Snippet> solution, List<Integer> regE, List<Integer> offsetE, int score, int bestScore) throws Exception {
+		int cycles = score;
 		boolean[] regECache = new boolean[]{false, false, false, false, false, false, false};
 		Integer[] offsetECache = new Integer[]{null, null, null, null, null, null, null};
 
@@ -257,7 +261,7 @@ public abstract class Pattern {
 
 		int posR = regE.size()-1;
 		// Parcours de toutes les données sauvegardées et construction du code de retablissement du fond
-		while (posR >= 0) {
+		while (posR >= 0 && cycles < bestScore) {
 			currentRegisters.clear();
 
 			if (Register.size[regE.get(posR)] == 1) {
