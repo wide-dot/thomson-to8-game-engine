@@ -636,7 +636,6 @@ public class SolutionOptim{
 			}
 			regBBIdx = -1;
 		
-
 			for (int j = 0; j < solution_patterns_id_RegisterCombi.size() ; j++) {
 				boolean[] registerCombi_id_j = solution_patterns_id_RegisterCombi.get(j);
 				for(maxIdx = registerCombi_id_j.length; !registerCombi_id_j[--maxIdx];);
@@ -653,8 +652,7 @@ public class SolutionOptim{
 
 		// Parcours des registres de la combinaison
 		boolean[] solution_patterns_id_RegisterCombi_bestCombi = solution_patterns_id_RegisterCombi.get(bestCombi);
-		int solution_computedOffsets_id = solution.computedOffsets.get(id);
-
+		Integer solution_computedOffsets_id = solution.computedOffsets.get(id);
 		for (int k = 0; k < solution_patterns_id_RegisterCombi_bestCombi.length; k++) {
 			if (solution_patterns_id_RegisterCombi_bestCombi[k]) {
 				// Le registre est utilisé dans la combinaison
