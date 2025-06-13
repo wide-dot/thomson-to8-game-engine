@@ -63,17 +63,19 @@ Init
         lda   #render_playfieldcoord_mask
         sta   render_flags,u
         _Collision_AddAABB AABB_0,AABB_list_ennemy
-        lda   #bink_hitdamage                   ; set damage potential for this hitbox
+        lda   #cancer_hitdamage                   ; set damage potential for this hitbox
         sta   AABB_0+AABB.p,u
         _ldd  cancer_hitbox_x,cancer_hitbox_y       ; set hitbox xy radius
         std   AABB_0+AABB.rx,u
-        
 
-       ;0000:8d91 c7 44 20        MOV        word ptr [SI + 0x20],0x7f
-       ;0000:8d96 8a 1e 2e 2f     MOV        BL,byte ptr [difficulty]
-       ;0000:8d9a 32 ff           XOR        BH,BH
-       ;0000:8d9c 03 db           ADD        BX,BX
-       ;0000:8d9e 26 8b 87        MOV        AX,word ptr ES:[BX + 0x3c1a]
+
+        ;0000:8d91 c7 44 20        MOV        word ptr [SI + 0x20],0x7f
+        ;0000:8d96 8a 1e 2e 2f     MOV        BL,byte ptr [difficulty]
+        ;0000:8d9a 32 ff           XOR        BH,BH
+        ;0000:8d9c 03 db           ADD        BX,BX
+        ;0000:8d9e 26 8b 87        MOV        AX,word ptr ES:[BX + 0x3c1a]
+        ;0000:8da3 89 44 30        MOV        word ptr [SI + 0x30],AX
+
 
         ldd   #$7f
         std   cancer_0x20,u
