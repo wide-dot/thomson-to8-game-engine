@@ -37,6 +37,11 @@ cancer_hitbox_x		equ 6
 cancer_hitbox_y		equ 13
 cancer_hitdamage	equ 1
 
+tabrok_score		equ 20
+tabrok_hitbox_x		equ 8
+tabrok_hitbox_y		equ 16
+tabrok_hitdamage	equ $1e
+
 dobkeratops_monster_score     equ 1
 dobkeratops_monster_hitbox_x  equ 4
 dobkeratops_monster_hitbox_y  equ 8
