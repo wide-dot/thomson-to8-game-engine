@@ -605,16 +605,8 @@ LAB_0000_6697
 
 FUN_0000_66bd_RunTabrokMode3
         lda   tabrok_0x3a,u
-        cmpa  #$10
-        bgt   LAB_0000_66c6
-        adda  gfxlock.frameDrop.count
-        cmpa  #$10
-        blt   LAB_0000_66c6
-        lda   tabrok_0x3a,u
-        suba  gfxlock.frameDrop.count
-        sta   tabrok_0x3a,u
+        bne   LAB_0000_66c6
         jsr   FUN_0000_6b15_TabrokShoots4Missiles
-
 LAB_0000_66c6
 
         ldx   #Img_tabrok_4
@@ -770,26 +762,14 @@ LAB_0000_675f
 FUN_0000_6774_RunTabrokMode6
         lda   tabrok_0x30,u
         cmpa  #$10
-        bgt   LAB_0000_6798
-        adda  gfxlock.frameDrop.count
-        cmpa  #$10
-        blt   LAB_0000_6798
-        lda   tabrok_0x30,u
-        suba  gfxlock.frameDrop.count
-        sta   tabrok_0x30,u
+        bne   LAB_0000_6798
         jsr   FUN_0000_6b15_TabrokShoots4Missiles
         jmp   LAB_0000_6798
 
 FUN_0000_6780_RunTabrokMode8
         lda   tabrok_0x30,u
         cmpa  #$10
-        bgt   LAB_0000_6798
-        adda  gfxlock.frameDrop.count
-        cmpa  #$10
-        blt   LAB_0000_6798
-        lda   tabrok_0x30,u
-        suba  gfxlock.frameDrop.count
-        sta   tabrok_0x30,u
+        bne   LAB_0000_6798
         jsr   FUN_0000_6b15_TabrokShoots4Missiles
         jmp   LAB_0000_6798        
 
@@ -1294,7 +1274,7 @@ LAB_0000_6976
         ;                      LAB_0000_69b2                                   XREF[1]:     0000:69ad(j)  
         ;0000:69b2 e8 65 00        CALL       FUN_0000_6a1a_TabrokChoosePalette                undefined FUN_0000_6a1a_TabrokCh
         ;0000:69b5 e8 86 00        CALL       FUN_0000_6a3e_ShouldTabrokFire                   undefined FUN_0000_6a3e_ShouldTa
-        ;0000:69b8 bf 40 2c        MOV        DI,0x2c40 
+        ;0000:69b8 bf 40 2c        MOV        DI,0x2c40
         ;0000:69bb e8 1c 91        CALL       FUN_0000_fada_DoCollisionWithPlayerAndWeapons_v2 undefined FUN_0000_fada_DoCollis
         ;0000:69be 74 09           JZ         LAB_0000_69c9
         ;0000:69c0 c6 46 3d 0c     MOV        byte ptr [BP + 0x3d],0xc
@@ -1319,14 +1299,11 @@ LAB_0000_6976
 
 
 FUN_0000_697c_RunTabrokMode11
-        lda   gfxlock.frame.count+1
-        cmpa  #$7f
-        bgt   LAB_0000_6987
-        adda  gfxlock.frameDrop.count
-        cmpa  #$7f
-        blt   LAB_0000_6987
-        jsr   FUN_0000_6b15_TabrokShoots4Missiles
 
+        ldb   gfxlock.frame.count+1
+        andb  #$7f
+        bne   LAB_0000_6987
+        jsr   FUN_0000_6b15_TabrokShoots4Missiles
 LAB_0000_6987
         clra  
         ldd   #Img_tabrok_4
@@ -1377,21 +1354,23 @@ LAB_0000_69b2
         ;0000:6b43 83 c7 08        ADD        DI,0x8
         ;0000:6b46 e9 13 00        JMP        LAB_0000_6b5c
 FUN_0000_6b15_TabrokShoots4Missiles
+        jmp   FUN_0000_69e4_DestroyTabrok
         ldy   #tabrok_0x2c94
         ldb   globals.difficulty
         ldx   #tabrok_0x2b58
         lda   b,x
         sta   @tabrok0x24
+        pshs  y
         jsr   LoadObject_x
-        beq   LAB_0000_6b82
-        lda   #ObjID_commonmissile
+        beq   LAB_0000_6b81
+        puls  y
+        lda   #ObjID_tabrokmissile
         sta   id,x
-        clr   subtype,x
         jsr   FUN_0000_6b88_ConfigureTabrokMissile
         ldd   player1+x_pos
         cmpd  x_pos,u
-        blt   LAB_0000_6b49
-        leay  6,y
+        bpl   LAB_0000_6b49
+        leay  8,y
         jmp   LAB_0000_6b5c
         ;                     LAB_0000_6b49                                   XREF[1]:     0000:6b41(j)  
         ;0000:6b49 57              PUSH       DI
@@ -1404,11 +1383,6 @@ FUN_0000_6b15_TabrokShoots4Missiles
         ;                     LAB_0000_6b59                                   XREF[1]:     0000:6b54(j)  
         ;0000:6b59 e8 2c 00        CALL       FUN_0000_6b88_ConfigureTabrokMissile                                    undefined FUN_0000_6b88_ConfigureTabrokMissile()
 LAB_0000_6b49
-        jsr   LoadObject_x
-        beq   LAB_0000_6b82
-        lda   #ObjID_commonmissile
-        sta   id,x
-        jsr   FUN_0000_6b88_ConfigureTabrokMissile
         ;                     LAB_0000_6b5c                                   XREF[1]:     0000:6b46(j)  
         ;0000:6b5c 57              PUSH       DI
         ;0000:6b5d b9 00 50        MOV        CX,0x5000
@@ -1417,14 +1391,9 @@ LAB_0000_6b49
         ;0000:6b66 5f              POP        DI
         ;0000:6b67 73 03           JNC        LAB_0000_6b6c
         ;0000:6b69 e9 16 00        JMP        LAB_0000_6b82
-        ;0000:6b6c e8 19 00        CALL       FUN_0000_6b88_ConfigureTabrokMissile                                    undefined FUN_0000_6b88_ConfigureTabrokMissile()
-LAB_0000_6b5c
-        jsr   LoadObject_x
-        beq   LAB_0000_6b82
-        lda   #ObjID_commonmissile
-        sta   id,x
-        jsr   FUN_0000_6b88_ConfigureTabrokMissile
+LAB_0000_6b5c 
         ;                     LAB_0000_6b6c                                   XREF[1]:     0000:6b67(j)  
+        ;0000:6b6c e8 19 00        CALL       FUN_0000_6b88_ConfigureTabrokMissile                                    undefined FUN_0000_6b88_ConfigureTabrokMissile()
         ;0000:6b6f 57              PUSH       DI
         ;0000:6b70 b9 00 50        MOV        CX,0x5000
         ;0000:6b73 ba d5 67        MOV        DX,0x67d5
@@ -1434,16 +1403,13 @@ LAB_0000_6b5c
         ;0000:6b7c e9 03 00        JMP        LAB_0000_6b82
         ;                     LAB_0000_6b7f                                   XREF[1]:     0000:6b7a(j)  
         ;0000:6b7f e8 06 00        CALL       FUN_0000_6b88_ConfigureTabrokMissile                                    undefined FUN_0000_6b88_ConfigureTabrokMissile()
-        jsr   LoadObject_x
-        beq   LAB_0000_6b82
-        lda   #ObjID_commonmissile
-        sta   id,x
-        jsr   FUN_0000_6b88_ConfigureTabrokMissile
         ;                     LAB_0000_6b82                                   XREF[4]:     0000:6b35(j), 0000:6b56(j), 
         ;                                                                                  0000:6b69(j), 0000:6b7c(j)  
         ;0000:6b82 b1 5d           MOV        CL,0x5d
         ;0000:6b84 e8 7c 9b        CALL       FUN_0000_0703_EnqueueSoundFx                     undefined FUN_0000_0703_EnqueueS
         ;0000:6b87 c3              RET
+LAB_0000_6b81
+        puls y
 LAB_0000_6b82
         rts
 FUN_0000_6b88_ConfigureTabrokMissile
@@ -1482,7 +1448,7 @@ FUN_0000_6b88_ConfigureTabrokMissile
         ldd   2,y
         std   y_vel,x
         lda   #$20
-        sta   ext_variables+12,x
+        sta   ext_variables+13,x
         ldd   x_pos,u
         std   x_pos,x
         ldd   y_pos,u
@@ -1490,16 +1456,16 @@ FUN_0000_6b88_ConfigureTabrokMissile
         lda   #0
 @tabrok0x24 equ   *-1
         sta   ext_variables+10,x
-        lda   4,y
-        sta   ext_variables+11,x
+        ldd   4,y
+        std   ext_variables+11,x
         ldd   player1+x_pos
         cmpd  x_pos,u
-        blt   LAB_0000_6bc5
-        lda   5,y
-        sta   ext_variables+11,x
+        bpl   LAB_0000_6bc5
+        ldd   6,y
+        std   ext_variables+11,x
         neg   ext_variables+10,x
 LAB_0000_6bc5
-        leay  6,y
+        leay  8,y
         rts
 
 
@@ -1725,22 +1691,22 @@ tabrok_0x2b58
         fcb   $02
 
 tabrok_0x2c94
-        fdb   $ff00 ; missile 1     $fe00
-        fdb   $0000 ;               $0000
-        fcb   $0c   ;               $000c
-        fcb   $04   ;               $0004
-        fdb   $ff00 ; missile 2     $fe00
-        fdb   $ff40 ;               $0100
-        fcb   $0d   ;               $000d
-        fcb   $03   ;               $0003
-        fdb   $ffb8 ; missile 3     $ff40
-        fdb   $feb0 ;               $01c0
-        fcb   $0f   ;               $000f
-        fcb   $01   ;               $0001
-        fdb   $0048 ; missile 4     $00c0
-        fdb   $ff70 ;               $00c0
-        fcb   $01   ;               $0001
-        fcb   $0f   ;               $000f
+        fdb   $fe00 ; missile 1
+        fdb   $0000
+        fdb   $000c
+        fdb   $0004
+        fdb   $fe00 ; missile 2
+        fdb   $0000
+        fdb   $000d
+        fdb   $0003
+        fdb   $ff40 ; missile 3
+        fdb   $01c0
+        fdb   $000f 
+        fdb   $0001 
+        fdb   $00c0 ; missile 4
+        fdb   $00c0
+        fdb   $0001 
+        fdb   $000f
 
 
 
