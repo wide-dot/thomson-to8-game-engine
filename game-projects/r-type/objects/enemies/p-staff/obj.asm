@@ -40,7 +40,7 @@ Routines
 FUN_0000_78b4_CreatePStaff
 
 	ldb   subtype_w+1,u
-    andb  #$0F
+    	andb  #$0F
 	aslb
 	ldx   #PresetXYIndex
 	abx
@@ -48,7 +48,7 @@ FUN_0000_78b4_CreatePStaff
 	ldb   1,x
 	addd  #$3    ; original value $8
 	std   y_pos,u
-    stb   AABB_0+AABB.cy,u
+    	stb   AABB_0+AABB.cy,u
 	ldb   ,x
 	addd  glb_camera_x_pos
 	std   x_pos,u
