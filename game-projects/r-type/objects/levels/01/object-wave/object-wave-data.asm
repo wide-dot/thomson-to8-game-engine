@@ -16,7 +16,7 @@
 ;$01,$8C,ObjID_32,$00,$0E
 ;$01,$8C,ObjID_32,$00,$0F
 
-	;fcb   $01,$C4,ObjID_scant,$00,$05
+	fcb   $01,$C4,ObjID_scant,$00,$05
 	;fcb   $01,$C4,ObjID_pstaff,$00,$08
 	;fcb   $01,$c4,ObjID_tabrok,$00,$07
  	fcb   $01,$F8,ObjID_patapata,$00,$04
