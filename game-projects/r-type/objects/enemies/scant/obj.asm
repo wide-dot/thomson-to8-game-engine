@@ -21,9 +21,10 @@ Onject
         jmp   [a,x]
 
 Routines
-        fdb   FUN_0000_84e3_CreateScant         ; 0
-        fdb   AlreadyDeleted                    ; 1
-        fdb   FUN_0000_8538_RunScantMode1       ; 2
+        fdb   FUN_0000_84e3_CreateScant                 ; 0
+        fdb   AlreadyDeleted                            ; 1
+        fdb   FUN_0000_8538_RunScantMode1               ; 2
+        fdb   FUN_0000_86d6_ScantPreparesToShoot        ; 3
 
 
 FUN_0000_84e3_CreateScant
@@ -62,7 +63,8 @@ FUN_0000_84e3_CreateScant
         ldd   #$1c0
         std   scant_0x26
         jsr   RandomNumber
-        andb  scant_0x14    
+        andb  #$1f    
+        stb   scant_0x14
         lda   #$1f
         sta   scant_0x16    
         ldd   player1+x_pos
@@ -83,6 +85,7 @@ FUN_0000_84e3_CreateScant
 
 
 FUN_0000_8538_RunScantMode1
+
         lda   scant_0x16
         adda  gfxlock.frameDrop.count
         sta   scant_0x16
@@ -112,15 +115,14 @@ FUN_0000_8538_RunScantMode1
         ldd   scant_0x26
         cmpd  #$ffff
         bne   LAB_0000_8582
-        ldd   #$ffac            ; original value $ff00
+        ldd   #$ffd0  ; original value 0xff00
         std   x_vel,u
 LAB_0000_8582
 	ldd   x_pos,u
 	addd  #($30*scale.XP1PX)/256
 	std   terrainCollision.sensor.x
 	lda   x_vel,u
-	anda  #$80
-	beq   LAB_0000_858e
+	bmi   LAB_0000_858e
 	ldd   x_pos,u
 	subd  #($30*scale.XP1PX)/256
 	std   terrainCollision.sensor.x
@@ -138,11 +140,11 @@ LAB_0000_858e_bis
         
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        cmpd  #$fc      ; original value $2a0
+        cmpd  #$12  ; original value 0x2a0
         bcs   LAB_0000_85b3
         lda   x_vel,u
         bmi   LAB_0000_85b3
-        ldd   #$20      ; original value $00
+        ldd   #$30      ; original value $00
         std   x_vel,u
 LAB_0000_85b3
 LAB_0000_85b9
@@ -169,16 +171,21 @@ LAB_0000_85c5
 LAB_0000_85c5_bis
         
         ldd   x_pos,u
-        cmpd  #$53      ; original value $dfc
+        cmpd  #$56      ; original value $dfc
         bcc   LAB_0000_85e2
         cmpd  #$2e      ; original value $7d0
         bcc   LAB_0000_85e2
         lda   x_vel,u
-        cmpa  #$80
-        bne   LAB_0000_85e2
-        ldd   #$20      ; original value $00
+        bmi   LAB_0000_85e2
+        ldd   #$31      ; original value $00
         std   x_vel,u
 LAB_0000_85e2
+
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB_0+AABB.cx,u
+        ldb   y_pos+1,u
+        stb   AABB_0+AABB.cy,u
 
         jsr   ObjectMoveSync
 
@@ -223,10 +230,11 @@ LAB_0000_8621
         ldd   player1+y_pos
         subd  #($18*scale.YP1PX)/256
         cmpd  y_pos,u
-        bcs   LAB_0000_8668
+        bcc   LAB_0000_8668
         addd  #($30*scale.YP1PX)/256
         cmpd  y_pos,u
-        bcc   LAB_0000_8668
+        bcs   LAB_0000_8668
+
         lda   scant_0x14
         suba  gfxlock.frameDrop.count
         sta   scant_0x14
@@ -237,23 +245,15 @@ LAB_0000_8621
         sta   scant_0x14
         lda   #$1f
         sta   scant_0x3a
-        ;lda   #3    ; FUN_0000_86d6
-        ;sta   routine,u
-        ;ldd   #1234
-        ;std   score
+        lda   #3    ; FUN_0000_86d6_ScantPreparesToShoot
+        sta   routine,u
+        ldd   #$0
+        std   y_vel,u
+
+
 LAB_0000_8668
         lda   AABB_0+AABB.p,u
         beq   LAB_0000_86a0_DestroyScant        ; was killed  
-
-
-
-
-
-
-
-
-
-
         jmp   DisplaySprite
 
 LAB_0000_86a0_DestroyScant                     
@@ -274,6 +274,82 @@ FUN_0000_6a07_DeleteScant
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
         jmp   DeleteObject
 
+
+;   			  *******************************************************
+;                         *                      FUNCTION                       *
+;                         *******************************************************
+
+
+
+FUN_0000_86d6_ScantPreparesToShoot
+        ldd   #$30
+        std   x_vel,u
+
+        lda   scant_0x3a
+        cmpa  #$e
+        bcc   LAB_0000_86f1
+        cmpa  #$8
+        bcs   LAB_0000_86eb
+        ldd   #$00f0  ; original value 0x200
+        std   x_vel,u
+        jmp   LAB_0000_86f1
+LAB_0000_86eb
+        ldd   #$ffe8  ; original value 0xff40
+        std   x_vel,u
+
+LAB_0000_86f1
+
+        ldx   #scant_0x3886
+        ldd   player1+x_pos
+        cmpd  x_pos,u
+        bcs   LAB_0000_86ff
+        ldx   #scant_0x388e
+LAB_0000_86ff
+        ldb   scant_0x3a
+        andb  #$18
+        asrb
+        asrb
+        abx
+        ldd   ,x
+        std   image_set,u
+
+        lda   scant_0x3a
+        cmpa  #$10
+        bhi   LAB_0000_871b
+        adda  gfxlock.frameDrop.count
+        cmpa  #$10
+        ble   LAB_0000_871b
+        lda   #$10
+        suba  gfxlock.frameDrop.count
+        sta   scant_0x3a
+        jsr   FUN_0000_8755_ScantShoots
+LAB_0000_871b
+
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB_0+AABB.cx,u
+        addd  #5                       ; add x radius
+        lbmi  FUN_0000_6a07_DeleteScant                  ; branch if out of screen's left
+
+        ldb   y_pos+1,u
+        stb   AABB_0+AABB.cy,u
+
+        jsr   ObjectMoveSync
+        lda   AABB_0+AABB.p,u
+        lbeq  LAB_0000_86a0_DestroyScant        ; was killed  
+
+
+        lda   scant_0x3a
+        suba  gfxlock.frameDrop.count
+        bpl   LAB_0000_874a
+        lda   #$2 ; FUN_0000_8538_RunScantMode1
+        sta   routine,u
+LAB_0000_874a
+        sta   scant_0x3a
+        jmp   DisplaySprite
+
+FUN_0000_8755_ScantShoots
+        rts
 
 AlreadyDeleted
         rts
@@ -337,38 +413,39 @@ scant_0x388e
 
 
 
-scant_0x3966    fdb $0020       ; $0    $0000
-                fdb $fee0       ;       $0180
-                fdb $0036       ; $4    $00b0
-                fdb $fef8       ;       $0160
-                fdb $006c       ; $8    $0140
-                fdb $ff28       ;       $0120
-                fdb $0090       ; $c    $01a0
-                fdb $ff88       ;       $00a0
-                fdb $00a8       ; $10   $01c0
-                fdb $0000
-                fdb $0090       ; $14   $01a0
-                fdb $0078       ;       $ff60
-                fdb $006c       ; $18   $0140
-                fdb $00d8       ;       $fee0
-                fdb $0036       ; $1c   $00b0
-                fdb $0108       ;       $fea0
-                fdb $0020       ; $20   $0000
-                fdb $0120       ;       $fe80
-                fdb $ffca       ; $24   $ff50
-                fdb $0108       ;       $fea0
-                fdb $ff94       ; $28   $fec0
-                fdb $00d8       ;       $fee0
-                fdb $ff70       ; $2c   $fe60
-                fdb $0078       ;       $ff60
-                fdb $ff58       ; $30   $fe40
-                fdb $0000
-                fdb $ff70       ; $34   $fe60
-                fdb $ff88       ;       $00a0
-                fdb $ff94       ; $38   $fec0
-                fdb $ff28       ;       $0120
-                fdb $ffc0       ; $3c   $ff50
-                fdb $fef8       ;       $0160
+scant_0x3966
+        fdb $0030  ; original value 0x0000
+        fdb $fee0  ; original value 0x0180
+        fdb $0072  ; original value 0x00b0
+        fdb $fef8  ; original value 0x0160
+        fdb $00a8  ; original value 0x0140
+        fdb $ff28  ; original value 0x0120
+        fdb $00cc  ; original value 0x01a0
+        fdb $ff88  ; original value 0x00a0
+        fdb $00d8  ; original value 0x01c0
+        fdb $0000  ; original value 0x0000
+        fdb $00cc  ; original value 0x01a0
+        fdb $0078  ; original value 0xff60
+        fdb $00a8  ; original value 0x0140
+        fdb $00d8  ; original value 0xfee0
+        fdb $0072  ; original value 0x00b0
+        fdb $0108  ; original value 0xfea0
+        fdb $0030  ; original value 0x0000
+        fdb $0120  ; original value 0xfe80
+        fdb $ffee  ; original value 0xff50
+        fdb $0108  ; original value 0xfea0
+        fdb $ffb8  ; original value 0xfec0
+        fdb $00d8  ; original value 0xfee0
+        fdb $ff94  ; original value 0xfe60
+        fdb $0078  ; original value 0xff60
+        fdb $ff88  ; original value 0xfe40
+        fdb $0000  ; original value 0x0000
+        fdb $ff94  ; original value 0xfe60
+        fdb $ff88  ; original value 0x00a0
+        fdb $ffb8  ; original value 0xfec0
+        fdb $ff28  ; original value 0x0120
+        fdb $ffee  ; original value 0xff50
+        fdb $fef8  ; original value 0x0160
 
 
 
