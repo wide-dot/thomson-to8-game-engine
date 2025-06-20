@@ -150,11 +150,11 @@
 	fcb   $16,$50,ObjID_blaster,$00,$00
 	fcb   $16,$90,ObjID_blaster,$00,$20
 	fcb   $16,$D0,ObjID_blaster,$00,$00
-	fcb   $16,$D4,ObjID_tabrok,$00,$07
+	;fcb   $16,$D4,ObjID_tabrok,$00,$07
 	fcb   $17,$10,ObjID_blaster,$00,$01
 	fcb   $17,$50,ObjID_blaster,$00,$11
  	fcb   $18,$22,ObjID_pow,$00,$04
-	fcb   $18,$6A,ObjID_tabrok,$00,$06
+	;fcb   $18,$6A,ObjID_tabrok,$00,$06
 	fcb   $19,$68,ObjID_fadetotunnel,$00,$01
 	fcb   $19,$68,ObjID_fadetotunnel,$00,$02
 	fcb   $1A,$30,ObjID_bossmusic,$00,$00
