@@ -140,6 +140,17 @@ Live
         std   x_pos,x
         ldd   player1+y_pos
         std   y_pos,x
+        lda   #ObjID_emitter_flash
+        jsr   LoadObject_x
+        beq   @resetbeam 
+        sta   id,x
+        lda   #$1
+        sta   subtype,x
+        ldd   player1+x_pos
+        addd  #$f
+        std   x_pos,x
+        ldd   player1+y_pos
+        std   y_pos,x
 @resetbeam
         ldd   #0
         std   player1+beam_value

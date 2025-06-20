@@ -28,7 +28,7 @@ Init
 
         jsr   LoadObject_x
         beq   Init2
-	lda   #ObjID_scantfireball
+	lda   #ObjID_emitter_flash
         sta   id,x
         lda   subtype,u
         sta   subtype,x

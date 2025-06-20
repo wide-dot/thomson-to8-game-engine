@@ -22,11 +22,11 @@ Routines
         fdb   AlreadyDeleted
 
 Init
-        ldd   #Ani_scantfireball_left
+        ldd   #Ani_emitter_flash_left
         std   anim,u
         lda   subtype,u
         beq   >
-        ldd   #Ani_scantfireball_right
+        ldd   #Ani_emitter_flash_right
         std   anim,u
 !
         ldb   #3
