@@ -19,10 +19,16 @@ Routines
         fdb   Init
         fdb   Live
         fdb   DieScantFireBall
+        fdb   AlreadyDeleted
 
 Init
         ldd   #Ani_scantfireball_left
         std   anim,u
+        lda   subtype,u
+        beq   >
+        ldd   #Ani_scantfireball_right
+        std   anim,u
+!
         ldb   #3
         stb   priority,u
         lda   render_flags,u
@@ -39,4 +45,7 @@ Live
         jmp   DisplaySprite
 
 DieScantFireBall  
+        inc   routine,u
         jmp   DeleteObject
+AlreadyDeleted
+        rts
