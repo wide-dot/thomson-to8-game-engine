@@ -25,6 +25,18 @@ Routines
         fdb   AlreadyDeleted
 
 Init
+
+        jsr   LoadObject_x
+        beq   Init2
+	lda   #ObjID_scantfireball
+        sta   id,x
+        lda   subtype,u
+        sta   subtype,x
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
+Init2
         ldd   #Ani_scantfire_left
         std   anim,u
         lda   subtype,u
