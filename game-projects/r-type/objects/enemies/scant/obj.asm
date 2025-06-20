@@ -23,7 +23,7 @@ Onject
 Routines
         fdb   FUN_0000_84e3_CreateScant                 ; 0
         fdb   AlreadyDeleted                            ; 1
-        fdb   FUN_0000_8538_RunScantMode1               ; 2
+        fdb   FUN_0000_8538_ScantTracksPlayer1          ; 2
         fdb   FUN_0000_86d6_ScantPreparesToShoot        ; 3
 
 
@@ -75,7 +75,7 @@ FUN_0000_84e3_CreateScant
         std   scant_0x28
         std   scant_0x32
 
-        lda   #2        ; FUN_0000_8538_RunScantMode1
+        lda   #2        ; FUN_0000_8538_ScantTracksPlayer1
         sta   routine,u
         rts
 
@@ -84,7 +84,7 @@ FUN_0000_84e3_CreateScant
 ;                         *******************************************************
 
 
-FUN_0000_8538_RunScantMode1
+FUN_0000_8538_ScantTracksPlayer1
 
         lda   scant_0x16
         adda  gfxlock.frameDrop.count
@@ -240,7 +240,7 @@ LAB_0000_8621
         sta   scant_0x14
         bpl   LAB_0000_8668
         ldb   globals.difficulty
-        ldx   #scant_3856
+        ldx   #scant_0x3856
         lda   b,x
         sta   scant_0x14
         lda   #$1f
@@ -342,13 +342,50 @@ LAB_0000_871b
         lda   scant_0x3a
         suba  gfxlock.frameDrop.count
         bpl   LAB_0000_874a
-        lda   #$2 ; FUN_0000_8538_RunScantMode1
+        lda   #$2 ; FUN_0000_8538_ScantTracksPlayer1
         sta   routine,u
 LAB_0000_874a
         sta   scant_0x3a
         jmp   DisplaySprite
 
 FUN_0000_8755_ScantShoots
+	jsr   LoadObject_x ; make then die early ... to be removed
+        beq   LAB_0000_87de
+	lda   #ObjID_scantfire
+        sta   id,x
+	ldd   x_pos,u
+	std   x_pos,x
+	ldd   y_pos,u
+        subd  #5
+	std   y_pos,x
+
+        ldd   player1+x_pos
+        cmpd  x_pos,u
+        bcc   ToTheRight
+
+        clr   subtype,x
+        ldb   globals.difficulty
+        aslb
+        ldy   #scant_0x385e
+        ldd   b,y        
+        std   x_vel,x
+        ldd   #($30*scale.XN1PX)/256
+        addd  x_pos,x
+        std   x_pos,x
+        jmp   LAB_0000_87de
+ToTheRight
+        lda   #$01
+        sta   subtype,x
+        ldb   globals.difficulty
+        aslb
+        ldy   #scant_0x385e
+        ldd   b,y   
+        _negd     
+        std   x_vel,x
+        ldd   #($30*scale.XP1PX)/256
+        addd  x_pos,x
+        std   x_pos,x
+LAB_0000_87de
         rts
 
 AlreadyDeleted
@@ -364,7 +401,7 @@ scant_0x32      fdb $0
 scant_0x38      fcb $0
 scant_0x3a      fdb $0
 
-scant_3856
+scant_0x3856
                 fcb $20
                 fcb $18
                 fcb $10
@@ -374,6 +411,12 @@ scant_3856
                 fdb $fb00
                 fdb $f900
                 fdb $f700
+
+scant_0x385e
+        fdb $feb0  ; original value 0xfc00
+        fdb $fe50  ; original value 0xfb00
+        fdb $fd90  ; original value 0xf900
+        fdb $fcd0  ; original value 0xf700
 
 scant_0x3866    
         fdb Img_scant_0
