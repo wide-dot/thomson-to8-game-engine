@@ -167,7 +167,7 @@ Live
         cmpa  #$4
         bne   >
         ldx   #$19
-        stx   player1+ext_variables+16
+        stx   player1+ext_variables+16  ; forcepod offset for beam and flash emitter
 !
         ldb   Fire_Press
         andb  #c1_button_B_mask

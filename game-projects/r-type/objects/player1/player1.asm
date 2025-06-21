@@ -141,6 +141,7 @@ Live
         stb   subtype,x
         ldd   player1+x_pos
         addd  player1+forcepodoffset
+        subd  #$F
         std   x_pos,x
         ldd   player1+y_pos
         std   y_pos,x
@@ -148,7 +149,7 @@ Live
         jsr   LoadObject_x
         beq   @resetbeam 
         sta   id,x
-        lda   #$1
+        lda   #$2
         sta   subtype,x
         ldd   player1+x_pos
         addd  player1+forcepodoffset
