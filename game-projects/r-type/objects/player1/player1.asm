@@ -55,6 +55,9 @@ Init
         sta   player1+AABB_0+AABB.p
         _ldd  4,4                       ; set hitbox xy radius
         std   player1+AABB_0+AABB.rx
+
+        ldd   #$F
+        std   player1+forcepodoffset
 Live
         ldd   glb_camera_x_pos
         subd  glb_camera_x_pos_old
@@ -137,6 +140,7 @@ Live
         sta   id,x
         stb   subtype,x
         ldd   player1+x_pos
+        addd  player1+forcepodoffset
         std   x_pos,x
         ldd   player1+y_pos
         std   y_pos,x
@@ -147,9 +151,10 @@ Live
         lda   #$1
         sta   subtype,x
         ldd   player1+x_pos
-        addd  #$f
+        addd  player1+forcepodoffset
         std   x_pos,x
         ldd   player1+y_pos
+        addd  #$1
         std   y_pos,x
 @resetbeam
         ldd   #0

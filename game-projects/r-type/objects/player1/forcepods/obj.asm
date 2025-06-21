@@ -159,9 +159,16 @@ Live
         clr   anim_frame,u
         sta   currentlevel,u
 @continueliveishooked
+        ldx   #$F
+        stx   player1+ext_variables+16
         lda   hooked_status,u
         beq   @continueliveisfree
                                         ; Forcepod is hooked
+        cmpa  #$4
+        bne   >
+        ldx   #$19
+        stx   player1+ext_variables+16
+!
         ldb   Fire_Press
         andb  #c1_button_B_mask
         bne   @ejectforcepod     
