@@ -8,6 +8,7 @@
 
         INCLUDE "./engine/macros.asm"
 
+parentaddr      equ ext_variables   ; 2 bytes
 
 Object
         lda   routine,u
@@ -37,9 +38,13 @@ Init
         inc   routine,u
 
 Live
-        ldd   x_pos,u
-        cmpd  glb_camera_x_pos
-        ble   DieScantFireBall
+        ldx   parentaddr,u
+        ldd   x_pos,x
+        addd  ext_variables+16,x
+        std   x_pos,u
+        ldd   y_pos,x
+        std   y_pos,u
+
         jsr   AnimateSpriteSync
         jsr   ObjectMoveSync
         jmp   DisplaySprite
