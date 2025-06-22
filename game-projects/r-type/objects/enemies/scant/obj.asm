@@ -13,6 +13,7 @@
         INCLUDE "./objects/explosion/explosion.const.asm"
 
 AABB_0                  equ ext_variables   ; AABB struct (9 bytes)
+flashemitteroffset      equ ext_variables+16  ; 2 bytes !! must be ext_variables+16 !!
 
 Onject
         lda   routine,u
@@ -349,14 +350,13 @@ LAB_0000_874a
         jmp   DisplaySprite
 
 FUN_0000_8755_ScantShoots
-	jsr   LoadObject_x ; make then die early ... to be removed
-        beq   LAB_0000_87de
+	jsr   LoadObject_x
+        lbeq  LAB_0000_87de
 	lda   #ObjID_scantfire
         sta   id,x
 	ldd   x_pos,u
 	std   x_pos,x
 	ldd   y_pos,u
-        subd  #5
 	std   y_pos,x
 
         ldd   player1+x_pos
@@ -370,8 +370,16 @@ FUN_0000_8755_ScantShoots
         ldd   b,y        
         std   x_vel,x
         ldd   #($30*scale.XN1PX)/256
+        std   flashemitteroffset,u
         addd  x_pos,x
+        addd  #10
         std   x_pos,x
+        jsr   LoadObject_x
+        beq   LAB_0000_87de
+	lda   #ObjID_emitter_flash
+        sta   id,x
+        clr   subtype,x
+        stu   ext_variables,x
         jmp   LAB_0000_87de
 ToTheRight
         lda   #$01
@@ -383,8 +391,18 @@ ToTheRight
         _negd     
         std   x_vel,x
         ldd   #($30*scale.XP1PX)/256
+        std   flashemitteroffset,u
         addd  x_pos,x
+        subd  #10
         std   x_pos,x
+        jsr   LoadObject_x
+        beq   LAB_0000_87de
+	lda   #ObjID_emitter_flash
+        sta   id,x
+        lda   #$01
+        sta   subtype,x
+        stu   ext_variables,x
+
 LAB_0000_87de
         rts
 

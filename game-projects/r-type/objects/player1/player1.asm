@@ -57,7 +57,8 @@ Init
         std   player1+AABB_0+AABB.rx
 
         ldd   #$F
-        std   player1+forcepodoffset
+        std   player1+flashemitteroffset
+
 Live
         ldd   glb_camera_x_pos
         subd  glb_camera_x_pos_old
@@ -140,23 +141,20 @@ Live
         sta   id,x
         stb   subtype,x
         ldd   player1+x_pos
-        addd  player1+forcepodoffset
+        addd  player1+flashemitteroffset
         subd  #$F
         std   x_pos,x
         ldd   player1+y_pos
+        subd  #2
         std   y_pos,x
         lda   #ObjID_emitter_flash
         jsr   LoadObject_x
         beq   @resetbeam 
         sta   id,x
-        lda   #$2
+        lda   #$1
         sta   subtype,x
-        ldd   player1+x_pos
-        addd  player1+forcepodoffset
-        std   x_pos,x
-        ldd   player1+y_pos
-        addd  #$1
-        std   y_pos,x
+        ldd   #player1
+        std   ext_variables,x
 @resetbeam
         ldd   #0
         std   player1+beam_value
