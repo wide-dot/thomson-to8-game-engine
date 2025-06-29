@@ -25,6 +25,22 @@ Note les options de l'étape 3 sont un peu longue. Cependant si on lance juste a
 La vitesse moyenne mesurée est d'environ 11fps, soit un peu plus de 4VBL par image. plus précisément le temps entrer deux passage par la routine LevelMainLoop s'étale environ de 400µs à 161ms pour une moyenne de 92ms avec une erreur-standard de +/- 30%. Cela montre que les frames sont loin d'être calculées en temps constant.
 
 Environ 14 "hotspots" représentant 12s des 32s joués sont trouvés. Chacun de ces hotspots correspond à une routine spécifique:
+=======
+4. Un fichier HTML est produit qui contient des infos utiles poru l'optimisation. 
+En particulier l'option `-times=LevelMainLoop` mesure empiriquemen le temps moyen passé entre chaque appel de la boucle principale. On peut en déduire le FPS moyen sur ces 32 secondes tracées. L'info est présente dans le tableau.
+5. Modifier l'asm en coinséquence de l'analyse
+6. recompiler et retourner en 1.
+
+Note les options de l'étape 3 sont un peu longue. Cependant si on lance ```
+$ ../../../DCMoto_MemMap/lua.exe ../../../DCMoto_MemMap/memmap.lua -prev-args
+```
+alors l'outil ira retrouver les arguments de la ligne de commande dans le fichier CSV accompagnant le HTML.
+
+# mesures initiales
+La vitesse moyenne mesurée est d'environ 11fps, soit un peu plus de 4VBL par image. plus précisément le temps entrer deux passage par la routine LevelMainLoop s'étale environ de 400µs à 161ms pour une moyenne de 92ms avec une erreur-standard de +/- 30%. Cela montre que les frames sont loin d'êtr calculées en temps constant.
+
+Environ 14 "hotspots" représantant 12s des 32s joués sont trouvés. Chacun de ces hotspots correspond à une routine spécifique:
+>>>>>>> 07f472ae (added notes about optms going-on.)
 1. CSR_ProcessEachPriorityLevel (23% du temps)
 2. DrawTiles (13%)
 3. empty_tile (12%)
@@ -41,6 +57,7 @@ Environ 14 "hotspots" représentant 12s des 32s joués sont trouvés. Chacun de 
 14. Collision_Do (2%)
 
 En plus l'outil suggère environ 118 instructions à modifier résultant sur un gain total d'environ 200ms à elles seules sur l'ensemble de la séquence de 32s. Ca parait peu, mais c'est toujours ca à prendre sans avoir à changer trop massivement l'implémentation.
+
 
 # optim 1: remplacement des long-branch par des short-branch
 Il y en a 7 de trouvés durant les 32s enregistrés, chaun représantant plus de 5% duy temps gagnable. Rien qu'avec cette série d'optim on couvre 30% des 200ms facilement optimisabler.
