@@ -389,7 +389,7 @@ public class BuildDisk
 				sound.inRAM = true;
 
 			sound.setAllBinaries(sound.soundFile, inRAM);
-			object.sounds.add(sound);
+			synchronized(object.sounds) {object.sounds.add(sound);}
 		});
 	}
 
