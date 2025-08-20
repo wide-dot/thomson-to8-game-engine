@@ -1,8 +1,8 @@
-package fr.bento8.to8.compiledSprite.backupDrawErase.patterns;
+package fr.bento8.to8.compiledSprite.draw.patterns;
 
-public class Pattern_11111111 extends PatternStackBlast {
+public class Pattern4Bytes extends PatternStackBlast {
 
-	public Pattern_11111111() {
+	public Pattern4Bytes() {
 		nbPixels = 8;
 		nbBytes = nbPixels/2;
 		useIndexedAddressing = false;
@@ -10,7 +10,7 @@ public class Pattern_11111111 extends PatternStackBlast {
 		registerCombi.add(new boolean[] {false, false, true, true, false, false, false});
 		registerCombi.add(new boolean[] {false, false, true, false, true, false, false});
 		registerCombi.add(new boolean[] {false, false, false, true, true, false, false});
-	}
+		}
 
 	public boolean matchesForward (byte[] data, Integer offset) {
 		if (offset+7 >= data.length) {
