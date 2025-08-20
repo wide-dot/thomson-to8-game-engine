@@ -1,8 +1,8 @@
 package fr.bento8.to8.compiledSprite.draw.patterns;
 
-public class Pattern_111111111111 extends PatternStackBlast {
+public class Pattern6Bytes extends PatternStackBlast {
 
-	public Pattern_111111111111() {
+	public Pattern6Bytes() {
 		nbPixels = 12;
 		nbBytes = nbPixels/2;
 		useIndexedAddressing = false;
