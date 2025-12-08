@@ -11,6 +11,17 @@
 	INCLUDE "./engine/collision/struct_AABB.equ"
 	INCLUDE "./objects/explosion/explosion.const.asm"
 
+ IFNDEF t2
+Img_pstaff_3 equ Img_pstaff_0
+Img_pstaff_4 equ Img_pstaff_1
+Img_pstaff_5 equ Img_pstaff_2
+Img_pstaff_7 equ Img_pstaff_8
+Img_pstaff_13 equ Img_pstaff_10
+Img_pstaff_14 equ Img_pstaff_11
+Img_pstaff_15 equ Img_pstaff_12
+Img_pstaff_17 equ Img_pstaff_18
+ ENDC
+
 AABB_0    		equ ext_variables   ; AABB struct (9 bytes)
 pstaff_0x22		equ ext_variables+9 ; 1 byte
 pstaff_0x24		equ ext_variables+10 ; 1 byte

@@ -10,6 +10,16 @@
         INCLUDE "./objects/soundFX/soundFX.const.asm"
         INCLUDE "./engine/sound/soundFX.macro.asm"
 
+ IFNDEF t2
+Img_expSmall_2 equ Img_expSmall_3
+Img_expSmall_4 equ Img_expSmall_5
+Img_expFwk_2 equ Img_expFwk_3
+Img_expFwk_4 equ Img_expFwk_5
+Img_expBig_2 equ Img_expBig_3
+Img_expBig_4 equ Img_expBig_5
+Img_expBig_6 equ Img_expBig_7
+ ENDC
+
 Onject
         lda   routine,u
         asla

@@ -27,7 +27,7 @@ Init
 	ldx   #ImagesIndex
         ldd   ,x
 	std   image_set,u
-	ldb   #3
+	ldb   #7
         stb   priority,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask

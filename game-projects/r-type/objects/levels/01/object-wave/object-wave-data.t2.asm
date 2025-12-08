@@ -1,4 +1,4 @@
-;$00,$00,ObjID_0,$00,$00
+	fcb   $00,$00,ObjID_checkpoint,$00,$00
 ;$00,$08,ObjID_33,$00,$00
 ;$00,$08,ObjID_32,$00,$04
 ;$00,$08,ObjID_32,$00,$05
@@ -6,7 +6,7 @@
 ;$00,$08,ObjID_32,$00,$07
 ;$00,$08,ObjID_32,$00,$08
 ;$00,$08,ObjID_32,$00,$09
-;$01,$80,ObjID_0,$00,$01
+	fcb   $01,$80,ObjID_checkpoint,$00,$01
 ;$01,$80,ObjID_1,$00,$00
 ;$01,$8C,ObjID_33,$00,$02
 ;$01,$8C,ObjID_32,$00,$0A
@@ -16,9 +16,6 @@
 ;$01,$8C,ObjID_32,$00,$0E
 ;$01,$8C,ObjID_32,$00,$0F
 
-	;fcb   $01,$C4,ObjID_scant,$00,$05
-	;fcb   $01,$C4,ObjID_pstaff,$00,$08
-	;fcb   $01,$c4,ObjID_tabrok,$00,$07
  	fcb   $01,$F8,ObjID_patapata,$00,$04
  	fcb   $02,$06,ObjID_patapata,$00,$03
  	fcb   $02,$1A,ObjID_patapata,$00,$05
@@ -72,7 +69,7 @@
  	fcb   $08,$0E,ObjID_bink,$01,$0C
  	fcb   $08,$6C,ObjID_bink,$00,$17
 	fcb   $08,$8C,ObjID_bug,$01,$34
-;$09,$00,ObjID_0,$00,$02
+	fcb   $09,$00,ObjID_checkpoint,$00,$02
 	fcb   $09,$4C,ObjID_bug,$00,$36
  	fcb   $09,$8C,ObjID_bink,$01,$1C
  	fcb   $09,$8C,ObjID_bink,$00,$12
@@ -136,7 +133,7 @@
  	fcb   $12,$C4,ObjID_patapata,$00,$08
 	fcb   $12,$D0,ObjID_blaster,$00,$20
  	fcb   $13,$1E,ObjID_pow,$00,$47
-;$13,$80,ObjID_0,$00,$03
+	fcb   $13,$80,ObjID_checkpoint,$00,$03
 	fcb   $13,$90,ObjID_blaster,$00,$02
 	fcb   $13,$90,ObjID_blaster,$00,$03
  	fcb   $13,$9E,ObjID_bink,$00,$16
