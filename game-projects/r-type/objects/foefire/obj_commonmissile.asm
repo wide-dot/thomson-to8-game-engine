@@ -62,7 +62,7 @@ Init
         asla
         ldx   a,x
 	stx   image_set,u
-	ldb   #3
+	ldb   #7
         stb   priority,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
@@ -352,7 +352,7 @@ Init2
         ;cmpa  #1
         ;lbne  Init3
 
-	ldb   #3
+	ldb   #7
         stb   priority,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
