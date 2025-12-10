@@ -15,6 +15,7 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/objects/collision/terrainCollision.macro.asm"
         INCLUDE "./global/scale.asm"
         INCLUDE "./global/object.const.asm"
+        INCLUDE "./engine/objects/sound/ymm/ymm.macro.asm"
 
 timestamp.DELETE_ALIEN_BODY equ $1D80
 timestamp.ERASE_NERV_START equ $2000
@@ -29,10 +30,6 @@ moveByScript.POSYSTEP equ scale.YP1PX
 map_width       equ 1540
 viewport_width  equ 144
 viewport_height equ 180
-
- ; checkpoint positions in 24px tiles
-CHECKPOINT_00      equ 0
-CHECKPOINT_01      equ 20
 
         org   $6100
         clr   NEXT_GAME_MODE
@@ -76,7 +73,6 @@ CHECKPOINT_01      equ 20
 
 ; init scroll
         jsr   InitScroll
-        lda   #CHECKPOINT_00
         jsr   checkpoint.load
 
 ; play music
@@ -110,26 +106,14 @@ CHECKPOINT_01      equ 20
 LevelMainLoop
         jsr   ReadJoypads
 
-        lda   checkpoint.state          ; load checkpoint requested ?
+        lda   checkpoint.state         ; load checkpoint requested ?
         beq   >
         ldu   #palettefade             ; yes check palette fade
         lda   routine,u                ; is palette fade over ?
         cmpa  #o_fade_routine_idle
         bne   >
-        lda   #CHECKPOINT_01           ; yes load checkpoint
         jsr   checkpoint.load
 !
-
-; GETC may crash IRQ double buffering if used ($E7C3 update)
-;        jsr   KTST
-;        bcc   >
-;        jsr   GETC
-;        cmpb  #$41 ; touche A
-;        bne   >
-;        jsr   Palette_FadeOut
-;        lda   #1
-;        sta   checkpoint.state
-;!
         jsr   Scroll
         jsr   ObjectWave
 
@@ -182,11 +166,12 @@ UserIRQ
 	jsr   PalUpdateNow
         jsr   joypad.buffer.addDirection
         _MountObject ObjID_ymm01
-        _MusicFrame_objymm
+        _ymm.processFrame
         ;_MountObject ObjID_vgc01
         ;_MusicFrame_objvgc
         _MountObject ObjID_soundFX
         jmp   ,x ; call soundFX driver
+
 * ---------------------------------------------------------------------------
 * Collision_ClearLists
 *
@@ -262,6 +247,16 @@ main.followDobkeratops
         rts
 
 * ---------------------------------------------------------------------------
+*  Checkpoint positions in 24px tiles
+* ---------------------------------------------------------------------------
+checkpoint.positions
+        fcb 0
+        fcb 3
+        fcb 18
+        fcb 39
+        fcb -1
+
+* ---------------------------------------------------------------------------
 * Game Mode RAM variables
 * ---------------------------------------------------------------------------
         INCLUDE "./game-mode/01/ram_data.asm"
@@ -317,8 +312,10 @@ main.followDobkeratops
         ; random numbers
         INCLUDE "./engine/math/RandomNumber.asm"
 
-        ; sound fx
+        ; music and sound fx
         INCLUDE "./engine/sound/soundFX.data.asm"
+        INCLUDE "./engine/objects/sound/ymm/ymm.const.asm"
+        INCLUDE "./engine/objects/sound/ymm/ymm.data.asm"
 
         ; should be at the end of includes (ifdef dependencies)
         INCLUDE "./engine/InitGlobals.asm"

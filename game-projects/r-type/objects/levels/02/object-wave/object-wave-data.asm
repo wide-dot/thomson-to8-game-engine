@@ -2,9 +2,7 @@
 ;$00,$00,ObjID_1,$00,$00
 ;$00,$C8,ObjID_gouger,$00,$0A
 ;$01,$90,ObjID_gouger,$00,$00
-	;fcb   $02,$06,ObjID_pow,$00,$35 ; original data
-        fcb   $02,$06,ObjID_pow,$00,$45 ; test (to remove)
-        fcb   $02,$0A,ObjID_pow,$00,$45 ; test (to remove)
+	fcb   $02,$06,ObjID_pow,$00,$35
 ;$02,$58,ObjID_gouger,$00,$01
 ;$03,$20,ObjID_gouger,$00,$07
 ;$03,$D4,ObjID_gouger,$00,$01

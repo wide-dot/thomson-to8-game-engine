@@ -15,11 +15,11 @@ AABB_0                  equ ext_variables   ; AABB struct (9 bytes)
 
 ; **** TABROK MISSILE VARIABLES ****
 
-tabrokmissile_0x24      equ ext_variables+10 ; 1 byte - reference value for run mode change frames
-tabrokmissile_0x16      equ ext_variables+11 ; 1 bytes - current image index
-tabrokmissile_0x20      equ ext_variables+12 ; 1 byte - run mode change frames
-tabrokmissile_0x22      equ ext_variables+13 ; 2 bytes - period of tracking (set at $800 - after that, no tracking anymore)
-tabrokmissile_b         equ ext_variables+15 ; 1 byte - temporary B register
+missile_0x24      equ ext_variables+10 ; 1 byte - reference value for run mode change frames
+missile_0x16      equ ext_variables+11 ; 1 bytes - current image index
+missile_0x20      equ ext_variables+12 ; 1 byte - run mode change frames
+missile_0x22      equ ext_variables+13 ; 2 bytes - period of tracking (set at $800 - after that, no tracking anymore)
+missile_b         equ ext_variables+15 ; 1 byte - temporary B register
 missile_flame           equ ext_variables+16 ; 2 bytes
 
 ; **** PSTAFF ROCKET VARIABLES ****
@@ -35,12 +35,12 @@ Object
 Routines
 ; Tabrok Missiles routines 
         fdb   Init                                              ; 0
-        fdb   FUN_0000_xxxx_RunTabrokMissileRunMode0            ; 1
+        fdb   FUN_0000_xxxx_RunMissileRunMode0            ; 1
         fdb   AlreadyDeleted                                    ; 2
-        fdb   FUN_0000_6c7d_RunTabrokMissileRunMode1            ; 3
+        fdb   FUN_0000_6c7d_RunMissileRunMode1            ; 3
 ; Pstaff Rockets routines
-        fdb   FUN_0000_7c0e_CreateAndRunPstaffRocketMode1       ; 4
-        fdb   FUN_0000_7c91_RunPstaffRocketMode2                ; 5
+        fdb   FUN_0000_7c0e_CreateAndRunRocketMode1       ; 4
+        fdb   FUN_0000_7c91_RunRocketMode2                ; 5
 
 
 Init
@@ -53,12 +53,12 @@ Init
 
         jsr   LoadObject_x
         beq   >
-        lda   #ObjID_tabrokmissileflame
+        lda   #ObjID_commonmissileflame
         sta   id,x
         stx   missile_flame,u
 !
-	ldx   #TabrokMissileImagesIndex
-        lda   tabrokmissile_0x16,u
+	ldx   #MissileImagesIndex
+        lda   missile_0x16,u
         asla
         ldx   a,x
 	stx   image_set,u
@@ -80,9 +80,9 @@ Init
         ;                     **************************************************************
         ;                     *                          FUNCTION                          *
         ;                     **************************************************************
-        ;                     undefined FUN_0000_xxxx_RunTabrokMissileRunMode0()
+        ;                     undefined FUN_0000_xxxx_RunMissileRunMode0()
 
-FUN_0000_xxxx_RunTabrokMissileRunMode0
+FUN_0000_xxxx_RunMissileRunMode0
 
         ldd   x_pos,u
         std   terrainCollision.sensor.x
@@ -125,18 +125,18 @@ FUN_0000_xxxx_RunTabrokMissileRunMode0
         subd  glb_camera_y_pos
         stb   AABB.cy,x
 
-        lda   tabrokmissile_0x20,u
+        lda   missile_0x20,u
         suba  gfxlock.frameDrop.count
         ble   LAB_0000_6c4c
 	
-        sta   tabrokmissile_0x20,u
+        sta   missile_0x20,u
 
 
 	jsr   ObjectMoveSync
         ldy   missile_flame,u
         beq   >
         ldx   #missileflame_1x2d14
-        lda   tabrokmissile_0x16,u
+        lda   missile_0x16,u
         asla
         asla
         leax  a,x
@@ -152,16 +152,16 @@ FUN_0000_xxxx_RunTabrokMissileRunMode0
 
 LAB_0000_6c4c
         lda   #1
-        sta   tabrokmissile_0x20,u
+        sta   missile_0x20,u
         ldd   #$800
-        std   tabrokmissile_0x22,u
-        lda   #3  ; FUN_0000_6c7d_RunTabrokMissileRunMode1
+        std   missile_0x22,u
+        lda   #3  ; FUN_0000_6c7d_RunMissileRunMode1
         sta   routine,u
 	jsr   ObjectMoveSync
         ldy   missile_flame,u
         beq   >
         ldx   #missileflame_1x2d14
-        lda   tabrokmissile_0x16,u
+        lda   missile_0x16,u
         asla
         asla
         leax  a,x
@@ -177,11 +177,11 @@ LAB_0000_6c4c
         ;                     **************************************************************
         ;                     *                          FUNCTION                          *
         ;                     **************************************************************
-        ;                     undefined FUN_0000_6c7d_RunTabrokMissileRunMode1()
+        ;                     undefined FUN_0000_6c7d_RunMissileRunMode1()
 
-FUN_0000_6c7d_RunTabrokMissileRunMode1
+FUN_0000_6c7d_RunMissileRunMode1
 
-        ldd  tabrokmissile_0x22,u
+        ldd  missile_0x22,u
         bpl  LAB_0000_6c8a
         ; check if bullet is outside the viewport
         ; x axis
@@ -195,14 +195,14 @@ FUN_0000_6c7d_RunTabrokMissileRunMode1
 
 
 LAB_0000_6c8a
-        ldx   tabrokmissile_0x22,u
+        ldx   missile_0x22,u
         lda   gfxlock.frameDrop.count
         nega
         leax  a,x
-        stx   tabrokmissile_0x22,u
-        lda   tabrokmissile_0x20,u
+        stx   missile_0x22,u
+        lda   missile_0x20,u
         suba  gfxlock.frameDrop.count
-        sta   tabrokmissile_0x20,u
+        sta   missile_0x20,u
         bpl   LAB_0000_6cee
 
         ldx   #player1
@@ -211,37 +211,37 @@ LAB_0000_6c8a
         clra
         asrb
         asrb
-        stb   tabrokmissile_b,u
+        stb   missile_b,u
 
-        cmpb  tabrokmissile_0x16,u
+        cmpb  missile_0x16,u
         bmi   LAB_0000_6cae
         subb  #$8
         bmi   LAB_0000_6cb6
-        subb  tabrokmissile_0x16,u
+        subb  missile_0x16,u
         bmi   LAB_0000_6cb6
         jmp   LAB_0000_6cbc
 
 LAB_0000_6cae
-        lda   tabrokmissile_0x16,u
+        lda   missile_0x16,u
         suba  #$8
         bmi   LAB_0000_6cbc
-        suba  tabrokmissile_b,u
+        suba  missile_b,u
         bmi   LAB_0000_6cbc
 LAB_0000_6cb6
-        inc   tabrokmissile_0x16,u
+        inc   missile_0x16,u
         jmp   LAB_0000_6cbf
 LAB_0000_6cbc
-        dec   tabrokmissile_0x16,u
+        dec   missile_0x16,u
 LAB_0000_6cbf
-        lda   tabrokmissile_0x16,u
+        lda   missile_0x16,u
         anda  #$f
-        sta   tabrokmissile_0x16,u
+        sta   missile_0x16,u
         ldb   globals.difficulty
-        ldx   #tabrokmissile_1x2c8c
+        ldx   #missile_1x2c8c
         lda   b,x
         ldx   #missile_1x8f90
         leax  a,x
-        ldb   tabrokmissile_0x16,u
+        ldb   missile_0x16,u
         aslb
         aslb
         leax  b,x
@@ -249,12 +249,12 @@ LAB_0000_6cbf
         std   x_vel,u
         ldd   2,x
         std   y_vel,u
-        lda   tabrokmissile_0x24,u
-        sta   tabrokmissile_0x20,u
+        lda   missile_0x24,u
+        sta   missile_0x20,u
 LAB_0000_6cee
 
-        ldx   #TabrokMissileImagesIndex
-        lda   tabrokmissile_0x16,u
+        ldx   #MissileImagesIndex
+        lda   missile_0x16,u
         asla
         ldx   a,x
 	stx   image_set,u
@@ -305,7 +305,7 @@ LAB_0000_6cee
         ldy   missile_flame,u
         beq   >
         ldx   #missileflame_1x2d14
-        lda   tabrokmissile_0x16,u
+        lda   missile_0x16,u
         asla
         asla
         leax  a,x
@@ -367,7 +367,7 @@ Init2
         std   AABB.rx,x
 
 
-        lda   #4        ; FUN_0000_7c0e_CreateAndRunPstaffRocketMode1
+        lda   #4        ; FUN_0000_7c0e_CreateAndRunRocketMode1
         sta   routine,u
 
         ldx   #Pstaff_0x343a
@@ -391,7 +391,7 @@ Init22
         jmp   DisplaySprite
 
 
-FUN_0000_7c0e_CreateAndRunPstaffRocketMode1
+FUN_0000_7c0e_CreateAndRunRocketMode1
 
         ; check if bullet is outside the viewport
         ; x axis
@@ -464,14 +464,14 @@ LAB_0000_7c86
 
         ldd   #$0
         std   y_vel,u
-        lda   #5        ; FUN_0000_7c91_RunPstaffRocketMode2
+        lda   #5        ; FUN_0000_7c91_RunRocketMode2
         sta   routine,u
         jmp   DisplaySprite
 
 ;   **************************************************************
 ;   *                   FUNCTION                                 *
 ;   **************************************************************
-FUN_0000_7c91_RunPstaffRocketMode2
+FUN_0000_7c91_RunRocketMode2
 
         ; check if bullet is outside the viewport
         ; x axis
@@ -547,7 +547,7 @@ missile_1x8f90
         INCLUDE "./global/preset/18f90_preset-fireVelocity.asm"
 
 
-tabrokmissile_1x2c8c
+missile_1x2c8c
         fdb $00
         fdb $40
         fdb $80
@@ -574,7 +574,7 @@ missileflame_1x2d14
 	fdb $0003,$0006 ; $000a,$fff7
 	fdb $0001,$0008 ; $0003,$fff5
 
-TabrokMissileImagesIndex
+MissileImagesIndex
         fdb   Img_missile_0
         fdb   Img_missile_1
         fdb   Img_missile_2

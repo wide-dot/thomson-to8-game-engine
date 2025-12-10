@@ -39,7 +39,29 @@ Lst_FreeCell_1                fcb   nb_free_cells ; init of first free cell
                               fdb   cell_start_adr
                               fdb   $0000
                               fill  0,(entry_size*(nb_free_cells/2))-1 ; (buffer 1)                                                
-                                                                           
+
+EraseSprites_ClearAll
+        ldu   #Lst_FreeCellFirstEntry_0
+        ldd   #Lst_FreeCell_0
+        bsr   >
+        ldu   #Lst_FreeCellFirstEntry_1
+        ldd   #Lst_FreeCell_1
+!
+        std   ,u++
+        lda   #nb_free_cells
+        sta   ,u+
+        ldd   #cell_start_adr-cell_size*nb_free_cells
+        std   ,u++
+        ldd   #cell_start_adr
+        std   ,u++
+        ldd   #$0000
+        sta   ,u+
+        ldx   #(entry_size*(nb_free_cells/2))/2
+!       sta   ,u+
+        leax  -1,x
+        bne   <
+        rts
+
 EraseSprites
 	lda   #0
 	sta   <glb_force_sprite_refresh

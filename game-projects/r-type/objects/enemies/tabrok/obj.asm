@@ -1370,7 +1370,7 @@ LAB_0000_69b2
         ;0000:6b33 73 03           JNC        LAB_0000_6b38
         ;0000:6b35 e9 4a 00        JMP        LAB_0000_6b82
         ;                     LAB_0000_6b38                                   XREF[1]:     0000:6b33(j)  
-        ;0000:6b38 e8 4d 00        CALL       FUN_0000_6b88_ConfigureTabrokMissile                                    undefined FUN_0000_6b88_ConfigureTabrokMissile()
+        ;0000:6b38 e8 4d 00        CALL       FUN_0000_6b88_ConfigureMissile                                    undefined FUN_0000_6b88_ConfigureMissile()
         ;0000:6b3b a1 24 00        MOV        AX,[0x24]
         ;0000:6b3e 39 46 04        CMP        word ptr [BP + 0x4],AX
         ;0000:6b41 73 06           JNC        LAB_0000_6b49
@@ -1387,7 +1387,7 @@ FUN_0000_6b15_TabrokShoots4Missiles
         lda   #ObjID_commonmissile
         sta   id,x
         clr   subtype,x
-        jsr   FUN_0000_6b88_ConfigureTabrokMissile
+        jsr   FUN_0000_6b88_ConfigureMissile
         ldd   player1+x_pos
         cmpd  x_pos,u
         blt   LAB_0000_6b49
@@ -1402,13 +1402,13 @@ FUN_0000_6b15_TabrokShoots4Missiles
         ;0000:6b54 73 03           JNC        LAB_0000_6b59
         ;0000:6b56 e9 29 00        JMP        LAB_0000_6b82
         ;                     LAB_0000_6b59                                   XREF[1]:     0000:6b54(j)  
-        ;0000:6b59 e8 2c 00        CALL       FUN_0000_6b88_ConfigureTabrokMissile                                    undefined FUN_0000_6b88_ConfigureTabrokMissile()
+        ;0000:6b59 e8 2c 00        CALL       FUN_0000_6b88_ConfigureMissile                                    undefined FUN_0000_6b88_ConfigureMissile()
 LAB_0000_6b49
         jsr   LoadObject_x
         beq   LAB_0000_6b82
         lda   #ObjID_commonmissile
         sta   id,x
-        jsr   FUN_0000_6b88_ConfigureTabrokMissile
+        jsr   FUN_0000_6b88_ConfigureMissile
         ;                     LAB_0000_6b5c                                   XREF[1]:     0000:6b46(j)  
         ;0000:6b5c 57              PUSH       DI
         ;0000:6b5d b9 00 50        MOV        CX,0x5000
@@ -1417,13 +1417,13 @@ LAB_0000_6b49
         ;0000:6b66 5f              POP        DI
         ;0000:6b67 73 03           JNC        LAB_0000_6b6c
         ;0000:6b69 e9 16 00        JMP        LAB_0000_6b82
-        ;0000:6b6c e8 19 00        CALL       FUN_0000_6b88_ConfigureTabrokMissile                                    undefined FUN_0000_6b88_ConfigureTabrokMissile()
+        ;0000:6b6c e8 19 00        CALL       FUN_0000_6b88_ConfigureMissile                                    undefined FUN_0000_6b88_ConfigureMissile()
 LAB_0000_6b5c
         jsr   LoadObject_x
         beq   LAB_0000_6b82
         lda   #ObjID_commonmissile
         sta   id,x
-        jsr   FUN_0000_6b88_ConfigureTabrokMissile
+        jsr   FUN_0000_6b88_ConfigureMissile
         ;                     LAB_0000_6b6c                                   XREF[1]:     0000:6b67(j)  
         ;0000:6b6f 57              PUSH       DI
         ;0000:6b70 b9 00 50        MOV        CX,0x5000
@@ -1433,12 +1433,12 @@ LAB_0000_6b5c
         ;0000:6b7a 73 03           JNC        LAB_0000_6b7f
         ;0000:6b7c e9 03 00        JMP        LAB_0000_6b82
         ;                     LAB_0000_6b7f                                   XREF[1]:     0000:6b7a(j)  
-        ;0000:6b7f e8 06 00        CALL       FUN_0000_6b88_ConfigureTabrokMissile                                    undefined FUN_0000_6b88_ConfigureTabrokMissile()
+        ;0000:6b7f e8 06 00        CALL       FUN_0000_6b88_ConfigureMissile                                    undefined FUN_0000_6b88_ConfigureMissile()
         jsr   LoadObject_x
         beq   LAB_0000_6b82
         lda   #ObjID_commonmissile
         sta   id,x
-        jsr   FUN_0000_6b88_ConfigureTabrokMissile
+        jsr   FUN_0000_6b88_ConfigureMissile
         ;                     LAB_0000_6b82                                   XREF[4]:     0000:6b35(j), 0000:6b56(j), 
         ;                                                                                  0000:6b69(j), 0000:6b7c(j)  
         ;0000:6b82 b1 5d           MOV        CL,0x5d
@@ -1446,7 +1446,7 @@ LAB_0000_6b5c
         ;0000:6b87 c3              RET
 LAB_0000_6b82
         rts
-FUN_0000_6b88_ConfigureTabrokMissile
+FUN_0000_6b88_ConfigureMissile
         ;0000:6b88 26 8b 05        MOV        AX,word ptr ES:[DI]
         ;0000:6b8b 89 44 30        MOV        word ptr [SI + 0x30],AX
         ;0000:6b8e 26 8b 45 02     MOV        AX,word ptr ES:[DI + 0x2]

@@ -15,10 +15,17 @@
         INCLUDE "./objects/player1/player1.equ"
         INCLUDE "./objects/soundFX/soundFX.const.asm"
         INCLUDE "./engine/sound/soundFX.macro.asm"
+        INCLUDE "./engine/objects/sound/ymm/ymm.macro.asm"
         
 AABB_0           equ ext_variables     ; AABB struct (9 bytes)
 ply_width        equ 12/2
 ply_height       equ 16/2
+
+Init_routine       equ 0
+Live_routine       equ 1
+Dead_routine       equ 2
+Respawn_routine    equ 3
+Checkpoint_routine equ 4
 
 Player
         lda   player1+routine
@@ -29,6 +36,9 @@ Player
 Routines
         fdb   Init
         fdb   Live
+        fdb   Dead
+        fdb   Respawn
+        fdb   Checkpoint
 
 Init
         ldx   #Ani_Player1_init
@@ -214,12 +224,18 @@ destroy
         lda   #1
         sta   player1+AABB_0+AABB.p
 
-        ; hit sound
-        _soundFX.play soundFX.PlayerHitSound,$85
-
+ IFDEF invincible
         ; white screen border
         ldb   #1
         jsr   gfxlock.screenBorder.update
+ ELSE
+        _ymm.stop
+        _soundFX.play soundFX.PlayerHitSound,$85
+        ldd   #Ani_Player1_explode
+        std   anim,u
+        lda   #Dead_routine
+        sta   player1+routine
+ ENDC
         bra   display
 
 CheckRange
@@ -348,6 +364,29 @@ ApplyJoypadInput
         addd  2,x                                    ; load Y velocity
         std   player1+y_vel
         bra   @loop
+
+Dead
+        jsr   AnimateSpriteSync
+        jmp   DisplaySprite
+
+Respawn
+        lda   #Checkpoint_routine
+        sta   player1+routine
+        lda   #1
+        sta   checkpoint.state
+        jsr   Palette_FadeOut
+        jmp   DisplaySprite
+
+Checkpoint
+        ldu   #palettefade
+        lda   routine,u                ; is palette fade over ?
+        cmpa  #o_fade_routine_idle
+        bne   >
+        ldd   #Ani_Player1
+        std   anim,u
+        lda   #Live_routine
+        sta   player1+routine
+!       jmp   DisplaySprite
 
 ; Speed presets for player movement
 ; Each configuration contains only the 8 valid combinations
