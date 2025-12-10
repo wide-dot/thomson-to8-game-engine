@@ -96,6 +96,7 @@ YVGM_do_MusicFrame
         jmp   ,x
 !       lda   YVGM_loop
         beq   @no_looping
+YVGM_PlayMusicAtLoopPoint
         ldb   #1
         stb   YVGM_WaitFrame
         ldx   YVGM_MusicData
