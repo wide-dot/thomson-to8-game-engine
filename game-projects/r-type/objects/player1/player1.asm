@@ -1,3 +1,4 @@
+ opt c
 ; ---------------------------------------------------------------------------
 ; Object - Player
 ;
@@ -61,7 +62,7 @@ Init
 
         _Collision_AddAABB AABB_0,AABB_list_player
         
-        lda   #1                        ; set damage potential for this hitbox
+        lda   #127                      ; set weak hitbox type
         sta   player1+AABB_0+AABB.p
         _ldd  4,4                       ; set hitbox xy radius
         std   player1+AABB_0+AABB.rx
@@ -220,9 +221,11 @@ display
 !       rts
 
 destroy
-        ; reset damage potential
-        lda   #1
+        ; reset damage potential and beam charging value
+        lda   #127                      ; set weak hitbox type
         sta   player1+AABB_0+AABB.p
+        ldd   #0
+        std   player1+beam_value
 
  IFDEF invincible
         ; white screen border
@@ -235,6 +238,8 @@ destroy
         std   anim,u
         lda   #Dead_routine
         sta   player1+routine
+        lda   #1
+        sta   mainloop.sequence
  ENDC
         bra   display
 
@@ -370,8 +375,10 @@ Dead
         jmp   DisplaySprite
 
 Respawn
+        ; move to next routine
         lda   #Checkpoint_routine
         sta   player1+routine
+        ; invoke checkpoint in main loop
         lda   #1
         sta   checkpoint.state
         jsr   Palette_FadeOut
@@ -382,6 +389,7 @@ Checkpoint
         lda   routine,u                ; is palette fade over ?
         cmpa  #o_fade_routine_idle
         bne   >
+        clr   mainloop.sequence
         ldd   #Ani_Player1
         std   anim,u
         lda   #Live_routine
