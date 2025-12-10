@@ -114,7 +114,7 @@ LevelMainLoop
         cmpa  #o_fade_routine_idle
         bne   >
         jsr   checkpoint.load
-        _ymm.play
+        _ymm.restart
 !
         ; handle dead sequence
         lda   #0
