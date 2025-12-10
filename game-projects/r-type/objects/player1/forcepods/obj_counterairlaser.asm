@@ -120,7 +120,10 @@ InitFirstChild
         stb   AABB_0+AABB.cx,u
         std   xPosOld,u
         _Collision_AddAABB AABB_0,AABB_list_friend
-
+ IFDEF t2        
+        ldx   #counterAirImagesa
+        stx   anim,u
+ ENDC
         stu   parent,u                 ; set self as parent
         rts
 
@@ -164,6 +167,10 @@ GenChild
         pshs  u
         leau  ,x                       ; Collision routine use u as object pointer
         _Collision_AddAABB AABB_0,AABB_list_friend
+ IFDEF t2
+        ldx   #counterAirImages
+        stx   anim,u
+ ENDC        
         puls  u,pc
 
 LiveInit
@@ -266,7 +273,11 @@ Live
 !
         ; compute current frame
         lda   caFrame,u
+ IFDEF t2
+        ldx   anim,u
+ ELSE
         ldx   #counterAirImages
+ ENDC        
         asla
         ldx   a,x
         stx   image_set,u
@@ -293,6 +304,21 @@ counterAirImages
         fdb   0
         fdb   0
         fdb   0
+
+ IFDEF t2
+counterAirImagesa
+        fdb   Img_counterairlaser_7a
+        fdb   Img_counterairlaser_6a
+        fdb   Img_counterairlaser_5a
+        fdb   Img_counterairlaser_4a
+        fdb   Img_counterairlaser_3a
+        fdb   Img_counterairlaser_2a
+        fdb   Img_counterairlaser_1a
+        fdb   Img_counterairlaser_0a
+        fdb   0
+        fdb   0
+        fdb   0
+ ENDC
 
 counterAirHitboxes
         fcb   3,14

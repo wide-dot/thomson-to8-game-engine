@@ -7,6 +7,15 @@
 checkpoint.state fcb 0
 
 checkpoint.load
+        clrb
+        ldx   #checkpoint.positions
+@loop   lda   b,x
+        cmpa  scroll_tile_pos
+        bhi   >
+        incb
+        bra   @loop
+!       decb
+        lda   b,x
         sta   @a
         sta   @b
         clr   checkpoint.state
@@ -16,6 +25,7 @@ checkpoint.load
         jsr   ManagedObjects_ClearAll
         jsr   InitStack
         jsr   DisplaySprite_ClearAll
+        jsr   EraseSprites_ClearAll
         jsr   Collision_ClearLists
 ;
         ; clear the two screen buffers to black

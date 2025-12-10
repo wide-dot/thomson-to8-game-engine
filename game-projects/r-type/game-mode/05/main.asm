@@ -13,7 +13,8 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/objects/collision/terrainCollision.macro.asm"
         INCLUDE "./global/scale.asm"
         INCLUDE "./global/object.const.asm"
-        
+        INCLUDE "./engine/objects/sound/ymm/ymm.macro.asm"
+
 moveByScript.NEGXSTEP equ scale.XN1PX
 moveByScript.POSXSTEP equ scale.XP1PX
 moveByScript.NEGYSTEP equ scale.YN1PX
@@ -22,10 +23,6 @@ moveByScript.POSYSTEP equ scale.YP1PX
 map_width       equ 1152
 viewport_width  equ 144
 viewport_height equ 180
-
- ; checkpoint positions in 24px tiles
-CHECKPOINT_00      equ 0
-CHECKPOINT_01      equ 24
 
         org   $6100
         clr   NEXT_GAME_MODE
@@ -71,7 +68,6 @@ CHECKPOINT_01      equ 24
 
 ; init scroll
         jsr   InitScroll
-        lda   #CHECKPOINT_00
         jsr   checkpoint.load
 
 ; play music
@@ -103,19 +99,8 @@ LevelMainLoop
         lda   routine,u                ; is palette fade over ?
         cmpa  #o_fade_routine_idle
         bne   >
-        lda   #CHECKPOINT_01           ; yes load checkpoint
         jsr   checkpoint.load
 !
-; GETC may crash IRQ double buffering if used ($E7C3 update)
-;        jsr   KTST
-;        bcc   >
-;        jsr   GETC
-;        cmpb  #$41 ; touche A
-;        bne   >
-;        jsr   Palette_FadeOut
-;        lda   #1
-;        sta   checkpoint.state
-;!
         jsr   Scroll
         jsr   ObjectWave
 
@@ -227,6 +212,14 @@ Palette_FadeCallback
         rts
 
 * ---------------------------------------------------------------------------
+*  Checkpoint positions in 24px tiles
+* ---------------------------------------------------------------------------
+checkpoint.positions
+        fcb 0
+        fcb 35
+        fcb -1
+
+* ---------------------------------------------------------------------------
 * Game Mode RAM variables
 * ---------------------------------------------------------------------------
         INCLUDE "./game-mode/05/ram_data.asm"
@@ -281,6 +274,11 @@ Palette_FadeCallback
 
         ; random numbers
         INCLUDE "./engine/math/RandomNumber.asm"
+
+        ; music and sound fx
+        INCLUDE "./engine/sound/soundFX.data.asm"
+        INCLUDE "./engine/objects/sound/ymm/ymm.const.asm"
+        INCLUDE "./engine/objects/sound/ymm/ymm.data.asm"
 
         ; should be at the end of includes (ifdef dependencies)
         INCLUDE "./engine/InitGlobals.asm"

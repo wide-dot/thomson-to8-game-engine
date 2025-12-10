@@ -1,3 +1,5 @@
+ opt c
+
 DEBUG   equ     1
 SOUND_CARD_PROTOTYPE equ 1
 
@@ -13,7 +15,8 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/objects/collision/terrainCollision.macro.asm"
         INCLUDE "./global/scale.asm"
         INCLUDE "./global/object.const.asm"
-        
+        INCLUDE "./engine/objects/sound/ymm/ymm.macro.asm"
+                
 moveByScript.NEGXSTEP equ scale.XN1PX
 moveByScript.POSXSTEP equ scale.XP1PX
 moveByScript.NEGYSTEP equ scale.YN1PX
@@ -23,16 +26,13 @@ map_width       equ 1128
 viewport_width  equ 144
 viewport_height equ 180
 
- ; checkpoint positions in 24px tiles
-CHECKPOINT_00      equ 0
-CHECKPOINT_01      equ 24
-
         org   $6100
         clr   NEXT_GAME_MODE
         jsr   InitGlobals
-		jsr   InitDrawSprites
-        lda   #1
+	jsr   InitDrawSprites
+        lda   #0
         sta   globals.difficulty
+
         jsr   InitStack
         jsr   LoadAct
         jsr   InitJoypads
@@ -42,7 +42,7 @@ CHECKPOINT_01      equ 24
         ldd   #Pal_black
         std   Pal_current
         clr   PalRefresh
-	    jsr   PalUpdateNow
+	jsr   PalUpdateNow
 
 ; register animation data object
         ldb   #ObjID_animation
@@ -60,9 +60,6 @@ CHECKPOINT_01      equ 24
         _MountObject ObjID_LevelInit
         jsr   ,x
 
-        _MountObject ObjID_LevelInit_s
-        jsr   ,x
-
         _MountObject ObjID_LevelWave
         jsr   ,x
 
@@ -71,14 +68,13 @@ CHECKPOINT_01      equ 24
 
 ; init scroll
         jsr   InitScroll
-        lda   #CHECKPOINT_00
         jsr   checkpoint.load
 
 ; play music
         _MountObject ObjID_ymm02
         _MusicInit_objymm #0,#MUSIC_LOOP,#0
-        _MountObject ObjID_vgc02
-        _MusicInit_objvgc #0,#MUSIC_LOOP,#0
+        ;_MountObject ObjID_vgc02
+        ;_MusicInit_objvgc #0,#MUSIC_LOOP,#0
 
 ; init user irq
         jsr   IrqInit
@@ -103,19 +99,8 @@ LevelMainLoop
         lda   routine,u                ; is palette fade over ?
         cmpa  #o_fade_routine_idle
         bne   >
-        lda   #CHECKPOINT_01           ; yes load checkpoint
         jsr   checkpoint.load
 !
-; GETC may crash IRQ double buffering if used ($E7C3 update)
-;        jsr   KTST
-;        bcc   >
-;        jsr   GETC
-;        cmpb  #$41 ; touche A
-;        bne   >
-;        jsr   Palette_FadeOut
-;        lda   #1
-;        sta   checkpoint.state
-;!
         jsr   Scroll
         jsr   ObjectWave
 
@@ -123,6 +108,7 @@ LevelMainLoop
 
         _Collision_Do AABB_list_player,AABB_list_bonus
         _Collision_Do AABB_list_player,AABB_list_foefire
+        _Collision_Do AABB_list_player,AABB_list_ennemy_unkillable        
         _Collision_Do AABB_list_player,AABB_list_ennemy
 
         _Collision_Do AABB_list_forcepod,AABB_list_foefire
@@ -144,13 +130,14 @@ LevelMainLoop
         _gfxlock.off
         _gfxlock.loop
 
+        ; boss music
         lda  NEXT_GAME_MODE
         beq  >
         jsr   IrqOff
         _MountObject ObjID_ymm02
         _MusicInit_objymm #1,#MUSIC_LOOP,#0
-        _MountObject ObjID_vgc02
-        _MusicInit_objvgc #1,#MUSIC_LOOP,#0
+        ;_MountObject ObjID_vgc02
+        ;_MusicInit_objvgc #1,#MUSIC_LOOP,#0
         jsr   IrqOn
         clr   NEXT_GAME_MODE
 !
@@ -162,12 +149,14 @@ LevelMainLoop
 
 UserIRQ
         jsr   gfxlock.bufferSwap.check
-    	jsr   PalUpdateNow
+	jsr   PalUpdateNow
+        jsr   joypad.buffer.addDirection
         _MountObject ObjID_ymm02
         _MusicFrame_objymm
-        _MountObject ObjID_vgc02
-        _MusicFrame_objvgc
-        rts
+        ;_MountObject ObjID_vgc02
+        ;_MusicFrame_objvgc
+        _MountObject ObjID_soundFX
+        jmp   ,x ; call soundFX driver
 
 * ---------------------------------------------------------------------------
 * Collision_ClearLists
@@ -227,6 +216,14 @@ Palette_FadeCallback
         rts
 
 * ---------------------------------------------------------------------------
+*  Checkpoint positions in 24px tiles
+* ---------------------------------------------------------------------------
+checkpoint.positions
+        fcb 0
+        fcb 21
+        fcb -1
+
+* ---------------------------------------------------------------------------
 * Game Mode RAM variables
 * ---------------------------------------------------------------------------
         INCLUDE "./game-mode/02/ram_data.asm"
@@ -256,10 +253,10 @@ Palette_FadeCallback
         ; joystick
         INCLUDE "./engine/joypad/InitJoypads.asm"
         INCLUDE "./engine/joypad/ReadJoypads.asm"
+        INCLUDE "./engine/joypad/joypad.buffer.asm"
 
         ; object management
         INCLUDE "./engine/object-management/RunObjects.asm"
-        INCLUDE "./engine/object-management/ObjectMove.asm"
         INCLUDE "./engine/object-management/ObjectMoveSync.asm"
         INCLUDE "./engine/object-management/ObjectWave-subtype.asm"
         INCLUDE "./engine/object-management/ObjectDp.asm"
@@ -281,6 +278,11 @@ Palette_FadeCallback
 
         ; random numbers
         INCLUDE "./engine/math/RandomNumber.asm"
+
+        ; music and sound fx
+        INCLUDE "./engine/sound/soundFX.data.asm"
+        INCLUDE "./engine/objects/sound/ymm/ymm.const.asm"
+        INCLUDE "./engine/objects/sound/ymm/ymm.data.asm"
 
         ; should be at the end of includes (ifdef dependencies)
         INCLUDE "./engine/InitGlobals.asm"

@@ -56,7 +56,7 @@ AlreadyDeleted
 
 
 ImagesIndex
-        fdb   Img_tabrokmissileflame_0
-	fdb   Img_tabrokmissileflame_1
-	fdb   Img_tabrokmissileflame_2
-	fdb   Img_tabrokmissileflame_3
+        fdb   Img_missileflame_0
+	fdb   Img_missileflame_1
+	fdb   Img_missileflame_2
+	fdb   Img_missileflame_3

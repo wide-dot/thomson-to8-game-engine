@@ -22,6 +22,7 @@ kill_my_nok     equ  ext_variables+18
 current_p       equ  ext_variables+19
 angle_step equ 16
 center_of_circle equ 882
+invincible_full_potential equ $80
 
 ; child offsets
 
@@ -193,7 +194,7 @@ LiveContinue
         stb   AABB.cy,x
         lda   AABB.p,x
         beq   @destroy          ; was killed
-        cmpa  #255
+        cmpa  #invincible_full_potential
         beq   >
         sta   current_p,u
 !
@@ -212,19 +213,19 @@ LiveContinue
         bgt   @facingleft
         cmpy  x_pos,u           ; Canons facing right
         bgt   >
-        ldb   #255
+        ldb   #invincible_full_potential
 !
         stb   AABB.p,x
         jmp   DisplaySprite
 @facingleft
         cmpy  x_pos,u           ; Canons facing left
         blt   >
-        ldb   #255
+        ldb   #invincible_full_potential
 !
         stb   AABB.p,x
         jmp   DisplaySprite
 @destroy
-        ldb   #255
+        ldb   #invincible_full_potential
         stb   AABB.p,x
         lda   #4
         sta   routine,u

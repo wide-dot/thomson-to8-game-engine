@@ -1,5 +1,6 @@
 
         INCLUDE "./engine/macros.asm"
+        INCLUDE "./engine/objects/sound/ymm/ymm.const.asm"
 
         bmi   @update
         pshs  u
@@ -10,6 +11,7 @@
         stb   YVGM_loop
         stx   YVGM_MusicData
         sty   YVGM_callback            ; bind the callback routine
+@reset  
         _GetCartPageA
         sta   YVGM_MusicPage
         lda   #1
@@ -22,6 +24,20 @@
         puls  u,pc
 @update
         pshs  u
+        cmpb  #ymm.command.PLAY
+        beq   @run
+        cmpb  #ymm.command.STOP
+        jsr   ym2413.reset
+        beq   @rts
+ IFDEF ymm.command
+        lda   #ymm.command.PLAY
+        sta   ymm.command
+ ENDC
+        ldb   YVGM_loop
+        ldx   YVGM_MusicData
+        ldy   YVGM_callback       
+        bra   @reset
+@run    
         lda   YVGM_MusicStatus
         beq   @rts
         dec   YVGM_WaitFrame
@@ -29,6 +45,7 @@
         ldx   YVGM_MusicData
         beq   @rts
         jsr   YVGM_do_MusicFrame
-@rts    puls  u,pc
+@rts    
+        puls  u,pc
 
         INCLUDE "./engine/sound/YM2413vgm.asm"
