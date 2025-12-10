@@ -106,6 +106,7 @@ viewport_height equ 180
 LevelMainLoop
         jsr   ReadJoypads
 
+        ; handle checkpoint requests
         lda   checkpoint.state         ; load checkpoint requested ?
         beq   >
         ldu   #palettefade             ; yes check palette fade
@@ -113,20 +114,22 @@ LevelMainLoop
         cmpa  #o_fade_routine_idle
         bne   >
         jsr   checkpoint.load
+        _ymm.play
 !
+        ; handle dead sequence
+        lda   #0
+mainloop.sequence equ *-1
+        bne   @dead
         jsr   Scroll
         jsr   ObjectWave
-
         _Collision_Do AABB_list_friend,AABB_list_ennemy
-
         _Collision_Do AABB_list_player,AABB_list_bonus
         _Collision_Do AABB_list_player,AABB_list_foefire
         _Collision_Do AABB_list_player,AABB_list_ennemy_unkillable        
         _Collision_Do AABB_list_player,AABB_list_ennemy
-
         _Collision_Do AABB_list_forcepod,AABB_list_foefire
         _Collision_Do AABB_list_forcepod,AABB_list_ennemy
-
+@dead
         _RunObject ObjID_fade,#palettefade
         _RunObject ObjID_Player1,#player1
         jsr   RunObjects

@@ -92,11 +92,15 @@ Collision_Do_2 equ *-2
         bra   @continue
 !       cmpb  #127
         beq   @xWeak
+        cmpa  #127
+        beq   @uWeak
         clrb 
         suba  AABB.p,x
         bmi   @loose
 @win    sta   AABB.p,u                ; win or draw
         stb   AABB.p,x
+        bra   @continue
+@uWeak  clr   AABB.p,u                ; U is weak box, U Loose
         bra   @continue
 @loose  nega                          ; loose
         sta   AABB.p,x
