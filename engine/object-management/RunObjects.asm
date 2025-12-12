@@ -63,6 +63,17 @@ object_list_next equ   *-2
         bne   <
         rts
 
+RunFrozenObjects
+        ldu   object_list_first
+        beq   @rts
+!       lda   render_flags,u
+        anda  #^render_hide_mask       ; unset hide flag
+        sta   render_flags,u
+        ldu   run_object_next,u        ; do not remove: child object created by last object
+        bne   <                        ; have been added to the list
+@rts    rts   
+
+
 LoadObject_u
         ldu STACK_POINTER              ; is there a free slot ?
         cmpu #STACK_SLOT_ADDRESS_END   ; 

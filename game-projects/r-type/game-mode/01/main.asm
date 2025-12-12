@@ -94,7 +94,6 @@ viewport_height equ 180
 * ---------------------------------------------------------------------------
 * INIT PLAYER 1 ANIMATION
 * ---------------------------------------------------------------------------
-
         jsr   LoadObject_x
         lda   #ObjID_initlevel1
         sta   id,x  
@@ -119,7 +118,7 @@ LevelMainLoop
         ; handle dead sequence
         lda   #0
 mainloop.sequence equ *-1
-        bne   @dead
+        bne  >
         jsr   Scroll
         jsr   ObjectWave
         _Collision_Do AABB_list_friend,AABB_list_ennemy
@@ -129,11 +128,18 @@ mainloop.sequence equ *-1
         _Collision_Do AABB_list_player,AABB_list_ennemy
         _Collision_Do AABB_list_forcepod,AABB_list_foefire
         _Collision_Do AABB_list_forcepod,AABB_list_ennemy
-@dead
+!
         _RunObject ObjID_fade,#palettefade
         _RunObject ObjID_Player1,#player1
+
+        lda   mainloop.sequence
+        bne  >
         jsr   RunObjects
+        bra   @endif
+!       jsr   RunFrozenObjects
+@endif
         jsr   CheckSpritesRefresh
+
         _gfxlock.on
         jsr   EraseSprites
         jsr   UnsetDisplayPriority
@@ -201,7 +207,7 @@ Palette_FadeIn
         std   o_fade_src,u
         ldd   #Pal_game
         std   o_fade_dst,u
-        lda   #6
+        lda   #4
         sta   o_fade_wait,u
         ldd   #Palette_FadeCallback
         std   o_fade_callback,u
