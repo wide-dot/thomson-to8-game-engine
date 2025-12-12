@@ -19,14 +19,16 @@
         INCLUDE "./engine/objects/sound/ymm/ymm.macro.asm"
         
 AABB_0           equ ext_variables     ; AABB struct (9 bytes)
+
 ply_width        equ 12/2
 ply_height       equ 16/2
 
 Init_routine       equ 0
-Live_routine       equ 1
-Dead_routine       equ 2
-Respawn_routine    equ 3
-Checkpoint_routine equ 4
+LiveBlink_routine  equ 1
+Live_routine       equ 2
+Dead_routine       equ 3
+Respawn_routine    equ 4
+Checkpoint_routine equ 5
 
 Player
         lda   player1+routine
@@ -36,6 +38,7 @@ Player
 
 Routines
         fdb   Init
+        fdb   LiveBlink
         fdb   Live
         fdb   Dead
         fdb   Respawn
@@ -58,7 +61,8 @@ Init
         lda   player1+render_flags
         ora   #render_playfieldcoord_mask
         sta   player1+render_flags
-        inc   player1+routine
+        lda   #Live_routine
+        sta   player1+routine
 
         _Collision_AddAABB AABB_0,AABB_list_player
         
@@ -70,6 +74,24 @@ Init
         ldd   #$F
         std   player1+flashemitteroffset
 
+        ldx   AnimationSet
+        cmpx  #Player1_AnimationSet_Normal
+        beq   Live
+        ldx   #Player1_AnimationSet_Blink
+        stx   AnimationSet
+        lda   #LiveBlink_routine
+        sta   player1+routine
+
+LiveBlink
+        ; player is invincible during fade in
+        ldx   #palettefade
+        lda   routine,x
+        cmpa  #o_fade_routine_idle
+        bne   Live
+        lda   #Live_routine
+        sta   player1+routine
+        ldx   #Player1_AnimationSet_Normal
+        stx   AnimationSet
 Live
         ldd   glb_camera_x_pos
         subd  glb_camera_x_pos_old
@@ -224,14 +246,19 @@ destroy
         ; reset damage potential and beam charging value
         lda   #127                      ; set weak hitbox type
         sta   player1+AABB_0+AABB.p
-        ldd   #0
-        std   player1+beam_value
+
+        ; player is invincible during blink / fade in
+        ldx   AnimationSet
+        cmpx  #Player1_AnimationSet_Blink
+        beq   display
 
  IFDEF invincible
         ; white screen border
         ldb   #1
         jsr   gfxlock.screenBorder.update
  ELSE
+        ldd   #0
+        std   player1+beam_value
         _ymm.stop
         _soundFX.play soundFX.PlayerHitSound,$85
         ldd   #Ani_Player1_explode
@@ -292,6 +319,7 @@ ApplyJoypadInput
         ldd   #0                ; reset velocities to 0
         std   player1+x_vel
         std   player1+y_vel
+        ldy   AnimationSet
 
 @loop   jsr   joypad.buffer.getDirection
         cmpa  #$FF
@@ -300,18 +328,18 @@ ApplyJoypadInput
         ldd   player1+y_vel              ; load y velocity
         bgt   @moveDown                  ; if positive, moving down
         blt   @moveUp                    ; if negative, moving up
-        ldx   #Ani_Player1               ; neutral position
+        ldx   ,y                         ; neutral position
         bra   @setAnim
 @moveDown
-        ldx   #Ani_Player1_down         ; downward animation
+        ldx   4,y                        ; downward animation
         bra   @setAnim
 @moveUp
-        ldx   #Ani_Player1_up           ; upward animation
+        ldx   2,y                        ; upward animation
 @setAnim
-        stx   player1+anim              ; store animation pointer
+        stx   player1+anim               ; store animation pointer
         rts
 !
-        anda  #c1_dpad                               ; mask only direction bits for joypad 1
+        anda  #c1_dpad                   ; mask only direction bits for joypad 1
         beq   @loop
         ; Convert joypad bits to table offset using binary logic
         ; Input bits: RLDU (Right Left Down Up)
@@ -385,16 +413,27 @@ Respawn
         jmp   DisplaySprite
 
 Checkpoint
-        ldu   #palettefade
-        lda   routine,u                ; is palette fade over ?
+        ldx   #palettefade
+        lda   routine,x                ; is palette fade over ?
         cmpa  #o_fade_routine_idle
         bne   >
+        ldx   #Player1_AnimationSet_Blink
+        stx   AnimationSet
         clr   mainloop.sequence
-        ldd   #Ani_Player1
-        std   anim,u
-        lda   #Live_routine
-        sta   player1+routine
 !       jmp   DisplaySprite
+
+AnimationSet
+        fdb   Player1_AnimationSet_Normal
+
+Player1_AnimationSet_Normal
+        fdb   Ani_Player1
+        fdb   Ani_Player1_up
+        fdb   Ani_Player1_down
+
+Player1_AnimationSet_Blink        
+        fdb   Ani_Player1_blink
+        fdb   Ani_Player1_blink_up
+        fdb   Ani_Player1_blink_down
 
 ; Speed presets for player movement
 ; Each configuration contains only the 8 valid combinations
