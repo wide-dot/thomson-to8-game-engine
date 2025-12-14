@@ -41,6 +41,7 @@
 *
 ********************************************************************************
 WaitVBL
+        pshs  d
  ifdef DO_NOT_WAIT_VBL
         ldd   gfxlock.frame.count
         subd  gfxlock.frame.lastCount
@@ -85,8 +86,7 @@ am_SwapVideoPage
 
         ldd   gfxlock.frame.count
         std   gfxlock.frame.lastCount
-
-        rts
+        puls  d,pc
         
 gfxlock.bufferSwap.count  fdb   0 ; page swap counter
 gfxlock.frame.count       fdb   0 ; incremented in 50Hz IRQ

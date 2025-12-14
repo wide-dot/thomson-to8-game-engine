@@ -1,10 +1,8 @@
 * ---------------------------------------------------------------------------
 * Game_Checkpoint
-*
-* A blank palette is expected on entry (any color)
-* A = final position in map (in 24px tiles)
+* Move to previous checkpoint position, based on scroll position
 * ---------------------------------------------------------------------------
-mainloop.state   fcb 0
+        INCLUDE "./engine/macros.asm"
 
 checkpoint.load
         clrb
@@ -18,7 +16,6 @@ checkpoint.load
         lda   b,x
         sta   @a
         sta   @b
-        clr   mainloop.state  
 ;
         ; clear object data
         jsr   ObjectDp_Clear
@@ -49,6 +46,8 @@ checkpoint.load
         jsr   Palette_FadeIn
 ;
         ; set object wave position based on new camera position
+        ldd   #$0000
+        std   gfxlock.frameDrop.count_w
         lda   #128
         ldb   #0
 @b      equ   *-1

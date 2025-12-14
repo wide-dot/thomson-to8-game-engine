@@ -191,3 +191,14 @@ _breakpoint MACRO
         puls  CC
  ENDC
  ENDM
+
+_waitFrames MACRO
+       lda   \1
+@l1    tst   $E7E7 ; beam is not in the screen
+       bpl   @l1   ; until the bit is 0 loop
+@l2    tst   $E7E7 ; beam is in the screen
+       bmi   @l2   ; until the bit is 1 loop
+       deca
+       bne   @l1
+ ENDM
+ 
