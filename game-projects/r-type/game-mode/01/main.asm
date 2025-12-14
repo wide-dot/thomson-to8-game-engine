@@ -16,6 +16,7 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./global/scale.asm"
         INCLUDE "./global/object.const.asm"
         INCLUDE "./engine/objects/sound/ymm/ymm.macro.asm"
+        INCLUDE "./objects/messages/messages.const.asm"
 
 timestamp.DELETE_ALIEN_BODY equ $1D80
 timestamp.ERASE_NERV_START equ $2000
@@ -73,8 +74,9 @@ viewport_height equ 180
 
 ; init scroll
         jsr   InitScroll
-        jsr   checkpoint.load
-
+        _MountObject ObjID_checkpoint
+        jsr   ,x
+        
 ; play music
         _MountObject ObjID_ymm01
         _MusicInit_objymm #0,#MUSIC_LOOP,#0  ; initialize the YM2413 player 
@@ -103,22 +105,23 @@ viewport_height equ 180
 * ---------------------------------------------------------------------------
 
 LevelMainLoop
-        jsr   ReadJoypads
+        lda   mainloop.state
+        ldx   #mainloop.routines
+        jmp   [a,x]
 
-        ; handle checkpoint requests
-        lda   checkpoint.state         ; load checkpoint requested ?
-        beq   >
-        ldu   #palettefade             ; yes check palette fade
-        lda   routine,u                ; is palette fade over ?
-        cmpa  #o_fade_routine_idle
-        bne   >
-        jsr   checkpoint.load
-        _ymm.restart
-!
-        ; handle dead sequence
-        lda   #0
-mainloop.sequence equ *-1
-        bne  >
+mainloop.state.RUNNING    equ 0
+mainloop.state.DEAD       equ 2
+mainloop.state.CHECKPOINT equ 4
+mainloop.state
+        fcb 0
+
+mainloop.routines
+        fdb   mainloop.routine.running
+        fdb   mainloop.routine.dead
+        fdb   mainloop.routine.checkpoint
+
+mainloop.routine.running
+        jsr   ReadJoypads
         jsr   Scroll
         jsr   ObjectWave
         _Collision_Do AABB_list_friend,AABB_list_ennemy
@@ -128,19 +131,12 @@ mainloop.sequence equ *-1
         _Collision_Do AABB_list_player,AABB_list_ennemy
         _Collision_Do AABB_list_forcepod,AABB_list_foefire
         _Collision_Do AABB_list_forcepod,AABB_list_ennemy
-!
         _RunObject ObjID_fade,#palettefade
         _RunObject ObjID_Player1,#player1
-
-        lda   mainloop.sequence
-        bne  >
         jsr   RunObjects
-        bra   @endif
-!       jsr   RunFrozenObjects
-@endif
         jsr   CheckSpritesRefresh
 
-        _gfxlock.on
+        jsr   gfxlock.on
         jsr   EraseSprites
         jsr   UnsetDisplayPriority
         jsr   DrawTiles
@@ -149,8 +145,8 @@ mainloop.sequence equ *-1
         jsr   ,x
         _MountObject ObjID_hud
         jsr   ,x
-        _gfxlock.off
-        _gfxlock.loop
+        jsr   gfxlock.off
+        jsr   gfxlock.loop
 
         ; boss music
         lda  NEXT_GAME_MODE
@@ -163,8 +159,83 @@ mainloop.sequence equ *-1
         jsr   IrqOn
         clr   NEXT_GAME_MODE
 !
-
         jmp   LevelMainLoop
+
+mainloop.routine.dead
+        ldd   #$0000
+        std   scroll_vel
+        _RunObject ObjID_fade,#palettefade
+        _RunObject ObjID_Player1,#player1
+        jsr   RunFrozenObjects
+        jsr   CheckSpritesRefresh
+        jsr   gfxlock.on
+        jsr   EraseSprites
+        jsr   UnsetDisplayPriority
+        jsr   DrawTiles
+        jsr   DrawSprites
+        _MountObject ObjID_Mask
+        jsr   ,x
+        _MountObject ObjID_hud
+        jsr   ,x
+        jsr   gfxlock.off
+        jsr   gfxlock.loop
+        jmp   LevelMainLoop
+
+mainloop.routine.checkpoint
+        jsr   Palette_FadeOut
+@loop   ; wait for fade out to finish
+        _RunObject ObjID_fade,#palettefade
+        jsr   gfxlock.on
+        jsr   gfxlock.off
+        jsr   gfxlock.loop
+        ldu   #palettefade
+        lda   routine,u
+        cmpa  #o_fade_routine_idle
+        bne   @loop
+
+        _waitFrames #25
+        ldx   #$0000
+        jsr   ClearDataMem
+        _MountObject ObjID_messages
+        ldb   #messages.READY
+        jsr   ,x
+        clra                           ; switch to 320x200x16c mode
+        sta   $E7DC
+        ldd   #Pal_messages
+        std   Pal_current
+        clr   PalRefresh
+	jsr   PalUpdateNow             ; message is now visible on screen
+        _waitFrames #50
+        ldd   #Pal_black
+        std   Pal_current
+        clr   PalRefresh
+	jsr   PalUpdateNow             ; black out the message
+        lda   #$7B                     * switch to 160x200x16c mode
+        sta   $E7DC
+        ldd   #$0030
+        std   scroll_vel
+        _MountObject ObjID_checkpoint
+        jsr   ,x
+
+        ; reset Player one ...
+        clr   player1+routine
+
+        _ymm.restart
+        lda   #mainloop.state.RUNNING
+        sta   mainloop.state
+        jmp   LevelMainLoop
+
+gfxlock.on
+        _gfxlock.on
+        rts
+
+gfxlock.off
+        _gfxlock.off
+        rts
+
+gfxlock.loop
+        _gfxlock.loop
+        rts
 
 * ---------------------------------------------------------------------------
 * MAIN IRQ
@@ -209,6 +280,8 @@ Palette_FadeIn
         std   o_fade_dst,u
         lda   #4
         sta   o_fade_wait,u
+        ldd   #0
+        std   o_fade_sleep,u
         ldd   #Palette_FadeCallback
         std   o_fade_callback,u
         rts
@@ -226,6 +299,8 @@ Palette_FadeOut
         ldd   #Pal_black
         std   o_fade_dst,u
         clr   o_fade_wait,u
+        ldd   #0
+        std   o_fade_sleep,u
         ldd   #Palette_FadeCallback
         std   o_fade_callback,u
         rts
@@ -273,7 +348,6 @@ checkpoint.positions
 * ---------------------------------------------------------------------------
 * CUSTOM routines
 * ---------------------------------------------------------------------------
-        INCLUDE "./global/checkpoint.asm"
         INCLUDE "./global/moveXPos8.8.asm"
         INCLUDE "./global/moveYPos8.8.asm"
         INCLUDE "./global/projectile.asm"

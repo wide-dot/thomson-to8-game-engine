@@ -27,8 +27,7 @@ Init_routine       equ 0
 LiveBlink_routine  equ 1
 Live_routine       equ 2
 Dead_routine       equ 3
-Respawn_routine    equ 4
-Checkpoint_routine equ 5
+End_routine        equ 4
 
 Player
         lda   player1+routine
@@ -41,8 +40,7 @@ Routines
         fdb   LiveBlink
         fdb   Live
         fdb   Dead
-        fdb   Respawn
-        fdb   Checkpoint
+        fdb   End        
 
 Init
         ldx   #Ani_Player1_init
@@ -265,8 +263,8 @@ destroy
         std   anim,u
         lda   #Dead_routine
         sta   player1+routine
-        lda   #1
-        sta   mainloop.sequence
+        lda   #mainloop.state.DEAD
+        sta   mainloop.state
  ENDC
         bra   display
 
@@ -402,25 +400,12 @@ Dead
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
 
-Respawn
-        ; move to next routine
-        lda   #Checkpoint_routine
-        sta   player1+routine
-        ; invoke checkpoint in main loop
-        lda   #1
-        sta   checkpoint.state
-        jsr   Palette_FadeOut
-        jmp   DisplaySprite
-
-Checkpoint
-        ldx   #palettefade
-        lda   routine,x                ; is palette fade over ?
-        cmpa  #o_fade_routine_idle
-        bne   >
+End
         ldx   #Player1_AnimationSet_Blink
         stx   AnimationSet
-        clr   mainloop.sequence
-!       jmp   DisplaySprite
+        lda   #mainloop.state.CHECKPOINT
+        sta   mainloop.state
+        rts
 
 AnimationSet
         fdb   Player1_AnimationSet_Normal

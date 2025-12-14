@@ -1,4 +1,6 @@
 ; Checkpoints locations
+; unused, keep for reference only
+; values are set in main.asm of each game mode
 
 ; stage 1
 	fdb   $0000 ; $0600

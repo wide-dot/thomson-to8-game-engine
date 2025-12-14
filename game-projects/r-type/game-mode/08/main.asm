@@ -88,7 +88,7 @@ viewport_height equ 18
 LevelMainLoop
         jsr   ReadJoypads
 
-        lda   checkpoint.state          ; load checkpoint requested ?
+        lda   mainloop.state            ; load checkpoint requested ?
         beq   >
         ldu   #palettefade             ; yes check palette fade
         lda   routine,u                ; is palette fade over ?

@@ -179,6 +179,9 @@ DrawTiles
         lda   #0
         sta   glb_Page
 
+        _GetCartPageA
+        sta   DrawTiles.restoredPage
+
         ; compute number of tiles to render
         ; add one tile col when camera pos is not a multiple of tile size
         ; ---------------------------------------------------------------------
@@ -260,7 +263,10 @@ start_pos equ *-2
 scroll_mc_step equ *-1
         sty   start_pos
         bra   scroll_cloop             ; loop until the end
-@rts    rts
+@rts    lda   #0
+DrawTiles.restoredPage equ *-1
+        _SetCartPageA
+        rts
 
 empty_tile
         lda   tile_buffer_page
