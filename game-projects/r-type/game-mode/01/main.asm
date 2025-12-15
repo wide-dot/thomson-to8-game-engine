@@ -33,6 +33,7 @@ viewport_width  equ 144
 viewport_height equ 180
 
         org   $6100
+Level01_Start
         clr   NEXT_GAME_MODE
         jsr   InitGlobals
 	jsr   InitDrawSprites
@@ -197,8 +198,16 @@ mainloop.routine.checkpoint
         ldx   #$0000
         jsr   ClearDataMem
         _MountObject ObjID_messages
+        dec   lives+1
+        bmi   >
         ldb   #messages.READY
         jsr   ,x
+        bra   @displaymessage
+!       ldb   #messages.GAME
+        jsr   ,x
+!       ldb   #messages.OVER
+        jsr   ,x
+@displaymessage
         clra                           ; switch to 320x200x16c mode
         sta   $E7DC
         ldd   #Pal_messages
@@ -214,12 +223,18 @@ mainloop.routine.checkpoint
         sta   $E7DC
         ldd   #$0030
         std   scroll_vel
-        _MountObject ObjID_checkpoint
-        jsr   ,x
-
-        _ymm.restart
         lda   #mainloop.state.RUNNING
         sta   mainloop.state
+        tst   lives+1
+        bpl   >
+        jsr   IrqOff
+        jmp   Level01_Start           ; GAME OVER: restart level 1
+!       
+        _MountObject ObjID_checkpoint ; READY: load checkpoint
+        jsr   ,x
+        lda   #1
+        sta   player1+subtype         ; player one blink mode / invincibility
+        _ymm.restart
         jmp   LevelMainLoop
 
 gfxlock.on
@@ -264,52 +279,32 @@ Collision_ClearLists
         rts
 
 * ---------------------------------------------------------------------------
-* Palette_FadeIn
+* Palette fade routines
 *
 * ---------------------------------------------------------------------------
 
 Palette_FadeIn
         ldu   #palettefade
+        ldx   #Pal_game
+        lda   #4
+Palette_FadeCommon
         clr   routine,u
+        stx   o_fade_dst,u
+        sta   o_fade_wait,u
         ldd   Pal_current
         std   o_fade_src,u
-        ldd   #Pal_game
-        std   o_fade_dst,u
-        lda   #4
-        sta   o_fade_wait,u
         ldd   #0
         std   o_fade_sleep,u
         ldd   #Palette_FadeCallback
         std   o_fade_callback,u
+Palette_FadeCallback
         rts
-
-* ---------------------------------------------------------------------------
-* Palette_FadeOut
-*
-* ---------------------------------------------------------------------------
 
 Palette_FadeOut
         ldu   #palettefade
-        clr   routine,u
-        ldd   Pal_current
-        std   o_fade_src,u
-        ldd   #Pal_black
-        std   o_fade_dst,u
+        ldx   #Pal_black
         lda   #1
-        sta   o_fade_wait,u
-        ldd   #0
-        std   o_fade_sleep,u
-        ldd   #Palette_FadeCallback
-        std   o_fade_callback,u
-        rts
-
-* ---------------------------------------------------------------------------
-* Palette_FadeCallback
-*
-* ---------------------------------------------------------------------------
-
-Palette_FadeCallback
-        rts
+        bra   Palette_FadeCommon
 
 * ---------------------------------------------------------------------------
 * followDobkeratops

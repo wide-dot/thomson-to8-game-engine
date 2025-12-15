@@ -3,11 +3,12 @@
 ; input REG : [B] message index
 ; ---------------------------------------------------------------------------
 
+        pshs  d,x,y,u
         ldu   #bm4.images
         aslb
         ldu   b,u
-        ldy   #$C000        ; video ram
-        leay  128/8+94*40,y ; position : x=128 px, y=94 px
+        ldy   #bm4.positions
+        ldy   b,y
         jsr   bm4.drawChunks
 
         ; draw color mask
@@ -34,7 +35,12 @@
         lda   #0
 @bytes  equ   *-1
         bra   @row
-!       rts
+!       puls  d,x,y,u,pc
+
+bm4.positions
+        fdb   $C000+128/8+94*40 ; position : x=128 px, y=94 px
+        fdb   $C000+88/8+94*40
+        fdb   $C000+184/8+94*40
 
 bm4.images
         fdb   bm4.img.ready

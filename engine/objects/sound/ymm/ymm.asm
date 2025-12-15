@@ -8,6 +8,10 @@
         asla
         ldx   a,x
 @init
+ IFDEF ymm.command
+        lda   #ymm.command.PLAY
+        sta   ymm.command
+ ENDC
         stb   YVGM_loop
         stx   YVGM_MusicData
         sty   YVGM_callback            ; bind the callback routine

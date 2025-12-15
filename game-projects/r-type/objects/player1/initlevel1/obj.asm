@@ -33,7 +33,7 @@ LevelInitPhase0
         inc   routine,u
         lda   #50
         sta   LevelInitPhase0_a
-        lda   #$FF
+        lda   #-1
         sta   player1+subtype  
 LevelInitPhase0Live
         lda   #0
@@ -45,7 +45,7 @@ LevelInitPhase0_a equ *-1
 
 LevelInitPhase1
         inc   routine,u
-        lda   #$01
+        lda   #-2
         sta   player1+subtype  
 
         ; Load engine flames
