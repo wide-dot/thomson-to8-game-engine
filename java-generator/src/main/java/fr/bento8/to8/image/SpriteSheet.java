@@ -24,7 +24,8 @@ public class SpriteSheet {
 	// Thomson TO8/TO9+
 	// Mode 160x200 en seize couleurs sans contraintes
 	
-	private static final Logger logger = LogManager.getLogger("log");	
+	private static final Logger logger = LogManager.getLogger("log");
+	private static int debugFileCounter = 0; // Compteur pour les fichiers de debug
 	
 	private BufferedImage image;
 	private String name;
@@ -274,7 +275,8 @@ public class SpriteSheet {
 		        
 		    	image = indexedImage;				
 				
-		        File outputfile = new File(Game.generatedCodeDirNameDebug+Paths.get(sprite.spriteFile).getFileName().toString()+"_"+FileUtil.removeExtension(Paths.get(fileRef[0]).getFileName().toString())+"_diff.png");
+		        debugFileCounter++;
+		        File outputfile = new File(Game.generatedCodeDirNameDebug+String.format("%04d_", debugFileCounter)+Paths.get(sprite.spriteFile).getFileName().toString()+"_"+FileUtil.removeExtension(Paths.get(fileRef[0]).getFileName().toString())+"_diff.png");
 		        ImageIO.write(image, "png", outputfile);
 		        
                 // merge images to get the new reference
@@ -316,7 +318,8 @@ public class SpriteSheet {
 		    		}
 		    	}
 		    	
-		        File outputfile2 = new File(Game.generatedCodeDirNameDebug+Paths.get(sprite.spriteFile).getFileName().toString()+"_"+FileUtil.removeExtension(Paths.get(fileRef[0]).getFileName().toString())+".png");
+		        debugFileCounter++;
+		        File outputfile2 = new File(Game.generatedCodeDirNameDebug+String.format("%04d_", debugFileCounter)+Paths.get(sprite.spriteFile).getFileName().toString()+"_"+FileUtil.removeExtension(Paths.get(fileRef[0]).getFileName().toString())+".png");
 		        ImageIO.write(mergedImage, "png", outputfile2);
 		        		        
 		        sprite.associatedIdx = new String(String.format("$%02X", coloridx[0] << 6 | coloridx[1] << 4 | coloridx[2] << 2 | coloridx[3]));
@@ -342,7 +345,8 @@ public class SpriteSheet {
 			            }
 			        }
 			        
-			        File outputfile = new File(Game.generatedCodeDirNameDebug+Paths.get(sprite.spriteFile).getFileName().toString()+"_"+FileUtil.removeExtension(Paths.get(fileRef[0]).getFileName().toString())+"_diff.png");
+			        debugFileCounter++;
+			        File outputfile = new File(Game.generatedCodeDirNameDebug+String.format("%04d_", debugFileCounter)+Paths.get(sprite.spriteFile).getFileName().toString()+"_"+FileUtil.removeExtension(Paths.get(fileRef[0]).getFileName().toString())+"_diff.png");
 			        ImageIO.write(image, "png", outputfile);
 				}
 			}

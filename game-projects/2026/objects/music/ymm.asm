@@ -1,0 +1,8 @@
+
+        INCLUDE "./engine/objects/sound/ymm/ymm.asm"
+
+Snd_index
+        fdb   Snd_2026
+
+Snd_2026
+        INCLUDEBIN "./objects/music/2026.ymm

@@ -11,6 +11,7 @@
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./objects/explosion/explosion.const.asm"
+        INCLUDE "./global/projectile.macro.asm"
 
 AABB_0          equ  ext_variables     ; AABB struct (9 bytes)
 angle           equ  ext_variables+9   ; 8.8
@@ -88,8 +89,11 @@ cur_angle equ *-2
         bne   >
         ldb   #1
         stb   subtype,x
-!       deca
-        sta   childs
+!       ldu   #ShellParameters
+        ldb   a,u
+        leau  ,x
+        _loadFirePreset
+        dec   childs
         bne   @loop
 @nomore
         ldu   #0
@@ -184,6 +188,8 @@ LiveContinue
         subd  glb_camera_x_pos
         subd  #55+8
         stb   AABB.cx,x
+        jsr   tryFoeFire
+        leax  AABB_0,u          ; restore x pointer
         ldy   #YPositions
         ldb   angle,u
         ldb   b,y
@@ -879,3 +885,7 @@ YPositions equ *+128 ; signed offset
         fcb   $41
         fcb   $41
         fcb   $41
+
+ShellParameters
+;        fcb   $00,$10,$00,$00,$30,$10,$00,$00,$00,$10,$00,$00,$00,$20,$00,$00 ; last two unused as w have 14 shells instead of 16, but their fire is off, great ...
+        fcb   $20,$00,$00,$00,$10,$00,$00,$00,$10,$30,$00,$00,$10,$00,$00,$00 ; shell are created in reverse order, not like arcade
