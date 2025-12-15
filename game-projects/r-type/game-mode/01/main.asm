@@ -162,8 +162,6 @@ mainloop.routine.running
         jmp   LevelMainLoop
 
 mainloop.routine.dead
-        ldd   #$0000
-        std   scroll_vel
         _RunObject ObjID_fade,#palettefade
         _RunObject ObjID_Player1,#player1
         jsr   RunFrozenObjects
@@ -171,7 +169,6 @@ mainloop.routine.dead
         jsr   gfxlock.on
         jsr   EraseSprites
         jsr   UnsetDisplayPriority
-        jsr   DrawTiles
         jsr   DrawSprites
         _MountObject ObjID_Mask
         jsr   ,x
@@ -179,6 +176,9 @@ mainloop.routine.dead
         jsr   ,x
         jsr   gfxlock.off
         jsr   gfxlock.loop
+        _waitFrames #83
+        lda   #mainloop.state.CHECKPOINT
+        sta   mainloop.state
         jmp   LevelMainLoop
 
 mainloop.routine.checkpoint
@@ -193,7 +193,7 @@ mainloop.routine.checkpoint
         cmpa  #o_fade_routine_idle
         bne   @loop
 
-        _waitFrames #25
+        _waitFrames #40
         ldx   #$0000
         jsr   ClearDataMem
         _MountObject ObjID_messages
@@ -216,9 +216,6 @@ mainloop.routine.checkpoint
         std   scroll_vel
         _MountObject ObjID_checkpoint
         jsr   ,x
-
-        ; reset Player one ...
-        clr   player1+routine
 
         _ymm.restart
         lda   #mainloop.state.RUNNING
@@ -298,7 +295,8 @@ Palette_FadeOut
         std   o_fade_src,u
         ldd   #Pal_black
         std   o_fade_dst,u
-        clr   o_fade_wait,u
+        lda   #1
+        sta   o_fade_wait,u
         ldd   #0
         std   o_fade_sleep,u
         ldd   #Palette_FadeCallback
