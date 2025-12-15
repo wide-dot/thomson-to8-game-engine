@@ -44,11 +44,7 @@ Routines
 
 Init
         ldx   #Ani_Player1_init
-        lda   player1+subtype
-        bne   >
-        ldx   #Ani_Player1
-!
-        stx   player1+anim
+        stx   player1+anim         ; will be overwritten by LiveBlink or Live if not in specific level 1 initphase
         ldb   #3
         stb   player1+priority
         ldd   #60
@@ -72,9 +68,11 @@ Init
         ldd   #$F
         std   player1+flashemitteroffset
 
-        ldx   AnimationSet
-        cmpx  #Player1_AnimationSet_Normal
-        beq   Live
+        ldx   #Player1_AnimationSet_Normal
+        stx   AnimationSet
+        lda   player1+subtype  
+        cmpa  #1
+        bne   Live
         ldx   #Player1_AnimationSet_Blink
         stx   AnimationSet
         lda   #LiveBlink_routine
@@ -98,7 +96,7 @@ Live
         std   player1+x_pos
 !
         lda   player1+subtype
-        lbne  SkipPlayer1Controls
+        lbmi  SkipPlayer1Controls      ; negative means player is not controlled
         jsr   ApplyJoypadInput
 @testFire
         ; press fire
@@ -235,11 +233,12 @@ SkipPlayer1Controls
         jsr   gfxlock.screenBorder.update
 
 display
-        ldb   player1+subtype            ; If bit 7 is 1, don't show player1
-        bmi   >
+        ldb   player1+subtype            ; If -1, don't show player1
+        cmpb  #-1
+        beq   >
         jmp   DisplaySprite
 !       rts
-
+        
 destroy
         ; reset damage potential and beam charging value
         lda   #127                      ; set weak hitbox type
@@ -401,8 +400,8 @@ Dead
         jmp   DisplaySprite
 
 End
-        ldx   #Player1_AnimationSet_Blink
-        stx   AnimationSet
+        lda   #1
+        sta   player1+subtype                        ; set blink mode
         lda   #mainloop.state.DEAD
         sta   mainloop.state
         jmp   DisplaySprite
