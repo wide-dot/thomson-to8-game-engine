@@ -51,7 +51,7 @@ Init
         stx   player1+anim
         ldb   #3
         stb   player1+priority
-        ldd   #20
+        ldd   #60
         addd  glb_camera_x_pos
         std   player1+x_pos
         ldd   #93
@@ -263,8 +263,8 @@ destroy
         std   anim,u
         lda   #Dead_routine
         sta   player1+routine
-        lda   #mainloop.state.DEAD
-        sta   mainloop.state
+        ldd   #$0000
+        std   scroll_vel
  ENDC
         bra   display
 
@@ -403,9 +403,9 @@ Dead
 End
         ldx   #Player1_AnimationSet_Blink
         stx   AnimationSet
-        lda   #mainloop.state.CHECKPOINT
+        lda   #mainloop.state.DEAD
         sta   mainloop.state
-        rts
+        jmp   DisplaySprite
 
 AnimationSet
         fdb   Player1_AnimationSet_Normal
