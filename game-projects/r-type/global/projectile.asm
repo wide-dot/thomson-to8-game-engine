@@ -5,8 +5,17 @@
 ; --------------
 ;
 ; -----------------------------------------------------------------------------
-
+tryFoeFireShell
+        clra                           ; no display delay
+        ldx   #circleCenter
+        stx   FoeFireTarget
+        bra   tryFoeFireCommon
 tryFoeFire ; 0xfa3a
+        lda   #3
+        ldx   #player1
+        stx   FoeFireTarget
+tryFoeFireCommon        
+        sta   fireDisplayDelay,u
         ldb   fireThreshold,u
         stb   @b
         ldd   fireCounter,u
@@ -32,3 +41,12 @@ LAB_0000_fa50
         ldd   Obj_Index_Address+2*ObjID_createFoeFire
         std   PSR_Address                  
         jmp   RunPgSubRoutine
+
+FoeFireTarget
+        fdb   0
+circleCenter equ *-x_pos
+circleCenter.x_pos
+        fdb   882 ; x_pos
+        fcb   0   ; subpixel
+circleCenter.y_pos
+        fdb   101  ; y_pos

@@ -12,9 +12,13 @@ createFoeFire
         ldd   x_pos,u
         std   x_pos,x
         ldd   y_pos,u
-        std   y_pos,x
+        ldy   FoeFireTarget
+        cmpy  #circleCenter
+        bne   >
+        subd  #9
+!       std   y_pos,x
         stx   @x
-        ldx   #player1
+        ldx   FoeFireTarget
         jsr   setDirectionTo           ; return value is y += (0-63) (16 direction presets)
         ldx   #0
 @x      equ   *-2
@@ -28,7 +32,7 @@ createFoeFire
         std   x_vel,x
         ldd   2,y
         std   y_vel,x
-        lda   #3
+        lda   fireDisplayDelay,u
         sta   fireDisplayDelay,x
 LAB_0000_fa93
         rts

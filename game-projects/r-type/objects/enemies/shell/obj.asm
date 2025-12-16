@@ -21,12 +21,12 @@ dad_ptr         equ  ext_variables+15
 is_destroyed    equ  ext_variables+17
 kill_my_nok     equ  ext_variables+18
 current_p       equ  ext_variables+19
-angle_step equ 16
-center_of_circle equ 882
+
+angle_step                equ 16
 invincible_full_potential equ $80
+ShellGateIn               equ 840 ; x_pos
 
 ; child offsets
-
 parent         equ  ext_variables
 old_pos_0      equ  ext_variables+2
 old_pos_1      equ  ext_variables+4
@@ -63,7 +63,6 @@ CreateChilds
         ora   #render_overlay_mask
         sta   render_flags,u
         jsr   LoadObject_x             ; create shell object
-        ; background object
         beq   @nomore
         stx   parent,u
         stu   child_ptr,x
@@ -138,7 +137,7 @@ Live
         ldx   #Images
 LiveContinue
         lda   gfxlock.frameDrop.count
-        ldb   #$60
+        ldb   #$64
         mul
         addd  angle,u
         std   angle,u
@@ -179,7 +178,7 @@ LiveContinue
         ldb   angle,u
         ldb   b,x
         sex
-        addd  #center_of_circle ; x center of circle
+        addd  circleCenter.x_pos
         std   x_pos,u
         leax  AABB_0,u
         addd  #55+8             ; circle 2*x_radius + max sprite radius in any positions
@@ -188,16 +187,22 @@ LiveContinue
         subd  glb_camera_x_pos
         subd  #55+8
         stb   AABB.cx,x
-        jsr   tryFoeFire
-        leax  AABB_0,u          ; restore x pointer
         ldy   #YPositions
         ldb   angle,u
         ldb   b,y
         sex
-        addd  #101               ; y center of circle
+        addd  circleCenter.y_pos
         std   y_pos,u
         subd  glb_camera_y_pos
         stb   AABB.cy,x
+;
+        ; check if player one entered the shell circle
+        ldx   #ShellGateIn
+        cmpx  player1+x_pos
+        bhi   >
+        jsr   tryFoeFireShell
+!       leax  AABB_0,u          ; restore x pointer
+;
         lda   AABB.p,x
         beq   @destroy          ; was killed
         cmpa  #invincible_full_potential
@@ -284,7 +289,7 @@ AlreadyDeleted
         rts
 Destroyed
         lda   gfxlock.frameDrop.count
-        ldb   #$60
+        ldb   #$64
         mul
         addd  angle,u
         std   angle,u
@@ -292,7 +297,7 @@ Destroyed
         ldb   angle,u
         ldb   b,x
         sex
-        addd  #center_of_circle ; x center of circle
+        addd  circleCenter.x_pos
         std   x_pos,u
         leax  AABB_0,u
         addd  #55+8             ; circle 2*x_radius + max sprite radius in any positions
@@ -305,7 +310,7 @@ Destroyed
         ldb   angle,u
         ldb   b,y
         sex
-        addd  #101               ; y center of circle
+        addd  circleCenter.y_pos
         std   y_pos,u
         subd  glb_camera_y_pos
         stb   AABB.cy,x
