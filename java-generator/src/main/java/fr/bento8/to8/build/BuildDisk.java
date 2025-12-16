@@ -876,6 +876,8 @@ public class BuildDisk
 		if (obj.imageSet.uncompressedSize > 0) {
 			prepend = "\torg   $A000\n"; // dummy
 			prepend += "\tsetdp $FF\n";
+			// Évite l'adresse $0000 : ajoute un octet au début pour que les images ne commencent jamais à $0000
+			prepend += "\tfcb   $00\n";
 			objectCodeTmpFile = duplicateFilePrepend(Game.generatedCodeDirName + obj.name + "/" + obj.imageSet.fileName, imgSetDir + "/", prepend);
 			compileRAW(objectCodeTmpFile, UNDEFINED);
 			obj.imageSet.bin = Files.readAllBytes(Paths.get(getBINFileName(objectCodeTmpFile)));
@@ -1810,6 +1812,8 @@ public class BuildDisk
 		if (obj.imageSet.uncompressedSize > 0) {
 			prepend = "\torg   $" + String.format("%1$04X", imgSetAddress) + "\n";
 			prepend += "\tsetdp $FF\n";
+			// Évite l'adresse $0000 : ajoute un octet au début pour que les images ne commencent jamais à $0000
+			prepend += "\tfcb   $00\n";
 			objectCodeTmpFile = duplicateFilePrepend(Game.generatedCodeDirName + imgSetDir + "/" + obj.imageSet.fileName, imgSetDir + "/", prepend);
 			compileRAW(objectCodeTmpFile, mode);
 			obj.imageSet.bin = Files.readAllBytes(Paths.get(getBINFileName(objectCodeTmpFile)));
