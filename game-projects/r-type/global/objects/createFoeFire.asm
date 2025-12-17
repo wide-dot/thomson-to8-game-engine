@@ -12,11 +12,7 @@ createFoeFire
         ldd   x_pos,u
         std   x_pos,x
         ldd   y_pos,u
-        ldy   FoeFireTarget
-        cmpy  #circleCenter
-        bne   >
-        subd  #9
-!       std   y_pos,x
+        std   y_pos,x
         stx   @x
         ldx   FoeFireTarget
         jsr   setDirectionTo           ; return value is y += (0-63) (16 direction presets)
