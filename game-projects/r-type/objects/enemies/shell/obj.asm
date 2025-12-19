@@ -20,7 +20,7 @@ son_ptr         equ  ext_variables+13
 dad_ptr         equ  ext_variables+15
 is_destroyed    equ  ext_variables+17
 kill_my_nok     equ  ext_variables+18
-current_p       equ  ext_variables+19
+potential_set   equ  ext_variables+19
 
 angle_step                equ 16
 invincible_full_potential equ $80
@@ -115,13 +115,10 @@ Init
         _Collision_AddAABB AABB_0,AABB_list_ennemy
         
         leax  AABB_0,u
-        lda   #1                       ; set damage potential for this hitbox
-        ldb   subtype,u
-        beq   >
-        lda   #2
-!
+        lda   #invincible_full_potential
         sta   AABB.p,x
-        sta   current_p,u
+        lda   #0
+        sta   potential_set,u
         _ldd  7,17                     ; set hitbox xy radius
         std   AABB.rx,x
 
@@ -155,25 +152,6 @@ LiveContinue
         anda  #%00011110
         ldx   a,x
         stx   image_set,u
-        sta   @a
-; do the maths
-;        ldb   angle,u
-;        jsr   CalcSine
-;        stx   @x
-;        ldx   #40           ; circle radius
-;        jsr   Mul9x16
-;        addd  #916          ; x center of circle
-;        std   x_pos,u
-;        addd  #40*2+14/2
-;        cmpd  glb_camera_x_pos
-;        ble   >
-;        ldd   #0
-;@x      equ *-2
-;        ldx   #56           ; circle radius
-;        jsr   Mul9x16
-;        addd  #82           ; y center of circle
-;        std   y_pos,u
-; or precalc positions
         ldx   #XPositions
         ldb   angle,u
         ldb   b,x
@@ -197,43 +175,29 @@ LiveContinue
         stb   AABB.cy,x
 ;
         ; check if player one entered the shell circle
-        ldx   #ShellGateIn
-        cmpx  player1+x_pos
+        ldy   #ShellGateIn
+        cmpy  player1+x_pos
         bhi   >
-        jsr   tryFoeFireShell
-!       leax  AABB_0,u          ; restore x pointer
+        tst   potential_set,u
+        bne   @try
+        inc   potential_set,u ; reset lock
+        lda   #6              ; if gate reached, shell are weak
+        ldb   subtype,u
+        beq   @blue           ; beq if shell with blue eye
+        lda   #2
+@blue   sta   AABB.p,x        ; reset potential
+@try    jsr   tryFoeFireShell ; if gate reached, fire !
+!      
+        leax  AABB_0,u        ; restore x pointer
 ;
         lda   AABB.p,x
-        beq   @destroy          ; was killed
-        cmpa  #invincible_full_potential
-        beq   >
-        sta   current_p,u
-!
+        beq   @destroy        ; was killed
         lda   kill_my_nok,u
         bita  #$03
         bne   @destroy
         asra
         asra
         sta   kill_my_nok,u
-        ldb   current_p,u
-        ldy   player1+x_pos     ; Starts testing if shell is vulnerable
-        lda   subtype,u
-        lda   #0                ; Contains current image number
-@a      equ   *-1
-        cmpa  #14
-        bgt   @facingleft
-        cmpy  x_pos,u           ; Canons facing right
-        bgt   >
-        ldb   #invincible_full_potential
-!
-        stb   AABB.p,x
-        jmp   DisplaySprite
-@facingleft
-        cmpy  x_pos,u           ; Canons facing left
-        blt   >
-        ldb   #invincible_full_potential
-!
-        stb   AABB.p,x
         jmp   DisplaySprite
 @destroy
         ldb   #invincible_full_potential
