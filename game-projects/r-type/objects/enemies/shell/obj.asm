@@ -84,11 +84,8 @@ cur_angle equ *-2
         lda   #1
         sta   routine,x
         lda   childs
-        cmpa  #11
-        bne   >
-        ldb   #1
-        stb   subtype,x
-!       ldu   #ShellParameters
+        sta   subtype,x
+        ldu   #ShellParameters
         ldb   a,u
         leau  ,x
         _loadFirePreset
@@ -124,7 +121,8 @@ Init
 
 
         lda   subtype,u
-        beq   >
+        cmpa  #11
+        bne   >
         lda   #3
         sta   routine,u
         bra   LiveEye
@@ -174,6 +172,46 @@ LiveContinue
         subd  glb_camera_y_pos
         stb   AABB.cy,x
 ;
+        ; update invisible collision tiles
+        lda   subtype,u
+        cmpa  #14
+        bne   >
+        lda   angle,u         ; last shell open the gate
+        bmi   >
+        lda   y_pos+1,u       ; transform y into tile index
+        suba  #11+5*6         ; tiles to update begins at 5 tiles from the top of the screen
+        bmi   >
+        cmpa  #20*6           ; 20 tiles to animate
+        bge   >
+        ldb   #43
+        mul                   ; divide A by 6
+        clrb                  ; b loaded with mask value => change with clr instead
+        asla
+        ldx   #gateTiles.offsets
+        ldx   a,x             ; x loaded with offset value
+        lda   #1              ; 1 = foreground
+        jsr   terrainCollision.update
+!
+        lda   subtype,u
+        cmpa  #1
+        bne   >
+        lda   angle,u         ; last shell open the gate
+        bmi   >
+        lda   y_pos+1,u       ; transform y into tile index
+        suba  #11+5*6         ; tiles to update begins at 5 tiles from the top of the screen
+        bmi   >
+        cmpa  #20*6           ; 20 tiles to animate
+        bge   >
+        ldb   #43
+        mul                   ; divide A by 6
+        ldx   #gateTiles.mask
+        ldb   a,x             ; b loaded with mask value => change with clr instead
+        asla
+        ldx   #gateTiles.offsets
+        ldx   a,x             ; x loaded with offset value
+        lda   #1              ; 1 = foreground
+        jsr   terrainCollision.update
+!
         ; check if player one entered the shell circle
         ldy   #ShellGateIn
         cmpy  player1+x_pos
@@ -183,6 +221,7 @@ LiveContinue
         inc   potential_set,u ; reset lock
         lda   #6              ; if gate reached, shell are weak
         ldb   subtype,u
+        cmpb  #11
         beq   @blue           ; beq if shell with blue eye
         lda   #2
 @blue   sta   AABB.p,x        ; reset potential
@@ -216,7 +255,8 @@ LiveContinue
         std   y_pos,x
 !
         lda   subtype,u
-        beq   >
+        cmpa  #11
+        bne   >
         ldx   dad_ptr,u         ; The eye sends the order to destroy his direct son and dad
         ldb   #4                ; =4 => Next of kin to kill is dad
         stb   kill_my_nok,x
@@ -858,3 +898,46 @@ YPositions equ *+128 ; signed offset
 ShellParameters
 ;        fcb   $00,$10,$00,$00,$30,$10,$00,$00,$00,$10,$00,$00,$00,$20,$00,$00 ; last two unused as w have 14 shells instead of 16, but their fire is off, great ...
         fcb   $20,$00,$00,$00,$10,$00,$00,$00,$10,$30,$00,$00,$10,$00,$00,$00 ; shell are created in reverse order, not like arcade
+
+gateTiles.offsets
+        fdb   35+5*66
+        fdb   35+6*66
+        fdb   34+7*66
+        fdb   34+8*66
+        fdb   34+9*66
+        fdb   34+10*66
+        fdb   34+11*66
+        fdb   34+12*66
+        fdb   34+13*66
+        fdb   34+14*66
+        fdb   34+15*66
+        fdb   34+16*66
+        fdb   34+17*66
+        fdb   34+18*66
+        fdb   34+19*66
+        fdb   34+20*66
+        fdb   34+21*66
+        fdb   34+22*66
+        fdb   35+23*66
+        fdb   35+24*66
+gateTiles.mask
+        fcb   %10000000
+        fcb   %10000000
+        fcb   %00000001
+        fcb   %00000010
+        fcb   %00000010
+        fcb   %00000010
+        fcb   %00000100
+        fcb   %00000100
+        fcb   %00000100
+        fcb   %00000100
+        fcb   %00000100
+        fcb   %00000100
+        fcb   %00000100
+        fcb   %00000100
+        fcb   %00000010
+        fcb   %00000010
+        fcb   %00000010
+        fcb   %00000001
+        fcb   %10000000
+        fcb   %10000000

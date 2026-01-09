@@ -40,3 +40,20 @@ terrainCollision.main.xAxis.doLeft.address equ *-2
 @page   equ *-1
         _SetCartPageA
         rts
+
+terrainCollision.update
+        sta   @a
+        _GetCartPageA
+        sta   @page
+        lda   #0
+terrainCollision.main.update.page equ *-1
+        _SetCartPageA
+        lda   #0
+@a   equ *-1
+        jsr   >0
+terrainCollision.main.update.address equ *-2
+        lda   #0
+@page   equ *-1
+        _SetCartPageA
+        rts
+

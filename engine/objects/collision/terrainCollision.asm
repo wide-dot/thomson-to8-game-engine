@@ -12,6 +12,7 @@
         jmp   terrainCollision.checkPosition
         jmp   terrainCollision.checkXaxisRight
         jmp   terrainCollision.checkXaxisLeft
+        jmp   terrainCollision.updateByte
 
 terrainCollision.loadMap
         ldx   #terrainCollision.maps
@@ -327,3 +328,14 @@ terrainCollision.xMask equ *-8 ; minus horizontal viewport position
         fcb   $04,$04,$04
         fcb   $02,$02,$02
         fcb   $01,$01,$01
+
+terrainCollision.updateByte
+        ldy   #terrainCollision.maps
+        asla
+        stb   @b
+        ldd   a,y ; load adress of terrain collision bitfield in d
+        leax  d,x ; add offset (position) already loaded in x 
+        ldb   #0
+@b      equ   *-1        
+        stb   ,x  ; update bitfield with new value
+        rts
