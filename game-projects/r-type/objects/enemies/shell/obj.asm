@@ -179,7 +179,7 @@ LiveContinue
         lda   angle,u         ; last shell open the gate
         bmi   >
         lda   y_pos+1,u       ; transform y into tile index
-        suba  #11+5*6         ; tiles to update begins at 5 tiles from the top of the screen
+        suba  #22-6+5*6         ; tiles to update begins at 5 tiles from the top of the screen
         bmi   >
         cmpa  #20*6           ; 20 tiles to animate
         bge   >
@@ -198,7 +198,7 @@ LiveContinue
         lda   angle,u         ; last shell open the gate
         bmi   >
         lda   y_pos+1,u       ; transform y into tile index
-        suba  #11+5*6         ; tiles to update begins at 5 tiles from the top of the screen
+        suba  #11+6+5*6        ; tiles to update begins at 5 tiles from the top of the screen
         bmi   >
         cmpa  #20*6           ; 20 tiles to animate
         bge   >
