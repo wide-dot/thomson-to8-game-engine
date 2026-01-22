@@ -47,6 +47,7 @@ import fr.bento8.to8.InstructionSet.Register;
 import fr.bento8.to8.audio.Sound;
 import fr.bento8.to8.audio.SoundBin;
 import fr.bento8.to8.boot.Bootloader;
+import fr.bento8.to8.build.ObjectBin;
 import fr.bento8.to8.compiledSprite.backupDrawErase.AssemblyGenerator;
 import fr.bento8.to8.compiledSprite.draw.SimpleAssemblyGenerator;
 import fr.bento8.to8.image.Animation;
@@ -72,6 +73,7 @@ import fr.bento8.to8.storage.T2Util;
 import fr.bento8.to8.util.FileUtil;
 import fr.bento8.to8.util.LWASMUtil;
 import fr.bento8.to8.util.knapsack.Item;
+import fr.bento8.to8.util.knapsack.ItemBin;
 import fr.bento8.to8.util.knapsack.Knapsack;
 import fr.bento8.to8.util.knapsack.Solution;
 import zx0.Compressor;
@@ -1263,21 +1265,27 @@ public class BuildDisk
 						currentItem.bin.dataIndex.get(gm).fd_ram_address = rImg.endAddress[rImg.curPage];
 						rImg.setDataAtCurPos(currentItem.bin.bin);
 						currentItem.bin.dataIndex.get(gm).fd_ram_endAddress = rImg.endAddress[rImg.curPage];
-						logger.debug("\t\t\tItem: "+currentItem.name+" FD "+currentItem.bin.dataIndex.get(gm).fd_ram_page+" "+String.format("$%1$04X", currentItem.bin.dataIndex.get(gm).fd_ram_address)+" "+String.format("$%1$04X", currentItem.bin.dataIndex.get(gm).fd_ram_endAddress-1));
+						String filePath = getItemBinFilePath(currentItem.bin);
+						String fileInfo = filePath != null ? " (" + filePath + ")" : "";
+						logger.debug("\t\t\tItem: "+currentItem.name+" FD "+currentItem.bin.dataIndex.get(gm).fd_ram_page+" "+String.format("$%1$04X", currentItem.bin.dataIndex.get(gm).fd_ram_address)+" "+String.format("$%1$04X", currentItem.bin.dataIndex.get(gm).fd_ram_endAddress-1)+fileInfo);
 
 					} else if (rImg.mode == BuildDisk.MEGAROM_T2) {
 						currentItem.bin.dataIndex.get(gm).t2_ram_page = rImg.curPage;
 						currentItem.bin.dataIndex.get(gm).t2_ram_address = rImg.endAddress[rImg.curPage];
 						rImg.setDataAtCurPos(currentItem.bin.bin);
 						currentItem.bin.dataIndex.get(gm).t2_ram_endAddress = rImg.endAddress[rImg.curPage];
-						logger.debug("\t\t\tItem: "+currentItem.name+" T2 "+currentItem.bin.dataIndex.get(gm).t2_ram_page+" "+String.format("$%1$04X", currentItem.bin.dataIndex.get(gm).t2_ram_address)+" "+String.format("$%1$04X", currentItem.bin.dataIndex.get(gm).t2_ram_endAddress-1));
+						String filePath = getItemBinFilePath(currentItem.bin);
+						String fileInfo = filePath != null ? " (" + filePath + ")" : "";
+						logger.debug("\t\t\tItem: "+currentItem.name+" T2 "+currentItem.bin.dataIndex.get(gm).t2_ram_page+" "+String.format("$%1$04X", currentItem.bin.dataIndex.get(gm).t2_ram_address)+" "+String.format("$%1$04X", currentItem.bin.dataIndex.get(gm).t2_ram_endAddress-1)+fileInfo);
 					}
 
 				} else {
 					int startAddress = rImg.curAddress;
 					rImg.endAddress[rImg.curPage] += currentItem.weight;
 					rImg.curAddress = rImg.endAddress[rImg.curPage] + 1;
-					logger.debug("\t\t\tItem: "+currentItem.name+" "+rImg.curPage+" "+String.format("$%1$04X", startAddress)+" "+String.format("$%1$04X", rImg.curAddress-1));
+					String filePath = getItemBinFilePath(currentItem.bin);
+					String fileInfo = filePath != null ? " (" + filePath + ")" : "";
+					logger.debug("\t\t\tItem: "+currentItem.name+" "+rImg.curPage+" "+String.format("$%1$04X", startAddress)+" "+String.format("$%1$04X", rImg.curAddress-1)+fileInfo);
 				}
 
 				// construit la liste des éléments restants à organiser
@@ -1482,7 +1490,9 @@ public class BuildDisk
 				game.romT2.setDataAtCurPos(currentItem.bin.bin);
 				currentItem.bin.t2_endAddress = game.romT2.endAddress[game.romT2.curPage];
 
-				logger.debug("Item: "+currentItem.name+" T2 ROM "+currentItem.bin.t2_page+" "+String.format("$%1$04X", currentItem.bin.t2_address)+" "+String.format("$%1$04X", currentItem.bin.t2_endAddress-1));
+				String filePath = getItemBinFilePath(currentItem.bin);
+				String fileInfo = filePath != null ? " (" + filePath + ")" : "";
+				logger.debug("Item: "+currentItem.name+" T2 ROM "+currentItem.bin.t2_page+" "+String.format("$%1$04X", currentItem.bin.t2_address)+" "+String.format("$%1$04X", currentItem.bin.t2_endAddress-1)+fileInfo);
 
 				// construit la liste des éléments restants à organiser
 				for (int i = 0; i < items.length; i++) {
@@ -2017,7 +2027,9 @@ public class BuildDisk
 				game.romT2.setDataAtCurPos(((RAMLoaderIndex) currentItem.bin).encBin);
 				currentItem.bin.getRAMLoaderIndex().t2_endAddress = game.romT2.endAddress[game.romT2.curPage];
 
-				logger.debug("Item: "+currentItem.name+" T2 ROM "+currentItem.bin.getRAMLoaderIndex().t2_page+" "+String.format("$%1$04X", currentItem.bin.getRAMLoaderIndex().t2_address) + " " + String.format("$%1$04X", currentItem.bin.getRAMLoaderIndex().t2_endAddress-1));
+				String filePath = getItemBinFilePath(currentItem.bin);
+				String fileInfo = filePath != null ? " (" + filePath + ")" : "";
+				logger.debug("Item: "+currentItem.name+" T2 ROM "+currentItem.bin.getRAMLoaderIndex().t2_page+" "+String.format("$%1$04X", currentItem.bin.getRAMLoaderIndex().t2_address) + " " + String.format("$%1$04X", currentItem.bin.getRAMLoaderIndex().t2_endAddress-1)+fileInfo);
 
 				// Update all identical index on other GameModes
 				for (RAMLoaderIndex di : currentItem.bin.getRAMLoaderIndex().rli) {
@@ -3584,5 +3596,62 @@ public class BuildDisk
 		List<Integer> ret = new ArrayList<>(toExclusive-from);
 		for(int i=from; i<toExclusive; ++i) ret.add(i);
 		return ret;
+	}
+	
+	/**
+	 * Obtient le chemin relatif du fichier source pour un ItemBin donné.
+	 * @param bin L'ItemBin pour lequel obtenir le chemin
+	 * @return Le chemin relatif du fichier, ou null si non disponible
+	 */
+	private static String getItemBinFilePath(ItemBin bin) {
+		if (bin == null) {
+			return null;
+		}
+		
+		// Pour ObjectBin, on peut obtenir le chemin via l'objet parent
+		if (bin instanceof ObjectBin) {
+			ObjectBin objBin = (ObjectBin) bin;
+			Object obj = objBin.getObject();
+			if (obj != null && obj.fileName != null) {
+				try {
+					Path filePath = Paths.get(obj.fileName);
+					// Si le chemin est déjà relatif, le retourner tel quel
+					if (!filePath.isAbsolute()) {
+						return filePath.toString().replace('\\', '/');
+					}
+					// Sinon, essayer de le rendre relatif au répertoire de travail
+					Path currentDir = Paths.get(System.getProperty("user.dir"));
+					try {
+						Path relativePath = currentDir.relativize(filePath);
+						return relativePath.toString().replace('\\', '/');
+					} catch (IllegalArgumentException e) {
+						// Si les chemins ne sont pas sur le même système de fichiers, retourner le chemin absolu
+						return filePath.toString().replace('\\', '/');
+					}
+				} catch (Exception e) {
+					// Si le calcul du chemin relatif échoue, retourner le chemin tel quel
+					return obj.fileName.replace('\\', '/');
+				}
+			}
+		}
+		
+		// Pour ImageSetBin et AnimationBin, on peut essayer de trouver l'objet parent
+		if (bin instanceof ImageSetBin || bin instanceof AnimationBin) {
+			// Ces bins sont généralement associés à un objet, mais on n'a pas de référence directe
+			// On retourne le nom du fichier si disponible
+			if (bin instanceof ImageSetBin) {
+				ImageSetBin imgBin = (ImageSetBin) bin;
+				if (imgBin.fileName != null) {
+					return imgBin.fileName;
+				}
+			} else if (bin instanceof AnimationBin) {
+				AnimationBin aniBin = (AnimationBin) bin;
+				if (aniBin.fileName != null) {
+					return aniBin.fileName;
+				}
+			}
+		}
+		
+		return null;
 	}
 }

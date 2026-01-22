@@ -16,6 +16,10 @@
 ;$01,$8C,ObjID_32,$00,$0E
 ;$01,$8C,ObjID_32,$00,$0F
 
+	; temp for test
+ 	fcb   $01,$C0,ObjID_pow,$00,$06
+	fcb   $01,$C1,ObjID_pow,$00,$04
+
  	fcb   $01,$F8,ObjID_patapata,$00,$04
  	fcb   $02,$06,ObjID_patapata,$00,$03
  	fcb   $02,$1A,ObjID_patapata,$00,$05

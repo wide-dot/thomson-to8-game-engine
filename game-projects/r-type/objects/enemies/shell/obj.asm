@@ -191,6 +191,7 @@ LiveContinue
         ldx   a,x             ; x loaded with offset value
         lda   #1              ; 1 = foreground
         jsr   terrainCollision.update
+        leax  AABB_0,u        ; restore x pointer
 !
         lda   subtype,u
         cmpa  #1
@@ -211,6 +212,7 @@ LiveContinue
         ldx   a,x             ; x loaded with offset value
         lda   #1              ; 1 = foreground
         jsr   terrainCollision.update
+        leax  AABB_0,u        ; restore x pointer
 !
         ; check if player one entered the shell circle
         ldy   #ShellGateIn
@@ -226,9 +228,8 @@ LiveContinue
         lda   #2
 @blue   sta   AABB.p,x        ; reset potential
 @try    jsr   tryFoeFireShell ; if gate reached, fire !
-!      
         leax  AABB_0,u        ; restore x pointer
-;
+!      
         lda   AABB.p,x
         beq   @destroy        ; was killed
         lda   kill_my_nok,u

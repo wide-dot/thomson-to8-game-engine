@@ -292,31 +292,20 @@ Live
         rts
 @reboundlaser
         jsr   LoadObject_x
-        lbeq  >                             
+        beq  >                             
         lda   #ObjID_forcepod_reboundlaser  
         sta   id,x
-        ldd   x_pos,u
-        std   x_pos,x
-        ldd   y_pos,u
-        std   y_pos,x
-        lda   #$05
+        lda   hooked_status,u
         sta   subtype,x
-        jsr   LoadObject_x
-        lbeq  >                             
-        lda   #ObjID_forcepod_reboundlaser  
-        sta   id,x
-        ldd   x_pos,u
+        ldd   player1+x_pos
         std   x_pos,x
-        ldd   y_pos,u
+        ldd   player1+y_pos
         std   y_pos,x
-        lda   #$85
-        sta   subtype,x
 !       
-        ldb   #canshootreboundlasertiming
+        ldb   #1 ; handled by obj_reboundlaser
         stb   canshootweapon,u
         rts
 @shootlaser
-        jmp   @counterairlaser ; only counter air available at the moment
         lda   player1+forcepodtype
         beq   @reboundlaser
         cmpa  #2
@@ -324,7 +313,6 @@ Live
 @countergroundlaser
         rts
 @counterairlaser
-        ldd   glb_camera_x_pos
         jsr   LoadObject_x
         beq   >                             
         lda   #ObjID_forcepod_counterairlaser
