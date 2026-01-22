@@ -19,7 +19,7 @@ hooked_status     equ ext_variables+10 ; Byte (0=Not hooked, 4=hooked front, 5=h
 hookzoneignore    equ ext_variables+11 ; Byte
 canshootweapon    equ ext_variables+12 ; Byte
 
-canshootreboundlasertiming equ 20
+canshootreboundlasertiming equ 4
 canshootcounterairlasertiming equ 4
 neartrackingzonex equ 4
 neartrackingzoney equ 1
@@ -302,7 +302,7 @@ Live
         ldd   player1+y_pos
         std   y_pos,x
 !       
-        ldb   #1 ; handled by obj_reboundlaser
+        ldb   #canshootreboundlasertiming ; handled by obj_reboundlaser
         stb   canshootweapon,u
         rts
 @shootlaser

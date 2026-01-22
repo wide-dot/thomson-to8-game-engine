@@ -18,14 +18,14 @@
 
 AABB_0        equ ext_variables    ; AABB struct (9 bytes)
 direction     equ ext_variables+9  ; 1 byte, diagonal: 0=upright, 2=downright, 4=downleft, 6=upleft - horizontal: 0=right, 2=left
-startDelay    equ ext_variables+10 ; 1 byte, start delay in frames before the laser starts moving
-lateFrames    equ startDelay       ; alias for startDelay
+; free slot equ ext_variables+10 ; 1 byte
 laserLifetime equ ext_variables+11 ; 1 byte, number of frames the laser is active
 slotMask      equ ext_variables+12 ; 1 byte, mask to set/free slot occupation
 parent        equ ext_variables+13 ; 2 bytes, parent object pointer (0=no parent, head of laser)
 childId       equ ext_variables+15 ; 1 byte, index of the child laser (0=first child, 1=second child, ...)
-bufferBase    equ ext_variables+16 ; 2 bytes, index of the position buffer (aligned to 16 bytes)
-bufferIndex   equ ext_variables+18 ; 1 byte, index in the 16 bytes buffer (0,2,4,6,8,10,12,14)
+isLastChild   equ ext_variables+16 ; 1 byte, 1=last child, 0=not last child
+bufferBase    equ ext_variables+17 ; 2 bytes, index of the position buffer (aligned to 16 bytes)
+bufferIndex   equ ext_variables+19 ; 1 byte, index in the 16 bytes buffer (0,2,4,6,8,10,12,14)
 
 LASER_LIFETIME equ $70 ; 112 frames
 
@@ -49,21 +49,20 @@ Object
 
 Routines
         fdb   Orchestrate
-        fdb   WaitForStart
+        fdb   StartLaser
         fdb   RunHorizontalLaser
         fdb   RunDiagonalLaser
         fdb   RunExplosion
         fdb   DoubleBufferingFlush
 
 Rtn_Orchestrate          equ 0
-Rtn_WaitForStart         equ 1
+Rtn_StartLaser           equ 1
 Rtn_RunHorizontalLaser   equ 2
 Rtn_RunDiagonalLaser     equ 3
 Rtn_RunExplosion         equ 4
 Rtn_DoubleBufferingFlush equ 5
 
 glb.loopCounter    fcb 0
-glb.startDelay     fcb 0
 glb.childId        fcb 0
 glb.slotsState     fcb 0 ; bit0=up, bit1=center, bit2=down
 glb.frameDrop      fcb 0
@@ -84,7 +83,7 @@ Orchestrate
         lda   glb.slotsState
         cmpa  #7 ; if all 3 lasers are active, do not initiate a new one
         bne   >
-        rts
+        jmp   DeleteObject
 !
         ; precompute position for all segments
         ldd   x_pos,u
@@ -98,20 +97,20 @@ Orchestrate
 
         ; initiate the lasers
         lda   glb.slotsState
-        anda  #SLOT_UP
-        bne   >
+        anda  #SLOT_UP                ; is slot up active?
+        bne   >                       ; if yes, skip
         ldd   #glb.diagonalUpBuffer
         std   glb.diagonalBuffer
         lda   #LASER_RIGHT_UP
         ldb   #SLOT_UP
         jsr   InitiateDiagonalLaser
-!       lda   glb.slotsState
-        anda  #SLOT_CENTER
+!       lda   glb.slotsState          ; is slot center active?
+        anda  #SLOT_CENTER            ; if yes, skip
         bne   >
         ldb   #SLOT_CENTER
         jsr   InitiateHorizontalLaser
-!       lda   glb.slotsState
-        anda  #SLOT_DOWN
+!       lda   glb.slotsState          ; is slot down active?
+        anda  #SLOT_DOWN              ; if yes, skip
         bne   >
         ldd   #glb.diagonalDownBuffer
         std   glb.diagonalBuffer        
@@ -132,50 +131,65 @@ InitiateDiagonalLaser
         anda  #7
 !       sta   direction,u
 
-        lda   #1
-        sta   glb.startDelay
-
-        ; laser length (2 or 8) based on forcepod power        
-        lda   player1+forcepodlevel
-        cmpa  #2
-        bne   DiagonalLoad8Objects
-
-DiagonalLoad2Objects
         ldd   #0
         std   parent,u
-        ldd   glb.diagonalBuffer 
-        std   bufferBase,u            
+        sta   isLastChild,u
+        ldx   glb.diagonalBuffer 
+        stx   bufferBase,u        
+        jsr   initBuffer
         jsr   DiagonalLoadObject
         stx   parent,u
         clr   glb.childId
-        jsr   DiagonalLoadObject
-        rts
-
-DiagonalLoad8Objects
-        ldd   #0
-        std   parent,u
-        ldd   glb.diagonalBuffer 
-        std   bufferBase,u         
-        jsr   DiagonalLoadObject
-        stx   parent,u
-        clr   glb.childId        
+        ; laser length (2 or 8) based on forcepod power        
+        lda   player1+forcepodlevel
+        cmpa  #2
+        beq   >
         jsr   DiagonalLoadObject
         jsr   DiagonalLoadObject
         jsr   DiagonalLoadObject
         jsr   DiagonalLoadObject
         jsr   DiagonalLoadObject
-        jsr   DiagonalLoadObject                                
+        jsr   DiagonalLoadObject 
+!       inc   isLastChild,u
         jsr   DiagonalLoadObject
         rts
 
 DiagonalLoadObject
+        stx   @x
         jsr   LoadObject_x
-        beq   @exit
+        beq   >
+        ldb   glb.slotsState
+        orb   slotMask,u
+        stb   glb.slotsState    
         jsr   InitLaserSegment
         lda   #Rtn_RunDiagonalLaser
         sta   routine_secondary,x
         rts
-@exit   leas  2,s ; double return to skip following object allocation (no more slots available)
+!
+        ldx   #0
+@x      equ *-2
+        inc   isLastChild,x ; assign a last child when no more slots are available
+        leas  2,s ; double return to skip following object allocation (no more slots available)
+        rts
+
+initBuffer
+        ;ldd   #0 already done ...
+        std   ,x
+        std   2,x        
+        std   4,x
+        std   6,x
+        std   8,x
+        std   10,x
+        std   12,x
+        std   14,x
+        std   16,x
+        std   18,x
+        std   20,x
+        std   22,x
+        std   24,x
+        std   26,x
+        std   28,x
+        std   30,x
         rts
 
 InitiateHorizontalLaser
@@ -189,52 +203,47 @@ InitiateHorizontalLaser
         ldb   #LASER_LEFT
 !       stb   direction,u
 
-        lda   #1
-        sta   glb.startDelay
-
-        ; laser length (2 or 8) based on forcepod power        
-        lda   player1+forcepodlevel
-        cmpa  #2
-        bne   HorizontalLoad8Objects
-
-HorizontalLoad2Objects
         ldd   #0
         std   parent,u
-        ldd   #glb.horizontalBuffer
-        std   bufferBase,u
-        jsr   HorizontalLoadObject
-        stx   parent,u
-        clr   glb.childId        
-        jsr   HorizontalLoadObject
-        rts
-
-HorizontalLoad8Objects
-        ldd   #0
-        std   parent,u
-        ldd   #glb.horizontalBuffer
-        std   bufferBase,u        
+        sta   isLastChild,u
+        ldx   #glb.horizontalBuffer
+        stx   bufferBase,u
+        jsr   initBuffer        
         jsr   HorizontalLoadObject
         stx   parent,u
         clr   glb.childId
+        ; laser length (2 or 8) based on forcepod power        
+        lda   player1+forcepodlevel
+        cmpa  #2
+        beq   >
         jsr   HorizontalLoadObject
         jsr   HorizontalLoadObject
         jsr   HorizontalLoadObject
         jsr   HorizontalLoadObject
         jsr   HorizontalLoadObject
-        jsr   HorizontalLoadObject                                
+        jsr   HorizontalLoadObject
+!       inc   isLastChild,u
         jsr   HorizontalLoadObject
         rts
 
 HorizontalLoadObject
+        stx   @x
         jsr   LoadObject_x
-        beq   @exit
+        beq   >
+        ldb   glb.slotsState
+        orb   slotMask,u
+        stb   glb.slotsState    
         jsr   InitLaserSegment
         lda   #Rtn_RunHorizontalLaser
         sta   routine_secondary,x
         ldd   #Img_reboundlaser_horizontal
         std   image_set,x
         rts
-@exit   leas  2,s ; double return to skip following object allocation (no more slots available)
+!
+        ldx   #0
+@x      equ *-2
+        inc   isLastChild,x ; assign a last child when no more slots are available
+        leas  2,s ; double return to skip following object allocation (no more slots available)
         rts
 
 InitLaserSegment
@@ -249,37 +258,26 @@ InitLaserSegment
         sta   direction,x
         lda   slotMask,u
         sta   slotMask,x
-        clr   slotMask,u ; only the head of the laser needs to have the slot mask
         ldd   x_pos,u
         std   x_pos,x
         ldd   y_pos,u
         std   y_pos,x
-        lda   #Rtn_WaitForStart
+        lda   #Rtn_StartLaser
         sta   routine,x
-        lda   glb.startDelay
-        sta   startDelay,x
-        adda  #2
-        sta   glb.startDelay
         ldd   parent,u
         std   parent,x
         lda   glb.childId
         sta   childId,x
-        inc   glb.childId        
+        inc   glb.childId    
+        lda   isLastChild,u
+        sta   isLastChild,x
         ldd   bufferBase,u
         std   bufferBase,x
         clr   bufferIndex,x
         rts
 
-WaitForStart
-        ; release the laser when the start delay is over
-        ldb   startDelay,u
-        subb  gfxlock.frameDrop.count
-        stb   startDelay,u
-        beq   >
-        bmi   >
-        rts
-!
-        ; check if the laser is born inside a wall
+StartLaser
+         ; check if the laser is born inside a wall
         ;ldd   x_pos,u
         ;std   terrainCollision.sensor.x
         ;ldd   y_pos,u
@@ -299,21 +297,27 @@ WaitForStart
         ;jsr   terrainCollision.do
         ;tstb
         ;bne   Destroy
-!
+
         lda   routine_secondary,u
         sta   routine,u
-        lda   #LASER_LIFETIME
+        ldd   parent,u
+        beq   >
+        lda   childId,u
+        inca
+        asla
+!       adda  #LASER_LIFETIME ; for parent a is implicitely 0
         sta   laserLifetime,u
-        rts
+        jmp   Object ; run the laser now
         
 DoubleBufferingFlush
         rts
 
 RunHorizontalChildLaser
         ; simplyfied code for childs
-        lda   id,x
-        cmpa  #ObjID_forcepod_reboundlaser
-        bne   Destroy       ; no more parent, destroy the child
+        ldb   laserLifetime,u
+        subb  gfxlock.frameDrop.count
+        stb   laserLifetime,u
+        lbmi  Destroy
         ldb   bufferIndex,x ; get index in the buffer
         lda   childId,u
         asla
@@ -338,11 +342,8 @@ RunHorizontalLaser
         ldb   bufferIndex,u
         leay  b,y
 
-        ldb   lateFrames,u
-        negb
-        addb  gfxlock.frameDrop.count
+        ldb  gfxlock.frameDrop.count
         stb   glb.frameDrop
-        clr   lateFrames,u
 RunHorizontalLaser.frameDropLoop
 
         ; update position
@@ -352,14 +353,6 @@ RunHorizontalLaser.frameDropLoop
         addd  x_pos,u
         std   x_pos,u
         std   ,y ; store new x position in history working buffer
-
-        ; move to next position in the buffer
-        ldb   bufferIndex,u
-        addb  #2
-        andb  #%00011111
-        stb   bufferIndex,u
-        ldy   bufferBase,u
-        leay  b,y          
 
         ; check if the laser is on edge of the screen (right)
         ; if so, skip wall collision
@@ -371,18 +364,37 @@ RunHorizontalLaser.frameDropLoop
         ; check for collision with the walls
         ; TODO
 !
+
+        ; move to next position in the buffer
+        ldb   bufferIndex,u
+        addb  #2
+        andb  #%00011111
+        stb   bufferIndex,u
+        ldy   bufferBase,u
+        leay  b,y  
+
         dec   glb.frameDrop
         bne   RunHorizontalLaser.frameDropLoop
 
         ; no collision to walls
         jsr   isOutOfScreen
         beq   Destroy
-        dec   laserLifetime,u
-        beq   Destroy
+        ; check if the laser is still alive
+        ldb   laserLifetime,u
+        subb  gfxlock.frameDrop.count
+        stb   laserLifetime,u
+        lbmi  Destroy  
 
         jmp   DisplaySprite
 
 Destroy
+        lda   isLastChild,u
+        beq   >
+        com   slotMask,u
+        ldb   glb.slotsState
+        andb  slotMask,u
+        stb   glb.slotsState
+!
         lda   #Rtn_DoubleBufferingFlush
         sta   routine,u
         jmp   DeleteObject
@@ -392,15 +404,15 @@ isOutOfScreen
         ; if not, destroy the laser
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        cmpd  #-8*8 ; 20px on arcade: 20x3.75=7.5px, mult by 8 because of child concept
+        cmpd  #-8 ; 20px on arcade: 20x3.75=7.5px
         blt   @false
-        cmpd  #144+8*8
+        cmpd  #144+8
         bge   @false
         ldd   y_pos,u
         subd  glb_camera_y_pos
-        cmpd  #-15*8 ; 20px on arcade: 20x0.75=15px
+        cmpd  #-15 ; 20px on arcade: 20x0.75=15px
         blt   @false
-        cmpd  #180+15*8
+        cmpd  #180+15
         bge   @false
 @true   lda   #1
         rts
@@ -409,9 +421,10 @@ isOutOfScreen
 
 RunDiagonalChildLaser
         ; simplyfied code for childs
-        lda   id,x
-        cmpa  #ObjID_forcepod_reboundlaser        
-        bne   Destroy       ; no more parent, destroy the child
+        ldb   laserLifetime,u
+        subb  gfxlock.frameDrop.count
+        stb   laserLifetime,u        
+        lbmi  Destroy        
         ldb   bufferIndex,x ; get index in the buffer
         lda   childId,u
         asla
@@ -441,11 +454,8 @@ RunDiagonalLaser
         ldb   bufferIndex,u
         leay  b,y
 
-        ldb   lateFrames,u
-        negb
-        addb  gfxlock.frameDrop.count
+        ldb  gfxlock.frameDrop.count
         stb   glb.frameDrop
-        clr   lateFrames,u
 RunDiagonalLaser.frameDropLoop
 
         ; update position
@@ -471,7 +481,9 @@ RunDiagonalLaser.frameDropLoop
 
         ; check for collision with the walls
         ; TODO
- 
+
+!
+
         ; no collision to walls
         ldx   #DiagonalImages
         lda   direction,u
@@ -486,15 +498,18 @@ RunDiagonalLaser.frameDropLoop
         stb   bufferIndex,u
         ldy   bufferBase,u
         leay  b,y          
-!
+
         dec   glb.frameDrop
         bne   RunDiagonalLaser.frameDropLoop
 
         jsr   isOutOfScreen
         lbeq  Destroy
-        dec   laserLifetime,u
-        lbeq  Destroy  
-
+        ; check if the laser is still alive
+        ldb   laserLifetime,u
+        subb  gfxlock.frameDrop.count
+        stb   laserLifetime,u
+        lbmi  Destroy  
+        
         jmp   DisplaySprite
 
 RunExplosion
