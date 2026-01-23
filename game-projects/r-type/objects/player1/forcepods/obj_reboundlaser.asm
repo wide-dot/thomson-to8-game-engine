@@ -85,14 +85,24 @@ Orchestrate
         bne   >
         jmp   DeleteObject
 !
-        ; precompute position for all segments
+
+        ; adjust x position based on the position of the forcepod
+        ldb   subtype,u   ; get position of the forcepod (4=front, 5=rear)
+        cmpb  #4
+        beq   >
         ldd   x_pos,u
-        ; TODO: tile snap on 3px grid
-        ; and add 1px to the right (center of the tile)
+        subd  #9
+        bra   @end
+!
+        ldd   x_pos,u
+        addd  #11
+@end    
+        ; TODO snap on tile grid (3px)
+        ; TODO add 1px to the right (center of the tile)
         std   x_pos,u
         ldd   y_pos,u
-        ; TODO: tile snap on 6px grid
-        ; and add 3px to the bottom (center of the tile)
+        ; TODO snap on tile grid (6px)
+        ; TODO add 3px to the bottom (center of the tile)
         std   y_pos,u
 
         ; initiate the lasers
