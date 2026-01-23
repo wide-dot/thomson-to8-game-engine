@@ -314,6 +314,9 @@ DoubleBufferingFlush
 
 RunHorizontalChildLaser
         ; simplyfied code for childs
+        lda   id,x
+        cmpa  #ObjID_forcepod_reboundlaser
+        lbne   Destroy
         ldb   laserLifetime,u
         subb  gfxlock.frameDrop.count
         stb   laserLifetime,u
@@ -377,7 +380,7 @@ RunHorizontalLaser.frameDropLoop
         bne   RunHorizontalLaser.frameDropLoop
 
         ; no collision to walls
-        jsr   isOutOfScreen
+        jsr   isInVisibleScreen
         beq   Destroy
         ; check if the laser is still alive
         ldb   laserLifetime,u
@@ -399,28 +402,50 @@ Destroy
         sta   routine,u
         jmp   DeleteObject
 
-isOutOfScreen
+isInVisibleScreen
         ; check if the laser is in visible screen range
         ; if not, destroy the laser
+        lda   player1+forcepodlevel
+        cmpa  #2
+        beq   >        
+        ; longer laser
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        cmpd  #-8 ; 20px on arcade: 20x3.75=7.5px
+        cmpd  #-8*8 ; 20px on arcade: 20x3.75=7.5px
         blt   @false
-        cmpd  #144+8
+        cmpd  #144+8*8
         bge   @false
         ldd   y_pos,u
         subd  glb_camera_y_pos
-        cmpd  #-15 ; 20px on arcade: 20x0.75=15px
+        cmpd  #-15*8 ; 20px on arcade: 20x0.75=15px
         blt   @false
-        cmpd  #180+15
+        cmpd  #180+15*8
         bge   @false
 @true   lda   #1
         rts
 @false  clra
         rts
+!       ; shorter laser
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        cmpd  #-8*2 ; 20px on arcade: 20x3.75=7.5px
+        blt   @false
+        cmpd  #144+8*2
+        bge   @false
+        ldd   y_pos,u
+        subd  glb_camera_y_pos
+        cmpd  #-15*2 ; 20px on arcade: 20x0.75=15px
+        blt   @false
+        cmpd  #180+15*2
+        bge   @false
+        lda   #1
+        rts
 
 RunDiagonalChildLaser
         ; simplyfied code for childs
+        lda   id,x
+        cmpa  #ObjID_forcepod_reboundlaser
+        lbne   Destroy        
         ldb   laserLifetime,u
         subb  gfxlock.frameDrop.count
         stb   laserLifetime,u        
@@ -502,7 +527,7 @@ RunDiagonalLaser.frameDropLoop
         dec   glb.frameDrop
         bne   RunDiagonalLaser.frameDropLoop
 
-        jsr   isOutOfScreen
+        jsr   isInVisibleScreen
         lbeq  Destroy
         ; check if the laser is still alive
         ldb   laserLifetime,u
