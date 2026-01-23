@@ -321,10 +321,7 @@ LAB_0000_6cee
 
 
 Destroy
-        ldx   missile_flame,u    ; kill flame sprite
-        beq   DestroyNoFlame
-        lda   #1
-        sta   ext_variables,x
+
 DestroyNoFlame
         jsr   LoadObject_x
         beq   Delete
@@ -335,6 +332,11 @@ DestroyNoFlame
         ldd   y_pos,u
         std   y_pos,x
 Delete
+        ldx   missile_flame,u    ; kill flame sprite
+        beq   >
+        lda   #1
+        sta   ext_variables,x
+!
         lda   #2    ; AlreadyDeleted
         sta   routine,u
         _Collision_RemoveAABB AABB_0,AABB_list_foefire
