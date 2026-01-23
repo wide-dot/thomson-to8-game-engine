@@ -67,6 +67,7 @@ glb.childId        fcb 0
 glb.slotsState     fcb 0 ; bit0=up, bit1=center, bit2=down
 glb.frameDrop      fcb 0
 glb.diagonalBuffer fdb 0
+glb.dataLocation   fdb 0
 
                        fill 0,32   ; spare bytes for alignment (cycling buffer)
 glb.diagonalUpBuffer   equ (*/32)*32
@@ -105,6 +106,25 @@ Orchestrate
         ; TODO add 3px to the bottom (center of the tile)
         std   y_pos,u
 
+        ; check if the laser is born inside a wall
+        ldd   x_pos,u
+        std   terrainCollision.sensor.x
+        ldd   y_pos,u
+        std   terrainCollision.sensor.y
+        ldb   #1 ; foreground
+        jsr   terrainCollision.do
+        tstb
+        beq   >
+        jmp   DeleteObject
+!
+        lda   globals.backgroundSolid
+        beq   >
+        ldb   #0 ; background
+        jsr   terrainCollision.do
+        tstb
+        beq   >
+        jmp   DeleteObject
+!
         ; initiate the lasers
         lda   glb.slotsState
         anda  #SLOT_UP                ; is slot up active?
@@ -287,27 +307,6 @@ InitLaserSegment
         rts
 
 StartLaser
-         ; check if the laser is born inside a wall
-        ;ldd   x_pos,u
-        ;std   terrainCollision.sensor.x
-        ;ldd   y_pos,u
-        ;std   terrainCollision.sensor.y
-        ;ldb   #1 ; foreground
-        ;jsr   terrainCollision.do
-        ;tstb
-        ;bne   Destroy
-
-        ;lda   globals.backgroundSolid
-        ;beq   >
-        ;ldd   x_pos,u
-        ;std   terrainCollision.sensor.x
-        ;ldd   y_pos,u
-        ;std   terrainCollision.sensor.y
-        ;ldb   #0 ; background
-        ;jsr   terrainCollision.do
-        ;tstb
-        ;bne   Destroy
-
         lda   routine_secondary,u
         sta   routine,u
         ldd   parent,u
@@ -485,9 +484,10 @@ RunDiagonalLaser
         bne   RunDiagonalChildLaser
 
         ; load buffer base
-        ldy   bufferBase,u
+        ldx   bufferBase,u
         ldb   bufferIndex,u
-        leay  b,y
+        leax  b,x
+        stx   glb.diagonalBuffer
 
         ldb  gfxlock.frameDrop.count
         stb   glb.frameDrop
@@ -501,41 +501,157 @@ RunDiagonalLaser.frameDropLoop
         ldd   ,x
         addd  x_pos,u
         std   x_pos,u
-        std   ,y ; store new x position in history buffer
         ldd   2,x
         addd  y_pos,u
         std   y_pos,u
-        std   32,y ; store new y position in history buffer
 
         ; check if the laser is on edge of the screen (right)
         ; if so, skip wall collision
         ldd   x_pos,u
         subd  glb_camera_x_pos
         cmpd  #160-2 ; center of sprite is 2px from the right edge of sprite
-        bhs   >
+        lbhs  RunDiagonalLaser.straightSegment
 
         ; check for collision with the walls
-        ; TODO
+        ldd   x_pos,u
+        std   terrainCollision.sensor.x
+        ldd   y_pos,u
+        std   terrainCollision.sensor.y
 
+        ldb   #1 ; foreground
+        jsr   terrainCollision.do
+        tstb
+        bne   RunDiagonalLaser.rebound
+        ;lda   globals.backgroundSolid
+        ;lbeq  RunDiagonalLaser.straightSegment
+        ;ldb   #0 ; background
+        ;jsr   terrainCollision.do
+        ;tstb
+        ;lbeq  RunDiagonalLaser.straightSegment
+        jmp   RunDiagonalLaser.straightSegment
+
+RunDiagonalLaser.rebound
+        ldx   #ReboundPresets
+        ldb   direction,u
+        aslb                    ; mult by 6
+        stb   @b
+        aslb
+        addb  #0
+@b      equ *-1
+        abx
+        ldd   ,x
+        addd  x_pos,u
+        std   terrainCollision.sensor.x
+        ldd   2,x
+        addd  y_pos,u
+        std   terrainCollision.sensor.y
+        stx   glb.dataLocation
+
+        ; second collision check
+        ldb   #1 ; foreground
+        jsr   terrainCollision.do
+        tstb
+        bne   RunDiagonalLaser.rebound2
+        ;lda   globals.backgroundSolid
+        ;beq   >
+        ;ldb   #0 ; background
+        ;jsr   terrainCollision.do
+        ;tstb
+        ;bne   RunDiagonalLaser.rebound2
 !
+        ; apply based on first collision only
+        ldx   glb.dataLocation
+        ldd   x_pos,u
+        addd  ,x
+        std   x_pos,u
+        ldd   y_pos,u
+        addd  2,x
+        std   y_pos,u
+        ldd   4,x
+        std   image_set,u
+        lda   direction,u
+        adda  #2
+        anda  #%00000111
+        sta   direction,u        
+        jmp   RunDiagonalLaser.afterCollision
 
-        ; no collision to walls
+RunDiagonalLaser.rebound2    
+        ldx   glb.dataLocation    
+        ldd   6,x
+        addd  terrainCollision.sensor.x
+        std   terrainCollision.sensor.x
+        ldd   8,x
+        addd  terrainCollision.sensor.y
+        std   terrainCollision.sensor.y
+        ldb   #1 ; foreground
+        jsr   terrainCollision.do
+        tstb
+        bne   RunDiagonalLaser.reboundBack
+        ;lda   globals.backgroundSolid
+        ;beq   >
+        ;ldb   #0 ; background
+        ;jsr   terrainCollision.do
+        ;tstb
+        ;bne   RunDiagonalLaser.reboundBack
+!
+        ; apply based on first collision only
+        ldx   glb.dataLocation
+        ldd   x_pos,u
+        addd  6,x
+        std   x_pos,u
+        ldd   y_pos,u
+        addd  8,x
+        std   y_pos,u
+        ldd   10,x
+        std   image_set,u
+        lda   direction,u
+        adda  #6
+        anda  #%00000111
+        sta   direction,u        
+        jmp   RunDiagonalLaser.afterCollision
+
+RunDiagonalLaser.reboundBack
+        ldx   glb.dataLocation    
+        ldd   x_pos,u
+        addd  ,x
+        addd  6,x
+        std   x_pos,u
+        ldd   y_pos,u
+        addd  2,x
+        addd  8,x
+        std   y_pos,u
+        lda   direction,u
+        adda  #4
+        anda  #%00000111
+        sta   direction,u
+
+RunDiagonalLaser.straightSegment
         ldx   #DiagonalImages
         lda   direction,u
         ldd   a,x
         std   image_set,u
-        std   64,y ; store new image in history buffer
+
+RunDiagonalLaser.afterCollision
+
+        ldx   glb.diagonalBuffer
+        ldd   x_pos,u
+        std   ,x ; store new x position in history buffer
+        ldd   y_pos,u
+        std   32,x ; store new y position in history buffer
+        ldd   image_set,u
+        std   64,x ; store new image in history buffer
 
         ; move to next position in the buffer
         ldb   bufferIndex,u
         addb  #2
         andb  #%00011111
         stb   bufferIndex,u
-        ldy   bufferBase,u
-        leay  b,y          
+        ldx   bufferBase,u
+        leax  b,x          
+        stx   glb.diagonalBuffer
 
         dec   glb.frameDrop
-        bne   RunDiagonalLaser.frameDropLoop
+        lbne  RunDiagonalLaser.frameDropLoop
 
         jsr   isInVisibleScreen
         lbeq  Destroy
