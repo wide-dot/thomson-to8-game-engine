@@ -684,10 +684,10 @@ ReboundPresets
         fdb   0
         fdb   6
         fdb   Img_reboundlaser_angle_0 ; /\
-        fdb   -6
+        fdb   -3
         fdb   0
         fdb   Img_reboundlaser_angle_1 ; >
-        fdb   -6
+        fdb   -3
         fdb   0
         fdb   Img_reboundlaser_angle_2 ; >
         fdb   0
@@ -696,10 +696,10 @@ ReboundPresets
         fdb   0
         fdb   -6
         fdb   Img_reboundlaser_angle_4 ; \/
-        fdb   6
+        fdb   3
         fdb   0
         fdb   Img_reboundlaser_angle_5 ; <
-        fdb   6
+        fdb   3
         fdb   0
         fdb   Img_reboundlaser_angle_6 ; <
         fdb   0
