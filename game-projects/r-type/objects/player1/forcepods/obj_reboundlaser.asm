@@ -77,6 +77,38 @@ glb.diagonalDownBuffer equ (*/32)*32
 glb.horizontalBuffer   equ (*/32)*32
                        fill 0,32 ; used to store up to 16 words (x_pos)
 
+DIV6u
+  bsr  DIV3u
+  lsra
+  rorb
+  lsr  2,x
+  std  ,x
+  rts
+
+DIV3u
+  ldb  1,x
+  lda  #85
+  mul
+  std  1,x
+  ldb  ,x
+  lda  #85
+  mul
+  addb 1,x
+  adca #0
+  std  ,x
+* partie optionnelle pour une vraie division par 3,
+* sinon c'est division par 3.0117 (0.4% d'erreur)
+  ldd  1,x
+  addd #128   ; arrondi
+  adda 2,x
+  sta  2,x
+  ldd  ,x
+  adcb ,x
+  adca #0
+  std  ,x
+* fin de la partie optionelle pour vraie division
+  rts
+
 Orchestrate
         ; a rebound laser can only be releases if the previous one was destroyed
         ; each of the 3 lasers (high, mid, low) are independent
@@ -97,20 +129,28 @@ Orchestrate
 !
         ldd   x_pos,u
         addd  #11
-@end    
-        ; TODO snap on tile grid (3px)
-        ; TODO add 1px to the right (center of the tile)
-        std   x_pos,u
-        ldd   y_pos,u
-        ; TODO snap on tile grid (6px)
-        ; TODO add 3px to the bottom (center of the tile)
+@end    std   x_pos,u
+
+        ; snap on tile grid (3px)
+        leax  x_pos,u        
+        jsr   DIV3u
+        addd  x_pos,u        
+        addd  x_pos,u        
+        std   x_pos,u        
+        std   terrainCollision.sensor.x
+
+        ; snap on tile grid (6px)
+        leax  y_pos,u        
+        jsr   DIV6u
+        addd  y_pos,u        
+        addd  y_pos,u        
+        lslb
+        rola        
+        addd  #1 ; center of the tile
         std   y_pos,u
+        std   terrainCollision.sensor.y
 
         ; check if the laser is born inside a wall
-        ldd   x_pos,u
-        std   terrainCollision.sensor.x
-        ldd   y_pos,u
-        std   terrainCollision.sensor.y
         ldb   #1 ; foreground
         jsr   terrainCollision.do
         tstb
@@ -498,16 +538,17 @@ RunDiagonalLaser.frameDropLoop
         ldb   direction,u
         aslb
         abx
-        ldd   ,x
-        addd  x_pos,u
-        std   x_pos,u
-        ldd   2,x
-        addd  y_pos,u
+        ldd   y_pos,u
+        addd  2,x
         std   y_pos,u
+        std   terrainCollision.sensor.y
+        ldd   x_pos,u
+        addd  ,x
+        std   x_pos,u
+        std   terrainCollision.sensor.x
 
         ; check if the laser is on edge of the screen (right)
         ; if so, skip wall collision
-        ldd   x_pos,u
         subd  glb_camera_x_pos
         cmpd  #160-2 ; center of sprite is 2px from the right edge of sprite
         lbhs  RunDiagonalLaser.straightSegment
@@ -539,11 +580,11 @@ RunDiagonalLaser.rebound
         addb  #0
 @b      equ *-1
         abx
-        ldd   ,x
-        addd  x_pos,u
+        ldd   x_pos,u
+        addd  ,x
         std   terrainCollision.sensor.x
-        ldd   2,x
-        addd  y_pos,u
+        ldd   y_pos,u
+        addd  2,x
         std   terrainCollision.sensor.y
         stx   glb.dataLocation
 
@@ -560,13 +601,11 @@ RunDiagonalLaser.rebound
         ;bne   RunDiagonalLaser.rebound2
 !
         ; apply based on first collision only
-        ldx   glb.dataLocation
-        ldd   x_pos,u
-        addd  ,x
+        ldd   terrainCollision.sensor.x
         std   x_pos,u
-        ldd   y_pos,u
-        addd  2,x
+        ldd   terrainCollision.sensor.y
         std   y_pos,u
+        ldx   glb.dataLocation
         ldd   4,x
         std   image_set,u
         lda   direction,u
@@ -577,11 +616,11 @@ RunDiagonalLaser.rebound
 
 RunDiagonalLaser.rebound2    
         ldx   glb.dataLocation    
-        ldd   6,x
-        addd  terrainCollision.sensor.x
+        ldd   x_pos,u
+        addd  6,x
         std   terrainCollision.sensor.x
-        ldd   8,x
-        addd  terrainCollision.sensor.y
+        ldd   y_pos,u
+        addd  8,x
         std   terrainCollision.sensor.y
         ldb   #1 ; foreground
         jsr   terrainCollision.do
@@ -594,14 +633,12 @@ RunDiagonalLaser.rebound2
         ;tstb
         ;bne   RunDiagonalLaser.reboundBack
 !
-        ; apply based on first collision only
-        ldx   glb.dataLocation
-        ldd   x_pos,u
-        addd  6,x
+        ; apply based on second collision only
+        ldd   terrainCollision.sensor.x
         std   x_pos,u
-        ldd   y_pos,u
-        addd  8,x
+        ldd   terrainCollision.sensor.y
         std   y_pos,u
+        ldx   glb.dataLocation
         ldd   10,x
         std   image_set,u
         lda   direction,u
@@ -612,18 +649,28 @@ RunDiagonalLaser.rebound2
 
 RunDiagonalLaser.reboundBack
         ldx   glb.dataLocation    
-        ldd   x_pos,u
+        ldd   terrainCollision.sensor.x
         addd  ,x
-        addd  6,x
         std   x_pos,u
-        ldd   y_pos,u
+        ldd   terrainCollision.sensor.y
         addd  2,x
-        addd  8,x
         std   y_pos,u
         lda   direction,u
         adda  #4
         anda  #%00000111
         sta   direction,u
+
+        ; arcade bug fix ... does not exists in original game
+        ldx   #DiagonalVelocityPresets
+        ldb   direction,u
+        aslb
+        abx
+        ldd   y_pos,u
+        addd  2,x
+        std   y_pos,u
+        ldd   x_pos,u
+        addd  ,x
+        std   x_pos,u
 
 RunDiagonalLaser.straightSegment
         ldx   #DiagonalImages
