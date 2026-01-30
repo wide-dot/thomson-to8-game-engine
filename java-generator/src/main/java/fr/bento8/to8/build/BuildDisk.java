@@ -100,6 +100,8 @@ public class BuildDisk
 
 	public static boolean abortFloppyDisk = false;
 	public static boolean abortT2 = false;
+	public static int missingBytesFd = 0;
+	public static int missingBytesT2 = 0;
 
 	public static DynamicContent dynamicContentFD = new DynamicContent();
 	public static DynamicContent dynamicContentT2 = new DynamicContent();
@@ -179,12 +181,12 @@ public class BuildDisk
 			logger.info("Build réussi pour FD et T2");
 		} else {
 			if (abortFloppyDisk) {
-				logger.warn("FLOPPY_DISK: ECHEC (pas assez de RAM)");
+				logger.warn("FLOPPY_DISK: ECHEC - manque " + missingBytesFd + " octets");
 			} else {
 				logger.info("FLOPPY_DISK: OK");
 			}
 			if (abortT2) {
-				logger.warn("MEGAROM_T2: ECHEC (pas assez de RAM)");
+				logger.warn("MEGAROM_T2: ECHEC - manque " + missingBytesT2 + " octets");
 			} else {
 				logger.info("MEGAROM_T2: OK");
 			}
@@ -1283,8 +1285,10 @@ public class BuildDisk
 						logger.fatal("Plus de place en RAM pour " + modeLabel + " ! Manque " + remainingSize + " octets (page " + rImg.curPage + " dépassée)");
 						if (rImg.mode == BuildDisk.FLOPPY_DISK) {
 							abortFloppyDisk = true;
+							missingBytesFd = remainingSize;
 						} else {
 							abortT2 = true;
+							missingBytesT2 = remainingSize;
 						}
 					}
 					return 0;
