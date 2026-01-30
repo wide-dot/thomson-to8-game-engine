@@ -160,10 +160,36 @@ public class BuildDisk
 			compileAndWriteBootFd();
 			compileAndWriteBootT2();
 			buildT2Flash();
+			
+			// Affichage du résumé du build
+			printBuildSummary();
 
 		} catch (Exception e) {
 			logger.fatal("Build error.", e);
+			printBuildSummary();
 		}
+	}
+	
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	private static void printBuildSummary() {
+		logger.info("");
+		logger.info("========================================");
+		if (!abortFloppyDisk && !abortT2) {
+			logger.info("Build réussi pour FD et T2");
+		} else {
+			if (abortFloppyDisk) {
+				logger.warn("FLOPPY_DISK: ECHEC (pas assez de RAM)");
+			} else {
+				logger.info("FLOPPY_DISK: OK");
+			}
+			if (abortT2) {
+				logger.warn("MEGAROM_T2: ECHEC (pas assez de RAM)");
+			} else {
+				logger.info("MEGAROM_T2: OK");
+			}
+		}
+		logger.info("========================================");
 	}
 
 
@@ -810,7 +836,9 @@ public class BuildDisk
 					asmBuilder.add("        sta   $E7DD");
 					asmBuilder.add("        anda  #$0F");
 					asmBuilder.add("        adda  #$80");
+					asmBuilder.add(" IFDEF gfxlock.screenBorder.color");					
 					asmBuilder.add("        sta   gfxlock.screenBorder.color");
+					asmBuilder.add(" ENDC");					
 				}
 
 				if (act.bgColorIndex != null || act.bgFileName != null) {
@@ -1038,15 +1066,21 @@ public class BuildDisk
 				gm.ramFD.curAddress = Game.loadManagerSizeFd;
 
 				for (GameModeCommon common : gm.gameModeCommon) {
-					if (common != null) {
+					if (common != null && !abortFloppyDisk) {
 						logger.debug("\t\tCommon : " + common.name);
 						common.items = getRAMItems(gm, common.objects, FLOPPY_DISK, GAMEMODE_COMMON);
-						computeItemsRamAddress(gm, common, common.items, gm.ramFD, true);
+						int result = computeItemsRamAddress(gm, common, common.items, gm.ramFD, true);
+						if (result == 0 && common.items.length > 0) {
+							// Erreur détectée, on arrête pour ce mode
+							break;
+						}
 					}
 				}
-				gm.items = getRAMItems(gm, gm.objects, FLOPPY_DISK, GAMEMODE);
-				gm.items = addCommonObjectCodeToRAMItems(gm.items, gm, FLOPPY_DISK);
-				computeItemsRamAddress(gm, null, gm.items, gm.ramFD, true);
+				if (!abortFloppyDisk) {
+					gm.items = getRAMItems(gm, gm.objects, FLOPPY_DISK, GAMEMODE);
+					gm.items = addCommonObjectCodeToRAMItems(gm.items, gm, FLOPPY_DISK);
+					computeItemsRamAddress(gm, null, gm.items, gm.ramFD, true);
+				}
 			}
 
 			if (!abortT2) {
@@ -1054,15 +1088,21 @@ public class BuildDisk
 				gm.ramT2.curAddress = Game.loadManagerSizeT2;
 
 				for (GameModeCommon common : gm.gameModeCommon) {
-					if (common != null) {
+					if (common != null && !abortT2) {
 						logger.debug("\t\tCommon : " + common.name);
 						common.items = getRAMItems(gm, common.objects, MEGAROM_T2, GAMEMODE_COMMON);
-						computeItemsRamAddress(gm, common, common.items, gm.ramT2, true);
+						int result = computeItemsRamAddress(gm, common, common.items, gm.ramT2, true);
+						if (result == 0 && common.items.length > 0) {
+							// Erreur détectée, on arrête pour ce mode
+							break;
+						}
 					}
 				}
-				gm.items = getRAMItems(gm, gm.objects, MEGAROM_T2, GAMEMODE);
-				gm.items = addCommonObjectCodeToRAMItems(gm.items, gm, MEGAROM_T2);
-				computeItemsRamAddress(gm, null, gm.items, gm.ramT2, true);
+				if (!abortT2) {
+					gm.items = getRAMItems(gm, gm.objects, MEGAROM_T2, GAMEMODE);
+					gm.items = addCommonObjectCodeToRAMItems(gm.items, gm, MEGAROM_T2);
+					computeItemsRamAddress(gm, null, gm.items, gm.ramT2, true);
+				}
 			}
 		}
 	}
@@ -1238,7 +1278,15 @@ public class BuildDisk
 					for (Item item : items) {
 						remainingSize += item.weight;
 					}
-					logger.fatal("C'est un peu trop ambitieux ... plus de place en RAM ! Il manque " + remainingSize + " octets");
+					String modeLabel = (rImg.mode == BuildDisk.FLOPPY_DISK) ? "FLOPPY_DISK" : "MEGAROM_T2";
+					if (writeIndex) {
+						logger.fatal("Plus de place en RAM pour " + modeLabel + " ! Manque " + remainingSize + " octets (page " + rImg.curPage + " dépassée)");
+						if (rImg.mode == BuildDisk.FLOPPY_DISK) {
+							abortFloppyDisk = true;
+						} else {
+							abortT2 = true;
+						}
+					}
 					return 0;
 				}
 				rImg.startAddress[rImg.curPage] = 0;
