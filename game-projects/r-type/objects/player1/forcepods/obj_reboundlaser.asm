@@ -26,6 +26,7 @@ childId       equ ext_variables+15 ; 1 byte, index of the child laser (0=first c
 isLastChild   equ ext_variables+16 ; 1 byte, 1=last child, 0=not last child
 bufferBase    equ ext_variables+17 ; 2 bytes, index of the position buffer (aligned to 16 bytes)
 bufferIndex   equ ext_variables+19 ; 1 byte, index in the 16 bytes buffer (0,2,4,6,8,10,12,14)
+child         equ routine_tertiary ; 2 bytes, pointer to the next child object in the laser chain
 
 LASER_LIFETIME equ $70 ; 112 frames
 
@@ -64,9 +65,10 @@ Rtn_DoubleBufferingFlush equ 5
 
 glb.loopCounter    fcb 0
 glb.childId        fcb 0
+glb.prevSegment    fdb 0
 glb.slotsState     fcb 0 ; bit0=up, bit1=center, bit2=down
 glb.frameDrop      fcb 0
-glb.diagonalBuffer fdb 0
+glb.buffer         fdb 0 ; temp for buffer address
 glb.dataLocation   fdb 0
 
                        fill 0,32   ; spare bytes for alignment (cycling buffer)
@@ -170,7 +172,7 @@ Orchestrate
         anda  #SLOT_UP                ; is slot up active?
         bne   >                       ; if yes, skip
         ldd   #glb.diagonalUpBuffer
-        std   glb.diagonalBuffer
+        std   glb.buffer
         lda   #LASER_RIGHT_UP
         ldb   #SLOT_UP
         jsr   InitiateDiagonalLaser
@@ -183,7 +185,7 @@ Orchestrate
         anda  #SLOT_DOWN              ; if yes, skip
         bne   >
         ldd   #glb.diagonalDownBuffer
-        std   glb.diagonalBuffer        
+        std   glb.buffer        
         lda   #LASER_RIGHT_DOWN
         ldb   #SLOT_DOWN
         jsr   InitiateDiagonalLaser
@@ -204,7 +206,8 @@ InitiateDiagonalLaser
         ldd   #0
         std   parent,u
         sta   isLastChild,u
-        ldx   glb.diagonalBuffer 
+        stu   glb.prevSegment ; dummy value ... will set something on the orchestrate object when writing child,y        
+        ldx   glb.buffer 
         stx   bufferBase,u        
         jsr   initBuffer
         jsr   DiagonalLoadObject
@@ -214,10 +217,10 @@ InitiateDiagonalLaser
         lda   player1+forcepodlevel
         cmpa  #2
         beq   >
-        jsr   DiagonalLoadObject
-        jsr   DiagonalLoadObject
-        jsr   DiagonalLoadObject
-        jsr   DiagonalLoadObject
+        ;jsr   DiagonalLoadObject ; 8 sprites x 3 lasers = 24 sprites, too much left for enemies
+        ;jsr   DiagonalLoadObject
+        ;jsr   DiagonalLoadObject
+        ;jsr   DiagonalLoadObject
         jsr   DiagonalLoadObject
         jsr   DiagonalLoadObject 
 !       inc   isLastChild,u
@@ -276,9 +279,10 @@ InitiateHorizontalLaser
         ldd   #0
         std   parent,u
         sta   isLastChild,u
+        stu   glb.prevSegment ; dummy value ... will set something on the orchestrate object when writing child,y
         ldx   #glb.horizontalBuffer
         stx   bufferBase,u
-        jsr   initBuffer        
+        jsr   initBuffer   
         jsr   HorizontalLoadObject
         stx   parent,u
         clr   glb.childId
@@ -286,10 +290,10 @@ InitiateHorizontalLaser
         lda   player1+forcepodlevel
         cmpa  #2
         beq   >
-        jsr   HorizontalLoadObject
-        jsr   HorizontalLoadObject
-        jsr   HorizontalLoadObject
-        jsr   HorizontalLoadObject
+        ;jsr   HorizontalLoadObject
+        ;jsr   HorizontalLoadObject
+        ;jsr   HorizontalLoadObject
+        ;jsr   HorizontalLoadObject
         jsr   HorizontalLoadObject
         jsr   HorizontalLoadObject
 !       inc   isLastChild,u
@@ -335,7 +339,12 @@ InitLaserSegment
         lda   #Rtn_StartLaser
         sta   routine,x
         ldd   parent,u
-        std   parent,x
+        std   parent,x ; copy head of laser chain as parent for all children
+        ldy   glb.prevSegment ; get previous segment and set new segment as child
+        stx   child,y
+        stx   glb.prevSegment
+        ldd   #0
+        std   child,x
         lda   glb.childId
         sta   childId,x
         inc   glb.childId    
@@ -351,13 +360,28 @@ StartLaser
         sta   routine,u
         ldd   parent,u
         beq   >
+        ; for children
         lda   childId,u
         inca
         asla
-!       adda  #LASER_LIFETIME ; for parent a is implicitely 0
+        adda  #LASER_LIFETIME ; for parent a is implicitely 0
         sta   laserLifetime,u
         jmp   Object ; run the laser now
-        
+!
+        ; for parent
+        lda   #LASER_LIFETIME ; for parent a is implicitely 0
+        sta   laserLifetime,u
+
+        ; set hitbox
+        lda   #2                       ; set damage potential for this hitbox
+        sta   AABB_0+AABB.p,u
+        _ldd  5,9                     ; set hitbox xy radius (arcade radius: 12x12px)
+        std   AABB_0+AABB.rx,u
+        ldb   y_pos+1,u
+        stb   AABB_0+AABB.cy,u         ; fixed y position for horizontal laser   
+        _Collision_AddAABB AABB_0,AABB_list_friend
+        jmp   Object ; run the laser now
+
 DoubleBufferingFlush
         rts
 
@@ -365,7 +389,10 @@ RunHorizontalChildLaser
         ; simplyfied code for childs
         lda   id,x
         cmpa  #ObjID_forcepod_reboundlaser
-        lbne   Destroy
+        lbne  Destroy
+        ldb   routine,x
+        cmpb  #Rtn_RunHorizontalLaser
+        lbne  Destroy
         ldb   laserLifetime,u
         subb  gfxlock.frameDrop.count
         stb   laserLifetime,u
@@ -379,8 +406,8 @@ RunHorizontalChildLaser
         subb  #0
 @a      equ *-1
         andb  #%00011111
-        ldy   bufferBase,x  ; get actual position of parent in buffer
-        ldd   b,y
+        ldx   bufferBase,x  ; get actual position of parent in buffer
+        ldd   b,x
         std   x_pos,u
         jmp   DisplaySprite
 
@@ -389,12 +416,17 @@ RunHorizontalLaser
         ldx   parent,u
         bne   RunHorizontalChildLaser
 
-        ; load buffer base
-        ldy   bufferBase,u
-        ldb   bufferIndex,u
-        leay  b,y
+        ; check collision potential
+        ldb   AABB_0+AABB.p,u
+        lbeq  InitExplosion
 
-        ldb  gfxlock.frameDrop.count
+        ; load buffer base
+        ldx   bufferBase,u
+        ldb   bufferIndex,u
+        leax  b,x
+        stx   glb.buffer
+
+        ldb   gfxlock.frameDrop.count
         stb   glb.frameDrop
 RunHorizontalLaser.frameDropLoop
 
@@ -404,38 +436,70 @@ RunHorizontalLaser.frameDropLoop
         ldd   a,x
         addd  x_pos,u
         std   x_pos,u
-        std   ,y ; store new x position in history working buffer
+        ldx   glb.buffer
+        std   ,x
+        std   terrainCollision.sensor.x        
 
         ; check if the laser is on edge of the screen (right)
         ; if so, skip wall collision
-        ldd   x_pos,u
-        subd  glb_camera_x_pos
-        cmpd  #160-2 ; center of sprite is 2px from the right edge of sprite
-        bhs   >
+        jsr   isInCollisionRange
+        lbeq  RunHorizontalLaser.forward
 
         ; check for collision with the walls
-        ; TODO
-!
+        ldd   y_pos,u
+        std   terrainCollision.sensor.y
 
+        ldb   #1 ; foreground
+        jsr   terrainCollision.do
+        tstb
+        bne   RunHorizontalLaser.rebound
+        ;lda   globals.backgroundSolid
+        ;lbeq  RunHorizontalLaser.forward
+        ;ldb   #0 ; background
+        ;jsr   terrainCollision.do
+        ;tstb
+        ;lbeq  RunHorizontalLaser.forward
+        jmp   RunHorizontalLaser.forward
+
+RunHorizontalLaser.rebound
+        ldb   direction,u
+        eorb  #%00000010
+        stb   direction,u
+
+        ; arcade bug fix ... does not exists in original game
+        ldx   #HorizontalVelocityPresets
+        ldd   b,x
+        addd  x_pos,u
+        std   x_pos,u
+        ldx   glb.buffer
+        std   ,x        
+
+RunHorizontalLaser.forward
         ; move to next position in the buffer
         ldb   bufferIndex,u
         addb  #2
         andb  #%00011111
         stb   bufferIndex,u
-        ldy   bufferBase,u
-        leay  b,y  
+        ldx   bufferBase,u
+        leax  b,x          
+        stx   glb.buffer
 
         dec   glb.frameDrop
         bne   RunHorizontalLaser.frameDropLoop
 
         ; no collision to walls
-        jsr   isInVisibleScreen
+        jsr   isInLivingArea
         beq   Destroy
         ; check if the laser is still alive
         ldb   laserLifetime,u
         subb  gfxlock.frameDrop.count
         stb   laserLifetime,u
         lbmi  Destroy  
+
+        ; update hitbox position
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB_0+AABB.cx,u            
 
         jmp   DisplaySprite
 
@@ -449,10 +513,15 @@ Destroy
 !
         lda   #Rtn_DoubleBufferingFlush
         sta   routine,u
-        jmp   DeleteObject
+        ldd   parent,u
+        bne   >
+        lda   AABB_0+AABB.rx,u
+        beq   >
+        _Collision_RemoveAABB AABB_0,AABB_list_friend        
+!       jmp   DeleteObject
 
-isInVisibleScreen
-        ; check if the laser is in visible screen range
+isInLivingArea
+        ; check if the laser is in living range
         ; if not, destroy the laser
         lda   player1+forcepodlevel
         cmpa  #2
@@ -490,11 +559,36 @@ isInVisibleScreen
         lda   #1
         rts
 
+isInCollisionRange
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        cmpd  #8
+        blt   @false ; not tested in arcade but we have different behavior in collision testing that make this check mandatory
+        cmpd  #144+8-2 ; center of sprite is 2px from the right edge of sprite (similar to arcade)
+        bge   @false
+        ldd   y_pos,u
+        cmpd  #8 ; value set by test ...
+        blt   @false ; not tested in arcade but we have different behavior in collision testing that make this check mandatory
+        cmpd  #180+18 ; value set by test ...
+        bge   @false ; not tested in arcade but we have different behavior in collision testing that make this check mandatory
+@true   lda   #1 ; return value
+        rts
+@false
+        lda   AABB_0+AABB.rx,u
+        beq   >
+        _Collision_RemoveAABB AABB_0,AABB_list_friend
+        clr   AABB_0+AABB.rx,u ; flag hitbox as disabled
+        ; implicit return value: bit zero set by previous instruction
+!       rts
+
 RunDiagonalChildLaser
         ; simplyfied code for childs
         lda   id,x
         cmpa  #ObjID_forcepod_reboundlaser
         lbne   Destroy        
+        ldb   routine,x
+        cmpb  #Rtn_RunDiagonalLaser
+        lbne  Destroy        
         ldb   laserLifetime,u
         subb  gfxlock.frameDrop.count
         stb   laserLifetime,u        
@@ -523,13 +617,17 @@ RunDiagonalLaser
         ldx   parent,u
         bne   RunDiagonalChildLaser
 
+        ; check collision potential
+        ldb   AABB_0+AABB.p,u
+        lbeq  InitExplosion
+
         ; load buffer base
         ldx   bufferBase,u
         ldb   bufferIndex,u
         leax  b,x
-        stx   glb.diagonalBuffer
+        stx   glb.buffer
 
-        ldb  gfxlock.frameDrop.count
+        ldb   gfxlock.frameDrop.count
         stb   glb.frameDrop
 RunDiagonalLaser.frameDropLoop
 
@@ -549,9 +647,8 @@ RunDiagonalLaser.frameDropLoop
 
         ; check if the laser is on edge of the screen (right)
         ; if so, skip wall collision
-        subd  glb_camera_x_pos
-        cmpd  #160-2 ; center of sprite is 2px from the right edge of sprite
-        lbhs  RunDiagonalLaser.straightSegment
+        jsr   isInCollisionRange
+        lbeq  RunDiagonalLaser.forward
 
         ; check for collision with the walls
         ldd   x_pos,u
@@ -564,12 +661,12 @@ RunDiagonalLaser.frameDropLoop
         tstb
         bne   RunDiagonalLaser.rebound
         ;lda   globals.backgroundSolid
-        ;lbeq  RunDiagonalLaser.straightSegment
+        ;lbeq  RunDiagonalLaser.forward
         ;ldb   #0 ; background
         ;jsr   terrainCollision.do
         ;tstb
-        ;lbeq  RunDiagonalLaser.straightSegment
-        jmp   RunDiagonalLaser.straightSegment
+        ;lbeq  RunDiagonalLaser.forward
+        jmp   RunDiagonalLaser.forward
 
 RunDiagonalLaser.rebound
         ldx   #ReboundPresets
@@ -578,7 +675,7 @@ RunDiagonalLaser.rebound
         stb   @b
         aslb
         addb  #0
-@b      equ *-1
+@b      equ   *-1
         abx
         ldd   x_pos,u
         addd  ,x
@@ -655,14 +752,13 @@ RunDiagonalLaser.reboundBack
         ldd   terrainCollision.sensor.y
         addd  2,x
         std   y_pos,u
-        lda   direction,u
-        adda  #4
-        anda  #%00000111
-        sta   direction,u
+        ldb   direction,u
+        addb  #4
+        andb  #%00000111
+        stb   direction,u
 
         ; arcade bug fix ... does not exists in original game
         ldx   #DiagonalVelocityPresets
-        ldb   direction,u
         aslb
         abx
         ldd   y_pos,u
@@ -672,7 +768,7 @@ RunDiagonalLaser.reboundBack
         addd  ,x
         std   x_pos,u
 
-RunDiagonalLaser.straightSegment
+RunDiagonalLaser.forward
         ldx   #DiagonalImages
         lda   direction,u
         ldd   a,x
@@ -680,13 +776,14 @@ RunDiagonalLaser.straightSegment
 
 RunDiagonalLaser.afterCollision
 
-        ldx   glb.diagonalBuffer
+        ; store new position in history buffer
+        ldx   glb.buffer
         ldd   x_pos,u
-        std   ,x ; store new x position in history buffer
+        std   ,x ; store new x position
         ldd   y_pos,u
-        std   32,x ; store new y position in history buffer
+        std   32,x ; store new y position
         ldd   image_set,u
-        std   64,x ; store new image in history buffer
+        std   64,x ; store new image
 
         ; move to next position in the buffer
         ldb   bufferIndex,u
@@ -695,23 +792,83 @@ RunDiagonalLaser.afterCollision
         stb   bufferIndex,u
         ldx   bufferBase,u
         leax  b,x          
-        stx   glb.diagonalBuffer
+        stx   glb.buffer
 
         dec   glb.frameDrop
         lbne  RunDiagonalLaser.frameDropLoop
 
-        jsr   isInVisibleScreen
+        jsr   isInLivingArea
         lbeq  Destroy
         ; check if the laser is still alive
         ldb   laserLifetime,u
         subb  gfxlock.frameDrop.count
         stb   laserLifetime,u
         lbmi  Destroy  
+
+        ; update hitbox position
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB_0+AABB.cx,u            
+        ldb   y_pos+1,u
+        stb   AABB_0+AABB.cy,u            
         
         jmp   DisplaySprite
 
+InitExplosion
+        ; split laser if needed
+        ldx   child,u
+        lda   isLastChild,x
+        bne   >                 ; if next segment is last child, do not split
+        ; split child
+        inc   isLastChild,x     ; make 2nd segment last child
+        ldx   child,x           ; 3rd segment will be new parent
+        ldd   #0
+        std   parent,x
+        ldb   bufferIndex,u
+        subb  #4*2
+        andb  #%00011111
+        stb   bufferIndex,x
+
+        ; set hitbox of new parent
+        lda   #2                ; set damage potential for this hitbox
+        sta   AABB_0+AABB.p,x
+        _ldd  5,9               ; set hitbox xy radius (arcade radius: 12x12px)
+        std   AABB_0+AABB.rx,x
+        ldd   x_pos,x
+        subd  glb_camera_x_pos
+        stb   AABB_0+AABB.cx,x
+        ldb   y_pos+1,x
+        stb   AABB_0+AABB.cy,x  ; fixed y position for horizontal laser   
+        _Collision_AddAABB_x AABB_0,AABB_list_friend
+
+        ldy   child,x           ; 4th segment is now child of new parent
+        stx   parent,y
+        clr   childId,y
+!
+        ; init explosion
+        ldb   #Rtn_RunExplosion ; replace head of laser chain by an explosion
+        stb   routine,u
+        clr   anim_frame,u
+        ; please do not change priority here, there is a bug in priority change ...
+
 RunExplosion
+        ldx   #ExplosionImages
+        ldb   anim_frame,u
+        cmpb  #4
+        bne   >
+        jmp   Destroy
+!
+        aslb
+        ldd   b,x
+        std   image_set,u
+        inc   anim_frame,u
         jmp   DisplaySprite
+
+ExplosionImages
+        fdb   Img_reboundlaser_explosion_0
+        fdb   Img_reboundlaser_explosion_1
+        fdb   Img_reboundlaser_explosion_2
+        fdb   Img_reboundlaser_explosion_3
 
 DiagonalVelocityPresets ; y values are inverted compared to arcade
         fdb   3  ; x velocity for up right
@@ -758,7 +915,3 @@ DiagonalImages
         fdb   Img_reboundlaser_diagonal_1 ; right down
         fdb   Img_reboundlaser_diagonal_2 ; left down
         fdb   Img_reboundlaser_diagonal_3 ; left up
-
-HorizontalImages
-        fdb   Img_reboundlaser_horizontal
-        fdb   Img_reboundlaser_horizontal

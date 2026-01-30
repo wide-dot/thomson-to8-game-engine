@@ -66,7 +66,7 @@
  	fcb   $06,$AC,ObjID_fadetotunnel,$00,$07
  	fcb   $06,$AC,ObjID_fadetotunnel,$00,$08
  	fcb   $06,$C0,ObjID_bink,$00,$08
- 	fcb   $06,$FC,ObjID_scant,$00,$05
+ 	;fcb   $06,$FC,ObjID_scant,$00,$05
  	fcb   $07,$24,ObjID_bink,$00,$08
 	fcb   $07,$C4,ObjID_pstaff,$00,$08
  	fcb   $07,$D0,ObjID_bink,$00,$08
