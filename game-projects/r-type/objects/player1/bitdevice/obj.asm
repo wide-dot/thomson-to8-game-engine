@@ -42,10 +42,12 @@ InitOptionBox
         inc   routine,u                 ; Set routine to LiveOptionBox
 
         _Collision_AddAABB AABB_0,AABB_list_bonus        
-        lda   #1                        ; set damage potential for this hitbox
+        lda   #127                        ; set damage potential for this hitbox
         sta   AABB_0+AABB.p,u
         _ldd  3,6                       ; set hitbox xy radius
         std   AABB_0+AABB.rx,u
+        ldb   y_pos+1,u
+        stb   AABB_0+AABB.cy,u
 LiveOptionBox
         ldd   x_pos,u
         cmpd  glb_camera_x_pos
@@ -59,8 +61,6 @@ LiveOptionBox
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB_0+AABB.cx,u
-        ldb   y_pos+1,u
-        stb   AABB_0+AABB.cy,u
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
 @delete       
