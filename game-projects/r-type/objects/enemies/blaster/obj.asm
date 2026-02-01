@@ -65,8 +65,7 @@ Init
         _ldd  blaster_hitbox_x,blaster_hitbox_y
         std   AABB_0+AABB.rx,u
 
-        ldd   y_pos,u
-        subd  glb_camera_y_pos
+        ldb   y_pos+1,u
         stb   AABB_0+AABB.cy,u
 
         inc   routine,u

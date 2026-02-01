@@ -121,8 +121,7 @@ FUN_0000_xxxx_RunMissileRunMode0
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB.cx,x
-	ldd   y_pos,u
-        subd  glb_camera_y_pos
+	ldb   y_pos+1,u
         stb   AABB.cy,x
 
         lda   missile_0x20,u
@@ -296,8 +295,7 @@ LAB_0000_6cee
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB.cx,x
-	ldd   y_pos,u
-        subd  glb_camera_y_pos
+	ldb   y_pos+1,u
         stb   AABB.cy,x
 
 	jsr   ObjectMoveSync
@@ -449,8 +447,7 @@ LAB_0000_7c45
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB.cx,x
-	ldd   y_pos,u
-        subd  glb_camera_y_pos
+	ldb   y_pos+1,u
         stb   AABB.cy,x
 
         ldb   #$c               ; original value $10
@@ -530,8 +527,7 @@ LAB_0000_7cd5
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB.cx,x
-	ldd   y_pos,u
-        subd  glb_camera_y_pos
+	ldb   y_pos+1,u
         stb   AABB.cy,x
 
         ldb   #$c               ; original value $10

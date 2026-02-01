@@ -107,8 +107,7 @@ Live
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB.cx,x
-	ldd   y_pos,u
-        subd  glb_camera_y_pos
+	ldb   y_pos+1,u
         stb   AABB.cy,x
 	
 	jsr   ObjectMoveSync

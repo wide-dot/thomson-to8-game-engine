@@ -89,8 +89,7 @@ Scant_live
         stb   AABB.cx,x
         addd  #5                       ; add x radius
         bmi   @delete                  ; branch if out of screen's left
-        ldd   y_pos,u
-        subd  glb_camera_y_pos
+        ldb   y_pos+1,u
         stb   AABB.cy,x
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
@@ -121,8 +120,7 @@ Scant_shoot
         stb   AABB.cx,x
         addd  #5                       ; add x radius
         bmi   @delete                  ; branch if out of screen's left
-        ldd   y_pos,u
-        subd  glb_camera_y_pos
+        ldb   y_pos+1,u
         stb   AABB.cy,x
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
