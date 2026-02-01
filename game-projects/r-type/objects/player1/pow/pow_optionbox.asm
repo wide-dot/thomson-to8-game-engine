@@ -39,7 +39,7 @@ Init
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
-	    inc   routine,u
+	inc   routine,u
 
         _Collision_AddAABB AABB_0,AABB_list_bonus
         
@@ -59,9 +59,6 @@ Live
         stb   AABB_0+AABB.cx,u
         addd  #4                       ; add x radius
         bmi   @delete                  ; branch if out of screen's left
-        ldd   y_pos,u
-        subd  glb_camera_y_pos
-        stb   AABB_0+AABB.cy,u
         jmp   DisplaySprite
 @captured
         lda   subtype,u                 ; Rebound laser ?
