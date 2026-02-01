@@ -73,7 +73,6 @@ Init
         ldd   y_pos,u
         addd  #2
         std   y_pos,u
-        subd  glb_camera_y_pos
         stb   AABB_0+AABB.cy,u
 
         ; compute wall hit destiny

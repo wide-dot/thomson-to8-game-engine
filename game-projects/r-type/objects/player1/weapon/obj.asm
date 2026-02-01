@@ -52,8 +52,7 @@ Init
         _ldd  15,1                     ; set hitbox xy radius (x should be 3, but 15 for framerate compensation)
         std   AABB_0+AABB.rx,u
 
-        ldd   y_pos,u
-        subd  glb_camera_y_pos
+        ldb   y_pos+1,u
         stb   AABB_0+AABB.cy,u
 
         ; compute wall hit destiny

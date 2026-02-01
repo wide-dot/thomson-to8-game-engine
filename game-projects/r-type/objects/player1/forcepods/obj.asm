@@ -135,8 +135,7 @@ LiveTrackspot
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB_0+AABB.cx,u
-	ldd   y_pos,u
-        subd  glb_camera_y_pos
+	ldb   y_pos+1,u
         stb   AABB_0+AABB.cy,u
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
@@ -339,7 +338,6 @@ LiveHookedFront
         stb   AABB_0+AABB.cx,u
 	ldd   player1+y_pos
 	std   y_pos,u
-        subd  glb_camera_y_pos
         stb   AABB_0+AABB.cy,u
         jsr   AnimateSpriteSync
         jmp   DisplaySprite
@@ -354,7 +352,6 @@ LiveHookedBack
         stb   AABB_0+AABB.cx,u
 	ldd   player1+y_pos
 	std   y_pos,u
-        subd  glb_camera_y_pos
         stb   AABB_0+AABB.cy,u
         jsr   AnimateSpriteSync
         jmp   DisplaySprite

@@ -370,8 +370,7 @@ updateHitbox
         subd  #144+5*2+10              ; +10 is a guess value
         bpl   delete                   ; branch if out of screen's right
 
-        ldd   y_pos,u
-        subd  glb_camera_y_pos
+        ldb   y_pos+1,u
         stb   AABB_0+AABB.cy,u
         rts
 

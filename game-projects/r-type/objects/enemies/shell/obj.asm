@@ -169,7 +169,6 @@ LiveContinue
         sex
         addd  circleCenter.y_pos
         std   y_pos,u
-        subd  glb_camera_y_pos
         stb   AABB.cy,x
 ;
         ; update invisible collision tiles
@@ -317,7 +316,6 @@ Destroyed
         sex
         addd  circleCenter.y_pos
         std   y_pos,u
-        subd  glb_camera_y_pos
         stb   AABB.cy,x
         lda   kill_my_nok,u
         bne   >
