@@ -453,26 +453,17 @@ RunHorizontalLaser.frameDropLoop
         jsr   terrainCollision.do
         tstb
         bne   RunHorizontalLaser.rebound
-        ;lda   globals.backgroundSolid
-        ;lbeq  RunHorizontalLaser.forward
-        ;ldb   #0 ; background
-        ;jsr   terrainCollision.do
-        ;tstb
-        ;lbeq  RunHorizontalLaser.forward
-        jmp   RunHorizontalLaser.forward
+        lda   globals.backgroundSolid
+        lbeq  RunHorizontalLaser.forward
+        ldb   #0 ; background
+        jsr   terrainCollision.do
+        tstb
+        lbeq  RunHorizontalLaser.forward
 
 RunHorizontalLaser.rebound
         ldb   direction,u
         eorb  #%00000010
         stb   direction,u
-
-        ; arcade bug fix ... does not exists in original game
-        ldx   #HorizontalVelocityPresets
-        ldd   b,x
-        addd  x_pos,u
-        std   x_pos,u
-        ldx   glb.buffer
-        std   ,x        
 
 RunHorizontalLaser.forward
         ; move to next position in the buffer
@@ -660,13 +651,12 @@ RunDiagonalLaser.frameDropLoop
         jsr   terrainCollision.do
         tstb
         bne   RunDiagonalLaser.rebound
-        ;lda   globals.backgroundSolid
-        ;lbeq  RunDiagonalLaser.forward
-        ;ldb   #0 ; background
-        ;jsr   terrainCollision.do
-        ;tstb
-        ;lbeq  RunDiagonalLaser.forward
-        jmp   RunDiagonalLaser.forward
+        lda   globals.backgroundSolid
+        lbeq  RunDiagonalLaser.forward
+        ldb   #0 ; background
+        jsr   terrainCollision.do
+        tstb
+        lbeq  RunDiagonalLaser.forward
 
 RunDiagonalLaser.rebound
         ldx   #ReboundPresets
@@ -690,12 +680,12 @@ RunDiagonalLaser.rebound
         jsr   terrainCollision.do
         tstb
         bne   RunDiagonalLaser.rebound2
-        ;lda   globals.backgroundSolid
-        ;beq   >
-        ;ldb   #0 ; background
-        ;jsr   terrainCollision.do
-        ;tstb
-        ;bne   RunDiagonalLaser.rebound2
+        lda   globals.backgroundSolid
+        beq   >
+        ldb   #0 ; background
+        jsr   terrainCollision.do
+        tstb
+        bne   RunDiagonalLaser.rebound2
 !
         ; apply based on first collision only
         ldd   terrainCollision.sensor.x
@@ -723,12 +713,12 @@ RunDiagonalLaser.rebound2
         jsr   terrainCollision.do
         tstb
         bne   RunDiagonalLaser.reboundBack
-        ;lda   globals.backgroundSolid
-        ;beq   >
-        ;ldb   #0 ; background
-        ;jsr   terrainCollision.do
-        ;tstb
-        ;bne   RunDiagonalLaser.reboundBack
+        lda   globals.backgroundSolid
+        beq   >
+        ldb   #0 ; background
+        jsr   terrainCollision.do
+        tstb
+        bne   RunDiagonalLaser.reboundBack
 !
         ; apply based on second collision only
         ldd   terrainCollision.sensor.x
@@ -756,17 +746,6 @@ RunDiagonalLaser.reboundBack
         addb  #4
         andb  #%00000111
         stb   direction,u
-
-        ; arcade bug fix ... does not exists in original game
-        ldx   #DiagonalVelocityPresets
-        aslb
-        abx
-        ldd   y_pos,u
-        addd  2,x
-        std   y_pos,u
-        ldd   x_pos,u
-        addd  ,x
-        std   x_pos,u
 
 RunDiagonalLaser.forward
         ldx   #DiagonalImages
