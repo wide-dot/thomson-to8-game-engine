@@ -28,3 +28,7 @@ AABB_list_bonus              fdb   0,0
 AABB_list_foefire            fdb   0,0
 AABB_list_forcepod           fdb   0,0
 AABB_endLists
+
+player_pos_ring_buffer_ptr  fdb   player_pos_ring_buffer
+player_pos_ring_buffer      fill  0,4*32 ; saves position of player one: x (2 bytes), y (2 bytes), repeated 32 times
+

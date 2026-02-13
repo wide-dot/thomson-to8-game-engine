@@ -158,19 +158,22 @@ Live
         clr   anim_frame,u
         sta   currentlevel,u
 @continueliveishooked
-        ldx   #$F
-        stx   player1+ext_variables+16
+        ;ldx   #$F
+        ;stx   player1+ext_variables+16
         lda   hooked_status,u
         beq   @continueliveisfree
                                         ; Forcepod is hooked
-        cmpa  #$4
-        bne   >
-        ldx   #$19
-        stx   player1+ext_variables+16  ; forcepod offset for beam and flash emitter
-!
+        ; Now this is handled in player1.asm when object is created
+        ;cmpa  #$4
+        ;bne   >
+        ;ldx   #$19
+        ;stx   player1+ext_variables+16  ; forcepod offset for beam and flash emitter
+ ;!
         ldb   Fire_Press
         andb  #c1_button_B_mask
-        bne   @ejectforcepod     
+        bne   @ejectforcepod
+        ; TODO SHOULD IMPLEMENT A WHATEVER KEY PRESS TO EJECT FORCEPOD
+        ; THAT WILL not update E7C3 !!!!!!!!!!!!! UNLIKE ROM CODE !!!
         ;jsr   KTST ; TODO custom ? E7C3 update leads to double buffer bug
         ;bcc   >
         ;jsr   GETC

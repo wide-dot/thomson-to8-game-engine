@@ -17,9 +17,8 @@
         INCLUDE "./objects/soundFX/soundFX.const.asm"
         INCLUDE "./engine/sound/soundFX.macro.asm"
         INCLUDE "./engine/objects/sound/ymm/ymm.macro.asm"
+        INCLUDE "./objects/foefire/obj_emitter-flash.equ"
         
-AABB_0           equ ext_variables     ; AABB struct (9 bytes)
-
 ply_width        equ 12/2
 ply_height       equ 16/2
 
@@ -58,15 +57,12 @@ Init
         lda   #Live_routine
         sta   player1+routine
 
-        _Collision_AddAABB AABB_0,AABB_list_player
+        _Collision_AddAABB p1_AABB_0,AABB_list_player
         
         lda   #127                      ; set weak hitbox type
-        sta   player1+AABB_0+AABB.p
+        sta   player1+p1_AABB_0+AABB.p
         _ldd  4,4                       ; set hitbox xy radius
-        std   player1+AABB_0+AABB.rx
-
-        ldd   #$F
-        std   player1+flashemitteroffset
+        std   player1+p1_AABB_0+AABB.rx
 
         ldx   #Player1_AnimationSet_Normal
         stx   AnimationSet
@@ -123,13 +119,13 @@ Live
         adda  gfxlock.frameDrop.count
         sta   player1+beam_value
         cmpa  #15                       ; arcade value (0xf)
-        blo   @end                      ; branch if threshold not reached
+        lblo  @end                      ; branch if threshold not reached
         sta   player1+is_charging
         jsr   LoadObject_x
-        beq   @end                      ; branch if no more available object slot
+        lbeq  @end                      ; branch if no more available object slot
         lda   #ObjID_beamcharge         ; Charge anim
         sta   id,x
-        bra   @end
+        jmp   @end
 @incharging
         lda   player1+beam_value
         adda  gfxlock.frameDrop.count
@@ -170,9 +166,10 @@ Live
         sta   id,x
         stb   subtype,x
         ldd   player1+x_pos
-        addd  player1+flashemitteroffset
-        subd  #$F
-        std   x_pos,x
+        tst   player1+forcepod_attached
+        beq   >
+        addd  #$A        
+!       std   x_pos,x
         ldd   player1+y_pos
         subd  #2
         std   y_pos,x
@@ -183,7 +180,15 @@ Live
         lda   #$1
         sta   subtype,x
         ldd   #player1
-        std   ext_variables,x
+        std   emitterFlash.parent,x
+        clr   emitterFlash.delay,x        
+        ldd   #$d        
+        tst   player1+forcepod_attached
+        beq   >
+        tst   player1+forcepod_mount_side
+        bne   >
+        addd  #$8
+!       std   emitterFlash.x_offset,x        
 @resetbeam
         ldd   #0
         std   player1+beam_value
@@ -198,10 +203,10 @@ SkipPlayer1Controls
         ; update hitbox position
         ldd   player1+x_pos
         subd  glb_camera_x_pos
-        stb   player1+AABB_0+AABB.cx
+        stb   player1+p1_AABB_0+AABB.cx
         ldd   player1+y_pos
         subd  glb_camera_y_pos
-        stb   player1+AABB_0+AABB.cy
+        stb   player1+p1_AABB_0+AABB.cy
 
         ; terrain collision
         ldd   player1+x_pos
@@ -225,7 +230,7 @@ SkipPlayer1Controls
         bne   destroy
 !
         ; collision to Player
-        lda   player1+AABB_0+AABB.p
+        lda   player1+p1_AABB_0+AABB.p
         beq   destroy
 
         ; black screen border
@@ -242,7 +247,7 @@ display
 destroy
         ; reset damage potential and beam charging value
         lda   #127                      ; set weak hitbox type
-        sta   player1+AABB_0+AABB.p
+        sta   player1+p1_AABB_0+AABB.p
 
         ; player is invincible during blink / fade in
         ldx   AnimationSet
@@ -316,12 +321,13 @@ ApplyJoypadInput
         ldd   #0                ; reset velocities to 0
         std   player1+x_vel
         std   player1+y_vel
-        ldy   AnimationSet
+        ldy   player_pos_ring_buffer_ptr
 
 @loop   jsr   joypad.buffer.getDirection
         cmpa  #$FF
         bne   >
         ; Set animation Ani_Player1, Ani_Player1_up or Ani_Player1_down based on velocity
+        ldy   AnimationSet
         ldd   player1+y_vel              ; load y velocity
         bgt   @moveDown                  ; if positive, moving down
         blt   @moveUp                    ; if negative, moving up
@@ -337,7 +343,10 @@ ApplyJoypadInput
         rts
 !
         anda  #c1_dpad                   ; mask only direction bits for joypad 1
-        beq   @loop
+        bne   >
+        ldx   #speed.null
+        bra   @setSpeed
+!        
         ; Convert joypad bits to table offset using binary logic
         ; Input bits: RLDU (Right Left Down Up)
         ; First calculates 1-based index (1-8), then converts to 0-based (0-7):
@@ -386,14 +395,30 @@ ApplyJoypadInput
         ldx   player1+speedlevel
         abx
         leax  speed.preset,x
+@setSpeed
         ; Load velocities
-        ldd   player1+x_vel
-        addd  ,x                                     ; load X velocity
+        ldd   ,x                                     ; load X velocity        
+        addd  player1+x_vel
         std   player1+x_vel
-        ldd   player1+y_vel
-        addd  2,x                                    ; load Y velocity
+        ldb   player1+x_vel        
+        sex
+        addd  player1+x_pos
+        subd  glb_camera_x_pos
+        std   ,y++
+        ldd   2,x                                    ; load Y velocity
+        addd  player1+y_vel
         std   player1+y_vel
-        bra   @loop
+        ldb   player1+y_vel        
+        sex
+        addd  player1+y_pos
+        std   ,y++        
+        ; update ring buffer pointer
+        cmpy  #player_pos_ring_buffer+64*2
+        bne   >
+        ldy   #player_pos_ring_buffer
+!       sty   player_pos_ring_buffer_ptr
+        jmp   @loop
+
 
 Dead
         jsr   AnimateSpriteSync
@@ -422,6 +447,8 @@ Player1_AnimationSet_Blink
 ; Speed presets for player movement
 ; Each configuration contains only the 8 valid combinations
 ; Values are paired as (x velocity, y velocity) in 8.8 fixed point format
+speed.null
+        fdb $0000,$0000
 speed.preset
         ; Configuration 1
         fdb $0000,$febc         ; Up
