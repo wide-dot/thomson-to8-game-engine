@@ -32,7 +32,7 @@ Init
         ldd   #Ani_scantfire_right
         std   anim,u
 !
-        ldb   #3
+        ldb   #4
         stb   priority,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask

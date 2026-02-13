@@ -11,9 +11,9 @@
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./objects/explosion/explosion.const.asm"
+        INCLUDE "./objects/foefire/obj_emitter-flash.equ"
 
 AABB_0                  equ ext_variables   ; AABB struct (9 bytes)
-flashemitteroffset      equ ext_variables+16  ; 2 bytes !! must be ext_variables+16 !!
 
 Onject
         lda   routine,u
@@ -359,6 +359,7 @@ FUN_0000_8755_ScantShoots
 	ldd   y_pos,u
 	std   y_pos,x
 
+        ldy   #scant_0x385e
         ldd   player1+x_pos
         cmpd  x_pos,u
         bcc   ToTheRight
@@ -366,43 +367,42 @@ FUN_0000_8755_ScantShoots
         clr   subtype,x
         ldb   globals.difficulty
         aslb
-        ldy   #scant_0x385e
         ldd   b,y        
         std   x_vel,x
         ldd   #($30*scale.XN1PX)/256
-        std   flashemitteroffset,u
+        std   @offset
         addd  x_pos,x
         addd  #10
         std   x_pos,x
         jsr   LoadObject_x
         beq   LAB_0000_87de
-	lda   #ObjID_emitter_flash
-        sta   id,x
-        clr   subtype,x
-        stu   ext_variables,x
-        jmp   LAB_0000_87de
+        clra
+        bra   @common
 ToTheRight
         lda   #$01
         sta   subtype,x
         ldb   globals.difficulty
         aslb
-        ldy   #scant_0x385e
         ldd   b,y   
         _negd     
         std   x_vel,x
         ldd   #($30*scale.XP1PX)/256
-        std   flashemitteroffset,u
+        std   @offset
         addd  x_pos,x
         subd  #10
         std   x_pos,x
         jsr   LoadObject_x
         beq   LAB_0000_87de
-	lda   #ObjID_emitter_flash
-        sta   id,x
         lda   #$01
+@common
         sta   subtype,x
-        stu   ext_variables,x
-
+	lda   #ObjID_emitter_flash
+        sta   id,x        
+        ldd   #0
+@offset equ   *-2        
+        std   emitterFlash.x_offset,x    
+        clr   emitterFlash.delay,x    
+        stu   emitterFlash.parent,x
 LAB_0000_87de
         rts
 

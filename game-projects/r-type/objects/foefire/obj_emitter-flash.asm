@@ -7,8 +7,7 @@
 ; ---------------------------------------------------------------------------
 
         INCLUDE "./engine/macros.asm"
-
-parentaddr      equ ext_variables   ; 2 bytes
+        INCLUDE "./objects/foefire/obj_emitter-flash.equ"
 
 Object
         lda   routine,u
@@ -19,18 +18,23 @@ Object
 Routines
         fdb   Init
         fdb   Live
-        fdb   DieScantFireBall
+        fdb   Delete
         fdb   AlreadyDeleted
 
 Init
+        lda   emitterFlash.delay,u
+        beq   >
+        dec   emitterFlash.delay,u
+        rts
+!
+
         ldd   #Ani_emitter_flash_left
-        std   anim,u
-        lda   subtype,u
+        tst   subtype,u
         beq   >
         ldd   #Ani_emitter_flash_right
-        std   anim,u
-!
-        ldb   #3
+!       std   anim,u
+
+        ldb   #4
         stb   priority,u
         lda   render_flags,u
         ora   #render_playfieldcoord_mask
@@ -38,9 +42,9 @@ Init
         inc   routine,u
 
 Live
-        ldx   parentaddr,u
+        ldx   emitterFlash.parent,u
         ldd   x_pos,x
-        addd  ext_variables+16,x
+        addd  emitterFlash.x_offset,u
         std   x_pos,u
         ldd   y_pos,x
         std   y_pos,u
@@ -49,7 +53,7 @@ Live
         jsr   ObjectMoveSync
         jmp   DisplaySprite
 
-DieScantFireBall  
+Delete  
         inc   routine,u
         jmp   DeleteObject
 AlreadyDeleted
