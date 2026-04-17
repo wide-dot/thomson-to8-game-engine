@@ -101,7 +101,7 @@ terrainCollision.checkXaxisRight
         mul
         addd  #0
 @tileBlockOffset equ *-2
-        addd  #8 ; screen border offset ? don't know why
+        addd  #8 ; screen border offset
         cmpd  #map_width
         bls   >
 @noImpact

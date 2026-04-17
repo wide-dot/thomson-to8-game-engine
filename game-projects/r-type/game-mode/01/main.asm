@@ -60,7 +60,7 @@ Level01_Start
         std   score
         ldd   #2
         std   lives
-        lda   #0
+        lda   #1
         sta   globals.backgroundSolid
 
 ; register map locations for scroll
