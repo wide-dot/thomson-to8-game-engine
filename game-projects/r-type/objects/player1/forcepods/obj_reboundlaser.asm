@@ -6,7 +6,7 @@
 ;
 ; input REG : [u] pointer to Object Status Table (OST)
 ; ---------
-; subtype: 4=front, 5=back
+; subtype: 0=front, 1=back
 ; x_pos: x position of the forcepod
 ; y_pos: y position of the forcepod
 ; ---------------------------------------------------------------------------
@@ -122,14 +122,13 @@ Orchestrate
 !
 
         ; adjust x position based on the position of the forcepod
-        ldb   subtype,u   ; get position of the forcepod (4=front, 5=rear)
-        cmpb  #4
+        ldb   subtype,u   ; get position of the forcepod
         beq   >
-        ldd   x_pos,u
+        ldd   player1+x_pos
         subd  #9
         bra   @end
 !
-        ldd   x_pos,u
+        ldd   player1+x_pos
         addd  #11
 @end    std   x_pos,u
 
@@ -142,6 +141,8 @@ Orchestrate
         std   terrainCollision.sensor.x
 
         ; snap on tile grid (6px)
+        ldd   player1+y_pos
+        std   y_pos,u
         leax  y_pos,u        
         jsr   DIV6u
         addd  y_pos,u        
@@ -196,8 +197,7 @@ InitiateDiagonalLaser
         stb   slotMask,u
 
         ; set direction based on the position of the forcepod
-        ldb   subtype,u   ; get position of the forcepod (4=front, 5=rear)
-        cmpb  #4
+        ldb   subtype,u   ; get position of the forcepod
         beq   >
         adda  #4          ; UP and DOWN are inverted when rear mounted forcepod, it does not matter
         anda  #7
@@ -270,8 +270,7 @@ InitiateHorizontalLaser
 
         ; set direction based on the position of the forcepod
         ldb   #LASER_RIGHT
-        lda   subtype,u   ; get position of the forcepod (4=front, 5=back)
-        cmpa  #4
+        lda   subtype,u   ; get position of the forcepod
         beq   >
         ldb   #LASER_LEFT
 !       stb   direction,u
