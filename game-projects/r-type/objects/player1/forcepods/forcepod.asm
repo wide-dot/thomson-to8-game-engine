@@ -78,6 +78,8 @@ impact_x_f_row2   fcb   0
 upper_solid_tiles fcb   0
 lower_solid_tiles fcb   0
 closed_path       fcb   0
+counterair_lock   fcb   0
+forcepodfire_lock fcb   0
 
 Init
         ldd   #0
@@ -88,6 +90,8 @@ Init
         sta   offset_frame
         sta   power_level,u            ; no level, force animation to be set
         std   target_x_pos
+        sta   counterair_lock
+        sta   forcepodfire_lock
 
         lda   #-1
         sta   rotation                 ; default to up rotation
@@ -707,7 +711,13 @@ RunAttached
         jsr   AnimateForcePodSync
         jsr   DisplaySprite
 
-ForcePodAttachedFire        
+ForcePodAttachedFire     
+        lda   counterair_lock
+        suba  gfxlock.frameDrop.count
+        bpl   >
+        lda   #0
+!       sta   counterair_lock
+
         ldb   Fire_Press
         andb  #c1_button_A_mask
         beq   @rts
@@ -723,8 +733,12 @@ ForcePodAttachedFire
         lda   #ObjID_forcepod_reboundlaser
         bra   >  
 @counterairlaser
+        lda   counterair_lock
+        bne   @rts
         jsr   LoadObject_x
         beq   @rts
+        lda   #20
+        sta   counterair_lock
         lda   #ObjID_forcepod_counterairlaser
 !
         sta   id,x
@@ -737,13 +751,13 @@ ForcePodDetachedFire
         andb  #c1_button_A_mask
         beq   @rts
         jsr   LoadObject_x
-        beq   @rts                          ; branch if no more available object slot
-        lda   #ObjID_forcepod_straightup    ; fire straight up !
+        beq   @rts
+        lda   #ObjID_forcepod_straightup
         sta   id,x
         stu   ext_variables+9,x
         jsr   LoadObject_x
-        beq   @rts                          ; branch if no more available object slot
-        lda   #ObjID_forcepod_straightdown  ; fire straight up !
+        beq   @rts
+        lda   #ObjID_forcepod_straightdown
         sta   id,x
         stu   ext_variables+9,x
 @rts    rts
