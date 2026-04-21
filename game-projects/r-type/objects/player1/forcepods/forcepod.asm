@@ -30,6 +30,10 @@
 ; pod max - frameDuration: 2, down rotation
 ; ---------------------------------------------------------------------------
 
+        ; TODO SHOULD IMPLEMENT A WHATEVER KEYBOARD PRESS TO EJECT FORCEPOD
+        ; THAT WILL not update E7C3 !!!!!!!!!!!!! UNLIKE ROM CODE !!!
+
+        ; TODO _Collision_RemoveAABB when downgrade forcepod (player one respawns)
 
         INCLUDE "./engine/macros.asm"
         INCLUDE "./engine/collision/macros.asm"
@@ -213,7 +217,8 @@ RunFloating
         jsr   checkForcePodUpdate        
         jsr   UpdateCollisionBox
         jsr   AnimateForcePodSync
-        jmp   DisplaySprite
+        jsr   DisplaySprite
+        jmp   ForcePodDetachedFire
 
 HorizontalTracking
         ; reinit forcepod to initial position if out of screen on left
@@ -640,7 +645,8 @@ RunEjected
         jsr   checkForcePodUpdate
         jsr   UpdateCollisionBox
         jsr   AnimateForcePodSyncEjected
-        jmp   DisplaySprite
+        jsr   DisplaySprite
+        jmp   ForcePodDetachedFire
 
 RunAttached
         ldd   #9
@@ -663,6 +669,7 @@ RunAttached
 @end
         jsr   checkForcePodUpdate
         jsr   UpdateCollisionBox
+
         ; TODO clear green balls of level 4
 
         lda   Fire_Press
@@ -698,7 +705,48 @@ RunAttached
         stu   emitterFlash.parent,x        
 @continue
         jsr   AnimateForcePodSync
-        jmp   DisplaySprite
+        jsr   DisplaySprite
+
+ForcePodAttachedFire        
+        ldb   Fire_Press
+        andb  #c1_button_A_mask
+        beq   @rts
+        ldb   power_level,u
+        subb  #2
+        beq   @reboundlaser
+        decb
+        beq   @counterairlaser
+        rts
+@reboundlaser
+        jsr   LoadObject_x
+        beq   @rts
+        lda   #ObjID_forcepod_reboundlaser
+        bra   >  
+@counterairlaser
+        jsr   LoadObject_x
+        beq   @rts
+        lda   #ObjID_forcepod_counterairlaser
+!
+        sta   id,x
+        lda   mount_side,u
+        sta   subtype,x
+@rts    rts
+
+ForcePodDetachedFire
+        ldb   Fire_Press
+        andb  #c1_button_A_mask
+        beq   @rts
+        jsr   LoadObject_x
+        beq   @rts                          ; branch if no more available object slot
+        lda   #ObjID_forcepod_straightup    ; fire straight up !
+        sta   id,x
+        stu   ext_variables+9,x
+        jsr   LoadObject_x
+        beq   @rts                          ; branch if no more available object slot
+        lda   #ObjID_forcepod_straightdown  ; fire straight up !
+        sta   id,x
+        stu   ext_variables+9,x
+@rts    rts
 
 UpdateCollisionBox
         ldx   #CollisionRadius          ; load default collision x,y radius
@@ -712,8 +760,6 @@ UpdateCollisionBox
         ldb   y_pos+1,u
         stb   AABB_0+AABB.cy,u  
         rts
-
-; TODO _Collision_RemoveAABB when downgrade forcepod (player one respawns)
 
 CollisionRadius equ *-2 ; forcepod level begins at 1
         fcb   2,3
