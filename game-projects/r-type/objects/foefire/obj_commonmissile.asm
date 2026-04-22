@@ -69,13 +69,12 @@ Init
         sta   render_flags,u
 	inc   routine,u
 
-        _Collision_AddAABB AABB_0,AABB_list_foefire
+        _Collision_AddAABB AABB_0,AABB_list_ennemy
         
-        leax  AABB_0,u
         lda   #1                                        ; set damage potential for this hitbox
-        sta   AABB.p,x
+        sta   AABB_0+AABB.p,u
         _ldd  3,4                                       ; set hitbox xy radius
-        std   AABB.rx,x
+        std   AABB_0+AABB.rx,u
 
         ;                     **************************************************************
         ;                     *                          FUNCTION                          *
@@ -113,16 +112,15 @@ FUN_0000_xxxx_RunMissileRunMode0
         lbge  Delete
 
         ; collision
-        leax  AABB_0,u
-        lda   AABB.p,x
+        lda   AABB_0+AABB.p,u
         lbeq  Destroy
 
         ; update hitbox position
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
 	ldb   y_pos+1,u
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
 
         lda   missile_0x20,u
         suba  gfxlock.frameDrop.count
@@ -287,16 +285,15 @@ LAB_0000_6cee
         bge   Delete
 
         ; collision
-        leax  AABB_0,u
-        lda   AABB.p,x
+        lda   AABB_0+AABB.p,u
         beq   Destroy
 
         ; update hitbox position
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
 	ldb   y_pos+1,u
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
 
 	jsr   ObjectMoveSync
 
@@ -337,7 +334,7 @@ Delete
 !
         lda   #2    ; AlreadyDeleted
         sta   routine,u
-        _Collision_RemoveAABB AABB_0,AABB_list_foefire
+        _Collision_RemoveAABB AABB_0,AABB_list_ennemy
         jmp   DeleteObject
 
 AlreadyDeleted
@@ -358,13 +355,12 @@ Init2
         ora   #render_playfieldcoord_mask
         sta   render_flags,u
 
-        _Collision_AddAABB AABB_0,AABB_list_foefire
+        _Collision_AddAABB AABB_0,AABB_list_ennemy
         
-        leax  AABB_0,u
         lda   #1                                        ; set damage potential for this hitbox
-        sta   AABB.p,x
+        sta   AABB_0+AABB.p,u
         _ldd  3,4                                       ; set hitbox xy radius
-        std   AABB.rx,x
+        std   AABB_0+AABB.rx,u
 
 
         lda   #4        ; FUN_0000_7c0e_CreateAndRunRocketMode1
@@ -439,16 +435,15 @@ LAB_0000_7c45
         lbne  DestroyNoFlame
 !
         ; collision
-        leax  AABB_0,u
-        lda   AABB.p,x
+        lda   AABB_0+AABB.p,u
         lbeq  DestroyNoFlame
 
         ; update hitbox position
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
 	ldb   y_pos+1,u
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
 
         ldb   #$c               ; original value $10
         lda   gfxlock.frameDrop.count
@@ -519,16 +514,15 @@ LAB_0000_7cd5
         lbne  DestroyNoFlame
 !
         ; collision
-        leax  AABB_0,u
-        lda   AABB.p,x
+        lda   AABB_0+AABB.p,u
         lbeq  DestroyNoFlame
 
         ; update hitbox position
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        stb   AABB.cx,x
+        stb   AABB_0+AABB.cx,u
 	ldb   y_pos+1,u
-        stb   AABB.cy,x
+        stb   AABB_0+AABB.cy,u
 
         ldb   #$c               ; original value $10
         lda   gfxlock.frameDrop.count
