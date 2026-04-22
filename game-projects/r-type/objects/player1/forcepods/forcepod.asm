@@ -750,16 +750,42 @@ ForcePodDetachedFire
         ldb   Fire_Press
         andb  #c1_button_A_mask
         beq   @rts
+        ldb   power_level,u
+        decb
+        beq   @level1
+        decb
+        beq   @level2
+        decb
+        bne   @rts
+@level3
+        clra
+        jsr   InstancateForcePodDetachedFire
+        lda   #4
+        jsr   InstancateForcePodDetachedFire
+@level2
+        lda   #1
+        jsr   InstancateForcePodDetachedFire
+        lda   #3
+        jsr   InstancateForcePodDetachedFire
+        rts
+@level1
+        lda   #2
+        jsr   InstancateForcePodDetachedFire
+@rts    rts
+
+InstancateForcePodDetachedFire
+        sta   @a
         jsr   LoadObject_x
         beq   @rts
-        lda   #ObjID_forcepod_straightup
+        lda   #ObjID_forcepod_simplefire
         sta   id,x
-        stu   ext_variables+9,x
-        jsr   LoadObject_x
-        beq   @rts
-        lda   #ObjID_forcepod_straightdown
-        sta   id,x
-        stu   ext_variables+9,x
+        lda   #0
+@a      equ *-1        
+        sta   subtype,x
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
 @rts    rts
 
 UpdateCollisionBox
