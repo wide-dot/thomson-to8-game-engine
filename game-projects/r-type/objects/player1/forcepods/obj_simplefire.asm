@@ -26,6 +26,8 @@ Weapon_Routines
         fdb   Delete
         fdb   AlreadyDeleted
 
+glb.frameDrop      fcb 0
+
 Init
         lda   #6
         ldb   subtype,u
@@ -57,33 +59,42 @@ Init
 Live
         ; delete weapon if no more damage potential
         lda   AABB_0+AABB.p,u
-        beq   Delete
-
-        ; update weapon position
-        jsr   ObjectMoveSync
-        ldd   x_pos,u
-        addd  glb_camera_x_pos
-        subd  glb_camera_x_pos_old
-        std   x_pos,u
-        subd  glb_camera_x_pos        
-        stb   AABB_0+AABB.cx,u
-        ldb   y_pos+1,u
-        stb   AABB_0+AABB.cy,u
+        lbeq  Delete
 
         ; check wall collision
-        ; deactivated: TODO
-        bra   >
-        ldd   #Img_weapon_impact0
-        std   image_set,u
-        inc   routine,u
-        jmp   DisplaySprite
-!
+        ldb   gfxlock.frameDrop.count
+        stb   glb.frameDrop
+FrameDropLoop
 
-        ; delete weapon if out of screen range
+        ; update position
+        ldb   x_vel,u
+        sex                            ; velocity is positive or negative, take care of that
+        sta   @a+1
+        ldd   x_pos+1,u                ; x_pos must be followed by x_sub in memory
+        addd  x_vel,u
+        std   x_pos+1,u                ; update low byte of x_pos and x_sub byte
+        lda   x_pos,u
+@a
+        adca  #$00                     ; (dynamic) parameter is modified by the result of sign extend
+        sta   x_pos,u                  ; update high byte of x_pos
+;        
+        ldb   y_vel,u
+        sex                            ; velocity is positive or negative, take care of that
+        sta   @b+1        
+        ldd   y_pos+1,u                ; y_pos must be followed by y_sub in memory
+        addd  y_vel,u
+        std   y_pos+1,u                ; update low byte of y_pos and y_sub byte
+        lda   y_pos,u
+@b
+        adca  #$00                     ; (dynamic) parameter is modified by the result of sign extend
+        sta   y_pos,u                  ; update high byte of y_pos        
+
+        ; check if the fire is on edge of the screen (right)
+        ; if so, skip wall collision
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        cmpd  #-9
-        blt   Delete
+        ;cmpd  #-9
+        ;blt   Delete
         cmpd  #144+9
         bge   Delete
         ldd   y_pos,u
@@ -93,6 +104,36 @@ Live
         cmpd  #180+6
         bge   Delete
 
+        ; check for collision with the walls
+        ldd   x_pos,u
+        std   terrainCollision.sensor.x
+        ldd   y_pos,u
+        std   terrainCollision.sensor.y
+
+        ldb   #1 ; foreground
+        jsr   terrainCollision.do
+        tstb
+        bne   @impact
+        lda   globals.backgroundSolid
+        beq   >
+        ldb   #0 ; background
+        jsr   terrainCollision.do
+        tstb
+        beq   >
+@impact        
+        ldd   #Img_weapon_impact0
+        std   image_set,u
+        inc   routine,u
+        bra   @end
+!
+        dec   glb.frameDrop
+        bne   FrameDropLoop
+@end
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        stb   AABB_0+AABB.cx,u            
+        ldb   y_pos+1,u
+        stb   AABB_0+AABB.cy,u  
         jmp   DisplaySprite
 
 Impact
