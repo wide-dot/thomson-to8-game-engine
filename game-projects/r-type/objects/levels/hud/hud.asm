@@ -140,17 +140,22 @@ beam_m_size  equ 2                     ; number of byte for a segment
 DisplayLife
         ldb   lives
 	subb  #7
-!	beq   @drawlife
-	jsr   DRAW_Img_hud_b
+	bpl   @drawlife ; cap when higher lives count than displayable
+!	jsr   DRAW_Img_hud_b
 	leau  1,u
 	incb
+	beq   @drawlife
 	bra   <
 @drawlife	
 	ldb   lives
-!	beq   @rts
-	jsr   DRAW_Img_hud_life	
+	beq   @rts
+	cmpb  #7
+	bls   >
+	ldb   #7 ; cap when higher lives count than displayable
+!	jsr   DRAW_Img_hud_life	
 	leau  1,u
 	decb
+	beq   @rts
 	bra   <
 @rts	rts
 
