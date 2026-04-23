@@ -112,13 +112,15 @@ Live
         lda   Fire_Held
         anda  #c1_button_A_mask
         beq   @wasbuttonhdeld           ; branch if button not held, so released ?
-        ldd   player1+beam_value        : beam_value / is_charging
-        tstb
+        ldb   player1+is_charging
         bne   @incharging
         ; Start charging animation
-        adda  gfxlock.frameDrop.count
+        lda   gfxlock.frameDrop.count
+        asra
+        inca
+        adda  player1+beam_value        ; approx.
         sta   player1+beam_value
-        cmpa  #15                       ; arcade value (0xf)
+        cmpa  #5                        ; arcade value (0xf)
         lblo  @end                      ; branch if threshold not reached
         sta   player1+is_charging
         jsr   LoadObject_x
@@ -127,36 +129,38 @@ Live
         sta   id,x
         jmp   @end
 @incharging
-        lda   player1+beam_value
-        adda  gfxlock.frameDrop.count
-        cmpa  #60                       ; Max value ?
+        lda   gfxlock.frameDrop.count
+        asra
+        inca
+        adda  player1+beam_value        ; approx.
+        cmpa  #40                       ; Max value ?
         ble   >
-        lda   #60
+        lda   #40
 !       sta   player1+beam_value
         bra   @end
 @wasbuttonhdeld
         ; original arcade values (at speed of 2 per frame):
-        ; no beam: <24 => <12
-        ; beam 0: <48 => <23
-        ; beam 1: <72 => <34
-        ; beam 2: <80 => <38
-        ; beam 3: <104 => <49
-        ; beam 4: <=128 => <=60
+        ; no beam: <24 => <8
+        ; beam 0: <48 => <15
+        ; beam 1: <72 => <22
+        ; beam 2: <80 => <25
+        ; beam 3: <104 => <33
+        ; beam 4: <=128 => <=40
         lda   player1+beam_value
         ldb   #-1
-        cmpa  #12
+        cmpa  #8
         blo   @resetbeam
         incb
-        cmpa  #23
+        cmpa  #15
         blo   @createBeam
         incb
-        cmpa  #34
+        cmpa  #22
         blo   @createBeam
         incb
-        cmpa  #38
+        cmpa  #25
         blo   @createBeam
         incb
-        cmpa  #49
+        cmpa  #33
         blo   @createBeam
         incb
 @createBeam

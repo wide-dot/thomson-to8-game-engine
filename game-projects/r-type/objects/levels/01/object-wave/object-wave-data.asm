@@ -158,7 +158,7 @@
 	fcb   $18,$6A,ObjID_tabrok,$00,$06
 	fcb   $19,$68,ObjID_fadetotunnel,$00,$01
 	fcb   $19,$68,ObjID_fadetotunnel,$00,$02
-	fcb   $1A,$30,ObjID_bossmusic,$00,$00
+	fcb   $1B,$40,ObjID_bossmusic,$00,$00
 	fcb   $1B,$40,ObjID_dobkeratops_tail,$00,$00 ; (original dobkeratops)
 
 	fcb   $1B,$7C,ObjID_dobkeratops,$00,$07 ; eraser 0

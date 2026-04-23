@@ -58,8 +58,8 @@ Level01_Start
 ; init score and lives at level 1
         ldd   #0
         std   score
-        ldd   #2
-        std   lives
+        ldb   #7
+        stb   lives
         lda   #1
         sta   globals.backgroundSolid
 
@@ -198,7 +198,7 @@ mainloop.routine.checkpoint
         ldx   #$0000
         jsr   ClearDataMem
         _MountObject ObjID_messages
-        dec   lives+1
+        dec   lives
         bmi   >
         ldb   #messages.READY
         jsr   ,x
@@ -225,7 +225,7 @@ mainloop.routine.checkpoint
         std   scroll_vel
         lda   #mainloop.state.RUNNING
         sta   mainloop.state
-        tst   lives+1
+        tst   lives
         bpl   >
         jsr   IrqOff
         jmp   Level01_Start           ; GAME OVER: restart level 1
@@ -353,7 +353,7 @@ checkpoint.positions
         ; common utilities
         INCLUDE "./engine/ram/BankSwitch.asm"
         INCLUDE "./engine/graphics/buffer/gfxlock.asm"
-        INCLUDE "./engine/palette/PalUpdateNow.asm"
+        INCLUDE "./engine/palette/PalUpdateNowLean.asm"
         INCLUDE "./engine/ram/ClearDataMemory.asm"
         INCLUDE "./engine/irq/Irq.asm"
         ;INCLUDE "./engine/math/CalcSine.asm"
