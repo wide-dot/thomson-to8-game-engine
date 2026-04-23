@@ -42,6 +42,15 @@ _beam_seg_intB MACRO                   ; inner line of 8px
 beam_m_start equ $BE3B                 ; beam render starting point
 beam_m_size  equ 2                     ; number of byte for a segment
 
+; ---------------------------------------------------------------------------
+; HUD render entry point
+; ---------------------------------------------------------------------------
+; Draws the beam indicator (5 segments), then updates lives (granting any
+; extra life triggered by a score threshold), then draws the current score.
+; Each segment of the beam is 8px; values in-between are rendered using
+; Beam_mask to mask off the dark pixels of the last partial segment.
+; ---------------------------------------------------------------------------
+
         ; display beam in 5 segments
         ldu   #beam_m_start
 
@@ -114,6 +123,9 @@ beam_m_size  equ 2                     ; number of byte for a segment
         bne   @loop_black
 @beam_end
 
+        ; grant extra lives on score thresholds
+        jsr   hud.checkExtraLife
+
         ; display lives
         ldu   #$DE97
         jsr   DisplayLife
@@ -137,28 +149,95 @@ beam_m_size  equ 2                     ; number of byte for a segment
 	bne   <	
 	jmp   DRAW_Img_hud_0
 
+; ----------------------------------------------------
+; hud.checkExtraLife
+; ----------------------------------------------------
+; Grants +1 life when the score crosses one of the
+; following displayed thresholds:
+;   100000, 200000, 350000, 500000, 700000
+; The on-screen score is score*100, so the values compared
+; against the 'score' variable are divided by 100:
+;   1000, 2000, 3500, 5000, 7000
+;
+; State is tracked in lifeUpThresholdIndex (0..5).
+; It is auto-reset when score is 0 (new game / restart),
+; so no per-game-mode initialization is required.
+;
+; At most one threshold can be crossed per call (score
+; increments are always small enough in-game).
+; ----------------------------------------------------
+hud.checkExtraLife
+        ldd   score
+        bne   @doCheck
+        clr   lifeUpThresholdIndex     ; new game: reset tracking
+        rts
+;
+@doCheck
+        ldb   lifeUpThresholdIndex
+        cmpb  #hud.nbExtraLifeThresholds
+        bhs   @rts                     ; all thresholds already granted
+        aslb                           ; B = index * 2 (fdb entry size)
+        ldx   #hud.extraLifeThresholds
+        abx                            ; X = &threshold[index]  (D preserved)
+        ldd   score
+        cmpd  ,x
+        blo   @rts                     ; score < next threshold
+        inc   lives
+        inc   lifeUpThresholdIndex
+@rts    rts
+
+hud.nbExtraLifeThresholds equ 5
+hud.extraLifeThresholds
+        fdb   1000                     ; 100000
+        fdb   2000                     ; 200000
+        fdb   3500                     ; 350000
+        fdb   5000                     ; 500000
+        fdb   7000                     ; 700000
+
+; ----------------------------------------------------
+; Display the number of lives on screen (mode 160x200x16)
+;
+; Draws 7 columns total: padding black tiles on the left
+; followed by one life icon per remaining life. When
+; 'lives' is >= 7, the display is capped to 7 icons.
+;
+; INPUT
+; -----
+; register U : screen location in ram A ($C000-$DFFF)
+;              (leftmost column of the lives area)
+; global     : lives (1 byte)
+; ----------------------------------------------------
 DisplayLife
         ldb   lives
 	subb  #7
-	bpl   @drawlife ; cap when higher lives count than displayable
-!	jsr   DRAW_Img_hud_b
+	bmi   >
+	ldb   #7
+	bra   @drawLifeFull ; cap when higher lives count than displayable
+!
+	jsr   DRAW_Img_hud_b
 	leau  1,u
 	incb
-	beq   @drawlife
+	beq   @drawLife
 	bra   <
-@drawlife	
+@drawLife	
 	ldb   lives
+!
 	beq   @rts
-	cmpb  #7
-	bls   >
-	ldb   #7 ; cap when higher lives count than displayable
-!	jsr   DRAW_Img_hud_life	
+@drawLifeFull
+ 	jsr   DRAW_Img_hud_life	
 	leau  1,u
 	decb
-	beq   @rts
 	bra   <
 @rts	rts
 
+; ----------------------------------------------------
+; Draw a single "life" icon (4px wide) on screen
+; (mode 160x200x16)
+;
+; INPUT
+; -----
+; register U : screen location in ram A ($C000-$DFFF)
+; ----------------------------------------------------
 DRAW_Img_hud_life
 	LDA #$08
 	STA 120,U
@@ -268,6 +347,15 @@ Img_Num
         fdb   DRAW_Img_hud_8
         fdb   DRAW_Img_hud_9
 
+; ----------------------------------------------------
+; Draw a single blank (black) 4px-wide tile on screen
+; (mode 160x200x16). Used both as background eraser and
+; as padding by DisplayLife / DisplayDigit.
+;
+; INPUT
+; -----
+; register U : screen location in ram A ($C000-$DFFF)
+; ----------------------------------------------------
 DRAW_Img_hud_b
 
 	LDA #$00
@@ -544,6 +632,20 @@ DRAW_Img_hud_9
 	STA -120,U
         LEAU $2000,U
 	rts
+
+; ---------------------------------------------------------------------------
+; Beam partial-segment masks
+; ---------------------------------------------------------------------------
+; Bit masks used when the beam value is not a multiple of 8, to render the
+; last (partially filled) segment of the beam bar. Each row describes the 4
+; bytes of a segment:
+;   RAMB: XH, XL   RAMA: XH, XL
+; The parenthesized number indicates how many pixels of the segment are lit
+; (from 7 down to 1). The selected row is later ANDed with the full-segment
+; colour bytes: one byte stores two pixels (one nibble each), so $55 encodes
+; two pixels of colour 5, $66 two pixels of colour 6 and $dd two pixels of
+; colour $d. The mask zeroes out the pixels that must stay dark.
+; ---------------------------------------------------------------------------
 
 Beam_mask
         fcb $ff,$ff,$ff,$f0 ; (7) RAMB: XH, XL RAMA: XH, XL
