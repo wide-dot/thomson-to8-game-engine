@@ -10,51 +10,57 @@
 
         INCLUDE "./objects/player1/player1.equ"
 
-_beam_seg_extB MACRO                    ; outer lines of 12px
-	PSHU A,X
-
-	LEAU 2*40+3,U
-	PSHU A,X
+_beam_seg_extA MACRO                   ; outer lines of 8px
+	std   $2001,u
+	std   $2001+4*40,u
  ENDM
 
-_beam_seg_extA MACRO                    ; outer lines of 12px
-        LEAU $2000-2*40+3+1,U
-	PSHU A,X
-
-	LEAU 2*40+3,U
-	PSHU A,X
+_beam_seg_extB MACRO                   ; outer lines of 8px
+	std   ,u
+	std   4*40,u
  ENDM
 
-_beam_seg_intA MACRO                    ; inner line of 12px
-	LEAU -37,U
-	PSHU A,X
+_beam_seg_midA MACRO                   ; middle lines of 8px
+	std   $2001+1*40,u
+	std   $2001+3*40,u
  ENDM
 
-_beam_seg_intB MACRO                    ; inner line of 12px
-        LEAU $-2000+3-1,U
-	PSHU A,X
-
-        LEAU -37+3,U                    ; move to next segment position
+_beam_seg_midB MACRO                   ; middle lines of 8px
+	std   1*40,u
+	std   3*40,u
  ENDM
 
-beam_m_start equ $BE87                 ; beam render starting point
-beam_m_size  equ 3                     ; number of byte for a segment
+_beam_seg_intA MACRO                   ; inner line of 8px
+	std   $2001+2*40,u
+ ENDM
+
+_beam_seg_intB MACRO                   ; inner line of 8px
+	std   2*40,u
+        leau  beam_m_size,u            ; move to next segment position
+ ENDM
+
+beam_m_start equ $BE3B                 ; beam render starting point
+beam_m_size  equ 2                     ; number of byte for a segment
 
         ; display beam in 5 segments
         ldu   #beam_m_start
 
         ldb   player1+beam_value
+	stb   @cnt
 @loop_full_beam
-        tstb
+        ldb   #0
+@cnt    equ   *-1
         lbeq  @loop_black
-        subb  #12
+        subb  #8
         bmi   @do_partial_beam
-	Lda   #$66
-	Ldx   #$6666
-        _beam_seg_extB
+	stb   @cnt	
+	ldd   #$5555
         _beam_seg_extA
-	Lda   #$dd
-	Ldx   #$dddd
+        _beam_seg_extB
+	ldd   #$6666
+        _beam_seg_midA
+        _beam_seg_midB
+	ldd   #$dddd
         _beam_seg_intA
         _beam_seg_intB
         cmpu  #beam_m_start+beam_m_size*5
@@ -63,47 +69,45 @@ beam_m_size  equ 3                     ; number of byte for a segment
 ;
 @do_partial_beam
         ldy   #Beam_mask
-        lda   #6
+        lda   #4
         negb
         decb
         mul
         leay  d,y
-        ldd   1,y
-        anda  #$66
-        andb  #$66
-        tfr   d,x
-        lda   ,y
-        anda  #$66
-        _beam_seg_extB
-        ldd   4,y
-        anda  #$66
-        andb  #$66
-        tfr   d,x
-        lda   3,y
-        anda  #$66
+        ldd   2,y
+        anda  #$55
+        andb  #$55
         _beam_seg_extA
-        ldd   4,y
+        ldd   ,y
+        anda  #$55
+        andb  #$55
+        _beam_seg_extB
+        ldd   2,y
+        anda  #$66
+        andb  #$66
+        _beam_seg_midA
+        ldd   ,y
+        anda  #$66
+        andb  #$66
+        _beam_seg_midB
+        ldd   2,y
         anda  #$dd
         andb  #$dd
-        tfr   d,x
-        lda   3,y
-        anda  #$dd
         _beam_seg_intA
-        ldd   1,y
+        ldd   ,y
         anda  #$dd
         andb  #$dd
-        tfr   d,x
-        lda   ,y
-        anda  #$dd
         _beam_seg_intB
         cmpu  #beam_m_start+beam_m_size*5
         beq   @beam_end
 ;
 @loop_black
-        lda   #$00                     ; complete the bar with black segments
-	Ldx   #$0000
-        _beam_seg_extB
+        ; complete the bar with black segments
+	ldd   #$0000
         _beam_seg_extA
+        _beam_seg_extB	
+        _beam_seg_midA
+        _beam_seg_midB
         _beam_seg_intA
         _beam_seg_intB
         cmpu  #beam_m_start+beam_m_size*5
@@ -111,33 +115,80 @@ beam_m_size  equ 3                     ; number of byte for a segment
 @beam_end
 
         ; display lives
-        ldb   #1
-        ldx   lives
-        ldu   #$DEA4
-        jsr   DisplayDigit
+        ldu   #$DE97
+        jsr   DisplayLife
 
         ; display score
+        ldu   #$DE7D
         ldx   score
         beq   >
-        ldb   #4                       ; nb of char
-        ldu   #$DEC0
+        ldb   #5                       ; nb of char
         jsr   DisplayDigit
-        ldx   #0                       ; display the last two 0
-        ldb   #2                       ; nb of char
-        ldu   #$DEC4
-        jmp   DisplayDigitPad
+        ; display the last two 0
+	jsr   DRAW_Img_hud_0
+	leau  1,u
+ 	jmp   DRAW_Img_hud_0
 
-!       ldx   #0                       ; special case when score is 0
-        ldb   #6                       ; nb of char
-        ldu   #$DEC0
-        jmp   DisplayDigit
+!       ; special case when score is 0
+        ldb   #6                       ; nb of black char
+!	jsr   DRAW_Img_hud_b
+	leau  1,u
+	decb
+	bne   <	
+	jmp   DRAW_Img_hud_0
+
+DisplayLife
+        ldb   lives
+	subb  #7
+!	beq   @drawlife
+	jsr   DRAW_Img_hud_b
+	leau  1,u
+	incb
+	bra   <
+@drawlife	
+	ldb   lives
+!	beq   @rts
+	jsr   DRAW_Img_hud_life	
+	leau  1,u
+	decb
+	bra   <
+@rts	rts
+
+DRAW_Img_hud_life
+	LDA #$08
+	STA 120,U
+	STA 80,U
+	LDA #$04
+	STA 40,U
+	STA ,U
+	LDA #$05
+	STA -40,U
+	STA -80,U
+	LDA #$00
+	STA -120,U
+
+        LEAU -$2000,U
+	LDA #$18
+	STA 80,U
+	LDA #$14
+	STA 40,U
+	STA ,U
+	LDA #$08
+	STA 120,U
+	LDA #$d5
+	STA -40,U
+	STA -80,U
+	LDA #$50
+	STA -120,U
+        LEAU $2000,U
+	rts
 
 ; ----------------------------------------------------
 ; Display a n digit number on screen (mode 160x200x16)
 ;
 ; INPUT
 ; -----
-; register B : number of digits
+; register B : number of digits (1-5)
 ; register X : value to display
 ; register U : screen location in ram A ($C000-$DFFF)
 ;
@@ -150,11 +201,6 @@ counter_hdr_flag  equ dp_engine+1
 
 DisplayDigit
         clr   counter_hdr_flag         ; flag used to skip left 0 at display
-        bra   >
-DisplayDigitPad
-        lda   #1
-        sta   counter_hdr_flag
-!
         stx   @d1
         decb
         aslb
@@ -200,10 +246,9 @@ Hud_10          fdb   10
 Hud_100         fdb   100
 Hud_1000        fdb   1000
 Hud_10000       fdb   10000
-Hud_100000      fdb   100000
 
 ; ---------------------------------------------------------------------------
-; Diplay routines for numbers
+; Diplay routines
 ; ---------------------------------------------------------------------------
 
 Img_Num
@@ -219,7 +264,7 @@ Img_Num
         fdb   DRAW_Img_hud_9
 
 DRAW_Img_hud_b
-        pshs u
+
 	LDA #$00
 	STA 120,U
 	STA 80,U
@@ -238,29 +283,28 @@ DRAW_Img_hud_b
 	STA -40,U
 	STA -80,U
 	STA -120,U
-        puls  u,pc
+        LEAU $2000,U
+	rts
 
 DRAW_Img_hud_0
 
-	clra
-	STA -120,U
-
-	LDA #$04
+	LDA #$01
 	STA 120,U
 	STA 80,U
 	STA 40,U
 	STA ,U
 	STA -40,U
 	STA -80,U
+	STA -120,U
 
         LEAU -$2000,U
-	LDA #$04
+	LDA #$01
 	STA 80,U
 	STA 40,U
 	STA ,U
 	STA -40,U
 	STA -80,U
-	LDA #$44
+	LDA #$11
 	STA 120,U
 	STA -120,U
 
@@ -268,7 +312,7 @@ DRAW_Img_hud_0
 	rts
 
 DRAW_Img_hud_1
-        pshs u
+
 	LDA #$00
 	STA 120,U
 	STA 80,U
@@ -279,149 +323,151 @@ DRAW_Img_hud_1
 	STA -120,U
 
         LEAU -$2000,U
-	LDA #$44
-	STA -120,U
-	LDA #$04
+	LDA #$01
 	STA 120,U
 	STA 80,U
 	STA 40,U
 	STA ,U
 	STA -40,U
 	STA -80,U
-        puls  u,pc
+	STA -120,U
+        LEAU $2000,U
+	rts
 
 DRAW_Img_hud_2
-        pshs u
-	LDA #$04
+
+	LDA #$01
 	STA 120,U
 	STA 80,U
 	STA 40,U
-	LDA #$00
 	STA ,U
+	LDA #$00
 	STA -40,U
 	STA -80,U
-	LDA #$04
+	LDA #$01
 	STA -120,U
 
         LEAU -$2000,U
-	LDA #$44
-	STA 120,U
-	LDA #$40
-	STA ,U
-	STA -120,U
 	LDA #$00
 	STA 80,U
 	STA 40,U
-	LDA #$04
+	LDA #$01
 	STA -40,U
 	STA -80,U
-        puls  u,pc
+	LDA #$11
+	STA 120,U
+	STA ,U
+	STA -120,U
+        LEAU $2000,U
+	rts
 
 DRAW_Img_hud_3
-        pshs u
-	LDA #$04
+
+	LDA #$01
 	STA 120,U
 	LDA #$00
 	STA 80,U
 	STA 40,U
-	LDA #$04
+	LDA #$01
 	STA ,U
 	LDA #$00
 	STA -40,U
 	STA -80,U
-	LDA #$04
+	LDA #$01
 	STA -120,U
 
         LEAU -$2000,U
-	LDA #$04
+	LDA #$01
 	STA 80,U
 	STA 40,U
 	STA -40,U
 	STA -80,U
-	LDA #$44
+	LDA #$11
 	STA 120,U
 	STA ,U
 	STA -120,U
-        puls  u,pc
+        LEAU $2000,U
+	rts
 
 DRAW_Img_hud_4
-        pshs u
+
 	LDA #$00
 	STA 120,U
 	STA 80,U
+	LDA #$01
 	STA 40,U
-	LDA #$04
 	STA ,U
 	STA -40,U
 	STA -80,U
 	STA -120,U
 
         LEAU -$2000,U
-	LDA #$44
-	STA ,U
-	LDA #$04
+	LDA #$01
 	STA 120,U
 	STA 80,U
-	STA 40,U
+	STA ,U
 	STA -40,U
 	STA -80,U
 	STA -120,U
-        puls  u,pc
+	LDA #$11
+	STA 40,U
+        LEAU $2000,U
+	rts
 
 DRAW_Img_hud_5
-        pshs u
-	LDA #$04
+
+	LDA #$01
 	STA 120,U
 	LDA #$00
 	STA 80,U
 	STA 40,U
-	LDA #$04
+	LDA #$01
 	STA ,U
 	STA -40,U
 	STA -80,U
 	STA -120,U
 
         LEAU -$2000,U
-	LDA #$40
-	STA 120,U
-	LDA #$44
-	STA ,U
-	STA -120,U
-	LDA #$04
+	LDA #$01
 	STA 80,U
 	STA 40,U
 	LDA #$00
 	STA -40,U
 	STA -80,U
-        puls  u,pc
+	LDA #$11
+	STA 120,U
+	STA ,U
+	STA -120,U
+        LEAU $2000,U
+	rts
 
 DRAW_Img_hud_6
-        pshs u
-	LDA #$04
+
+	LDA #$01
 	STA 120,U
 	STA 80,U
 	STA 40,U
 	STA ,U
 	STA -40,U
 	STA -80,U
-	LDA #$00
 	STA -120,U
 
         LEAU -$2000,U
-	LDA #$44
-	STA 120,U
-	STA ,U
-	STA -120,U
-	LDA #$04
+	LDA #$01
 	STA 80,U
 	STA 40,U
 	LDA #$00
 	STA -40,U
 	STA -80,U
-        puls  u,pc
+	LDA #$11
+	STA 120,U
+	STA ,U
+	STA -120,U
+        LEAU $2000,U
+	rts
 
 DRAW_Img_hud_7
-        pshs u
+
 	LDA #$00
 	STA 120,U
 	STA 80,U
@@ -429,79 +475,76 @@ DRAW_Img_hud_7
 	STA ,U
 	STA -40,U
 	STA -80,U
-	LDA #$04
+	LDA #$01
 	STA -120,U
 
         LEAU -$2000,U
-	LDA #$04
+	LDA #$11
+	STA -120,U
+	LDA #$01
 	STA 120,U
 	STA 80,U
 	STA 40,U
 	STA ,U
 	STA -40,U
 	STA -80,U
-	LDA #$44
-	STA -120,U
-        puls  u,pc
+        LEAU $2000,U
+	rts
 
 DRAW_Img_hud_8
-        pshs u
-	LDA #$04
+
+	LDA #$01
 	STA 120,U
 	STA 80,U
 	STA 40,U
 	STA ,U
 	STA -40,U
 	STA -80,U
-	LDA #$00
 	STA -120,U
 
         LEAU -$2000,U
-	LDA #$44
+	LDA #$11
 	STA 120,U
 	STA ,U
 	STA -120,U
-	LDA #$04
+	LDA #$01
 	STA 80,U
 	STA 40,U
 	STA -40,U
 	STA -80,U
-        puls  u,pc
+        LEAU $2000,U
+	rts
 
 DRAW_Img_hud_9
-        pshs u
+
 	LDA #$00
 	STA 120,U
 	STA 80,U
 	STA 40,U
-	LDA #$04
+	LDA #$01
 	STA ,U
 	STA -40,U
 	STA -80,U
-	LDA #$00
 	STA -120,U
 
         LEAU -$2000,U
-	LDA #$04
+	LDA #$01
 	STA 120,U
 	STA 80,U
 	STA 40,U
 	STA -40,U
 	STA -80,U
-	LDA #$44
+	LDA #$11
 	STA ,U
 	STA -120,U
-        puls  u,pc
+        LEAU $2000,U
+	rts
 
 Beam_mask
-        fcb $ff,$ff,$ff,$ff,$ff,$f0 ; (11) RAMB: A, XH, XL RAMA: A, XH, XL
-        fcb $ff,$ff,$ff,$ff,$ff,$00 : (10)
-        fcb $ff,$ff,$f0,$ff,$ff,$00
-        fcb $ff,$ff,$00,$ff,$ff,$00
-        fcb $ff,$ff,$00,$ff,$f0,$00
-        fcb $ff,$ff,$00,$ff,$00,$00
-        fcb $ff,$f0,$00,$ff,$00,$00
-        fcb $ff,$00,$00,$ff,$00,$00
-        fcb $ff,$00,$00,$f0,$00,$00
-        fcb $ff,$00,$00,$00,$00,$00
-        fcb $f0,$00,$00,$00,$00,$00 ; (01)
+        fcb $ff,$ff,$ff,$f0 ; (7) RAMB: XH, XL RAMA: XH, XL
+        fcb $ff,$ff,$ff,$00 : (6)
+        fcb $ff,$f0,$ff,$00 : (5)
+        fcb $ff,$00,$ff,$00 : (4)
+        fcb $ff,$00,$f0,$00 : (3)
+        fcb $ff,$00,$00,$00 : (2)
+        fcb $f0,$00,$00,$00 : (1)
