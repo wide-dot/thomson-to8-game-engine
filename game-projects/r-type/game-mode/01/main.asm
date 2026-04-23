@@ -58,7 +58,7 @@ Level01_Start
 ; init score and lives at level 1
         ldd   #0
         std   score
-        ldb   #7
+        ldb   #2
         stb   lives
         lda   #1
         sta   globals.backgroundSolid
