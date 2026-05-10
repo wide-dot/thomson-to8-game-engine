@@ -21,7 +21,7 @@ viewport_width  equ 144
 viewport_height equ 180
 
         org   $6100
-        clr   NEXT_GAME_MODE
+        clr   globals.nextGameMode
         jsr   InitGlobals
 		jsr   InitDrawSprites
         jsr   InitStack
@@ -38,11 +38,11 @@ viewport_height equ 180
         ldb   #ObjID_animation
         jsr   AnimateMoveSyncRegister
 
-; init score and lives at level 1
+; init globals.score and globals.lives at level 1
         ldd   #0
-        std   score
+        std   globals.score
         ldd   #2
-        std   lives
+        std   globals.lives
 
 ; register map locations for scroll
         _MountObject ObjID_LevelInit
@@ -215,7 +215,7 @@ LoopRun
         _gfxlock.off
         _gfxlock.loop
 
-        lda  NEXT_GAME_MODE
+        lda  globals.nextGameMode
         bne  Start_Music_Boss_Routine
 
         rts
@@ -229,7 +229,7 @@ Start_Music_Boss_Routine
         _MusicInit_objvgc #1,#MUSIC_NO_LOOP,#MusicCallbackSNBoss
         jsr   IrqOn
 
-        clr   NEXT_GAME_MODE
+        clr   globals.nextGameMode
 
         rts
 

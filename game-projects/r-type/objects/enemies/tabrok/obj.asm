@@ -296,9 +296,9 @@ CommonLife
 
 
 FUN_0000_69e4_DestroyTabrok                       
-        ldd   score
+        ldd   globals.score
         addd  #tabrok_score
-        std   score
+        std   globals.score
         jsr   LoadObject_x ; make then die early ... to be removed
         beq   FUN_0000_6a07_DeleteTabrok
         _ldd  ObjID_explosion,explosion.subtype.big

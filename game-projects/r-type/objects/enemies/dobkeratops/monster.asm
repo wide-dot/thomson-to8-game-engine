@@ -32,6 +32,7 @@ Routines
         fdb   MonsterOut
         fdb   MonsterMouth
         fdb   WaitEndStage
+        fdb   AlreadyDeleted
 
 Init
         ; init sprite position
@@ -188,7 +189,7 @@ monster.fire.images
 
 UpdateHitBox
         lda   AABB_0+AABB.p,u
-        beq   DeleteMonster
+        beq   Delete
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB_0+AABB.cx,u
@@ -197,10 +198,10 @@ UpdateHitBox
         stb   AABB_0+AABB.cy,u
         rts
 
-DeleteMonster 
-        ldd   score
+Delete
+        ldd   globals.score
         addd  #dobkeratops_monster_score
-        std   score
+        std   globals.score
         jsr   LoadObject_x
         beq   @delete
         _ldd   ObjID_explosion,explosion.subtype.smallx3
@@ -211,4 +212,21 @@ DeleteMonster
         std   y_pos,x
 @delete
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
+        lda   #1
+        sta   globals.bossDefeated
+
+        jsr   LoadObject_x
+        beq   >
+        lda   #ObjID_dobkeratops_explosion
+        sta   id,x
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
+!       
+        lda   #6
+        sta   routine,u
         jmp   DeleteObject
+
+AlreadyDeleted
+        rts

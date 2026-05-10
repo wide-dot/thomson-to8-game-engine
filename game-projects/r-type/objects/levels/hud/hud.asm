@@ -2,9 +2,9 @@
 ; Render HUD on screen
 ; --------------------
 ;
-; - nb of lives
+; - nb of globals.lives
 ; - beam indicator
-; - score
+; - globals.score
 ;
 ; *****************************************************************************
 
@@ -45,8 +45,8 @@ beam_m_size  equ 2                     ; number of byte for a segment
 ; ---------------------------------------------------------------------------
 ; HUD render entry point
 ; ---------------------------------------------------------------------------
-; Draws the beam indicator (5 segments), then updates lives (granting any
-; extra life triggered by a score threshold), then draws the current score.
+; Draws the beam indicator (5 segments), then updates globals.lives (granting any
+; extra life triggered by a globals.score threshold), then draws the current globals.score.
 ; Each segment of the beam is 8px; values in-between are rendered using
 ; Beam_mask to mask off the dark pixels of the last partial segment.
 ; ---------------------------------------------------------------------------
@@ -123,16 +123,16 @@ beam_m_size  equ 2                     ; number of byte for a segment
         bne   @loop_black
 @beam_end
 
-        ; grant extra lives on score thresholds
+        ; grant extra globals.lives on globals.score thresholds
         jsr   hud.checkExtraLife
 
-        ; display lives
+        ; display globals.lives
         ldu   #$DE97
         jsr   DisplayLife
 
-        ; display score
+        ; display globals.score
         ldu   #$DE7D
-        ldx   score
+        ldx   globals.score
         beq   >
         ldb   #5                       ; nb of char
         jsr   DisplayDigit
@@ -141,7 +141,7 @@ beam_m_size  equ 2                     ; number of byte for a segment
 	leau  1,u
  	jmp   DRAW_Img_hud_0
 
-!       ; special case when score is 0
+!       ; special case when globals.score is 0
         ldb   #6                       ; nb of black char
 !	jsr   DRAW_Img_hud_b
 	leau  1,u
@@ -152,38 +152,38 @@ beam_m_size  equ 2                     ; number of byte for a segment
 ; ----------------------------------------------------
 ; hud.checkExtraLife
 ; ----------------------------------------------------
-; Grants +1 life when the score crosses one of the
+; Grants +1 life when the globals.score crosses one of the
 ; following displayed thresholds:
 ;   100000, 200000, 350000, 500000, 700000
-; The on-screen score is score*100, so the values compared
-; against the 'score' variable are divided by 100:
+; The on-screen globals.score is globals.score*100, so the values compared
+; against the 'globals.score' variable are divided by 100:
 ;   1000, 2000, 3500, 5000, 7000
 ;
-; State is tracked in lifeUpThresholdIndex (0..5).
-; It is auto-reset when score is 0 (new game / restart),
+; State is tracked in globals.lifeUpIdx (0..5).
+; It is auto-reset when globals.score is 0 (new game / restart),
 ; so no per-game-mode initialization is required.
 ;
-; At most one threshold can be crossed per call (score
+; At most one threshold can be crossed per call (globals.score
 ; increments are always small enough in-game).
 ; ----------------------------------------------------
 hud.checkExtraLife
-        ldd   score
+        ldd   globals.score
         bne   @doCheck
-        clr   lifeUpThresholdIndex     ; new game: reset tracking
+        clr   globals.lifeUpIdx     ; new game: reset tracking
         rts
 ;
 @doCheck
-        ldb   lifeUpThresholdIndex
+        ldb   globals.lifeUpIdx
         cmpb  #hud.nbExtraLifeThresholds
         bhs   @rts                     ; all thresholds already granted
         aslb                           ; B = index * 2 (fdb entry size)
         ldx   #hud.extraLifeThresholds
         abx                            ; X = &threshold[index]  (D preserved)
-        ldd   score
+        ldd   globals.score
         cmpd  ,x
-        blo   @rts                     ; score < next threshold
-        inc   lives
-        inc   lifeUpThresholdIndex
+        blo   @rts                     ; globals.score < next threshold
+        inc   globals.lives
+        inc   globals.lifeUpIdx
 @rts    rts
 
 hud.nbExtraLifeThresholds equ 5
@@ -195,24 +195,24 @@ hud.extraLifeThresholds
         fdb   7000                     ; 700000
 
 ; ----------------------------------------------------
-; Display the number of lives on screen (mode 160x200x16)
+; Display the number of globals.lives on screen (mode 160x200x16)
 ;
 ; Draws 7 columns total: padding black tiles on the left
 ; followed by one life icon per remaining life. When
-; 'lives' is >= 7, the display is capped to 7 icons.
+; 'globals.lives' is >= 7, the display is capped to 7 icons.
 ;
 ; INPUT
 ; -----
 ; register U : screen location in ram A ($C000-$DFFF)
-;              (leftmost column of the lives area)
-; global     : lives (1 byte)
+;              (leftmost column of the globals.lives area)
+; global     : globals.lives (1 byte)
 ; ----------------------------------------------------
 DisplayLife
-        ldb   lives
+        ldb   globals.lives
 	subb  #7
 	bmi   >
 	ldb   #7
-	bra   @drawLifeFull ; cap when higher lives count than displayable
+	bra   @drawLifeFull ; cap when higher globals.lives count than displayable
 !
 	jsr   DRAW_Img_hud_b
 	leau  1,u
@@ -220,7 +220,7 @@ DisplayLife
 	beq   @drawLife
 	bra   <
 @drawLife	
-	ldb   lives
+	ldb   globals.lives
 !
 	beq   @rts
 @drawLifeFull

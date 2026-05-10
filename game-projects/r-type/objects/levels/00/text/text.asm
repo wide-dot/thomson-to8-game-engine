@@ -159,7 +159,7 @@ LiveScoresContinue
 @livescoresmainloop equ *-1
 	ldu   #0
 @savedu equ *-2 
-	ldx   x_vel,u			; Unhide score number image
+	ldx   x_vel,u			; Unhide globals.score number image
 	asla
 	ldx   a,x
 	asra

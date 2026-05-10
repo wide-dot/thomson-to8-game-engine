@@ -19,9 +19,9 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./objects/messages/messages.const.asm"
 
 timestamp.DELETE_ALIEN_BODY equ $1D80
-timestamp.ERASE_NERV_START equ $2000
-timestamp.MOVE_ALIEN_START equ $2000+140
-timestamp.MOVE_ALIEN_END   equ $2000+880+140
+timestamp.ERASE_NERV_START equ timestamp.DELETE_ALIEN_BODY+$280
+timestamp.MOVE_ALIEN_START equ timestamp.ERASE_NERV_START+140
+timestamp.MOVE_ALIEN_END   equ timestamp.MOVE_ALIEN_END+880
 
 moveByScript.NEGXSTEP equ scale.XN1PX
 moveByScript.POSXSTEP equ scale.XP1PX
@@ -34,7 +34,7 @@ viewport_height equ 180
 
         org   $6100
 Level01_Start
-        clr   NEXT_GAME_MODE
+        clr   globals.nextGameMode
         jsr   InitGlobals
 	jsr   InitDrawSprites
         lda   #0
@@ -55,11 +55,11 @@ Level01_Start
         ldb   #ObjID_animation
         jsr   moveByScript.register
 
-; init score and lives at level 1
+; init globals.score and globals.lives at level 1
         ldd   #0
-        std   score
+        std   globals.score
         ldb   #2
-        stb   lives
+        stb   globals.lives
         lda   #1
         sta   globals.backgroundSolid
 
@@ -150,7 +150,7 @@ mainloop.routine.running
         jsr   gfxlock.loop
 
         ; boss music
-        lda  NEXT_GAME_MODE
+        lda  globals.nextGameMode
         beq  >
         jsr   IrqOff
         _MountObject ObjID_ymm01
@@ -158,7 +158,7 @@ mainloop.routine.running
         ;_MountObject ObjID_vgc01
         ;_MusicInit_objvgc #1,#MUSIC_LOOP,#0
         jsr   IrqOn
-        clr   NEXT_GAME_MODE
+        clr   globals.nextGameMode
 !
         jmp   LevelMainLoop
 
@@ -198,7 +198,7 @@ mainloop.routine.checkpoint
         ldx   #$0000
         jsr   ClearDataMem
         _MountObject ObjID_messages
-        dec   lives
+        dec   globals.lives
         bmi   >
         ldb   #messages.READY
         jsr   ,x
@@ -225,7 +225,7 @@ mainloop.routine.checkpoint
         std   scroll_vel
         lda   #mainloop.state.RUNNING
         sta   mainloop.state
-        tst   lives
+        tst   globals.lives
         bpl   >
         jsr   IrqOff
         jmp   Level01_Start           ; GAME OVER: restart level 1

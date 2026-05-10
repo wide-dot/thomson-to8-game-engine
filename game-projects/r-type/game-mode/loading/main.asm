@@ -63,7 +63,7 @@ Init
         bra   Init
 !
         jsr   IrqOff                    
-        lda   NEXT_GAME_MODE
+        lda   globals.nextGameMode
         sta   GameMode
         jsr   LoadGameModeNow
 
