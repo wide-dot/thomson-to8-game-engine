@@ -88,6 +88,9 @@ exp.animations
         fdb   exp.animation.fwk
         fdb   exp.animation.fwk ; reserved for unknown, to be implemented
         fdb   exp.animation.big
+        fdb   exp.animation.big ; with white/blue flash disk
+        fdb   exp.animation.big ; with white/brown flash disk        
+        fdb   exp.animation.smallx3 ; with black background eraser
 
 exp.animation.smallx3
         fcb   2

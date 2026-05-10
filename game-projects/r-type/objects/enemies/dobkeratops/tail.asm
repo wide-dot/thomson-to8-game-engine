@@ -19,6 +19,8 @@ tail.xVelSign     equ ext_variables+11
 tail.yVelSign     equ ext_variables+12
 
 rtnid.WaitEndStage equ 2
+rtnid.Explode equ 3
+rtnid.AlreadyDeleted equ 4
 
 ; temporary variables
 tail.instances    equ dp_extreg
@@ -33,6 +35,8 @@ Routines
         fdb   InstanciateTail ; reserved for parent object only
         fdb   Run             ; start routine for tails elements
         fdb   WaitEndStage
+        fdb   Explode
+        fdb   AlreadyDeleted
 
 InstanciateTail
         ; init presets
@@ -135,6 +139,12 @@ Run
         sta   routine,u
 !
 WaitEndStage
+        lda   globals.bossDefeated
+        beq   >
+        lda   #rtnid.Explode
+        sta   routine,u
+        jmp   DisplaySprite
+!
         ; apply velocity by script in sync with framerate
         ; -----------------------------------------------
         ldy gfxlock.frameDrop.count_w ; take number of elapsed frame since last render and apply all moves
@@ -277,9 +287,29 @@ WaitEndStage
 !
         jmp   DisplaySprite
 
-DeleteTail
+Explode
+        lda   tail.explodeDelay,u
+        bmi   >
+        suba  gfxlock.frameDrop.count
+        sta   tail.explodeDelay,u
+        jmp   DisplaySprite
+!
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
+        jsr   LoadObject_x
+        beq   >
+        _ldd   ObjID_explosion,explosion.subtype.smallx2
+        std   id,x ; and subtype
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
+!       
+        lda   #rtnid.AlreadyDeleted
+        sta   routine,u
         jmp   DeleteObject
+
+AlreadyDeleted
+        rts
 
 tail.images
         fdb   Img_dobkeratops_tail_0

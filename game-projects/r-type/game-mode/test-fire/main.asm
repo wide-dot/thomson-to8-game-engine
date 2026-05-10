@@ -15,7 +15,7 @@ SOUND_CARD_PROTOTYPE equ 1
 
         org   $6100
 
-        clr   NEXT_GAME_MODE
+        clr   globals.nextGameMode
         jsr   InitGlobals
 	jsr   InitDrawSprites
 

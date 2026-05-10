@@ -25,7 +25,7 @@ viewport_width  equ 144
 viewport_height equ 180
 
         org   $6100
-        clr   NEXT_GAME_MODE
+        clr   globals.nextGameMode
         jsr   InitGlobals
 	jsr   InitDrawSprites
         lda   #1
@@ -45,11 +45,11 @@ viewport_height equ 180
         ldb   #ObjID_animation
         jsr   moveByScript.register
 
-; init score and lives at level 1
+; init globals.score and globals.lives at level 1
         ldd   #0
-        std   score
+        std   globals.score
         ldd   #2
-        std   lives
+        std   globals.lives
         lda   #0
         sta   globals.backgroundSolid
 
@@ -129,7 +129,7 @@ LevelMainLoop
         _gfxlock.off
         _gfxlock.loop
 
-        lda  NEXT_GAME_MODE
+        lda  globals.nextGameMode
         beq  >
         jsr   IrqOff
         _MountObject ObjID_ymm05
@@ -137,7 +137,7 @@ LevelMainLoop
         _MountObject ObjID_vgc05
         _MusicInit_objvgc #1,#MUSIC_LOOP,#0
         jsr   IrqOn
-        clr   NEXT_GAME_MODE
+        clr   globals.nextGameMode
 !
         jmp   LevelMainLoop
 

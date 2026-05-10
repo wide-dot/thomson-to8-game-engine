@@ -258,9 +258,9 @@ LAB_0000_8668
         jmp   DisplaySprite
 
 LAB_0000_86a0_DestroyScant                     
-        ldd   score
+        ldd   globals.score
         addd  #tabrok_score
-        std   score
+        std   globals.score
         jsr   LoadObject_x ; make then die early ... to be removed
         beq   FUN_0000_6a07_DeleteScant
         _ldd  ObjID_explosion,explosion.subtype.big

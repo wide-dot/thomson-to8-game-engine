@@ -167,10 +167,10 @@ RunEyes
         stb   AABB_0+AABB.cx,u
         jmp   DisplaySprite
 @erase
-        ; score update
-        ldd   score
+        ; globals.score update
+        ldd   globals.score
         addd  #dobkeratops_eye_score
-        std   score
+        std   globals.score
         ; delete eyes object
         ldb   subtype,u
         cmpb  #1

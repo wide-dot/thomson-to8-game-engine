@@ -2,7 +2,7 @@
 ;
 ; Defines the properties for each enemies. A properties is declined into 4 equates :
 ; 
-; - spritename_score     : Number of points (multiples of 100) to increment the score with
+; - spritename_score     : Number of points (multiples of 100) to increment the globals.score with
 ; - spritename_hitbox_x  : X radius of collision sensibility
 ; - spritename_hitbox_y  : Y radius of collision sensibility
 ; - spritename_hitdamage : Damage sensibility
@@ -45,7 +45,7 @@ tabrok_hitdamage	equ $1e
 dobkeratops_monster_score     equ 1
 dobkeratops_monster_hitbox_x  equ 4
 dobkeratops_monster_hitbox_y  equ 8
-dobkeratops_monster_hitdamage equ 30 ; ARCADE OK
+dobkeratops_monster_hitdamage equ 30 ; ARCADE VERIFIED OK (1e)
 
 dobkeratops_tail_hitbox_x  equ 2
 dobkeratops_tail_hitbox_y  equ 4

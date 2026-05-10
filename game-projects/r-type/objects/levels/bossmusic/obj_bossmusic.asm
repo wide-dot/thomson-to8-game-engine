@@ -21,7 +21,7 @@ Routines
 
 Init
         lda   #1
-        sta   NEXT_GAME_MODE
+        sta   globals.nextGameMode
 
         inc   routine,u
         jmp   DeleteObject

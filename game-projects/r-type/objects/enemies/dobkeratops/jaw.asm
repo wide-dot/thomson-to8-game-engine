@@ -9,7 +9,8 @@
         INCLUDE "./engine/macros.asm"
         INCLUDE "./objects/explosion/explosion.const.asm"
 
-rtnid.DeleteJaw equ 3
+rtnid.WaitEndStage equ 3
+rtnid.AlreadyDeleted equ 4
 
 Object
         lda   routine,u
@@ -22,6 +23,7 @@ Routines
         fdb   Wait
         fdb   Run
         fdb   WaitEndStage
+        fdb   AlreadyDeleted
 
 Init
         ; init sprite position
@@ -66,13 +68,16 @@ Run
         jsr   main.followDobkeratops
         cmpx  #timestamp.MOVE_ALIEN_END
         blo   >
-        lda   #rtnid.DeleteJaw
+        lda   #rtnid.WaitEndStage
         sta   routine,u
 !
 WaitEndStage
         jmp   Animate
 
 Animate
+        lda   globals.bossDefeated
+        bne   Explode
+
         ldd   anim_frame,u
         addd  gfxlock.frameDrop.count_w
         cmpd  #$180                     ; up to x180 (384)
@@ -93,3 +98,19 @@ Animate
         stx   image_set,u
         jmp   DisplaySprite
 
+Explode
+        jsr   LoadObject_x
+        beq   >
+        _ldd   ObjID_explosion,explosion.subtype.smallx2
+        std   id,x ; and subtype
+        ldd   x_pos,u
+        std   x_pos,x
+        ldd   y_pos,u
+        std   y_pos,x
+!
+        lda   #rtnid.AlreadyDeleted
+        sta   routine,u
+        jmp   DeleteObject
+
+AlreadyDeleted
+        rts     

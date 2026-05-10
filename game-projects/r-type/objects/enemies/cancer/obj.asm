@@ -631,9 +631,9 @@ Live
         stb   AABB_0+AABB.cy,u
         jmp   DisplaySprite
 @destroy 
-        ldd   score
+        ldd   globals.score
         addd  #cancer_score
-        std   score
+        std   globals.score
         jsr   LoadObject_x ; make then die early ... to be removed
         beq   @delete
         _ldd   ObjID_explosion,explosion.subtype.smallx2
