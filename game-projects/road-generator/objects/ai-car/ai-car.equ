@@ -1,0 +1,33 @@
+; ============================================================================
+; ai-car.equ — équates pour l'objet AiCar (MOCK, pas activé pour l'instant)
+;
+; Une AI car = une voiture concurrente. Chaque instance partage la même
+; struct LotusCarState dans le tableau résident AI_States[] (cf. ram-data).
+;
+; Lien OST ↔ state : ext_variables d'une AI car contient un POINTER vers
+; son slot dans AI_States[] (= équivalent A4 dans Lotus 68000 qui pointe
+; sur la struct du véhicule en cours).
+;
+; Cross-deps (de l'analyse reverse Lotus) :
+*   - chaque AI lit la précédente dans AI_States pour le spacing
+*     (`FUN_000795f2` : `puVar12[-3] - 0x4000` = ne pas dépasser car -1)
+*   - Player1 collision-scan lit toutes les AI cars (`FUN_00075c36`)
+*   - Player collision peut écrire la lateral / velocity de l'AI car
+; ============================================================================
+
+* --- AI car capacity ---
+AI_NB_CARS                    equ 18           ; Lotus = 16-18 cars en course
+
+* --- Routine IDs ---
+AiCar_Init_routine            equ 0
+AiCar_Main_routine            equ 1
+
+* --- ext_variables layout pour AI car OST ---
+* (= ce qui s'ajoute après les 38 oct standards)
+ai_car_state_ptr              equ ext_variables+0   ; 2 oct — pointeur vers AI_States[i]
+ai_car_index                  equ ext_variables+2   ; 1 oct — index 0..AI_NB_CARS-1
+; (1 oct spare alignment)
+ai_car_ext_size               equ 4
+
+* Si on rajoute AiCar au game mode, définir :
+*    ext_variables_size  equ ai_car_ext_size   (= max ext entre tous les objets)
