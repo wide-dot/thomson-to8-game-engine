@@ -25,7 +25,13 @@ struct_LotusCarState equ 1
 
 LotusCarState         struct
 * ── Position / vitesse forward ──────────────────────────────────────────
-track_pos             rmb   4   ; 32-bit (high word = segment idx %NB_SEGMENTS)
+track_pos             rmb   4   ; 32-bit cumulatif (high=compteur seg, low=fraction)
+segment_idx           rmb   2   ; cache ∈ [0, NB_SEGMENTS[ — maintenu par
+                                ; Lotus_PhysicsTick : incrémenté quand le low-word
+                                ; de track_pos overflow propage (wrap mod N).
+                                ; Évite de recalculer (track_pos>>16)%N à chaque
+                                ; consommation (projection, AI steering, collision).
+                                ; Pas de hardware divu sur 6809 → cache obligatoire.
 speed                 rmb   2   ; ushort, forward velocity
 gear                  rmb   2   ; 0..4
 rpm                   rmb   2   ; régime moteur, clampé [1000, 7999]

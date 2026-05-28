@@ -54,14 +54,22 @@ AI_States_End
 
 ; ============================================================================
 ; GLOBALS CIRCUIT — pointeurs vers le circuit chargé
+;
+; Le pointeur de segment courant n'est PAS stocké ici : chaque voiture a son
+; propre cache `segment_idx` dans son LotusCarState (maintenu par
+; Lotus_PhysicsTick). Les consommateurs (projection, AI, collision) calculent
+; le pointeur à la demande : `Circuit_base + segment_idx * 16`.
+;
+; Justification : 6809 n'a pas de hardware divu (vs 68000), donc le pattern
+; Lotus "recalcule (track_pos>>16) % N à chaque consommation" coûterait trop
+; cher sur 19 voitures (= 285% du budget frame 50 Hz). Le cache rend la
+; conversion O(1) amortie.
 ; ============================================================================
 
-* Circuit_base = adresse du circuit courant (= label Circuit_NN_xxx)
+* Circuit_base = pointeur DIRECT sur premier segment du circuit courant
+* (= sortie de la jump table : Circuit_xxx +2). Setté par main.asm au chargement.
 Circuit_base                      fdb   0
 
-* Circuit_nb_segments = N segments du circuit courant
+* Circuit_nb_segments = N segments du circuit courant. Lu par Lotus_PhysicsTick
+* pour le wrap du segment_idx.
 Circuit_nb_segments               fdb   0
-
-* Current_segment_ptr = adresse du segment courant (= base + segments_offset
-* + segment_idx × 16). Mis à jour par Circuit_step à chaque tick physique.
-Current_segment_ptr               fdb   0
