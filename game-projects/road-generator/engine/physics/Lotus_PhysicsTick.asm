@@ -61,15 +61,32 @@ LPT_do_track
         *   low_word += speed_low (with carry)
         *   high_word += sign_extension_of_speed + carry_from_low
         ldd   LotusCarState.speed,u       ; D = speed (signed)
-        addd  LotusCarState.track_pos+2,u ; D = low_word + speed (carry set if overflow)
+        addd  LotusCarState.track_pos+2,u ; D = low_word + speed
         std   LotusCarState.track_pos+2,u ; store low_word
+        bcc   LPT_no_seg_advance          ; pas d'overflow → segment inchangé
 
-        * Carry propagation au high word :
-        ldd   LotusCarState.track_pos,u   ; D = high_word
-        adcb  #0                          ; +carry from low add
-        adca  #0                          ; (mais pas de carry d'addB→A car +0)
-        * Sign extension de speed (si speed négative, retrancher 1 du high) :
-        * Pour rester simple ici on assume speed >= 0 (test phase).
+        * --- Carry du low-word → high_word += 1 + segment_idx += 1 (wrap N) ---
+        * On ne remet pas à jour le high_word pour servir d'index (segment_idx
+        * sert pour ça). Mais on le maintient quand même = somme cumulative
+        * pure (utile pour distance/temps si on en a besoin plus tard).
+        ldd   LotusCarState.track_pos,u
+        addd  #1
         std   LotusCarState.track_pos,u
 
+        * segment_idx = (segment_idx + 1) mod NB_SEGMENTS
+        * (Le cas où speed est si grand que low_word fait plusieurs overflow
+        *  ne se produit pas : speed est borné à PHYS_MAX_SPEED = $1AA < $10000,
+        *  donc un seul franchissement de segment par tick max.)
+        ldd   LotusCarState.segment_idx,u
+        addd  #1
+        cmpd  Circuit_nb_segments
+        blo   LPT_save_seg_idx
+        ldd   #0                          ; wrap
+LPT_save_seg_idx
+        std   LotusCarState.segment_idx,u
+
+LPT_no_seg_advance
+        * Note : speed forward toujours >= 0 dans cette phase test.
+        * Quand on portera le tick complet, le crash peut produire speed négative
+        * → il faudra alors décrémenter segment_idx sur borrow (avec wrap +N).
         rts

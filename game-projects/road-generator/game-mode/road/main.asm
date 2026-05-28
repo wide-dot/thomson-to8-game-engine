@@ -32,6 +32,20 @@ SOUND_CARD_PROTOTYPE equ 1
         jsr   InitGlobals
         jsr   InitDrawSprites
         jsr   InitStack
+
+        ; --- Copy page 3 → page 0 RAMA/RAMB demi-pages ---
+        ; Page 3 a été chargée par le RAMLoader avec :
+        ;   $0000-$0D7A : RoadPatternsDark
+        ;   $1000-$1FFF : Persp_Recip A (lecture interpolateur quand PRC=0)
+        ;   $2000-$2D7A : RoadPatternsLight
+        ;   $3000-$3FFF : Persp_Recip B (lecture interpolateur quand PRC=1)
+        ; → après copie, page 0 RAMA = dark+RecipA / RAMB = light+RecipB,
+        ;   visibles alternativement à $4000-$5FFF via le bit PRC.
+        ; DOIT être appelé AVANT gfxlock.init (= avant que pages 2/3 deviennent
+        ; des back-buffers actifs).
+        lda   #3
+        jsr   CopyPageToDemiPage0
+
         jsr   LoadAct                   ; palette + bordure (cf. main.properties)
 
         ; --- Alloue l'objet Road (sprite affiché) ---
@@ -50,19 +64,16 @@ SOUND_CARD_PROTOTYPE equ 1
         sta   player1+id
         clr   player1+routine          ; commence en Init routine
 
-        ; --- Charge le circuit via JUMP TABLE (= interchangeable) ---
-        ; Layout d'un .asm circuit (généré par tools/generate_circuits.py) :
-        ;   +0..1   fdb → ptr nb_segments
-        ;   +2..3   fdb → ptr segments
-        ;   +4..5   nb_segments (uint16)
-        ;   +6..    segments × 16 oct
-        ; → Circuit_base = pointeur DIRECT sur premier segment (= jump[+2]).
-        ldx   #Circuit_23_hard_6        ; X = base jump table circuit choisi
-        ldd   [,x]                      ; D = nb_segments (indirect via ptr +0)
+        ; --- Charge le circuit (labels directs, pas de jump table) ---
+        ; Chaque circuit expose 2 labels publics :
+        ;   Circuit_xxx_nb_segments  : 1 mot (uint16) = N
+        ;   Circuit_xxx_segments     : (N+8) × 16 octets
+        ; Pas d'indirection nécessaire — taille fixe et labels stables.
+        ldd   Circuit_01_easy_1_nb_segments
         std   Circuit_nb_segments
-        ldd   2,x                       ; D = ptr segments (direct)
+        ldd   #Circuit_01_easy_1_segments
         std   Circuit_base
-        std   Current_segment_ptr       ; init = premier segment
+        ; segment_idx du joueur initialisé à 0 dans PlayerOne_Init.
 
         ; --- Init palette statique (depuis road.png) ---
         ldd   #Pal_Road
@@ -115,6 +126,7 @@ UserIRQ
 
         ; --- Utilitaires ---
         INCLUDE "./engine/ram/BankSwitch.asm"
+        INCLUDE "./engine/ram/CopyPageToDemiPage0.asm"
         INCLUDE "./engine/graphics/buffer/gfxlock.asm"
         INCLUDE "./engine/palette/PalUpdateNow.asm"
         INCLUDE "./engine/ram/ClearDataMemory.asm"
@@ -131,13 +143,24 @@ UserIRQ
         ; --- Sprite pack (background-erase, mode draw ND0 supporté) ---
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-pack.asm"
 
-        ; --- Lotus port : input buffer + physics tick + circuit step ---
+        ; --- Lotus port : input buffer + physics tick ---
+        ; (Plus de Circuit_step : segment_idx est cached dans LotusCarState
+        ;  et maintenu directement par Lotus_PhysicsTick.)
         INCLUDE "./game-mode/road/input/lotus.input.buffer.asm"
         INCLUDE "./engine/physics/Lotus_PhysicsTick.asm"
-        INCLUDE "./engine/circuit/Circuit_step.asm"
+
+        ; --- Lotus port : projection sparse (task #C) ---
+        INCLUDE "./engine/math/Mul9x16.asm"
+        INCLUDE "./engine/projection/SparseProjection.asm"
+
+        ; --- Lotus port : interpolateur linéaire (task #D) ---
+        ; FILE59_BASE_FOR_INTERP est défini en EQU dans LinearInterp.asm
+        ; comme Persp_Recip_k01-$40 (= fallback résident, imprécis pour
+        ; les indices < $40 mais OK en pratique).
+        INCLUDE "./engine/projection/LinearInterp.asm"
 
         ; --- Données circuit (= sortie de generate_circuits.py) ---
-        INCLUDE "./engine/circuits/23_hard_6.asm"
+        INCLUDE "./engine/circuits/01_easy_1.asm"
 
         ; --- DOIT être en dernier (dépendances ifdef sur ce qui précède) ---
         INCLUDE "./engine/InitGlobals.asm"

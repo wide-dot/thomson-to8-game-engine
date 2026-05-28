@@ -151,6 +151,7 @@ public class BuildDisk
 			System.gc();
 			computeRamAddress();
 			computeRomAddress();
+			placeFixedData();
 			generateDynamicContent();
 			generateImgAniIndex();
 			compileMainEngines(true);
@@ -3703,7 +3704,125 @@ public class BuildDisk
 				}
 			}
 		}
-		
+
 		return null;
 	}
+
+	/**
+	 * Place les FixedData (data.X=foo.bin;page;offset) dans les RamImage FD et T2
+	 * et crée les entrées RAMLoaderIndex nécessaires pour que le loader copie
+	 * les bytes au runtime.
+	 *
+	 * Caractéristiques :
+	 *   - Pas de knapsack : page + offset imposés par l'utilisateur
+	 *   - split=true : déclenche la logique d'inversion demi-pages (cf. ~line 2219)
+	 *   - Les bytes sont injectés dans gm.ramFD et gm.ramT2 directement
+	 *
+	 * À appeler APRES computeRamAddress + computeRomAddress (qui posent les
+	 * RAMLoaderIndex des objets), AVANT compressData (qui boucle sur les
+	 * entrées d'index pour les compresser).
+	 *
+	 * Pour FD et T2, on crée 2 RAMLoaderIndex distincts car les champs disk-side
+	 * diffèrent (sector vs t2_page). Les champs RAM-side sont identiques.
+	 *
+	 * @throws Exception si une FixedData déborde de sa page
+	 */
+	private static void placeFixedData() throws Exception {
+		logger.debug("placeFixedData ...");
+
+		// Tailles des structures d'index dans le RAMLoader (FD: 7 oct, T2: 6 oct)
+		final int INDEX_STRUCT_SIZE_FD = 7;
+		final int INDEX_STRUCT_SIZE_T2 = 6;
+
+		for (Entry<String, GameMode> entry : game.gameModes.entrySet()) {
+			GameMode gm = entry.getValue();
+			if (gm.fixedDataMap.isEmpty()) continue;
+			logger.debug("\tGame Mode : " + gm.name);
+
+			int addedFdEntries = 0;
+			int addedT2Entries = 0;
+
+			for (FixedData fd : gm.fixedDataMap.values()) {
+				logger.debug("\t\t" + fd.toString());
+
+				int endOffset = fd.offset + fd.bytes.length;
+				int nbEntries = (fd.offset < 0x2000 && endOffset > 0x2000) ? 2 : 1;
+
+				// === FLOPPY DISK ===
+				if (!abortFloppyDisk) {
+					gm.ramFD.setData(fd.page, fd.offset, fd.bytes);
+					addedFdEntries += nbEntries;
+
+					// Si l'asset traverse $2000, créer 2 entrées (split en 2 demi-pages)
+					if (fd.offset < 0x2000 && endOffset > 0x2000) {
+						RAMLoaderIndex rli1 = new RAMLoaderIndex();
+						rli1.gml.add(gm);
+						rli1.ram_page = fd.page;
+						rli1.ram_address = fd.offset;
+						rli1.ram_endAddress = 0x2000;
+						rli1.split = true;
+						gm.fdIdx.add(rli1);
+
+						RAMLoaderIndex rli2 = new RAMLoaderIndex();
+						rli2.gml.add(gm);
+						rli2.ram_page = fd.page;
+						rli2.ram_address = 0x2000;
+						rli2.ram_endAddress = endOffset;
+						rli2.split = true;
+						gm.fdIdx.add(rli2);
+					} else {
+						RAMLoaderIndex rli = new RAMLoaderIndex();
+						rli.gml.add(gm);
+						rli.ram_page = fd.page;
+						rli.ram_address = fd.offset;
+						rli.ram_endAddress = endOffset;
+						rli.split = true;
+						gm.fdIdx.add(rli);
+					}
+				}
+
+				// === MEGAROM T2 ===
+				if (!abortT2) {
+					gm.ramT2.setData(fd.page, fd.offset, fd.bytes);
+					addedT2Entries += nbEntries;
+
+					if (fd.offset < 0x2000 && endOffset > 0x2000) {
+						RAMLoaderIndex rli1 = new RAMLoaderIndex();
+						rli1.gml.add(gm);
+						rli1.ram_page = fd.page;
+						rli1.ram_address = fd.offset;
+						rli1.ram_endAddress = 0x2000;
+						rli1.split = true;
+						gm.t2Idx.add(rli1);
+
+						RAMLoaderIndex rli2 = new RAMLoaderIndex();
+						rli2.gml.add(gm);
+						rli2.ram_page = fd.page;
+						rli2.ram_address = 0x2000;
+						rli2.ram_endAddress = endOffset;
+						rli2.split = true;
+						gm.t2Idx.add(rli2);
+					} else {
+						RAMLoaderIndex rli = new RAMLoaderIndex();
+						rli.gml.add(gm);
+						rli.ram_page = fd.page;
+						rli.ram_address = fd.offset;
+						rli.ram_endAddress = endOffset;
+						rli.split = true;
+						gm.t2Idx.add(rli);
+					}
+				}
+			}
+
+			// Ajuste indexSizeFD/T2 pour inclure les entrées FixedData ajoutées
+			// (sinon la vérification "FD indexSize too large" ligne ~2201 échoue)
+			gm.indexSizeFD += addedFdEntries * INDEX_STRUCT_SIZE_FD;
+			gm.indexSizeT2 += addedT2Entries * INDEX_STRUCT_SIZE_T2;
+			logger.debug("\t\tindexSizeFD += " + (addedFdEntries * INDEX_STRUCT_SIZE_FD)
+				+ " → " + gm.indexSizeFD);
+			logger.debug("\t\tindexSizeT2 += " + (addedT2Entries * INDEX_STRUCT_SIZE_T2)
+				+ " → " + gm.indexSizeT2);
+		}
+	}
+
 }

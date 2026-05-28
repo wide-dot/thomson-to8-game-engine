@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,6 +43,10 @@ public class GameMode {
 	// Storage Index
 	public List<RAMLoaderIndex> fdIdx = Collections.synchronizedList(new ArrayList<RAMLoaderIndex>());
 	public List<RAMLoaderIndex> t2Idx = Collections.synchronizedList(new ArrayList<RAMLoaderIndex>());
+
+	// Fixed-address data binaries (data.X=foo.bin;page;offset)
+	// Chargés à page+offset imposés (= hors knapsack)
+	public Map<String, FixedData> fixedDataMap = new LinkedHashMap<String, FixedData>();
 	
 	public GameMode(String gameModeName, String fileName) throws Exception {
 		
@@ -150,12 +155,53 @@ public class GameMode {
 		// ********************************************************************
 
 		HashMap<String, String[]> actProperties = PropertyList.get(prop, "act");
-		
+
 		for (Map.Entry<String, String[]> curActProperty : actProperties.entrySet()) {
 			if (!acts.containsKey(curActProperty.getKey().split("\\.",2)[0])) {
 				acts.put(curActProperty.getKey().split("\\.",2)[0], new Act(curActProperty.getKey().split("\\.",2)[0]));
 			}
 			acts.get(curActProperty.getKey().split("\\.",2)[0]).setProperty(curActProperty.getKey().split("\\.",2)[1], curActProperty.getValue());
+		}
+
+		// Fixed-address Data
+		// ********************************************************************
+		// Syntaxe : data.<NomLogique>=<chemin_bin>;<page>;<offset>
+		// Charge un .bin à une page+offset RAM imposés (hors knapsack).
+		// Voir FixedData.java pour les détails.
+
+		HashMap<String, String[]> dataProperties = PropertyList.get(prop, "data");
+		if (dataProperties != null) {
+			for (Map.Entry<String, String[]> curData : dataProperties.entrySet()) {
+				String dataName = curData.getKey();
+				String[] values = curData.getValue();
+				if (values.length != 3) {
+					throw new Exception("data." + dataName + " : 3 valeurs attendues (path;page;offset), reçu " + values.length);
+				}
+				String dataPath = values[0].trim();
+				int dataPage;
+				int dataOffset;
+				try {
+					dataPage = Integer.parseInt(values[1].trim());
+				} catch (NumberFormatException nfe) {
+					throw new Exception("data." + dataName + " : page invalide '" + values[1] + "' (attendu : entier)", nfe);
+				}
+				try {
+					String offsetStr = values[2].trim();
+					if (offsetStr.startsWith("$")) {
+						dataOffset = Integer.parseInt(offsetStr.substring(1), 16);
+					} else if (offsetStr.startsWith("0x") || offsetStr.startsWith("0X")) {
+						dataOffset = Integer.parseInt(offsetStr.substring(2), 16);
+					} else {
+						dataOffset = Integer.parseInt(offsetStr);
+					}
+				} catch (NumberFormatException nfe) {
+					throw new Exception("data." + dataName + " : offset invalide '" + values[2] + "' (attendu : $XXXX ou 0xXXXX ou décimal)", nfe);
+				}
+
+				FixedData fd = new FixedData(dataName, dataPath, dataPage, dataOffset);
+				fixedDataMap.put(dataName, fd);
+				BuildDisk.logger.debug("\tLoad FixedData " + fd.toString());
+			}
 		}
 	}
 }

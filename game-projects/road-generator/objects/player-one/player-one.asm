@@ -43,10 +43,13 @@ PlayerOne_Init
         * --- Init état Lotus (= valeurs de départ post-FUN_74eac) ---
         ldu   #PlayerOne_State
 
-        * track_pos = 0 (low 32 bits, on commence segment 0)
+        * track_pos = 0 (32-bit cumulatif, on commence segment 0)
         ldd   #0
         std   LotusCarState.track_pos,u
         std   LotusCarState.track_pos+2,u
+
+        * segment_idx = 0 (cache cohérent avec track_pos=0)
+        std   LotusCarState.segment_idx,u
 
         * speed = 0
         std   LotusCarState.speed,u
@@ -119,10 +122,9 @@ P1M_loop
         sta   LotusCarState.input_last,u
 
         * --- Tick physique complet (= port FUN_75e30 + crash wrapper) ---
+        * NB : la maintenance de segment_idx (= cache modulo NB_SEGMENTS) est
+        * intégrée à Lotus_PhysicsTick — pas besoin d'appel séparé.
         jsr   Lotus_PhysicsTick
-
-        * --- Avancement segment circuit selon nouveau track_pos ---
-        jsr   Circuit_step
 
         bra   P1M_loop
 P1M_done

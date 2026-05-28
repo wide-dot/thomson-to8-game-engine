@@ -93,7 +93,8 @@ AiCar_Init
 AiCar_Main
         * Mock : charge U avec ma state, appellerait Lotus_PhysicsTick.
         * Désactivé volontairement pour cette phase.
+        * NB : pas de Circuit_step séparé — segment_idx est cached dans
+        * LotusCarState et maintenu directement par Lotus_PhysicsTick.
         ; ldu   ai_car_state_ptr,u
         ; jsr   Lotus_PhysicsTick
-        ; jsr   Circuit_step           ; sa propre progression circuit
         rts
