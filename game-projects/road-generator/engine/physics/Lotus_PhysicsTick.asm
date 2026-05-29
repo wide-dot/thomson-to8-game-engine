@@ -30,12 +30,17 @@ Lotus_PhysicsTick
         * incrémenter speed de 1, sinon décrémenter. Permettra de voir
         * le pointeur segment avancer/reculer au debugger.
 
-        * --- TEST : speed += 1 si UP pressé, -= 1 si DOWN, clamp à 0 ---
+        * --- TEST : speed += $30 si UP pressé, -= $30 si DOWN, clamp [0..max] ---
+        * Pas d'accélération inspirée de FUN_75dec du 68k (gear 0/1 ≈ +$30/tick).
+        * Permet de tester le pipeline projection rapidement (max en ~0.2s).
+        * Masques = format TO8 natif ($E7CC bits 0-3 P1, post-coma) :
+        *   bit 0 = UP, bit 1 = DOWN, bit 2 = LEFT, bit 3 = RIGHT, bit 6 = FIRE
+LPT_ACCEL_STEP        equ   $30           ; ~ gear 0 du 68k FUN_75dec
         lda   LotusCarState.input_held,u
-        bita  #%00001000                  ; UP ?
+        bita  #%00000001                  ; UP (c1_button_up_mask) ?
         beq   LPT_no_up
         ldd   LotusCarState.speed,u
-        addd  #1
+        addd  #LPT_ACCEL_STEP
         cmpd  #PHYS_MAX_SPEED
         ble   LPT_save_spd
         ldd   #PHYS_MAX_SPEED
@@ -43,11 +48,11 @@ LPT_save_spd
         std   LotusCarState.speed,u
         bra   LPT_do_track
 LPT_no_up
-        bita  #%00000100                  ; DOWN ?
+        bita  #%00000010                  ; DOWN (c1_button_down_mask) ?
         beq   LPT_do_track
         ldd   LotusCarState.speed,u
         beq   LPT_do_track
-        subd  #1
+        subd  #LPT_ACCEL_STEP
         bmi   LPT_clamp_zero
         std   LotusCarState.speed,u
         bra   LPT_do_track

@@ -1,15 +1,3 @@
- opt c
-; ========================================================================
-; Road RAM v4 — table Road_lines (8 octets/ligne, interleavée)
-;   ORG $0000 (blob relocatable, addresses Line_NNNN absolues)
-; Layout par ligne :
-;   fdb  RAMA_s0, RAMA_s1, RAMB_s0, RAMB_s1
-; À placer dans la mémoire résidente (typiquement main.asm $6100-$9FFF).
-; ========================================================================
-        INCLUDE "./tools/output/road_lines_ram/road_buffers_externs.inc"
-        ORG   $0000
-
-Road_lines
         fdb   Line_0000,Line_0001,Line_0001,Line_0002   ; ligne 000
         fdb   Line_0000,Line_0001,Line_0001,Line_0002   ; ligne 001
         fdb   Line_0003,Line_0000,Line_0002,Line_0004   ; ligne 002

@@ -73,3 +73,27 @@ Circuit_base                      fdb   0
 * Circuit_nb_segments = N segments du circuit courant. Lu par Lotus_PhysicsTick
 * pour le wrap du segment_idx.
 Circuit_nb_segments               fdb   0
+
+; ============================================================================
+; BUFFERS PROJECTION
+;
+; Sparse_Buffer  : sortie SparseProjection.
+;   Format : slots de 8 octets (X | Y | Ymin | D0a), N variable mais
+;   borné par la traversée de circuit (max ~128 slots = 1024 oct dans
+;   les configurations extrêmes ; sécurité 1280 = 160 slots).
+;
+; Dense_Buffer   : sortie LinearInterp, lu par DrawFrameRoad.
+;   Format : 6 octets/ligne (flags|width|extra) × 96 lignes road = 576 oct.
+;   Le buffer est indexé via Y_screen (= les slots correspondant à des
+;   lignes au-dessus de l'horizon sont skip par LinearInterp).
+;
+; Les 2 buffers vivent en RAM résidente $6100-$9FFF du game-mode.
+; ============================================================================
+
+Sparse_Buffer                     fill  0,1280
+* Dense_Buffer : indexé par Y_screen ABSOLU 0..191 (= comme 68k $2b400).
+* LinearInterp écrit à dense + Y_last × 6 sans décalage.
+* Pour une route plate (D3=0), Y_screen ∈ [39..95] = positions CIEL valides.
+* DrawFrameRoad lit dense[($60 + i) × 6] pour i = 0..95 (= viewport road).
+* Taille = $C0 × 6 = 1152 oct (= 192 triplets, capacité écran entière).
+Dense_Buffer                      fill  0,1152

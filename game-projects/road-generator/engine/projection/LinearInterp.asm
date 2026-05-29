@@ -141,12 +141,29 @@ LinearInterp
         ldd   #0
         std   LI_d0_frac                 ; D0 low = 0 (= ext.l de scaling positif)
 
-        * --- A1 = dense + 6 × Y_last ---
+        * --- A1 = dense + 6 × Y_last (= conforme 68k, Y_screen absolu) ---
+        * Dense_Buffer indexé par Y_screen absolu 0..191 (= 1152 oct).
+        *
+        * Sur 68k, l'overflow naturel des tables permet Y_last grand
+        * (jusqu'à $0FFF), Y init pointe hors buffer puis back_step ramène
+        * dedans avant écriture. Notre port reproduit cette mécanique.
+        *
+        * SECURITY : ce code peut écrire jusqu'à 6 × $0FFF = 24570 oct hors
+        * Dense_Buffer si back_step ne se déclenche pas. C'est PROTÉGÉ par :
+        *   1. Notre SparseProjection cape loop3 à (subseg+1) substeps. Si
+        *      l'horizon n'est pas atteint, SP_last_y est synthétisé depuis
+        *      le dernier slot.Y écrit (= valeur dans [0..C0] typiquement).
+        *   2. Le back_step de LinearInterp se déclenche dès que sparse[i].Y
+        *      diminue (delta>0), ramenant Y dans le buffer.
+        *   3. En BSS Y_last reste signed-16 ; mul 8x8 avec lo byte sera
+        *      tronqué. Pour Y_last > 192 (= hors viewport), c'est du noise
+        *      qui sera écrasé par les back_steps suivants.
+        ldd   LI_d1                      ; D = Y_last (= sparse[N-1].Y signed 16)
         lda   #6
-        ldb   LI_d1+1                    ; B = Y_last (< 256)
-        mul                              ; D = 6 × Y_last
+        ldb   LI_d1+1                    ; B = Y_last low byte
+        mul                              ; D = 6 × Y_last.lo (8x8 unsigned)
         addd  LinearInterp_buffer_out
-        tfr   d,y                        ; Y = dense_start + 6 × Y_last
+        tfr   d,y                        ; Y = dense + 6 × Y_last (modulo)
 
 * ──────────────────────────────────────────────────────────────────────
 * OUTER LOOP — itère les sparse slots backward
@@ -337,6 +354,14 @@ LI_c20
         subd  #$100
         std   LI_d7
         lbpl  LI_outer_loop
+        rts
+
+* ──────────────────────────────────────────────────────────────────────
+* LI_no_work — exit immédiat sans écriture (= projection invalide)
+* Dense_Buffer reste tel quel ; DrawFrameRoad dispatchera Line_0001 (M=0)
+* sur toutes les lignes → écran sans route.
+* ──────────────────────────────────────────────────────────────────────
+LI_no_work
         rts
 
 * ──────────────────────────────────────────────────────────────────────

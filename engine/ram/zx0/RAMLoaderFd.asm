@@ -22,6 +22,7 @@
         opt   c,ct
 
 ZX0_DISABLE_DISABLING_INTERRUPTS equ 1
+ZX0_DISABLE_ALIGN equ 1
 
 start        
         INCLUDE "./engine/compression/zx0/zx0_6809_mega_back.asm"  

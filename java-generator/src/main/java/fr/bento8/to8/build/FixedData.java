@@ -54,10 +54,17 @@ public class FixedData {
         this.page = page;
         this.offset = offset;
 
-        // Validation page
-        if (page < 3) {
+        // Validation page : SEULE la page 3 est autorisée.
+        // FixedData est conçu pour le pattern "load to page 3, copy to page 0
+        // demi-pages au boot" (cf. CopyPageToDemiPage0.asm). Pour les autres
+        // usages d'allocation paginée, passer par le mécanisme objet standard
+        // (= object.X=... + knapsack pages 4+).
+        if (page != 3) {
             throw new Exception("FixedData '" + name + "' : page " + page
-                + " interdite (0=loader, 1=game-mode, 2=loader work). Min = 3.");
+                + " interdite. SEULE la page 3 est autorisée pour le mécanisme"
+                + " FixedData (= page intermédiaire avant copie vers page 0"
+                + " demi-pages). Pour une autre allocation, utiliser le"
+                + " mécanisme object.X=... (knapsack pages 4+).");
         }
 
         // Lecture du .bin

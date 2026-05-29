@@ -29,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -674,8 +675,14 @@ public class BuildDisk
 			};
 			// concurrent car ca peut être rempli en parallèle
 			Aux[] byId = new Aux[tileset.nbTiles];
-			forEach(range(0,tileset.nbTiles),
-					tileId -> byId[tileId] = new Aux(tileId));
+			// NB: sequential loop (was a parallel forEach lambda) — workaround
+			// pour un bug javac (capture order incorrecte de la local class Aux)
+			// qui produisait un VerifyError au class-init de BuildDisk.
+			// L'overhead est négligeable : la vraie parallélisation est sur
+			// uniq.keySet() (initBin) ci-dessous.
+			for (int tileId = 0; tileId < tileset.nbTiles; tileId++) {
+				byId[tileId] = new Aux(tileId);
+			}
 			Map<Aux, Aux> uniq = new HashMap<>();
 			for(int i=0; i<byId.length; ++i) {
 				Aux aux = byId[i];
@@ -3733,89 +3740,123 @@ public class BuildDisk
 		// Tailles des structures d'index dans le RAMLoader (FD: 7 oct, T2: 6 oct)
 		final int INDEX_STRUCT_SIZE_FD = 7;
 		final int INDEX_STRUCT_SIZE_T2 = 6;
+		final int HP_BOUNDARY = 0x2000;
 
 		for (Entry<String, GameMode> entry : game.gameModes.entrySet()) {
 			GameMode gm = entry.getValue();
 			if (gm.fixedDataMap.isEmpty()) continue;
 			logger.debug("\tGame Mode : " + gm.name);
 
+			// === ÉTAPE 1 : écrit les bytes de chaque FixedData dans la RamImage
+			//               à leur page+offset imposés.
+			for (FixedData fd : gm.fixedDataMap.values()) {
+				logger.debug("\t\t" + fd.toString());
+				if (!abortFloppyDisk) gm.ramFD.setData(fd.page, fd.offset, fd.bytes);
+				if (!abortT2)         gm.ramT2.setData(fd.page, fd.offset, fd.bytes);
+			}
+
+			// === ÉTAPE 2 : agrège par (page × demi-page) pour reproduire le
+			//               pattern "1 entrée RAMLoaderIndex par demi-page" du
+			//               knapsack pages 4+ (computeItemsRamAddress, l.1374+).
+			//
+			// Pour chaque page touchée par au moins un FixedData on calcule
+			// {min start, max end} dans HP0 [$0000-$2000[ et HP1 [$2000-$4000[.
+			// Un FixedData traversant $2000 contribue aux 2 demi-pages.
+			// On émet AU PLUS 2 RAMLoaderIndex par page (un par HP non-vide),
+			// couvrant la totalité de la zone utilisée — l'inter-FixedData est
+			// rempli de zéros (RamImage init = 0) et compressé avec.
+			//
+			// → Pour road-generator (4 FixedData en page 3) on génère 2 entrées :
+			//     HP0 [$0000-$2000] et HP1 [$2000-$4000] (= page entière agrégée).
+			Map<Integer, int[]> hpMinMax = new TreeMap<>(); // page → {hp0Min, hp0Max, hp1Min, hp1Max}
+			for (FixedData fd : gm.fixedDataMap.values()) {
+				int p = fd.page;
+				int start = fd.offset;
+				int end   = fd.offset + fd.bytes.length;
+				int[] mm = hpMinMax.computeIfAbsent(p, k -> new int[]{
+					Integer.MAX_VALUE, Integer.MIN_VALUE,
+					Integer.MAX_VALUE, Integer.MIN_VALUE
+				});
+				// Contribution à HP0 [$0000, $2000[
+				if (start < HP_BOUNDARY) {
+					int s = start;
+					int e = Math.min(end, HP_BOUNDARY);
+					if (s < mm[0]) mm[0] = s;
+					if (e > mm[1]) mm[1] = e;
+				}
+				// Contribution à HP1 [$2000, $4000[
+				if (end > HP_BOUNDARY) {
+					int s = Math.max(start, HP_BOUNDARY);
+					int e = end;
+					if (s < mm[2]) mm[2] = s;
+					if (e > mm[3]) mm[3] = e;
+				}
+			}
+
 			int addedFdEntries = 0;
 			int addedT2Entries = 0;
 
-			for (FixedData fd : gm.fixedDataMap.values()) {
-				logger.debug("\t\t" + fd.toString());
+			for (Entry<Integer, int[]> e : hpMinMax.entrySet()) {
+				int p = e.getKey();
+				int[] mm = e.getValue();
 
-				int endOffset = fd.offset + fd.bytes.length;
-				int nbEntries = (fd.offset < 0x2000 && endOffset > 0x2000) ? 2 : 1;
-
-				// === FLOPPY DISK ===
-				if (!abortFloppyDisk) {
-					gm.ramFD.setData(fd.page, fd.offset, fd.bytes);
-					addedFdEntries += nbEntries;
-
-					// Si l'asset traverse $2000, créer 2 entrées (split en 2 demi-pages)
-					if (fd.offset < 0x2000 && endOffset > 0x2000) {
-						RAMLoaderIndex rli1 = new RAMLoaderIndex();
-						rli1.gml.add(gm);
-						rli1.ram_page = fd.page;
-						rli1.ram_address = fd.offset;
-						rli1.ram_endAddress = 0x2000;
-						rli1.split = true;
-						gm.fdIdx.add(rli1);
-
-						RAMLoaderIndex rli2 = new RAMLoaderIndex();
-						rli2.gml.add(gm);
-						rli2.ram_page = fd.page;
-						rli2.ram_address = 0x2000;
-						rli2.ram_endAddress = endOffset;
-						rli2.split = true;
-						gm.fdIdx.add(rli2);
-					} else {
+				// HP0 utilisée ?
+				if (mm[0] != Integer.MAX_VALUE) {
+					logger.debug("\t\tpage=" + p + " HP0 ["
+						+ String.format("$%1$04X", mm[0]) + "-"
+						+ String.format("$%1$04X", mm[1]) + "]");
+					if (!abortFloppyDisk) {
 						RAMLoaderIndex rli = new RAMLoaderIndex();
 						rli.gml.add(gm);
-						rli.ram_page = fd.page;
-						rli.ram_address = fd.offset;
-						rli.ram_endAddress = endOffset;
+						rli.ram_page = p;
+						rli.ram_address = mm[0];
+						rli.ram_endAddress = mm[1]; // ≤ $2000
 						rli.split = true;
 						gm.fdIdx.add(rli);
+						addedFdEntries++;
 					}
-				}
-
-				// === MEGAROM T2 ===
-				if (!abortT2) {
-					gm.ramT2.setData(fd.page, fd.offset, fd.bytes);
-					addedT2Entries += nbEntries;
-
-					if (fd.offset < 0x2000 && endOffset > 0x2000) {
-						RAMLoaderIndex rli1 = new RAMLoaderIndex();
-						rli1.gml.add(gm);
-						rli1.ram_page = fd.page;
-						rli1.ram_address = fd.offset;
-						rli1.ram_endAddress = 0x2000;
-						rli1.split = true;
-						gm.t2Idx.add(rli1);
-
-						RAMLoaderIndex rli2 = new RAMLoaderIndex();
-						rli2.gml.add(gm);
-						rli2.ram_page = fd.page;
-						rli2.ram_address = 0x2000;
-						rli2.ram_endAddress = endOffset;
-						rli2.split = true;
-						gm.t2Idx.add(rli2);
-					} else {
+					if (!abortT2) {
 						RAMLoaderIndex rli = new RAMLoaderIndex();
 						rli.gml.add(gm);
-						rli.ram_page = fd.page;
-						rli.ram_address = fd.offset;
-						rli.ram_endAddress = endOffset;
+						rli.ram_page = p;
+						rli.ram_address = mm[0];
+						rli.ram_endAddress = mm[1];
 						rli.split = true;
 						gm.t2Idx.add(rli);
+						addedT2Entries++;
+					}
+				}
+				// HP1 utilisée ?
+				if (mm[2] != Integer.MAX_VALUE) {
+					logger.debug("\t\tpage=" + p + " HP1 ["
+						+ String.format("$%1$04X", mm[2]) + "-"
+						+ String.format("$%1$04X", mm[3]) + "]");
+					if (!abortFloppyDisk) {
+						RAMLoaderIndex rli = new RAMLoaderIndex();
+						rli.gml.add(gm);
+						rli.ram_page = p;
+						rli.ram_address = mm[2]; // ≥ $2000
+						rli.ram_endAddress = mm[3];
+						rli.split = true;
+						gm.fdIdx.add(rli);
+						addedFdEntries++;
+					}
+					if (!abortT2) {
+						RAMLoaderIndex rli = new RAMLoaderIndex();
+						rli.gml.add(gm);
+						rli.ram_page = p;
+						rli.ram_address = mm[2];
+						rli.ram_endAddress = mm[3];
+						rli.split = true;
+						gm.t2Idx.add(rli);
+						addedT2Entries++;
 					}
 				}
 			}
 
-			// Ajuste indexSizeFD/T2 pour inclure les entrées FixedData ajoutées
-			// (sinon la vérification "FD indexSize too large" ligne ~2201 échoue)
+			// === ÉTAPE 3 : ajuste indexSizeFD/T2 pour inclure les entrées
+			// FixedData ajoutées (sinon la vérification "FD indexSize too
+			// large" ligne ~2201 échoue).
 			gm.indexSizeFD += addedFdEntries * INDEX_STRUCT_SIZE_FD;
 			gm.indexSizeT2 += addedT2Entries * INDEX_STRUCT_SIZE_T2;
 			logger.debug("\t\tindexSizeFD += " + (addedFdEntries * INDEX_STRUCT_SIZE_FD)
