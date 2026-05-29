@@ -1,5 +1,5 @@
 ********************************************************************************
-* CopyPageToDemiPage0 — copie 16 Ko depuis une page RAM vers page 0 demi-pages
+* CopyPageATo0 — copie 16 Ko depuis une page RAM vers page 0 demi-pages
 * ------------------------------------------------------------------------------
 *
 * Source : page <src_page> mountée à $0000-$3FFF (cart zone, RAM-over-cart)
@@ -14,7 +14,7 @@
 *
 * === USAGE ===
 *   lda   #3                      ; numéro de page source (chargée par RAMLoader)
-*   jsr   CopyPageToDemiPage0
+*   jsr   CopyPageATo0
 *
 * === CONVENTION ===
 *   input :  A = numéro de page source (typiquement page 3 = video page libre
@@ -38,7 +38,7 @@
 *
 ********************************************************************************
 
-CopyPageToDemiPage0
+CopyPageATo0
         * Mount source page in cart zone $0000-$3FFF
         ora   #$60                       ; bit5 = RAM-over-cart, bit6 = write-enable
         sta   $E7E6                      ; cart zone = src page

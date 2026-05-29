@@ -78,6 +78,12 @@ ASM_PATTERNS_LIGHT = 'road_patterns_light.asm'
 INC_PATTERNS       = 'road_patterns_externs.inc'
 INC_BUFFERS        = 'road_buffers_externs.inc'
 
+# Chemins INCLUDE émis dans les .asm résultats, relatifs au PROJECT ROOT.
+# (= path qui marche depuis tools/output/ ET depuis generated-code/<gm>/<obj>/
+#  car les deux ont le project root dans leur includedir lwasm.)
+INC_PATTERNS_PATH  = './tools/output/road_lines_ram/' + INC_PATTERNS
+INC_BUFFERS_PATH   = './tools/output/road_lines_ram/' + INC_BUFFERS
+
 PATTERNS_ORG    = 0x4000
 BUFFERS_ORG     = 0x0000
 LINES_TABLE_ORG = 0x0000   # blob relocatable, addresses Line_NNNN absolues
@@ -407,11 +413,11 @@ def emit_buffers_asm(out_path: Path, store: BufferStore) -> None:
         " opt c",
         "; " + "=" * 72,
         "; Road RAM v4 — buffers fdb (header K,M,J + cœur)",
-        f";   ORG ${BUFFERS_ORG:04X}. Pattern externs : {INC_PATTERNS}",
+        f";   ORG ${BUFFERS_ORG:04X}. Pattern externs : {INC_PATTERNS_PATH}",
         "; Format buffer : fcb K,M,J ; fdb cœur[0]..cœur[M-1]",
         "; Tient dans une bank 16 Ko ($4000..$7FFF par exemple).",
         "; " + "=" * 72,
-        f'        INCLUDE "{INC_PATTERNS}"',
+        f'        INCLUDE "{INC_PATTERNS_PATH}"',
         f"        ORG   ${BUFFERS_ORG:04X}",
         "",
         "* " + "=" * 70,
@@ -434,7 +440,7 @@ def emit_lines_table_asm(out_path: Path, line_table) -> None:
         ";   fdb  RAMA_s0, RAMA_s1, RAMB_s0, RAMB_s1",
         "; À placer dans la mémoire résidente (typiquement main.asm $6100-$9FFF).",
         "; " + "=" * 72,
-        f'        INCLUDE "{INC_BUFFERS}"',
+        f'        INCLUDE "{INC_BUFFERS_PATH}"',
         f"        ORG   ${LINES_TABLE_ORG:04X}",
         "",
         "Road_lines",

@@ -5,7 +5,7 @@
 ; Format buffer : fcb K,M,J ; fdb cœur[0]..cœur[M-1]
 ; Tient dans une bank 16 Ko ($4000..$7FFF par exemple).
 ; ========================================================================
-        INCLUDE "road_patterns_externs.inc"
+        INCLUDE "./tools/output/road_lines_ram/road_patterns_externs.inc"
         ORG   $0000
 
 * ======================================================================
