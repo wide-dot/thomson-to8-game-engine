@@ -20,18 +20,18 @@ No new systems are activated. We're expanding the joypad reading from Step 00 to
 
 ## Walkthrough: Joypad Byte Layout
 
-In Step 00, we read the joypad state as a single byte. Each bit represents one input:
+The Thomson TO8 uses a 6821 PIA (Programmable Interface Adapter) that splits joypad input across two ports. Each port returns a byte where specific bits represent inputs:
 
 ```
-Joypad State Byte (Port A at $A7E0)
-Bit 7: Fire button (1 = pressed)
-Bit 6: Button B (1 = pressed)
-Bit 5: Button A (1 = pressed)
-Bit 4: Up (1 = pressed)
-Bit 3: Down (1 = pressed)
-Bit 2: Left (1 = pressed)
-Bit 1: Right (1 = pressed)
-Bit 0: (unused)
+Port A (Directional Pad) at $E7CC
+Bit 3: North (1 = pressed)
+Bit 2: South (1 = pressed)
+Bit 1: East (1 = pressed)
+Bit 0: West (1 = pressed)
+
+Port B (Action Buttons) at $E7CD
+Bit 6: Fire/Button A (1 = pressed)
+Bit 2: Button B (1 = pressed)
 ```
 
 Note: Unlike modern controllers, **1 = pressed** (active high). When a button is not pressed, the bit is 0.
@@ -43,7 +43,7 @@ Use `bita` (bit test accumulator) to check a specific button without destroying 
 ```asm
         lda   joypad_state
 
-        * Check fire button (bit 7)
+        * Check fire button (bit 6 of Port B)
         bita  #$80                  ; 0x80 = 1000 0000 in binary
         beq   not_firing            ; Zero flag set if bit was 0
         jsr   FireBullet            ; Fire button is pressed
@@ -70,8 +70,9 @@ fire_key_was_pressed equ 7         ; Offset 7: was fire pressed last frame?
 
         * In update loop
 UpdatePlayer:
-        lda   joypad_state
-        bita  #$80                  ; Fire button pressed now?
+        ldx   #$E7CD                ; Port B (buttons)
+        lda   ,x
+        bita  #$40                  ; Fire button (bit 6) pressed now?
         beq   fire_released
         
         * Fire button is pressed
@@ -101,20 +102,26 @@ This pattern:
 
 ### Port Addressing
 
-The TO8 has two joypad ports:
+The TO8 uses the 6821 PIA for joypad input:
 
 ```
-Port A (1 player):    $A7E0
-Port B (2 players):   $A7E1
+Port A ($E7CC):  Directional input (North/South/East/West)
+Port B ($E7CD):  Button input (Fire/Button A on bit 6, Button B on bit 2)
 ```
 
 For single-player games, read port A:
 
 ```asm
 ReadJoypad:
-        ldx   #$A7E0                ; Port A address
-        lda   ,x                    ; Read one byte
-        sta   joypad_state
+        * Read directional input (Port A)
+        ldx   #$E7CC
+        lda   ,x
+        sta   joypad_state_dir
+        
+        * Read button input (Port B)
+        ldx   #$E7CD
+        lda   ,x
+        sta   joypad_state_btn
         rts
 ```
 

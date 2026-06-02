@@ -62,7 +62,7 @@ Stack grows downward in memory. Each `jsr` costs 3 bytes (the return address). I
 
 ## Code Template: Copy & Modify
 
-The minimal game template lives in `tutorial/templates/minimal-game/`.
+The minimal game template lives in `tutorial/templates/minimal-game/` and provides a complete project scaffold.
 
 **To get started:**
 
@@ -87,6 +87,50 @@ The minimal game template lives in `tutorial/templates/minimal-game/`.
    │   └── global-variables.asm
    └── Makefile
    ```
+
+### Template File Organization
+
+If you don't have the template yet, here's the minimal boilerplate structure to create it manually:
+
+**main.asm**:
+```asm
+        org $6100
+        jsr InitGlobals             ; Initialize memory
+        jsr InitGraphics            ; Set up display
+        jsr CreateSprites           ; Allocate sprite table
+        jsr InitJoypads             ; Enable input
+GameLoop:
+        jsr ReadJoypad
+        jsr UpdateSprites
+        jsr RenderFrame
+        bra GameLoop
+```
+
+**global/global-equates.asm**:
+```asm
+* Display constants
+ScreenWidth:    equ 320
+ScreenHeight:   equ 200
+ScreenBase:     equ $4000
+
+* Sprite table (max 32 sprites)
+SpriteTable:    equ $5000
+SpriteStride:   equ 16
+MaxSprites:     equ 32
+
+* Joypad input
+JoypadPort_A:   equ $E7CC           ; Directional pad
+JoypadPort_B:   equ $E7CD           ; Action buttons
+```
+
+**global/global-variables.asm**:
+```asm
+        org $0400
+GameState:      rmb 256             ; Game state and variables
+PlayerSprite:   rmb 16              ; Player sprite structure
+BulletTable:    rmb 32*16           ; Up to 32 bullets
+EnemyTable:     rmb 16*16           ; Up to 16 enemies
+```
 
 4. Build the game:
    ```bash

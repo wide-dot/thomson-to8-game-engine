@@ -123,12 +123,13 @@ CheckCollisionBoxes:
         cmpa  <bullet_top
         bls   no_collision
         
-        * Collision detected!
-        orcc  #$04                  ; Set Z flag
+        * Collision detected! Return with A=1
+        lda   #1
         rts
         
 no_collision:
-        andcc #$FB                  ; Clear Z flag
+        * No collision. Return with A=0 (will set Z flag)
+        lda   #0
         rts
 ```
 
@@ -148,11 +149,12 @@ enemy_collision_loop:
         beq   enemy_col_next
         
         jsr   CheckCollisionBoxes
-        beq   no_hit                ; Z flag clear = no collision
+        cmpa  #0                    ; Check return value in A
+        beq   no_hit                ; A=0 means no collision
         
         * Collision! Handle it
         jsr   OnBulletHitEnemy
-        bra   bullet_col_next       ; Bullet despawned; move to next
+        bra   bullet_col_next       ; Bullet despawned; skip remaining enemies for this bullet
         
 no_hit:
         leay  SpriteStride,y
