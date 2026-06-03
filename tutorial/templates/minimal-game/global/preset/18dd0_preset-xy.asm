@@ -1,0 +1,16 @@
+	fcb   $29,$03
+	fcb   $53,$03
+	fcb   $7D,$03
+	fcb   $9B,$1B
+	fcb   $9B,$33
+	fcb   $9B,$5D
+	fcb   $9B,$69
+	fcb   $9B,$87
+	fcb   $9B,$9F
+	fcb   $7D,$C3
+	fcb   $53,$C3
+	fcb   $29,$C3
+	fcb   $0A,$9F
+	fcb   $0A,$87
+	fcb   $0A,$63
+	fcb   $0A,$1B
