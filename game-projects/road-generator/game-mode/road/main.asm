@@ -1,4 +1,8 @@
         opt   c,ct
+* Sparse_Buffer déporté dans l'objet RoadEngine (page paginée) pour ce mode.
+* Ce flag fait sauter sa def dans ram-data.asm (partagé avec road-debug qui,
+* lui, n'a pas le flag → garde Sparse_Buffer résident, intact).
+SPARSE_BUFFER_DEPORTED equ 1
 
 * ==============================================================================
 * road-generator — Game Mode "road"
@@ -16,8 +20,8 @@ SOUND_CARD_PROTOTYPE equ 1
 *
 * Note : forward EQU resolus en pass-2 lwasm. L'INCLUDE est plus bas.
 * ============================================================================
-ACTIVE_CIRCUIT_NB    equ Circuit_22_hard_5_nb_segments
-ACTIVE_CIRCUIT_BASE  equ Circuit_22_hard_5_segments
+; Circuit déporté dans l'objet RoadEngine (sélection + Circuit_base/nb posés
+; par RoadEngine_Init). Plus d'ACTIVE_CIRCUIT_* ni d'INCLUDE circuit en main.
 
         INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/system/to8/map.const.asm"
@@ -58,14 +62,10 @@ ACTIVE_CIRCUIT_BASE  equ Circuit_22_hard_5_segments
         sta   <player1+id
         clr   <player1+routine         ; commence en Init routine
 
-        ; --- Charge le circuit ---
-        ; Chaque circuit expose 2 labels publics :
-        ;   Circuit_xxx_nb_segments  : 1 mot (uint16) = N
-        ;   Circuit_xxx_segments     : (N+8) × 16 octets
-        ldd   ACTIVE_CIRCUIT_NB         ; = Circuit_<id>_nb_segments
-        std   Circuit_nb_segments
-        ldd   #ACTIVE_CIRCUIT_BASE      ; = Circuit_<id>_segments
-        std   Circuit_base
+        ; --- Init RoadEngine (objet paginé) : pose Circuit_base/nb + buffer ptrs
+        ;     AU BOOT, avant la physique (qui lit Circuit_base/segment_idx).
+        ;     Le circuit est déporté dans la page RoadEngine.
+        _RunObjectRoutineB ObjID_RoadEngine,#0
         ; segment_idx du joueur initialisé à 0 dans PlayerOne_Init.
 
         ; --- Configure l'IRQ utilisateur ---
@@ -87,16 +87,10 @@ ACTIVE_CIRCUIT_BASE  equ Circuit_22_hard_5_segments
         clr   PalRefresh
         jsr   PalUpdateNow
 
-        ; --- Init pointeurs buffers projection (= setup une fois) ---
-        ; Le pipeline projection :
-        ;   PlayerOne_State + Circuit_base → SparseProjection → Sparse_Buffer
-        ;   Sparse_Buffer → LinearInterp → Dense_Buffer
-        ;   Dense_Buffer → DrawFrameRoad → VRAM
-        ldd   #Sparse_Buffer
-        std   Proj_buffer_ptr
-        std   LinearInterp_buffer_in
-        ldd   #Dense_Buffer
-        std   LinearInterp_buffer_out
+        ; --- Init pointeurs buffers projection : déplacé dans l'objet RoadEngine
+        ;     (qui détient SP/LI). Le pipeline : PlayerOne_State + Circuit_base
+        ;     → RoadEngine{SparseProjection → Sparse_Buffer → LinearInterp →
+        ;     Dense_Buffer} → DrawFrameRoad (main) → VRAM.
 
 * ==============================================================================
 * Main Loop
@@ -112,9 +106,9 @@ MainLoop
         * sparses dans Sparse_Buffer. LinearInterp interpole en triplets dans
         * Dense_Buffer. DrawFrameRoad lit width par scanline (= effet
         * perspective), avec fallback Line_0254 sur triplet vide.
-        ldu   #PlayerOne_State
-        jsr   SparseProjection
-        jsr   LinearInterp
+        * Projection (SparseProjection + LinearInterp) déportée dans l'objet
+        * RoadEngine paginé (page cart $0000-$3FFF), invoqué ici. Libère la main.
+        _RunObjectRoutineB ObjID_RoadEngine,#1    ; #1 = Main (projection/frame)
 
         jsr   CheckSpritesRefresh
         _gfxlock.on
@@ -177,13 +171,8 @@ UserIRQ
         INCLUDE "./engine/joypad/ReadJoypads.asm"
         INCLUDE "./engine/joypad/InitJoypads.asm"
 
-        INCLUDE "./engine/projection/SparseProjection.asm"
-
-        ; --- Lotus port : interpolateur linéaire (task #D) ---
-        ; LinearInterp utilise la table FILE59 2-tier paged à $5000-$5BFF
-        ; (= cf PerspectiveTables.asm LI_TABLE_A_BASE/LI_TABLE_B_BASE).
-        ; A4 dither lookup via A4_table résident (64 oct).
-        INCLUDE "./engine/projection/LinearInterp.asm"
+        ; --- SparseProjection + LinearInterp : DÉPORTÉS dans l'objet RoadEngine
+        ;     paginé (objects/road-engine/road-engine.asm). Plus inclus en main. ---
 
         ; --- Lotus port : EQU patterns (= adresses Road_R*/Road_draw_KX_JY
         ; dans la pattern bank, valides quand celle-ci est mountée à $4000) ---
@@ -199,7 +188,7 @@ UserIRQ
         INCLUDE "./engine/projection/DrawFrameRoad.asm"
 
         ; --- Données circuit (= sortie de generate_circuits.py) ---
-        INCLUDE "./engine/circuits/22_hard_5.asm"
+        ; Circuit 22_hard_5 : déporté dans l'objet RoadEngine (plus en main).
 
         ; --- DOIT être en dernier (dépendances ifdef sur ce qui précède) ---
         INCLUDE "./engine/InitGlobals.asm"

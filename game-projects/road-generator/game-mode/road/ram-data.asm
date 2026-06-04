@@ -74,6 +74,16 @@ Circuit_base                      fdb   0
 * pour le wrap du segment_idx.
 Circuit_nb_segments               fdb   0
 
+* --- Sorties publiques de la projection (RÉSIDENTES, exportées dans main.glb) ---
+* Extraites de SparseProjection.asm : doivent rester en main pour que DrawFrameRoad
+* (Proj_min_y) et l'init main (Proj_buffer_ptr) y accèdent quand SP/LI seront
+* déportés dans l'objet RoadEngine paginé. (Relocation phase 2.)
+Proj_buffer_ptr                   fdb   0
+Proj_count                        fdb   0
+Proj_min_y                        fcb   0
+Proj_first_count                  fcb   0   ; = 15 - nibble
+Proj_last_count                   fcb   0   ; = 1  + nibble
+
 ; ============================================================================
 ; BUFFERS PROJECTION
 ;
@@ -90,7 +100,9 @@ Circuit_nb_segments               fdb   0
 ; Les 2 buffers vivent en RAM résidente $6100-$9FFF du game-mode.
 ; ============================================================================
 
-Sparse_Buffer                     fill  0,1280
+ ifndef SPARSE_BUFFER_DEPORTED
+Sparse_Buffer                     fill  0,1280   ; (road-debug : résident ici)
+ endc
 * Dense_Buffer : indexé par Y_screen ABSOLU 0..191 (= comme 68k $2b400).
 * LinearInterp écrit à dense + Y_last × 6 sans décalage.
 * Pour une route plate (D3=0), Y_screen ∈ [39..95] = positions CIEL valides.

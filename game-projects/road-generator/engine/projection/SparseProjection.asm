@@ -103,12 +103,8 @@ SP_loop1_count   fcb 0          ; (= 15 - subseg) - conforme 68k $78af6 SMC
 SP_loop2_outer   fcb 0          ; (= 7)
 SP_loop2_inner   fcb 0          ; (= 7)
 
-* -- Outputs publiques ------------------------------------------------
-Proj_buffer_ptr   fdb 0
-Proj_count        fdb 0
-Proj_min_y        fcb 0
-Proj_first_count  fcb 0          ; = 15 - nibble (former $78af6 SMC value)
-Proj_last_count   fcb 0          ; = 1  + nibble (former $78e8c SMC value)
+* -- Outputs publiques : DÉPLACÉES dans game-mode/road/ram-data.asm (résidentes,
+*    main.glb) pour survivre au déport de SP/LI dans l'objet RoadEngine. --
 
 * ----------------------------------------------------------------------
 * SparseProjection — point d'entrée
@@ -191,7 +187,12 @@ SP_loop1_top
 SP_skip_loop1
 
         * --------------------------------------------------------------
-        * LOOP 2 : 7 itérations x (segment_advance + 8 sub-steps)
+        * LOOP 2 : 7 itérations x (segment_advance + 16 sub-steps)
+        * BUGFIX horizon-sawtooth : le 68k fait 16 sub-steps/segment (cf.
+        * FUN_78a98 LAB_8744 = 16 muls (A3)+ par passe). Le port faisait 8,
+        * incohérent avec le 1er bloc (15-nibble, qui suppose 16/segment) →
+        * désalignement de phase à chaque changement de segment → l'horizon
+        * sautait. Tables perspective = 128 mots (= 16×8), donc 128 substeps.
         * --------------------------------------------------------------
         lda   #7
         sta   SP_loop2_outer
@@ -203,8 +204,8 @@ SP_loop2_outer_lp
         lbsr  SP_substep_first
         bcs   SP_horizon_exit
 
-        * 7 sub-steps restantes
-        lda   #7
+        * 15 sub-steps restantes (= 16/segment, conforme 68k)
+        lda   #15
         sta   SP_loop2_inner
 SP_loop2_inner_lp
         lbsr  SP_substep
@@ -231,7 +232,7 @@ SP_loop2_inner_lp
         *
         * Mathématique 68k : (subseg+1) substeps "complètent" le 9ème segment
         * jusqu'à la sub-position symétrique de celle de la caméra.
-        * Conservation : (15-subseg) + 7x8 + (subseg+1) = 72 substeps = 9x8.
+        * Conservation : (15-subseg) + 7x16 + (subseg+1) = 128 substeps = 8x16.
         *
         * Note : sur 68k pure, si horizon-exit ne se déclenche pas dans les
         * (subseg+1) iters, le code continue via dbra qui décrémente le counter
@@ -326,7 +327,19 @@ SP_write_horizon_stamp
 * SP_substep       — sub-step normale (clear bit 1 du flag)
 * ----------------------------------------------------------------------
 SP_substep_first
-        lbsr  SP_advance_state
+        * SP_advance_state INLINÉ (évite lbsr/rts ×72 substeps)
+        ldd   <SP_d0
+        addd  <SP_d4
+        std   <SP_d0
+        ldd   <SP_d1
+        subd  <SP_d5
+        std   <SP_d1
+        ldd   <SP_d2
+        addd  <SP_d0
+        std   <SP_d2
+        ldd   <SP_d3
+        addd  <SP_d1
+        std   <SP_d3
         ldd   <SP_d2
         andb  #$FC                        ; clear bits 0-1 de low byte
         orb   <SP_seg_flag                 ; OR avec flag du segment (PIT+START)
@@ -334,7 +347,19 @@ SP_substep_first
         bra   SP_compute_y_screen
 
 SP_substep
-        lbsr  SP_advance_state
+        * SP_advance_state INLINÉ
+        ldd   <SP_d0
+        addd  <SP_d4
+        std   <SP_d0
+        ldd   <SP_d1
+        subd  <SP_d5
+        std   <SP_d1
+        ldd   <SP_d2
+        addd  <SP_d0
+        std   <SP_d2
+        ldd   <SP_d3
+        addd  <SP_d1
+        std   <SP_d3
         ldd   <SP_d2
         andb  #$FC
         orb   <SP_seg_flag                 ; OR avec flag du segment
@@ -345,20 +370,77 @@ SP_compute_y_screen
         * Y_screen = (D3 x Persp_Scaling[i]) >> 16 + Persp_Horizon[i]
         ldd   <SP_d3
         std   <SP_d3_save
-        stx   <SP_seg_save                 ; preserve segment ptr (X réutilisé)
-        ldx   256,u                       ; X = Persp_Scaling[i]
-        lbsr  SP_mul_d3_by_scaling        ; D = (D3 x scaling) >> 16
-        ldx   <SP_seg_save                 ; restore segment ptr
+        * Lead-B : charge l'échelle DIRECTEMENT dans l'entrée du mul (SP_tmp_scale).
+        * SP_mul est désormais X-clean (cf. tst au lieu de ldx) → plus besoin de
+        * sauver/restaurer le ptr segment (X) autour de l'appel. (−10 cyc/substep)
+        ldd   256,u                       ; D = Persp_Scaling[i]
+        std   <SP_tmp_scale                ; v pour le mul
+        * --- SP_mul_d3_by_scaling INLINÉ (évite lbsr/rts ×72 substeps) : (D3×scaling)>>16 ---
+        ldd   <SP_d3_save
+        beq   SP_after_mul                ; D3==0 → produit 0 (D déjà 0)
+        tsta
+        beq   SP_imul_hz
+        cmpa  #$FF
+        beq   SP_imul_hf
+        bra   SP_imul_full
+SP_imul_hz
+        tstb
+        bmi   SP_imul_full
+        lda   <SP_tmp_scale               ; fast path D3 in [1,127]
+        mul
+        tfr   a,b
+        clra
+        bra   SP_after_mul
+SP_imul_hf
+        tstb
+        bpl   SP_imul_full
+        negb                              ; fast path D3 in [-128,-1]
+        lda   <SP_tmp_scale
+        mul
+        tfr   a,b
+        clra
+        comb
+        coma
+        addd  #1
+        bra   SP_after_mul
+SP_imul_full
+        lda   <SP_d3_save                 ; Knuth M16 : t1 = u_hi×v_hi
+        ldb   <SP_tmp_scale
+        mul
+        std   <SP_tmp_hi
+        lda   <SP_d3_save                 ; mid_a = u_hi×v_lo
+        ldb   <SP_tmp_scale+1
+        mul
+        std   <SP_mid_acc
+        lda   <SP_d3_save+1               ; mid_b = u_lo×v_hi
+        ldb   <SP_tmp_scale
+        mul
+        addd  <SP_mid_acc
+        tfr   a,b
+        bcc   SP_imul_no_carry
+        lda   #1
+        bra   SP_imul_shifted
+SP_imul_no_carry
+        clra
+SP_imul_shifted
+        addd  <SP_tmp_hi                  ; hi_unsigned
+        tst   <SP_d3_save                 ; sign correction si u < 0
+        bpl   SP_after_mul
+        subd  <SP_tmp_scale
+SP_after_mul
         addd  ,u++                        ; D += Persp_Horizon[i] ; U += 2
         std   ,y++                        ; write slot.Y (TOUJOURS, même si horizon)
 
         cmpd  #$0060
-        * BGE (signed) au lieu de BHS (unsigned) : conforme 68k FUN_78a98.
-        * Pour pitch fort faisant Y_screen négatif (= horizon haut écran), BHS
-        * traiterait Y = -100 comme grand unsigned (65436) → exit prématuré.
-        * BGE comprend Y signed : -100 < +96 → continue. Conserve l'amplitude
-        * pitch jusqu'à clip naturel par horizon table.
-        bge   SP_substep_horizon
+        * BHS (unsigned) = conforme 68k FUN_78a98 ($78720 : cmp #0x60,D6 ; BCC).
+        * Le 68k teste Y >= 96 EN NON-SIGNÉ : un Y négatif (route qui crête au-dessus
+        * du haut d'écran) devient grand unsigned (≥96) → EXIT. C'est voulu : la
+        * projection s'arrête quand la route passe au-dessus de l'horizon.
+        * BUG corrigé : l'ancien BGE (signed) laissait Y négatif continuer → avec
+        * 16 substeps/segment la route crête à Y<0 sur ~50 substeps → LinearInterp
+        * remplissait un span Y énorme (-41..118) et DÉBORDAIT Dense_Buffer dans
+        * IrqManager ($6E40) → crash IRQ. (Latent à 72 substeps : route moins profonde.)
+        bhs   SP_substep_horizon
 
         * Continue : update min_y, write slot.Ymin + slot.D0a
         cmpd  <SP_min_y
@@ -378,141 +460,10 @@ SP_substep_horizon
         rts
 
 * ----------------------------------------------------------------------
-* SP_advance_state — applique 1 perspective step :
-*   D0 += D4   (delta_curve cumulé)
-*   D1 -= D5   (delta_pitch cumulé négatif)
-*   D2 += D0   (horizontal road pos)
-*   D3 += D1   (vertical road slope)
+* SP_advance_state — INLINÉ dans SP_substep / SP_substep_first (plus de
+* sous-routine : évite lbsr/rts ×72/game-loop). Pas-perspective :
+*   D0 += D4 ; D1 -= D5 ; D2 += D0 ; D3 += D1
 * ----------------------------------------------------------------------
-SP_advance_state
-        ldd   <SP_d0
-        addd  <SP_d4
-        std   <SP_d0
-        ldd   <SP_d1
-        subd  <SP_d5
-        std   <SP_d1
-        ldd   <SP_d2
-        addd  <SP_d0
-        std   <SP_d2
-        ldd   <SP_d3
-        addd  <SP_d1
-        std   <SP_d3
-        rts
-
-* ----------------------------------------------------------------------
-* SP_mul_d3_by_scaling — (signed_16 x unsigned_12) >> 16 ADAPTATIVE
-* ----------------------------------------------------------------------
-SP_mul_d3_by_scaling
-        stx   <SP_tmp_scale                ; sauvegarde scaling (byte hi:byte lo)
-
-        * --- EARLY-EXIT : D3 == 0 (60.4% des substeps) ---
-        ldd   <SP_d3_save                  ; D = D3 (A=hi, B=lo)
-        bne   SP_mul_nonzero
-        rts                               ; D = 0, return
-
-SP_mul_nonzero
-        * --- Test si D3 in signed_8 ([-128, 127]) ---
-        tsta
-        beq   SP_mul_hi_zero
-        cmpa  #$FF
-        beq   SP_mul_hi_ff
-        bra   SP_mul_full                 ; A != 0 et A != $FF
-
-SP_mul_hi_zero
-        * D3 in [1, 255] (zero éliminé). Need D3_lo < $80 pour signed_8.
-        tstb
-        bmi   SP_mul_full                 ; B[7]=1 -> D3 >= 128 -> fallback
-
-        * --- FAST PATH POSITIF : D3 in [1, 127] ---
-        lda   <SP_tmp_scale                ; A = sHi (0..15)
-        mul                               ; D = D3 x sHi (max 127x15 = 1905)
-        tfr   a,b                         ; B = high byte (= result >> 8)
-        clra                              ; D = 0:result (positive 16-bit)
-        rts
-
-SP_mul_hi_ff
-        * D3 in [-256, -1]. Need D3_lo >= $80 pour signed_8 négatif.
-        tstb
-        bpl   SP_mul_full                 ; B[7]=0 -> D3 < -128 -> fallback
-
-        * --- FAST PATH NÉGATIF : D3 in [-128, -1] ---
-        negb                              ; B = -D3_lo (= |D3| en 1..128)
-        lda   <SP_tmp_scale                ; A = sHi
-        mul                               ; D = |D3| x sHi
-        tfr   a,b                         ; B = result byte
-        clra                              ; D = 0:result (positive)
-        comb                              ; négate 16-bit (2's complement)
-        coma
-        addd  #1                          ; D = -(|D3| x sHi >> 8) signed 16
-        rts
-
-SP_mul_full
-        * --- KNUTH ALGORITHM M tronquée + sign correction (= identique à
-        * DFR Mul16x16HiSigned, dupliqué inline pour éviter conflit DP).
-        *
-        * Reproduit la routine DFR (DrawFrameRoad.asm Mul16x16HiSigned) mais
-        * avec slots DP propres : SP utilise dp_extreg+0..+20 simultanément
-        * pendant la mul (SP_d3_save, SP_tmp_scale, etc.), tandis que DFR
-        * M16_u_signed/hi_acc/mid_acc partagent les mêmes offsets → conflit
-        * si appel direct. Solution : code inline avec SP_tmp_hi (=+20) et
-        * SP_mid_acc (=+25), libres pendant la mul.
-        *
-        * Formule : (u_signed × v_unsigned) >> 16 = t1 + (mid >> 8) - v×sign(u)
-        *   t1   = u_hi × v_hi
-        *   mid  = u_hi × v_lo + u_lo × v_hi
-        *   u_lo × v_lo dropped (max contribution = 1, négligeable au px près)
-        *
-        * GAIN PRÉCISION vs ancien 2× Mul9x16 : le `tfr a,b; sex` de l'ancien
-        * tronquait le low byte du lo_contrib, perdant ~1 LSB par scaling
-        * step → plateaux Y dans SP output (5 substeps à Y=27 au lieu de 1)
-        * → LinearInterp générait widths non-smooth (+28/+33). Knuth M16
-        * tronque moins → Y trajectory mieux étalée → widths smooth.
-        *
-        * Inputs DP :
-        *   SP_d3_save   = u (signed 16-bit, D3 cumulé)
-        *   SP_tmp_scale = v (unsigned 16-bit, scaling[i] toujours positif)
-        * Output : D = (u × v) >> 16 signed
-        * Clobbers : A, B, X, SP_tmp_hi, SP_mid_acc
-
-        * --- t1 = u_hi × v_hi ---
-        lda   <SP_d3_save                  ; A = u_hi
-        ldb   <SP_tmp_scale                ; B = v_hi
-        mul                               ; D = t1
-        std   <SP_tmp_hi
-
-        * --- mid_a = u_hi × v_lo ---
-        lda   <SP_d3_save
-        ldb   <SP_tmp_scale+1
-        mul                               ; D = mid_a
-        std   <SP_mid_acc
-
-        * --- mid_b = u_lo × v_hi, somme avec mid_a dans D (C = carry) ---
-        lda   <SP_d3_save+1
-        ldb   <SP_tmp_scale
-        mul                               ; D = mid_b
-        addd  <SP_mid_acc                  ; D = mid_a + mid_b (16-bit), C=carry
-
-        * --- mid_sum >> 8 avec carry préservé (= 17-bit shift right 8) ---
-        * sum_17bit = (C << 16) | D. >> 8 = (C << 8) | (D high byte).
-        tfr   a,b                         ; B = A (= high byte of sum)
-        bcc   SP_M16_no_mid_carry
-        lda   #1
-        bra   SP_M16_mid_shifted
-SP_M16_no_mid_carry
-        clra
-SP_M16_mid_shifted
-        * D = mid_sum >> 8 (= 9-bit max)
-
-        * --- hi_unsigned = t1 + mid_sum_shifted ---
-        addd  <SP_tmp_hi                   ; D = hi_unsigned
-
-        * --- Sign correction : si u < 0, subtract v ---
-        * ldx ,DP set flags N/Z selon valeur chargée → bpl sur u signed.
-        ldx   <SP_d3_save
-        bpl   SP_M16_done                 ; u ≥ 0 → pas de correction
-        subd  <SP_tmp_scale                ; hi_signed = hi_unsigned - v
-SP_M16_done
-        rts
 
 * ----------------------------------------------------------------------
 * SP_load_segment_deltas — décode le segment courant (format compact 8 oct)

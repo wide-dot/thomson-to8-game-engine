@@ -306,8 +306,11 @@ LI_d3_lookup_full
         std   <LI_d3_frac
 
 LI_d3_lookup_done
-        * --- Restaure X = sparse buffer ptr (= prêt pour next LI_outer_loop) ---
-        puls  x
+        * Lead-B : flags (LI_d2) est constant sur tout le segment → hoisté dans X,
+        * écrit via `stx ,y++` dans l'inner loop + tail (−5 cyc/ligne, le `ldd LI_d2`
+        * disparaît). Le ptr sparse (pshs'd en LI_normal_interp) reste sur la pile ;
+        * son `puls x` est déplacé en fin de LI_normal_tail (= avant retour outer).
+        ldx   <LI_d2                      ; X = flags (constant ce segment)
 
         * --- Inner loop counter = N_lines - 2 ---
         * Inner runs (N-1) fois (= bpl tant que counter >= 0), puis tail = 1 write.
@@ -325,8 +328,7 @@ LI_d3_lookup_done
 
 LI_inner_loop
         * Write triplet (flags, width, extra) = (D2, D0_int, D7)
-        ldd   <LI_d2
-        std   ,y++
+        stx   ,y++                        ; flags (Lead-B : X = LI_d2 hoisté)
         ldd   <LI_d0_int
         std   ,y++
         ldd   <LI_d7
@@ -351,8 +353,7 @@ LI_inner_loop
 
 LI_normal_tail
         * Tail : 1 dernier triplet + arrondi de D7
-        ldd   <LI_d2
-        std   ,y++
+        stx   ,y++                        ; flags (Lead-B : X = LI_d2 hoisté)
         ldd   <LI_d0_int
         std   ,y++
         ldd   <LI_d7
@@ -364,6 +365,7 @@ LI_normal_tail
         clrb                              ; D7 low byte = 0
         adda  #1                          ; D7 high byte += 1
         std   <LI_d7
+        puls  x                           ; Lead-B : restaure ptr sparse (déplacé de lookup_done)
         bra   LI_c1c
 
 * ──────────────────────────────────────────────────────────────────────
