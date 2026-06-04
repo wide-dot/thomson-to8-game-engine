@@ -263,11 +263,15 @@ DrawFrameRoad
         *      dans DFR_have_data depuis combined lateral+curve sub_pix.
         *      Cf. tâche #154.) ---
 
-        * --- Setup boucle : compteur descendant de scanlines (Lead-G) ---
-        * DFR_y_curr sert ici de down-counter (NB_ROAD_LINES → 0), plus de
-        * cmpa/y_limit dans le corps de boucle. Proj_min_y est relu directement
-        * pour les inits qui en ont besoin (U_RAMB, dense_ptr).
+        * --- Setup boucle : compteur descendant = bandeau VISIBLE (96 - Proj_min_y) ---
+        * On ne boucle QUE les lignes route effectivement dans le viewport
+        * [Proj_min_y .. 95] au lieu d'un 96 fixe : quand l'horizon est bas
+        * (Proj_min_y > 0), le 96 fixe débordait sous la ligne 95 (lignes hors écran
+        * null-skippées = itérations gaspillées). Identique au compte du border_mask.
+        * Proj_min_y est clampé < 96 par SP (horizon-exit à Y>=96) ; garde quand même
+        * le cas dégénéré (= 0 ligne visible) avant la boucle.
         lda   #NB_ROAD_LINES
+        suba  Proj_min_y                  ; A = 96 - Proj_min_y (hauteur bandeau visible)
         sta   <DFR_y_curr
 
         * --- Erase above horizon (= ciel sur les lignes qui étaient en route n-2) ---
@@ -336,6 +340,11 @@ DFR_no_erase
         ldb   $E7C3
         andb  #$FE
         stb   DFR_smc_prc+1
+
+        * --- Garde : bandeau vide (Proj_min_y >= 96) → aucune route visible ---
+        * (la boucle est do-while : un compteur 0 ferait 256 tours → on saute.)
+        lda   <DFR_y_curr
+        lbeq  DFR_main_done
 
 * ============================================================
 * Boucle principale : horizon → bas (= Y_curr ascendant)
@@ -632,6 +641,7 @@ DFR_skip_scanline
         dec   <DFR_y_curr
         lbne  DFR_main_loop              ; long branch (boucle > 128 oct)
 
+DFR_main_done
         rts
 
 * ======================================================================
