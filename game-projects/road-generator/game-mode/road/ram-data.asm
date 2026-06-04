@@ -21,8 +21,8 @@
 ; player1 OST = en DP, lifecycle pur, donc ext_variables_size = 0 ici.
 ; Si AiCar est activé plus tard, monter à `ai_car_ext_size` (= 4).
 ext_variables_size                equ 0
-nb_dynamic_objects                equ 2     ; Road + 1 réserve
-nb_graphical_objects              equ 1     ; seul Road a un sprite (player invisible)
+nb_dynamic_objects                equ 1     ; Road 
+nb_graphical_objects              equ 1     ; 1 sprite = voiture joueur (player1 OST)
 
 ; --- OST Player1 en DP ---
 ; Alias sur direct page : tous les accès player1+champ utilisent l'adressage

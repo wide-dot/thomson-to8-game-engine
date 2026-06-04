@@ -33,7 +33,7 @@ Doc détaillée : `lotus-ste/doc/extraction/40_road_v1_pipeline_status.md`
 - ❌ **#B** Look-ahead courbure : **PAS nécessaire pour v1** (découverte clé documentée dans doc 40)
 - ⏳ **#C** Projection sparse — port de `FUN_78a98` (offset 8698 CARS.REL.asm.txt)
 - ⏳ **#D** Interpolateur linéaire — port de `FUN_78f3a` (offset 8B3A)
-- ⏳ **#E** DRAW_FRAME_ROAD version TO8 — remplace SMC blitter 68000 par blit des sprites preshiftés `tools/output/road_lines_to8/`
+- ⏳ **#E** DRAW_FRAME_ROAD version TO8 — remplace SMC blitter 68000 par blit des sprites preshiftés `tools/road_sprites_source/`
 
 ## Documentation key
 

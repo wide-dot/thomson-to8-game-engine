@@ -127,17 +127,11 @@ def main(argv):
     scaling = list(struct.unpack(f'>{N_LINES}h',
                                  data[OFF_SCALING:OFF_SCALING + N_LINES*2]))
 
-    # 8 groupes de 128 longs (1/n × k pour k=1,9,...,57)
-    recip_groups = []
-    for g in range(RECIP_NB_GROUPS):
-        grp_off = OFF_RECIP_BASE + g * RECIP_GROUP_SIZE
-        n_longs = RECIP_GROUP_SIZE // 4
-        # group 8 (g=7) est tronqué — on lit jusqu'à la fin
-        avail = (OFF_HORIZON - grp_off) // 4
-        n_longs = min(n_longs, avail)
-        longs = list(struct.unpack(f'>{n_longs}I',
-                                   data[grp_off:grp_off + n_longs*4]))
-        recip_groups.append(longs)
+    # NOTE : les 8 groupes Persp_Recip_k01..k57 ne sont PLUS émis ici.
+    # Ils sont désormais générés en binaire compacté 2-tier par
+    # tools/build_persp_recip_paged.py → Persp_Recip_paged.bin.
+    # Cette extraction garde uniquement Horizon + Scaling (= résident) +
+    # les EQUs de dispatch + A4_table (= LUT précomputée pour le depth dither).
 
     # --- Émission .asm ---
     out_lines = [
@@ -162,33 +156,60 @@ def main(argv):
         "* " + "=" * 70,
     ]
 
-    emit_words_table(
-        "Persp_Horizon", horizon, out_lines,
-        "Y horizon par ligne — courbe 1/Z descendant de 95 (= horizon "
-        "lointain) à 39 (= sol près). Utilisé par FUN_78a98 :  "
-        "Y_ecran = horizon[line] + (altitude * scaling[line]) >> 16.",
-        per_line=8,
-    )
+    # Persp_Horizon et Persp_Scaling sont migrées dans Persp_Recip_paged.bin
+    # à offset $C00..$DFF (= runtime $5C00..$5DFF). Émet juste les EQUs.
+    out_lines.append("")
+    out_lines.append("* " + "─" * 70)
+    out_lines.append("* Persp_Horizon — Y horizon par ligne (128 mots, courbe 1/Z)")
+    out_lines.append("*   Migré dans Persp_Recip_paged.bin à $5C00 (= padding zone).")
+    out_lines.append("*   Lue par SparseProjection : ldu #Persp_Horizon ; 256,u = Persp_Scaling")
+    out_lines.append("*   Valeurs (= référence) : " + ", ".join(str(v) for v in horizon[:8]) + ", ...")
+    out_lines.append("* " + "─" * 70)
+    out_lines.append("Persp_Horizon                   equ $5C00           ; 256 oct (128 mots)")
+    out_lines.append("")
+    out_lines.append("* " + "─" * 70)
+    out_lines.append("* Persp_Scaling — facteur scaling par ligne (128 mots, décroît 4095→160)")
+    out_lines.append("*   Migré dans Persp_Recip_paged.bin à $5D00.")
+    out_lines.append("*   Lue par SparseProjection (via 256,u).")
+    out_lines.append("*   Valeurs (= référence) : " + ", ".join(str(v) for v in scaling[:8]) + ", ...")
+    out_lines.append("* " + "─" * 70)
+    out_lines.append("Persp_Scaling                   equ $5D00           ; 256 oct (128 mots)")
 
-    emit_words_table(
-        "Persp_Scaling", scaling, out_lines,
-        "Facteur scaling par ligne — décroît de 4095 (proche) à ~160 (loin). "
-        "Utilisé en MULS.W avec altitude cumulée pour produire la correction "
-        "verticale due au pitch caméra.",
-        per_line=8,
-    )
+    # ──────────────────────────────────────────────────────────────────
+    # EQUs FILE59 paged (= layout 2-tier compact) + A4_table résident.
+    # Voir build_persp_recip_paged.py pour la génération du binaire.
+    # ──────────────────────────────────────────────────────────────────
+    out_lines.append("")
+    out_lines.append("* " + "─" * 70)
+    out_lines.append("* FILE59 step LUT — TABLE 2-TIER COMPACTÉE (PAGÉE)")
+    out_lines.append("*")
+    out_lines.append("*   $5000..$53FF  Plage A : entries 0..511 packed 2 oct/entry")
+    out_lines.append("*   $5400..$5BFF  Plage B : entries 512..1023 full 4 oct/entry")
+    out_lines.append("*   $5C00..$5DFF  Persp_Horizon + Persp_Scaling (= migrés du résident)")
+    out_lines.append("*   $5E00..$5FFF  Padding zéros (= 512 oct dispo)")
+    out_lines.append("*")
+    out_lines.append("* Génération : tools/build_persp_recip_paged.py")
+    out_lines.append("* Consommation : LinearInterp.asm via dispatch cmpd #LI_PLAGE_BOUNDARY")
+    out_lines.append("* " + "─" * 70)
+    out_lines.append("LI_TABLE_A_BASE                 equ $5000")
+    out_lines.append("LI_TABLE_B_BASE                 equ $5400")
+    out_lines.append("LI_PLAGE_BOUNDARY               equ 512")
 
-    # Émet les 8 groupes 1/n
-    for g, longs in enumerate(recip_groups):
-        k = 1 + 8 * g    # k = 1, 9, 17, 25, 33, 41, 49, 57
-        name = f"Persp_Recip_k{k:02d}"
-        emit_longs_table(
-            name, longs, out_lines,
-            f"Table 1/n × {k} × 2^20 (128 longs). Group {g+1} : valeur "
-            f"[n] = ({k} × 2^20) / n approximé. Utilisé par interpolateur "
-            f"FUN_78f3a (offset = n × 4 octets, lit long).",
-            per_line=4,
-        )
+    # A4_table — précomputed floor(256/N) pour N=0..63
+    out_lines.append("")
+    out_lines.append("* " + "─" * 70)
+    out_lines.append("* A4_table — précomputed depth dither step (= floor(256/N))")
+    out_lines.append("*   Equivalent au calcul 68k : A4 = (1/N × 2^20 × 16) >> 16 = 256/N")
+    out_lines.append("*   Indexed by N = nombre de lignes interp. Valeurs ∈ [4..128] → 8 bits.")
+    out_lines.append("*   N=0,1 : path delta_zero/delta_one (jamais utilisé multi-line).")
+    out_lines.append("* " + "─" * 70)
+    out_lines.append("A4_table")
+    a4_vals = [0 if n < 2 else 256 // n for n in range(64)]
+    for i in range(0, 64, 8):
+        line = a4_vals[i:i+8]
+        hex_vals = ",".join(f"${v:02X}" for v in line)
+        dec_vals = " ".join(f"{v:3d}" for v in line)
+        out_lines.append(f"        fcb   {hex_vals}    ; N={i:2d}..{i+7:2d} : {dec_vals}")
 
     out_lines.append("")
     out_lines.append(" endc")
@@ -201,10 +222,10 @@ def main(argv):
           f"{horizon[:8]}")
     print(f"   Persp_Scaling   : {N_LINES} mots — première 8 = "
           f"{scaling[:8]}")
-    for g, longs in enumerate(recip_groups):
-        k = 1 + 8 * g
-        print(f"   Persp_Recip_k{k:02d}  : {len(longs)} longs")
+    print(f"   A4_table        : 64 oct (= floor(256/N) pour N=0..63)")
+    print(f"   LI_TABLE_*      : 3 EQUs pour dispatch FILE59 paged")
     print(f"\n✓ {args.output} écrit")
+    print(f"  (régénère le .bin paged via : python3 tools/build_persp_recip_paged.py)")
     return 0
 
 

@@ -9,6 +9,16 @@
 
 SOUND_CARD_PROTOTYPE equ 1
 
+* ============================================================================
+* Circuit selection — pour changer de circuit modifier UNIQUEMENT ces 3 lignes.
+* Les labels Circuit_<id>_nb_segments / Circuit_<id>_segments sont définis
+* par engine/circuits/<id>.asm (cf. liste 00_training..32_hard_15).
+*
+* Note : forward EQU resolus en pass-2 lwasm. L'INCLUDE est plus bas.
+* ============================================================================
+ACTIVE_CIRCUIT_NB    equ Circuit_22_hard_5_nb_segments
+ACTIVE_CIRCUIT_BASE  equ Circuit_22_hard_5_segments
+
         INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/system/to8/map.const.asm"
         INCLUDE "./engine/constants.asm"
@@ -52,9 +62,9 @@ SOUND_CARD_PROTOTYPE equ 1
         ; Chaque circuit expose 2 labels publics :
         ;   Circuit_xxx_nb_segments  : 1 mot (uint16) = N
         ;   Circuit_xxx_segments     : (N+8) × 16 octets
-        ldd   Circuit_23_hard_6_nb_segments
+        ldd   ACTIVE_CIRCUIT_NB         ; = Circuit_<id>_nb_segments
         std   Circuit_nb_segments
-        ldd   #Circuit_23_hard_6_segments
+        ldd   #ACTIVE_CIRCUIT_BASE      ; = Circuit_<id>_segments
         std   Circuit_base
         ; segment_idx du joueur initialisé à 0 dans PlayerOne_Init.
 
@@ -67,6 +77,9 @@ SOUND_CARD_PROTOTYPE equ 1
         jsr   IrqSync
         _gfxlock.init
         jsr   IrqOn
+
+        ; --- Init joypad engine API ---
+        jsr   InitJoypads
 
         ; --- Init palette statique ---
         ldd   #Pal_Road
@@ -89,19 +102,31 @@ SOUND_CARD_PROTOTYPE equ 1
 * Main Loop
 * ==============================================================================
 MainLoop
+        jsr   ReadJoypads               ; engine: lit $E7CC + calcule Dpad_Held + Dpad_Press
+        _RunObject ObjID_PlayerOne,#player1
         jsr   RunObjects                ; PlayerOne → drain input → PhysicsTick
                                          ; (update speed, segment_idx, track_pos)
 
-        * --- Pipeline projection : remplit Dense_Buffer (6 oct × 96 lignes) ---
+        * --- DEBUG STEP 3 : projection RÉACTIVÉE ---
+        * SparseProjection lit l'état Lotus + circuit, projette les segments
+        * sparses dans Sparse_Buffer. LinearInterp interpole en triplets dans
+        * Dense_Buffer. DrawFrameRoad lit width par scanline (= effet
+        * perspective), avec fallback Line_0254 sur triplet vide.
         ldu   #PlayerOne_State
-        jsr   SparseProjection           ; Sparse_Buffer ← projeté depuis segment_idx
-        jsr   LinearInterp               ; Dense_Buffer  ← interpolé depuis Sparse_Buffer
+        jsr   SparseProjection
+        jsr   LinearInterp
 
         jsr   CheckSpritesRefresh
         _gfxlock.on
         jsr   EraseSprites
         jsr   UnsetDisplayPriority
-        jsr   DrawFrameRoad              ; consomme Dense_Buffer (à terme — v2 hardcoded)
+
+        * --- PRC est piloté per-scanline par DrawFrameRoad (bit 10 LI_d7) ---
+        * Plus de hardcode global ici : le dithering perspective-cohérent est
+        * fait par DFR_main_loop via la valeur extra du triplet Dense_Buffer.
+
+        jsr   DrawFrameRoad             ; route complète : horizon→bas, 2 banques, dithering
+        jsr   DFR_border_mask           ; mask 8px L+R des n scanlines rendues sur les 2 banks
         jsr   DrawSprites
         _gfxlock.off
         _gfxlock.loop
@@ -114,7 +139,6 @@ MainLoop
 * ==============================================================================
 UserIRQ
         jsr   gfxlock.bufferSwap.check
-        jsr   lotus_input.add           ; push état joystick dans buffer (50 Hz)
         rts
 
 * ==============================================================================
@@ -140,28 +164,30 @@ UserIRQ
         INCLUDE "./engine/object-management/RunPgSubRoutine.asm"
 
         ; --- Animation ---
-        INCLUDE "./engine/graphics/animation/AnimateSprite.asm"
+        ;INCLUDE "./engine/graphics/animation/AnimateSprite.asm"
 
-        ; --- Sprite pack (background-erase, mode draw ND0 supporté) ---
+        ; --- Sprite pack ---
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-pack.asm"
 
-        ; --- Lotus port : input buffer + physics tick ---
-        INCLUDE "./game-mode/road/input/lotus.input.buffer.asm"
+        ; --- Lotus port : physics tick (input lu via Dpad_Held de ReadJoypads) ---
         INCLUDE "./engine/physics/Lotus_PhysicsTick.asm"
 
         ; --- Lotus port : projection sparse (task #C) ---
         INCLUDE "./engine/math/Mul9x16.asm"
+        INCLUDE "./engine/joypad/ReadJoypads.asm"
+        INCLUDE "./engine/joypad/InitJoypads.asm"
+
         INCLUDE "./engine/projection/SparseProjection.asm"
 
         ; --- Lotus port : interpolateur linéaire (task #D) ---
-        ; FILE59_BASE_FOR_INTERP est défini en EQU dans LinearInterp.asm
-        ; comme Persp_Recip_k01-$40 (= fallback résident, imprécis pour
-        ; les indices < $40 mais OK en pratique).
+        ; LinearInterp utilise la table FILE59 2-tier paged à $5000-$5BFF
+        ; (= cf PerspectiveTables.asm LI_TABLE_A_BASE/LI_TABLE_B_BASE).
+        ; A4 dither lookup via A4_table résident (64 oct).
         INCLUDE "./engine/projection/LinearInterp.asm"
 
         ; --- Lotus port : EQU patterns (= adresses Road_R*/Road_draw_KX_JY
         ; dans la pattern bank, valides quand celle-ci est mountée à $4000) ---
-        INCLUDE "./tools/output/road_lines_ram/road_patterns_externs.inc"
+        INCLUDE "./game-mode/road/generated/road_patterns_externs.inc"
 
         ; --- Lotus port : table de dispatch Road_lines (~2 Ko résident).
         ; Lookup par scanline → ptr vers Line_NNNN dans road_buffers
@@ -173,7 +199,7 @@ UserIRQ
         INCLUDE "./engine/projection/DrawFrameRoad.asm"
 
         ; --- Données circuit (= sortie de generate_circuits.py) ---
-        INCLUDE "./engine/circuits/23_hard_6.asm"
+        INCLUDE "./engine/circuits/22_hard_5.asm"
 
         ; --- DOIT être en dernier (dépendances ifdef sur ce qui précède) ---
         INCLUDE "./engine/InitGlobals.asm"

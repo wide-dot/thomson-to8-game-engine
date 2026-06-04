@@ -71,32 +71,37 @@ SparseProjection_included equ 1
         INCLUDE "./engine/struct/LotusCarState.struct.asm"
         INCLUDE "./engine/projection/PerspectiveTables.asm"
 
-* -- Variables internes (résidentes, accès extended) -----------------
-SP_d0            fdb 0          ; delta_curve cumulé (signed 16)
-SP_d1            fdb 0          ; -delta_pitch cumulé (signed 16)
-SP_d2            fdb 0          ; sum_of_D0 = horizontal road pos (signed 16)
-SP_d3            fdb 0          ; sum_of_D1 = vertical road slope (signed 16)
-SP_d4            fdb 0          ; segment.delta_curve sign-ext (signed 16)
-SP_d5            fdb 0          ; segment.delta_pitch x 2 sign-ext (signed 16)
-SP_min_y         fdb $0060      ; min Y_screen vu (16-bit ; init = $60)
-SP_d3_save       fdb 0          ; D3 sauvé pour passage à Mul9x16
-SP_seg_save      fdb 0          ; X (segment ptr) sauvé pendant mul
-SP_tmp_scale     fdb 0          ; scaling sauvé (hi byte:lo byte)
-SP_tmp_hi        fdb 0          ; term_hi de la décomposition mul
+* -- Variables internes HOT mappées en DP (dp_extreg = 28 oct trash) ---
+* "Trash" = contenu non garanti entre frames. SparseProjection les init au
+* début de chaque appel donc safe. Accès via `<` = direct mode = 1 cyc
+* de moins par instruction vs extended (= ~1100 cyc/frame économisés).
+* GOTCHA : dp_extreg est partagé avec moveByScript (glb_d*), scroll-map,
+* etc. → ne PAS mettre les Proj_* outputs ici (= lus par LinearInterp et
+* DFR plus tard, risque de clobber par sprite routines entre temps).
+SP_d0            equ dp_extreg+0     ; delta_curve cumulé (signed 16)
+SP_d1            equ dp_extreg+2     ; -delta_pitch cumulé (signed 16)
+SP_d2            equ dp_extreg+4     ; sum_of_D0 = horizontal road pos
+SP_d3            equ dp_extreg+6     ; sum_of_D1 = vertical road slope
+SP_d4            equ dp_extreg+8     ; segment.delta_curve sign-ext
+SP_d5            equ dp_extreg+10    ; segment.delta_pitch x 2 sign-ext
+SP_min_y         equ dp_extreg+12    ; min Y_screen vu (16-bit ; init = $0060)
+SP_seg_save      equ dp_extreg+14    ; X (segment ptr) sauvé pendant mul
+SP_d3_save       equ dp_extreg+16    ; D3 sauvé pour passage à Mul9x16
+SP_tmp_scale     equ dp_extreg+18    ; scaling sauvé (hi byte:lo byte)
+SP_tmp_hi        equ dp_extreg+20    ; term_hi de la décomposition mul
+SP_curve_nibble  equ dp_extreg+22    ; sub-position 0..15 dans segment courant
+SP_seg_flag      equ dp_extreg+23    ; flag byte cached pour le segment courant
+*                              ;   bit 0 = PIT (extrait de curve_raw bit 7)
+*                              ;   bit 1 = START (extrait de pitch_raw bit 7)
+SP_loop3_count   equ dp_extreg+24    ; (= subseg + 1 - 1 = subseg)
+SP_mid_acc       equ dp_extreg+25    ; M16 mid product (u_hi×v_lo) — 2 oct
+
+* -- Variables résidentes en extended (moins critique ou large data) --
 SP_last_y        fdb 0          ; Y_screen ayant déclenché l'exit horizon
 SP_buffer_start  fdb 0          ; buffer de sortie sauvegardé (epilogue)
-SP_curve_nibble  fcb 0          ; sub-position 0..15 dans segment courant
 SP_loop1_count   fcb 0          ; (= 15 - subseg) - conforme 68k $78af6 SMC
 SP_loop2_outer   fcb 0          ; (= 7)
 SP_loop2_inner   fcb 0          ; (= 7)
-SP_loop3_count   fcb 0          ; (= subseg + 1 - 1 = subseg) - conforme 68k $78e8c SMC
-                                ;   (le -1 car le SP_substep_first du loop3 compte
-                                ;    déjà pour 1 itération, comme le 68k qui décrémente
-                                ;    à la fin de chaque itération de $78e92-$78f06)
-SP_seg_flag      fcb 0          ; flag byte cached pour le segment courant
-*                              ;   bit 0 = PIT (extrait de curve_raw bit 7)
-*                              ;   bit 1 = START (extrait de pitch_raw bit 7)
-*                              ;   = remplace l'ancien lookup segment[+0xB]
 
 * -- Outputs publiques ------------------------------------------------
 Proj_buffer_ptr   fdb 0
@@ -115,15 +120,14 @@ SparseProjection
         lsra
         lsra
         lsra                              ; A = nibble (0..15)
-        sta   SP_curve_nibble
+        sta   <SP_curve_nibble
 
         * (15 - nibble) -> blitter first count (SMC pattern pour DrawFrameRoad)
         ldb   #15
-        subb  SP_curve_nibble
+        subb  <SP_curve_nibble
         stb   Proj_first_count
 
         * (1 + nibble) -> blitter last count
-        lda   SP_curve_nibble
         inca
         sta   Proj_last_count
 
@@ -151,12 +155,12 @@ SparseProjection
 
         * --- Reset accumulateurs (D0=D1=D2=D3=0, min_y=$0060) ---
         ldd   #0
-        std   SP_d0
-        std   SP_d1
-        std   SP_d2
-        std   SP_d3
+        std   <SP_d0
+        std   <SP_d1
+        std   <SP_d2
+        std   <SP_d3
         ldd   #$0060
-        std   SP_min_y
+        std   <SP_min_y
 
         * --- 1er segment advance + load D4/D5/SP_seg_flag ---
         * SP_load_segment_deltas: leax 8,x -> X = Circuit_base + segment_idx*8
@@ -176,7 +180,7 @@ SparseProjection
         * Pour subseg=15 (= camera tout au bord) -> 0 substeps, skip direct.
         * --------------------------------------------------------------
         lda   #15
-        suba  SP_curve_nibble            ; A = 15 - subseg
+        suba  <SP_curve_nibble            ; A = 15 - subseg
         beq   SP_skip_loop1               ; subseg = 15 -> 0 iters
         sta   SP_loop1_count
 SP_loop1_top
@@ -240,18 +244,28 @@ SP_loop2_inner_lp
         *
         * Le 1er substep ci-dessus (SP_substep_first) compte pour 1 iter.
         * Il reste (subseg+1 - 1) = subseg iters à faire.
-        lda   SP_curve_nibble
+        lda   <SP_curve_nibble
         beq   SP_loop3_done               ; subseg = 0 -> pas d'iter restante
-        sta   SP_loop3_count
+        sta   <SP_loop3_count
 SP_loop3
         lbsr  SP_substep
         bcs   SP_horizon_exit
-        dec   SP_loop3_count
+        dec   <SP_loop3_count
         bne   SP_loop3
 SP_loop3_done
         * (subseg+1) substeps épuisés sans horizon-exit. Synthèse SP_last_y
-        * depuis le dernier slot.Y écrit (= sparse[N-1].Y à -2,Y).
-        ldd   -2,y                       ; D = sparse[N-1].Y
+        * depuis le dernier slot.Y écrit.
+        *
+        * BUG FIX (#132) : layout slot = [X(0..1), Y(2..3), Y_min(4..5), D0a(6..7)].
+        * Après 4 std ,y++, Y a avancé de 8 oct. Donc :
+        *   -2,y = offset 6 = D0a (= cumul curve, peut être négatif !)
+        *   -6,y = offset 2 = slot.Y (= ce qu'on veut)
+        *
+        * Avant fix : lecture de D0a → SP_last_y négatif (e.g. -378 pour
+        * 71 substeps de curve=-6) → bmi SP_horizon_underflow → clr Proj_min_y
+        * → DFR démarre à Y=0 et lit le dense buffer pollué partout (mur de
+        * piste au-dessus de l'horizon, route cassée par blocs).
+        ldd   -6,y                       ; D = sparse[N-1].Y (= offset 2 du slot)
         std   SP_last_y
         bra   SP_horizon_exit
 
@@ -272,7 +286,7 @@ SP_horizon_exit
         lsra
         rorb                              ; D = bytes/8 = slots
         std   Proj_count
-        ldb   SP_min_y+1
+        ldb   <SP_min_y+1
         stb   Proj_min_y
         bra   SP_write_horizon_stamp
 
@@ -313,42 +327,47 @@ SP_write_horizon_stamp
 * ----------------------------------------------------------------------
 SP_substep_first
         lbsr  SP_advance_state
-        ldd   SP_d2
+        ldd   <SP_d2
         andb  #$FC                        ; clear bits 0-1 de low byte
-        orb   SP_seg_flag                 ; OR avec flag du segment (PIT+START)
+        orb   <SP_seg_flag                 ; OR avec flag du segment (PIT+START)
         std   ,y++                        ; write slot.X
         bra   SP_compute_y_screen
 
 SP_substep
         lbsr  SP_advance_state
-        ldd   SP_d2
+        ldd   <SP_d2
         andb  #$FC
-        orb   SP_seg_flag                 ; OR avec flag du segment
+        orb   <SP_seg_flag                 ; OR avec flag du segment
         andb  #$FD                        ; clear bit 1 (= NOT transition)
         std   ,y++
 
 SP_compute_y_screen
         * Y_screen = (D3 x Persp_Scaling[i]) >> 16 + Persp_Horizon[i]
-        ldd   SP_d3
-        std   SP_d3_save
-        stx   SP_seg_save                 ; preserve segment ptr (X réutilisé)
+        ldd   <SP_d3
+        std   <SP_d3_save
+        stx   <SP_seg_save                 ; preserve segment ptr (X réutilisé)
         ldx   256,u                       ; X = Persp_Scaling[i]
         lbsr  SP_mul_d3_by_scaling        ; D = (D3 x scaling) >> 16
-        ldx   SP_seg_save                 ; restore segment ptr
+        ldx   <SP_seg_save                 ; restore segment ptr
         addd  ,u++                        ; D += Persp_Horizon[i] ; U += 2
         std   ,y++                        ; write slot.Y (TOUJOURS, même si horizon)
 
         cmpd  #$0060
-        bhs   SP_substep_horizon
+        * BGE (signed) au lieu de BHS (unsigned) : conforme 68k FUN_78a98.
+        * Pour pitch fort faisant Y_screen négatif (= horizon haut écran), BHS
+        * traiterait Y = -100 comme grand unsigned (65436) → exit prématuré.
+        * BGE comprend Y signed : -100 < +96 → continue. Conserve l'amplitude
+        * pitch jusqu'à clip naturel par horizon table.
+        bge   SP_substep_horizon
 
         * Continue : update min_y, write slot.Ymin + slot.D0a
-        cmpd  SP_min_y
+        cmpd  <SP_min_y
         bge   SP_no_update_min
-        std   SP_min_y
+        std   <SP_min_y
 SP_no_update_min
-        ldd   SP_min_y
+        ldd   <SP_min_y
         std   ,y++                        ; write slot.Ymin
-        ldd   SP_d0
+        ldd   <SP_d0
         std   ,y++                        ; write slot.D0a
         andcc #$FE                        ; clear carry = continue
         rts
@@ -366,28 +385,28 @@ SP_substep_horizon
 *   D3 += D1   (vertical road slope)
 * ----------------------------------------------------------------------
 SP_advance_state
-        ldd   SP_d0
-        addd  SP_d4
-        std   SP_d0
-        ldd   SP_d1
-        subd  SP_d5
-        std   SP_d1
-        ldd   SP_d2
-        addd  SP_d0
-        std   SP_d2
-        ldd   SP_d3
-        addd  SP_d1
-        std   SP_d3
+        ldd   <SP_d0
+        addd  <SP_d4
+        std   <SP_d0
+        ldd   <SP_d1
+        subd  <SP_d5
+        std   <SP_d1
+        ldd   <SP_d2
+        addd  <SP_d0
+        std   <SP_d2
+        ldd   <SP_d3
+        addd  <SP_d1
+        std   <SP_d3
         rts
 
 * ----------------------------------------------------------------------
 * SP_mul_d3_by_scaling — (signed_16 x unsigned_12) >> 16 ADAPTATIVE
 * ----------------------------------------------------------------------
 SP_mul_d3_by_scaling
-        stx   SP_tmp_scale                ; sauvegarde scaling (byte hi:byte lo)
+        stx   <SP_tmp_scale                ; sauvegarde scaling (byte hi:byte lo)
 
         * --- EARLY-EXIT : D3 == 0 (60.4% des substeps) ---
-        ldd   SP_d3_save                  ; D = D3 (A=hi, B=lo)
+        ldd   <SP_d3_save                  ; D = D3 (A=hi, B=lo)
         bne   SP_mul_nonzero
         rts                               ; D = 0, return
 
@@ -405,7 +424,7 @@ SP_mul_hi_zero
         bmi   SP_mul_full                 ; B[7]=1 -> D3 >= 128 -> fallback
 
         * --- FAST PATH POSITIF : D3 in [1, 127] ---
-        lda   SP_tmp_scale                ; A = sHi (0..15)
+        lda   <SP_tmp_scale                ; A = sHi (0..15)
         mul                               ; D = D3 x sHi (max 127x15 = 1905)
         tfr   a,b                         ; B = high byte (= result >> 8)
         clra                              ; D = 0:result (positive 16-bit)
@@ -418,7 +437,7 @@ SP_mul_hi_ff
 
         * --- FAST PATH NÉGATIF : D3 in [-128, -1] ---
         negb                              ; B = -D3_lo (= |D3| en 1..128)
-        lda   SP_tmp_scale                ; A = sHi
+        lda   <SP_tmp_scale                ; A = sHi
         mul                               ; D = |D3| x sHi
         tfr   a,b                         ; B = result byte
         clra                              ; D = 0:result (positive)
@@ -428,21 +447,71 @@ SP_mul_hi_ff
         rts
 
 SP_mul_full
-        * --- FALLBACK : code original 2x Mul9x16 (D3 hors signed_8, ~33%) ---
-        clra                              ; multiplier high byte = 0 (positif)
-        ldb   SP_tmp_scale                ; B = scaling_hi byte (0..15)
-        ldx   SP_d3_save                  ; X = D3 signed 16
-        lbsr  Mul9x16                     ; D = (scaling_hi x D3) / 256
-        std   SP_tmp_hi
+        * --- KNUTH ALGORITHM M tronquée + sign correction (= identique à
+        * DFR Mul16x16HiSigned, dupliqué inline pour éviter conflit DP).
+        *
+        * Reproduit la routine DFR (DrawFrameRoad.asm Mul16x16HiSigned) mais
+        * avec slots DP propres : SP utilise dp_extreg+0..+20 simultanément
+        * pendant la mul (SP_d3_save, SP_tmp_scale, etc.), tandis que DFR
+        * M16_u_signed/hi_acc/mid_acc partagent les mêmes offsets → conflit
+        * si appel direct. Solution : code inline avec SP_tmp_hi (=+20) et
+        * SP_mid_acc (=+25), libres pendant la mul.
+        *
+        * Formule : (u_signed × v_unsigned) >> 16 = t1 + (mid >> 8) - v×sign(u)
+        *   t1   = u_hi × v_hi
+        *   mid  = u_hi × v_lo + u_lo × v_hi
+        *   u_lo × v_lo dropped (max contribution = 1, négligeable au px près)
+        *
+        * GAIN PRÉCISION vs ancien 2× Mul9x16 : le `tfr a,b; sex` de l'ancien
+        * tronquait le low byte du lo_contrib, perdant ~1 LSB par scaling
+        * step → plateaux Y dans SP output (5 substeps à Y=27 au lieu de 1)
+        * → LinearInterp générait widths non-smooth (+28/+33). Knuth M16
+        * tronque moins → Y trajectory mieux étalée → widths smooth.
+        *
+        * Inputs DP :
+        *   SP_d3_save   = u (signed 16-bit, D3 cumulé)
+        *   SP_tmp_scale = v (unsigned 16-bit, scaling[i] toujours positif)
+        * Output : D = (u × v) >> 16 signed
+        * Clobbers : A, B, X, SP_tmp_hi, SP_mid_acc
 
+        * --- t1 = u_hi × v_hi ---
+        lda   <SP_d3_save                  ; A = u_hi
+        ldb   <SP_tmp_scale                ; B = v_hi
+        mul                               ; D = t1
+        std   <SP_tmp_hi
+
+        * --- mid_a = u_hi × v_lo ---
+        lda   <SP_d3_save
+        ldb   <SP_tmp_scale+1
+        mul                               ; D = mid_a
+        std   <SP_mid_acc
+
+        * --- mid_b = u_lo × v_hi, somme avec mid_a dans D (C = carry) ---
+        lda   <SP_d3_save+1
+        ldb   <SP_tmp_scale
+        mul                               ; D = mid_b
+        addd  <SP_mid_acc                  ; D = mid_a + mid_b (16-bit), C=carry
+
+        * --- mid_sum >> 8 avec carry préservé (= 17-bit shift right 8) ---
+        * sum_17bit = (C << 16) | D. >> 8 = (C << 8) | (D high byte).
+        tfr   a,b                         ; B = A (= high byte of sum)
+        bcc   SP_M16_no_mid_carry
+        lda   #1
+        bra   SP_M16_mid_shifted
+SP_M16_no_mid_carry
         clra
-        ldb   SP_tmp_scale+1              ; B = scaling_lo (0..255)
-        ldx   SP_d3_save
-        lbsr  Mul9x16                     ; D = (scaling_lo x D3) / 256
+SP_M16_mid_shifted
+        * D = mid_sum >> 8 (= 9-bit max)
 
-        tfr   a,b
-        sex                               ; sign-extend B -> A
-        addd  SP_tmp_hi                   ; D = total = (D3 x scaling) >> 16
+        * --- hi_unsigned = t1 + mid_sum_shifted ---
+        addd  <SP_tmp_hi                   ; D = hi_unsigned
+
+        * --- Sign correction : si u < 0, subtract v ---
+        * ldx ,DP set flags N/Z selon valeur chargée → bpl sur u signed.
+        ldx   <SP_d3_save
+        bpl   SP_M16_done                 ; u ≥ 0 → pas de correction
+        subd  <SP_tmp_scale                ; hi_signed = hi_unsigned - v
+SP_M16_done
         rts
 
 * ----------------------------------------------------------------------
@@ -455,12 +524,12 @@ SP_mul_full
 * ----------------------------------------------------------------------
 SP_load_segment_deltas
         leax  8,x                         ; avance au segment suivant (8 oct/seg)
-        clr   SP_seg_flag                 ; reset flag accumulator
+        clr   <SP_seg_flag                 ; reset flag accumulator
 
         * --- Decode curve_raw : bit 7 = PIT, bits 0-6 = curve 7-bit signed ---
         ldb   ,x                          ; B = curve_raw
         bpl   SP_no_pit                   ; bit 7 clear -> no PIT
-        inc   SP_seg_flag                 ; flag bit 0 = PIT
+        inc   <SP_seg_flag                 ; flag bit 0 = PIT
 SP_no_pit
         andb  #$7F                        ; mask out PIT bit
         bitb  #$40                        ; 7-bit sign (bit 6) set ?
@@ -468,14 +537,14 @@ SP_no_pit
         orb   #$80                        ; sign-extend bit 6 -> bit 7
 SP_curve_pos
         sex                               ; D = signed 16 curve
-        std   SP_d4
+        std   <SP_d4
 
         * --- Decode pitch_raw : bit 7 = START, bits 0-6 = pitch 7-bit signed ---
         ldb   1,x                         ; B = pitch_raw
         bpl   SP_no_start
-        lda   SP_seg_flag
+        lda   <SP_seg_flag
         ora   #$02                        ; flag bit 1 = START
-        sta   SP_seg_flag
+        sta   <SP_seg_flag
 SP_no_start
         andb  #$7F                        ; mask out START bit
         bitb  #$40
@@ -485,7 +554,7 @@ SP_pitch_pos
         sex                               ; D = signed 16 pitch
         aslb                              ; x2 (D5 = 2 x pitch)
         rola
-        std   SP_d5
+        std   <SP_d5
         rts
 
  endc                                     ; SparseProjection_included

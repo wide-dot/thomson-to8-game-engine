@@ -22,7 +22,11 @@ Source : ../lotus-ste/doc/extraction/road_lines/
     pits_dark/000.png ... 254.png
     composite_normal_light.png ... composite_pits_dark.png
 
-Destination : ./output/road_lines_to8/
+Destination : ./road_sprites_raw/  (= sortie brute ST→TO8, JAMAIS éditée à la main)
+
+IMPORTANT : ce script n'écrit PAS dans road_sprites_source/. Le pipeline est :
+  convert_road_lines.py -> road_sprites_raw/ -> (user copie + édite palette/layout)
+  -> road_sprites_source/ -> compile_road_sprites.py -> game-mode/generated/
     normal_light/000.png ... 254.png    (largeurs / 2)
     normal_dark/...
     pits_light/...
@@ -168,12 +172,18 @@ def subsample_horizontal_2x(pixels_2d):
 
 
 def convert_png(src_path: Path, dst_path: Path):
-    """Lit un PNG ST, le subsample par 2 horizontalement, écrit le PNG TO8."""
+    """Lit un PNG ST, le subsample par 2 horizontalement, écrit le PNG TO8.
+
+    Note : aucun padding n'est appliqué ici. Le PNG TO8 représente fidèlement
+    le visuel ST réduit. Le padding chunk-alignment + parité (= contraintes du
+    pipeline de rendu RAM) est fait dynamiquement en mémoire par
+    compile_road_sprites.py au moment du chunking, sans persister dans le PNG."""
     width, height, pixels, palette = read_png_indexed(src_path)
     pixels_to8 = subsample_horizontal_2x(pixels)
     dst_path.parent.mkdir(parents=True, exist_ok=True)
     write_png_indexed(dst_path, pixels_to8, palette)
-    return width, height, len(pixels_to8[0]) if pixels_to8 else 0, len(pixels_to8)
+    dst_w = len(pixels_to8[0]) if pixels_to8 else 0
+    return width, height, dst_w, len(pixels_to8)
 
 
 # ============================================================================
@@ -187,7 +197,7 @@ def main(argv):
     # Chemins par défaut RELATIFS au script (= tools/), pas au cwd
     script_dir = Path(__file__).resolve().parent
     src_root = script_dir.parent / 'lotus-ste' / 'doc' / 'extraction' / 'road_lines'
-    dst_root = script_dir / 'output' / 'road_lines_to8'
+    dst_root = script_dir / 'road_sprites_raw'
 
     # Parse args optionnels
     args = list(argv[1:])

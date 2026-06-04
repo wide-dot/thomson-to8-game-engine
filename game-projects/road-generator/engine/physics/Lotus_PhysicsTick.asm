@@ -23,51 +23,22 @@
 ; ============================================================================
 
 Lotus_PhysicsTick
-        * --- STUB minimal pour valider le pipeline ---
-        * track_pos += sign_extend(speed) (= portion forward de FUN_760ae)
+        * --- track_pos += 5 × speed (= conforme 68k FUN_760ae $7610A..$76112) ---
+        * Le 68k fait 5 × `add.l D0, D4` où D0 = speed × gear_factor (à (0x12,A4)).
+        * Notre STUB n'a pas encore le gear_factor → on utilise 5 × speed direct.
+        * Quand le port physique complet (= gear/torque/RPM) sera fait, on
+        * remplacera par muls(speed, gear_factor) × 5.
         *
-        * Pour tester sans physique input : si bit 3 (UP) pressé,
-        * incrémenter speed de 1, sinon décrémenter. Permettra de voir
-        * le pointeur segment avancer/reculer au debugger.
-
-        * --- TEST : speed += $30 si UP pressé, -= $30 si DOWN, clamp [0..max] ---
-        * Pas d'accélération inspirée de FUN_75dec du 68k (gear 0/1 ≈ +$30/tick).
-        * Permet de tester le pipeline projection rapidement (max en ~0.2s).
-        * Masques = format TO8 natif ($E7CC bits 0-3 P1, post-coma) :
-        *   bit 0 = UP, bit 1 = DOWN, bit 2 = LEFT, bit 3 = RIGHT, bit 6 = FIRE
-LPT_ACCEL_STEP        equ   $30           ; ~ gear 0 du 68k FUN_75dec
-        lda   LotusCarState.input_held,u
-        bita  #%00000001                  ; UP (c1_button_up_mask) ?
-        beq   LPT_no_up
-        ldd   LotusCarState.speed,u
-        addd  #LPT_ACCEL_STEP
-        cmpd  #PHYS_MAX_SPEED
-        ble   LPT_save_spd
-        ldd   #PHYS_MAX_SPEED
-LPT_save_spd
-        std   LotusCarState.speed,u
-        bra   LPT_do_track
-LPT_no_up
-        bita  #%00000010                  ; DOWN (c1_button_down_mask) ?
-        beq   LPT_do_track
-        ldd   LotusCarState.speed,u
-        beq   LPT_do_track
-        subd  #LPT_ACCEL_STEP
-        bmi   LPT_clamp_zero
-        std   LotusCarState.speed,u
-        bra   LPT_do_track
-LPT_clamp_zero
-        ldd   #0
-        std   LotusCarState.speed,u
-
-LPT_do_track
-        * --- track_pos (32-bit) += sign_extend(speed) (16-bit signed) ---
-        * D += speed_signed sur 32 bits :
-        *   low_word += speed_low (with carry)
-        *   high_word += sign_extension_of_speed + carry_from_low
-        ldd   LotusCarState.speed,u       ; D = speed (signed)
-        addd  LotusCarState.track_pos+2,u ; D = low_word + speed
-        std   LotusCarState.track_pos+2,u ; store low_word
+        * Math : pour PHYS_MAX_SPEED = $1AA, 5× = $852. Fits in 16-bit.
+        * Pas d'overflow possible si speed ∈ [0..$1AA] (= 5*$1AA = $852 < $FFFF).
+        ldd   LotusCarState.speed,u       ; D = speed
+        aslb
+        rola                              ; D = speed × 2
+        aslb
+        rola                              ; D = speed × 4
+        addd  LotusCarState.speed,u       ; D = speed × 5
+        addd  LotusCarState.track_pos+2,u ; D = low_word + 5*speed
+        std   LotusCarState.track_pos+2,u
         bcc   LPT_no_seg_advance          ; pas d'overflow → segment inchangé
 
         * --- Carry du low-word → high_word += 1 + segment_idx += 1 (wrap N) ---
