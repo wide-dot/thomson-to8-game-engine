@@ -5,9 +5,10 @@ RoadLinesTable_included equ 1
 * ======================================================================
 * RoadLinesTable.asm — TABLE DE DISPATCH SCANLINE → LINE_NNNN
 *
-* Wrapper résident du fichier tools/output/road_lines_ram/road_lines_table.asm
-* (qui contient un `ORG $0000` problématique → on ne peut pas l'inclure
-* directement dans le game-mode résident).
+* Wrapper résident pour la table Road_lines générée par
+* tools/compile_road_sprites_ram.py dans game-mode/road/generated/.
+* Le wrapper fournit le label Road_lines et les INCLUDE externs pour
+* résoudre les Line_NNNN au compile-time.
 *
 * Cette table est consultée par DRAW_FRAME_ROAD :
 *   pour chaque scanline i (0..254), 4 variants pré-calculés par
@@ -28,9 +29,9 @@ RoadLinesTable_included equ 1
 * inclure AVANT cet asm pour résoudre les symboles).
 * ======================================================================
 
-        INCLUDE "./tools/output/road_lines_ram/road_buffers_externs.inc"
+        INCLUDE "./game-mode/road/generated/road_buffers_externs.inc"
 
 Road_lines
-        INCLUDE "./engine/projection/RoadLinesTable_data.asm"
+        INCLUDE "./game-mode/road/generated/road_lines_table.asm"
 
  endc

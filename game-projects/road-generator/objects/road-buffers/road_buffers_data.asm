@@ -12,4 +12,4 @@
 * ======================================================================
 
         ORG   $0000
-        INCLUDEBIN "./tools/output/road_lines_ram/road_buffers.bin"
+        INCLUDEBIN "./objects/road-buffers/generated/road_buffers.bin"
