@@ -102,6 +102,11 @@ SP_buffer_start  fdb 0          ; buffer de sortie sauvegardé (epilogue)
 SP_loop1_count   fcb 0          ; (= 15 - subseg) - conforme 68k $78af6 SMC
 SP_loop2_outer   fcb 0          ; (= 7)
 SP_loop2_inner   fcb 0          ; (= 7)
+* -- Fast-path PLAT : vecteurs substep choisis par SP_load_segment_deltas --
+* Si segment plat (D1==D3==D5==0 : pas de pitch -> Y=horizon[i], pas de mul),
+* on pointe sur SP_substep_flat (intégrateur courbe seul). Sinon SP_substep.
+SP_step_vec       fdb SP_substep        ; substep normal (clear bit1)
+SP_step_first_vec fdb SP_substep_first  ; 1ère substep du segment (preserve bit1)
 
 * -- Outputs publiques : DÉPLACÉES dans game-mode/road/ram-data.asm (résidentes,
 *    main.glb) pour survivre au déport de SP/LI dans l'objet RoadEngine. --
@@ -180,7 +185,7 @@ SparseProjection
         beq   SP_skip_loop1               ; subseg = 15 -> 0 iters
         sta   SP_loop1_count
 SP_loop1_top
-        lbsr  SP_substep                  ; substep normal (= clear bit 1)
+        jsr   [SP_step_vec]               ; substep flat OU slow (clear bit 1)
         bcs   SP_horizon_exit
         dec   SP_loop1_count
         bne   SP_loop1_top
@@ -201,14 +206,14 @@ SP_loop2_outer_lp
 
         * 1ère sub-step du segment : pas de andi fffd (preserve flag bit 1
         * comme transition marker)
-        lbsr  SP_substep_first
+        jsr   [SP_step_first_vec]
         bcs   SP_horizon_exit
 
         * 15 sub-steps restantes (= 16/segment, conforme 68k)
         lda   #15
         sta   SP_loop2_inner
 SP_loop2_inner_lp
-        lbsr  SP_substep
+        jsr   [SP_step_vec]
         bcs   SP_horizon_exit
         dec   SP_loop2_inner
         bne   SP_loop2_inner_lp
@@ -222,7 +227,7 @@ SP_loop2_inner_lp
         lbsr  SP_load_segment_deltas
 
         * 1ère sub-step (transition marker)
-        lbsr  SP_substep_first
+        jsr   [SP_step_first_vec]
         bcs   SP_horizon_exit
 
         * Boucle conforme 68k $78e8a-$78f06 :
@@ -249,7 +254,7 @@ SP_loop2_inner_lp
         beq   SP_loop3_done               ; subseg = 0 -> pas d'iter restante
         sta   <SP_loop3_count
 SP_loop3
-        lbsr  SP_substep
+        jsr   [SP_step_vec]
         bcs   SP_horizon_exit
         dec   <SP_loop3_count
         bne   SP_loop3
@@ -460,6 +465,56 @@ SP_substep_horizon
         rts
 
 * ----------------------------------------------------------------------
+* SP_substep_flat / SP_substep_flat_first — FAST-PATH ROUTE PLATE
+*
+* Pré-condition (garantie par SP_load_segment_deltas) : D1==D3==D5==0 sur ce
+* segment -> le pitch reste nul -> Y_screen = (0 × scaling) + horizon[i] =
+* horizon[i]. On évite : l'intégration pitch (D1/D3), le load scaling (256,u),
+* le save D3, tout le mul, et le test horizon (horizon[i] <= 95 < 0x60 -> jamais
+* d'exit). On ne fait QUE l'intégrateur de courbe (D0/D2) + write X + Y=ldd,u++.
+* Ymin = Y (horizon décroît -> chaque Y est le nouveau min). Carry clear = continue.
+* ~110 cyc vs ~205 (slow). Fidèle : Y vaut exactement la même valeur qu'au slow.
+* ----------------------------------------------------------------------
+SP_substep_flat
+        ldd   <SP_d0                      ; D0 += D4 (courbe)
+        addd  <SP_d4
+        std   <SP_d0
+        ldd   <SP_d2                      ; D2 += D0
+        addd  <SP_d0
+        std   <SP_d2                      ; D = D2 (pas de reload)
+        andb  #$FC                        ; write X = (D2 & $FC) | flags
+        orb   <SP_seg_flag
+        andb  #$FD                        ; clear bit 1 (pas transition)
+        std   ,y++
+        ldd   ,u++                        ; Y = horizon[i] (U += 2)
+        std   ,y++                        ; write slot.Y
+        std   <SP_min_y                   ; horizon décroît -> nouveau min
+        std   ,y++                        ; write slot.Ymin (= Y)
+        ldd   <SP_d0
+        std   ,y++                        ; write slot.D0a
+        andcc #$FE                        ; carry clear = continue
+        rts
+
+SP_substep_flat_first
+        ldd   <SP_d0
+        addd  <SP_d4
+        std   <SP_d0
+        ldd   <SP_d2
+        addd  <SP_d0
+        std   <SP_d2
+        andb  #$FC
+        orb   <SP_seg_flag                 ; preserve bit 1 (START/transition marker)
+        std   ,y++
+        ldd   ,u++
+        std   ,y++
+        std   <SP_min_y
+        std   ,y++
+        ldd   <SP_d0
+        std   ,y++
+        andcc #$FE
+        rts
+
+* ----------------------------------------------------------------------
 * SP_advance_state — INLINÉ dans SP_substep / SP_substep_first (plus de
 * sous-routine : évite lbsr/rts ×72/game-loop). Pas-perspective :
 *   D0 += D4 ; D1 -= D5 ; D2 += D0 ; D3 += D1
@@ -506,6 +561,28 @@ SP_pitch_pos
         aslb                              ; x2 (D5 = 2 x pitch)
         rola
         std   <SP_d5
+        * --- Choix fast-path : segment PLAT si D5==0 ET D1==0 ET D3==0 ---
+        * (pitch nul + accumulateurs pitch nuls -> D3 reste 0 -> Y=horizon[i]).
+        * Dès qu'un hill est rencontré (D1/D3 != 0) on repasse en slow tant que
+        * le pitch accumulé n'est pas revenu à 0.
+        * NB : X = pointeur segment (préservé entre appels via leax 8,x) et
+        * U = pointeur Persp_Horizon -> NE PAS les clobber. On pose les vecteurs
+        * via D (libre ici), pas via X/U.
+        bne   SP_lsd_slow                 ; D5 != 0 -> slow (Z = std <SP_d5)
+        ldd   <SP_d1
+        bne   SP_lsd_slow
+        ldd   <SP_d3
+        bne   SP_lsd_slow
+        ldd   #SP_substep_flat            ; segment plat
+        std   SP_step_vec
+        ldd   #SP_substep_flat_first
+        std   SP_step_first_vec
+        rts
+SP_lsd_slow
+        ldd   #SP_substep                 ; segment avec pente (mul requis)
+        std   SP_step_vec
+        ldd   #SP_substep_first
+        std   SP_step_first_vec
         rts
 
  endc                                     ; SparseProjection_included

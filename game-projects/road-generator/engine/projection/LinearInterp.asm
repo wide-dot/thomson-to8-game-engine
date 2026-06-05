@@ -195,32 +195,44 @@ LinearInterp
 * OUTER LOOP — itère les sparse slots backward
 * ──────────────────────────────────────────────────────────────────────
 LI_outer_loop
-        * D5 = -(A3) = sparse[i].Y
+        * D5 = -(A3) = sparse[i].Y   (X pointe ensuite sur le mot Y = slot+2)
         leax  -2,x
         ldd   ,x
         std   <LI_d5
-        * D2 = -(A3) = sparse[i].X
-        leax  -2,x
-        ldd   ,x
-        std   <LI_d2
-        * A3 -= 4 (skip Y_min/D0a de slot i-1 pour la prochaine iter)
-        leax  -4,x
         * D4 = -(U) = scaling[i-1]
         leau  -2,u
         ldd   ,u
         std   <LI_d4
 
         * --- Compare D1 (prev Y) vs D5 (cur Y) ---
+        * OPTIM : la lecture de X (flags=LI_d2) n'est utile QUE si on écrit
+        * (delta_one / interp). 100/127 transitions sont delta_zero (rien écrit)
+        * -> on DIFFÈRE la lecture de X après ce test. -23 cyc/delta_zero.
         ldd   <LI_d1
         cmpd  <LI_d5
-        lbeq  LI_delta_zero
+        beq   LI_dz_adv                   ; delta_zero -> skip lecture X
+
+        * D2 = sparse[i].X (flags), seulement si transition écrivante.
+        * X mot = (X courant)-2 = slot+0 (lu via offset, sans bouger X).
+        ldd   -2,x
+        std   <LI_d2
+        * Avance A3 de -6 (mot X -2, skip Y_min/D0a -4) -> Y_min de slot i-1.
+        leax  -6,x
 
         * D1 != D5 : compute delta = D1 - D5
+        ldd   <LI_d1
         subd  <LI_d5
         std   <LI_d1                      ; D1 = delta (signed)
         cmpd  #-1
         lbeq  LI_delta_one               ; delta == -1 (= 1 ligne)
         lbmi  LI_normal_interp           ; delta < -1 (= multi-line interp)
+        lbra  LI_back_step               ; delta > 0 (back-step)
+
+LI_dz_adv
+        * delta_zero : X non lu, on avance juste A3 de -6 (-2 mot X, -4 skip)
+        * puis saute vers LI_delta_zero (D0 <- D4) — loin, donc lbra.
+        leax  -6,x
+        lbra  LI_delta_zero
 
 * ──────────────────────────────────────────────────────────────────────
 * LI_back_step — delta > 0 (sparse Y rétrécit, rare dans les virages serrés)

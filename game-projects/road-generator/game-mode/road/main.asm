@@ -68,6 +68,12 @@ SOUND_CARD_PROTOTYPE equ 1
         _RunObjectRoutineB ObjID_RoadEngine,#0
         ; segment_idx du joueur initialisé à 0 dans PlayerOne_Init.
 
+        ; --- Sprites bord-de-piste (roadside) : voir lotus-ste/doc/extraction/
+        ;     41_roadside_objects_plan.md. Approche RETENUE = BLIT DIRECT par frame
+        ;     (pas de pool OST / DisplaySprite). À implémenter : Phase1 projection
+        ;     dans RoadEngine -> Roadside_DrawList résident ; Phase2 Roadside_BlitAll
+        ;     après DrawFrameRoad. (Pool OST B3/B4/B5 retiré = cleanup.)
+
         ; --- Configure l'IRQ utilisateur ---
         jsr   IrqInit
         ldd   #UserIRQ
@@ -97,18 +103,10 @@ SOUND_CARD_PROTOTYPE equ 1
 * ==============================================================================
 MainLoop
         jsr   ReadJoypads               ; engine: lit $E7CC + calcule Dpad_Held + Dpad_Press
-        _RunObject ObjID_PlayerOne,#player1
-        jsr   RunObjects                ; PlayerOne → drain input → PhysicsTick
-                                         ; (update speed, segment_idx, track_pos)
-
-        * --- DEBUG STEP 3 : projection RÉACTIVÉE ---
-        * SparseProjection lit l'état Lotus + circuit, projette les segments
-        * sparses dans Sparse_Buffer. LinearInterp interpole en triplets dans
-        * Dense_Buffer. DrawFrameRoad lit width par scanline (= effet
-        * perspective), avec fallback Line_0254 sur triplet vide.
-        * Projection (SparseProjection + LinearInterp) déportée dans l'objet
-        * RoadEngine paginé (page cart $0000-$3FFF), invoqué ici. Libère la main.
-        _RunObjectRoutineB ObjID_RoadEngine,#1    ; #1 = Main (projection/frame)
+        _RunObject ObjID_PlayerOne,#player1   ; physique : track_pos, segment_idx
+        jsr   RunObjects
+        * RoadEngine #1 : SparseProjection + LinearInterp (alimente DrawFrameRoad).
+        _RunObjectRoutineB ObjID_RoadEngine,#1
 
         jsr   CheckSpritesRefresh
         _gfxlock.on
