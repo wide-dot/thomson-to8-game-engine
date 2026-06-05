@@ -83,8 +83,14 @@ def load_lines_table(table_path):
 
 
 def read_kmj(bin_bytes, offset):
-    """Header buffer = 3 octets K, M, J à l'offset donné dans road_buffers.bin."""
-    return bin_bytes[offset], bin_bytes[offset + 1], bin_bytes[offset + 2]
+    """Header buffer = 1 octet M à l'offset donné dans road_buffers.bin.
+
+    K et J ne sont PLUS stockés (header réduit à `fcb M`) : le runtime les
+    recalcule depuis leftEdge + M. Retourne (None, M, None) pour conserver
+    M à l'index 1 (les consommateurs qui ne lisent que M restent OK ; ceux
+    qui touchent K/J — port_dispatch/model_current, modèle N=K+M+J DÉPRÉCIÉ —
+    échouent franchement sur None plutôt que de lire des octets de pointeur)."""
+    return None, bin_bytes[offset], None
 
 
 def port_dispatch(K, M, J, chunk_shift, sub_pix):

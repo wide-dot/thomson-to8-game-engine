@@ -138,7 +138,7 @@ DFR_lateral_scaled fdb 0           ; ext (constant frame, accédé 96× = ok ext
 * UNE fois par scanline (DFR_dispatch_compute) et on partage le résultat aux 2
 * passes (DFR_dispatch_draw). En mémoire étendue (DP plein) : +1 cyc/accès, négligeable.
 DFR_route_ptr      fdb 0           ; ext : ptr routine Road_draw_K'_J' (0 = non implémentée)
-DFR_core_off       fcb 0           ; ext : 3 + max(0,right-10)*2 (offset header+cœur)
+DFR_core_off       fcb 0           ; ext : 1 + max(0,right-10)*2 (offset header+cœur)
 
 * ── Track phase per-frame pour animation bandes dark/light ──
 * 68k FUN_765fe $7664E-$76654 : D5 = track_pos.lower ror 4 & $7FF, patché SMC dans
@@ -446,15 +446,15 @@ DFR_have_width
         addd  #Road_lines
         std   <DFR_lines_base
 
-        * --- (2) M = largeur route en chunks (header buffer variant 0, offset 1) ---
+        * --- (2) M = largeur route en chunks (header buffer variant 0, offset 0) ---
         ldx   <DFR_lines_base
         ldx   ,x                          ; X = ptr Line variant 0 (Lead-2 : via X, pas tfr d,y)
-        ldb   1,x                         ; B = M
+        ldb   ,x                          ; B = M  (header réduit : M en offset 0)
         andb  #$FE                        ; FIX PARITÉ : centre sur la partie PAIRE de M.
         *                                   M impair était décalé de -8px (demi-chunk),
         *                                   car la route est centrée sur une frontière de
         *                                   chunk et un cœur de M impair se cale sur un
-        *                                   centre de chunk. (M réel relu en 1,y au dispatch.)
+        *                                   centre de chunk. (M réel relu en ,y au dispatch.)
 
         * --- (3) Pré-calcule (CENTER - (M&~1)*8) et l'empile (survit à Mul16x16) ---
         lda   #8
@@ -554,7 +554,7 @@ DFR_curve_done
 
         * -- corps DFR_dispatch_compute inliné --
         lda   <DFR_curve_chunk_shift     ; A = LE (signé)
-        adda  1,y                        ; A = LE + M = right
+        adda  ,y                         ; A = LE + M = right  (M en offset 0)
         sta   <DFR_tmp_base
         bpl   DFR_nc_re_pos
         clra
@@ -593,7 +593,7 @@ DFR_nc_jp_done
         clra
 DFR_nc_off_pos
         asla
-        adda  #3                         ; core_off = 3 + max(0,right-10)*2
+        adda  #1                         ; core_off = 1 + max(0,right-10)*2  (header = 1 oct : M)
         sta   DFR_core_off
 
         * ===== Passe RAMB (Y = buffer RAMB) — draw inliné =====
@@ -677,13 +677,13 @@ DFR_main_done
 * @input  : Y = ptr buffer Line_NNNN (M lu en 1,Y ; identique sur les 2 variants)
 *           DFR_curve_chunk_shift = LE
 * @output : DFR_route_ptr (ptr routine, 0 si non implémentée)
-*           DFR_core_off   (= 3 + max(0,right-10)*2 = offset header+cœur)
+*           DFR_core_off   (= 1 + max(0,right-10)*2 = offset header+cœur)
 * @trashes: A, B, X (Y et U préservés)
 * ======================================================================
 DFR_dispatch_compute
         * --- right = leftEdge_chunks + M (= bord droit route, chunks signé) ---
         lda   <DFR_curve_chunk_shift     ; A = leftEdge_chunks (signé)
-        adda  1,y                        ; A = LE + M = right
+        adda  ,y                         ; A = LE + M = right  (M en offset 0)
         sta   <DFR_tmp_base              ; save right (pour coreOff)
 
         * --- K' = 10 - clamp(right, 0, 10) ---
@@ -726,14 +726,14 @@ DFR_dc_jp_done
         * --- Cleanup stack ---
         leas  2,s
 
-        * --- core_off = 3 + max(0, right - 10) × 2 (= header skip + skip chunks droite) ---
+        * --- core_off = 1 + max(0, right - 10) × 2 (= header skip + skip chunks droite) ---
         lda   <DFR_tmp_base               ; A = right (= leftEdge_chunks + M)
         suba  #10                        ; A = right - 10
         bpl   DFR_dc_off_pos
         clra                             ; offset = 0 si right <= 10
 DFR_dc_off_pos
         asla                             ; A × 2 (= byte offset cœur)
-        adda  #3                         ; + skip header K,M,J
+        adda  #1                         ; + skip header (M, 1 oct)
         sta   DFR_core_off                ; partagé aux 2 passes (ext)
         rts
 
@@ -840,7 +840,7 @@ DFR_TEST_U_BASE_A    equ   $C7A8-2           ; = $C7A6 (fin ligne 48 RAMA -2)
 * ======================================================================
 * DFR_TL_dispatch_fixed — dispatch hardcodé K'=2, J'=2 (= F=6 road visible)
 *
-* @input  : Y = ptr buffer Line_NNNN (header K, M, J + 6 fdb Road_R*)
+* @input  : Y = ptr buffer Line_NNNN (header M + 6 fdb Road_R*)
 *           U = position VRAM (= fin scanline ajustée par byte_offset)
 * @output : 40 oct écrits avec 2 grass left + 6 road + 2 grass right
 * ======================================================================
@@ -850,7 +850,7 @@ DFR_TL_dispatch_fixed
         ldx   ,x                         ; X = ptr Road_draw_K2_J2
         cmpx  #0
         beq   DFR_TL_skip                ; routine non implémentée -> skip
-        leay  3,y                        ; skip header K, M, J -> coeur
+        leay  1,y                        ; skip header (M, 1 oct) -> coeur
         jsr   ,x
 DFR_TL_skip
         rts
@@ -925,7 +925,7 @@ DFR_dbg_loop
         ldx   <DFR_lines_base
         ldd   ,x                          ; D = ptr Line variant 0
         tfr   d,y
-        lda   1,y                         ; A = M (cœur, chunks)
+        lda   ,y                          ; A = M (cœur, chunks ; M en offset 0)
         anda  #$FE                        ; centre sur la partie PAIRE de M : compense le
         *                                   demi-chunk (8px) de parité → route centrée même
         *                                   si M impair (leftEdge += 8 pour M impair).
