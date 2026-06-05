@@ -20,7 +20,20 @@ ENGINE_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 GENERATOR_DIR="$ENGINE_ROOT/java-generator"
 JAR_NAME="game-engine-0.0.1-SNAPSHOT-jar-with-dependencies.jar"
 JAR_PATH="$GENERATOR_DIR/target/$JAR_NAME"
-CONFIG="./config-macos-stream.properties"
+
+SYS="unknown"
+case "$(uname -s)" in
+    Darwin*)
+        SYS="macos"
+        ;;
+    Linux*)
+        SYS="linux"
+        ;;
+    MINGW*|MSYS*|CYGWIN*)
+        SYS="windows"
+        ;;
+esac
+CONFIG="./config-$SYS-stream.properties"
 
 CLEAN=0
 RUN=0
