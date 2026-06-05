@@ -138,10 +138,11 @@ def render_vram(vram, palette, y0, y1):
 # ───────────────────────── SIM : vrais pixels via buffers + patterns ─────────────
 
 def read_line_buffer(buf, off):
-    """Header (K,M,J) + M adresses de chunks Road_R* (fdb)."""
-    K, M, J = buf[off], buf[off+1], buf[off+2]
-    core = [(buf[off+3+2*i] << 8) | buf[off+3+2*i+1] for i in range(M)]
-    return K, M, J, core
+    """Header (M, 1 oct) + M adresses de chunks Road_R* (fdb).
+       K/J ne sont plus stockés (recalculés au runtime depuis leftEdge)."""
+    M = buf[off]
+    core = [(buf[off+1+2*i] << 8) | buf[off+1+2*i+1] for i in range(M)]
+    return M, core
 
 
 def _signed16(v):
@@ -187,8 +188,8 @@ def render_road_from_dense(dense, lateral_scaled, y0, y1, palette, root):
         li = min(254, width >> 4)
         if li >= len(lines_tab):
             continue
-        _, M, _, rama_core = read_line_buffer(buf, line_off[lines_tab[li][0]])  # RAMA_s0
-        _, _, _, ramb_core = read_line_buffer(buf, line_off[lines_tab[li][2]])  # RAMB_s0
+        M, rama_core = read_line_buffer(buf, line_off[lines_tab[li][0]])  # RAMA_s0
+        _, ramb_core = read_line_buffer(buf, line_off[lines_tab[li][2]])  # RAMB_s0
         # === Position FIDÈLE 68k FUN_0007661e ===
         #   leftEdge = centerX - demi-largeur, demi-largeur = width>>5 CONTINUE
         #   (68k : lsr #4 sur width ST = width>>5 en TO8), centre $90/2 = 72.

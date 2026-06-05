@@ -21,10 +21,9 @@ RoadDrawDispatch_included equ 1
 *
 * Caller (DrawFrameRoad) :
 *   ldy   Road_lines + 8×line_idx + 2×variant       ; ptr Line_NNNN
-*   lda   ,y                                         ; A = K
-*   ldb   1,y                                        ; B = M
-*   ; calcule K' = min(10, K), J' = max(0, 10-K-M)
-*   leay  3,y                                        ; Y → cœur (entry_idx=0)
+*   ldb   ,y                                         ; B = M  (header réduit : M en offset 0)
+*   ; K'/J' recalculés depuis leftEdge (DFR_curve_chunk_shift) + M — PAS de K/J stockés
+*   leay  1,y                                        ; Y → cœur (skip header 1 oct)
 *   ; lookup dispatch[K'×7 + J'], jsr indirect
 * ======================================================================
 

@@ -312,16 +312,20 @@ class RoadPool:
                 lines.append("        pshu  d,x")
 
 
-# ── BufferStore (dedup par (K, M, J, cœur_labels)) ───────────────────────────
+# ── BufferStore (dedup par (M, cœur_labels)) ─────────────────────────────────
+# K et J ne sont PAS lus au runtime : DrawFrameRoad recalcule K'/J' depuis
+# leftEdge (= DFR_curve_chunk_shift) + M seul. Le header est donc réduit à
+# `fcb M` (1 oct au lieu de 3) et la dédup se fait sur (M, labels) — deux
+# buffers identiques en cœur+M mais d'ancien K/J distincts fusionnent.
 
 class BufferStore:
     def __init__(self):
-        self.map: dict[tuple, str] = {}     # (K, M, J, labels) → name
+        self.map: dict[tuple, str] = {}     # (M, labels) → name
         self.order: list[tuple] = []
         self._id = 0
 
-    def register(self, K, M, J, label_tuple):
-        key = (K, M, J, label_tuple)
+    def register(self, M, label_tuple):
+        key = (M, label_tuple)
         if key in self.map:
             return self.map[key]
         name = f"Line_{self._id:04d}"
@@ -332,12 +336,12 @@ class BufferStore:
 
     def emit(self, lines):
         for key in self.order:
-            K, M, J, labels = key
+            M, labels = key
             name = self.map[key]
             lines.append("")
-            lines.append(f"* {name}  K={K} M={M} J={J}")
+            lines.append(f"* {name}  M={M}")
             lines.append(name)
-            lines.append(f"        fcb   ${K:02X},${M:02X},${J:02X}")
+            lines.append(f"        fcb   ${M:02X}")
             for lbl in labels:
                 lines.append(f"        fdb   {lbl}")
 
@@ -519,7 +523,7 @@ def process_entry(chunks_d, chunks_l, K_uni, J_uni,
     core_l = chunks_l[K:K + M]
     labels = build_core_labels(core_d, core_l, J, pool)
     pool.record_kmj(K, M, J)
-    return store.register(K, M, J, labels)
+    return store.register(M, labels)
 
 
 def build_all(all_entries, pool: RoadPool, store: BufferStore):
@@ -548,16 +552,16 @@ def emit_buffers_asm(out_path: Path, store: BufferStore) -> None:
     lines = [
         " opt c",
         "; " + "=" * 72,
-        "; Road RAM v4 — buffers fdb (header K,M,J + cœur)",
+        "; Road RAM v4 — buffers fdb (header M + cœur)",
         f";   ORG ${BUFFERS_ORG:04X}. Pattern externs : {INC_PATTERNS_PATH}",
-        "; Format buffer : fcb K,M,J ; fdb cœur[0]..cœur[M-1]",
+        "; Format buffer : fcb M ; fdb cœur[0]..cœur[M-1]  (K/J non lus au runtime)",
         "; Tient dans une bank 16 Ko ($4000..$7FFF par exemple).",
         "; " + "=" * 72,
         f'        INCLUDE "{INC_PATTERNS_PATH}"',
         f"        ORG   ${BUFFERS_ORG:04X}",
         "",
         "* " + "=" * 70,
-        f"* {len(store.order)} buffers uniques (dédoublonnés sur K,M,J,cœur)",
+        f"* {len(store.order)} buffers uniques (dédoublonnés sur M,cœur)",
         "* " + "=" * 70,
     ]
     store.emit(lines)
@@ -708,11 +712,11 @@ def compare_pattern_maps(dark_map, light_map) -> list[str]:
 def print_stats(pool, store, line_table, variant_set):
     n_routines = len(pool.label_map)
     n_buffers = len(store.map)
-    total_chunks = sum(len(k[3]) for k in store.order)
-    pshu_chunks = sum(1 for k in store.order for lbl in k[3] if lbl == PSHU_LABEL)
+    total_chunks = sum(len(k[1]) for k in store.order)
+    pshu_chunks = sum(1 for k in store.order for lbl in k[1] if lbl == PSHU_LABEL)
     R_chunks = total_chunks - pshu_chunks
     n_lines = sum(1 for e in line_table if e is not None)
-    headers_bytes = n_buffers * 3
+    headers_bytes = n_buffers * 1            # header réduit à 1 oct (M seul)
     cœur_bytes = total_chunks * 2
     table_bytes = len(line_table) * 8
     variants_bytes = sum(

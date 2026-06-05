@@ -5,7 +5,7 @@
 * Pas de parsing asm = aucun risque de conflit de symbole avec main.glb
 * auto-injecté par Bento8 (= les Road_R* EQUs y sont déjà depuis le résident).
 *
-* Le .bin contient les 800 buffers Line_NNNN (= header K,M,J + ptrs Road_R*)
+* Le .bin contient les buffers Line_NNNN (= header M (1 oct) + ptrs Road_R*)
 * assemblés à ORG $0000 par compile_road_sprites_ram.py. Au runtime cette
 * page est mountée en cart zone $0000-$3FFF, les Line_NNNN EQUs résolus
 * par road_buffers_externs.inc (résident) pointent vers les bons offsets.
