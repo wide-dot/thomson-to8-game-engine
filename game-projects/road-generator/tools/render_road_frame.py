@@ -258,7 +258,7 @@ def render_road_continuous(dense, lateral_scaled, y0, y1, palette, root):
     return img
 
 
-def render_ref_real(dense, lateral_scaled, y0, y1, root):
+def render_ref_real(dense, lateral_scaled, y0, y1, root, phase=0):
     """RÉFÉRENCE 68k avec VRAIE texture Lotus : prend la ligne route source
        (normal_dark/light.png), la met à l'échelle de la largeur écran CONTINUE,
        centrée à centerX = $90/2 - product, et alterne dark/light par scanline
@@ -304,7 +304,9 @@ def render_ref_real(dense, lateral_scaled, y0, y1, root):
         if right <= left:
             continue
         li = min(hd - 1, width >> 4)
-        row = light[li] if (t.get('extra', 0) & 0x400) else dark[li]   # bit 10 = dark/light
+        # dark/light = bit 10 de (extra + phase), CONFORME DrawFrameRoad : la phase
+        # live (= track_pos.lower>>4 & $7FF) fait DÉFILER les bandes même géométrie figée.
+        row = light[li] if ((t.get('extra', 0) + phase) & 0x400) else dark[li]
         s, e = spans[li]
         ew = e - s
         if ew <= 0:

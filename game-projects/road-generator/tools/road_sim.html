@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Road Sim — sweet-spot fps / step-division (Lotus TO8, circuit 22_hard_5)</title>
+<style>
+  body{margin:0;background:#111;color:#ddd;font:13px/1.4 system-ui,sans-serif;display:flex;gap:16px;padding:14px}
+  #left{flex:0 0 auto}
+  /* interne 320x96 (160 logique x2 horizontal = pixels 2:1 BM16) ; affiché x2 uniforme -> 640x192, 2:1 préservé */
+  canvas{background:#000;border:1px solid #333;display:block;image-rendering:pixelated;width:640px;height:192px}
+  #panel{flex:1 1 auto;max-width:560px}
+  h1{font-size:15px;margin:0 0 8px;color:#fff}
+  .row{margin:7px 0;display:flex;align-items:center;gap:8px}
+  .row label{flex:0 0 140px;color:#9cf}
+  input[type=range]{flex:1}
+  .val{flex:0 0 78px;text-align:right;font-variant-numeric:tabular-nums;color:#ffd}
+  table{border-collapse:collapse;margin-top:8px;font-variant-numeric:tabular-nums}
+  td,th{border:1px solid #333;padding:3px 8px;text-align:right}
+  th{color:#9cf}
+  .live td{color:#ffd;font-weight:bold}
+  .hint{color:#888;font-size:12px;margin-top:6px}
+  .keys{color:#7d7}
+  .warn{color:#f96}.ok{color:#7d7}
+  b{color:#fff}
+</style>
+</head>
+<body>
+<div id="left">
+  <canvas id="cv" width="320" height="96"></canvas>
+  <div class="hint">Clique le canvas pour le focus. <span class="keys">← →</span> dirige. Vitesse = slider (pas de touche à tenir).</div>
+</div>
+
+<div id="panel">
+  <h1>Road Sim — caler le sweet-spot (fps × step-division)</h1>
+  <div class="hint">Circuit <b>22_hard_5</b> (= celui actif dans l'ASM). Projection SP fidèle + <b>vrai modèle d'affichage</b> DrawFrameRoad (center=72−(slot_x×width)≫16, demi-largeur=width≫5, rumble + ligne centrale + dither dark/light).</div>
+
+  <div class="row"><label>Vitesse (nibbles/s)</label><input id="spd" type="range" min="0" max="60" value="20" step="1"><div class="val" id="spdv">20</div></div>
+  <div class="row"><label>FPS cible</label><input id="fps" type="range" min="3" max="25" value="12" step="1"><div class="val" id="fpsv">12</div></div>
+  <div class="row"><label>Step division /S</label><input id="step" type="range" min="1" max="48" value="1" step="1"><div class="val" id="stepv">1</div></div>
+
+  <div class="hint">
+    fps réel <b id="rfps">–</b> ·
+    avance <b id="adv">–</b> nibbles/frame ·
+    palier snap <b id="snap">–</b> nibbles ·
+    <span id="verdict"></span>
+  </div>
+  <div class="hint">
+    position <b id="pos">–</b> · segment <b id="seg">–</b>/176 ·
+    Proj_min_y <b id="pmy">–</b> · lignes utiles <b id="ul">–</b>/96 ·
+    tour estimé <b id="lap">–</b>
+  </div>
+
+  <h1 style="font-size:13px;margin-top:14px">Taille des données RÉELLES (table complète, offset ligne de départ)</h1>
+  <div class="hint">Σ sur positions échantillonnées de <b>(lignes_utiles × 6 + 1)</b>, calculé sur les 2816 positions réelles. ZX0 ≈ ÷3. RAM 512 Ko = budget (données décompressées).</div>
+  <table id="sizetab">
+    <thead><tr><th>/S</th><th>positions</th><th>lignes moy.</th><th>brut</th><th>ZX0 ~÷3</th><th>RAM 512Ko ?</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="hint" style="margin-top:12px">
+    Le défilement (dither/rumble) suit la position <b>continue</b> ; la géométrie suit la position <b>quantifiée /S</b> → augmente /S et regarde si le « palier » géométrique devient visible alors que les bandes continuent de couler.
+  </div>
+</div>
+
+<script>
+// ── Données RÉELLES (22_hard_5.asm + FILE59.bin) ───────────────────────────
+const DATA = {"segments": [[0,0,0,1],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,1,0],[0,0,1,0],[0,0,1,0],[0,0,1,0],[0,0,1,0],[0,0,1,0],[0,0,1,0],[0,0,1,0],[-4,0,0,0],[-4,0,0,0],[-4,0,0,0],[-4,0,0,0],[-4,0,0,0],[-4,0,0,0],[-4,0,0,0],[-4,0,0,0],[0,0,0,0],[0,0,0,0],[0,-2,0,0],[0,-2,0,0],[0,2,0,0],[0,2,0,0],[0,0,0,0],[0,0,0,0],[-6,0,0,0],[-6,0,0,0],[-6,-1,0,0],[-6,-1,0,0],[-6,0,0,0],[-6,0,0,0],[-6,0,0,0],[-6,0,0,0],[-6,1,0,0],[-6,1,0,0],[-6,0,0,0],[-6,0,0,0],[-6,0,0,0],[-6,0,0,0],[-6,0,0,0],[-6,0,0,0],[6,0,0,0],[6,0,0,0],[6,-1,0,0],[6,-1,0,0],[6,0,0,0],[6,0,0,0],[6,0,0,0],[6,0,0,0],[6,-1,0,0],[6,-1,0,0],[6,0,0,0],[6,0,0,0],[6,1,0,0],[6,1,0,0],[6,1,0,0],[6,1,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,-2,0,0],[0,-2,0,0],[0,-2,0,0],[0,-2,0,0],[0,-2,0,0],[0,-2,0,0],[0,-2,0,0],[0,-2,0,0],[4,0,0,0],[4,0,0,0],[4,0,0,0],[4,0,0,0],[0,2,0,0],[0,2,0,0],[0,2,0,0],[0,2,0,0],[0,2,0,0],[0,2,0,0],[0,2,0,0],[0,2,0,0],[-6,0,0,0],[-6,0,0,0],[-6,0,0,0],[-6,0,0,0],[-4,0,0,0],[-4,0,0,0],[-4,0,0,0],[-4,0,0,0],[-6,0,0,0],[-6,0,0,0],[-6,0,0,0],[-6,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,2,0,0],[0,2,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,2,0,0],[0,2,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,2,0,0],[0,2,0,0],[0,0,0,0],[0,0,0,0],[0,-2,0,0],[0,-2,0,0],[0,0,0,0],[0,0,0,0],[0,-2,0,0],[0,-2,0,0],[0,0,0,0],[0,0,0,0],[0,2,0,0],[0,2,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,-2,0,0],[0,-2,0,0],[0,-2,0,0],[0,-2,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[-4,0,0,0],[-4,0,0,0],[-4,0,0,0],[-4,0,0,0],[0,0,0,0],[0,0,0,0],[0,1,0,0],[0,1,0,0],[-4,0,0,0],[-4,0,0,0],[-4,-1,0,0],[-4,-1,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[-4,0,0,0],[-4,0,0,0],[-4,1,0,0],[-4,1,0,0],[0,0,0,0],[0,0,0,0],[0,-1,0,0],[0,-1,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
+"horizon":[95,85,78,73,69,66,63,61,59,57,56,55,54,53,52,51,50,50,49,49,48,48,47,47,46,46,46,46,45,45,45,44,44,44,44,44,44,43,43,43,43,43,43,42,42,42,42,42,42,42,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,40,40,40,40,40,40,40,40,40,40,40,40,40,40,40,40,40,40,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39],
+"scaling":[4095,3420,2944,2584,2302,2076,1891,1735,1604,1491,1392,1306,1230,1163,1102,1047,998,953,912,874,839,807,778,750,724,700,678,657,637,618,601,584,568,553,539,526,513,501,489,478,468,457,448,438,430,421,413,405,397,390,383,376,369,363,357,351,345,340,334,329,324,319,314,310,305,301,297,292,288,285,281,277,274,270,267,263,260,257,254,251,248,245,242,239,237,234,231,229,226,224,222,219,217,215,213,211,209,206,204,203,201,199,197,195,193,191,190,188,186,185,183,182,180,178,177,175,174,173,171,170,168,167,166,164,163,162,161,160]};
+const SEG=DATA.segments, HOR=DATA.horizon, SCAL=DATA.scaling;
+const NB=176, NPOS=NB*16;
+
+// ── Projection SP fidèle (128 substeps = 16/segment) ───────────────────────
+function s16(v){v=((v%65536)+65536)%65536;return v>=32768?v-65536:v;}
+function project(pos){
+  let p=((pos%NPOS)+NPOS)%NPOS;
+  const segStart=Math.floor(p/16), nibble=Math.floor(p)%16;
+  let D0=0,D1=0,D2=0,D3=0,hi=0,minY=0x60;
+  const slots=[];
+  const seg=off=>{const s=SEG[(segStart+off)];return [s[0],s[1]*2,(s[2]?1:0)|(s[3]?2:0)];};
+  function step(D4,D5,flag,first){
+    D0=s16(D0+D4);D1=s16(D1-D5);D2=s16(D2+D0);D3=s16(D3+D1);
+    let X=(D2&0xFFFC)|flag; if(!first)X&=0xFFFD; X=s16(X);
+    const Yh=Math.floor((D3*SCAL[hi])/65536);
+    const Y=s16(Yh+HOR[hi]);
+    slots.push({y:Y,x:X,sc:SCAL[hi]});
+    if(Y<minY)minY=Y;
+    hi++; return Y;
+  }
+  let a=seg(0),done=false;
+  for(let i=0;i<15-nibble&&!done;i++) if(step(a[0],a[1],a[2],false)>=0x60)done=true;
+  for(let o=0;o<7&&!done;o++){
+    a=seg(o+1);
+    if(step(a[0],a[1],a[2],true)>=0x60){done=true;break;}
+    for(let k=0;k<15&&!done;k++) if(step(a[0],a[1],a[2],false)>=0x60)done=true;
+  }
+  if(!done){a=seg(8);if(step(a[0],a[1],a[2],true)<0x60)for(let i=0;i<nibble;i++)if(step(a[0],a[1],a[2],false)>=0x60)break;}
+  return {slots,minY:Math.max(0,minY),segStart};
+}
+
+// dense[y] = {x, sc, depth} interpolé par scanline (= rôle de LinearInterp).
+// depth = index substep (0=près .. ~127=horizon) : sert le dithering perspective
+// (= le champ `extra`/LI_d7 du triplet, bit 10 testé par DrawFrameRoad).
+function buildDense(r){
+  const sl=r.slots, dense=new Array(96).fill(null);
+  // OCCLUSION : on parcourt LOIN→PRÈS (i décroissant) pour que les slots PROCHES
+  // écrivent EN DERNIER -> ils écrasent les slots lointains sur les scanlines
+  // recouvrantes (ex. derrière une crête de colline). = comportement LinearInterp.
+  for(let i=sl.length-2;i>=0;i--){
+    const A=sl[i], B=sl[i+1];           // A proche, B loin
+    const yA=A.y, yB=B.y, lo=Math.min(yA,yB), hi=Math.max(yA,yB);
+    for(let y=lo;y<=hi;y++){
+      if(y<0||y>=96)continue;
+      const f = (yA===yB)?0:(yA-y)/(yA-yB);   // 0 en A (proche)
+      dense[y]={x:A.x+(B.x-A.x)*f, sc:A.sc+(B.sc-A.sc)*f, depth:i+f};
+    }
+  }
+  return dense;
+}
+
+// ── Pré-calcul lignes utiles, TOUTES positions (taille data réelle) ─────────
+const usefulLines=new Array(NPOS);
+for(let p=0;p<NPOS;p++)usefulLines[p]=Math.max(0,96-project(p).minY);
+function dataSize(S){let b=0,n=0,s=0;for(let p=0;p<NPOS;p+=S){const L=usefulLines[p];b+=L*6+1;s+=L;n++;}return{n,b,avg:s/n};}
+
+// ── Rendu : VRAIES lignes de piste (normal_dark/light.png) rasterisées ──────
+// Modèle FIDÈLE (render_ref_real) : par scanline, ligne source li=width≫4,
+// extent rumble-à-rumble scalé sur [left,right], centré (courbe), dark/light.
+const cv=document.getElementById('cv'),cx=cv.getContext('2d'),W=cv.width,H=cv.height;
+cx.imageSmoothingEnabled=false;
+const CENTER=72;
+const IMG_DARK="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYAAAAD/CAMAAADPGvEtAAADAFBMVEUAAAC0Hh7///8eWh48gjxaWlq0tLSAgID///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAoTBjmAAABAHRSTlMA////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Cpf0PAAAB+xJREFUeNrt2otu20oMBNAQBcH//+OmbeLGtrRPDvc1AW6b2EJxwZPhRpp8fIA/foE/DPzvf6z+QYC9AcyMACMB1JQAAwHkE0AIMA7APgGMAMMARD8BsBEgAAHmBfic/x8AqAABCDAvgH0BGAGGAPwJwF8AZAQIkLgJewAoAQYAiD0ATAgwAODv9A38kygBMj8CGfgHIQIkj+DvM4AA4QDyAiAECAawJwAjQCyAfN8Ff/+HigABMjdhBr4ZI0B6A+njbwKENmFfR/B/ANwxvCgEuop8A2A1GVnEyGP1P/4wYTET2YS9AbAZCyxixC5WEDYCBCDAPEXM/yP4JwD2ByECvAXA9OVPI0BMD/D0GM5CHskRgADz9AA/j+DnM+BzB7EXCABQvQFARoAArwF46QPQESDAawCuANiMBRQxOQA+lkY3YZY4A4zNGBbgLQBvf6MiQICXn0FvAIwAYADNACgBgADyXkXaezUpBAACPB+6r4cwbgfxDvgrAC8b6O0TUzm7F0ADaAZACRARgAQAOAIEIMC4HkDejly9fEVO7gWCA3DxGQFg85fE2J9+R+7kYiZmAyUBoBE4uYipAhACADdQZgURIC4Al58iI0AAAgzqAeR629j1XpJjewECbPoY+mb+N5/jBAhAAAIcB/Bv/lUAMIGDAbQCQAngPP82ACEAOgC3X6AicGYP0AxwUC+ABfh5BBcCQJ+JngTwFoAyAHQEDgawBIARIDgAia+wAgQgQFgP8HwElwNABQ4D0AYAJYDX/F+/sRMAL1GRc3qBQRso9SV0B53zGDq9gZJffgEIARw3UB2AEsA9ABmAqAgQgABBAKlHD7mvgcfwMUWMC4AQwOsIrgMAHsMHAFwGoBYAFoFTAJK3upcAQRHYH0BcAYQAmA2UewG2g87oASR345t/ARaBWSDAAJbZQBcAUccwAQiALmIk86ShBAC9gzYHsNwRkH8FHIGdixjJ33aVvIKNwFkAVgRgBHCbvwsAVGBzAHUAUAK0zV/yzx3KXnocw0KAvg3UDqAEaAhAyQa6BLjdQUKAvg3UCmAEaAqAIwBMYGsAdQJQArgE4GrYZa8BI7AzQEkArgECI7AdgNwewV0Aj2NYCNC+gboAlABVASh5xlAO8GMHCQE8A6DXL8ZFYM8iZiGAYRDh8+8DgAsQgADgI7gTAHcMbwhQEQC9eTU8AjsVMXAAIUD1XXA/APBueBeAZABcAIACBCDAmPnbJAIEIIDj/FEAQIG9ABQCoAQomH8UgBDAYwPdAoTvoF2KmMoA1AEgI0AAAiDn7wQAFCAAAYBH8O387wHudhDqGF4boDkAtQC4COzShEUArN2MIed/u4E8AYA3Y3sA1I658h0CJOcfA4AUWByg5slOBiD1bxHgcv4DAIQAJUewMwA0Auv2AMkAtAGMiMDCABoIoAS4DkDtBkoBlO0gIUA2AM4A2Ags2wNI9ZPNDgBgBHYEsGYAI0DF/Ouf+be+97yDhADtGygJMGQHLdoDSPqJpzMAMgIEIID/BmoHiN9BSwGUBsAdABiBZQGsaQOlATKoxwPINACyAACyiGnfQM3vIm8FMBDI+Utb6dgHgIrAigCtlUvPu+gIrFTEzAAgJwM0NYtFAFnXgwF8AtDxNjgCawHYEAAjQNEGQgLosQClGwgHAN5BSwG09IplAFnaUwHEaQP1vG/QCCwGoAMA9GCA4gCAAYACBCCAx/xzZ3AWoKDPlDV6gTkD0HfBqQBSfASDAd6OYTkOoKvy9QCARWBiAJkYQA4D6J5/7xW4CMwLIFMDyHQAyCZM+voujyteHwjNV8xg5z8HAFKAAARAzr//ErQAAQhAgDl7gPz8QwDQAgQgQHL+nRvI4RrDCswOoMMB9CAAWQRATgDIb6BAAGAEZi1iCgIQBYCNwMRNWOF3pgtASdK2B0AEwOciZAQIQID7+U8EABOYGkAnAdATAKTyCC47g4sBisKGEJgWwGcDOV0F3EGzAAhmA3lddQEgGwPopAA6EwDuMXRxAFwBhkWgFYIA+wJUTMQJoNh7V4D6AEQDwCMwEYBODKB7Akj9BhoBAI3AVE1Y+TwcAQZHYJoiZikA2RTAbwM5XgfeQbP0AIUBGAAAjsBMAOa3gWoAxkZgkh6gIgDhANgIEOBUAGnZQMVzdb3wcgfJXgCev+7jfyEyAnMUMRUBAAAMjcA0TdgCALoRgDRvoBEA1ztI9gIw1yPA+UrgDhoDAA9AHcDICBBgFQBsE1Y8hnEA0GeiBRC4+RcHYCAA8hieAsDx9w0xl0LvhqMBpHEDTQCAExgP4LqBKgEm2EHDeoC6AAwFgAoQ4BgAad1AYwFudpAsD4AJgFZeOz4Co4qY5QFkcYC6HTASABwBAhwCIK13wXUzhVx8fTcsSwOgAlANMDwCY4qYLQBkcQDz+z1aMAB0Bw0pYkSXBIAIEOAEgND5LyZAgAMAeuY/BwBQYEARQ4AiCNz8dwKQFQGA868FmCgCcUXMXgCyHkDdnGYCiG3G5gjANADwCIQ2YQ3feECAyiguBiChG6gawGEHyaIAuhiAbgKgywPoUgCdAZgJAByBOQEsBMD2Beg8gqsDUA/Q8t0gIb3AkhsICqDrAUjnETwpAEQgDsCWBrCVAMRjA0UAdO8gWQRANwHQNQC6A1C/gRoAmv6HABGIANBtAHQFAOk+gucEAEUgoAlr+hkoBsDGA3x//Aaw1APNoq8OiwAAAABJRU5ErkJggg==";
+const IMG_LIGHT="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYAAAAD/CAMAAADPGvEtAAADAFBMVEUAAAC0Hh7///8eWh48gjxaWlqgoKC0tLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADq4cKYAAABAHRSTlMA////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Cpf0PAAAB8FJREFUeNrt24luJDcMBNBFIRj+/x9ngdiTOfrQwaIoqQxkbc80FgGfi0p3OX/+kD/+IX8Y+e//M/uHANYGMDMBCGBfAPwFgADGAZixIyCAuwCQIyAAAeQF+G/+XAEBCCAvgP1+CGAIAJ4AEMAIALOACAigIADMCAhAAEkBXudPFBCAAHIC4AMAAggGMAuJgACKAsCLgAAuAvB4+ccEEAvw+PnJf34WQGgT9txAD/oxPCkEv4r8AFA1GVnE4Ln6n388oGImuAl7B1AzFljE4HGwgrgREIAA8hQxrzdhj4jnEQI4CsDDPv58CCCmB4DZIQA1AgIQQJYe4PUIfj8D/u4g9QIBAG9PQR8xtYAAvgLwsO9PxAgI4DMARwBqxgKKmDsAPZZmN2GPizPgoWaMC/AVgK/PrAgI4BfgR+D5m9HvnyEAMoDdAJgAiAD/b6AzANoOEsD7BrJPiJf57w3A7QG+NtDXFzDs3QuwAewGwAQQEYALAHIEBCCAcT0Avo5cO3wFO/cCwQE4+EoA7JvgGwDi7fDuAAeb/+gragR2LmKqACAA5k3w9QoSQFwADr9kRkAAAhjWA8AKAZgCAhDAqMfQh/M/+Rr7PpYWgAAEwJl/FQBNYGMAqwAwATjPvw0AAmAH4PQbVgT27AGaATbqBbgAhmoA6jPRnQC+AlAGwI7AxgC4AIAAggNw8R1XQAACCOsB3o/gcgCqwGYA1gBgAvCa/+cP9gXAR1SwTy8waANdfUvdQfs8hr7eQJff/gBAAI4bqA7ABOAegBuAqAgIQABBAFePHu6+Jx7D2xQxLgAQgNcRXAdAPIY3ADgMQC0ALQK7AFze6h7/f8IxEVgfAK4AEABnA929QNtBe/QAuLvxvX+BFoEsEGQA3GygA4CoY1gAAmAXMbh50lACwN5BiwPg7gi4f4UcgZWLGNzfdpW8wo3AXgAoAoAA3ObvAkAVWBzAHABMAG3zx/1zh7KXnscwBNC3gdoBTAANASjZQIcApzsIAujbQK0AEEBTABwBaAJLA5gTgAnAJQBHwy57jRiBlQFKAnAMEBiB5QBwegR3ATyPYQigfQN1AZgAqgJQ8oyhHOBlB0EAngGw4xfjIrBmETMRwDCI8Pn3AdAFBCAA8hHcCcA7hhcEqAiAnbwaHoGVihg6AARQfRfcD0C8G14F4DIALgBEAQEIYMz8kURAAAJwnD8LgCiwFoBRAEwABfOPAoAAPDbQKUD4DlqliKkMQB0AMwICEABz/k4ARAEBCIB4BJ/O/xzgbAexjuG5AZoDUAvAi8AqTVgEwNzNGHP+pxvIE4B4M7YGQO2YK98RwOX8YwCYApMD1DzZuQG4+rsEcDj/AQAQQMkR7AxAjcC8PcBlANoARkRgYgALBDABHAegdgNdAZTtIAjgNgDOANwITNsDoPrJZgcAMQIrAqAZAAKomH/9M//W9953EATQvoEuAYbsoEl7AFw/8XQGYEZAAALw30DtAPE7aCqA0gC4AxAjMC0AmjbQNcAN6vYASAOACQCYRUz7Bmp+l3krwIFgzh9tpWMfACsCMwK0Vi4977IjMFMRkwEAOwM0NYtFALeuGwP4BKDjbXIE5gLAEAAIoGgDMQFsW4DSDcQDIO+gqQBaesUygFvaXQHgtIF63gc1ApMB2AAA2xigOABkAKKAAATgMf+7M/gWoKDPxBy9QM4A9F2wKwCKj2AywNcxjO0AuipfDwBaBBIDIDEANgPonn/vFbwI5AVAagCkA2A2Yejruzyu+HwglK+Y4c4/BwBTQAACYM6//xK2gAAEIICcPcD9/EMA2AICEMDl/Ds3kMM14ApkB7DhALYRACYBwA4A9xsoEIAYgaxFTEEAogC4EUjchBX+ZLoAlCRteQBGAHwuYkZAAAI4n38iAJpAagBLAmA7AKDyCC47g4sBisLGEEgL4LOBnK4i7qAsAOBsIK+rDgCwMIAlBbBMALzH0MUBcAUYFoFWCAGsC1AxESeAYu9VAeoDEA1Aj0AiAEsMYGsCoH4DjQCgRiBVE1Y+D0eAwRFIU8RMBYBFAfw2kON15B2UpQcoDMAAAHIEMgHAbwPVAIyNQJIeoCIA4QDcCAhgVwC0bKDiubpeeLiDsBaA56/7+F/IjECOIqYiAASAoRFI04RNAGALAaB5A40AON5BWAsArkeA85XEHTQGgB6AOoCRERDALADcJqx4DOMAqM9ECyB48y8OwEAA5jGcAsDx9w05l1LvhqMB0LiBEgDwBMYDuG6gSoAEO2hYD1AXgKEAVAEBbAOA1g00FuBkB2F6AE4ArPLa8REYVcRMD4DJAep2wEgAcgQEsAkAWu+C62ZKufj4bhhTA7ACUA0wPAJjipglADA5APx+j5YMQN1BQ4oY2JQAFAEB7AAQOv/JBASwAUDP/HMAEAUGFDECKILgzX8lAMwIQJx/LUCiCMQVMWsBYD6AujllAohtxnIEIA0APQKhTVjDDx4RoDKKkwEgdANVAzjsIEwKYJMB2CIANj2ATQXQGYBMAOQI5ARACADWBeg8gqsDUA/Q8tOAkF5gyg1EBbD5ANB5BCcFoAjEAWBqAMwEAI8NFAHQvYMwCYAtAmBzAHQHoH4DNQA0/QsRIhABYMsA2AwA6D6CcwKQIhDQhDX9N1AMAMYD/H78C2ocNFrh29tuAAAAAElFTkSuQmCC";
+let SRC=null;
+const off=document.createElement('canvas');off.width=160;off.height=96;
+const offctx=off.getContext('2d');
+const offimg=offctx.createImageData(160,96);
+// pixel "route" = opaque ET pas vert-herbe (extent = rumble-à-rumble)
+function isRoad(d,i){const a=d[i+3];if(a<128)return false;const r=d[i],g=d[i+1],b=d[i+2];return !(g>r+18&&g>b+18);}
+function loadImages(){
+  let n=0; const out={};
+  for(const k of ['dark','light']){
+    const im=new Image();
+    im.onload=()=>{
+      const oc=document.createElement('canvas');oc.width=im.width;oc.height=im.height;
+      const o=oc.getContext('2d');o.drawImage(im,0,0);
+      const id=o.getImageData(0,0,im.width,im.height), ext=new Array(im.height);
+      for(let y=0;y<im.height;y++){let s=-1,e=-1;const base=y*im.width*4;
+        for(let x=0;x<im.width;x++)if(isRoad(id.data,base+x*4)){if(s<0)s=x;e=x;}
+        ext[y]=[s<0?0:s,(e<0?0:e)+1];}
+      out[k]={w:im.width,h:im.height,data:id.data,ext};
+      if(++n===2)SRC=out;
+    };
+    im.src=(k==='dark'?IMG_DARK:IMG_LIGHT);
+  }
+}
+loadImages();
+function render(geomPos, stripePhase, steer){
+  const r=project(geomPos), dense=buildDense(r), od=offimg.data;
+  // fond : ciel au-dessus de l'horizon, herbe en dessous
+  for(let y=0;y<96;y++){
+    const sky=y<r.minY, R=sky?105:42, G=sky?176:122, B=sky?232:42;
+    for(let x=0;x<160;x++){const i=(y*160+x)*4;od[i]=R;od[i+1]=G;od[i+2]=B;od[i+3]=255;}
+  }
+  if(SRC){
+    const lat=steer*8;
+    for(let y=r.minY;y<96;y++){
+      const t=dense[y]; if(!t)continue;
+      const width=t.sc;
+      const slot_x=s16((Math.round(t.x))&0xFFFC);
+      const comb=s16(slot_x+lat);
+      const neg=s16(-s16(Math.floor((comb*width)/65536)));
+      const half=width>>5, center=CENTER+neg, left=center-half, right=center+half;
+      if(right<=left)continue;
+      const li=Math.min(SRC.dark.h-1, width>>4);
+      const band=(Math.floor(t.depth*0.7 + stripePhase) & 1);   // ≈ bit 10 extra (avance -> bandes vers le bas/viewer)
+      const src=band?SRC.light:SRC.dark, ex=src.ext[li], s=ex[0], e=ex[1], ew=e-s;
+      if(ew<=0)continue;
+      const sw=src.w, sd=src.data, srow=li*sw*4, span=right-left;
+      const xl=Math.max(0,left), xr=Math.min(160,right);
+      for(let x=xl;x<xr;x++){
+        const srcx=s+(((x-left)/span*ew)|0);
+        const si=srow+Math.min(srcx,sw-1)*4;
+        if(sd[si+3]<128)continue;                  // transparent -> herbe
+        const oi=(y*160+x)*4;
+        od[oi]=sd[si];od[oi+1]=sd[si+1];od[oi+2]=sd[si+2];od[oi+3]=255;
+      }
+    }
+  }
+  offctx.putImageData(offimg,0,0);
+  cx.drawImage(off,0,0,160,96,0,0,W,H);
+  return r;
+}
+
+// ── Physique + boucle ──────────────────────────────────────────────────────
+let pos=0, steer=0, lastT=performance.now(), frames=0, fpsAcc=0, rfps=0, acc=0;
+const keys={};
+addEventListener('keydown',e=>{keys[e.key]=1;if(e.key.startsWith('Arrow'))e.preventDefault();});
+addEventListener('keyup',e=>keys[e.key]=0);
+cv.tabIndex=0; cv.addEventListener('click',()=>cv.focus());
+const getN=id=>+document.getElementById(id).value;
+
+function loop(){
+  const now=performance.now(), dt=(now-lastT)/1000; lastT=now;
+  const speed=getN('spd'), fps=getN('fps'), S=getN('step');
+  fpsAcc+=dt;frames++;if(fpsAcc>=0.5){rfps=frames/fpsAcc;frames=0;fpsAcc=0;}
+  acc+=dt; const frameDt=1/fps;
+  while(acc>=frameDt){
+    acc-=frameDt;
+    if(keys['ArrowLeft'])steer=Math.max(steer-12,-150);
+    else if(keys['ArrowRight'])steer=Math.min(steer+12,150);
+    else steer*=0.8;
+    pos=(pos + speed*frameDt) % NPOS;          // avance = speed(nib/s) × temps frame
+  }
+  const geomPos=Math.floor(pos/S)*S;           // géométrie quantifiée /S (= cache)
+  const stripePhase=pos*0.5;                   // défilement continu (live)
+  const r=render(geomPos, stripePhase, steer);
+
+  const set=(id,v)=>document.getElementById(id).textContent=v;
+  set('spdv',speed);set('fpsv',fps);set('stepv',S);set('rfps',rfps.toFixed(1));
+  const advF=speed/fps;
+  set('adv',advF.toFixed(2));set('snap',(S/2).toFixed(1));
+  set('pos',pos.toFixed(1));set('seg',r.segStart);set('pmy',r.minY);set('ul',96-r.minY);
+  set('lap', speed>0.5 ? (NPOS/speed).toFixed(0)+' s' : '–');
+  const vd=document.getElementById('verdict');
+  if(speed<0.5){vd.textContent='(monte la vitesse pour juger)';vd.className='';}
+  else if(S/2<=advF){vd.textContent='palier ≤ avance → INVISIBLE';vd.className='ok';}
+  else {vd.textContent='palier > avance → stepping visible';vd.className='warn';}
+  requestAnimationFrame(loop);
+}
+
+// ── Table tailles ──
+const fmtKB=b=>(b/1024).toFixed(b<102400?1:0)+' Ko';
+function buildTable(){
+  const liveS=getN('step'), rows=[1,2,4,6,12,24];
+  if(!rows.includes(liveS))rows.push(liveS); rows.sort((a,b)=>a-b);
+  const tb=document.querySelector('#sizetab tbody'); tb.innerHTML='';
+  for(const S of rows){
+    const d=dataSize(S), zx0=d.b/3, ramOk=d.b<=512*1024;
+    const tr=document.createElement('tr'); if(S===liveS)tr.className='live';
+    tr.innerHTML=`<td>/${S}</td><td>${d.n}</td><td>${d.avg.toFixed(0)}</td><td>${fmtKB(d.b)}</td><td>${fmtKB(zx0)}</td><td class="${ramOk?'ok':'warn'}">${ramOk?'oui':'NON'}</td>`;
+    tb.appendChild(tr);
+  }
+}
+document.getElementById('step').addEventListener('input',buildTable);
+buildTable(); cv.focus(); requestAnimationFrame(loop);
+</script>
+</body>
+</html>

@@ -254,57 +254,50 @@ def sparse_projection(segments, seg_start, nibble, horizon, scaling):
             'D0': D0, 'D1': D1, 'D2': D2, 'D3': D3,
         })
 
+    def post(X, Y):
+        """add_slot + advance horizon_idx + test horizon. Retourne True si exit.
+        SYNC ASM (fix bge->bhs) : le test est NON-SIGNÉ (cmpd #$60 ; bhs). Un Y
+        négatif (route qui crête au-dessus du haut d'écran) devient grand unsigned
+        (>=$60) → EXIT. Et min_y n'est mis à jour QUE si pas d'exit (= ordre ASM :
+        bhs AVANT le cmpd min_y), sinon le slot crête négatif polluait min_y."""
+        nonlocal horizon_idx, min_y
+        add_slot(horizon_idx, X, Y, scaling[horizon_idx])
+        horizon_idx += 1
+        if (Y & 0xFFFF) >= 0x60:        # UNSIGNED
+            return True
+        if min_y > Y:
+            min_y = Y
+        return False
+
     # Loop 1 : (15 - nibble) substeps in seg 0
     D4, D5, flag = load_seg(0)
     for i in range(15 - nibble):
         D0, D1, D2, D3, X, Y = substep(D0, D1, D2, D3, D4, D5, flag, horizon_idx, True, False)
-        add_slot(horizon_idx, X, Y, scaling[horizon_idx])
-        if min_y > Y:
-            min_y = Y
-        horizon_idx += 1
-        if Y >= 0x60:
-            apply_horizon_stamp(slots)
-            return slots, min_y
+        if post(X, Y):
+            apply_horizon_stamp(slots); return slots, min_y
 
-    # Loop 2 : 7 segments × (1 first + 7 normal)
+    # Loop 2 : 7 segments × (1 first + 15 normal) = 16 substeps/segment
+    # SYNC ASM (fix sawtooth) : l'ASM fait 16 substeps/segment (loop2 inner = 15).
+    # Total = (15-nibble) + 7×16 + (1+nibble) = 128 substeps.
     for outer in range(7):
         D4, D5, flag = load_seg(outer + 1)
-        # First substep (preserve START)
         D0, D1, D2, D3, X, Y = substep(D0, D1, D2, D3, D4, D5, flag, horizon_idx, False, True)
-        add_slot(horizon_idx, X, Y, scaling[horizon_idx])
-        if min_y > Y:
-            min_y = Y
-        horizon_idx += 1
-        if Y >= 0x60:
-            apply_horizon_stamp(slots)
-            return slots, min_y
-        for inner in range(7):
+        if post(X, Y):
+            apply_horizon_stamp(slots); return slots, min_y
+        for inner in range(15):
             D0, D1, D2, D3, X, Y = substep(D0, D1, D2, D3, D4, D5, flag, horizon_idx, True, False)
-            add_slot(horizon_idx, X, Y, scaling[horizon_idx])
-            if min_y > Y:
-                min_y = Y
-            horizon_idx += 1
-            if Y >= 0x60:
-                return slots, min_y
+            if post(X, Y):
+                apply_horizon_stamp(slots); return slots, min_y
 
     # Loop 3 : 9th segment, first + (nibble) substeps
     D4, D5, flag = load_seg(8)
     D0, D1, D2, D3, X, Y = substep(D0, D1, D2, D3, D4, D5, flag, horizon_idx, False, True)
-    add_slot(horizon_idx, X, Y, scaling[horizon_idx])
-    if min_y > Y:
-        min_y = Y
-    horizon_idx += 1
-    if Y >= 0x60:
-        return slots, min_y
+    if post(X, Y):
+        apply_horizon_stamp(slots); return slots, min_y
     for i in range(nibble):
         D0, D1, D2, D3, X, Y = substep(D0, D1, D2, D3, D4, D5, flag, horizon_idx, True, False)
-        add_slot(horizon_idx, X, Y, scaling[horizon_idx])
-        if min_y > Y:
-            min_y = Y
-        horizon_idx += 1
-        if Y >= 0x60:
-            apply_horizon_stamp(slots)
-            return slots, min_y
+        if post(X, Y):
+            apply_horizon_stamp(slots); return slots, min_y
 
     apply_horizon_stamp(slots)
     return slots, min_y
