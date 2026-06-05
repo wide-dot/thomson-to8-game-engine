@@ -45,6 +45,11 @@ RoadEngine_Main
         lbsr  LinearInterp
         rts
 
+* NOTE sprites bord-de-piste : la projection (Phase 1) viendra ICI (accès
+* Sparse_Buffer + circuit, page RoadEngine), remplira Roadside_DrawList résident,
+* puis Phase 2 (Roadside_BlitAll, blit direct) après DrawFrameRoad. Voir
+* lotus-ste/doc/extraction/41_roadside_objects_plan.md. (Pool OST retiré = cleanup.)
+
         INCLUDE "./engine/projection/SparseProjection.asm"
         INCLUDE "./engine/projection/LinearInterp.asm"
         INCLUDE "./engine/circuits/22_hard_5.asm"

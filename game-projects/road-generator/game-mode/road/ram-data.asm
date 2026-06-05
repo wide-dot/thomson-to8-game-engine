@@ -21,8 +21,11 @@
 ; player1 OST = en DP, lifecycle pur, donc ext_variables_size = 0 ici.
 ; Si AiCar est activé plus tard, monter à `ai_car_ext_size` (= 4).
 ext_variables_size                equ 0
-nb_dynamic_objects                equ 1     ; Road 
+nb_dynamic_objects                equ 1     ; Road (player1 = dp, hors pool)
 nb_graphical_objects              equ 1     ; 1 sprite = voiture joueur (player1 OST)
+; --- Sprites bord-de-piste : approche BLIT DIRECT (cf. 41_roadside_objects_plan.md).
+;     PAS de pool OST. ROADSIDE_DRAW_MAX = taille future de Roadside_DrawList résident.
+ROADSIDE_DRAW_MAX                 equ 16    ; sprites décor blittés max / frame (les + proches)
 
 ; --- OST Player1 en DP ---
 ; Alias sur direct page : tous les accès player1+champ utilisent l'adressage
