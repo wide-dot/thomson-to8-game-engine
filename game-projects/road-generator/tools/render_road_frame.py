@@ -258,11 +258,14 @@ def render_road_continuous(dense, lateral_scaled, y0, y1, palette, root):
     return img
 
 
-def render_ref_real(dense, lateral_scaled, y0, y1, root, phase=0):
+def render_ref_real(dense, lateral_scaled, y0, y1, root, phase=0, full_line=False, bg_color=None, tex_dir=None, palette=None):
     """RÉFÉRENCE 68k avec VRAIE texture Lotus : prend la ligne route source
        (normal_dark/light.png), la met à l'échelle de la largeur écran CONTINUE,
        centrée à centerX = $90/2 - product, et alterne dark/light par scanline
-       (bit 10). = cible visuelle originale (bords lisses + vrai motif)."""
+       (bit 10). = cible visuelle originale (bords lisses + vrai motif).
+       full_line : si True, dessine la ligne ENTIÈRE (herbe idx3/4 comprise =
+       extent non-transparent) -> l'herbe alterne dark/light comme la route.
+       bg_color : couleur de fond (zone non dessinée par l'algo route). Défaut=herbe."""
     import struct
     from road_common import read_png_indexed, measure_effective_width
 
@@ -279,18 +282,21 @@ def render_ref_real(dense, lateral_scaled, y0, y1, root, phase=0):
                 break
         return w, h, px, plte
 
-    src = root / 'tools' / 'road_sprites_source'
+    src = Path(tex_dir) if tex_dir else root / 'tools' / 'road_sprites_source'
     wd, hd, dark, plte = load_png(src / 'normal_dark.png')
     _,  _,  light, _   = load_png(src / 'normal_light.png')
-    # Extent ROUTE = rumble-à-rumble (idx route 1=rumble,2=blanc,5/6/7=asphalte),
-    # PAS le span non-transparent qui inclut les marges d'herbe (idx 3/4).
+    # ROAD = rumble-à-rumble (ancre [left,right]) ; FULL = non-transparent (herbe
+    # idx3/4 comprise). full_line : on dessine FULL à l'ÉCHELLE de la route (la route
+    # garde sa taille normale dans [left,right], l'herbe s'étend AU-DELÀ à la même
+    # échelle). -> l'herbe alterne dark/light comme la route.
     ROAD_IDX = (1, 2, 5, 6, 7)
-    def road_extent(row):
-        xs = [x for x in range(len(row)) if row[x] in ROAD_IDX]
+    def span_of(row, idxs):
+        xs = [x for x in range(len(row)) if (row[x] != 0 if idxs is None else row[x] in idxs)]
         return (min(xs), max(xs) + 1) if xs else (0, 0)
-    spans = [road_extent(dark[y]) for y in range(hd)]
-    GRASS = plte[4]
-    img = Image.new('RGB', (SCREEN_W, y1 - y0), GRASS)
+    road_spans = [span_of(dark[y], ROAD_IDX) for y in range(hd)]
+    full_spans = [span_of(dark[y], None) for y in range(hd)]
+    bg = bg_color if bg_color is not None else plte[4]
+    img = Image.new('RGB', (SCREEN_W, y1 - y0), bg)
     px = img.load()
     for y, t in dense.items():
         if not (y0 <= y < y1):
@@ -307,16 +313,37 @@ def render_ref_real(dense, lateral_scaled, y0, y1, root, phase=0):
         # dark/light = bit 10 de (extra + phase), CONFORME DrawFrameRoad : la phase
         # live (= track_pos.lower>>4 & $7FF) fait DÉFILER les bandes même géométrie figée.
         row = light[li] if ((t.get('extra', 0) + phase) & 0x400) else dark[li]
-        s, e = spans[li]
-        ew = e - s
-        if ew <= 0:
+        rs, re = road_spans[li]
+        if re <= rs:
+            continue
+        if full_line:
+            # échelle = route mappée sur [left,right] ; on étend FULL à cette échelle
+            k = (right - left) / (re - rs)
+            fs, fe = full_spans[li]
+            s = fs
+            ew = fe - fs
+            scr_lo = left - (rs - fs) * k       # bord gauche écran de l'herbe
+            scr_w = (fe - fs) * k               # largeur écran totale de la ligne
+        else:
+            s = rs
+            ew = re - rs
+            scr_lo = left
+            scr_w = right - left
+        if ew <= 0 or scr_w <= 0:
             continue
         rown = y - y0
-        for x in range(max(0, left), min(SCREEN_W, right)):
-            srcx = s + int((x - left) / (right - left) * ew)
-            idx = row[min(srcx, len(row) - 1)]
-            if idx != 0:                       # 0 = transparent → reste herbe
-                px[x, rown] = plte[idx]
+        x0 = max(0, int(scr_lo))
+        x1 = min(SCREEN_W, int(scr_lo + scr_w) + 1)
+        for x in range(x0, x1):
+            srcx = s + int((x - scr_lo) / scr_w * ew)
+            idx = row[min(max(srcx, 0), len(row) - 1)]
+            if idx != 0:                       # 0 = transparent → reste fond
+                # palette par INDEX (idx texture 1..16 -> palette[idx-1]) si fournie,
+                # sinon palette native de la texture.
+                if palette is not None and 0 < idx <= len(palette):
+                    px[x, rown] = palette[idx - 1]
+                else:
+                    px[x, rown] = plte[idx]
     return img
 
 

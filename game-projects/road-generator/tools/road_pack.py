@@ -59,16 +59,26 @@ def record_stream(frames, KF):
             yield i, rec, False
 
 
+# ── 1bis. Frames à partir de segments ÉDITÉS (bypass parse_circuit) ───────────
+# segs = liste de [delta_curve, delta_pitch, pit, start] (= format road_bake.project_pos).
+def frames_from_segs(segs, nb, S, assets):
+    out = []
+    for p in range(0, nb * rb.SUBPOS_PER_SEG, S):
+        dense, min_y = rb.project_pos(segs, nb, p, assets)
+        row = {y: (dense[y]['flags'] & 0xFFFF, dense[y]['width'] & 0xFFFF,
+                   dense[y].get('extra', 0) & 0xFFFF) for y in dense}
+        out.append((min_y, row))
+    return out
+
+
 # ── 2. Packing en pages 16 Ko (+ index + keyframe table) ─────────────────────
-def pack_circuit(circuit, S, KF, assets, page_size=PAGE_SIZE):
-    frames = dp.frames_of(circuit, S, assets)
+def pack_frames(frames, KF, page_size=PAGE_SIZE):
     pages = [bytearray()]
     index = []                      # par frame : (page, offset)
     kf_table = []                   # par keyframe : (frame, page, offset)
     for i, rec, is_kf in record_stream(frames, KF):
         cur = pages[-1]
-        # réserver 1 octet pour un éventuel $FF (jamais couper un record)
-        if len(cur) + len(rec) > page_size - 1:
+        if len(cur) + len(rec) > page_size - 1:   # jamais couper un record (réserve $FF)
             cur.append(NEXT_PAGE)
             pages.append(bytearray())
             cur = pages[-1]
@@ -76,10 +86,21 @@ def pack_circuit(circuit, S, KF, assets, page_size=PAGE_SIZE):
         if is_kf:
             kf_table.append((i, len(pages) - 1, len(cur)))
         cur += rec
-    # padder chaque page à page_size (les pages cart font 16 Ko fixes)
-    for p in pages:
+    for p in pages:                                # padder à 16 Ko (page cart fixe)
         if len(p) < page_size:
             p += b'\x00' * (page_size - len(p))
+    return pages, index, kf_table
+
+
+def pack_circuit(circuit, S, KF, assets, page_size=PAGE_SIZE):
+    frames = dp.frames_of(circuit, S, assets)
+    pages, index, kf_table = pack_frames(frames, KF, page_size)
+    return frames, pages, index, kf_table
+
+
+def pack_from_segs(segs, nb, S, KF, assets, page_size=PAGE_SIZE):
+    frames = frames_from_segs(segs, nb, S, assets)
+    pages, index, kf_table = pack_frames(frames, KF, page_size)
     return frames, pages, index, kf_table
 
 
@@ -160,8 +181,24 @@ def write_circuit(circuit, S, KF, outdir, assets, page_size=PAGE_SIZE):
 # n'étale PAS un binaire sur plusieurs pages. On émet donc 1 objet code-only PAR page
 # logique (chunk), paddé à EXACTEMENT 16384 -> occupe toute sa page -> base $0000 garantie.
 # Au runtime : chunk k -> page physique = Obj_Index_Page + ObjID_RoadStreamP0 + k.
-def emit_build(circuit, S, KF, outdir, assets, prefix='RoadStreamP'):
+# base_path = dossier engine-relatif où les fichiers stream VIVRONT (inscrit en dur
+# dans les INCLUDEBIN / code= / object= générés). Défaut = layout historique partagé.
+DEFAULT_BASE = './objects/road-stream-data'
+
+
+def emit_build(circuit, S, KF, outdir, assets, prefix='RoadStreamP', base_path=DEFAULT_BASE):
     frames, pages, index, kf_table = pack_circuit(circuit, S, KF, assets)
+    return _emit_files(frames, pages, index, kf_table, S, KF, outdir, circuit, prefix, base_path)
+
+
+def emit_build_from_segs(segs, nb, S, KF, outdir, assets, circuit='circuit', prefix='RoadStreamP', base_path=DEFAULT_BASE):
+    """Comme emit_build mais à partir des segments ÉDITÉS (pas d'un .asm disque)."""
+    frames, pages, index, kf_table = pack_from_segs(segs, nb, S, KF, assets)
+    return _emit_files(frames, pages, index, kf_table, S, KF, outdir, circuit, prefix, base_path)
+
+
+def _emit_files(frames, pages, index, kf_table, S, KF, outdir, circuit, prefix='RoadStreamP', base_path=DEFAULT_BASE):
+    base = base_path.rstrip('/')
     validate(frames, pages, index)
     outdir = Path(outdir)
     outdir.mkdir(parents=True, exist_ok=True)
@@ -178,12 +215,12 @@ def emit_build(circuit, S, KF, outdir, assets, prefix='RoadStreamP'):
             f"* Pure data (DIFF/KEYFRAME packés). ORG $0000 -> base de page garantie\n"
             f"* (paddé à 16384 = occupe toute la page). Lu via Obj_Index_Page+ObjID_{prefix}{k}.\n"
             f"        ORG   $0000\n"
-            f'        INCLUDEBIN "./objects/road-stream-data/generated/{circuit}_chunk_{k:02d}.bin"\n'
+            f'        INCLUDEBIN "{base}/generated/{circuit}_chunk_{k:02d}.bin"\n'
         )
         (outdir / f'chunk_{k:02d}.asm').write_text(wrapper)
         (outdir / f'chunk_{k:02d}.properties').write_text(
             f"# road-stream chunk {k} ({circuit}) — objet data-only, 1 page cart pleine.\n"
-            f"code=./objects/road-stream-data/chunk_{k:02d}.asm\n")
+            f"code={base}/chunk_{k:02d}.asm\n")
 
     # 2) index résident en ASM : N entrées [fcb chunk] [fdb addr]
     L = [
@@ -206,7 +243,7 @@ def emit_build(circuit, S, KF, outdir, assets, prefix='RoadStreamP'):
             "# ⚠️ déclarer dans CET ORDRE pour que les ObjID soient consécutifs",
             f"#     (chunk k -> page via Obj_Index_Page + ObjID_{prefix}0 + k)."]
     for k in range(nchunks):
-        snip.append(f"object.{prefix}{k}=./objects/road-stream-data/chunk_{k:02d}.properties")
+        snip.append(f"object.{prefix}{k}={base}/chunk_{k:02d}.properties")
     (outdir / 'OBJECTS_SNIPPET.properties.txt').write_text("\n".join(snip) + "\n")
 
     return {'circuit': circuit, 'nchunks': nchunks, 'N': len(index),
