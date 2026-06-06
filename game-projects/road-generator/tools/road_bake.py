@@ -68,11 +68,14 @@ def project_pos(segments, nb_seg, pos, assets):
 
 
 # ── Rendu texturé RÉEL (= render_ref_real, vraies lignes normal_dark/light) ──
-def render(dense, steer, phase=0, root=ROOT):
+def render(dense, steer, phase=0, root=ROOT, full_line=False, bg_color=None, tex_dir=None, palette=None):
     """dense -> PIL Image 160×96 (vraies textures). steer = lateral_pos (±192).
-    phase = (track_pos.lower>>4)&$7FF : fait défiler les bandes dark/light (live)."""
+    phase = (track_pos.lower>>4)&$7FF : fait défiler les bandes dark/light (live).
+    full_line : dessine la ligne entière (herbe alternante). bg_color : fond.
+    tex_dir : dossier des textures. palette : 16 RGB (index 1..16 -> palette[idx-1])."""
     from render_road_frame import render_ref_real, _signed16
-    return render_ref_real(dense, _signed16(steer * 8), 0, 96, root, phase)
+    return render_ref_real(dense, _signed16(steer * 8), 0, 96, root, phase,
+                           full_line=full_line, bg_color=bg_color, tex_dir=tex_dir, palette=palette)
 
 
 # ── Bake binaire ────────────────────────────────────────────────────────────
