@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Lotus Circuit Editor — maquette v3</title>
+<style>
+  :root{
+    --bg:#13151a; --panel:#1b1e25; --panel2:#23262f; --line:#2c303a;
+    --ink:#dce0e8; --dim:#878e9c; --accent:#4ea1ff; --amber:#ffb454;
+    --green:#5fd08a; --red:#ff6b6b; --mono:"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--ink);font:13px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
+  .app{display:grid;grid-template-rows:40px 1fr;height:100vh}
+  .topbar{display:flex;align-items:center;gap:12px;padding:0 14px;background:#0e1014;border-bottom:1px solid var(--line)}
+  .topbar h1{font-size:13px;margin:0;font-weight:600}
+  .topbar .sp{flex:1}
+  .topbar select{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:6px;font-size:12px;padding:3px 8px}
+  .main{display:grid;grid-template-columns:236px 1fr 322px;gap:8px;padding:8px;min-height:0}
+  .col{display:flex;flex-direction:column;gap:8px;min-height:0}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:9px;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+  .panel>.h{padding:6px 10px;font-size:11px;color:var(--dim);border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:8px;letter-spacing:.4px;flex:0 0 auto;text-transform:uppercase}
+  .panel>.h .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  .panel>.h .r{margin-left:auto;display:flex;gap:6px;align-items:center}
+  .panel>.b{flex:1;min-height:0;position:relative;overflow:auto}
+  .btn{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:3px 9px;color:var(--ink);font-size:11px;cursor:default;white-space:nowrap}
+  .btn.acc{background:var(--accent);color:#06101f;border-color:var(--accent);font-weight:600}
+  .ico{width:22px;height:22px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--dim);cursor:default}
+  svg{display:block;width:100%;height:100%}
+  /* palette */
+  .pal .top{display:flex;gap:8px;padding:8px 9px;align-items:center;border-bottom:1px solid #20232b}
+  .pal .top img{width:78px;height:auto;border:1px solid var(--line);border-radius:4px;image-rendering:pixelated;background:#000}
+  .pal select{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:5px;font-size:11px;padding:2px 5px;flex:1}
+  .pal .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;padding:9px}
+  .pal .sw{aspect-ratio:1;border-radius:5px;border:1px solid #0006;cursor:default}
+  .pal .sw.sel{outline:2px solid var(--amber);outline-offset:1px}
+  .pal .sw.tr{background:
+    linear-gradient(45deg,#444 25%,transparent 25%,transparent 75%,#444 75%),
+    linear-gradient(45deg,#444 25%,#222 25%,#222 75%,#444 75%);
+    background-size:8px 8px;background-position:0 0,4px 4px;opacity:.5;cursor:not-allowed}
+  .pal .ed{padding:4px 10px 10px;border-top:1px solid #20232b}
+  .pal .hexrow{display:flex;align-items:center;gap:8px;margin:6px 0}
+  .pal .hexrow .big{width:34px;height:26px;border-radius:5px;border:1px solid #0006}
+  .pal input[type=text]{flex:1;background:#101319;border:1px solid var(--line);color:var(--ink);
+    font-family:var(--mono);font-size:13px;border-radius:5px;padding:5px 7px;letter-spacing:1px}
+  .pal .ch{display:grid;grid-template-columns:14px 1fr 58px;align-items:center;gap:7px;margin:4px 0;font-size:11px;color:var(--dim)}
+  .pal .ch input[type=range]{accent-color:var(--accent)}
+  .pal .ch .vv{font-family:var(--mono);text-align:right;color:var(--ink)}
+  /* troncon list */
+  .tlist{padding:6px}
+  .trow{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:7px;margin-bottom:4px;background:#191c23;border:1px solid #20232b}
+  .trow.cur{border-color:var(--amber);background:#241f17}
+  .trow.drag{opacity:.5;border-style:dashed}
+  .trow .grip{color:#566;cursor:grab;font-size:14px;letter-spacing:-2px}
+  .trow .ic{width:30px;height:19px;border:1px solid var(--line);border-radius:3px;flex:0 0 auto}
+  .trow .nm{flex:1;font-size:12px}
+  .trow .nm small{display:block;color:var(--dim);font-size:10px;font-family:var(--mono)}
+  .trow .x{width:20px;height:20px;border-radius:5px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--dim);cursor:default}
+  /* segment */
+  .seg .grp{padding:9px 10px;border-bottom:1px solid #20232b}
+  .seg .grp .lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-bottom:6px}
+  .seg .grp .lbl b{color:var(--ink);font-family:var(--mono)}
+  .seg input[type=range]{width:100%;accent-color:var(--accent)}
+  .seg .gfx{height:42px;background:#12151b;border:1px solid #20232b;border-radius:6px;margin-bottom:7px}
+  .seg .sp{display:flex;align-items:center;gap:7px;margin:5px 0}
+  .seg .sp select{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:5px;font-size:11px;padding:2px 4px;width:66px}
+  .seg .sp .road{flex:1;height:15px;background:linear-gradient(90deg,#1d3b27,#2c5a3a 18%,#3a3f4b 40%,#3a3f4b 60%,#2c5a3a 82%,#1d3b27);border-radius:3px;position:relative;border:1px solid #20232b}
+  .seg .sp .road i{position:absolute;top:-2px;width:8px;height:19px;border-radius:2px;background:var(--amber)}
+  .seg .flags{display:flex;gap:8px;padding:9px 10px}
+  .seg .tog{font-size:10px;padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:var(--panel2);color:var(--dim)}
+  .seg .tog.on{background:#241f17;border-color:var(--amber);color:var(--amber)}
+  /* transport */
+  .transport{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:7px 12px;flex:0 0 auto}
+  .tbtn{width:30px;height:26px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:13px}
+  .tbtn.play{background:var(--accent);color:#06101f;border-color:var(--accent)}
+  .ctl{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--dim)}.ctl input[type=range]{width:104px;accent-color:var(--accent)}
+  .steer .seg2{width:58px;height:6px;background:var(--panel2);border-radius:3px;position:relative;border:1px solid var(--line)}
+  .steer .seg2 i{position:absolute;top:-3px;width:10px;height:10px;border-radius:50%;background:var(--amber);left:40%}
+  .scrub{flex:1;height:8px;background:var(--panel2);border:1px solid var(--line);border-radius:4px;position:relative}
+  .scrub .fill{position:absolute;left:0;top:0;bottom:0;width:42%;background:linear-gradient(90deg,#2c3a5a,#3a5a8a);border-radius:4px}
+  .scrub .head{position:absolute;top:-4px;left:42%;width:4px;height:16px;background:var(--amber);border-radius:2px}
+  .simimg{width:100%;height:100%;object-fit:contain;image-rendering:pixelated;background:#0a0c10}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <h1>🏁 Lotus Circuit Editor</h1>
+    <select><option>22_hard_5</option><option>00_training</option><option>17_medium_10</option></select>
+    <span class="sp"></span>
+    <span class="btn">Compiler .asm</span>
+  </div>
+
+  <div class="main">
+    <!-- LEFT -->
+    <div class="col">
+      <div class="panel pal" style="flex:0 0 auto">
+        <div class="h"><span class="dot" style="background:var(--amber)"></span>Palette
+          <span class="r"><span class="ico" title="charger PNG texture">📁</span><span class="ico" title="enregistrer preset">💾</span></span></div>
+        <div class="top">
+          <img src="_tex_thumb.png" alt="texture">
+          <select><option>Lotus défaut</option><option>Crépuscule</option><option>Désert</option></select>
+        </div>
+        <div class="grid" data-swatches></div>
+        <div class="ed" data-editor></div>
+      </div>
+      <div class="panel" style="flex:1">
+        <div class="h"><span class="dot"></span>Tronçons<span class="r"><span class="ico">＋</span></span></div>
+        <div class="b"><div class="tlist" data-tlist></div></div>
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="col">
+      <div class="panel" style="flex:1.5">
+        <div class="h"><span class="dot" style="background:var(--green)"></span>Ruban 3D</div>
+        <div class="b" data-ribbon></div>
+      </div>
+      <div class="panel" style="flex:1.05">
+        <div class="h"><span class="dot" style="background:var(--amber)"></span>Simulateur</div>
+        <div class="b" style="display:flex;align-items:center;justify-content:center;overflow:hidden">
+          <img class="simimg" src="_ref_frame.png" alt="frame">
+        </div>
+      </div>
+      <div class="transport">
+        <div class="tbtn">⏮</div><div class="tbtn play">▶</div><div class="tbtn">⏸</div>
+        <div class="ctl"><input type="range" min="0" max="26" value="14"><span style="font-family:var(--mono)">14</span></div>
+        <div class="ctl steer">◀<div class="seg2"><i></i></div>▶</div>
+        <div class="scrub"><div class="fill"></div><div class="head"></div></div>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--dim)">74/176</span>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="col">
+      <div class="panel" style="flex:0 0 224px">
+        <div class="h"><span class="dot"></span>Vue de dessus</div>
+        <div class="b" data-plan></div>
+      </div>
+      <div class="panel seg" style="flex:1">
+        <div class="h"><span class="dot" style="background:var(--amber)"></span>Segment
+          <span class="r"><span class="ico">◀</span><b style="font-family:var(--mono);font-size:11px;color:var(--ink)">74</b><span class="ico">▶</span></span></div>
+        <div class="b">
+          <div class="grp">
+            <div class="lbl"><span>Courbure</span><b>Δ +4</b></div>
+            <div class="gfx" data-gfx-curve></div>
+            <input type="range" min="-127" max="127" value="4">
+          </div>
+          <div class="grp">
+            <div class="lbl"><span>Pente</span><b>Δ +17</b></div>
+            <div class="gfx" data-gfx-pitch></div>
+            <input type="range" min="-127" max="127" value="17">
+          </div>
+          <div class="grp">
+            <div class="lbl"><span>Sprites</span><b>2/4</b></div>
+            <div class="sp"><select><option>arbre</option><option>—</option></select><div class="road"><i style="left:24%"></i></div></div>
+            <div class="sp"><select><option>pub</option><option>—</option></select><div class="road"><i style="left:70%"></i></div></div>
+            <div class="sp"><select><option>—</option></select><div class="road"></div></div>
+            <div class="sp"><select><option>—</option></select><div class="road"></div></div>
+          </div>
+          <div class="flags">
+            <span class="tog">START</span><span class="tog on">PIT</span><span class="tog">surf. alt</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ns="http://www.w3.org/2000/svg";
+function el(t,a){const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);return e;}
+function rgb(r,g,b){return `rgb(${r|0},${g|0},${b|0})`;}
+
+/* ---- TO8 palette : 16 niveaux/canal (relevé EF9369, cf PaletteTO8.java) ---- */
+const TO8=[0,97,122,143,158,171,184,194,204,212,219,227,235,242,250,255];
+const hx=(r,g,b)=>'#'+[TO8[r],TO8[g],TO8[b]].map(v=>v.toString(16).padStart(2,'0').toUpperCase()).join('');
+// index 0 = transparence (non éditée). 16 couleurs éditables (level-triples).
+const LV=[[0,0,0],[15,15,15],[10,2,2],[2,6,2],[4,9,4],[1,1,1],[5,5,5],[7,7,8],
+          [9,11,15],[3,5,9],[12,10,5],[14,13,4],[6,4,2],[8,9,11],[11,3,3],[3,8,5]];
+let selIdx=6; // route grise sélectionnée
+function swatches(box){box.innerHTML="";
+  const tr=document.createElement('div');tr.className='sw tr';tr.title='index 0 — transparence';box.appendChild(tr);
+  LV.forEach((lv,i)=>{const d=document.createElement('div');d.className='sw'+(i===selIdx?' sel':'');
+    d.style.background=hx(lv[0],lv[1],lv[2]);d.onclick=()=>{selIdx=i;swatches(box);editor(document.querySelector('[data-editor]'));};box.appendChild(d);});
+}
+function editor(box){const lv=LV[selIdx];const hex=hx(lv[0],lv[1],lv[2]);
+  box.innerHTML=`
+    <div class="hexrow"><span class="big" style="background:${hex}"></span>
+      <input type="text" value="${hex}"></div>
+    ${[['R',0,'#ff6b6b'],['V',1,'#5fd08a'],['B',2,'#6aa8ff']].map(([n,c])=>
+      `<div class="ch"><span>${n}</span><input type="range" min="0" max="15" value="${lv[c]}"><span class="vv">${lv[c]} · ${TO8[lv[c]]}</span></div>`).join('')}`;
+}
+
+/* ---- track shape ---- */
+const N=64;
+const curvature=t=> 0.95*Math.sin(t*Math.PI*2.3)+0.45*Math.sin(t*6.1+0.7);
+const MARK=0.46, blind=[0.30,0.63];
+
+function ribbon(box){const W=box.clientWidth||700,Hh=box.clientHeight||280;
+  const svg=el("svg",{viewBox:`0 0 ${W} ${Hh}`,preserveAspectRatio:"xMidYMid meet"});
+  const g=el("g",{});
+  for(let i=0;i<=10;i++)g.appendChild(el("line",{x1:30+i*(W-60)/10,y1:Hh-14,x2:90+i*(W-120)/10,y2:Hh*0.30,stroke:"#1d2129","stroke-width":.5}));
+  for(let j=0;j<=6;j++)g.appendChild(el("line",{x1:30,y1:Hh-14-j*(Hh*0.7)/6,x2:W-30,y2:Hh-22-j*(Hh*0.66)/6,stroke:"#1d2129","stroke-width":.5}));
+  svg.appendChild(g);
+  let heading=-1.18,x=W*0.14,y=Hh-30,C=[];const sl=(W*0.74)/N;
+  for(let i=0;i<=N;i++){const t=i/N;heading+=curvature(t)*0.055;x+=Math.cos(heading)*sl;y-=Math.sin(heading)*sl*0.40;
+    const z=70*(0.5+0.5*Math.sin(t*5.4-0.6))*Math.sin(t*Math.PI)*0.9;C.push({x,by:y,ty:y-z,h:heading,z});}
+  const hw=Math.max(15,W*0.033),posts=el("g",{});
+  for(let i=0;i<C.length;i+=3){const p=C[i];if(p.z>4)posts.appendChild(el("line",{x1:p.x,y1:p.ty,x2:p.x,y2:p.by,stroke:"#262b36","stroke-width":1}));}
+  svg.appendChild(posts);
+  const L=[],R=[];for(const p of C){const px=Math.cos(p.h+Math.PI/2),py=-Math.sin(p.h+Math.PI/2)*0.40;L.push([p.x+px*hw,p.ty+py*hw]);R.push([p.x-px*hw,p.ty-py*hw]);}
+  for(let i=1;i<C.length;i++){const f=0.30+0.62*(i/C.length),b=i%2?[58,66,86]:[48,55,73];
+    svg.appendChild(el("polygon",{points:`${L[i-1][0]},${L[i-1][1]} ${R[i-1][0]},${R[i-1][1]} ${R[i][0]},${R[i][1]} ${L[i][0]},${L[i][1]}`,fill:rgb(b[0]*f+22,b[1]*f+24,b[2]*f+30),stroke:"#11141a","stroke-width":.3}));}
+  for(let i=0;i<C.length-1;i+=2)svg.appendChild(el("line",{x1:C[i].x,y1:C[i].ty,x2:C[i+1].x,y2:C[i+1].ty,stroke:"#e6ebf4","stroke-opacity":.5,"stroke-width":1.2,"stroke-dasharray":"4 4"}));
+  [0.12,0.34,0.55,0.78].forEach(tt=>{const p=C[Math.round(tt*N)];
+    svg.appendChild(el("line",{x1:p.x,y1:p.ty,x2:p.x,y2:p.ty-40,stroke:"#ffb454","stroke-width":1.3,"stroke-dasharray":"3 3"}));
+    svg.appendChild(el("circle",{cx:p.x,cy:p.ty-40,r:5,fill:"#ffb454"}));
+    svg.appendChild(el("circle",{cx:p.x,cy:p.ty,r:4.5,fill:"#13151a",stroke:"#4ea1ff","stroke-width":1.6}));});
+  blind.forEach(tt=>{const p=C[Math.round(tt*N)];svg.appendChild(el("circle",{cx:p.x,cy:p.ty,r:6,fill:"none",stroke:"#ff6b6b","stroke-width":2}));});
+  const m=C[Math.round(MARK*N)];
+  svg.appendChild(el("circle",{cx:m.x,cy:m.ty,r:8,fill:"#ffb454",stroke:"#06101f","stroke-width":2}));
+  svg.appendChild(el("circle",{cx:m.x,cy:m.ty,r:13,fill:"none",stroke:"#ffb454","stroke-opacity":.4,"stroke-width":1.5}));
+  box.innerHTML="";box.appendChild(svg);
+}
+function plan(box){const W=300,H=224;const svg=el("svg",{viewBox:`0 0 ${W} ${H}`,preserveAspectRatio:"xMidYMid meet"});
+  let heading=0,x=0,y=0,pts=[];for(let i=0;i<=N;i++){const t=i/N;heading+=curvature(t)*0.108;x+=Math.cos(heading);y+=Math.sin(heading);pts.push([x,y]);}
+  const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);const mnx=Math.min(...xs),mxx=Math.max(...xs),mny=Math.min(...ys),mxy=Math.max(...ys);
+  const sc=Math.min((W-40)/(mxx-mnx),(H-40)/(mxy-mny));const P=pts.map(p=>[20+(p[0]-mnx)*sc,20+(p[1]-mny)*sc]);
+  const d=P.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  svg.appendChild(el("path",{d,fill:"none",stroke:"#10131a","stroke-width":13,"stroke-linecap":"round","stroke-linejoin":"round"}));
+  svg.appendChild(el("path",{d,fill:"none",stroke:"#5a86c8","stroke-width":6.5,"stroke-linecap":"round","stroke-linejoin":"round"}));
+  [0.12,0.34,0.55,0.78].forEach(tt=>{const p=P[Math.round(tt*N)];svg.appendChild(el("circle",{cx:p[0],cy:p[1],r:3.2,fill:"#ffb454"}));});
+  blind.forEach(tt=>{const p=P[Math.round(tt*N)];svg.appendChild(el("circle",{cx:p[0],cy:p[1],r:4,fill:"none",stroke:"#ff6b6b","stroke-width":1.6}));});
+  const s=P[0];svg.appendChild(el("rect",{x:s[0]-5,y:s[1]-8,width:10,height:16,fill:"#e9edf5",opacity:.85}));
+  const m=P[Math.round(MARK*N)];svg.appendChild(el("circle",{cx:m[0],cy:m[1],r:6,fill:"#ffb454",stroke:"#06101f","stroke-width":1.6}));
+  svg.appendChild(el("circle",{cx:m[0],cy:m[1],r:11,fill:"none",stroke:"#ffb454","stroke-opacity":.4,"stroke-width":1.5}));
+  box.innerHTML="";box.appendChild(svg);
+}
+function gfxCurve(box){const W=box.clientWidth||280,H=42;const s=el("svg",{viewBox:`0 0 ${W} ${H}`,preserveAspectRatio:"none"});
+  s.appendChild(el("path",{d:`M10 ${H-9} Q ${W*0.5} ${H-9} ${W-10} 10`,fill:"none",stroke:"#4ea1ff","stroke-width":2.5}));box.innerHTML="";box.appendChild(s);}
+function gfxPitch(box){const W=box.clientWidth||280,H=42;const s=el("svg",{viewBox:`0 0 ${W} ${H}`,preserveAspectRatio:"none"});
+  s.appendChild(el("line",{x1:10,y1:H-9,x2:W-10,y2:H-9,stroke:"#2a2f3a","stroke-width":1,"stroke-dasharray":"3 3"}));
+  s.appendChild(el("line",{x1:10,y1:H-9,x2:W-10,y2:12,stroke:"#5fd08a","stroke-width":2.5}));box.innerHTML="";box.appendChild(s);}
+
+/* troncon list with grab reorder */
+let TR=[["Ligne droite","straight 8s","#3a3f4b"],["Arc gauche R90","arc -3°","#2c3a5a"],["Crête + S","crest·esses","#234032"],
+  ["Épingle droite","hairpin +9°","#4a2c2c"],["Descente","dip -5°","#2a2f3b"],["Ligne + sprites","straight","#3a3f4b"],["Chicane","chicane","#3a352c"]];
+const CUR=2;
+function tlist(box){box.innerHTML="";
+  TR.forEach((r,i)=>{const d=document.createElement('div');d.className='trow'+(i===CUR?' cur':'');d.draggable=true;d.dataset.i=i;
+    d.innerHTML=`<span class="grip">⠿</span><span class="ic" style="background:${r[2]}"></span>
+      <span class="nm">${String(i+1).padStart(2,'0')} ${r[0]}<small>${r[1]}</small></span><span class="x">✕</span>`;
+    d.addEventListener('dragstart',e=>{d.classList.add('drag');e.dataTransfer.setData('i',i);});
+    d.addEventListener('dragend',()=>d.classList.remove('drag'));
+    d.addEventListener('dragover',e=>e.preventDefault());
+    d.addEventListener('drop',e=>{e.preventDefault();const from=+e.dataTransfer.getData('i');const to=i;
+      if(from!==to){const m=TR.splice(from,1)[0];TR.splice(to,0,m);tlist(box);}});
+    box.appendChild(d);});
+}
+
+function build(){
+  swatches(document.querySelector('[data-swatches]'));
+  editor(document.querySelector('[data-editor]'));
+  tlist(document.querySelector('[data-tlist]'));
+  ribbon(document.querySelector('[data-ribbon]'));
+  plan(document.querySelector('[data-plan]'));
+  gfxCurve(document.querySelector('[data-gfx-curve]'));
+  gfxPitch(document.querySelector('[data-gfx-pitch]'));
+}
+build();let to;addEventListener('resize',()=>{clearTimeout(to);to=setTimeout(()=>{ribbon(document.querySelector('[data-ribbon]'));plan(document.querySelector('[data-plan]'));gfxCurve(document.querySelector('[data-gfx-curve]'));gfxPitch(document.querySelector('[data-gfx-pitch]'));},120);});
+</script>
+</body>
+</html>

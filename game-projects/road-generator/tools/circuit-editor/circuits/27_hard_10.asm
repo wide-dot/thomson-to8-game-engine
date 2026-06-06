@@ -1,0 +1,368 @@
+* ======================================================================
+* Circuit_27_hard_10 — N=144 segments (format compact 8 oct/seg)
+* Source       : 27_hard_10.bin (extrait de FILE30)
+*
+* Pays         : NEPAL
+* Lieu         : katmandu
+* Description  : winding track
+* Hazards      : rocks water and oil on road
+*
+* Palette ST (28 entrées, RGB 8-bit normalisé — runtime-effectif après
+* shift `(raw & $EEE) >> 1` du shifter ; cf. extract_palettes.py) :
+*   00:#000048 01:#909024 02:#6C6C24 03:#484824 04:#244824 05:#B40000 06:#242400 07:#242400
+*   08:#242424 09:#D8D8D8 10:#242424 11:#FCFCFC 12:#2400FC 13:#2424FC 14:#2448FC 15:#2448FC
+*   16:#246CFC 17:#246CFC 18:#2490D8 19:#4890B4 20:#6CB490 21:#90B46C 22:#B4D848 23:#B4D848
+*   24:#D8FC24 25:#D8FC00 26:#FCFC48 27:#FCFC6C
+* Palette base : mots [00..15]
+* Sky gradient : mots [16..27]
+*
+* === Format segment compact 8 oct (vs 16 oct Lotus 68k original) ===
+*   +0  curve_raw   bit 7 = PIT flag, bits 0-6 = delta_curve 7-bit signed
+*   +1  pitch_raw   bit 7 = START flag, bits 0-6 = delta_pitch 7-bit signed
+*   +2  spr01       (sprite_idx_1 << 4) | sprite_idx_0  ← index 4-bit dans LUT
+*   +3  spr23       (sprite_idx_3 << 4) | sprite_idx_2
+*   +4  lat_0       int8 signed (sprite 0 lateral position)
+*   +5  lat_1       int8 signed
+*   +6  lat_2       int8 signed
+*   +7  lat_3       int8 signed
+*
+* PIT/START flags : extraits par SparseProjection.asm via bit 7 des
+* bytes curve_raw/pitch_raw. PIT présent dans le source ; START forcé
+* sur segment 0 uniquement (= équivalent FUN_40B4 race-init du 68k).
+*
+* Sprite_LUT : index 0 = 'pas de sprite'. Indices 1..15 = sprite_id réel
+* (= FILExx.SCR à charger via add_file). Indexation 4-bit (max 16 IDs
+* par circuit ; ce circuit : 11 entries utilisées).
+*
+* === Table parallèle Circuit_xx_segment_cache (4 oct/seg) ===
+* Pré-calculée à la génération (vs Loop 1/2/3 de FUN_74dac runtime 68k).
+*   +0  yaw_abs    : cumul delta_curve mod 256, signed
+*                   → futur : Lotus_PhysicsTick + AI cars
+*   +1  pitch_abs  : cumul delta_pitch mod 256, signed
+*                   → futur : Lotus_PhysicsTick complet (suspension/pentes)
+*   +2  min_lat    : rightmost negative sprite lat + 8, smoothed backward
+*                   → futur : DRAW_SPRITES culling horizontal gauche
+*   +3  max_lat    : leftmost positive sprite lat - 8, smoothed backward
+*                   → futur : DRAW_SPRITES culling horizontal droite
+* Adressage cache : Circuit_xx_segment_cache + idx × 4 (= ×4 simple).
+*
+* 8 segments wraparound dupliqués à la fin pour look-ahead
+* projection sans wrap mod N (segments + cache).
+* Taille totale : 1842 oct (nb_segments 2 + LUT 16 + segments 1216 + cache 608).
+* ======================================================================
+
+Circuit_27_hard_10_nb_segments
+        fdb   144
+
+Circuit_27_hard_10_sprite_lut
+        fcb   $00,$82,$A9,$83,$80,$A3,$81,$97,$A2,$8A,$90,$00,$00,$00,$00,$00  ; LUT sprite_id (idx 0..15)
+
+Circuit_27_hard_10_segments
+        fcb   $00,$80,$01,$00,$00,$00,$00,$00  ; seg   0                      flags=[START] #0:$82@+0
+        fcb   $00,$00,$00,$00,$00,$00,$00,$00  ; seg   1
+        fcb   $00,$00,$02,$00,$EC,$00,$00,$00  ; seg   2                                    #0:$A9@-20
+        fcb   $00,$00,$02,$00,$EC,$00,$00,$00  ; seg   3                                    #0:$A9@-20
+        fcb   $00,$00,$03,$03,$12,$00,$12,$00  ; seg   4                                    #0:$83@+18 #2:$83@+18
+        fcb   $00,$00,$03,$03,$12,$00,$12,$00  ; seg   5                                    #0:$83@+18 #2:$83@+18
+        fcb   $00,$00,$03,$03,$12,$00,$12,$00  ; seg   6                                    #0:$83@+18 #2:$83@+18
+        fcb   $00,$00,$03,$03,$12,$00,$12,$00  ; seg   7                                    #0:$83@+18 #2:$83@+18
+        fcb   $80,$00,$02,$00,$EC,$00,$00,$00  ; seg   8                      flags=[PIT]   #0:$A9@-20
+        fcb   $80,$00,$02,$00,$EC,$00,$00,$00  ; seg   9                      flags=[PIT]   #0:$A9@-20
+        fcb   $80,$00,$04,$04,$16,$00,$16,$00  ; seg  10                      flags=[PIT]   #0:$80@+22 #2:$80@+22
+        fcb   $80,$00,$04,$04,$16,$00,$16,$00  ; seg  11                      flags=[PIT]   #0:$80@+22 #2:$80@+22
+        fcb   $84,$00,$04,$00,$16,$00,$00,$00  ; seg  12  curve=+4            flags=[PIT]   #0:$80@+22
+        fcb   $84,$00,$04,$00,$16,$00,$00,$00  ; seg  13  curve=+4            flags=[PIT]   #0:$80@+22
+        fcb   $84,$00,$02,$00,$EC,$00,$00,$00  ; seg  14  curve=+4            flags=[PIT]   #0:$A9@-20
+        fcb   $84,$00,$02,$00,$EC,$00,$00,$00  ; seg  15  curve=+4            flags=[PIT]   #0:$A9@-20
+        fcb   $00,$00,$02,$50,$EC,$00,$00,$0C  ; seg  16                                    #0:$A9@-20 #3:$A3@+12
+        fcb   $00,$00,$02,$50,$EC,$00,$00,$F4  ; seg  17                                    #0:$A9@-20 #3:$A3@-12
+        fcb   $00,$00,$04,$04,$16,$00,$16,$00  ; seg  18                                    #0:$80@+22 #2:$80@+22
+        fcb   $00,$00,$04,$54,$16,$00,$16,$08  ; seg  19                                    #0:$80@+22 #2:$80@+22 #3:$A3@+8
+        fcb   $04,$00,$04,$00,$16,$00,$00,$00  ; seg  20  curve=+4                          #0:$80@+22
+        fcb   $04,$00,$04,$50,$16,$00,$00,$06  ; seg  21  curve=+4                          #0:$80@+22 #3:$A3@+6
+        fcb   $04,$00,$02,$50,$EC,$00,$00,$0A  ; seg  22  curve=+4                          #0:$A9@-20 #3:$A3@+10
+        fcb   $04,$00,$02,$00,$EC,$00,$00,$00  ; seg  23  curve=+4                          #0:$A9@-20
+        fcb   $00,$00,$02,$50,$EC,$00,$00,$F8  ; seg  24                                    #0:$A9@-20 #3:$A3@-8
+        fcb   $00,$00,$02,$00,$EC,$00,$00,$00  ; seg  25                                    #0:$A9@-20
+        fcb   $00,$00,$02,$50,$EC,$00,$00,$F4  ; seg  26                                    #0:$A9@-20 #3:$A3@-12
+        fcb   $00,$00,$02,$50,$EC,$00,$00,$F6  ; seg  27                                    #0:$A9@-20 #3:$A3@-10
+        fcb   $00,$00,$02,$00,$EC,$00,$00,$00  ; seg  28                                    #0:$A9@-20
+        fcb   $00,$00,$02,$00,$EC,$00,$00,$00  ; seg  29                                    #0:$A9@-20
+        fcb   $00,$00,$02,$50,$EC,$00,$00,$F8  ; seg  30                                    #0:$A9@-20 #3:$A3@-8
+        fcb   $00,$00,$02,$50,$EC,$00,$00,$F4  ; seg  31                                    #0:$A9@-20 #3:$A3@-12
+        fcb   $00,$00,$02,$00,$EC,$00,$00,$00  ; seg  32                                    #0:$A9@-20
+        fcb   $00,$00,$02,$50,$EC,$00,$00,$08  ; seg  33                                    #0:$A9@-20 #3:$A3@+8
+        fcb   $00,$00,$06,$56,$EE,$00,$EE,$0C  ; seg  34                                    #0:$81@-18 #2:$81@-18 #3:$A3@+12
+        fcb   $00,$00,$06,$06,$EE,$00,$EE,$00  ; seg  35                                    #0:$81@-18 #2:$81@-18
+        fcb   $7C,$00,$06,$00,$EE,$00,$00,$00  ; seg  36  curve=-4                          #0:$81@-18
+        fcb   $7C,$00,$06,$50,$EE,$00,$00,$04  ; seg  37  curve=-4                          #0:$81@-18 #3:$A3@+4
+        fcb   $7C,$00,$04,$54,$12,$00,$12,$08  ; seg  38  curve=-4                          #0:$80@+18 #2:$80@+18 #3:$A3@+8
+        fcb   $7C,$00,$04,$54,$12,$00,$12,$0C  ; seg  39  curve=-4                          #0:$80@+18 #2:$80@+18 #3:$A3@+12
+        fcb   $04,$00,$04,$50,$12,$00,$00,$F4  ; seg  40  curve=+4                          #0:$80@+18 #3:$A3@-12
+        fcb   $04,$00,$04,$00,$12,$00,$00,$00  ; seg  41  curve=+4                          #0:$80@+18
+        fcb   $04,$00,$02,$50,$EC,$00,$00,$F6  ; seg  42  curve=+4                          #0:$A9@-20 #3:$A3@-10
+        fcb   $04,$00,$02,$50,$EC,$00,$00,$F8  ; seg  43  curve=+4                          #0:$A9@-20 #3:$A3@-8
+        fcb   $00,$00,$02,$50,$EC,$00,$00,$F4  ; seg  44                                    #0:$A9@-20 #3:$A3@-12
+        fcb   $00,$00,$02,$00,$EC,$00,$00,$00  ; seg  45                                    #0:$A9@-20
+        fcb   $00,$00,$04,$04,$12,$00,$12,$00  ; seg  46                                    #0:$80@+18 #2:$80@+18
+        fcb   $00,$00,$04,$54,$12,$00,$12,$F8  ; seg  47                                    #0:$80@+18 #2:$80@+18 #3:$A3@-8
+        fcb   $05,$01,$04,$00,$12,$00,$00,$00  ; seg  48  curve=+5  pitch=+1                #0:$80@+18
+        fcb   $05,$01,$04,$00,$12,$00,$00,$00  ; seg  49  curve=+5  pitch=+1                #0:$80@+18
+        fcb   $05,$00,$04,$00,$12,$00,$00,$00  ; seg  50  curve=+5                          #0:$80@+18
+        fcb   $05,$00,$04,$00,$12,$00,$00,$00  ; seg  51  curve=+5                          #0:$80@+18
+        fcb   $05,$7F,$04,$00,$12,$00,$00,$00  ; seg  52  curve=+5  pitch=-1                #0:$80@+18
+        fcb   $05,$7F,$04,$00,$12,$00,$00,$00  ; seg  53  curve=+5  pitch=-1                #0:$80@+18
+        fcb   $05,$00,$02,$00,$EC,$00,$00,$00  ; seg  54  curve=+5                          #0:$A9@-20
+        fcb   $05,$00,$02,$00,$EC,$00,$00,$00  ; seg  55  curve=+5                          #0:$A9@-20
+        fcb   $00,$02,$07,$87,$EE,$00,$12,$08  ; seg  56            pitch=+2                #0:$97@-18 #2:$97@+18 #3:$A2@+8
+        fcb   $00,$02,$07,$87,$EE,$00,$12,$F4  ; seg  57            pitch=+2                #0:$97@-18 #2:$97@+18 #3:$A2@-12
+        fcb   $00,$02,$07,$07,$EE,$00,$12,$00  ; seg  58            pitch=+2                #0:$97@-18 #2:$97@+18
+        fcb   $00,$02,$07,$87,$EE,$00,$12,$0C  ; seg  59            pitch=+2                #0:$97@-18 #2:$97@+18 #3:$A2@+12
+        fcb   $00,$7E,$07,$07,$EE,$00,$12,$00  ; seg  60            pitch=-2                #0:$97@-18 #2:$97@+18
+        fcb   $00,$7E,$07,$87,$EE,$00,$12,$0A  ; seg  61            pitch=-2                #0:$97@-18 #2:$97@+18 #3:$A2@+10
+        fcb   $00,$7E,$07,$07,$EE,$00,$12,$00  ; seg  62            pitch=-2                #0:$97@-18 #2:$97@+18
+        fcb   $00,$7E,$07,$87,$EE,$00,$12,$F4  ; seg  63            pitch=-2                #0:$97@-18 #2:$97@+18 #3:$A2@-12
+        fcb   $00,$7F,$07,$87,$EE,$00,$12,$04  ; seg  64            pitch=-1                #0:$97@-18 #2:$97@+18 #3:$A2@+4
+        fcb   $00,$7F,$07,$07,$EE,$00,$12,$00  ; seg  65            pitch=-1                #0:$97@-18 #2:$97@+18
+        fcb   $00,$01,$44,$44,$12,$12,$12,$12  ; seg  66            pitch=+1                #0:$80@+18 #1:$80@+18 #2:$80@+18 #3:$80@+18
+        fcb   $00,$01,$44,$44,$12,$12,$12,$12  ; seg  67            pitch=+1                #0:$80@+18 #1:$80@+18 #2:$80@+18 #3:$80@+18
+        fcb   $06,$00,$04,$00,$12,$00,$00,$00  ; seg  68  curve=+6                          #0:$80@+18
+        fcb   $06,$00,$04,$00,$12,$00,$00,$00  ; seg  69  curve=+6                          #0:$80@+18
+        fcb   $06,$00,$07,$07,$EE,$00,$EE,$00  ; seg  70  curve=+6                          #0:$97@-18 #2:$97@-18
+        fcb   $06,$00,$07,$07,$EE,$00,$EE,$00  ; seg  71  curve=+6                          #0:$97@-18 #2:$97@-18
+        fcb   $00,$01,$07,$87,$EE,$00,$EE,$F6  ; seg  72            pitch=+1                #0:$97@-18 #2:$97@-18 #3:$A2@-10
+        fcb   $00,$01,$07,$07,$EE,$00,$EE,$00  ; seg  73            pitch=+1                #0:$97@-18 #2:$97@-18
+        fcb   $00,$00,$07,$87,$12,$00,$12,$F4  ; seg  74                                    #0:$97@+18 #2:$97@+18 #3:$A2@-12
+        fcb   $00,$00,$07,$87,$12,$00,$12,$F8  ; seg  75                                    #0:$97@+18 #2:$97@+18 #3:$A2@-8
+        fcb   $00,$01,$07,$07,$12,$00,$12,$00  ; seg  76            pitch=+1                #0:$97@+18 #2:$97@+18
+        fcb   $00,$01,$07,$87,$12,$00,$12,$0C  ; seg  77            pitch=+1                #0:$97@+18 #2:$97@+18 #3:$A2@+12
+        fcb   $00,$00,$07,$07,$EE,$00,$EE,$00  ; seg  78                                    #0:$97@-18 #2:$97@-18
+        fcb   $00,$00,$07,$87,$EE,$00,$EE,$08  ; seg  79                                    #0:$97@-18 #2:$97@-18 #3:$A2@+8
+        fcb   $00,$7F,$07,$87,$EE,$00,$EE,$FA  ; seg  80            pitch=-1                #0:$97@-18 #2:$97@-18 #3:$A2@-6
+        fcb   $00,$7F,$07,$87,$EE,$00,$EE,$F8  ; seg  81            pitch=-1                #0:$97@-18 #2:$97@-18 #3:$A2@-8
+        fcb   $00,$00,$07,$07,$12,$00,$12,$00  ; seg  82                                    #0:$97@+18 #2:$97@+18
+        fcb   $00,$00,$07,$87,$12,$00,$12,$F6  ; seg  83                                    #0:$97@+18 #2:$97@+18 #3:$A2@-10
+        fcb   $00,$7F,$07,$87,$12,$00,$12,$08  ; seg  84            pitch=-1                #0:$97@+18 #2:$97@+18 #3:$A2@+8
+        fcb   $00,$7F,$07,$07,$12,$00,$12,$00  ; seg  85            pitch=-1                #0:$97@+18 #2:$97@+18
+        fcb   $00,$7F,$06,$86,$EE,$00,$EE,$0C  ; seg  86            pitch=-1                #0:$81@-18 #2:$81@-18 #3:$A2@+12
+        fcb   $00,$7F,$06,$06,$EE,$00,$EE,$00  ; seg  87            pitch=-1                #0:$81@-18 #2:$81@-18
+        fcb   $7C,$00,$06,$00,$EE,$00,$00,$00  ; seg  88  curve=-4                          #0:$81@-18
+        fcb   $7C,$00,$06,$90,$EE,$00,$00,$0A  ; seg  89  curve=-4                          #0:$81@-18 #3:$8A@+10
+        fcb   $7C,$00,$06,$90,$EE,$00,$00,$08  ; seg  90  curve=-4                          #0:$81@-18 #3:$8A@+8
+        fcb   $7C,$00,$06,$90,$EE,$00,$00,$06  ; seg  91  curve=-4                          #0:$81@-18 #3:$8A@+6
+        fcb   $7C,$7F,$06,$00,$EE,$00,$00,$00  ; seg  92  curve=-4  pitch=-1                #0:$81@-18
+        fcb   $7C,$7F,$06,$90,$EE,$00,$00,$0A  ; seg  93  curve=-4  pitch=-1                #0:$81@-18 #3:$8A@+10
+        fcb   $7C,$00,$06,$9A,$EE,$00,$18,$06  ; seg  94  curve=-4                          #0:$81@-18 #2:$90@+24 #3:$8A@+6
+        fcb   $7C,$00,$06,$0A,$EE,$00,$1C,$00  ; seg  95  curve=-4                          #0:$81@-18 #2:$90@+28
+        fcb   $7C,$01,$06,$9A,$EE,$00,$24,$0A  ; seg  96  curve=-4  pitch=+1                #0:$81@-18 #2:$90@+36 #3:$8A@+10
+        fcb   $7C,$01,$06,$9A,$EE,$00,$D0,$08  ; seg  97  curve=-4  pitch=+1                #0:$81@-18 #2:$90@-48 #3:$8A@+8
+        fcb   $7C,$00,$06,$0A,$EE,$00,$14,$00  ; seg  98  curve=-4                          #0:$81@-18 #2:$90@+20
+        fcb   $7C,$00,$06,$9A,$EE,$00,$1C,$06  ; seg  99  curve=-4                          #0:$81@-18 #2:$90@+28 #3:$8A@+6
+        fcb   $7C,$7F,$06,$9A,$EE,$00,$18,$0A  ; seg 100  curve=-4  pitch=-1                #0:$81@-18 #2:$90@+24 #3:$8A@+10
+        fcb   $7C,$7F,$06,$0A,$EE,$00,$20,$00  ; seg 101  curve=-4  pitch=-1                #0:$81@-18 #2:$90@+32
+        fcb   $7C,$00,$04,$94,$12,$00,$12,$08  ; seg 102  curve=-4                          #0:$80@+18 #2:$80@+18 #3:$8A@+8
+        fcb   $7C,$00,$04,$04,$12,$00,$12,$00  ; seg 103  curve=-4                          #0:$80@+18 #2:$80@+18
+        fcb   $04,$00,$04,$9A,$12,$00,$EC,$F6  ; seg 104  curve=+4                          #0:$80@+18 #2:$90@-20 #3:$8A@-10
+        fcb   $04,$00,$04,$9A,$12,$00,$E0,$F8  ; seg 105  curve=+4                          #0:$80@+18 #2:$90@-32 #3:$8A@-8
+        fcb   $04,$01,$04,$0A,$12,$00,$28,$00  ; seg 106  curve=+4  pitch=+1                #0:$80@+18 #2:$90@+40
+        fcb   $04,$01,$04,$9A,$12,$00,$E4,$FA  ; seg 107  curve=+4  pitch=+1                #0:$80@+18 #2:$90@-28 #3:$8A@-6
+        fcb   $04,$00,$04,$9A,$12,$00,$D8,$F8  ; seg 108  curve=+4                          #0:$80@+18 #2:$90@-40 #3:$8A@-8
+        fcb   $04,$00,$04,$0A,$12,$00,$DC,$00  ; seg 109  curve=+4                          #0:$80@+18 #2:$90@-36
+        fcb   $04,$00,$04,$9A,$12,$00,$EC,$FA  ; seg 110  curve=+4                          #0:$80@+18 #2:$90@-20 #3:$8A@-6
+        fcb   $04,$00,$04,$0A,$12,$00,$E4,$00  ; seg 111  curve=+4                          #0:$80@+18 #2:$90@-28
+        fcb   $04,$7F,$04,$9A,$12,$00,$E0,$F6  ; seg 112  curve=+4  pitch=-1                #0:$80@+18 #2:$90@-32 #3:$8A@-10
+        fcb   $04,$7F,$04,$0A,$12,$00,$2C,$00  ; seg 113  curve=+4  pitch=-1                #0:$80@+18 #2:$90@+44
+        fcb   $04,$00,$04,$9A,$12,$00,$E4,$FA  ; seg 114  curve=+4                          #0:$80@+18 #2:$90@-28 #3:$8A@-6
+        fcb   $04,$00,$04,$0A,$12,$00,$E8,$00  ; seg 115  curve=+4                          #0:$80@+18 #2:$90@-24
+        fcb   $04,$01,$04,$9A,$12,$00,$E0,$F8  ; seg 116  curve=+4  pitch=+1                #0:$80@+18 #2:$90@-32 #3:$8A@-8
+        fcb   $04,$01,$04,$0A,$12,$00,$D0,$00  ; seg 117  curve=+4  pitch=+1                #0:$80@+18 #2:$90@-48
+        fcb   $04,$01,$04,$9A,$12,$00,$D8,$F6  ; seg 118  curve=+4  pitch=+1                #0:$80@+18 #2:$90@-40 #3:$8A@-10
+        fcb   $04,$01,$04,$9A,$12,$00,$E0,$FA  ; seg 119  curve=+4  pitch=+1                #0:$80@+18 #2:$90@-32 #3:$8A@-6
+        fcb   $04,$00,$04,$9A,$12,$00,$EC,$F8  ; seg 120  curve=+4                          #0:$80@+18 #2:$90@-20 #3:$8A@-8
+        fcb   $04,$00,$04,$0A,$12,$00,$E4,$00  ; seg 121  curve=+4                          #0:$80@+18 #2:$90@-28
+        fcb   $04,$00,$04,$9A,$12,$00,$30,$F6  ; seg 122  curve=+4                          #0:$80@+18 #2:$90@+48 #3:$8A@-10
+        fcb   $04,$00,$04,$9A,$12,$00,$D8,$F8  ; seg 123  curve=+4                          #0:$80@+18 #2:$90@-40 #3:$8A@-8
+        fcb   $04,$00,$04,$0A,$12,$00,$CC,$00  ; seg 124  curve=+4                          #0:$80@+18 #2:$90@-52
+        fcb   $04,$00,$04,$9A,$12,$00,$E0,$FA  ; seg 125  curve=+4                          #0:$80@+18 #2:$90@-32 #3:$8A@-6
+        fcb   $04,$00,$00,$9A,$00,$00,$30,$F8  ; seg 126  curve=+4                          #2:$90@+48 #3:$8A@-8
+        fcb   $04,$00,$00,$0A,$00,$00,$E0,$00  ; seg 127  curve=+4                          #2:$90@-32
+        fcb   $00,$00,$00,$0A,$00,$00,$24,$00  ; seg 128                                    #2:$90@+36
+        fcb   $00,$00,$00,$8A,$00,$00,$1C,$F8  ; seg 129                                    #2:$90@+28 #3:$A2@-8
+        fcb   $00,$01,$00,$0A,$00,$00,$EC,$00  ; seg 130            pitch=+1                #2:$90@-20
+        fcb   $00,$01,$00,$8A,$00,$00,$E0,$0C  ; seg 131            pitch=+1                #2:$90@-32 #3:$A2@+12
+        fcb   $00,$7F,$00,$8A,$00,$00,$D8,$F4  ; seg 132            pitch=-1                #2:$90@-40 #3:$A2@-12
+        fcb   $00,$7F,$00,$0A,$00,$00,$20,$00  ; seg 133            pitch=-1                #2:$90@+32
+        fcb   $00,$00,$00,$8A,$00,$00,$18,$08  ; seg 134                                    #2:$90@+24 #3:$A2@+8
+        fcb   $00,$00,$00,$0A,$00,$00,$1C,$00  ; seg 135                                    #2:$90@+28
+        fcb   $00,$00,$00,$80,$00,$00,$00,$E8  ; seg 136                                    #3:$A2@-24
+        fcb   $00,$00,$00,$80,$00,$00,$00,$18  ; seg 137                                    #3:$A2@+24
+        fcb   $00,$00,$00,$80,$00,$00,$00,$20  ; seg 138                                    #3:$A2@+32
+        fcb   $00,$00,$00,$00,$00,$00,$00,$00  ; seg 139
+        fcb   $00,$00,$00,$80,$00,$00,$00,$DC  ; seg 140                                    #3:$A2@-36
+        fcb   $00,$00,$00,$00,$00,$00,$00,$00  ; seg 141
+        fcb   $00,$00,$00,$80,$00,$00,$00,$18  ; seg 142                                    #3:$A2@+24
+        fcb   $00,$00,$00,$00,$00,$00,$00,$00  ; seg 143
+* ── Wraparound (8 premiers segments dupliqués pour look-ahead) ──
+        fcb   $00,$00,$01,$00,$00,$00,$00,$00  ; seg 144                                    #0:$82@+0
+        fcb   $00,$00,$00,$00,$00,$00,$00,$00  ; seg 145
+        fcb   $00,$00,$02,$00,$EC,$00,$00,$00  ; seg 146                                    #0:$A9@-20
+        fcb   $00,$00,$02,$00,$EC,$00,$00,$00  ; seg 147                                    #0:$A9@-20
+        fcb   $00,$00,$03,$03,$12,$00,$12,$00  ; seg 148                                    #0:$83@+18 #2:$83@+18
+        fcb   $00,$00,$03,$03,$12,$00,$12,$00  ; seg 149                                    #0:$83@+18 #2:$83@+18
+        fcb   $00,$00,$03,$03,$12,$00,$12,$00  ; seg 150                                    #0:$83@+18 #2:$83@+18
+        fcb   $00,$00,$03,$03,$12,$00,$12,$00  ; seg 151                                    #0:$83@+18 #2:$83@+18
+
+Circuit_27_hard_10_segment_cache
+        fcb   $00,$00,$F6,$0A  ; seg   0  yaw=  +0 pitch=  +0 min_lat= -10 max_lat= +10
+        fcb   $00,$00,$F6,$0A  ; seg   1  yaw=  +0 pitch=  +0 min_lat= -10 max_lat= +10
+        fcb   $00,$00,$F6,$0A  ; seg   2  yaw=  +0 pitch=  +0 min_lat= -10 max_lat= +10
+        fcb   $00,$00,$F6,$0A  ; seg   3  yaw=  +0 pitch=  +0 min_lat= -10 max_lat= +10
+        fcb   $00,$00,$F6,$0A  ; seg   4  yaw=  +0 pitch=  +0 min_lat= -10 max_lat= +10
+        fcb   $00,$00,$F6,$0A  ; seg   5  yaw=  +0 pitch=  +0 min_lat= -10 max_lat= +10
+        fcb   $00,$00,$F6,$0A  ; seg   6  yaw=  +0 pitch=  +0 min_lat= -10 max_lat= +10
+        fcb   $00,$00,$F6,$0A  ; seg   7  yaw=  +0 pitch=  +0 min_lat= -10 max_lat= +10
+        fcb   $00,$00,$F6,$0A  ; seg   8  yaw=  +0 pitch=  +0 min_lat= -10 max_lat= +10
+        fcb   $00,$00,$F6,$0A  ; seg   9  yaw=  +0 pitch=  +0 min_lat= -10 max_lat= +10
+        fcb   $00,$00,$F6,$09  ; seg  10  yaw=  +0 pitch=  +0 min_lat= -10 max_lat=  +9
+        fcb   $00,$00,$F6,$08  ; seg  11  yaw=  +0 pitch=  +0 min_lat= -10 max_lat=  +8
+        fcb   $00,$00,$F7,$07  ; seg  12  yaw=  +0 pitch=  +0 min_lat=  -9 max_lat=  +7
+        fcb   $04,$00,$F8,$06  ; seg  13  yaw=  +4 pitch=  +0 min_lat=  -8 max_lat=  +6
+        fcb   $08,$00,$F9,$05  ; seg  14  yaw=  +8 pitch=  +0 min_lat=  -7 max_lat=  +5
+        fcb   $0C,$00,$FA,$04  ; seg  15  yaw= +12 pitch=  +0 min_lat=  -6 max_lat=  +4
+        fcb   $10,$00,$FB,$03  ; seg  16  yaw= +16 pitch=  +0 min_lat=  -5 max_lat=  +3
+        fcb   $10,$00,$FC,$02  ; seg  17  yaw= +16 pitch=  +0 min_lat=  -4 max_lat=  +2
+        fcb   $10,$00,$FA,$01  ; seg  18  yaw= +16 pitch=  +0 min_lat=  -6 max_lat=  +1
+        fcb   $10,$00,$FB,$00  ; seg  19  yaw= +16 pitch=  +0 min_lat=  -5 max_lat=  +0
+        fcb   $10,$00,$FC,$FF  ; seg  20  yaw= +16 pitch=  +0 min_lat=  -4 max_lat=  -1
+        fcb   $14,$00,$FD,$FE  ; seg  21  yaw= +20 pitch=  +0 min_lat=  -3 max_lat=  -2
+        fcb   $18,$00,$FE,$02  ; seg  22  yaw= +24 pitch=  +0 min_lat=  -2 max_lat=  +2
+        fcb   $1C,$00,$FF,$0A  ; seg  23  yaw= +28 pitch=  +0 min_lat=  -1 max_lat= +10
+        fcb   $20,$00,$00,$09  ; seg  24  yaw= +32 pitch=  +0 min_lat=  +0 max_lat=  +9
+        fcb   $20,$00,$FC,$08  ; seg  25  yaw= +32 pitch=  +0 min_lat=  -4 max_lat=  +8
+        fcb   $20,$00,$FD,$07  ; seg  26  yaw= +32 pitch=  +0 min_lat=  -3 max_lat=  +7
+        fcb   $20,$00,$FE,$06  ; seg  27  yaw= +32 pitch=  +0 min_lat=  -2 max_lat=  +6
+        fcb   $20,$00,$FE,$05  ; seg  28  yaw= +32 pitch=  +0 min_lat=  -2 max_lat=  +5
+        fcb   $20,$00,$FF,$04  ; seg  29  yaw= +32 pitch=  +0 min_lat=  -1 max_lat=  +4
+        fcb   $20,$00,$00,$03  ; seg  30  yaw= +32 pitch=  +0 min_lat=  +0 max_lat=  +3
+        fcb   $20,$00,$FC,$02  ; seg  31  yaw= +32 pitch=  +0 min_lat=  -4 max_lat=  +2
+        fcb   $20,$00,$F6,$01  ; seg  32  yaw= +32 pitch=  +0 min_lat= -10 max_lat=  +1
+        fcb   $20,$00,$F6,$00  ; seg  33  yaw= +32 pitch=  +0 min_lat= -10 max_lat=  +0
+        fcb   $20,$00,$F7,$FF  ; seg  34  yaw= +32 pitch=  +0 min_lat=  -9 max_lat=  -1
+        fcb   $20,$00,$F8,$FE  ; seg  35  yaw= +32 pitch=  +0 min_lat=  -8 max_lat=  -2
+        fcb   $20,$00,$F9,$FD  ; seg  36  yaw= +32 pitch=  +0 min_lat=  -7 max_lat=  -3
+        fcb   $1C,$00,$FA,$FC  ; seg  37  yaw= +28 pitch=  +0 min_lat=  -6 max_lat=  -4
+        fcb   $18,$00,$FB,$00  ; seg  38  yaw= +24 pitch=  +0 min_lat=  -5 max_lat=  +0
+        fcb   $14,$00,$FC,$04  ; seg  39  yaw= +20 pitch=  +0 min_lat=  -4 max_lat=  +4
+        fcb   $10,$00,$FD,$0A  ; seg  40  yaw= +16 pitch=  +0 min_lat=  -3 max_lat= +10
+        fcb   $14,$00,$FE,$0A  ; seg  41  yaw= +20 pitch=  +0 min_lat=  -2 max_lat= +10
+        fcb   $18,$00,$FF,$0A  ; seg  42  yaw= +24 pitch=  +0 min_lat=  -1 max_lat= +10
+        fcb   $1C,$00,$00,$0A  ; seg  43  yaw= +28 pitch=  +0 min_lat=  +0 max_lat= +10
+        fcb   $20,$00,$FD,$0A  ; seg  44  yaw= +32 pitch=  +0 min_lat=  -3 max_lat= +10
+        fcb   $20,$00,$FE,$0A  ; seg  45  yaw= +32 pitch=  +0 min_lat=  -2 max_lat= +10
+        fcb   $20,$00,$FF,$0A  ; seg  46  yaw= +32 pitch=  +0 min_lat=  -1 max_lat= +10
+        fcb   $20,$00,$00,$09  ; seg  47  yaw= +32 pitch=  +0 min_lat=  +0 max_lat=  +9
+        fcb   $20,$00,$F6,$08  ; seg  48  yaw= +32 pitch=  +0 min_lat= -10 max_lat=  +8
+        fcb   $25,$01,$F6,$07  ; seg  49  yaw= +37 pitch=  +1 min_lat= -10 max_lat=  +7
+        fcb   $2A,$02,$F6,$06  ; seg  50  yaw= +42 pitch=  +2 min_lat= -10 max_lat=  +6
+        fcb   $2F,$02,$F6,$05  ; seg  51  yaw= +47 pitch=  +2 min_lat= -10 max_lat=  +5
+        fcb   $34,$02,$F7,$04  ; seg  52  yaw= +52 pitch=  +2 min_lat=  -9 max_lat=  +4
+        fcb   $39,$01,$F8,$03  ; seg  53  yaw= +57 pitch=  +1 min_lat=  -8 max_lat=  +3
+        fcb   $3E,$00,$F9,$02  ; seg  54  yaw= +62 pitch=  +0 min_lat=  -7 max_lat=  +2
+        fcb   $43,$00,$FA,$01  ; seg  55  yaw= +67 pitch=  +0 min_lat=  -6 max_lat=  +1
+        fcb   $48,$00,$FB,$00  ; seg  56  yaw= +72 pitch=  +0 min_lat=  -5 max_lat=  +0
+        fcb   $48,$02,$FC,$03  ; seg  57  yaw= +72 pitch=  +2 min_lat=  -4 max_lat=  +3
+        fcb   $48,$04,$F7,$02  ; seg  58  yaw= +72 pitch=  +4 min_lat=  -9 max_lat=  +2
+        fcb   $48,$06,$F8,$01  ; seg  59  yaw= +72 pitch=  +6 min_lat=  -8 max_lat=  +1
+        fcb   $48,$08,$F9,$00  ; seg  60  yaw= +72 pitch=  +8 min_lat=  -7 max_lat=  +0
+        fcb   $48,$06,$FA,$FF  ; seg  61  yaw= +72 pitch=  +6 min_lat=  -6 max_lat=  -1
+        fcb   $48,$04,$FB,$FE  ; seg  62  yaw= +72 pitch=  +4 min_lat=  -5 max_lat=  -2
+        fcb   $48,$02,$FC,$FD  ; seg  63  yaw= +72 pitch=  +2 min_lat=  -4 max_lat=  -3
+        fcb   $48,$00,$F6,$FC  ; seg  64  yaw= +72 pitch=  +0 min_lat= -10 max_lat=  -4
+        fcb   $48,$FF,$F7,$0A  ; seg  65  yaw= +72 pitch=  -1 min_lat=  -9 max_lat= +10
+        fcb   $48,$FE,$F8,$0A  ; seg  66  yaw= +72 pitch=  -2 min_lat=  -8 max_lat= +10
+        fcb   $48,$FF,$F9,$0A  ; seg  67  yaw= +72 pitch=  -1 min_lat=  -7 max_lat= +10
+        fcb   $48,$00,$FA,$0A  ; seg  68  yaw= +72 pitch=  +0 min_lat=  -6 max_lat= +10
+        fcb   $4E,$00,$FB,$0A  ; seg  69  yaw= +78 pitch=  +0 min_lat=  -5 max_lat= +10
+        fcb   $54,$00,$FC,$09  ; seg  70  yaw= +84 pitch=  +0 min_lat=  -4 max_lat=  +9
+        fcb   $5A,$00,$FD,$08  ; seg  71  yaw= +90 pitch=  +0 min_lat=  -3 max_lat=  +8
+        fcb   $60,$00,$FE,$07  ; seg  72  yaw= +96 pitch=  +0 min_lat=  -2 max_lat=  +7
+        fcb   $60,$01,$FE,$06  ; seg  73  yaw= +96 pitch=  +1 min_lat=  -2 max_lat=  +6
+        fcb   $60,$02,$FF,$05  ; seg  74  yaw= +96 pitch=  +2 min_lat=  -1 max_lat=  +5
+        fcb   $60,$02,$00,$04  ; seg  75  yaw= +96 pitch=  +2 min_lat=  +0 max_lat=  +4
+        fcb   $60,$02,$FE,$03  ; seg  76  yaw= +96 pitch=  +2 min_lat=  -2 max_lat=  +3
+        fcb   $60,$03,$FF,$02  ; seg  77  yaw= +96 pitch=  +3 min_lat=  -1 max_lat=  +2
+        fcb   $60,$04,$00,$01  ; seg  78  yaw= +96 pitch=  +4 min_lat=  +0 max_lat=  +1
+        fcb   $60,$04,$01,$00  ; seg  79  yaw= +96 pitch=  +4 min_lat=  +1 max_lat=  +0
+        fcb   $60,$04,$02,$04  ; seg  80  yaw= +96 pitch=  +4 min_lat=  +2 max_lat=  +4
+        fcb   $60,$03,$00,$03  ; seg  81  yaw= +96 pitch=  +3 min_lat=  +0 max_lat=  +3
+        fcb   $60,$02,$FD,$02  ; seg  82  yaw= +96 pitch=  +2 min_lat=  -3 max_lat=  +2
+        fcb   $60,$02,$FE,$01  ; seg  83  yaw= +96 pitch=  +2 min_lat=  -2 max_lat=  +1
+        fcb   $60,$02,$F6,$00  ; seg  84  yaw= +96 pitch=  +2 min_lat= -10 max_lat=  +0
+        fcb   $60,$01,$F6,$04  ; seg  85  yaw= +96 pitch=  +1 min_lat= -10 max_lat=  +4
+        fcb   $60,$00,$F6,$03  ; seg  86  yaw= +96 pitch=  +0 min_lat= -10 max_lat=  +3
+        fcb   $60,$FF,$F6,$02  ; seg  87  yaw= +96 pitch=  -1 min_lat= -10 max_lat=  +2
+        fcb   $60,$FE,$F6,$01  ; seg  88  yaw= +96 pitch=  -2 min_lat= -10 max_lat=  +1
+        fcb   $5C,$FE,$F6,$00  ; seg  89  yaw= +92 pitch=  -2 min_lat= -10 max_lat=  +0
+        fcb   $58,$FE,$F6,$FF  ; seg  90  yaw= +88 pitch=  -2 min_lat= -10 max_lat=  -1
+        fcb   $54,$FE,$F6,$FE  ; seg  91  yaw= +84 pitch=  -2 min_lat= -10 max_lat=  -2
+        fcb   $50,$FE,$F6,$00  ; seg  92  yaw= +80 pitch=  -2 min_lat= -10 max_lat=  +0
+        fcb   $4C,$FD,$F6,$FF  ; seg  93  yaw= +76 pitch=  -3 min_lat= -10 max_lat=  -1
+        fcb   $48,$FC,$F6,$FE  ; seg  94  yaw= +72 pitch=  -4 min_lat= -10 max_lat=  -2
+        fcb   $44,$FC,$F6,$02  ; seg  95  yaw= +68 pitch=  -4 min_lat= -10 max_lat=  +2
+        fcb   $40,$FC,$F7,$01  ; seg  96  yaw= +64 pitch=  -4 min_lat=  -9 max_lat=  +1
+        fcb   $3C,$FD,$F8,$00  ; seg  97  yaw= +60 pitch=  -3 min_lat=  -8 max_lat=  +0
+        fcb   $38,$FE,$F9,$FF  ; seg  98  yaw= +56 pitch=  -2 min_lat=  -7 max_lat=  -1
+        fcb   $34,$FE,$FA,$FE  ; seg  99  yaw= +52 pitch=  -2 min_lat=  -6 max_lat=  -2
+        fcb   $30,$FE,$FB,$02  ; seg 100  yaw= +48 pitch=  -2 min_lat=  -5 max_lat=  +2
+        fcb   $2C,$FD,$FC,$01  ; seg 101  yaw= +44 pitch=  -3 min_lat=  -4 max_lat=  +1
+        fcb   $28,$FC,$FD,$00  ; seg 102  yaw= +40 pitch=  -4 min_lat=  -3 max_lat=  +0
+        fcb   $24,$FC,$FE,$0A  ; seg 103  yaw= +36 pitch=  -4 min_lat=  -2 max_lat= +10
+        fcb   $20,$FC,$FF,$0A  ; seg 104  yaw= +32 pitch=  -4 min_lat=  -1 max_lat= +10
+        fcb   $24,$FC,$00,$0A  ; seg 105  yaw= +36 pitch=  -4 min_lat=  +0 max_lat= +10
+        fcb   $28,$FC,$01,$0A  ; seg 106  yaw= +40 pitch=  -4 min_lat=  +1 max_lat= +10
+        fcb   $2C,$FD,$02,$0A  ; seg 107  yaw= +44 pitch=  -3 min_lat=  +2 max_lat= +10
+        fcb   $30,$FE,$00,$0A  ; seg 108  yaw= +48 pitch=  -2 min_lat=  +0 max_lat= +10
+        fcb   $34,$FE,$01,$0A  ; seg 109  yaw= +52 pitch=  -2 min_lat=  +1 max_lat= +10
+        fcb   $38,$FE,$02,$0A  ; seg 110  yaw= +56 pitch=  -2 min_lat=  +2 max_lat= +10
+        fcb   $3C,$FE,$FF,$0A  ; seg 111  yaw= +60 pitch=  -2 min_lat=  -1 max_lat= +10
+        fcb   $40,$FE,$00,$0A  ; seg 112  yaw= +64 pitch=  -2 min_lat=  +0 max_lat= +10
+        fcb   $44,$FD,$01,$0A  ; seg 113  yaw= +68 pitch=  -3 min_lat=  +1 max_lat= +10
+        fcb   $48,$FC,$02,$0A  ; seg 114  yaw= +72 pitch=  -4 min_lat=  +2 max_lat= +10
+        fcb   $4C,$FC,$FF,$0A  ; seg 115  yaw= +76 pitch=  -4 min_lat=  -1 max_lat= +10
+        fcb   $50,$FC,$00,$0A  ; seg 116  yaw= +80 pitch=  -4 min_lat=  +0 max_lat= +10
+        fcb   $54,$FD,$00,$0A  ; seg 117  yaw= +84 pitch=  -3 min_lat=  +0 max_lat= +10
+        fcb   $58,$FE,$01,$0A  ; seg 118  yaw= +88 pitch=  -2 min_lat=  +1 max_lat= +10
+        fcb   $5C,$FF,$02,$0A  ; seg 119  yaw= +92 pitch=  -1 min_lat=  +2 max_lat= +10
+        fcb   $60,$00,$00,$0A  ; seg 120  yaw= +96 pitch=  +0 min_lat=  +0 max_lat= +10
+        fcb   $64,$00,$FE,$0A  ; seg 121  yaw=+100 pitch=  +0 min_lat=  -2 max_lat= +10
+        fcb   $68,$00,$FF,$0A  ; seg 122  yaw=+104 pitch=  +0 min_lat=  -1 max_lat= +10
+        fcb   $6C,$00,$00,$0A  ; seg 123  yaw=+108 pitch=  +0 min_lat=  +0 max_lat= +10
+        fcb   $70,$00,$01,$0A  ; seg 124  yaw=+112 pitch=  +0 min_lat=  +1 max_lat= +10
+        fcb   $74,$00,$02,$09  ; seg 125  yaw=+116 pitch=  +0 min_lat=  +2 max_lat=  +9
+        fcb   $78,$00,$00,$08  ; seg 126  yaw=+120 pitch=  +0 min_lat=  +0 max_lat=  +8
+        fcb   $7C,$00,$FE,$07  ; seg 127  yaw=+124 pitch=  +0 min_lat=  -2 max_lat=  +7
+        fcb   $80,$00,$FF,$06  ; seg 128  yaw=-128 pitch=  +0 min_lat=  -1 max_lat=  +6
+        fcb   $80,$00,$00,$05  ; seg 129  yaw=-128 pitch=  +0 min_lat=  +0 max_lat=  +5
+        fcb   $80,$00,$FA,$04  ; seg 130  yaw=-128 pitch=  +0 min_lat=  -6 max_lat=  +4
+        fcb   $80,$01,$FB,$03  ; seg 131  yaw=-128 pitch=  +1 min_lat=  -5 max_lat=  +3
+        fcb   $80,$02,$FC,$02  ; seg 132  yaw=-128 pitch=  +2 min_lat=  -4 max_lat=  +2
+        fcb   $80,$01,$F6,$01  ; seg 133  yaw=-128 pitch=  +1 min_lat= -10 max_lat=  +1
+        fcb   $80,$00,$F6,$00  ; seg 134  yaw=-128 pitch=  +0 min_lat= -10 max_lat=  +0
+        fcb   $80,$00,$F6,$0A  ; seg 135  yaw=-128 pitch=  +0 min_lat= -10 max_lat= +10
+        fcb   $80,$00,$F6,$0A  ; seg 136  yaw=-128 pitch=  +0 min_lat= -10 max_lat= +10
+        fcb   $80,$00,$F6,$0A  ; seg 137  yaw=-128 pitch=  +0 min_lat= -10 max_lat= +10
+        fcb   $80,$00,$F6,$0A  ; seg 138  yaw=-128 pitch=  +0 min_lat= -10 max_lat= +10
+        fcb   $80,$00,$F6,$0A  ; seg 139  yaw=-128 pitch=  +0 min_lat= -10 max_lat= +10
+        fcb   $80,$00,$F6,$0A  ; seg 140  yaw=-128 pitch=  +0 min_lat= -10 max_lat= +10
+        fcb   $80,$00,$F6,$0A  ; seg 141  yaw=-128 pitch=  +0 min_lat= -10 max_lat= +10
+        fcb   $80,$00,$F6,$0A  ; seg 142  yaw=-128 pitch=  +0 min_lat= -10 max_lat= +10
+        fcb   $80,$00,$F6,$0A  ; seg 143  yaw=-128 pitch=  +0 min_lat= -10 max_lat= +10
+* ── Wraparound cache (8 premiers dupliqués) ──
+        fcb   $00,$00,$F6,$0A  ; seg 144 (wraparound de seg 0)
+        fcb   $00,$00,$F6,$0A  ; seg 145 (wraparound de seg 1)
+        fcb   $00,$00,$F6,$0A  ; seg 146 (wraparound de seg 2)
+        fcb   $00,$00,$F6,$0A  ; seg 147 (wraparound de seg 3)
+        fcb   $00,$00,$F6,$0A  ; seg 148 (wraparound de seg 4)
+        fcb   $00,$00,$F6,$0A  ; seg 149 (wraparound de seg 5)
+        fcb   $00,$00,$F6,$0A  ; seg 150 (wraparound de seg 6)
+        fcb   $00,$00,$F6,$0A  ; seg 151 (wraparound de seg 7)

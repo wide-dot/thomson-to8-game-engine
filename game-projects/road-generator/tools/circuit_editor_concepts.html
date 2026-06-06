@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Circuit Editor — Concepts d'édition multi-segments + générateur</title>
+<style>
+:root{--bg:#13151a;--panel:#1b1e25;--panel2:#23262f;--line:#2c303a;--ink:#dce0e8;--dim:#878e9c;--accent:#4ea1ff;--amber:#ffb454;--green:#5fd08a;--red:#ff6b6b;--mono:"SF Mono",Menlo,Consolas,monospace}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.5 -apple-system,Segoe UI,Roboto,sans-serif}
+header{background:#0e1014;border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:baseline;gap:16px}
+header h1{margin:0;font-size:15px;font-weight:600}header p{margin:0;color:var(--dim);font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;padding:20px 28px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.card .ch{padding:14px 16px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.card .ch .badge{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--panel2);border:1px solid var(--line)}
+.card .ch .badge.new{color:var(--green);border-color:#2c5a40}
+.card .ch .badge.complex{color:var(--amber);border-color:#5a4a2c}
+.card .ch h2{margin:0;font-size:13px;font-weight:600}
+.card .vis{background:#0e1014;position:relative;overflow:hidden}
+.card .body{padding:13px 16px;flex:1;display:flex;flex-direction:column;gap:10px}
+.card .body p{margin:0;font-size:12px;color:var(--dim);line-height:1.55}
+.card .body p b{color:var(--ink)}
+.card .pros{display:flex;flex-direction:column;gap:4px}
+.card .pros span{font-size:11px;padding:3px 8px;border-radius:5px}
+.card .pros span.pro{background:#1a2e1a;color:var(--green)}
+.card .pros span.con{background:#2a1e1e;color:var(--red)}
+.card .pros span.note{background:var(--panel2);color:var(--dim)}
+.section-title{padding:14px 28px 4px;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.8px}
+svg{display:block}
+.full{grid-column:1/-1}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏁 Lotus Circuit Editor — Concepts d'édition multi-segments + générateur procédural</h1>
+  <p>document de conception · non fonctionnel · pour choisir ce qu'on implémente</p>
+</header>
+
+<p class="section-title">A · Édition multi-segments — modifier plusieurs sections simultanément</p>
+<div class="grid">
+
+<!-- CONCEPT A1 : PROPORTIONAL EDITING -->
+<div class="card">
+  <div class="ch"><h2>A1 · Proportional Editing</h2><span class="badge new">★ recommandé</span></div>
+  <div class="vis"><svg viewBox="0 0 400 160" width="100%" height="160">
+    <!-- circuit schématique -->
+    <defs>
+      <linearGradient id="g1" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#4ea1ff" stop-opacity="0"/>
+        <stop offset=".35" stop-color="#4ea1ff" stop-opacity=".18"/>
+        <stop offset=".5" stop-color="#ffb454" stop-opacity=".55"/>
+        <stop offset=".65" stop-color="#4ea1ff" stop-opacity=".18"/>
+        <stop offset="1" stop-color="#4ea1ff" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="bell" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffb454" stop-opacity=".7"/>
+        <stop offset="1" stop-color="#ffb454" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <!-- zone d'influence colorée -->
+    <rect x="80" y="0" width="240" height="160" fill="url(#g1)"/>
+    <!-- segments (barres verticales = curvature) -->
+    <g opacity=".5">
+      <line x1="20" y1="80" x2="20" y2="80" stroke="#3a4150" stroke-width="6"/>
+    </g>
+    <!-- 25 segments -->
+    <g>
+    <script>
+    // génère les barres (simulation dans SVG pas possible, placées manuellement)
+    </script>
+    <!-- segments plats avant -->
+    <rect x="18" y="72" width="5" height="8" rx="2" fill="#3a4150"/>
+    <rect x="28" y="72" width="5" height="8" rx="2" fill="#3a4150"/>
+    <rect x="38" y="72" width="5" height="8" rx="2" fill="#3a4150"/>
+    <rect x="48" y="70" width="5" height="12" rx="2" fill="#3a4150"/>
+    <rect x="58" y="69" width="5" height="16" rx="2" fill="#3a4150"/>
+    <rect x="68" y="67" width="5" height="20" rx="2" fill="#3a4150" opacity=".6"/>
+    <!-- zone influence (falloff) : segments colorés proportionnellement -->
+    <rect x="78" y="65" width="5" height="25" rx="2" fill="#4ea1ff" opacity=".4"/>
+    <rect x="88" y="61" width="5" height="33" rx="2" fill="#4ea1ff" opacity=".6"/>
+    <rect x="98" y="56" width="5" height="43" rx="2" fill="#4ea1ff" opacity=".75"/>
+    <rect x="108" y="51" width="5" height="50" rx="2" fill="#4ea1ff" opacity=".9"/>
+    <rect x="118" y="48" width="5" height="55" rx="2" fill="#ffb454" opacity=".9"/>
+    <!-- segment central sélectionné -->
+    <rect x="128" y="38" width="6" height="76" rx="2" fill="#ffb454" stroke="#fff" stroke-width="1.5"/>
+    <rect x="128" y="38" width="6" height="76" rx="2" fill="none" stroke="#ffb454" stroke-width="3" opacity=".5"/>
+    <!-- symétrique droite -->
+    <rect x="138" y="48" width="5" height="55" rx="2" fill="#ffb454" opacity=".9"/>
+    <rect x="148" y="51" width="5" height="50" rx="2" fill="#4ea1ff" opacity=".9"/>
+    <rect x="158" y="56" width="5" height="43" rx="2" fill="#4ea1ff" opacity=".75"/>
+    <rect x="168" y="61" width="5" height="33" rx="2" fill="#4ea1ff" opacity=".6"/>
+    <rect x="178" y="65" width="5" height="25" rx="2" fill="#4ea1ff" opacity=".4"/>
+    <rect x="188" y="67" width="5" height="20" rx="2" fill="#3a4150" opacity=".6"/>
+    <!-- segments plats après -->
+    <rect x="198" y="69" width="5" height="16" rx="2" fill="#3a4150"/>
+    <rect x="208" y="70" width="5" height="12" rx="2" fill="#3a4150"/>
+    <rect x="218" y="72" width="5" height="8" rx="2" fill="#3a4150"/>
+    <rect x="228" y="72" width="5" height="8" rx="2" fill="#3a4150"/>
+    <rect x="238" y="72" width="5" height="8" rx="2" fill="#3a4150"/>
+    </g>
+    <!-- baseline -->
+    <line x1="10" y1="76" x2="390" y2="76" stroke="#2c303a" stroke-width="1"/>
+    <!-- légendes -->
+    <text x="131" y="30" fill="#ffb454" font-size="9" font-family="monospace" text-anchor="middle">◆ seg 15</text>
+    <text x="80" y="145" fill="#4ea1ff" font-size="9" font-family="monospace">← rayon d'influence</text>
+    <text x="195" y="145" fill="#4ea1ff" font-size="9" font-family="monospace">→</text>
+    <!-- mini courbe falloff -->
+    <path d="M320 140 Q350 90 360 50 Q370 90 390 140" fill="none" stroke="#ffb454" stroke-width="2"/>
+    <text x="310" y="152" fill="#dim" font-size="8" fill="#878e9c" font-family="monospace">falloff</text>
+    <!-- controles -->
+    <rect x="290" y="10" width="95" height="50" rx="6" fill="#23262f" stroke="#2c303a"/>
+    <text x="296" y="23" fill="#878e9c" font-size="9" font-family="monospace">rayon  [◀━━━|━▶]  8 seg</text>
+    <text x="296" y="36" fill="#878e9c" font-size="9" font-family="monospace">force  [◀━━━━|▶]  1.0</text>
+    <text x="296" y="49" fill="#878e9c" font-size="9" font-family="monospace">courbe [smooth ▾]</text>
+  </svg></div>
+  <div class="body">
+    <p><b>Inspiré de Blender</b> (O / Proportional Edit). Chaque modification du segment central se propage aux voisins avec un poids décroissant défini par une courbe de falloff.</p>
+    <p>Paramètres : <b>rayon</b> (nb de segments affectés de chaque côté), <b>force</b>, <b>type de falloff</b> : Smooth (cosinus), Sharp (x²), Linear, Bell (gaussienne), Constant.</p>
+    <div class="pros">
+      <span class="pro">✓ Intuitif, connu des utilisateurs Blender</span>
+      <span class="pro">✓ 3 paramètres seulement, prévisible</span>
+      <span class="pro">✓ Visualisation claire dans le plan et la 3D</span>
+      <span class="con">✗ Symétrique par défaut (falloff identique gauche/droite)</span>
+      <span class="note">→ idéal pour sculpter courbes + pentes progressivement</span>
+    </div>
+  </div>
+</div>
+
+<!-- CONCEPT A2 : RANGE + SHAPE STAMP -->
+<div class="card">
+  <div class="ch"><h2>A2 · Sélection de plage + tampon de forme</h2><span class="badge new">★ recommandé</span></div>
+  <div class="vis"><svg viewBox="0 0 400 160" width="100%" height="160">
+    <!-- canal courbure avec zone sélectionnée -->
+    <rect x="90" y="0" width="220" height="160" fill="#4ea1ff" fill-opacity=".05" stroke="#4ea1ff" stroke-opacity=".3" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="92" y="12" fill="#4ea1ff" font-size="9" font-family="monospace">sélection [seg 8..22]</text>
+    <!-- courbe avant -->
+    <path d="M10 80 L85 80" stroke="#3a4150" stroke-width="2" fill="none"/>
+    <!-- shape appliquée : chicane (sinusoïde) -->
+    <path d="M90 80 C110 40 130 40 150 80 C170 120 190 120 205 80 L310 80" stroke="#4ea1ff" stroke-width="2.5" fill="none"/>
+    <!-- courbe après -->
+    <path d="M310 80 L390 80" stroke="#3a4150" stroke-width="2" fill="none"/>
+    <!-- baseline -->
+    <line x1="10" y1="80" x2="390" y2="80" stroke="#2c303a" stroke-width="1" stroke-dasharray="2 4"/>
+    <!-- pallette de formes -->
+    <g>
+      <rect x="10" y="108" width="46" height="28" rx="5" fill="#23262f" stroke="#4ea1ff" stroke-width="1.5"/>
+      <path d="M18 122 Q24 110 30 122 Q36 134 42 122" stroke="#4ea1ff" stroke-width="1.5" fill="none"/>
+      <text x="28" y="145" fill="#4ea1ff" font-size="8" font-family="monospace" text-anchor="middle">Chicane</text>
+      <rect x="62" y="108" width="46" height="28" rx="5" fill="#23262f" stroke="#2c303a"/>
+      <path d="M70 128 Q85 106 108 128" stroke="#5fd08a" stroke-width="1.5" fill="none"/>
+      <text x="85" y="145" fill="#878e9c" font-size="8" font-family="monospace" text-anchor="middle">Bosse</text>
+      <rect x="114" y="108" width="46" height="28" rx="5" fill="#23262f" stroke="#2c303a"/>
+      <path d="M122 110 Q137 130 160 128" stroke="#ffb454" stroke-width="1.5" fill="none"/>
+      <text x="137" y="145" fill="#878e9c" font-size="8" font-family="monospace" text-anchor="middle">Épingle</text>
+      <rect x="166" y="108" width="46" height="28" rx="5" fill="#23262f" stroke="#2c303a"/>
+      <path d="M174 128 Q185 108 190 118 Q195 126 212 108" stroke="#878e9c" stroke-width="1.5" fill="none"/>
+      <text x="189" y="145" fill="#878e9c" font-size="8" font-family="monospace" text-anchor="middle">S-Curve</text>
+      <rect x="218" y="108" width="46" height="28" rx="5" fill="#23262f" stroke="#2c303a"/>
+      <path d="M226 122 L264 122" stroke="#878e9c" stroke-width="1.5" fill="none"/>
+      <text x="241" y="145" fill="#878e9c" font-size="8" font-family="monospace" text-anchor="middle">Droite</text>
+      <text x="280" y="118" fill="#878e9c" font-size="10" font-family="monospace">amp ━━|━ 1.0</text>
+      <text x="280" y="132" fill="#878e9c" font-size="10" font-family="monospace">sym ━━|━ 0.5</text>
+    </g>
+  </svg></div>
+  <div class="body">
+    <p><b>Inspiré du vectoriel</b> (Illustrator, Inkscape). On sélectionne une plage de segments [début..fin] via drag sur le scrubber ou shift+clic dans le plan, puis on applique une <b>forme prédéfinie</b> (chicane, bosse, épingle, S-curve) avec amplitude et symétrie.</p>
+    <p>La forme est une fonction paramétrée qui remplace (ou additionne à) les valeurs dans la plage.</p>
+    <div class="pros">
+      <span class="pro">✓ Crée des formes reconnaissables en 2 clics</span>
+      <span class="pro">✓ Bibliothèque extensible (pré-sets Lotus réels)</span>
+      <span class="con">✗ Moins organique — résultat "géométrique"</span>
+      <span class="note">→ idéal pour créer des sections typiques (chicane, épingle)</span>
+    </div>
+  </div>
+</div>
+
+<!-- CONCEPT A3 : PINCEAU/SCULPT -->
+<div class="card">
+  <div class="ch"><h2>A3 · Pinceau de sculpture (Sculpt Mode)</h2><span class="badge complex">complexité moyenne</span></div>
+  <div class="vis"><svg viewBox="0 0 400 160" width="100%" height="160">
+    <defs>
+      <radialGradient id="brush" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="#ffb454" stop-opacity=".6"/>
+        <stop offset="1" stop-color="#ffb454" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <!-- piste vue de dessus stylisée -->
+    <path d="M20 90 C60 90 80 60 120 55 C160 50 180 80 220 80 C260 80 280 60 320 65 C350 68 370 80 390 80" fill="none" stroke="#10131a" stroke-width="14" stroke-linecap="round"/>
+    <path d="M20 90 C60 90 80 60 120 55 C160 50 180 80 220 80 C260 80 280 60 320 65 C350 68 370 80 390 80" fill="none" stroke="#5a86c8" stroke-width="7" stroke-linecap="round"/>
+    <!-- trace de pinceau en cours -->
+    <path d="M90 62 C100 60 110 56 120 55" fill="none" stroke="#ffb454" stroke-width="18" stroke-opacity=".2" stroke-linecap="round"/>
+    <path d="M90 62 C100 60 110 56 120 55" fill="none" stroke="#ffb454" stroke-width="2" stroke-dasharray="3 3" stroke-opacity=".8" stroke-linecap="round"/>
+    <!-- position curseur pinceau -->
+    <circle cx="120" cy="55" r="22" fill="url(#brush)"/>
+    <circle cx="120" cy="55" r="22" fill="none" stroke="#ffb454" stroke-width="1.5" stroke-dasharray="4 3" opacity=".8"/>
+    <circle cx="120" cy="55" r="3" fill="#ffb454"/>
+    <!-- curseur mode -->
+    <rect x="10" y="10" width="160" height="32" rx="6" fill="#23262f" stroke="#2c303a"/>
+    <text x="16" y="22" fill="#878e9c" font-size="9" font-family="monospace">mode  [courb ▾]  taille ━|━━ 8</text>
+    <text x="16" y="35" fill="#878e9c" font-size="9" font-family="monospace">force ━━|━ 0.6   falloff[▲◀]</text>
+    <!-- légende avant/après -->
+    <text x="250" y="30" fill="#5fd08a" font-size="9" font-family="monospace">avant (fantôme)</text>
+    <path d="M280 90 C290 90 300 70 310 65" fill="none" stroke="#5fd08a" stroke-width="1.5" stroke-dasharray="2 3" opacity=".5"/>
+    <text x="250" y="50" fill="#ffb454" font-size="9" font-family="monospace">après (édité)</text>
+    <!-- axes modes pinceau -->
+    <text x="190" y="120" fill="#4ea1ff" font-size="9" font-family="monospace">pinceaux : courbure / pente / lissage / bruit</text>
+    <text x="190" y="135" fill="#878e9c" font-size="9" font-family="monospace">drag le long du circuit → accumule l'effet</text>
+  </svg></div>
+  <div class="body">
+    <p><b>Inspiré de ZBrush / Mudbox</b> (sculpt) et des outils calligraphie vectorielle. Un pinceau positionné sur le circuit applique l'effet au survol/glissement. Modes : <b>Courbure+/-</b>, <b>Pente+/-</b>, <b>Lisser</b> (moyenne voisins), <b>Bruit</b>.</p>
+    <p>Taille = nb de segments, force = amplitude, falloff = courbe d'atténuation radiale.</p>
+    <div class="pros">
+      <span class="pro">✓ Très intuitif, sensation de sculpture directe</span>
+      <span class="pro">✓ Résultat organique, non répétitif</span>
+      <span class="con">✗ Résultats difficiles à reproduire exactement</span>
+      <span class="con">✗ Le "lissage" peut être nécessaire après sculpture brute</span>
+      <span class="note">→ idéal pour l'exploration créative et le raffinement</span>
+    </div>
+  </div>
+</div>
+
+<!-- CONCEPT A4 : KEYFRAMES ÉPARSES (SPLINE) -->
+<div class="card">
+  <div class="ch"><h2>A4 · Édition par keyframes éparses (spline)</h2><span class="badge new">★ recommandé</span></div>
+  <div class="vis"><svg viewBox="0 0 400 160" width="100%" height="160">
+    <!-- canal courbure interpolé (Catmull-Rom) -->
+    <path d="M10 80 C30 80 50 80 60 80 C70 80 80 40 110 38 C135 36 150 80 175 80 C200 80 215 110 240 115 C260 119 280 80 310 80 C330 80 360 80 390 80" fill="none" stroke="#4ea1ff" stroke-width="2" opacity=".4"/>
+    <!-- zone d'interpolation mise en valeur -->
+    <path d="M60 80 C80 40 110 38 135 36" fill="none" stroke="#4ea1ff" stroke-width="2.5"/>
+    <!-- keyframes (diamants) -->
+    <g>
+      <rect x="57" y="77" width="6" height="6" rx="1" fill="#ffb454" transform="rotate(45 60 80)"/>
+      <rect x="107" y="35" width="6" height="6" rx="1" fill="#ffb454" transform="rotate(45 110 38)"/>
+      <rect x="172" y="77" width="6" height="6" rx="1" fill="#4ea1ff" transform="rotate(45 175 80)"/>
+      <rect x="237" y="112" width="6" height="6" rx="1" fill="#4ea1ff" transform="rotate(45 240 115)"/>
+      <rect x="307" y="77" width="6" height="6" rx="1" fill="#4ea1ff" transform="rotate(45 310 80)"/>
+    </g>
+    <!-- poignées tangentes Bezier sur 1 keyframe (actif) -->
+    <line x1="60" y1="80" x2="38" y2="80" stroke="#ffb454" stroke-width="1" stroke-dasharray="3 2" opacity=".7"/>
+    <circle cx="38" cy="80" r="4" fill="#23262f" stroke="#ffb454" stroke-width="1.5"/>
+    <line x1="110" y1="38" x2="88" y2="50" stroke="#ffb454" stroke-width="1" stroke-dasharray="3 2" opacity=".7"/>
+    <circle cx="88" cy="50" r="4" fill="#23262f" stroke="#ffb454" stroke-width="1.5"/>
+    <line x1="110" y1="38" x2="132" y2="26" stroke="#ffb454" stroke-width="1" stroke-dasharray="3 2" opacity=".7"/>
+    <circle cx="132" cy="26" r="4" fill="#23262f" stroke="#ffb454" stroke-width="1.5"/>
+    <!-- baseline -->
+    <line x1="10" y1="80" x2="390" y2="80" stroke="#2c303a" stroke-width="1" stroke-dasharray="2 4"/>
+    <!-- mini-segments denses (grisés) -->
+    <g opacity=".25">
+      <line x1="60" y1="80" x2="65" y2="68" stroke="#4ea1ff"/>
+      <line x1="70" y1="80" x2="75" y2="56" stroke="#4ea1ff"/>
+      <line x1="80" y1="80" x2="85" y2="46" stroke="#4ea1ff"/>
+      <line x1="90" y1="80" x2="95" y2="40" stroke="#4ea1ff"/>
+      <line x1="100" y1="80" x2="105" y2="38" stroke="#4ea1ff"/>
+    </g>
+    <!-- légendes -->
+    <text x="12" y="12" fill="#878e9c" font-size="9" font-family="monospace">◆ keyframe éparse · ● poignée tangente Bézier</text>
+    <text x="12" y="24" fill="#878e9c" font-size="9" font-family="monospace">segments denses calculés par interpolation Catmull-Rom</text>
+    <!-- interpolations -->
+    <text x="200" y="148" fill="#878e9c" font-size="9" font-family="monospace" text-anchor="middle">modes interp : Linear | Catmull-Rom | Bézier | Step</text>
+    <text x="12" y="148" fill="#ffb454" font-size="9" font-family="monospace">keyframe actif</text>
+  </svg></div>
+  <div class="body">
+    <p><b>Inspiré des splines Bézier / Catmull-Rom</b> (Blender F-Curves, After Effects). On ne place que quelques <b>keyframes clés</b> (10–15 pour 100 segments), la courbe entre eux est <b>interpolée automatiquement</b>. Poignées tangentes Bézier pour la forme locale.</p>
+    <p>C'est conceptuellement l'inverse de l'édition actuelle : au lieu de modifier chaque segment, on sculpte la courbe en entier via des points de contrôle clairsemés.</p>
+    <div class="pros">
+      <span class="pro">✓ Très puissant pour de grandes sections</span>
+      <span class="pro">✓ Courbes naturellement lisses, continuité C1/C2</span>
+      <span class="con">✗ Changement de paradigme (plus de segment direct)</span>
+      <span class="note">→ idéal pour concevoir le circuit de zéro, complémentaire du A1</span>
+    </div>
+  </div>
+</div>
+
+<!-- CONCEPT A5 : ENVELOPE / MULTIPLICATEUR -->
+<div class="card">
+  <div class="ch"><h2>A5 · Enveloppe de modulation</h2><span class="badge">utilitaire</span></div>
+  <div class="vis"><svg viewBox="0 0 400 160" width="100%" height="160">
+    <!-- canal original -->
+    <path d="M10 90 C30 90 40 65 60 55 C80 45 95 75 115 75 C130 75 145 90 160 90 C175 90 185 60 205 58 C220 56 235 80 255 80 C270 80 285 90 310 90 C330 90 360 90 390 90" fill="none" stroke="#3a4150" stroke-width="1.5" stroke-dasharray="3 2"/>
+    <!-- enveloppe -->
+    <path d="M10 80 C60 80 90 30 200 25 C280 22 350 60 390 80" fill="#5fd08a" fill-opacity=".08" stroke="#5fd08a" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <!-- résultat multiplié -->
+    <path d="M10 80 C40 80 55 50 80 42 C100 35 120 65 155 70 C170 72 180 76 200 75 C220 74 240 72 270 78 C300 82 340 84 390 80" fill="none" stroke="#4ea1ff" stroke-width="2.5"/>
+    <!-- poignées enveloppe -->
+    <circle cx="90" cy="30" r="4.5" fill="#23262f" stroke="#5fd08a" stroke-width="1.5"/>
+    <circle cx="200" cy="25" r="4.5" fill="#23262f" stroke="#5fd08a" stroke-width="1.5"/>
+    <circle cx="300" cy="55" r="4.5" fill="#23262f" stroke="#5fd08a" stroke-width="1.5"/>
+    <!-- légendes -->
+    <text x="12" y="14" fill="#3a4150" font-size="9" font-family="monospace">--- original (conservé)</text>
+    <text x="12" y="26" fill="#5fd08a" font-size="9" font-family="monospace">--- enveloppe (facteur multiplicatif)</text>
+    <text x="12" y="38" fill="#4ea1ff" font-size="9" font-family="monospace">─── résultat = original × enveloppe</text>
+    <text x="12" y="148" fill="#878e9c" font-size="9" font-family="monospace">exemples : atténuer une portion · fade-in d'un virage · mirror L/R</text>
+    <!-- mode fade -->
+    <rect x="270" y="108" width="115" height="40" rx="6" fill="#23262f" stroke="#2c303a"/>
+    <text x="278" y="121" fill="#878e9c" font-size="9" font-family="monospace">opération : ×mult ▾</text>
+    <text x="278" y="134" fill="#878e9c" font-size="9" font-family="monospace">canal : courbe + pente</text>
+    <text x="278" y="147" fill="#878e9c" font-size="9" font-family="monospace">sym : auto ✓</text>
+  </svg></div>
+  <div class="body">
+    <p><b>Inspiré de l'automation audio</b> (Pro Tools, Ableton) et des filtres vectoriels. Une <b>courbe d'enveloppe</b> (peu de points) est posée au-dessus du canal courbure ou pente. Le résultat final = signal original × enveloppe (ou + offset).</p>
+    <p>Utile pour : atténuer une section progressivement, amplifier un virage, appliquer une symétrie, ou créer un fade-in/out d'effet.</p>
+    <div class="pros">
+      <span class="pro">✓ Non-destructif (original conservé)</span>
+      <span class="pro">✓ Puissant pour la mise à l'échelle globale</span>
+      <span class="con">✗ Indirection — moins direct que A1 ou A3</span>
+      <span class="note">→ outil de post-traitement, complémentaire</span>
+    </div>
+  </div>
+</div>
+
+</div><!-- end grid A -->
+
+<p class="section-title">B · Générateur procédural — partir d'une base plutôt que d'une ligne droite</p>
+<div class="grid">
+
+<!-- CONCEPT B1 : PROFILES -->
+<div class="card">
+  <div class="ch"><h2>B1 · Profils de circuits + paramètres</h2><span class="badge new">★ recommandé</span></div>
+  <div class="vis"><svg viewBox="0 0 400 200" width="100%" height="200">
+    <!-- 6 miniatures de profils -->
+    <g>
+      <!-- Ovale -->
+      <rect x="10" y="10" width="88" height="65" rx="7" fill="#1b1e25" stroke="#4ea1ff" stroke-width="1.5"/>
+      <ellipse cx="54" cy="42" rx="32" ry="18" fill="none" stroke="#5a86c8" stroke-width="3"/>
+      <ellipse cx="54" cy="42" rx="16" ry="8" fill="none" stroke="#3a4a6b" stroke-width="1.5"/>
+      <text x="54" y="66" fill="#4ea1ff" font-size="9" font-family="monospace" text-anchor="middle">Ovale</text>
+      <!-- Technique -->
+      <rect x="106" y="10" width="88" height="65" rx="7" fill="#1b1e25" stroke="#2c303a"/>
+      <path d="M130 60 L130 30 L150 30 L150 50 L170 50 L170 25 L180 25" fill="none" stroke="#5a86c8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="150" y="66" fill="#878e9c" font-size="9" font-family="monospace" text-anchor="middle">Technique</text>
+      <!-- Montagne -->
+      <rect x="202" y="10" width="88" height="65" rx="7" fill="#1b1e25" stroke="#2c303a"/>
+      <path d="M215 60 Q230 20 246 60 Q255 35 264 60 L285 60" fill="none" stroke="#5fd08a" stroke-width="2.5" stroke-linecap="round"/>
+      <text x="246" y="66" fill="#878e9c" font-size="9" font-family="monospace" text-anchor="middle">Montagne</text>
+      <!-- Street -->
+      <rect x="298" y="10" width="88" height="65" rx="7" fill="#1b1e25" stroke="#2c303a"/>
+      <path d="M312 60 L312 30 L332 30 L332 50 L352 50 L352 30 L372 30 L372 50" fill="none" stroke="#ffb454" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="342" y="66" fill="#878e9c" font-size="9" font-family="monospace" text-anchor="middle">Street</text>
+      <!-- Flowing -->
+      <rect x="10" y="90" width="88" height="65" rx="7" fill="#1b1e25" stroke="#2c303a"/>
+      <path d="M22 140 C40 110 60 130 78 115 C90 105 92 125 98 130" fill="none" stroke="#5a86c8" stroke-width="2.5" stroke-linecap="round"/>
+      <text x="54" y="146" fill="#878e9c" font-size="9" font-family="monospace" text-anchor="middle">Flowing</text>
+      <!-- Hillclimb -->
+      <rect x="106" y="90" width="88" height="65" rx="7" fill="#1b1e25" stroke="#2c303a"/>
+      <path d="M115 148 L130 130 L145 148 L160 115 L175 148 L185 108" fill="none" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="150" y="166" fill="#878e9c" font-size="9" font-family="monospace" text-anchor="middle">Hillclimb</text>
+    </g>
+    <!-- Sliders paramètres -->
+    <rect x="202" y="90" width="186" height="82" rx="7" fill="#23262f" stroke="#2c303a"/>
+    <text x="212" y="105" fill="#878e9c" font-size="9" font-family="monospace">virages   ━━━━|━━ intenses</text>
+    <text x="212" y="118" fill="#878e9c" font-size="9" font-family="monospace">vallons   ━━━|━━━ vallons</text>
+    <text x="212" y="131" fill="#878e9c" font-size="9" font-family="monospace">symétrie  ━━━━━|━ aucune</text>
+    <text x="212" y="144" fill="#878e9c" font-size="9" font-family="monospace">aléatoire ━━━|━━━ graine 42</text>
+    <text x="212" y="157" fill="#878e9c" font-size="9" font-family="monospace">segments  ━━━━|━━ 96</text>
+    <rect x="212" y="163" width="80" height="5" rx="2" fill="#2c303a"/>
+    <rect x="212" y="163" width="54" height="5" rx="2" fill="#4ea1ff" opacity=".6"/>
+    <!-- Bouton générer -->
+    <rect x="298" y="158" width="82" height="20" rx="5" fill="#4ea1ff"/>
+    <text x="339" y="172" fill="#06101f" font-size="10" font-weight="600" font-family="monospace" text-anchor="middle">▶ Générer</text>
+  </svg></div>
+  <div class="body">
+    <p><b>6 profils de base</b> : Ovale, Technique, Montagne (élévation), Street (angles droits), Flowing (courbes douces), Hillclimb (montée linéaire). Chaque profil = une recette paramétrique (courbes + pentes) adaptée aux contraintes Lotus.</p>
+    <p>Paramètres : <b>intensité des virages</b>, <b>relief</b>, <b>symétrie</b>, <b>graine aléatoire</b>, <b>nb de segments</b>. Génère directement dans le circuit courant (ou nouveau).</p>
+    <div class="pros">
+      <span class="pro">✓ Départ concret, pas une ligne droite ennuyeuse</span>
+      <span class="pro">✓ Profils calibrés pour les contraintes int8</span>
+      <span class="pro">✓ Reproductible (graine) + variabilité</span>
+      <span class="note">→ combiné avec A1+A3 pour affiner après génération</span>
+    </div>
+  </div>
+</div>
+
+<!-- CONCEPT B2 : GRAMMAR-BASED -->
+<div class="card">
+  <div class="ch"><h2>B2 · Grammaire de tronçons (assemblage)</h2><span class="badge">intermédiaire</span></div>
+  <div class="vis"><svg viewBox="0 0 400 200" width="100%" height="200">
+    <!-- séquence de briques -->
+    <defs>
+      <linearGradient id="seg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c3a5a"/><stop offset="1" stop-color="#1a2235"/></linearGradient>
+      <linearGradient id="seg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2c5a"/><stop offset="1" stop-color="#22193a"/></linearGradient>
+      <linearGradient id="seg3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c5a3a"/><stop offset="1" stop-color="#19352a"/></linearGradient>
+    </defs>
+    <!-- briques assemblées -->
+    <rect x="10" y="80" width="60" height="38" rx="5" fill="url(#seg1)" stroke="#4ea1ff" stroke-width="1.5"/>
+    <text x="40" y="96" fill="#4ea1ff" font-size="9" font-family="monospace" text-anchor="middle">Droite</text>
+    <text x="40" y="108" fill="#5a86c8" font-size="8" font-family="monospace" text-anchor="middle">12 seg</text>
+    <text x="74" y="102" fill="#2c303a" font-size="14">›</text>
+    <rect x="80" y="80" width="60" height="38" rx="5" fill="url(#seg2)" stroke="#9060c8" stroke-width="1.5"/>
+    <text x="110" y="96" fill="#c080ff" font-size="9" font-family="monospace" text-anchor="middle">Arc G</text>
+    <text x="110" y="108" fill="#9060c8" font-size="8" font-family="monospace" text-anchor="middle">Δ-4 ×8</text>
+    <text x="144" y="102" fill="#2c303a" font-size="14">›</text>
+    <rect x="150" y="80" width="60" height="38" rx="5" fill="url(#seg1)" stroke="#4ea1ff" stroke-width="1"/>
+    <text x="180" y="96" fill="#4ea1ff" font-size="9" font-family="monospace" text-anchor="middle">Droite</text>
+    <text x="180" y="108" fill="#5a86c8" font-size="8" font-family="monospace" text-anchor="middle">6 seg</text>
+    <text x="214" y="102" fill="#2c303a" font-size="14">›</text>
+    <rect x="220" y="80" width="60" height="38" rx="5" fill="url(#seg3)" stroke="#5fd08a" stroke-width="1.5"/>
+    <text x="250" y="96" fill="#5fd08a" font-size="9" font-family="monospace" text-anchor="middle">Épingle</text>
+    <text x="250" y="108" fill="#3a8a5a" font-size="8" font-family="monospace" text-anchor="middle">+6→-6</text>
+    <text x="284" y="102" fill="#2c303a" font-size="14">›</text>
+    <rect x="290" y="80" width="60" height="38" rx="5" fill="url(#seg1)" stroke="#4ea1ff" stroke-width="1"/>
+    <text x="320" y="96" fill="#4ea1ff" font-size="9" font-family="monospace" text-anchor="middle">Droite</text>
+    <text x="320" y="108" fill="#5a86c8" font-size="8" font-family="monospace" text-anchor="middle">10 seg</text>
+    <!-- flèche retour fermeture -->
+    <path d="M360 99 Q390 99 390 140 Q390 160 200 165 Q50 165 20 140 Q10 130 10 99" fill="none" stroke="#2c303a" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text x="200" y="178" fill="#878e9c" font-size="8" font-family="monospace" text-anchor="middle">solveur de fermeture : ajuste la dernière droite pour boucler le circuit</text>
+    <!-- contrainte fermeture -->
+    <text x="10" y="42" fill="#878e9c" font-size="9" font-family="monospace">règle : Σ(delta_curve × substeps) = -2048 (1 tour)</text>
+    <text x="10" y="56" fill="#ffb454" font-size="9" font-family="monospace">▲ en cours : -1536 / -2048 (75%)</text>
+    <rect x="10" y="61" width="380" height="4" rx="2" fill="#2c303a"/>
+    <rect x="10" y="61" width="285" height="4" rx="2" fill="#ffb454" opacity=".7"/>
+    <!-- palette briques -->
+    <text x="10" y="12" fill="#878e9c" font-size="9" font-family="monospace">palette de briques : glisser-déposer · paramétrer · réordonner</text>
+  </svg></div>
+  <div class="body">
+    <p><b>Inspiré des grammaires de forme</b> et des éditeurs de niveaux à briques (Mario Maker, Track Mania). Le circuit est une <b>séquence de sections nommées</b> (droite, arc G/D, épingle, chicane, bosse...) avec des paramètres par section.</p>
+    <p>Un <b>solveur de fermeture</b> mesure en temps réel combien de courbure il reste pour boucler (Σδ_curve × 16 substeps = −2048) et ajuste automatiquement.</p>
+    <div class="pros">
+      <span class="pro">✓ Compréhensible (liste de sections nommées)</span>
+      <span class="pro">✓ Solveur de fermeture garantit la boucle</span>
+      <span class="con">✗ Moins flexible pour les formes hybrides</span>
+      <span class="note">→ idéal pour des circuits structurés, lisibles</span>
+    </div>
+  </div>
+</div>
+
+<!-- CONCEPT B3 : RANDOM + SEED -->
+<div class="card">
+  <div class="ch"><h2>B3 · Générateur aléatoire contrôlé (graine)</h2><span class="badge">rapide à implémenter</span></div>
+  <div class="vis"><svg viewBox="0 0 400 200" width="100%" height="200">
+    <!-- 3 variantes générées depuis même profil -->
+    <text x="10" y="14" fill="#878e9c" font-size="9" font-family="monospace">profil "Technique" · 3 variantes depuis graines différentes</text>
+    <g>
+      <!-- variante 1 -->
+      <path d="M15 80 C30 80 35 50 55 48 C70 46 80 65 90 80 C100 90 108 75 120 70 C130 65 140 80 155 78 C162 77 168 88 175 88" fill="none" stroke="#4ea1ff" stroke-width="2.5"/>
+      <text x="95" y="100" fill="#4ea1ff" font-size="9" font-family="monospace" text-anchor="middle">graine 17</text>
+      <!-- variante 2 -->
+      <path d="M205 80 C215 80 225 55 240 50 C252 46 258 70 270 80 C278 86 285 60 298 55 C308 52 318 80 330 80 C340 80 350 75 365 80" fill="none" stroke="#5fd08a" stroke-width="2.5"/>
+      <text x="285" y="100" fill="#5fd08a" font-size="9" font-family="monospace" text-anchor="middle">graine 42</text>
+      <!-- variante 3 -->
+      <path d="M15 148 C25 148 38 125 52 120 C62 117 72 138 85 148 C95 156 105 130 120 125 C132 122 140 148 155 148 C163 148 170 140 175 148" fill="none" stroke="#ffb454" stroke-width="2.5"/>
+      <text x="95" y="168" fill="#ffb454" font-size="9" font-family="monospace" text-anchor="middle">graine 99</text>
+      <!-- boutons régénérer -->
+      <rect x="205" y="128" width="165" height="50" rx="7" fill="#23262f" stroke="#2c303a"/>
+      <text x="213" y="142" fill="#878e9c" font-size="9" font-family="monospace">graine  [    42    ] ← saisie libre</text>
+      <text x="213" y="156" fill="#878e9c" font-size="9" font-family="monospace">profil  [Technique ▾]</text>
+      <rect x="213" y="162" width="72" height="10" rx="3" fill="#4ea1ff"/>
+      <text x="249" y="170" fill="#06101f" font-size="8" font-weight="600" font-family="monospace" text-anchor="middle">↺ Rejouer</text>
+      <rect x="292" y="162" width="68" height="10" rx="3" fill="#3a3f4b" stroke="#4ea1ff" stroke-width="1"/>
+      <text x="326" y="170" fill="#4ea1ff" font-size="8" font-family="monospace" text-anchor="middle">→ Adopter</text>
+    </g>
+  </svg></div>
+  <div class="body">
+    <p>Génération par <b>graine (seed)</b> reproductible : la même graine donne toujours le même circuit. Chaque profil = un ensemble de règles (distribution des virages, amplitude, fréquence des bosses) + une dose de bruit déterministe (Perlin ou LCG).</p>
+    <p>Boutons : <b>↺ Rejouer</b> (nouvelle graine aléatoire), <b>→ Adopter</b> (charge dans l'éditeur pour affinage). Rapide à parcourir, conserve les bons résultats.</p>
+    <div class="pros">
+      <span class="pro">✓ Exploration rapide, reproductible</span>
+      <span class="pro">✓ Simple à implémenter (LCG + règles)</span>
+      <span class="pro">✓ Découverte : circuit inattendu mais correct</span>
+      <span class="con">✗ Nécessite un affinage systématique après</span>
+      <span class="note">→ idéal pour prototyper vite 10 idées de circuit</span>
+    </div>
+  </div>
+</div>
+
+</div><!-- end grid B -->
+
+<p class="section-title">C · Recommandation — combinaison optimale pour votre contexte</p>
+<div class="grid">
+<div class="card full" style="flex-direction:row">
+  <div class="vis" style="width:340px;flex:0 0 340px"><svg viewBox="0 0 340 200" width="340" height="200">
+    <!-- workflow recommandé -->
+    <rect x="10" y="20" width="90" height="42" rx="7" fill="#23262f" stroke="#5fd08a" stroke-width="1.5"/>
+    <text x="55" y="37" fill="#5fd08a" font-size="10" font-family="monospace" text-anchor="middle">B1 Profil</text>
+    <text x="55" y="50" fill="#878e9c" font-size="8" font-family="monospace" text-anchor="middle">+ graine B3</text>
+    <path d="M100 41 L120 41" stroke="#4ea1ff" stroke-width="1.5" marker-end="url(#arr)"/>
+    <rect x="120" y="20" width="90" height="42" rx="7" fill="#23262f" stroke="#4ea1ff" stroke-width="1.5"/>
+    <text x="165" y="37" fill="#4ea1ff" font-size="10" font-family="monospace" text-anchor="middle">A4 Spline</text>
+    <text x="165" y="50" fill="#878e9c" font-size="8" font-family="monospace" text-anchor="middle">forme globale</text>
+    <path d="M210 41 L230 41" stroke="#4ea1ff" stroke-width="1.5"/>
+    <rect x="230" y="20" width="90" height="42" rx="7" fill="#23262f" stroke="#ffb454" stroke-width="1.5"/>
+    <text x="275" y="37" fill="#ffb454" font-size="10" font-family="monospace" text-anchor="middle">A1 Prop.</text>
+    <text x="275" y="50" fill="#878e9c" font-size="8" font-family="monospace" text-anchor="middle">sculpture fine</text>
+    <!-- flèche retour A3 -->
+    <path d="M275 62 Q275 85 220 90 Q170 95 120 90 Q80 88 55 85 L55 62" fill="none" stroke="#ff6b6b" stroke-width="1" stroke-dasharray="3 3"/>
+    <text x="165" y="108" fill="#ff6b6b" font-size="8" font-family="monospace" text-anchor="middle">A3 Pinceau (iteration)</text>
+    <!-- phases -->
+    <text x="10" y="130" fill="#878e9c" font-size="9" font-family="monospace">Phase 1 (vite) :  B3 random seed → adopter le meilleur</text>
+    <text x="10" y="144" fill="#878e9c" font-size="9" font-family="monospace">Phase 2 (forme) : A4 splines → courbe globale</text>
+    <text x="10" y="158" fill="#878e9c" font-size="9" font-family="monospace">Phase 3 (détail): A1 proportionnel → virages/collines</text>
+    <text x="10" y="172" fill="#878e9c" font-size="9" font-family="monospace">Phase 4 (finit) : A3 pinceau lissage + A2 tampons</text>
+    <text x="10" y="186" fill="#ffb454" font-size="9" font-family="monospace">B2 grammaire : optionnel, circuits très structurés</text>
+  </svg></div>
+  <div class="body" style="flex:1">
+    <p style="font-size:13px"><b>Recommandation : implémenter A1 + B1/B3 en priorité, puis A3.</b></p>
+    <p><b>A1 (Proportional Editing)</b> — le plus polyvalent et le mieux connu des artistes. Un slider de rayon + un dropdown de falloff suffisent. Visualisation dans le plan (dégradé de couleur sur les segments affectés). S'intègre directement dans le panneau Segment actuel. <b>Implémentation : 2–3 jours.</b></p>
+    <p><b>B1 + B3 (Profils + graine)</b> — résout le problème du départ en ligne droite. 6 profils paramétrables + génération reproductible. Le générateur utilise notre pipeline Python (source de vérité). <b>Implémentation : 2–3 jours.</b></p>
+    <p><b>A4 (Splines)</b> — mode d'édition alternatif très puissant pour la forme globale, mais change le paradigme (inverse de l'édition segment-par-segment). À ajouter après A1/B1 comme couche optionnelle.</p>
+    <p><b>A3 (Pinceau)</b> — complément naturel de A1 pour le lissage et la sculpture organique. Facile à ajouter une fois A1 en place (mêmes primitives). <b>Implémentation : 1–2 jours après A1.</b></p>
+    <div class="pros">
+      <span class="pro">✓ A1 + B1 résolvent 80% du besoin en une semaine</span>
+      <span class="pro">✓ Chaque outil reste cohérent avec le modèle int8 Lotus</span>
+      <span class="note">→ A5 (enveloppe) et B2 (grammaire) : plus tard si besoin</span>
+    </div>
+  </div>
+</div>
+</div>
+
+</body>
+</html>
