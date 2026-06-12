@@ -1,0 +1,215 @@
+	INCLUDE "./engine/constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+DRAW_Img_shell_mask_0
+	LEAU 320,U
+
+	LDD -39,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD -39,U
+	LDD -79,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD -79,U
+	LDD -119,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD -119,U
+	LDD #$ffff
+	STD 40,U
+	STD ,U
+	LDA 39,U
+	ANDA #$F0
+	ORA #$0f
+	STA 39,U
+	LDA -1,U
+	ANDA #$F0
+	ORA #$0f
+	STA -1,U
+	LDD #$ffff
+	STD 120,U
+	STD 80,U
+	STD -41,U
+	STD -81,U
+	STD -121,U
+	LEAU -279,U
+
+	STD 118,U
+	STD 78,U
+	STD 38,U
+	STD -2,U
+	STD -42,U
+	STD -82,U
+	STD -122,U
+	LDD 120,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD 120,U
+	LDD 80,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD 80,U
+	LDD 40,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD 40,U
+	LDD ,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD ,U
+	LDD -40,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD -40,U
+	LDD -80,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD -80,U
+	LDD -120,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD -120,U
+	LEAU -281,U
+
+	LDD 121,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD 121,U
+	LDD 81,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD 81,U
+	LDD 41,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD 41,U
+	LDD 1,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD 1,U
+	LDD -39,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD -39,U
+	LDA -81,U
+	ANDA #$F0
+	ORA #$0f
+	STA -81,U
+	LDA -121,U
+	ANDA #$F0
+	ORA #$0f
+	STA -121,U
+	LDD #$ffff
+	STD -80,U
+	STD -120,U
+	STD 119,U
+	STD 79,U
+	STD 39,U
+	STD -1,U
+	STD -41,U
+	LEAU -179,U
+
+	STD 19,U
+	STD -21,U
+
+	LDU <glb_screen_location_1
+	LEAU 362,U
+
+	LDA #$ff
+	STA 37,U
+	LDD 38,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD 38,U
+	LDD 77,U
+	ANDA #$F0
+	ORA #$0f
+	LDB #$ff
+	STD 77,U
+	LDX #$ffff
+	PSHU B,X
+	LEAU -37,U
+
+	PSHU B,X
+	LEAU -37,U
+
+	PSHU B,X
+	LEAU -37,U
+
+	PSHU B,X
+	LEAU -37,U
+
+	PSHU B,X
+	LEAU -37,U
+
+	PSHU B,X
+	LEAU -37,U
+
+	PSHU B,X
+	LEAU -37,U
+
+	PSHU B,X
+	LEAU -37,U
+
+	PSHU B,X
+	LEAU -37,U
+
+	PSHU B,X
+	LEAU -37,U
+
+	PSHU B,X
+	LEAU -37,U
+
+	PSHU B,X
+	LEAU -37,U
+
+	PSHU B,X
+	LEAU -37,U
+
+	PSHU B,X
+	LEAU -37,U
+
+	PSHU B,X
+	LEAU -37,U
+
+	PSHU B,X
+	LEAU -37,U
+
+	PSHU B,X
+	LEAU -37,U
+
+	PSHU B,X
+	LEAU -37,U
+
+	LDD -83,U
+	ANDA #$F0
+	ORA #$0f
+	LDB #$ff
+	STD -83,U
+	STB -43,U
+	LDD -42,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD -42,U
+	PSHU A,X
+	RTS
+

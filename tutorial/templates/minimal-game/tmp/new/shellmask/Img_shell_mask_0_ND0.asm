@@ -1,0 +1,182 @@
+	INCLUDE "./engine/constants.asm"
+	ORG $A000
+	SETDP $FF
+	OPT C,CT
+DRAW_Img_shell_mask_0
+	LEAU 421,U
+
+	LDD 19,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD 19,U
+	LDD -21,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD -21,U
+	LEAU -179,U
+
+	LDD #$ffff
+	STD 118,U
+	LDA 77,U
+	ANDA #$F0
+	ORA #$0f
+	STA 77,U
+	LDA 37,U
+	ANDA #$F0
+	ORA #$0f
+	STA 37,U
+	LDD #$ffff
+	STD 78,U
+	STD 38,U
+	LDX #$ffff
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	STD -122,U
+	LDA -43,U
+	ANDA #$F0
+	ORA #$0f
+	STA -43,U
+	LDA -83,U
+	ANDA #$F0
+	ORA #$0f
+	STA -83,U
+	STX -42,U
+	STX -82,U
+	PSHU B,X
+	LEAU -178,U
+
+	LDD 19,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD 19,U
+	LDD -21,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD -21,U
+
+	LDU <glb_screen_location_1
+	LEAU 420,U
+
+	LDD 19,U
+	ANDA #$F0
+	ORA #$0f
+	LDB #$ff
+	STD 19,U
+	LDD -21,U
+	ANDA #$F0
+	ORA #$0f
+	LDB #$ff
+	STD -21,U
+	LEAU -178,U
+
+	LDD #$ffff
+	STD 117,U
+	STA 77,U
+	STA 37,U
+	LDD 78,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD 78,U
+	LDD 38,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD 38,U
+	LDX #$ffff
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	PSHU A,X
+	LEAU -37,U
+
+	LDD -42,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD -42,U
+	LDD -82,U
+	LDA #$ff
+	ANDB #$0F
+	ORB #$f0
+	STD -82,U
+	STA -43,U
+	STA -83,U
+	STX -123,U
+	PSHU A,X
+	LEAU -179,U
+
+	LDD 19,U
+	ANDA #$F0
+	ORA #$0f
+	LDB #$ff
+	STD 19,U
+	LDD -21,U
+	ANDA #$F0
+	ORA #$0f
+	LDB #$ff
+	STD -21,U
+	RTS
+

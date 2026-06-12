@@ -1,0 +1,16 @@
+	fcb   $15
+	fcb   $21
+	fcb   $2D
+	fcb   $33
+	fcb   $39
+	fcb   $45
+	fcb   $51
+	fcb   $5D
+	fcb   $69
+	fcb   $75
+	fcb   $81
+	fcb   $93
+	fcb   $9F
+	fcb   $A5
+	fcb   $AB
+	fcb   $B7
