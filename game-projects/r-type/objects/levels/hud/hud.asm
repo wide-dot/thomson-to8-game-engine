@@ -51,6 +51,10 @@ beam_m_size  equ 2                     ; number of byte for a segment
 ; Beam_mask to mask off the dark pixels of the last partial segment.
 ; ---------------------------------------------------------------------------
 
+        ; ObjID_hud entry - dispatch on B (hud.NORMAL = bottom HUD, hud.READOUT = score readout)
+        cmpb  #hud.READOUT
+        lbeq  hud.scoreReadout
+
         ; display beam in 5 segments
         ldu   #beam_m_start
 
@@ -655,3 +659,1838 @@ Beam_mask
         fcb $ff,$00,$f0,$00 : (3)
         fcb $ff,$00,$00,$00 : (2)
         fcb $f0,$00,$00,$00 : (1)
+
+; ===========================================================================
+; STAGE SCORE READOUT (hud.READOUT) - arcade "score rollover" port
+; ---------------------------------------------------------------------------
+; Driven by main each frame during endstage phase 4 (double buffer). The 7 score
+; digits spin through random glyphs and settle one by one as a master countdown
+; crosses per-digit thresholds, like the arcade tick_score_rollover_dispatcher.
+; Drawn centered, reusing the HUD digit glyphs (Img_Num / DRAW_Img_hud_*). Seeded
+; from the stage score (globals.score - globals.stageScoreBase) the first frame
+; after main.endstage.scoreArmed is set; raises main.endstage.scoreDone at 0.
+; The bottom HUD is left untouched (preserved by the capped fade).
+; ===========================================================================
+
+READOUT_FRAMES equ 224          ; spin/settle master countdown (arcade 0xE0)
+READOUT_HOLD   equ 150          ; final-score hold after settle, in frames (~3 s @ 50 Hz)
+READOUT_BLANK  equ 10           ; settled-digit sentinel for a blanked leading zero
+; on-screen layout (RAMA, 40 cells/line, 1 cell = one 4px glyph). Centered; tune later.
+hud.line1U   equ $C000+56*40+5  ; "S T A G E   1   C L E A R E D" (29 cells), scanline 56, centered col 5
+hud.line2U   equ $C000+96*40+10 ; "STAGE SCORE " label (12 chars) - scanline 96, col 10
+hud.readoutU equ hud.line2U+12  ; the 7 score digits, right after the "STAGE SCORE " label
+
+hud.scoreReadout
+        lda   main.endstage.scoreArmed
+        beq   @run
+        clr   main.endstage.scoreArmed       ; first readout frame: seed digits + countdown
+        clr   main.endstage.scoreDone
+        jsr   hud.readout.seed
+        lda   #READOUT_FRAMES
+        sta   hud.readout.timer
+@run
+        ldb   hud.readout.timer               ; spin/settle countdown, frame-drop compensated
+        beq   @holdPhase                      ; spin/settle done -> hold the final score
+        subb  gfxlock.frameDrop.count
+        bhi   @storeTimer                     ; still spinning (> 0, no underflow)
+        clrb                                   ; spin/settle reached 0 this frame
+        lda   #READOUT_HOLD                    ; arm the final-score hold (main loop keeps running)
+        sta   hud.readout.holdTimer
+@storeTimer
+        stb   hud.readout.timer
+        bra   @draw
+@holdPhase
+        ; spin/settle done: hold the settled score for READOUT_HOLD frames. The main loop keeps
+        ; running (pod animates, ship pipeline) - we only set scoreDone when the hold expires.
+        ldb   hud.readout.holdTimer
+        beq   @draw                           ; hold already finished (scoreDone set) -> just draw
+        subb  gfxlock.frameDrop.count
+        bhi   @storeHold                      ; still holding
+        clrb
+        lda   #1
+        sta   main.endstage.scoreDone          ; hold done -> the Tick may leave the level
+@storeHold
+        stb   hud.readout.holdTimer
+@draw
+        ldu   #hud.line1U                     ; "STAGE n CLEARED" (static; redrawn each frame so
+        ldy   #hud.str.cleared                ;   both video buffers carry it)
+        jsr   hud.drawStr
+        ldu   #hud.line2U                     ; "STAGE SCORE " label
+        ldy   #hud.str.score
+        jsr   hud.drawStr
+        clr   hud.readout.spun                ; "did any digit actually spin this frame" (arcade DI)
+        ldu   #hud.readoutU                   ; leftmost score digit (RAMA)
+        ldx   #0                              ; digit index 0..6
+@digitLoop
+        ldb   hud.readout.digits,x            ; settled value for this position
+        cmpb  #10
+        bhs   @blank                           ; blanked leading zero -> never spins, stays blank
+        lda   hud.readout.timer               ; significant digit: spin while timer > threshold[i]
+        cmpa  hud.readout.thresholds,x
+        bls   @realDigit                       ; timer <= threshold -> settled (B = digits[x])
+        inc   hud.readout.spun                  ; this digit spins this frame
+        jsr   RandomNumber                      ; random glyph 0..9
+        andb  #15
+        cmpb  #10
+        blo   @realDigit
+        andb  #7                                ; clamp 10..15 -> 2..7 (arcade)
+@realDigit
+        aslb
+        ldy   #numbers_addr                     ; title font digits (raccord avec les lettres)
+        jsr   [b,y]                             ; DRAW_text_<digit> at U
+        bra   @nextDigit
+@blank
+        jsr   DRAW_text_space
+@nextDigit
+        leau  1,u
+        leax  1,x
+        cmpx  #7
+        blo   @digitLoop
+        ; chime every 4th frame while at least one significant digit actually spun (arcade DI)
+        lda   hud.readout.spun
+        beq   @done
+        ldb   gfxlock.frame.count+1
+        andb  #3
+        bne   @done
+        ldd   #$0201                           ; soundFX queue: id 2 (BonusSound) << 8 | priority 1
+        std   soundFX.newSound                 ; (inline - no soundFX macro include in this object)
+@done   rts
+
+; ---------------------------------------------------------------------------
+; hud.drawStr - draw a 0-terminated uppercase string at U (RAMA) with the
+; duplicated title font. Y = string ptr, U = screen dest. Each DRAW_text_X
+; restores U (pshs/puls), so we advance leau 1,u per character.
+; Trashes A,X,Y,U.
+; ---------------------------------------------------------------------------
+hud.drawStr
+        ldx   #letter_addr
+@l      lda   ,y+
+        beq   @r
+        suba  #32
+        asla
+        jsr   [a,x]
+        leau  1,u
+        bra   @l
+@r      rts
+
+hud.str.cleared fcc 'S T A G E   1   C L E A R E D'
+                fcb 0
+hud.str.score   fcc 'STAGE SCORE '
+                fcb 0
+
+; ---------------------------------------------------------------------------
+; seed: stageScore = globals.score - globals.stageScoreBase, expand to 7 digits
+; (5 significant MSB-first + the x100 trailing "00"), blank leading zeros.
+; ---------------------------------------------------------------------------
+hud.readout.seed
+        ldd   globals.score
+        subd  globals.stageScoreBase
+        bcc   >
+        ldd   #0                              ; clamp (base must never exceed score)
+!       ldx   #hud.readout.digits             ; X = output digit ptr
+        ldy   #hud.readout.powers             ; Y = power ptr (10000 down to 1)
+@digitExp
+        clr   hud.readout.seedDigit
+@subLoop
+        subd  ,y                               ; value -= power
+        blo   @subDone                         ; value < power -> this digit done
+        inc   hud.readout.seedDigit
+        bra   @subLoop
+@subDone
+        addd  ,y                               ; undo the last (borrowing) subtract
+        leay  2,y
+        pshs  d                                ; save value across the digit store
+        lda   hud.readout.seedDigit
+        sta   ,x+
+        puls  d
+        cmpy  #hud.readout.powers+10           ; all 5 powers processed?
+        blo   @digitExp
+        clr   ,x+                              ; digits[5] = 0 (x100 trailing zero)
+        clr   ,x                               ; digits[6] = 0
+        ldx   #hud.readout.digits              ; blank leading zeros (keep digits[6] real 0)
+        ldb   #6
+@blankLoop
+        lda   ,x
+        bne   @blankDone
+        lda   #READOUT_BLANK
+        sta   ,x+
+        decb
+        bne   @blankLoop
+@blankDone
+        rts
+
+hud.readout.timer      fcb 0
+hud.readout.holdTimer  fcb 0                  ; final-score hold countdown (after settle)
+hud.readout.seedDigit  fcb 0
+hud.readout.spun       fcb 0                  ; per-frame count of digits that spun (arcade DI)
+hud.readout.digits     fcb 0,0,0,0,0,0,0      ; 7 settled digit values (0-9 or READOUT_BLANK)
+hud.readout.thresholds fcb $10,$20,$30,$50,$70,$90,$A0
+hud.readout.powers     fdb 10000,1000,100,10,1
+
+; ===========================================================================
+; STAGE-CLEARED FONT  (duplicated verbatim from objects/levels/00/text/text.asm)
+; ---------------------------------------------------------------------------
+; Full title-screen glyph set, copied here so the phase-4 STAGE CLEARED / STAGE
+; SCORE text draws letters without depending on the title objects bank.
+; letter_addr is indexed by (ASCII-32)*2; each DRAW_text_X draws one 4px-wide x
+; ~8px-tall glyph at U (RAMA $C000-$DFFF), both banks via LEAU -$2000, the caller
+; advancing leau 1,u per char. Same 4px scale as the HUD digits (DRAW_Img_hud_*).
+; Object-local labels -> the title copy and this one do not clash at link.
+; ===========================================================================
+letter_addr     fdb DRAW_text_space                * 32 = space
+                fdb DRAW_text_exclam               * 33 = !
+                fdb DRAW_text_space                * 34
+                fdb DRAW_text_space                * 35
+                fdb DRAW_text_space                * 36
+                fdb DRAW_text_space                * 37
+                fdb DRAW_text_space                * 38
+                fdb DRAW_text_space                * 39
+                fdb DRAW_text_space                * 40
+                fdb DRAW_text_space                * 41
+                fdb DRAW_text_space                * 42
+                fdb DRAW_text_space                * 43
+                fdb DRAW_text_space                * 44
+                fdb DRAW_text_space                * 45
+                fdb DRAW_text_dot                  * 46
+                fdb DRAW_text_space                * 47
+numbers_addr    fdb DRAW_text_0                    * 48 = 0                
+                fdb DRAW_text_1                    * 49 = 1
+                fdb DRAW_text_2                    * 50 = 2
+                fdb DRAW_text_3                    * 51
+                fdb DRAW_text_4                    * 52
+                fdb DRAW_text_5                    * 53
+                fdb DRAW_text_6                    * 54
+                fdb DRAW_text_7                    * 55 = 7
+                fdb DRAW_text_8                    * 56 = 8
+                fdb DRAW_text_9                    * 57 = 9
+                fdb DRAW_text_space                * 58
+                fdb DRAW_text_space                * 59
+                fdb DRAW_text_space                * 60
+                fdb DRAW_text_space                * 61
+                fdb DRAW_text_space                * 62
+                fdb DRAW_text_space                * 63
+                fdb DRAW_text_space                * 64
+                fdb DRAW_text_a                    * 65 = A
+                fdb DRAW_text_b                    * 66
+                fdb DRAW_text_c                    * 67
+                fdb DRAW_text_d                    * 68
+                fdb DRAW_text_e                    * 69
+                fdb DRAW_text_f                    * 70
+                fdb DRAW_text_g                    * 71
+                fdb DRAW_text_h                    * 72
+                fdb DRAW_text_i                    * 73
+                fdb DRAW_text_j                    * 74
+                fdb DRAW_text_k                    * 75
+                fdb DRAW_text_l                    * 76
+                fdb DRAW_text_m                    * 77
+                fdb DRAW_text_n                    * 78
+                fdb DRAW_text_o                    * 79
+                fdb DRAW_text_p                    * 80
+                fdb DRAW_text_q                    * 81
+                fdb DRAW_text_r                    * 82
+                fdb DRAW_text_s                    * 83
+                fdb DRAW_text_t                    * 84
+                fdb DRAW_text_u                    * 85
+                fdb DRAW_text_v                    * 86
+                fdb DRAW_text_w                    * 87
+                fdb DRAW_text_x                    * 88
+                fdb DRAW_text_y                    * 89
+                fdb DRAW_text_z                    * 90
+                fdb DRAW_text_copy                 * 91 = [ (but used for (c) )
+
+DRAW_text_dot
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$f5
+	STA 80,U
+	LDA #$fd
+	STA 40,U
+	LDA #$ff
+	STA ,U
+	STA -40,U
+	STA -80,U
+	STA -120,U
+	LEAU -40,U
+
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 80,U
+	STA 40,U
+	STA ,U
+	STA -40,U
+	STA -80,U
+	STA -120,U
+	LEAU -40,U
+
+	STA -120,U
+	puls u,pc
+DRAW_text_z
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$f6
+	STA -80,U
+	LDA #$ff
+	STA -120,U
+	LDA #$6f
+	STA ,U
+	LDA #$66
+	STA -40,U
+	LDA #$55
+	STA 80,U
+	LDA #$5f
+	STA 40,U
+	LEAU -40,U
+
+	LDA #$1d
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 40,U
+	STA ,U
+	STA -40,U
+	LDA #$df
+	STA -120,U
+	LDA #$6f
+	STA -80,U
+	LDA #$5f
+	STA 80,U
+	LEAU -40,U
+
+	LDA #$df
+	STA -120,U
+	puls u,pc
+
+DRAW_text_3
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 40,U
+	STA ,U
+	LDA #$f6
+	STA -40,U
+	LDA #$ff
+	STA -80,U
+	STA -120,U
+	LDA #$55
+	STA 80,U
+	LEAU -40,U
+
+	LDA #$1d
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$df
+	STA -120,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LEAU -40,U
+
+	LDA #$df
+	STA -120,U
+	puls u,pc
+
+DRAW_text_o
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$f5
+	STA 80,U
+	LDA #$5f
+	STA 40,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$1f
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$f1
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 80,U
+	LDA #$5f
+	STA 40,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$ff
+	STA -120,U
+	puls u,pc
+
+DRAW_text_w
+        pshs u
+	LEAU 40,U
+
+	LDA #$66
+	STA ,U
+	STA -40,U
+	LDA #$6f
+	STA -80,U
+	LDA #$5f
+	STA 80,U
+	LDA #$55
+	STA 40,U
+	LDA #$ff
+	STA 120,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$1f
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$df
+	STA -120,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LEAU -40,U
+
+	LDA #$df
+	STA -120,U
+	puls u,pc
+
+DRAW_text_b
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$55
+	STA 80,U
+	LDA #$5f
+	STA 40,U
+	LDA #$df
+	STA -120,U
+	LDA #$6f
+	STA ,U
+	LDA #$66
+	STA -40,U
+	LDA #$6f
+	STA -80,U
+	LEAU -40,U
+
+	LDA #$1d
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 80,U
+	LDA #$f0
+	STA -40,U
+	LDA #$d0
+	STA -120,U
+	LDA #$60
+	STA ,U
+	STA -80,U
+	LDA #$50
+	STA 40,U
+	LEAU -40,U
+
+	LDA #$ff
+	STA -120,U
+	puls u,pc
+
+DRAW_text_i
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$f5
+	STA 80,U
+	STA 40,U
+	LDA #$f6
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$fd
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$f1
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$f0
+	STA 120,U
+	STA 80,U
+	STA 40,U
+	STA ,U
+	STA -40,U
+	STA -80,U
+	STA -120,U
+	LEAU -40,U
+
+	STA -120,U
+	puls u,pc
+
+DRAW_text_5
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 40,U
+	STA ,U
+	LDA #$55
+	STA 80,U
+	LDA #$66
+	STA -40,U
+	LDA #$6f
+	STA -80,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$1d
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LDA #$ff
+	STA 120,U
+	STA -80,U
+	STA -120,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	LEAU -40,U
+
+	LDA #$df
+	STA -120,U
+	puls u,pc
+
+DRAW_text_d
+        pshs u
+	LEAU 40,U
+
+	LDA #$55
+	STA 80,U
+	LDA #$5f
+	STA 40,U
+	LDA #$ff
+	STA 120,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$1d
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 80,U
+	LDA #$df
+	STA -120,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$5f
+	STA 40,U
+	LEAU -40,U
+
+	LDA #$ff
+	STA -120,U
+	puls u,pc
+
+DRAW_text_q
+        pshs u
+	LEAU 40,U
+
+	LDA #$65
+	STA ,U
+	LDA #$6f
+	STA -40,U
+	STA -80,U
+	LDA #$55
+	STA 40,U
+	LDA #$ff
+	STA 120,U
+	LDA #$f6
+	STA 80,U
+	LDA #$1f
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$f1
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LDA #$ff
+	STA 120,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$ff
+	STA -120,U
+	puls u,pc
+
+DRAW_text_8
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$6f
+	STA ,U
+	LDA #$66
+	STA -40,U
+	LDA #$6f
+	STA -80,U
+	LDA #$55
+	STA 80,U
+	LDA #$5f
+	STA 40,U
+	LDA #$1f
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$f1
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	STA -120,U
+	puls u,pc
+
+DRAW_text_2
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA -80,U
+	STA -120,U
+	LDA #$55
+	STA 80,U
+	LDA #$5f
+	STA 40,U
+	LDA #$6f
+	STA ,U
+	LDA #$66
+	STA -40,U
+	LEAU -40,U
+
+	LDA #$1d
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 40,U
+	STA ,U
+	LDA #$5f
+	STA 80,U
+	LDA #$6f
+	STA -40,U
+	STA -80,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	STA -120,U
+	puls u,pc
+
+DRAW_text_n
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LDA #$df
+	STA -120,U
+	LDA #$65
+	STA ,U
+	LDA #$66
+	STA -40,U
+	STA -80,U
+	LEAU -40,U
+
+	LDA #$1f
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LDA #$ff
+	STA 120,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	STA -120,U
+	puls u,pc
+
+DRAW_text_v
+        pshs u
+	LEAU 40,U
+
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$5f
+	STA 80,U
+	LDA #$55
+	STA 40,U
+	LDA #$ff
+	STA 120,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$1f
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 80,U
+	STA 40,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	STA -120,U
+	puls u,pc
+
+DRAW_text_exclam
+        pshs u
+	LEAU 40,U
+
+	LDA #$5f
+	STA 80,U
+	LDA #$ff
+	STA 120,U
+	STA 40,U
+	LDA #$f6
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$ff
+	STA -120,U
+	LEAU -40,U
+
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$60
+	STA -40,U
+	STA -80,U
+	LDA #$ff
+	STA 120,U
+	STA 80,U
+	STA 40,U
+	STA ,U
+	LDA #$d0
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$10
+	STA -120,U
+	puls u,pc
+
+DRAW_text_c
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$f5
+	STA 80,U
+	LDA #$5f
+	STA 40,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$1f
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$f1
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$df
+	STA -120,U
+	LDA #$5f
+	STA 40,U
+	LDA #$0f
+	STA ,U
+	LDA #$ff
+	STA 120,U
+	STA 80,U
+	STA -40,U
+	STA -80,U
+	LEAU -40,U
+
+	STA -120,U
+	puls u,pc
+
+DRAW_text_h
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$df
+	STA -120,U
+	LDA #$6f
+	STA ,U
+	LDA #$66
+	STA -40,U
+	LDA #$6f
+	STA -80,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LEAU -40,U
+
+	LDA #$1f
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	STA -120,U
+	puls u,pc
+
+DRAW_text_4
+        pshs u
+	LEAU 40,U
+
+	LDA #$df
+	STA -120,U
+	LDA #$66
+	STA ,U
+	LDA #$6f
+	STA -40,U
+	STA -80,U
+	LDA #$ff
+	STA 120,U
+	STA 80,U
+	STA 40,U
+	LEAU -40,U
+
+	LDA #$1f
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LDA #$ff
+	STA 120,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	STA -120,U
+	puls u,pc
+
+DRAW_text_e
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$55
+	STA 80,U
+	LDA #$5f
+	STA 40,U
+	LDA #$df
+	STA -120,U
+	LDA #$6f
+	STA ,U
+	LDA #$66
+	STA -40,U
+	LDA #$6f
+	STA -80,U
+	LEAU -40,U
+
+	LDA #$1d
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$f0
+	STA 120,U
+	STA 40,U
+	STA -80,U
+	STA -120,U
+	LDA #$50
+	STA 80,U
+	LDA #$00
+	STA ,U
+	STA -40,U
+	LEAU -40,U
+
+	LDA #$d0
+	STA -120,U
+	puls u,pc
+
+DRAW_text_9
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 40,U
+	STA ,U
+	LDA #$55
+	STA 80,U
+	LDA #$66
+	STA -40,U
+	LDA #$6f
+	STA -80,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$1d
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	STA -120,U
+	puls u,pc
+
+DRAW_text_p
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$df
+	STA -120,U
+	LDA #$6f
+	STA ,U
+	LDA #$66
+	STA -40,U
+	LDA #$6f
+	STA -80,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LEAU -40,U
+
+	LDA #$1d
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 80,U
+	STA 40,U
+	STA ,U
+	STA -40,U
+	LDA #$6f
+	STA -80,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$ff
+	STA -120,U
+	puls u,pc
+
+DRAW_text_m
+        pshs u
+	LEAU 40,U
+
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	LDA #$66
+	STA -80,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LDA #$ff
+	STA 120,U
+	LDA #$dd
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$1f
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	STA -120,U
+	puls u,pc
+
+DRAW_text_x
+        pshs u
+	LEAU 40,U
+
+	LDA #$df
+	STA -120,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LDA #$66
+	STA -80,U
+	LDA #$ff
+	STA 120,U
+	LDA #$f6
+	STA ,U
+	STA -40,U
+	LEAU -40,U
+
+	LDA #$1f
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA -40,U
+	STA -80,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LDA #$df
+	STA -120,U
+	LDA #$6f
+	STA ,U
+	LEAU -40,U
+
+	LDA #$df
+	STA -120,U
+	puls u,pc
+
+DRAW_text_1
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$f5
+	STA 80,U
+	STA 40,U
+	LDA #$f6
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$fd
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$f1
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$f0
+	STA 120,U
+	STA 80,U
+	STA 40,U
+	STA ,U
+	STA -40,U
+	STA -80,U
+	STA -120,U
+	LEAU -40,U
+
+	STA -120,U
+	puls u,pc
+
+DRAW_text_copy
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$f5
+	STA 80,U
+	LDA #$1f
+	STA -120,U
+	LDA #$65
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$5f
+	STA 40,U
+	LEAU -40,U
+
+	LDA #$f1
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$f5
+	STA 40,U
+	LDA #$f6
+	STA -40,U
+	LDA #$fd
+	STA -120,U
+	LDA #$66
+	STA ,U
+	STA -80,U
+	LDA #$5f
+	STA 80,U
+	LEAU -40,U
+
+	LDA #$df
+	STA -120,U
+	puls u,pc
+
+DRAW_text_u
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$f5
+	STA 80,U
+	LDA #$5f
+	STA 40,U
+	LDA #$df
+	STA -120,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LEAU -40,U
+
+	LDA #$1f
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 80,U
+	LDA #$5f
+	STA 40,U
+	LDA #$df
+	STA -120,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LEAU -40,U
+
+	LDA #$df
+	STA -120,U
+	puls u,pc
+
+DRAW_text_7
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 80,U
+	STA 40,U
+	STA ,U
+	STA -40,U
+	STA -80,U
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$1d
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$df
+	STA -120,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LEAU -40,U
+
+	LDA #$df
+	STA -120,U
+	puls u,pc
+
+DRAW_text_k
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LDA #$66
+	STA ,U
+	LDA #$6f
+	STA -40,U
+	STA -80,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$1f
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$6f
+	STA -40,U
+	STA -80,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LDA #$ff
+	STA 120,U
+	STA ,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$ff
+	STA -120,U
+	puls u,pc
+
+DRAW_text_s
+        pshs u
+	LEAU 40,U
+
+	LDA #$1d
+	STA -120,U
+	LDA #$55
+	STA 80,U
+	LDA #$66
+	STA -40,U
+	LDA #$6f
+	STA -80,U
+	LDA #$ff
+	STA 120,U
+	STA 40,U
+	STA ,U
+	LEAU -40,U
+
+	LDA #$f1
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 80,U
+	STA -40,U
+	STA -80,U
+	STA -120,U
+	LDA #$6f
+	STA ,U
+	LDA #$5f
+	STA 40,U
+	LEAU -40,U
+
+	LDA #$df
+	STA -120,U
+	puls u,pc
+
+DRAW_text_f
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$6f
+	STA ,U
+	LDA #$66
+	STA -40,U
+	LDA #$6f
+	STA -80,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$1d
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 80,U
+	STA 40,U
+	STA ,U
+	STA -40,U
+	STA -80,U
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$df
+	STA -120,U
+	puls u,pc
+
+DRAW_text_l
+        pshs u
+	LEAU 40,U
+
+	LDA #$df
+	STA -120,U
+	LDA #$55
+	STA 80,U
+	LDA #$5f
+	STA 40,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$ff
+	STA 120,U
+	LEAU -40,U
+
+	LDA #$1f
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 40,U
+	STA ,U
+	STA -40,U
+	STA -80,U
+	STA -120,U
+	LDA #$5f
+	STA 80,U
+	LEAU -40,U
+
+	LDA #$ff
+	STA -120,U
+	puls u,pc
+
+DRAW_text_0
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$55
+	STA 80,U
+	LDA #$5f
+	STA 40,U
+	LDA #$1f
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$f1
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$df
+	STA -120,U
+	LDA #$5f
+	STA 40,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$ff
+	STA 120,U
+	STA 80,U
+	LEAU -40,U
+
+	LDA #$df
+	STA -120,U
+	puls u,pc
+
+DRAW_text_y
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$f5
+	STA 80,U
+	STA 40,U
+	LDA #$f6
+	STA ,U
+	STA -40,U
+	LDA #$6f
+	STA -80,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$1f
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 80,U
+	STA 40,U
+	STA ,U
+	STA -40,U
+	LDA #$df
+	STA -120,U
+	LDA #$6f
+	STA -80,U
+	LEAU -40,U
+
+	LDA #$df
+	STA -120,U
+	puls u,pc
+
+DRAW_text_a
+        pshs u
+	LEAU 40,U
+
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LDA #$ff
+	STA 120,U
+	LDA #$f1
+	STA -120,U
+	LDA #$66
+	STA ,U
+	LDA #$6f
+	STA -40,U
+	STA -80,U
+	LEAU -40,U
+
+	LDA #$ff
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$f0
+	STA 120,U
+	LDA #$50
+	STA 80,U
+	STA 40,U
+	LDA #$60
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$d0
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$10
+	STA -120,U
+	puls u,pc
+
+DRAW_text_t
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$f5
+	STA 80,U
+	STA 40,U
+	LDA #$f6
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$fd
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$1d
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 80,U
+	STA 40,U
+	STA ,U
+	STA -40,U
+	STA -80,U
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$df
+	STA -120,U
+	puls u,pc
+
+DRAW_text_space
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 80,U
+	STA 40,U
+	STA ,U
+	STA -40,U
+	STA -80,U
+	STA -120,U
+	LEAU -40,U
+
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA 80,U
+	STA 40,U
+	STA ,U
+	STA -40,U
+	STA -80,U
+	STA -120,U
+	LEAU -40,U
+
+	STA -120,U
+	puls u,pc
+
+DRAW_text_6
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$55
+	STA 80,U
+	LDA #$5f
+	STA 40,U
+	LDA #$6f
+	STA ,U
+	LDA #$66
+	STA -40,U
+	LDA #$6f
+	STA -80,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$1d
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA -80,U
+	STA -120,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	LEAU -40,U
+
+	LDA #$df
+	STA -120,U
+	puls u,pc
+
+DRAW_text_j
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$f5
+	STA 80,U
+	LDA #$ff
+	STA -40,U
+	STA -80,U
+	STA -120,U
+	LDA #$6f
+	STA ,U
+	LDA #$55
+	STA 40,U
+	LEAU -40,U
+
+	LDA #$ff
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$df
+	STA -120,U
+	LDA #$5f
+	STA 40,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$ff
+	STA 120,U
+	STA 80,U
+	LEAU -40,U
+
+	LDA #$1f
+	STA -120,U
+	puls u,pc
+
+DRAW_text_r
+        pshs u
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	LDA #$df
+	STA -120,U
+	LDA #$66
+	STA ,U
+	STA -40,U
+	LDA #$6f
+	STA -80,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LEAU -40,U
+
+	LDA #$1d
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$ff
+	STA 120,U
+	STA ,U
+	STA -40,U
+	LDA #$6f
+	STA -80,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LDA #$df
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$ff
+	STA -120,U
+	puls u,pc
+
+DRAW_text_g
+        pshs u
+	LEAU 40,U
+
+	LDA #$1f
+	STA -120,U
+	LDA #$5f
+	STA 40,U
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	STA -80,U
+	LDA #$ff
+	STA 120,U
+	LDA #$f5
+	STA 80,U
+	LEAU -40,U
+
+	LDA #$f1
+	STA -120,U
+
+	LEAU -$2000,U
+	LEAU 40,U
+
+	LDA #$6f
+	STA ,U
+	STA -40,U
+	LDA #$5f
+	STA 80,U
+	STA 40,U
+	LDA #$ff
+	STA 120,U
+	STA -80,U
+	STA -120,U
+	LEAU -40,U
+
+	LDA #$df
+	STA -120,U
+	puls u,pc

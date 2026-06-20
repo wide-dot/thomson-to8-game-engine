@@ -1,8 +1,8 @@
 * ===========================================================================
 * Object Constants
 * ===========================================================================
-nb_dynamic_objects           equ 57
-nb_graphical_objects         equ 57 * max 64 total
+nb_dynamic_objects           equ 55
+nb_graphical_objects         equ 55 * max 64 total
 ext_variables_size           equ 20 ; ext_variables_size is for dynamic objects
 
 * ===========================================================================

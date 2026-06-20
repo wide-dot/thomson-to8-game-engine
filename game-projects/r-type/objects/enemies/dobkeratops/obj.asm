@@ -74,7 +74,11 @@ Init
         ldx   #EraserObjects
         aslb
         stu   b,x ; backup object pointer
-        inc   routine,u
+        tstb
+        bne   >
+        ldb   #4               ; first orbit spawned: reset the nerve counter
+        stb   eyesAlive        ; (arcade: parent +0x34 nerves-alive)
+!       inc   routine,u
         ora   #render_overlay_mask
         sta   render_flags,u
         _Collision_AddAABB AABB_0,AABB_list_ennemy
@@ -133,27 +137,46 @@ Run
         jsr   DeleteObject
 !       jmp   DisplaySprite
 @alienN0
-        ldx   gfxlock.frame.count
+        lda   globals.bossDefeated
+        bne   @frozen          ; boss killed: stop repainting, the overlay paint
+        ldx   gfxlock.frame.count ; persists and the tile-erase blits eat it
         cmpx  #timestamp.ERASE_NERV_START
-        blo   >
-        ; remove eyes hitboxes only once (with arbitrary alien instance)
-        ldx   EraserObjects
-        clr   AABB_0+AABB.p,x
-        ldx   EraserObjects+2
-        clr   AABB_0+AABB.p,x
-        ldx   EraserObjects+4
-        clr   AABB_0+AABB.p,x
-        ldx   EraserObjects+6
-        clr   AABB_0+AABB.p,x
-        ; move alien out without nerves
+        blo   @checkEyes
+        bsr   Run.killEyes     ; nerve free-life timeout (arcade: nerve +0x3E expires)
+@checkEyes
+        lda   eyesAlive
+        bne   >
+        ; all nerves gone: alien moves out (arcade: background scroll resumes)
         lda   #rtnid.MoveAlien
         sta   routine,u
         ldd   #-$0018
         std   x_vel,u
 !
         jmp   DisplaySprite
+@frozen rts
+
+Run.killEyes
+        ; remove hitboxes of the surviving eyes, each kill is then
+        ; processed by RunEyes (score, explosion, erase animation)
+        ldx   EraserObjects
+        beq   >
+        clr   AABB_0+AABB.p,x
+!       ldx   EraserObjects+2
+        beq   >
+        clr   AABB_0+AABB.p,x
+!       ldx   EraserObjects+4
+        beq   >
+        clr   AABB_0+AABB.p,x
+!       ldx   EraserObjects+6
+        beq   >
+        clr   AABB_0+AABB.p,x
+!       rts
 
 RunEyes
+        lda   main.dobkeratops.halfDamage ; arcade: monster past half damage kills the nerves
+        bne   @erase
+        lda   globals.bossDefeated     ; arcade +0x32 children-explode: boss dead ->
+        bne   @erase                   ;   erase any nerve still alive on a fast kill
         lda   AABB_0+AABB.p,u
         beq   @erase
         ldx   #AABBOffsets
@@ -167,6 +190,17 @@ RunEyes
         stb   AABB_0+AABB.cx,u
         jmp   DisplaySprite
 @erase
+        ; unregister this orbit (its slot will be recycled)
+        ; and update the nerve counter (arcade: parent +0x34)
+        ldx   #EraserObjects
+        ldb   subtype,u
+        aslb
+        ldy   #0
+        sty   b,x
+        dec   eyesAlive
+        bne   >
+        jsr   main.dobkeratops.allEyesDead ; all nerves dead: alien recedes
+!
         ; globals.score update
         ldd   globals.score
         addd  #dobkeratops_eye_score
@@ -201,7 +235,8 @@ RunEyes
         addd  2,y
         std   y_pos,x
 !       lda   #rtnid.DeleteEye
-        sta   routine,u      
+        sta   routine,u
+        inc   main.dobkeratops.nervesErasing ; this orbit nerve starts erasing (death lock)
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
         ; create a new eraser object with one frame ahead for double buffering
         jsr   LoadObject_x
@@ -219,8 +254,11 @@ RunEyes
         lda   routine,u
         sta   routine,x
         clr   anim_frame_duration,x
+        clr   anim_frame,x                  ; play the copy from frame 0 so it reaches
+                                            ;   @end and decrements (slot may be non-zero)
+        inc   main.dobkeratops.nervesErasing ; its double-buffer copy erases too
 !       rts
-DeleteEye  
+DeleteEye
         ldb   subtype,u
         ldx   #EraserImages
         aslb
@@ -233,8 +271,12 @@ DeleteEye
         std   image_set,u ; update image
         inc   anim_frame,u
         jmp   DisplaySprite
-@end    
+@end
         ldb   subtype,u
+        cmpb  #4
+        bhs   @endCascade
+        dec   main.dobkeratops.nervesErasing ; orbit nerve erase animation finished
+@endCascade
         cmpb  #5
         bne   >
         ldx   EyesObjects+4
@@ -249,18 +291,21 @@ DeleteEye
         jmp   DeleteObject
 
 MoveAlien
-        ldx   gfxlock.frame.count
-        cmpx  #timestamp.MOVE_ALIEN_START
+        lda   globals.bossDefeated
+        bne   @frozen          ; boss killed: stop repainting, the overlay paint
+        ldx   gfxlock.frame.count ; persists and the tile-erase blits eat it
+        cmpx  main.timestamp.moveAlienStart
         blo   >
         ldd   #Img_dobkeratops_alien
         std   image_set,u
         jsr   main.followDobkeratops
         ldx   gfxlock.frame.count
-        cmpx  #timestamp.MOVE_ALIEN_END
+        cmpx  main.timestamp.moveAlienEnd
         blo   >
         lda   #rtnid.DeleteAlien
         sta   routine,u
 !       jmp   DisplaySprite
+@frozen rts
 
 DeleteAlien
         inc   routine,u
@@ -409,3 +454,6 @@ EyesObjects
         fdb   0 ; 30
         fdb   0 ; 31
         fdb   0 ; 32
+
+eyesAlive
+        fcb   0 ; number of nerves still alive (arcade: parent +0x34)
