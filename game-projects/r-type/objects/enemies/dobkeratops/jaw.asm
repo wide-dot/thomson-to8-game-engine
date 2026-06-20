@@ -62,13 +62,15 @@ Wait
         jmp   DisplaySprite
 
 Run
+        lda   globals.bossDefeated
+        bne   @toEnd                       ; boss dead: stop following, go to hold/explode
         ldx   gfxlock.frame.count
-        cmpx  #timestamp.MOVE_ALIEN_START
+        cmpx  main.timestamp.moveAlienStart
         blo   >
         jsr   main.followDobkeratops
-        cmpx  #timestamp.MOVE_ALIEN_END
+        cmpx  main.timestamp.moveAlienEnd
         blo   >
-        lda   #rtnid.WaitEndStage
+@toEnd  lda   #rtnid.WaitEndStage
         sta   routine,u
 !
 WaitEndStage
@@ -76,8 +78,11 @@ WaitEndStage
 
 Animate
         lda   globals.bossDefeated
+        beq   @anim                        ; boss alive: normal jaw animation
+        lda   main.dobkeratops.explode      ; boss dead: held frozen until released
         bne   Explode
-
+        jmp   DisplaySprite                ; frozen in place, explosion pending
+@anim
         ldd   anim_frame,u
         addd  gfxlock.frameDrop.count_w
         cmpd  #$180                     ; up to x180 (384)

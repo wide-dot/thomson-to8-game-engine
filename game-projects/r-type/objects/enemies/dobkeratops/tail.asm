@@ -129,22 +129,27 @@ InstanceEnd
         jmp   UnloadObject_u
 
 Run
+        lda   globals.bossDefeated
+        bne   @toEnd                       ; boss dead: stop, go to hold/explode
         ldx   gfxlock.frame.count
-        cmpx  #timestamp.MOVE_ALIEN_START
+        cmpx  main.timestamp.moveAlienStart
         blo   >
         jsr   main.followDobkeratops
-        cmpx  #timestamp.MOVE_ALIEN_END
+        cmpx  main.timestamp.moveAlienEnd
         blo   >
-        lda   #rtnid.WaitEndStage
+@toEnd  lda   #rtnid.WaitEndStage
         sta   routine,u
 !
 WaitEndStage
         lda   globals.bossDefeated
-        beq   >
+        beq   @anim                        ; boss alive: normal tail animation
+        lda   main.dobkeratops.explode      ; boss dead: held frozen until released
+        beq   @hold
         lda   #rtnid.Explode
         sta   routine,u
         jmp   DisplaySprite
-!
+@hold   jmp   DisplaySprite                ; frozen in place, explosion pending
+@anim
         ; apply velocity by script in sync with framerate
         ; -----------------------------------------------
         ldy gfxlock.frameDrop.count_w ; take number of elapsed frame since last render and apply all moves

@@ -18,6 +18,9 @@ AABB_0              equ ext_variables   ; AABB struct (9 bytes)
 explosion.instances equ dp_extreg+9
 
 rtnid.WaitEndStage equ 5
+rtnid.WaitExplode  equ 7
+nerveLock.WAIT     equ 24                ; safety cap (~= nerve erase length): bounds the
+                                         ;   freeze if nervesErasing ever fails to reach 0
 
 Object
         lda   routine,u
@@ -33,6 +36,7 @@ Routines
         fdb   MonsterMouth
         fdb   WaitEndStage
         fdb   AlreadyDeleted
+        fdb   WaitExplode
 
 Init
         ; init sprite position
@@ -56,6 +60,11 @@ Init
         ; init image
         ldx   #0
         stx   image_set,u
+
+        lda   #nerveLock.WAIT           ; death freeze: safety-cap countdown
+        sta   nerveLock.wait
+        clr   hitFlash.active            ; boss hit flash state
+        clr   hitFlash.prevP
 
         _Collision_AddAABB AABB_0,AABB_list_ennemy
         lda   #dobkeratops_monster_hitdamage
@@ -133,10 +142,10 @@ monster.getout.images
 
 MonsterMouth
         ldx   gfxlock.frame.count
-        cmpx  #timestamp.MOVE_ALIEN_START
+        cmpx  main.timestamp.moveAlienStart
         blo   >
         jsr   main.followDobkeratops
-        cmpx  #timestamp.MOVE_ALIEN_END
+        cmpx  main.timestamp.moveAlienEnd
         blo   >
         lda   #rtnid.WaitEndStage
         sta   routine,u
@@ -188,8 +197,34 @@ monster.fire.images
         fdb   Img_dobkeratops_monster_4
 
 UpdateHitBox
+        ; boss hit flash. The palette change must be QUEUED (modify the working
+        ; palette buffer + clear PalRefresh); the IRQ PalUpdateNow applies it at
+        ; the next VBL. A direct $E7DA poke here tears (mid-frame). In game
+        ; Pal_current = Pal_buffer (set by the fade object), so we edit Pal_buffer.
+        ; undo last frame's white on index 12
+        lda   hitFlash.active
+        beq   @noUnflash
+        clr   hitFlash.active
+        ldd   Pal_game+24                  ; index 12 normal colour
+        std   Pal_buffer+24
+        clr   PalRefresh                   ; queue -> IRQ PalUpdateNow at next VBL
+@noUnflash
         lda   AABB_0+AABB.p,u
-        beq   Delete
+        beq   MonsterKill
+        ; hit this frame? the boss damage potential dropped since last frame
+        cmpa  hitFlash.prevP
+        bhs   @noHit
+        ldd   #$ff0f                        ; flash index 12 white (max), queued
+        std   Pal_buffer+24
+        clr   PalRefresh
+        lda   #1
+        sta   hitFlash.active
+@noHit  lda   AABB_0+AABB.p,u
+        sta   hitFlash.prevP
+        cmpa  #dobkeratops_monster_hitdamage/2
+        bhs   >
+        sta   main.dobkeratops.halfDamage ; arcade: past half damage the nerves self-destruct
+!       ; update the hitbox screen position
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB_0+AABB.cx,u
@@ -197,6 +232,46 @@ UpdateHitBox
         subd  glb_camera_y_pos
         stb   AABB_0+AABB.cy,u
         rts
+
+MonsterKill
+        ; boss reached 0 HP: freeze the whole boss now (bossDefeated -> body
+        ; @frozen, jaw/tail hold).
+        lda   #1
+        sta   globals.bossDefeated
+        ; alien already moving out (past moveAlienStart)? the optic nerves were
+        ; destroyed/erased long ago (>=140 frames) -> explode THIS frame, no wait.
+        ; (reliable, independent of the nervesErasing counter)
+        ldx   gfxlock.frame.count
+        cmpx  main.timestamp.moveAlienStart
+        bhs   @explodeNow
+        ; otherwise the nerves may still be on screen: wait unless none is erasing
+        lda   main.dobkeratops.halfDamage
+        beq   @forceErase                    ; instant kill (half not reached): force + wait
+        lda   main.dobkeratops.nervesErasing
+        bne   @wait                          ; nerves still erasing -> wait for them
+@explodeNow
+        lda   #1
+        sta   main.dobkeratops.explode       ; explode now
+        jmp   Delete
+@forceErase
+        lda   #1
+        sta   main.dobkeratops.halfDamage    ; trigger surviving nerves, then wait
+@wait
+        lda   #rtnid.WaitExplode
+        sta   routine,u
+        rts
+
+* boss is frozen: wait for the optic-nerve erase to finish, then release the
+* explosions (jaw + tail + boss) and the boss tile-erase via the explode flag.
+WaitExplode
+        lda   main.dobkeratops.nervesErasing
+        beq   >                             ; nerve erase finished -> release
+        lda   nerveLock.wait
+        beq   >                             ; safety cap reached -> release anyway
+        dec   nerveLock.wait
+        jmp   DisplaySprite                 ; still erasing -> hold, keep monster shown
+!       lda   #1
+        sta   main.dobkeratops.explode       ; release jaw/tail/boss explosions + tile-erase
 
 Delete
         ldd   globals.score
@@ -212,9 +287,6 @@ Delete
         std   y_pos,x
 @delete
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
-        lda   #1
-        sta   globals.bossDefeated
-
         jsr   LoadObject_x
         beq   >
         lda   #ObjID_dobkeratops_explosion
@@ -223,10 +295,18 @@ Delete
         std   x_pos,x
         ldd   y_pos,u
         std   y_pos,x
-!       
+!
         lda   #6
         sta   routine,u
         jmp   DeleteObject
 
 AlreadyDeleted
         rts
+
+nerveLock.wait
+        fcb   0 ; death-freeze safety-cap countdown (frames), set at Init
+
+hitFlash.active
+        fcb   0 ; 1 = palette index 12 is white this frame (restore next frame)
+hitFlash.prevP
+        fcb   0 ; boss damage potential last frame (hit = it dropped)
