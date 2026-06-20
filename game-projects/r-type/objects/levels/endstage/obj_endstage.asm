@@ -322,7 +322,7 @@ Blit
 * ---------------------------------------------------------------------------
 BlitPhase3
         lda   FadeCnt
-        cmpa  #80
+        cmpa  #FadeLen
         bcc   @clearHidden                  ; fade done -> black the HIDDEN buffer, then switch
         lda   gfxlock.backBuffer.id         ; still fading: enter single buffer on a buffer-0
         bne   @fade                         ; frame only (the frozen buffer is then buffer 0)
@@ -569,92 +569,277 @@ rect.lineCnt     fcb 0  ; BigBlackRect scanline counter
 *         bne    @loop    ; oui. => bouclage
 *         rts             ; non => retour
 
-; Accolade presents fading-out
-; ----------------------------
-
-; matrice de tramage (codée en dur)
-;  1 51 11 21 61 31 71 41        0
-; 18 58 28 68 38 78 48  8 
-; 65 35 75 45  5 55 15 25 
-; 42  2 52 12 22 62 32 72        1
-;  9 19 59 29 69 39 79 49 
-; 26 66 36 76 46  6 56 16 
-; 73 43  3 53 13 23 63 33        2
-; 50 10 20 60 30 70 40 80 
-; 17 27 67 37 77 47  7 57 
-; 34 74 44  4 54 14 24 64        3
+ACCOLAD equ     1
+DIAG    equ     2
+BAYER8  equ     3
+PATTERN equ     BAYER8
 
 InitFadeOut
         clr     FadeCnt
         rts
 
-FadeOut
-;       bsr     @erase      ; moduler le nb d'erase pour la vitesse
-;       bsr     @erase 
-;       bsr     @erase      ; implicite celui-là
-@erase  lda     #80       ; /!\ auto-modifié/ compteur d'état
+FadeOut ldb     #FadeLen
 FadeCnt set     *-1
-        cmpa    #80
+        cmpb    #FadeLen
         bcs     >
         rts
-!       inca
-        sta     FadeCnt
-; masque pixel
-        ldb     #$0F
-        bita    #1
-        beq     >
-        comb
-!       stb     @mask+1 ; $0F ou $F0
-; plan rama/ramb
-        ldb     #$A0
-        bita    #2
-        beq     >
-        addb    #$20 
-!       stb     @plan+1 ; partie haute
-!       clrb
-        bita    #4
-; 1er ou 2e colonne
-        beq     > 
+!       ldx     #FadeOutPattern
+        ifndef  DOUBLE_BUF
+        abx
+        else
+        lsrb
+        abx
+        rolb
+        endc
         incb
-!       stb     @plan+2 ; partie basse
-; calcul a*3
-        lsla
-        adda    FadeCnt
-; calcul "rapide" (a*3) mod 10
-@foRef  cmpa    #160 
-        bcs     >
-        suba    #160 
-!       cmpa    #80
-        bcs     >
-        suba    #80
-!       cmpa    #40
-        bcs     > 
-        suba    #40
-!       cmpa    #20
-        bcs     > 
-        suba    #20
-!       cmpa    #10
-        bcs     > 
-        suba    #10
-; D=40*((3*a) mod 10)
-!       ldb     #40
-        mul
-; calcule adresse buffer video 
-@plan   addd    #$CAFE     ; /!\ auto-modifié
-        tfr     d,x
-        addd    #8000    ; fin buffer video
+        stb     FadeCnt
+!       ldd     #$0FE0  ; A=mask
+        andb    ,x      ; keep b7b6b5
+        bitb    #32     ; b5=1 ?
+        beq     >
+        subd    #$1F20  ; invert mask and clear b5
+!       sta     @mask   ; $0F ou $F0
+; plan rama/ramb
+        lda     #$A0    ; rama
+        lslb            ; carry = b7
+        bpl     >       ; old b6=0 ?
+        lda     #$C0    ; no=> ramb
+!       rolb            ; put back b7 in b0
+        std     @plan+1
+        addd    #7999
         std     @tstend+1
-; jusqu'ici 130 cycle environ, et restent 
-; à la louche 20*((2+17*20)+5+4+3)=7080 cycles
-; dans ce qui suit, donc total ~7200 cycles par 
-; étape, soit 21ms par appel à FadeOut (à vérifier
-@loop   ldb     #38         ; on va en arrière pour éviter cmpb
-@mask   lda     #$FF        ; /!\ auto-modifié
-        anda    b,x
+        ldd     #40*256+31
+        andb    ,x      ; extract line offset
+        mul             ; convert to screen offset
+; calcule adresse buffer video 
+@plan   addd    #$CAFE  ; add screen-plane start
+        tfr     d,x     ; result in X
+@loop1  ldb     #40-2
+@loop2  lda     b,x
+        beq     >
+        anda    #$FF
+@mask   equ     *-1
         sta     b,x
-        subb    #2          ; on recule de 8 pix
-        bpl     @mask       ; bouclage sur ligne
-        leax    400,x       ; on repète pareil 10 lignes plus bas
-@tstend cmpx    #$DEAD      ; /!\ auto-modifié
-        bcs     @loop       ; pas atteitn fin écran => boucle
+!       subb    #2
+        bpl     @loop2  ; line done ? => no loop back
+        leax    40*(FadeLen/8),x ; ligne suivante
+@tstend cmpx    #$DEAD  ; screen done ?
+        bcs     @loop1  ; no => process a nes line
         rts
+
+; Accolade presents fading-out
+; ----------------------------
+
+; matrice de tramage (codée en dur)
+;     0  1  2  3  4  5  6  7
+; 0:  1 51 11 21 61 31 71 41        0
+; 1: 18 58 28 68 38 78 48  8 
+; 2: 65 35 75 45  5 55 15 25 
+; 3: 42  2 52 12 22 62 32 72        1
+; 4:  9 19 59 29 69 39 79 49 
+; 5: 26 66 36 76 46  6 56 16 
+; 6: 73 43  3 53 13 23 63 33        2
+; 7: 50 10 20 60 30 70 40 80 
+; 8: 17 27 67 37 77 47  7 57 
+; 9: 34 74 44  4 54 14 24 64        3
+
+; coord colonne,ligne avec 0 <= colonne <= 7 
+; le framework gère des motifs de 8 pix horiz,
+; et jusqu'à 32 vertical
+
+coord   macro
+        fcb     32*(\1)+(\2)
+        endm
+
+FadeOutPattern
+        ifeq    PATTERN-ACCOLAD
+; Accolade presnts
+        coord   0,0     ; 1
+        coord   1,3     ; 2
+        coord   2,6     ; 3
+        coord   3,9     ; 4
+        coord   4,2     ; 5
+        coord   5,5     ; 6
+        coord   6,8     ; 7
+        coord   7,1     ; 8
+        coord   0,4     ; 9
+        coord   1,7     ; 10
+        
+        coord   2,0     ; 11
+        coord   3,3     ; 12
+        coord   4,6     ; 13
+        coord   5,9     ; 14
+        coord   6,2     ; 15
+        coord   7,5     ; 16
+        coord   0,8     ; 17
+        coord   0,1     ; 18 <== irrégularité
+        coord   1,4     ; 19
+        coord   2,7     ; 20
+        
+        coord   3,0     ; 21
+        coord   4,3     ; 22
+        coord   5,6     ; 23
+        coord   6,9     ; 24
+        coord   7,2     ; 25
+        coord   0,5     ; 26
+        coord   1,8     ; 27
+        coord   2,1     ; 28
+        coord   3,4     ; 29
+        coord   4,7     ; 30
+        
+        coord   5,0     ; 31
+        coord   6,3     ; 32
+        coord   7,6     ; 33
+        coord   0,9     ; 34
+        coord   1,2     ; 35
+        coord   2,5     ; 36
+        coord   3,8     ; 37
+        coord   4,1     ; 38
+        coord   5,4     ; 39
+        coord   6,7     ; 40
+
+        coord   7,0     ; 41
+        coord   0,3     ; 42
+        coord   1,6     ; 43
+        coord   2,9     ; 44
+        coord   3,2     ; 45
+        coord   4,5     ; 46
+        coord   5,8     ; 47
+        coord   6,1     ; 48
+        coord   7,4     ; 49
+        coord   0,7     ; 50
+
+        coord   1,0     ; 51
+        coord   2,3     ; 52
+        coord   3,6     ; 53
+        coord   4,9     ; 54
+        coord   5,2     ; 55
+        coord   6,5     ; 56
+        coord   7,8     ; 57
+        coord   1,1     ; 58
+        coord   2,4     ; 59
+        coord   3,7     ; 60
+
+        coord   4,0     ; 61
+        coord   5,3     ; 62
+        coord   6,6     ; 63
+        coord   7,9     ; 64
+        coord   0,2     ; 65
+        coord   1,5     ; 66
+        coord   2,8     ; 67
+        coord   3,1     ; 68
+        coord   4,4     ; 69
+        coord   5,7     ; 70
+
+        coord   6,0     ; 71
+        coord   7,3     ; 72
+        coord   0,6     ; 73
+        coord   1,9     ; 74
+        coord   2,2     ; 75
+        coord   3,5     ; 76
+        coord   4,8     ; 77
+        coord   5,1     ; 78
+        coord   6,4     ; 79
+        coord   7,7     ; 80
+        endc
+
+        ifeq    PATTERN-DIAG
+        coord   7,0
+        coord   6,1
+        coord   5,2
+        coord   4,3
+        coord   3,4
+        coord   2,5
+        coord   1,6
+        coord   0,7
+
+        coord   7,1
+        coord   6,2
+        coord   5,3
+        coord   4,4
+        coord   3,5
+        coord   2,6
+        coord   1,7
+        coord   0,0
+
+        coord   7,2
+        coord   6,3
+        coord   5,4
+        coord   4,5
+        coord   3,6
+        coord   2,7
+        coord   1,0
+        coord   0,1
+
+        coord   7,3
+        coord   6,4
+        coord   5,5
+        coord   4,6
+        coord   3,7
+        coord   2,0
+        coord   1,1
+        coord   0,2
+
+        coord   7,4
+        coord   6,5
+        coord   5,6
+        coord   4,7
+        coord   3,0
+        coord   2,1
+        coord   1,2
+        coord   0,3
+
+        coord   7,5
+        coord   6,6
+        coord   5,7
+        coord   4,0
+        coord   3,1
+        coord   2,2
+        coord   1,3
+        coord   0,4
+
+        coord   7,6
+        coord   6,7
+        coord   5,0
+        coord   4,1
+        coord   3,2
+        coord   2,3
+        coord   1,4
+        coord   0,5
+
+        coord   7,7
+        coord   6,0
+        coord   5,1
+        coord   4,2
+        coord   3,3
+        coord   2,4
+        coord   1,5
+        coord   0,6
+
+        endc
+
+        ifeq    PATTERN-BAYER8
+bloc1   macro
+        coord   0+\1,0+\2
+        coord   4+\1,4+\2
+        coord   4+\1,0+\2
+        coord   0+\1,4+\2
+        endm
+bloc2   macro
+        bloc1   0+\1,0+\2
+        bloc1   2+\1,2+\2
+        bloc1   2+\1,0+\2
+        bloc1   0+\1,2+\2
+        endm
+
+        bloc2   0,0
+        bloc2   1,1
+        bloc2   1,0
+        bloc2   0,1
+        endc
+
+        ifndef  DOUBLE_BUF
+FadeLen set (*-FadeOutPattern) 
+        else
+FadeLen set (*-FadeOutPattern)*2
+        endc
