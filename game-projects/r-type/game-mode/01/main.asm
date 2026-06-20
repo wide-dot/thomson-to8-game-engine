@@ -2,6 +2,7 @@
 
 DEBUG   equ     1
 SOUND_CARD_PROTOTYPE equ 1
+DEBUG_START_LAST_CHECKPOINT equ 1    ; debug: start the stage at the last checkpoint (comment out to start from the beginning)
 
         INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/system/to8/map.const.asm"
@@ -20,15 +21,34 @@ SOUND_CARD_PROTOTYPE equ 1
 
 timestamp.DELETE_ALIEN_BODY equ $1D80
 timestamp.ERASE_NERV_START equ timestamp.DELETE_ALIEN_BODY+$280
-timestamp.MOVE_ALIEN_START equ timestamp.ERASE_NERV_START+140
-timestamp.MOVE_ALIEN_END   equ timestamp.MOVE_ALIEN_END+880
+timestamp.BOSS_ESCAPE      equ $2B7C ; boss activation ($1B7C) + $1000 (arcade: run_dobkeratops +0x3E timeout)
+timestamp.MOVEALIEN_DELAY  equ 140   ; frames between last nerve death and alien move out
+timestamp.MOVEALIEN_LEN    equ 880   ; duration of the alien move out
+
+endstage.DURATION equ $C0            ; arcade: run_dobkeratops arms +0x22 = $C0 frames
+endstage.JINGLE   equ $10            ; arcade: jingle + ship autopilot fire when the countdown reaches $10
+endstage.RALLY_X  equ 80             ; arcade X $200: CoordinatesConv round((512-320)*144/384)+8 = 80
+endstage.RALLY_Y  equ 130            ; arcade Y $E0: CoordinatesConv round((224-128-16)*-180/240)+190 = 130 (arcade Y axis is up, flipped)
+endstage.DEADBAND equ 3              ; per axis dead band in px (arcade: 4 px)
+endstage.bossStopX equ 1396          ; camera x that frames the boss room (was the old map_width-viewport_width)
+
+; ObjID_endstage mounted-object protocol (logic lives in obj_endstage.asm)
+endstage.TICK          equ 0         ; command: run the end of stage tick
+endstage.INIT          equ 1         ; command: reset boss sequencing state
+endstage.BLIT          equ 2         ; command: boss tile-erase black blits (call inside the gfx lock)
+endstage.STATUS_NONE   equ 0         ; status: nothing to do
+endstage.STATUS_JINGLE equ 1         ; status: main must start the stage clear jingle
+
+; ObjID_hud command protocol (logic lives in objects/levels/hud/hud.asm)
+hud.NORMAL  equ 0                    ; command: draw the bottom HUD (beam, lives, score)
+hud.READOUT equ 1                    ; command: tick + draw the centered stage-score readout
 
 moveByScript.NEGXSTEP equ scale.XN1PX
 moveByScript.POSXSTEP equ scale.XP1PX
 moveByScript.NEGYSTEP equ scale.YN1PX
 moveByScript.POSYSTEP equ scale.YP1PX
 
-map_width       equ 1540
+map_width       equ 1584             ; full map (132 cols x 12px); the boss scroll-stop is endstage.bossStopX
 viewport_width  equ 144
 viewport_height equ 180
 
@@ -45,6 +65,7 @@ Level01_Start
         jsr   InitJoypads
         jsr   InitRNG
         _terrainCollision.init ObjID_collision
+        _RunObjectRoutineB ObjID_endstage,#endstage.INIT ; reset boss sequencing state
 
         ldd   #Pal_black
         std   Pal_current
@@ -58,6 +79,7 @@ Level01_Start
 ; init globals.score and globals.lives at level 1
         ldd   #0
         std   globals.score
+        std   globals.stageScoreBase    ; stage-score base = score at stage start (D=0; multistage-ready)
         ldb   #2
         stb   globals.lives
         lda   #1
@@ -75,6 +97,10 @@ Level01_Start
 
 ; init scroll
         jsr   InitScroll
+ IFDEF DEBUG_START_LAST_CHECKPOINT
+        lda   #254                     ; >= last checkpoint, < the -1 sentinel: checkpoint.load picks the last one
+        sta   scroll_tile_pos
+ ENDC
         _MountObject ObjID_checkpoint
         jsr   ,x
         
@@ -139,13 +165,35 @@ mainloop.routine.running
 
         jsr   gfxlock.on
         jsr   EraseSprites
+        ; boss erase (block sweep + big rectangle): right after EraseSprites and
+        ; before DrawSprites, so it overwrites the restored background and the
+        ; sprite background backups then capture the blacked-out result
+        _MountObject ObjID_endstage
+        ldb   #endstage.BLIT
+        jsr   ,x
         jsr   UnsetDisplayPriority
         jsr   DrawTiles
         jsr   DrawSprites
+        ; phase 0-2: normal Mask + HUD. phase 3 (dissolve): draw nothing, it owns the screen
+        ; (HUD band preserved by the capped fade). phase 4: centered stage-score readout.
+        lda   main.endstage.phase
+        cmpa  #3
+        blo   @overlayNormal
+        cmpa  #4
+        beq   @overlayReadout
+        bra   @overlayOff
+@overlayNormal
         _MountObject ObjID_Mask
         jsr   ,x
         _MountObject ObjID_hud
+        ldb   #hud.NORMAL
         jsr   ,x
+        bra   @overlayOff
+@overlayReadout
+        _MountObject ObjID_hud
+        ldb   #hud.READOUT
+        jsr   ,x
+@overlayOff
         jsr   gfxlock.off
         jsr   gfxlock.loop
 
@@ -159,6 +207,17 @@ mainloop.routine.running
         ;_MusicInit_objvgc #1,#MUSIC_LOOP,#0
         jsr   IrqOn
         clr   globals.nextGameMode
+!
+        ; end of stage sequencing (logic in the mounted endstage object)
+        _RunObjectRoutineB ObjID_endstage,#endstage.TICK
+        tstb
+        beq   >
+        ; stage clear jingle (arcade: SFX $1A + $1C) - the ymm object cannot
+        ; be mounted from inside the endstage object, so main starts it
+        jsr   IrqOff
+        _MountObject ObjID_ymm01
+        _MusicInit_objymm #2,#MUSIC_NO_LOOP,#0
+        jsr   IrqOn
 !
         jmp   LevelMainLoop
 
@@ -174,6 +233,7 @@ mainloop.routine.dead
         _MountObject ObjID_Mask
         jsr   ,x
         _MountObject ObjID_hud
+        ldb   #hud.NORMAL
         jsr   ,x
         jsr   gfxlock.off
         jsr   gfxlock.loop
@@ -229,7 +289,8 @@ mainloop.routine.checkpoint
         bpl   >
         jsr   IrqOff
         jmp   Level01_Start           ; GAME OVER: restart level 1
-!       
+!
+        _RunObjectRoutineB ObjID_endstage,#endstage.INIT ; rearm boss sequencing for the replay
         _MountObject ObjID_checkpoint ; READY: load checkpoint
         jsr   ,x
         lda   #1
@@ -324,6 +385,37 @@ main.followDobkeratops
         rts
 
 * ---------------------------------------------------------------------------
+* Dobkeratops sequencing state (arcade: run_dobkeratops parent object)
+* Shared resident state - read/written by the dobkeratops objects and by the
+* mounted endstage object (which owns the end of stage logic)
+* ---------------------------------------------------------------------------
+
+main.timestamp.moveAlienStart fdb 0  ; frame stamp: alien starts to move out
+main.timestamp.moveAlienEnd   fdb 0  ; frame stamp: alien is gone
+main.endstage.counter         fdb 0  ; end of stage countdown (0: not armed)
+main.endstage.phase           fcb 0  ; 0: gameplay, 1: jingle+autopilot, 2: glide, 3: fading, 4: score readout
+main.endstage.scoreArmed      fcb 0  ; 1: tell the HUD readout to (re)seed from the stage score
+main.endstage.scoreDone       fcb 0  ; 1: HUD readout finished -> obj_endstage leaves the level
+main.dobkeratops.halfDamage   fcb 0  ; set when the monster is past half damage
+main.dobkeratops.nervesErasing fcb 0 ; orbit-nerve erase animations still playing
+main.dobkeratops.explode       fcb 0 ; 0: boss frozen (bossDefeated) but explosions held
+                                      ;   while the nerves erase; 1: release jaw/tail/boss
+                                      ;   explosions + the boss-room rectangle wipe
+
+; called when the player has destroyed all four optical nerves
+; (arcade: run_dobkeratops resumes the background scroll at once)
+; stays resident: called from the dobkeratops object bank
+main.dobkeratops.allEyesDead
+        ldd   gfxlock.frame.count
+        addd  #timestamp.MOVEALIEN_DELAY
+        cmpd  main.timestamp.moveAlienStart
+        bhs   >
+        std   main.timestamp.moveAlienStart
+        addd  #timestamp.MOVEALIEN_LEN
+        std   main.timestamp.moveAlienEnd
+!       rts
+
+* ---------------------------------------------------------------------------
 *  Checkpoint positions in 24px tiles
 * ---------------------------------------------------------------------------
 checkpoint.positions
@@ -395,3 +487,6 @@ checkpoint.positions
 
         ; should be at the end of includes (ifdef dependencies)
         INCLUDE "./engine/InitGlobals.asm"
+
+        ; game mode transition (end of stage)
+        INCLUDE "./engine/level-management/LoadGameMode.asm"

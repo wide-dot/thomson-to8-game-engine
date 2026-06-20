@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>R-Type TO8 — fade tile preview</title>
+<style>
+  :root { --bg:#15171c; --panel:#1d2027; --ink:#cdd3df; --accent:#54c2ff; --line:#2c313c; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:13px/1.45 system-ui,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+  header { padding:10px 16px; border-bottom:1px solid var(--line); display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  header h1 { font-size:15px; margin:0; font-weight:600; }
+  header .hint { color:#7f8794; font-size:12px; }
+  main { display:flex; gap:16px; padding:16px; align-items:flex-start; flex-wrap:wrap; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px; }
+  .ctrls { width:280px; }
+  .ctrls label { display:block; margin:9px 0 2px; color:#9aa3b2; }
+  .ctrls .row { display:flex; gap:8px; align-items:center; }
+  .ctrls input[type=number], .ctrls select { width:100%; background:#12141a; color:var(--ink); border:1px solid var(--line); border-radius:5px; padding:5px 7px; }
+  .ctrls input[type=range] { width:100%; }
+  .ctrls .val { color:var(--accent); font-variant-numeric:tabular-nums; min-width:42px; text-align:right; }
+  .ctrls button { width:100%; margin-top:12px; background:var(--accent); color:#06131c; border:0; border-radius:6px; padding:9px; font-weight:600; cursor:pointer; }
+  .ctrls button.sec { background:#2a2f3a; color:var(--ink); margin-top:8px; }
+  .views { display:flex; gap:16px; flex-wrap:wrap; }
+  .view h2 { font-size:12px; font-weight:600; margin:0 0 8px; color:#9aa3b2; text-transform:uppercase; letter-spacing:.04em; }
+  canvas { image-rendering:pixelated; background:
+      conic-gradient(#3a3f4a 25%, #2c313c 0 50%, #3a3f4a 0 75%, #2c313c 0) 0 0/16px 16px; border:1px solid var(--line); border-radius:4px; display:block; }
+  .meta { color:#7f8794; font-size:12px; margin-top:6px; }
+  code { color:#9fe0a0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>fade tile preview</h1>
+  <span class="hint">balayage additif <code>iRnd = (iRnd + MAGIC) mod (W·H)</code> par tile — toutes les tiles synchronisées. Charge une image de fond pour la voir disparaître en noir.</span>
+</header>
+
+<main>
+  <div class="panel ctrls">
+    <label>Tile largeur × hauteur</label>
+    <div class="row"><input id="tw" type="number" min="1" max="64" value="12"><input id="th" type="number" min="1" max="64" value="12"></div>
+
+    <label>Seed</label>
+    <input id="seed" type="number" value="0">
+
+    <label>MAGIC (pas) — effectif = <span id="magicEff" class="val"></span> mod W·H</label>
+    <input id="magic" type="number" value="359">
+
+    <label>Frames <span id="framesV" class="val"></span></label>
+    <input id="frames" type="range" min="2" max="48" value="12">
+
+    <label><input id="emptyFirst" type="checkbox"> frame 0 vide</label>
+
+    <label>Vitesse anim (fps) <span id="fpsV" class="val"></span></label>
+    <input id="fps" type="range" min="1" max="30" value="8">
+
+    <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
+
+    <label>Image de fond (PNG/JPG) — défaut : background.png</label>
+    <input id="bg" type="file" accept="image/*">
+
+    <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
+
+    <div class="meta">Export — format jeu : index 0 = magenta (204,0,255) = transparent · index 1 = noir (pixel d'effacement du fond).</div>
+    <button id="replay">▶ rejouer</button>
+    <button id="export" class="sec">⬇ export ZIP (un PNG par frame)</button>
+  </div>
+
+  <div class="views">
+    <div class="view">
+      <h2>Aperçu écran (12×15 tiles)</h2>
+      <canvas id="screen"></canvas>
+      <div class="meta" id="screenMeta"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+const MAGENTA = [204,0,255];
+const $ = id => document.getElementById(id);
+let COLS=12, ROWS=15;            // grille écran (tiles) — calée sur la résolution de l'image de fond
+const ZX=4, ZY=2;                // échelle d'affichage : pixels TO8 (largeur double, ×4 H / ×2 V)
+
+function gcd(a,b){ while(b){[a,b]=[b,a%b];} return a; }
+
+// ordre de balayage : PRNG additif iRnd += magic mod n (permutation si coprime)
+function sweepOrder(n, seed, magic){
+  const order=[], seen=new Uint8Array(n);
+  let i=((seed%n)+n)%n;
+  const step=((magic%n)+n)%n;
+  for(let k=0;k<n;k++){ if(!seen[i]){seen[i]=1;order.push(i);} i=(i+step)%n; }
+  for(let k=0;k<n;k++) if(!seen[k]) order.push(k); // complète si non coprime
+  return order;
+}
+
+// nb de pixels noirs cumulés à la frame fi (0-based), sur `frames` frames
+function blackCount(fi, frames, n, emptyFirst){
+  // emptyFirst : frame 0 vide, puis fi=1..frames-1 va de 1/(frames-1) à 1 -> dernière = n
+  if(emptyFirst){ if(fi===0) return 0; return Math.round(fi*n/(frames-1)); }
+  return Math.round((fi+1)*n/frames); // dernière frame (fi=frames-1) = n
+}
+
+function state(){
+  const tw=+$('tw').value, th=+$('th').value, n=tw*th;
+  const seed=+$('seed').value|0, magic=+$('magic').value|0;
+  const emptyFirst=$('emptyFirst').checked;
+  let frames=+$('frames').value; if(emptyFirst) frames=frames+1;
+  return {tw,th,n,seed,magic,emptyFirst,frames, fps:+$('fps').value};
+}
+
+// dessine une frame (cumul `nBlack` premiers pixels de `order`) au FORMAT JEU :
+// magenta (204,0,255) = transparent (index 0), noir = pixel d'effacement (index 1).
+function drawFrame(ctx, order, nBlack, tw, th, ox, oy, z){
+  const img = ctx.createImageData(tw*z, th*z);
+  const d = img.data;
+  const black = new Uint8Array(tw*th);
+  for(let k=0;k<nBlack;k++) black[order[k]]=1;
+  for(let y=0;y<th*z;y++) for(let x=0;x<tw*z;x++){
+    const px=(x/z|0), py=(y/z|0), idx=py*tw+px, o=(y*tw*z+x)*4;
+    if(black[idx]){ d[o]=0; d[o+1]=0; d[o+2]=0; }                          // index 1 : noir
+    else { d[o]=MAGENTA[0]; d[o+1]=MAGENTA[1]; d[o+2]=MAGENTA[2]; }         // index 0 : magenta transparent
+    d[o+3]=255;
+  }
+  ctx.putImageData(img, ox, oy);
+}
+
+let order=[], cur=0, playing=true, last=0, bgImg=null, frameTiles=[], dir=1; // dir=+1 disparition, -1 apparition
+
+function rebuild(){
+  const s=state();
+  $('magicEff').textContent = ((s.magic%s.n)+s.n)%s.n;
+  $('framesV').textContent = +$('frames').value;
+  $('fpsV').textContent = s.fps;
+  order = sweepOrder(s.n, s.seed, s.magic);
+  cur=0; dir=1; playing=true;      // changement de paramètre -> rejoue la disparition depuis le début
+
+  // pré-rendu des frames de fondu (tw×th, noir opaque sur fond transparent) pour
+  // l'overlay rapide via drawImage, la même frame sur toutes les tiles
+  frameTiles=[];
+  for(let f=0; f<s.frames; f++){
+    const cv=document.createElement('canvas'); cv.width=s.tw; cv.height=s.th;
+    const cx=cv.getContext('2d'), im=cx.createImageData(s.tw, s.th);
+    const nb=blackCount(f,s.frames,s.n,s.emptyFirst);
+    for(let k=0;k<nb;k++){ im.data[order[k]*4+3]=255; } // RGB=0 par défaut -> noir opaque
+    cx.putImageData(im,0,0);
+    frameTiles.push(cv);
+  }
+
+  // nb de tiles ENTIÈRES qui rentrent dans l'image (sinon viewport R-Type 12×15) ; une
+  // résolution non multiple laisse une bande de bord SANS tile (pas de tile partielle)
+  if(bgImg){ COLS=Math.floor(bgImg.width/s.tw); ROWS=Math.floor(bgImg.height/s.th); }
+  else { COLS=12; ROWS=15; }
+  // canvas = image à sa taille réelle ×(ZX,ZY) -> AUCUNE déformation (juste pixels TO8) ;
+  // sans image on cale sur la grille par défaut
+  if(bgImg){ $('screen').width=bgImg.width*ZX; $('screen').height=bgImg.height*ZY; }
+  else { $('screen').width=COLS*s.tw*ZX; $('screen').height=ROWS*s.th*ZY; }
+}
+
+function renderScreen(){
+  const s=state();
+  // écran : image de fond, puis la MÊME frame de fondu (synchronisée) sur toutes les tiles
+  const sc=$('screen'), ctx=sc.getContext('2d'); // ZX/ZY globaux (pixels TO8)
+  ctx.imageSmoothingEnabled=false;
+  if(bgImg) ctx.drawImage(bgImg, 0,0, bgImg.width, bgImg.height, 0,0, sc.width, sc.height);
+  else { ctx.fillStyle='#23262e'; ctx.fillRect(0,0,sc.width,sc.height); }
+  const frame=frameTiles[cur];
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++)
+    ctx.drawImage(frame, c*s.tw*ZX, r*s.th*ZY, s.tw*ZX, s.th*ZY);
+  const p=((s.magic%s.n)+s.n)%s.n;
+  $('screenMeta').textContent = `frame ${cur+1}/${s.frames} · ${COLS}×${ROWS} tiles · pas ${p}`
+    + (gcd(p, s.n)!==1 ? ' · ⚠ non coprime' : ' · coprime ✓');
+}
+
+function loop(ts){
+  const s=state();
+  if(playing && ts-last > 1000/s.fps){   // lecture UNIQUE dans le sens courant (dir), puis stop
+    last=ts;
+    const nx=cur+dir;
+    if(nx>=0 && nx<s.frames) cur=nx; else playing=false;  // arrivé au bout -> on s'arrête (pas de boucle)
+  }
+  renderScreen();
+  requestAnimationFrame(loop);
+}
+
+// --- export ZIP : un PNG distinct par frame ----------------------------------
+// mini-ZIP méthode STORE (pas de compression : les PNG le sont déjà), donc aucune
+// dépendance externe -> le fichier HTML reste autonome.
+let CRC_TABLE=null;
+function crc32(bytes){
+  if(!CRC_TABLE){
+    CRC_TABLE=new Uint32Array(256);
+    for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); CRC_TABLE[n]=c>>>0; }
+  }
+  let crc=0xFFFFFFFF;
+  for(let i=0;i<bytes.length;i++) crc=(crc>>>8)^CRC_TABLE[(crc^bytes[i])&0xFF];
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function canvasPng(canvas){ // -> Promise<Uint8Array> des octets PNG
+  return new Promise(res=>canvas.toBlob(b=>b.arrayBuffer().then(ab=>res(new Uint8Array(ab))), 'image/png'));
+}
+function makeZip(files){ // files: [{name, data:Uint8Array}] -> Blob zip
+  const enc=new TextEncoder(), chunks=[], central=[]; let offset=0;
+  for(const f of files){
+    const name=enc.encode(f.name), crc=crc32(f.data), size=f.data.length;
+    const lh=new DataView(new ArrayBuffer(30));        // local file header
+    lh.setUint32(0,0x04034b50,true); lh.setUint16(4,20,true); lh.setUint32(14,crc,true);
+    lh.setUint32(18,size,true); lh.setUint32(22,size,true); lh.setUint16(26,name.length,true);
+    chunks.push(new Uint8Array(lh.buffer), name, f.data);
+    const ch=new DataView(new ArrayBuffer(46));        // central directory header
+    ch.setUint32(0,0x02014b50,true); ch.setUint16(4,20,true); ch.setUint16(6,20,true);
+    ch.setUint32(16,crc,true); ch.setUint32(20,size,true); ch.setUint32(24,size,true);
+    ch.setUint16(28,name.length,true); ch.setUint32(42,offset,true);
+    central.push(new Uint8Array(ch.buffer), name);
+    offset += 30 + name.length + size;
+  }
+  const cdStart=offset; let cdSize=0;
+  for(const c of central){ chunks.push(c); cdSize += c.length; }
+  const eo=new DataView(new ArrayBuffer(22));          // end of central directory
+  eo.setUint32(0,0x06054b50,true); eo.setUint16(8,files.length,true); eo.setUint16(10,files.length,true);
+  eo.setUint32(12,cdSize,true); eo.setUint32(16,cdStart,true);
+  chunks.push(new Uint8Array(eo.buffer));
+  return new Blob(chunks, {type:'application/zip'});
+}
+async function exportZip(){
+  const s=state(), files=[];
+  for(let f=0; f<s.frames; f++){
+    const c=document.createElement('canvas'); c.width=s.tw; c.height=s.th;
+    drawFrame(c.getContext('2d'), order, blackCount(f,s.frames,s.n,s.emptyFirst), s.tw,s.th,0,0,1);
+    files.push({name:`fade_${String(f).padStart(2,'0')}.png`, data:await canvasPng(c)});
+  }
+  const a=document.createElement('a');
+  a.download=`fade_seed${s.seed}_m${s.magic}_${s.tw}x${s.th}_${s.frames}f.zip`;
+  a.href=URL.createObjectURL(makeZip(files)); a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+}
+
+// wiring
+['tw','th','seed','magic','frames','emptyFirst','fps']
+  .forEach(id=>$(id).addEventListener('input', ()=>{ rebuild(); }));
+$('bg').addEventListener('change', e=>{
+  const f=e.target.files && e.target.files[0]; if(!f) return;
+  const img=new Image();
+  img.onload=()=>{ bgImg=img; rebuild(); };  // recompute la grille selon la résolution puis rejoue
+  img.src=URL.createObjectURL(f);
+});
+
+// fond par défaut : background.png du répertoire courant (ignoré s'il est absent)
+const defaultBg=new Image();
+defaultBg.onload=()=>{ bgImg=defaultBg; rebuild(); };
+defaultBg.src='background.png';
+$('replay').addEventListener('click', e=>{   // alterne le sens à chaque clic : disparition <-> apparition
+  dir=-dir;
+  cur = dir>0 ? 0 : state().frames-1;          // disparition depuis l'image ; apparition depuis le noir
+  playing=true;
+  e.target.textContent = dir>0 ? '▶ disparition' : '◀ apparition';
+});
+$('export').addEventListener('click', exportZip);
+
+rebuild();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

@@ -16,6 +16,19 @@ viewport_height equ 180
 
         org   $6100
 
+        ; --- clean entry from the loading screen ----------------------------------------
+        ; The disk loader leaves raw data in the video RAM pages, and the loading screen
+        ; leaves page 2 onscreen, while this mode draws to page 3 (LoadAct). Black the
+        ; palette FIRST (hide everything) and switch the display to our draw page (3). The
+        ; screen stays black until LoadAct clears the pages and the attract phases reveal
+        ; Pal_* on a composed frame (PalUpdateNow writes the registers synchronously).
+        ldd   #Pal_black
+        std   Pal_current
+        clr   PalRefresh
+        jsr   PalUpdateNow
+        lda   #$C0                     ; onscreen video page = 3 (SYS2 bits6-7=11), border 0
+        sta   $E7DD
+
         jsr   InitGlobals
 		jsr   InitDrawSprites
         jsr   InitStack

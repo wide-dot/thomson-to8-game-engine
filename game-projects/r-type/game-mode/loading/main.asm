@@ -21,6 +21,16 @@ viewport_height equ 180
         jsr   InitStack
         jsr   LoadAct
 
+        ; --- video page strategy for a clean loading screen ----------------------------
+        ; The disk loader (RAMLoaderFd) reads disk sectors into, and decompresses from, the
+        ; page held in $E7E5 at its entry: it TRASHES that page. LoadAct leaves $E7E5=3, so
+        ; the loader's scratch page is page 3. Put the loading screen on the OTHER page (2),
+        ; both visible AND as the draw target, so it survives untouched for the whole load.
+        lda   #$80                     ; onscreen video page = 2 (SYS2 bits6-7=10), border 0
+        sta   $E7DD
+        ldb   #$02                     ; draw the loading gfx to page 2 ($A000-$DFFF window)
+        stb   $E7E5
+
         jsr   WaitVBL
 
 ; init user irq
@@ -62,7 +72,9 @@ Init
         sta   @loop
         bra   Init
 !
-        jsr   IrqOff                    
+        jsr   IrqOff
+        ldb   #$03                     ; hand the loader page 3 as its scratch buffer; page 2
+        stb   $E7E5                    ; (the visible loading screen) stays intact during load
         lda   globals.nextGameMode
         sta   GameMode
         jsr   LoadGameModeNow

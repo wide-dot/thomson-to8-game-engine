@@ -28,6 +28,9 @@ gfxlock.backProcess.status fcb   0 ; 1: a back process is active during wait
 gfxlock.bufferSwap.count   fdb   0 ; buffer swap counter
 gfxlock.backBuffer.id      fcb   0 ; back buffer set to read operations (0 or 1)
 gfxlock.backBuffer.status  fcb   0 ; always 0 or -1 (flip/flop)
+gfxlock.singleBuffer       fcb   0 ; 1: single-buffer mode - the display stays on the
+                                   ;    working page (swap + id flip frozen). Lets a
+                                   ;    full-screen effect write one page directly.
 
 gfxlock.frameDrop.count_w  fcb   0 ; zero pad
 gfxlock.frameDrop.count    fcb   0 ; elapsed 50Hz frames since last main loop
@@ -52,13 +55,15 @@ gfxlock.bufferSwap.do
         orb   #%10000000               ; set bit 7=1, bit 0-3=frame color
 gfxlock.screenBorder.color equ *-1
         stb   map.CF74021.SYS2         ; set visible video buffer (2 or 3)
+        tst   gfxlock.singleBuffer     ; single buffer: freeze the page so the working
+        bne   >                        ;   page stays displayed (no flip)
         com   gfxlock.backBuffer.status
-        inc   gfxlock.bufferSwap.count+1
+!       inc   gfxlock.bufferSwap.count+1
         bne   >
         inc   gfxlock.bufferSwap.count
 !
-        com   gfxlock.bufferSwap.status
-        rts
+        com   gfxlock.bufferSwap.status ; still signal "a swap happened" (frame pacing /
+        rts                             ;   bufferSwap.wait) even when the page is frozen
 
 gfxlock.bufferSwap.wait
         clr   gfxlock.bufferSwap.status

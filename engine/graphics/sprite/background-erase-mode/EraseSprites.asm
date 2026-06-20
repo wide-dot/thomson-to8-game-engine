@@ -197,7 +197,20 @@ ESP_CheckEraseB0
         ldb   rsv_prev_render_flags_0,u
         andb  #rsv_prev_render_overlay_mask
         bne   ESP_UnsetOnScreenFlagB0
-        
+
+        tst   <glb_sprite_erase_off         ; re-stamp mode: free the cell but DON'T
+        beq   ESP_CallEraseRoutineB0        ;   restore the screen (no erase->draw hole).
+        ldd   rsv_bgdata_0,u                ; cell_start = (bgdata-16) rounded to cell_size
+        subd  #16
+        andb  #256-cell_size
+        std   BBF_cell_start
+        lda   rsv_prev_erase_nb_cell_0,u    ; cell_end = cell_start + nb_cells*cell_size
+        ldb   #cell_size                    ;   (== what the erase routine would return)
+        mul
+        addd  BBF_cell_start
+        std   BBF_cell_end
+        bra   ESP_FreeEraseBufferB0
+
 ESP_CallEraseRoutineB0
         lda   rsv_prev_page_erase_routine_0,u
         _SetCartPageA

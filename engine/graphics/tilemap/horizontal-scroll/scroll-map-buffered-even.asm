@@ -33,6 +33,9 @@ scroll_tile_pos_offset    fcb   0   ; current camera x position offset from tile
 scroll_tile_pos_offset24  fcb   0   ; current camera x position offset from tile_pos by 24px
 scroll_map_pos            fdb   0   ; current tile position in the map x3
 glb_camera_x_pos_old      fdb   0   ; previous camera x pos
+scroll_max                fdb   0   ; camera x cap (map end by default, or a temporary
+                                    ;   earlier stop e.g. the boss room) - capped here so
+                                    ;   both buffers always stop at the same position
 
 ; tmp variables
 scroll_lcnt               equ   dp_engine
@@ -55,6 +58,9 @@ InitScroll
         subd  #1
         std   buffer_x_pos
         std   buffer_x_pos+2
+
+        ldd   #map_width-viewport_width          ; default scroll cap = real map end
+        std   scroll_max
 
         lda   scroll_tile_height                 ; set video memory steps between each tiles in line
         ldb   #40
@@ -82,10 +88,10 @@ Scroll
         ldd   glb_camera_x_pos
         std   glb_camera_x_pos_old
         clr   glb_camera_move          ; desactivate tiles drawing
-        ldx   #map_width-viewport_width
-        cmpx  buffer_x_pos             ; check end of map for buffer 0
+        ldx   scroll_max
+        cmpx  buffer_x_pos             ; both buffers already at the cap for buffer 0
         bne   >
-        cmpx  buffer_x_pos+2           ; check end of map for buffer 1
+        cmpx  buffer_x_pos+2           ; ... and buffer 1
         bne   >
         rts
 !
@@ -116,10 +122,10 @@ Scroll
         ldx   glb_camera_x_pos
         cmpx  a,u
         beq   @rts                     ; already rendered, skip scroll update
-        cmpx  #map_width-viewport_width
+        cmpx  scroll_max
         ble   >
-        ldx   #map_width-viewport_width          ; cap position to end of map
-        stx   glb_camera_x_pos
+        ldx   scroll_max                         ; cap the camera (applied per buffer, so
+        stx   glb_camera_x_pos                   ; both stop at exactly the same position)
 !       stx   a,u                                ; update buffer position
 ;
         lda   #1                                 ; we want to draw tiles
