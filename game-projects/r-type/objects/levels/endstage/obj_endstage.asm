@@ -322,8 +322,7 @@ Blit
 * ---------------------------------------------------------------------------
 BlitPhase3
         lda   FadeCnt
-        cmpa  #FadeLen
-        bcc   @clearHidden                  ; fade done -> black the HIDDEN buffer, then switch
+        beq   @clearHidden                  ; fade done -> black the HIDDEN buffer, then switch
         lda   gfxlock.backBuffer.id         ; still fading: enter single buffer on a buffer-0
         bne   @fade                         ; frame only (the frozen buffer is then buffer 0)
         ifndef  DOUBLE_BUF
@@ -575,30 +574,29 @@ BAYER8  equ     3
 PATTERN equ     BAYER8
 
 InitFadeOut
-        clr     FadeCnt
+        ldb     #FadeLen
+        stb     FadeCnt
         rts
 
-FadeOut ldb     #FadeLen
+FadeOut ldb     #0
 FadeCnt set     *-1
-        cmpb    #FadeLen
-        bcs     >
+        bne     >
         rts
-!       ldx     #FadeOutPattern
-        ifndef  DOUBLE_BUF
-        abx
-        else
-        lsrb
-        abx
-        rolb
-        endc
-        incb
+!       decb    
         stb     FadeCnt
-!       ldd     #$0FE0  ; A=mask
+        ldx     #FadeOutPattern
+        ifdef   DOUBLE_BUF
+        lsrb
+        endc
+        abx
+        ldd     #$0FE0  ; A=mask
         andb    ,x      ; keep b7b6b5
         bitb    #32     ; b5=1 ?
         beq     >
         subd    #$1F20  ; invert mask and clear b5
-!       sta     @mask   ; $0F ou $F0
+!       ldu     #@mask2+1
+        sta     ,u
+        sta     1,u
 ; plan rama/ramb
         lda     #$A0    ; rama
         lslb            ; carry = b7
@@ -606,7 +604,7 @@ FadeCnt set     *-1
         lda     #$C0    ; no=> ramb
 !       rolb            ; put back b7 in b0
         std     @plan+1
-        addd    #7999
+        addd    #8000
         std     @tstend+1
         ldd     #40*256+31
         andb    ,x      ; extract line offset
@@ -614,17 +612,70 @@ FadeCnt set     *-1
 ; calcule adresse buffer video 
 @plan   addd    #$CAFE  ; add screen-plane start
         tfr     d,x     ; result in X
-@loop1  ldb     #40-2
-@loop2  lda     b,x
-        beq     >
-        anda    #$FF
-@mask   equ     *-1
-        sta     b,x
-!       subb    #2
-        bpl     @loop2  ; line done ? => no loop back
+        ldd     ,u
+        std     <@mask0-@mask2,u
+        std     <@mask1-@mask2,u
+;       std     <@mask2-@mask2,u
+        std     <@mask3-@mask2,u
+        std     <@mask4-@mask2,u
+        std     <@mask5-@mask2,u
+        std     <@mask6-@mask2,u
+        std     <@mask7-@mask2,u
+        std     <@mask8-@mask2,u
+        std     <@mask9-@mask2,u
+@mask0  ldd   #0
+        anda  ,x
+        sta   ,x
+        andb  2,x
+        stb   2,x
+@mask1  ldd   #0
+        anda  4,x
+        sta   4,x
+        andb  6,x
+        stb   6,x
+@mask2  ldd   #0
+        anda  8,x
+        sta   8,x
+        andb  10,x
+        stb   10,x
+@mask3  ldd   #0
+        anda  12,x
+        sta   12,x
+        andb  14,x
+        stb   14,x
+@mask4  ldd   #0
+        anda  16,x
+        sta   16,x
+        andb  18,x
+        stb   18,x
+@mask5  ldd   #0
+        anda  20,x
+        sta   20,x
+        andb  22,x
+        stb   22,x
+@mask6  ldd   #0
+        anda  24,x
+        sta   24,x
+        andb  26,x
+        stb   26,x
+@mask7  ldd   #0
+        anda  28,x
+        sta   28,x
+        andb  30,x
+        stb   30,x
+@mask8  ldd   #0
+        anda  32,x
+        sta   32,x
+        andb  34,x
+        stb   34,x
+@mask9  ldd   #0
+        anda  36,x
+        sta   36,x
+        andb  38,x
+        stb   38,x
         leax    40*(FadeLen/8),x ; ligne suivante
 @tstend cmpx    #$DEAD  ; screen done ?
-        bcs     @loop1  ; no => process a nes line
+        lbcs    @mask0  ; no => process a nes line
         rts
 
 ; Accolade presents fading-out
@@ -654,93 +705,93 @@ coord   macro
 FadeOutPattern
         ifeq    PATTERN-ACCOLAD
 ; Accolade presnts
-        coord   0,0     ; 1
-        coord   1,3     ; 2
-        coord   2,6     ; 3
-        coord   3,9     ; 4
-        coord   4,2     ; 5
-        coord   5,5     ; 6
-        coord   6,8     ; 7
-        coord   7,1     ; 8
-        coord   0,4     ; 9
-        coord   1,7     ; 10
-        
-        coord   2,0     ; 11
-        coord   3,3     ; 12
-        coord   4,6     ; 13
-        coord   5,9     ; 14
-        coord   6,2     ; 15
-        coord   7,5     ; 16
-        coord   0,8     ; 17
-        coord   0,1     ; 18 <== irrégularité
-        coord   1,4     ; 19
-        coord   2,7     ; 20
-        
-        coord   3,0     ; 21
-        coord   4,3     ; 22
-        coord   5,6     ; 23
-        coord   6,9     ; 24
-        coord   7,2     ; 25
-        coord   0,5     ; 26
-        coord   1,8     ; 27
-        coord   2,1     ; 28
-        coord   3,4     ; 29
-        coord   4,7     ; 30
-        
-        coord   5,0     ; 31
-        coord   6,3     ; 32
-        coord   7,6     ; 33
-        coord   0,9     ; 34
-        coord   1,2     ; 35
-        coord   2,5     ; 36
-        coord   3,8     ; 37
-        coord   4,1     ; 38
-        coord   5,4     ; 39
-        coord   6,7     ; 40
-
-        coord   7,0     ; 41
-        coord   0,3     ; 42
-        coord   1,6     ; 43
-        coord   2,9     ; 44
-        coord   3,2     ; 45
-        coord   4,5     ; 46
-        coord   5,8     ; 47
-        coord   6,1     ; 48
-        coord   7,4     ; 49
-        coord   0,7     ; 50
-
-        coord   1,0     ; 51
-        coord   2,3     ; 52
-        coord   3,6     ; 53
-        coord   4,9     ; 54
-        coord   5,2     ; 55
-        coord   6,5     ; 56
-        coord   7,8     ; 57
-        coord   1,1     ; 58
-        coord   2,4     ; 59
-        coord   3,7     ; 60
-
-        coord   4,0     ; 61
-        coord   5,3     ; 62
-        coord   6,6     ; 63
-        coord   7,9     ; 64
-        coord   0,2     ; 65
-        coord   1,5     ; 66
-        coord   2,8     ; 67
-        coord   3,1     ; 68
-        coord   4,4     ; 69
-        coord   5,7     ; 70
-
-        coord   6,0     ; 71
-        coord   7,3     ; 72
-        coord   0,6     ; 73
-        coord   1,9     ; 74
-        coord   2,2     ; 75
-        coord   3,5     ; 76
-        coord   4,8     ; 77
-        coord   5,1     ; 78
-        coord   6,4     ; 79
         coord   7,7     ; 80
+        coord   6,4     ; 79
+        coord   5,1     ; 78
+        coord   4,8     ; 77
+        coord   3,5     ; 76
+        coord   2,2     ; 75
+        coord   1,9     ; 74
+        coord   0,6     ; 73
+        coord   7,3     ; 72
+        coord   6,0     ; 71
+        
+        coord   5,7     ; 70
+        coord   4,4     ; 69
+        coord   3,1     ; 68
+        coord   2,8     ; 67
+        coord   1,5     ; 66
+        coord   0,2     ; 65
+        coord   7,9     ; 64
+        coord   6,6    ; 63
+        coord   5,3     ; 62
+        coord   4,0     ; 61
+        
+        coord   3,7     ; 60
+        coord   2,4     ; 59
+        coord   1,1     ; 58
+        coord   7,8     ; 57
+        coord   6,5     ; 56
+        coord   5,2     ; 55
+        coord   4,9     ; 54
+        coord   3,6     ; 53
+        coord   2,3     ; 52
+        coord   1,0     ; 51
+        
+        coord   0,7     ; 50
+        coord   7,4     ; 49
+        coord   6,1     ; 48
+        coord   5,8     ; 47
+        coord   4,5     ; 46
+        coord   3,2     ; 45
+        coord   2,9     ; 44
+        coord   1,6     ; 43
+        coord   0,3     ; 42
+        coord   7,0     ; 41
+
+        coord   6,7     ; 40
+        coord   5,4     ; 39
+        coord   4,1     ; 38
+        coord   3,8     ; 37
+        coord   2,5     ; 36
+        coord   1,2     ; 35
+        coord   0,9     ; 34
+        coord   7,6     ; 33
+        coord   6,3     ; 32
+        coord   5,0     ; 31
+
+        coord   4,7     ; 30
+        coord   3,4     ; 29
+        coord   2,1     ; 28
+        coord   1,8     ; 27
+        coord   0,5     ; 26
+        coord   7,2     ; 25
+        coord   6,9     ; 24
+        coord   5,6     ; 23
+        coord   4,3     ; 22
+        coord   3,0     ; 21
+
+        coord   2,7     ; 20
+        coord   1,4     ; 19
+        coord   0,1     ; 18 <== irrégularité
+        coord   0,8     ; 17
+        coord   7,5     ; 16
+        coord   6,2     ; 15
+        coord   5,9     ; 14
+        coord   4,6     ; 13
+        coord   3,3     ; 12
+        coord   2,0     ; 11
+
+        coord   1,7     ; 10
+        coord   0,4     ; 9
+        coord   7,1     ; 8
+        coord   6,8     ; 7
+        coord   5,5     ; 6
+        coord   4,2     ; 5
+        coord   3,9     ; 4
+        coord   2,6     ; 3
+        coord   1,3     ; 2
+        coord   0,0     ; 1
         endc
 
         ifeq    PATTERN-DIAG
