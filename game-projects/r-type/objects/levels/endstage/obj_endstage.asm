@@ -15,6 +15,8 @@
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./engine/objects/palette/fade/fade.equ"
 
+DOUBLE_BUF set 1
+
 Object
         tstb
         beq   Tick
@@ -333,8 +335,7 @@ BlitPhase3
 @fade
         lda   #1
         sta   <glb_force_sprite_refresh     ; redraw ship/pod over the point-erase each frame
-        jsr   FadeOut
-        rts
+        jmp   FadeOut
 @clearHidden
         ; the fade blacked buffer 0 (the single-buffer visible page). Now black the HIDDEN
         ; buffer over 4 frames, STILL in single buffer, so its stale level never reaches the
@@ -574,7 +575,11 @@ BAYER8  equ     3
 PATTERN equ     BAYER8
 
 InitFadeOut
+        ifndef  DOUBLE_BUF
         ldb     #FadeLen
+        else
+        ldb     #FadeLen*2
+        endc
         stb     FadeCnt
         rts
 
@@ -602,7 +607,7 @@ FadeCnt set     *-1
         lslb            ; carry = b7
         bpl     >       ; old b6=0 ?
         lda     #$C0    ; no=> ramb
-!       rolb            ; put back b7 in b0
+!       rolb            ; put old b7 in b0, hence b=0/1
         std     @plan+1
         addd    #8000
         std     @tstend+1
@@ -889,8 +894,6 @@ bloc2   macro
         bloc2   0,1
         endc
 
-        ifndef  DOUBLE_BUF
 FadeLen set (*-FadeOutPattern) 
-        else
-FadeLen set (*-FadeOutPattern)*2
+
         endc
