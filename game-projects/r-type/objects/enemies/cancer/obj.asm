@@ -95,32 +95,22 @@ FUN_0000_8db0_RunCancerMode1
 
         jsr   tryFoeFire
 
-        lda   firsttime,u
-        beq   skip_reactivity
-
-       ;0000:8db3 ff 46 20        INC        word ptr [BP + 0x20]
-       ;0000:8db6 8b 46 30        MOV        AX,word ptr [BP + 0x30]
-       ;0000:8db9 85 46 20        TEST       word ptr [BP + 0x20],AX
-       ;0000:8dbc 75 29           JNZ        LAB_0000_8de7
-       ;0000:8dbe 81 7e 20        CMP        word ptr [BP + 0x20],0x400
-       ;          00 04
-       ;0000:8dc3 73 22           JNC        LAB_0000_8de7
-
+       ; cancer_0x20 = reactivity accumulator. It is BOTH the de-activation timer
+       ; (tracking stops once it reaches 0x400) AND the direction-pick cadence
+       ; (one pick per cancer_0x30+1 frames). Arcade @0x89b3 uses a +1/frame counter:
+       ;   INC [+0x20] ; TEST &cancer_0x30 -> JNZ skip ; CMP 0x400 -> JNC skip
+       ; With frame-drop we advance by frameDrop and must detect the (mask+1) boundary
+       ; crossing, else we would step over the exact 0 and miss picks. No firsttime flag
+       ; needed: cancer_0x20 starts at 0x7f so the first frame crosses 0x80 and picks.
         ldd   gfxlock.frameDrop.count_w
-        clra
         addd  cancer_0x20,u
         std   cancer_0x20,u
-        anda  cancer_0x30,u
-        andb  cancer_0x30+1,u
-        std   -2,s
-        bne   LAB_0000_8de7
         cmpd  #$400
-        bge   LAB_0000_8de7
-
-skip_reactivity
-
-        lda   #1
-        sta   firsttime,u        
+        bhs   LAB_0000_8de7              ; cancer_0x20 >= 0x400 : tracking de-activated
+        anda  cancer_0x30,u
+        andb  cancer_0x30+1,u            ; d = cancer_0x20 & mask (low part of the period)
+        cmpd  gfxlock.frameDrop.count_w
+        bhs   LAB_0000_8de7              ; (mask+1) boundary not crossed this frame -> keep dir
 
 
        ;0000:8dc5 b3 01           MOV        BL,0x1
@@ -221,13 +211,15 @@ LAB_0000_8e15
         ldd   y_pos,u
         subd  #($18*scale.YP1PX)/256
         std   terrainCollision.sensor.y
+        cmpd  #11                       ; sensor above the tilemap top? -> no terrain there, let it climb out
+        blt   @move                     ; (signed; the yOffset table only starts at sensor.y=11)
         ldd   x_pos,u
         std   terrainCollision.sensor.x
         ldb   #1 ; foreground
         jsr   terrainCollision.do
         tstb
         bne   LAB_0000_8e2d
-        dec   cancer_0x1e,u
+@move   dec   cancer_0x1e,u
         ldb   #($c0*scale.YP1PX)/256
         lda   gfxlock.frameDrop.count
         mul
@@ -372,21 +364,22 @@ FUN_0000_8db0_RunCancerMode2
 
         jsr   tryFoeFire
 
+       ; reactivity accumulator (timer + pick cadence), frame-drop robust — see Mode1.
+       ; (arcade @0x8af1: INC[+0x20]; TEST &mask -> JNZ skip; CMP 0x400 -> JNC skip)
         ldd   gfxlock.frameDrop.count_w
-        clra
         addd  cancer_0x20,u
         std   cancer_0x20,u
+        cmpd  #$400
+        bhs   LAB_0000_8f25
         anda  cancer_0x30,u
         andb  cancer_0x30+1,u
-        std   -2,s
-        bne   LAB_0000_8f25
-        cmpd  #$400
-        bpl   LAB_0000_8f25
+        cmpd  gfxlock.frameDrop.count_w
+        bhs   LAB_0000_8f25
 
         ldb   #$01
         ldx   player1+y_pos
         cmpx  y_pos,u
-        bmi   LAB_0000_8f10
+        bpl   LAB_0000_8f10              ; Mode2: vertical tracking INVERTED (arcade JNC) -> flee
         ldb   #$02
 
        ;                      LAB_0000_8f10                                   XREF[1]:     0000:8f0c(j)  
@@ -441,7 +434,7 @@ LAB_0000_8f25
         ldb   #1 ; foreground
         jsr   terrainCollision.do
         tstb
-        bmi   LAB_0000_8f4d
+        bne   LAB_0000_8f4d              ; B!=0 = solid tile -> blocked (was wrongly bmi)
         dec   cancer_0x1e,u
         ldb   #($c0*scale.YP1PX)/256
         lda   gfxlock.frameDrop.count
@@ -470,18 +463,20 @@ LAB_0000_8f4d
         stx   cancer_0x22,u
 LAB_0000_8f52
         ldb   cancer_0x2e,u
-        andb  #$02                      ; originally $02 but Y axis inverted on Arcade
+        andb  #$01                      ; up = bit $01 (Y inverted, as Mode1) — was wrongly $02
         beq   LAB_0000_8f76
         ldd   y_pos,u
         subd  #($18*scale.YP1PX)/256
         std   terrainCollision.sensor.y
+        cmpd  #11                       ; sensor above the tilemap top? -> no terrain there, let it climb out
+        blt   @move                     ; (signed; the yOffset table only starts at sensor.y=11)
         ldd   x_pos,u
         std   terrainCollision.sensor.x
         ldb   #1 ; foreground
         jsr   terrainCollision.do
         tstb
         bne   LAB_0000_8f76
-        dec   cancer_0x1e,u
+@move   dec   cancer_0x1e,u
         ldb   #($c0*scale.YP1PX)/256
         lda   gfxlock.frameDrop.count
         mul
@@ -610,7 +605,7 @@ LAB_0000_9006
         ldd   cancer_0x22,u
         subd  gfxlock.frameDrop.count_w
         std   cancer_0x22,u
-        bpl   Live
+        bgt   Live                       ; arcade DEC/JZ: back to Mode1 once cooldown hits 0
 LAB_0000_900c
         lda   #1
         sta   routine,u   
@@ -627,8 +622,9 @@ Live
         stb   AABB_0+AABB.cx,u
         addd  #5                       ; add x radius
         bmi   @delete                  ; branch if out of screen's left
-        ldb   y_pos+1,u
-        stb   AABB_0+AABB.cy,u
+        ldd   y_pos,u
+        bmi   @delete                  ; or out of screen's top (fled up through the tilemap gap)
+        stb   AABB_0+AABB.cy,u         ; b = y_pos low byte (from the ldd above)
         jmp   DisplaySprite
 @destroy 
         ldd   globals.score
@@ -662,10 +658,10 @@ ImageIndex
 
 
 cancer_0x3c1a
-        fdb   $000f ;$007f
-        fdb   $0007 ;$001f 
-        fdb   $0003 ;$000f
-        fdb   $0001 ;$0007
+        fdb   $007f                     ; arcade reactivity masks per difficulty (0x10003c1a)
+        fdb   $001f
+        fdb   $000f
+        fdb   $0007
 
 PresetXYIndex
         INCLUDE "./global/preset/18dd0_preset-xy.asm"
