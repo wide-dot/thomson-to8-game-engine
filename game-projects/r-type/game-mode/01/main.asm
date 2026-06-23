@@ -24,7 +24,7 @@ timestamp.ERASE_NERV_START equ timestamp.DELETE_ALIEN_BODY+$280
 timestamp.BOSS_ESCAPE      equ $2B7C ; boss activation ($1B7C) + $1000 (arcade: run_dobkeratops +0x3E timeout)
 timestamp.MOVEALIEN_DELAY  equ 140   ; frames between last nerve death and alien move out
 timestamp.MOVEALIEN_SPEED  equ $18   ; followDobkeratops leftward speed, 8.8 fixed (=24/256 px/frame)
-timestamp.MOVEALIEN_DIST   equ 65    ; px the boss travels left before it stops on the butee to explode
+timestamp.MOVEALIEN_DIST   equ 60    ; px the boss travels left before it stops on the butee to explode
 
 endstage.DURATION equ $C0            ; arcade: run_dobkeratops arms +0x22 = $C0 frames
 endstage.JINGLE   equ $10            ; arcade: jingle + ship autopilot fire when the countdown reaches $10
