@@ -54,6 +54,7 @@ checkpoint.load
         mul
         std   gfxlock.frame.count
         std   gfxlock.frame.lastCount
+        std   gfxlock.frame.gameCount    ; keep the level-timeline clock in step with the checkpoint
         jmp   ObjectWave_Init
 
 checkpoint.scroll

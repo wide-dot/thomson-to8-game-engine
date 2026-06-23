@@ -34,8 +34,14 @@ gfxlock.singleBuffer       fcb   0 ; 1: single-buffer mode - the display stays o
 
 gfxlock.frameDrop.count_w  fcb   0 ; zero pad
 gfxlock.frameDrop.count    fcb   0 ; elapsed 50Hz frames since last main loop
+gfxlock.frameDrop.max      fcb   0 ; cap applied to frameDrop.count (0 = no cap, default).
+                                   ;   Set by the game so we never compensate more scroll/
+                                   ;   movement than one render step can display.
 gfxlock.frame.count        fdb   0 ; elapsed 50Hz frames since init
 gfxlock.frame.lastCount    fdb   0 ; elapsed 50Hz frames at last main loop
+gfxlock.frame.gameCount    fdb   0 ; level-timeline clock: like frame.count but advancing by the
+                                   ;   CAPPED frame-drop, so wave/boss/endstage stay in step with the
+                                   ;   scroll. == frame.count when no cap (frameDrop.max = 0).
 
 * =============================================================================
 * routines

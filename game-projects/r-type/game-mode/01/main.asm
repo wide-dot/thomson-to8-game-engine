@@ -2,7 +2,7 @@
 
 DEBUG   equ     1
 SOUND_CARD_PROTOTYPE equ 1
-DEBUG_START_LAST_CHECKPOINT equ 1    ; debug: start the stage at the last checkpoint (comment out to start from the beginning)
+;DEBUG_START_LAST_CHECKPOINT equ 1    ; debug: start the stage at the last checkpoint (comment out to start from the beginning)
 
         INCLUDE "./engine/system/to8/memory-map.equ"
         INCLUDE "./engine/system/to8/map.const.asm"
@@ -23,7 +23,8 @@ timestamp.DELETE_ALIEN_BODY equ $1D80
 timestamp.ERASE_NERV_START equ timestamp.DELETE_ALIEN_BODY+$280
 timestamp.BOSS_ESCAPE      equ $2B7C ; boss activation ($1B7C) + $1000 (arcade: run_dobkeratops +0x3E timeout)
 timestamp.MOVEALIEN_DELAY  equ 140   ; frames between last nerve death and alien move out
-timestamp.MOVEALIEN_LEN    equ 880   ; duration of the alien move out
+timestamp.MOVEALIEN_SPEED  equ $18   ; followDobkeratops leftward speed, 8.8 fixed (=24/256 px/frame)
+timestamp.MOVEALIEN_DIST   equ 65    ; px the boss travels left before it stops on the butee to explode
 
 endstage.DURATION equ $C0            ; arcade: run_dobkeratops arms +0x22 = $C0 frames
 endstage.JINGLE   equ $10            ; arcade: jingle + ship autopilot fire when the countdown reaches $10
@@ -118,7 +119,9 @@ Level01_Start
         ldx   #Irq_one_frame
         jsr   IrqSync
         _gfxlock.init
-        jsr   IrqOn 
+        lda   #8                       ; cap frame-drop: 4px tile-erase trail / 0.5px-per-arcade-frame
+        sta   gfxlock.frameDrop.max     ; -> no scroll artifact when frames are dropped
+        jsr   IrqOn
 
 * ---------------------------------------------------------------------------
 * INIT PLAYER 1 ANIMATION
@@ -372,17 +375,37 @@ Palette_FadeOut
 *
 * ---------------------------------------------------------------------------
 
+* The whole boss (face, jaw, the 19 tail parts, the alien) moves left as one
+* body: every part calls this each frame and subtracts the SAME step from its
+* own position, so each keeps its offset relative to the boss. The step is
+* computed ONCE per frame and the last one is clamped to the distance still
+* owed, so the body lands exactly on the butee whatever the frame drop - no
+* per-sprite snap, the shared move.left == 0 is the pixel-exact arrival flag.
 main.followDobkeratops
+        ldd   gfxlock.frame.gameCount
+        cmpd  main.dobkeratops.move.frame   ; step already computed this frame?
+        beq   @apply
+        std   main.dobkeratops.move.frame
         lda   gfxlock.frameDrop.count
-        ldb   #$18                     ; 8.8 fixed point offset
+        ldb   #timestamp.MOVEALIEN_SPEED    ; raw step = frameDrop * speed (8.8, =px/256)
         mul
+        cmpd  main.dobkeratops.move.left
+        bls   >
+        ldd   main.dobkeratops.move.left    ; clamp the last step to the butee
+!       std   main.dobkeratops.move.step
+        ldd   main.dobkeratops.move.left
+        subd  main.dobkeratops.move.step
+        std   main.dobkeratops.move.left    ; 0 -> body has reached the butee
+@apply
+        ldd   main.dobkeratops.move.step
+        beq   @done                         ; butee reached: the whole body is frozen
         _negd
-        addd  x_pos+1,u                ; x_pos must be followed by x_sub in memory
-        std   x_pos+1,u                ; update low byte of x_pos and x_sub byte
+        addd  x_pos+1,u                      ; x_pos must be followed by x_sub in memory
+        std   x_pos+1,u                      ; update low byte of x_pos and x_sub byte
         lda   x_pos,u
         adca  #-1
-        sta   x_pos,u                  ; update high byte of x_pos
-        rts
+        sta   x_pos,u                        ; update high byte of x_pos
+@done   rts
 
 * ---------------------------------------------------------------------------
 * Dobkeratops sequencing state (arcade: run_dobkeratops parent object)
@@ -391,7 +414,9 @@ main.followDobkeratops
 * ---------------------------------------------------------------------------
 
 main.timestamp.moveAlienStart fdb 0  ; frame stamp: alien starts to move out
-main.timestamp.moveAlienEnd   fdb 0  ; frame stamp: alien is gone
+main.dobkeratops.move.frame   fdb $ffff ; frame.count of the last clamped-step calc
+main.dobkeratops.move.step    fdb 0  ; this frame's shared leftward step (8.8, =px/256)
+main.dobkeratops.move.left    fdb 0  ; distance left to the butee (8.8, =px/256); 0 = arrived
 main.endstage.counter         fdb 0  ; end of stage countdown (0: not armed)
 main.endstage.phase           fcb 0  ; 0: gameplay, 1: jingle+autopilot, 2: glide, 3: fading, 4: score readout
 main.endstage.scoreArmed      fcb 0  ; 1: tell the HUD readout to (re)seed from the stage score
@@ -406,13 +431,11 @@ main.dobkeratops.explode       fcb 0 ; 0: boss frozen (bossDefeated) but explosi
 ; (arcade: run_dobkeratops resumes the background scroll at once)
 ; stays resident: called from the dobkeratops object bank
 main.dobkeratops.allEyesDead
-        ldd   gfxlock.frame.count
+        ldd   gfxlock.frame.gameCount
         addd  #timestamp.MOVEALIEN_DELAY
         cmpd  main.timestamp.moveAlienStart
         bhs   >
-        std   main.timestamp.moveAlienStart
-        addd  #timestamp.MOVEALIEN_LEN
-        std   main.timestamp.moveAlienEnd
+        std   main.timestamp.moveAlienStart  ; move.left already seeded by InitSequence
 !       rts
 
 * ---------------------------------------------------------------------------

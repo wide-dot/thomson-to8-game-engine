@@ -66,6 +66,8 @@ Init
 
         ldx   #Player1_AnimationSet_Normal
         stx   AnimationSet
+        lda   #bank.CENTER               ; ship starts level (neutral tilt band)
+        sta   ship.bankCnt
         lda   player1+subtype  
         cmpa  #1
         bne   Live
@@ -200,6 +202,7 @@ Live
 
         ; move and animate
 SkipPlayer1Controls
+        jsr   SetVerticalAnim            ; up/down/neutral frame from y_vel (joypad or autopilot)
 !       jsr   AnimateSpriteSync
         jsr   ObjectMove
         jsr   CheckRange
@@ -315,6 +318,71 @@ CheckRange
 
 testval fcb 0
 
+; ---------------------------------------------------------------------------
+; Ship vertical banking (arcade run_player_one @0x2027 tilt counter).
+; A counter ramps toward an extreme while the ship moves vertically and springs
+; back to neutral when it stops, so the 5 tilt frames are crossed GRADUALLY in
+; both directions (incl. the return), exactly like the arcade. Driven by y_vel
+; so it serves joypad control AND the end-stage autopilot. The ramp and the
+; spring-back advance by frameDrop.count per rendered frame -> same wall-clock
+; banking speed whatever the frame drop, with clamps so a big step never
+; overshoots the centre or the bounds.
+;   counter 0..bank.MAX, neutral at bank.CENTER; band = (counter & 0x38) >> 2
+;   y_vel < 0 (up)   -> counter toward 0        (-> full up)
+;   y_vel > 0 (down) -> counter toward bank.MAX (-> full down)
+;   y_vel = 0        -> counter drifts to bank.CENTER (neutral)
+; ---------------------------------------------------------------------------
+bank.CENTER equ 20                        ; neutral counter value (arcade 0x14)
+bank.MAX    equ 39                        ; max counter value     (arcade 0x27)
+
+SetVerticalAnim
+        lda   gfxlock.frameDrop.count     ; advance the banking by the dropped frames
+        sta   bank.step
+        ldb   ship.bankCnt
+        ldx   player1+y_vel
+        beq   @toCenter                   ; no vertical move -> spring back to neutral
+        bmi   @up                         ; y_vel < 0 -> bank up   (counter -> 0)
+@down                                      ; y_vel > 0 -> bank down (counter -> MAX)
+        addb  bank.step
+        cmpb  #bank.MAX
+        bls   @store
+        ldb   #bank.MAX
+        bra   @store
+@up
+        subb  bank.step
+        bcc   @store                       ; no borrow -> still >= 0
+        clrb                               ; underflow -> clamp to 0
+        bra   @store
+@toCenter
+        cmpb  #bank.CENTER
+        beq   @select                      ; already neutral
+        bhi   @driftDown
+        addb  bank.step                    ; below centre -> climb toward it
+        cmpb  #bank.CENTER
+        bls   @store
+        ldb   #bank.CENTER                 ; do not overshoot the centre
+        bra   @store
+@driftDown
+        subb  bank.step                    ; above centre -> fall toward it
+        bcs   @clampCenter
+        cmpb  #bank.CENTER
+        bhs   @store
+@clampCenter
+        ldb   #bank.CENTER
+@store
+        stb   ship.bankCnt
+@select
+        andb  #$38                         ; 5 tilt bands: 0,8,16,24,32
+        lsrb
+        lsrb                               ; (counter & 0x38) >> 2 -> 0,2,4,6,8 (fdb index)
+        ldy   AnimationSet
+        ldx   b,y
+        stx   player1+anim
+        rts
+
+bank.step    fcb 0                         ; SetVerticalAnim scratch (frames this tick)
+ship.bankCnt fcb bank.CENTER              ; ship tilt counter (reset to neutral in Init)
+
 ; Apply joypad input to player velocity and position
 ; Uses the speed.preset table to determine velocities based on direction
 ; Table is organized by valid joypad combinations (8 entries per config)
@@ -328,21 +396,9 @@ ApplyJoypadInput
 @loop   jsr   joypad.buffer.getDirection
         cmpa  #$FF
         bne   >
-        ; Set animation Ani_Player1, Ani_Player1_up or Ani_Player1_down based on velocity
-        ldy   AnimationSet
-        ldd   player1+y_vel              ; load y velocity
-        bgt   @moveDown                  ; if positive, moving down
-        blt   @moveUp                    ; if negative, moving up
-        ldx   ,y                         ; neutral position
-        bra   @setAnim
-@moveDown
-        ldx   4,y                        ; downward animation
-        bra   @setAnim
-@moveUp
-        ldx   2,y                        ; upward animation
-@setAnim
-        stx   player1+anim               ; store animation pointer
-        rts
+        rts                              ; velocities set; the up/down/neutral frame is
+                                         ; chosen from y_vel in the common tail
+                                         ; (SetVerticalAnim), shared with the autopilot
 !
         anda  #c1_dpad                   ; mask only direction bits for joypad 1
         bne   >
@@ -436,15 +492,19 @@ End
 AnimationSet
         fdb   Player1_AnimationSet_Normal
 
-Player1_AnimationSet_Normal
-        fdb   Ani_Player1
-        fdb   Ani_Player1_up
-        fdb   Ani_Player1_down
+Player1_AnimationSet_Normal              ; one pose per tilt band (0..4)
+        fdb   Ani_Player1_up1            ; band 0: full up
+        fdb   Ani_Player1_up0            ; band 1: up
+        fdb   Ani_Player1                ; band 2: neutral
+        fdb   Ani_Player1_dn0            ; band 3: down
+        fdb   Ani_Player1_dn1            ; band 4: full down
 
-Player1_AnimationSet_Blink        
+Player1_AnimationSet_Blink
+        fdb   Ani_Player1_blink_up1
+        fdb   Ani_Player1_blink_up0
         fdb   Ani_Player1_blink
-        fdb   Ani_Player1_blink_up
-        fdb   Ani_Player1_blink_down
+        fdb   Ani_Player1_blink_dn0
+        fdb   Ani_Player1_blink_dn1
 
 ; Speed presets for player movement
 ; Each configuration contains only the 8 valid combinations

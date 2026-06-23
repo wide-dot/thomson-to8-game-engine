@@ -131,7 +131,7 @@ Run
         bhi   @alienNx
         jmp   DisplaySprite
 @alienNx
-        ldx   gfxlock.frame.count
+        ldx   gfxlock.frame.gameCount
         cmpx  #timestamp.DELETE_ALIEN_BODY
         blo   >
         jsr   DeleteObject
@@ -139,7 +139,7 @@ Run
 @alienN0
         lda   globals.bossDefeated
         bne   @frozen          ; boss killed: stop repainting, the overlay paint
-        ldx   gfxlock.frame.count ; persists and the tile-erase blits eat it
+        ldx   gfxlock.frame.gameCount ; persists and the tile-erase blits eat it
         cmpx  #timestamp.ERASE_NERV_START
         blo   @checkEyes
         bsr   Run.killEyes     ; nerve free-life timeout (arcade: nerve +0x3E expires)
@@ -293,15 +293,14 @@ DeleteEye
 MoveAlien
         lda   globals.bossDefeated
         bne   @frozen          ; boss killed: stop repainting, the overlay paint
-        ldx   gfxlock.frame.count ; persists and the tile-erase blits eat it
+        ldx   gfxlock.frame.gameCount ; persists and the tile-erase blits eat it
         cmpx  main.timestamp.moveAlienStart
         blo   >
         ldd   #Img_dobkeratops_alien
         std   image_set,u
         jsr   main.followDobkeratops
-        ldx   gfxlock.frame.count
-        cmpx  main.timestamp.moveAlienEnd
-        blo   >
+        ldd   main.dobkeratops.move.left      ; butee reached at the pixel? (frame-drop safe)
+        bne   >
         lda   #rtnid.DeleteAlien
         sta   routine,u
 !       jmp   DisplaySprite

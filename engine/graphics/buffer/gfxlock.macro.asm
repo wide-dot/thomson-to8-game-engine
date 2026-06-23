@@ -10,6 +10,7 @@ _gfxlock.init MACRO
         sta   gfxlock.backBuffer.id      ; id is 0 or 1
         clr   gfxlock.singleBuffer       ; always boot in double-buffer mode
         clr   <glb_sprite_erase_off      ; ... with normal sprite erasing
+        clr   gfxlock.frameDrop.max      ; no frame-drop cap by default; a game may set it after init
  ENDM
 
 _gfxlock.on MACRO
@@ -41,10 +42,24 @@ _gfxlock.loop MACRO
         eora  #%00000001
         sta   gfxlock.backBuffer.id
 !       ldd   gfxlock.frame.count
-        subd  gfxlock.frame.lastCount
-        stb   gfxlock.frameDrop.count   ; store the number of elapsed 50Hz frames since last main game loop
+        subd  gfxlock.frame.lastCount   ; b = elapsed 50Hz frames since last loop (frame-drop)
+        tst   gfxlock.frameDrop.max     ; 0 = no cap (default) -> behaviour strictly unchanged
+        beq   >
+        cmpb  gfxlock.frameDrop.max
+        bls   >
+        ldb   gfxlock.frameDrop.max     ; cap: never compensate more than one render step can show
+!       stb   gfxlock.frameDrop.count   ; store the number of elapsed 50Hz frames since last main game loop
         ldd   gfxlock.frame.count
         std   gfxlock.frame.lastCount
+        ; level-timeline clock kept in step with the rendered world (capped frame-drop).
+        ; no cap (max=0) -> equals frame.count exactly, so timeline behaviour is unchanged.
+        ldb   gfxlock.frameDrop.count
+        clra
+        addd  gfxlock.frame.gameCount
+        tst   gfxlock.frameDrop.max
+        bne   >
+        ldd   gfxlock.frame.count
+!       std   gfxlock.frame.gameCount
  ENDM
 
 _gfxlock.backProcess.on MACRO
