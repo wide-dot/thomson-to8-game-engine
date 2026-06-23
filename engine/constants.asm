@@ -54,10 +54,7 @@ glb_camera_x_offset           equ glb_camera_y_max_pos-2
 glb_camera_y_offset           equ glb_camera_x_offset-2
 glb_force_sprite_refresh      equ glb_camera_y_offset-1
 glb_camera_move               equ glb_force_sprite_refresh-1
-glb_sprite_erase_off          equ glb_camera_move-1         ; 1: EraseSprites frees the cell
-                                                            ;   but skips the screen restore
-                                                            ;   (single-buffer re-stamp, no hole)
-glb_alphaTiles                equ glb_sprite_erase_off-1
+glb_alphaTiles                equ glb_camera_move-1
 glb_timer_second              equ glb_alphaTiles-1
 glb_timer_minute              equ glb_timer_second-1
 glb_timer                     equ glb_timer_minute

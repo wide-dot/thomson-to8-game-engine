@@ -95,5 +95,3 @@ gfxlock.frameDrop.count_w fcb   0 ; pad to be able to load Vint_Main_runcount as
 gfxlock.frameDrop.count   fcb   0
 Vint_Main_runcount_cap    fcb   -1
 gfxlock.backBuffer.id     fcb   0 ; screen buffer set to write operations (0 or 1)
-gfxlock.singleBuffer      fcb   0 ; always 0 here (these modes never single-buffer);
-                                  ;   referenced by the shared sprite pack lifecycle code

@@ -42,8 +42,6 @@ DOB_Unset0
         stx   Lst_Priority_Unset_0
         
 DOB_TestOnscreen1
-        tst   gfxlock.singleBuffer          ; single buffer: buffer 1 is the dead half,
-        bne   DOB_RemoveFromDPSB1           ;   treat as not onscreen (free decided on buf 0)
         lda   rsv_prev_render_flags_1,u
         bpl   DOB_RemoveFromDPSB1           ; branch if not onscreen on buffer 1
         
