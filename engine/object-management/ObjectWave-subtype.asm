@@ -20,7 +20,7 @@ object_wave_data_page equ *-1          ; wave data page
         _SetCartPageA
         ldy   #0
 object_wave_data equ *-2               ; current position in wave data
-        ldx   gfxlock.frame.count
+        ldx   gfxlock.frame.gameCount
 !       cmpx  ,y
         blo   @rts
         pshs  x,y
@@ -31,7 +31,7 @@ object_wave_data equ *-2               ; current position in wave data
         sta   id,u
         ldd   3,y
         std   subtype_w,u
-        ldd   gfxlock.frame.count
+        ldd   gfxlock.frame.gameCount
         subd  ,y
         stb   wave_frame_drop,u
 @bypass leay  5,y
@@ -44,7 +44,7 @@ ObjectWave_Init
         lda   object_wave_data_page
         _SetCartPageA
         ldy   object_wave_data_start
-        ldx   gfxlock.frame.count
+        ldx   gfxlock.frame.gameCount
 !       cmpx  ,y
         blo   @end
         leay  5,y

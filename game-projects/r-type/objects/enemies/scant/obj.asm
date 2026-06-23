@@ -92,7 +92,8 @@ FUN_0000_8538_ScantTracksPlayer1
         sta   scant_0x16
         cmpa  #$1f
         blo   LAB_0000_8582
-        clr   scant_0x16
+        suba  #$1f                  ; keep overshoot (frame-drop-accurate cycle period, was clr)
+        sta   scant_0x16
 
         ldd   scant_0x30
         std   scant_0x24
@@ -113,17 +114,20 @@ FUN_0000_8538_ScantTracksPlayer1
         std   x_vel,u
         ldd   2,x
         std   y_vel,u
-        ldd   scant_0x26
-        cmpd  #$ffff
-        bne   LAB_0000_8582
-        ldd   #$ffd0  ; original value 0xff00
-        std   x_vel,u
 LAB_0000_8582
+        ; aim-lock expired -> retreat. Re-force the drift EVERY tracking frame: unlike the
+        ; arcade (vx persists through prepare-to-shoot), our prepare-to-shoot clobbers x_vel
+        ; with the lunge, so the cycle block alone would leave a weak drift most of the time.
+        ldd   scant_0x26
+        bne   @afterDrift
+        ldd   #$ffd0  ; arcade 0xff00 x0.375 + scroll $30 (screen drift = arcade x0.375)
+        std   x_vel,u
+@afterDrift
 	ldd   x_pos,u
 	addd  #($30*scale.XP1PX)/256
 	std   terrainCollision.sensor.x
 	lda   x_vel,u
-	bmi   LAB_0000_858e
+	bpl   LAB_0000_858e            ; moving right (x_vel>=0) -> probe AHEAD (+probe); was bmi = probed behind
 	ldd   x_pos,u
 	subd  #($30*scale.XP1PX)/256
 	std   terrainCollision.sensor.x
@@ -141,11 +145,11 @@ LAB_0000_858e_bis
         
         ldd   x_pos,u
         subd  glb_camera_x_pos
-        cmpd  #$12  ; original value 0x2a0
+        cmpd  #$90      ; right edge of viewport (arcade pos_x < 0x2A0, x0.375)
         bcs   LAB_0000_85b3
         lda   x_vel,u
         bmi   LAB_0000_85b3
-        ldd   #$30      ; original value $00
+        ldd   #$30      ; hold X on screen at the edge = scroll speed (arcade $00 x0.375 + scroll $30)
         std   x_vel,u
 LAB_0000_85b3
 LAB_0000_85b9
@@ -171,15 +175,8 @@ LAB_0000_85c5
         jmp   LAB_0000_85e2
 LAB_0000_85c5_bis
         
-        ldd   x_pos,u
-        cmpd  #$56      ; original value $dfc
-        bcc   LAB_0000_85e2
-        cmpd  #$2e      ; original value $7d0
-        bcc   LAB_0000_85e2
-        lda   x_vel,u
-        bmi   LAB_0000_85e2
-        ldd   #$31      ; original value $00
-        std   x_vel,u
+        ; arcade re-checked fg/bg tile openness here for the Y move; terrainCollision.do
+        ; above already gates Y on the foreground (bg check dropped as an optim) -> nothing to do
 LAB_0000_85e2
 
         ldd   x_pos,u
@@ -243,6 +240,7 @@ LAB_0000_8621
         ldb   globals.difficulty
         ldx   #scant_0x3856
         lda   b,x
+        adda  scant_0x14            ; keep the frame-drop overshoot (scant_0x14<0 here) -> exact arcade fire period
         sta   scant_0x14
         lda   #$1f
         sta   scant_0x3a
@@ -254,7 +252,23 @@ LAB_0000_8621
 
 LAB_0000_8668
         lda   AABB_0+AABB.p,u
-        beq   LAB_0000_86a0_DestroyScant        ; was killed  
+        beq   LAB_0000_86a0_DestroyScant        ; was killed
+        ; aim-lock countdown (arcade @0x8295: DEC +0x26 each frame), frame-drop aware:
+        ; the scant gives up tracking 0x1C0 frames after spawn.
+        ldd   scant_0x26
+        beq   @aimDone
+        subb  gfxlock.frameDrop.count
+        sbca  #0
+        bcc   @aimStore
+        ldd   #0                          ; clamp at 0 (no underflow)
+@aimStore
+        std   scant_0x26
+@aimDone
+        ; off-screen left -> unload (arcade @0x8298: pos_x < 0x130)
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        addd  #5
+        lbmi  FUN_0000_6a07_DeleteScant
         jmp   DisplaySprite
 
 LAB_0000_86a0_DestroyScant                     
@@ -320,10 +334,8 @@ LAB_0000_86ff
         adda  gfxlock.frameDrop.count
         cmpa  #$10
         ble   LAB_0000_871b
-        lda   #$10
-        suba  gfxlock.frameDrop.count
-        sta   scant_0x3a
-        jsr   FUN_0000_8755_ScantShoots
+        jsr   FUN_0000_8755_ScantShoots ; fire once at the 0x10 crossing; do NOT rewrite scant_0x3a
+                                         ; (rewriting it double-decremented the wind-up -> too short -> fired too often)
 LAB_0000_871b
 
         ldd   x_pos,u
