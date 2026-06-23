@@ -141,14 +141,19 @@ monster.getout.images
         fdb   Img_dobkeratops_monster_1
 
 MonsterMouth
-        ldx   gfxlock.frame.count
+        ldx   gfxlock.frame.gameCount
         cmpx  main.timestamp.moveAlienStart
         blo   >
         jsr   main.followDobkeratops
-        cmpx  main.timestamp.moveAlienEnd
-        blo   >
-        lda   #rtnid.WaitEndStage
+        ldd   main.dobkeratops.move.left      ; butee reached at the pixel? (frame-drop safe)
+        bne   >
+ IFDEF invincible
+        jmp   MonsterKill                     ; invincible test mode: the boss explodes on the butee
+ ELSE
+        clr   player1+ext_variables+AABB.p    ; normal play: the boss reaching the butee kills P1
+        lda   #rtnid.WaitEndStage             ; (boss stays frozen on the butee, firing saws)
         sta   routine,u
+ ENDC
 !
 WaitEndStage
         lda   gfxlock.frameDrop.count
@@ -234,14 +239,15 @@ UpdateHitBox
         rts
 
 MonsterKill
-        ; boss reached 0 HP: freeze the whole boss now (bossDefeated -> body
-        ; @frozen, jaw/tail hold).
+        ; boss death: reached 0 HP (UpdateHitBox) OR arrived on the left butee
+        ; (MonsterMouth). Freeze the whole boss now (bossDefeated -> body @frozen,
+        ; jaw/tail hold).
         lda   #1
         sta   globals.bossDefeated
         ; alien already moving out (past moveAlienStart)? the optic nerves were
         ; destroyed/erased long ago (>=140 frames) -> explode THIS frame, no wait.
         ; (reliable, independent of the nervesErasing counter)
-        ldx   gfxlock.frame.count
+        ldx   gfxlock.frame.gameCount
         cmpx  main.timestamp.moveAlienStart
         bhs   @explodeNow
         ; otherwise the nerves may still be on screen: wait unless none is erasing

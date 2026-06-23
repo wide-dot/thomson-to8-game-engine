@@ -131,12 +131,12 @@ InstanceEnd
 Run
         lda   globals.bossDefeated
         bne   @toEnd                       ; boss dead: stop, go to hold/explode
-        ldx   gfxlock.frame.count
+        ldx   gfxlock.frame.gameCount
         cmpx  main.timestamp.moveAlienStart
         blo   >
         jsr   main.followDobkeratops
-        cmpx  main.timestamp.moveAlienEnd
-        blo   >
+        ldd   main.dobkeratops.move.left      ; butee reached at the pixel? (frame-drop safe)
+        bne   >
 @toEnd  lda   #rtnid.WaitEndStage
         sta   routine,u
 !

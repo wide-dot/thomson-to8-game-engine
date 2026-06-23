@@ -31,8 +31,10 @@ Object
 InitSequence
         ldd   #timestamp.ERASE_NERV_START+timestamp.MOVEALIEN_DELAY
         std   main.timestamp.moveAlienStart
-        addd  #timestamp.MOVEALIEN_LEN
-        std   main.timestamp.moveAlienEnd
+        ldd   #timestamp.MOVEALIEN_DIST*256       ; distance the body owes to the butee (8.8)
+        std   main.dobkeratops.move.left
+        ldd   #$ffff
+        std   main.dobkeratops.move.frame
         ldd   #0
         std   main.endstage.counter
         clr   main.endstage.phase
@@ -68,7 +70,7 @@ Tick
         bne   @run                          ; sequence already armed
         lda   main.dobkeratops.explode       ; boss killed AND the nerve erase is done?
         bne   @arm
-        ldx   gfxlock.frame.count           ; boss escapes (arcade: +0x3E timeout expires)
+        ldx   gfxlock.frame.gameCount           ; boss escapes (arcade: +0x3E timeout expires)
         cmpx  #timestamp.BOSS_ESCAPE
         blo   @none
 @arm
@@ -302,7 +304,7 @@ Blit
         lda   erase.bigRect
         beq   @rts
         lda   #1                            ; the rect rewrites a large bg area: force a
-        sta   <glb_force_sprite_refresh     ; full sprite refresh so the backups go black
+        sta   <glb_force_sprite_refresh     ; full sprite refresh so the new backups go black
         jsr   BigBlackRect
         dec   erase.bigRect
 @rts    rts
@@ -311,7 +313,7 @@ Blit
         sta   erase.rectArmed
         lda   #8
         sta   erase.rectDelay
-        lda   #2
+        lda   #4
         sta   erase.bigRect
         rts
 
