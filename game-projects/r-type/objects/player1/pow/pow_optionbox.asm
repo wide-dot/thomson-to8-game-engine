@@ -101,6 +101,9 @@ Live
 !
         jmp   @delete
 @missiles
+        lda   #1                        ; débloque l'arme missile sous-nacelle (paire homing)
+        sta   globals.missileUnlocked
+        _soundFX.play soundFX.BonusSound,4
         jmp   @delete
 AlreadyDeleted
         rts

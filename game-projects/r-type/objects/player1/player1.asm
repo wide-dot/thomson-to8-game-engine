@@ -46,6 +46,13 @@ Init
         stx   player1+anim         ; will be overwritten by LiveBlink or Live if not in specific level 1 initphase
         ldb   #3
         stb   player1+priority
+        ; --- reset état manager missile (spawn/respawn) ---
+        clr   missilePairCount
+        ldd   #0
+        std   missileTgtTop
+        std   missileTgtBot
+        clr   globals.missileUnlocked  ; verrouillé au départ ; débloqué par le bonus (pow_optionbox subtype 7),
+                                       ;   et perdu à la mort (Init rejoué au respawn) — fidèle arcade
         ldd   #60
         addd  glb_camera_x_pos
         std   player1+x_pos
@@ -109,6 +116,34 @@ Live
         std   x_pos,x
         ldd   player1+y_pos
         std   y_pos,x
+        ; --- missiles : gate (débloqué par bonus) + paire pas déjà en vol ---
+        lda   globals.missileUnlocked
+        beq   @testHoldFire
+        lda   missilePairCount
+        bne   @testHoldFire            ; une paire est encore en vol
+        jsr   LoadObject_x              ; TOP (subtype 2, à y)
+        beq   @testHoldFire
+        lda   #ObjID_commonmissile
+        sta   id,x
+        lda   #2
+        sta   subtype,x
+        ldd   player1+x_pos
+        std   x_pos,x
+        ldd   player1+y_pos
+        std   y_pos,x
+        inc   missilePairCount
+        jsr   LoadObject_x              ; BOTTOM (subtype 3, à y+2)
+        beq   @testHoldFire
+        lda   #ObjID_commonmissile
+        sta   id,x
+        lda   #3
+        sta   subtype,x
+        ldd   player1+x_pos
+        std   x_pos,x
+        ldd   player1+y_pos
+        addd  #2
+        std   y_pos,x
+        inc   missilePairCount
 @testHoldFire       
         ; holding fire ?
         lda   Fire_Held

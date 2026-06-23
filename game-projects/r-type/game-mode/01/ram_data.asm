@@ -32,3 +32,11 @@ AABB_endLists
 player_pos_ring_buffer_ptr  fdb   player_pos_ring_buffer
 player_pos_ring_buffer      fill  0,4*32 ; saves position of player one: x (2 bytes), y (2 bytes), repeated 32 times
 
+* ===========================================================================
+* Arme missile joueur — état manager TRANSITOIRE (in-stage ; remis à 0 au chargement de stage)
+*   (le statut persistant missileUnlocked est dans globals., cf. global/variables.asm)
+* ===========================================================================
+missilePairCount            fcb   0      ; missiles vivants (gate du re-tir)
+missileTgtTop               fdb   0      ; OST cible missile TOP (no-double-lock)
+missileTgtBot               fdb   0      ; OST cible missile BOTTOM
+

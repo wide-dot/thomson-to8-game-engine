@@ -10,6 +10,8 @@
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./objects/explosion/explosion.const.asm"
+        INCLUDE "./objects/soundFX/soundFX.const.asm"
+        INCLUDE "./engine/sound/soundFX.macro.asm"
 
 AABB_0                  equ ext_variables   ; AABB struct (9 bytes)
 
@@ -41,16 +43,25 @@ Routines
 ; Pstaff Rockets routines
         fdb   FUN_0000_7c0e_CreateAndRunRocketMode1       ; 4
         fdb   FUN_0000_7c91_RunRocketMode2                ; 5
+; Player missile routines (subtype 2)
+        fdb   PlayerMissile_FreeFlight                    ; 6
+        fdb   PlayerMissile_Homing                        ; 7
 
 
 Init
         lda   subtype,u
-        lbne  Init2
+        beq   InitTabrok
+        cmpa  #2
+        lbeq  PlayerMissile_Init        ; subtype 2 = missile JOUEUR top
+        cmpa  #3
+        lbeq  PlayerMissile_Init        ; subtype 3 = missile JOUEUR bottom (miroir)
+        lbra  Init2                     ; subtype 1 = roquette p-staff
 
 ;   **************************************************************
 ;   *                   TABROK MISSILES                          *
 ;   **************************************************************
 
+InitTabrok
         jsr   LoadObject_x
         beq   >
         lda   #ObjID_commonmissileflame
@@ -602,6 +613,9 @@ Pstaff_0x346a
         fdb   Img_missile_6
         fdb   Img_missile_11
         fdb   Img_missile_5
+
+; --- Missile JOUEUR (subtype 2) : code spécifique, scope commun (sprites partagés) ---
+        INCLUDE "./objects/player1/missile/player_missile.asm"
 
 
 
