@@ -15,8 +15,6 @@
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./engine/objects/palette/fade/fade.equ"
 
-DOUBLE_BUF set 1
-
 Object
         tstb
         beq   Tick
@@ -318,36 +316,27 @@ Blit
         rts
 
 * ---------------------------------------------------------------------------
-* phase 3 -> 4: drive the dissolve, then switch to the double-buffer score readout.
-* Both video buffers are blacked so the readout restarts clean: buffer 1 (hidden
-* during the fade) is cleared by @clearHidden BEFORE the switch (still single
-* buffer, never shown stale); buffer 0 (the ex-single/visible page) is cleared by
-* BlitPhase4 the first time it is offscreen AFTER the switch.
+* phase 3 -> 4: drive the dissolve, then switch to the score readout.
+* Both video buffers are blacked so the readout restarts clean: the hidden buffer
+* is cleared by @clearHidden BEFORE the switch (never shown stale); the other
+* buffer is cleared by BlitPhase4 the first time it is offscreen AFTER the switch.
 * ---------------------------------------------------------------------------
 BlitPhase3
         lda   FadeCnt
         beq   @clearHidden                  ; fade done -> black the HIDDEN buffer, then switch
-        lda   gfxlock.backBuffer.id         ; still fading: enter single buffer on a buffer-0
-        bne   @fade                         ; frame only (the frozen buffer is then buffer 0)
-        ifndef  DOUBLE_BUF
-        lda   #1
-        sta   gfxlock.singleBuffer
-        sta   <glb_sprite_erase_off         ; (buffer 0) skip the screen restore: re-stamp
-        endc
-@fade
         lda   #1
         sta   <glb_force_sprite_refresh     ; redraw ship/pod over the point-erase each frame
         jmp   FadeOut
 @clearHidden
-        ; the fade blacked buffer 0 (the single-buffer visible page). Now black the HIDDEN
-        ; buffer over 4 frames, STILL in single buffer, so its stale level never reaches the
-        ; screen (clearing it AFTER the switch flashes one frame of the old buffer). Map the
-        ; hidden page, clear a half, restore the working page (buffer 0 stays displayed).
+        ; the fade blacked the visible buffer. Now black the HIDDEN buffer over 4 frames
+        ; before the switch, so its stale level never reaches the screen (clearing it AFTER
+        ; the switch would flash one frame of the old buffer). Map the hidden page, clear a
+        ; half, restore the working page.
         lda   clear.frameCnt
         cmpa  #4
         bhs   @toReadout                     ; hidden buffer fully black -> switch to dbl buffer
         lda   #1
-        sta   <glb_force_sprite_refresh      ; keep re-stamping ship/pod on the visible buffer 0
+        sta   <glb_force_sprite_refresh      ; keep redrawing ship/pod over the cleared bg
         ldb   gfxlock.backBuffer.status      ; map the HIDDEN page = (2 | status&1) ^ 1
         andb  #1
         eorb  #1
@@ -369,11 +358,8 @@ BlitPhase3
         stb   map.CF74021.DATA
         rts
 @toReadout
-        ; both buffers black: back to double buffer (NO glb_camera_move so the level stays
-        ; off), resume normal sprite erase, force a refresh so ship/pod recapture the black bg,
-        ; arm the HUD readout, advance to phase 4
-        clr   gfxlock.singleBuffer
-        clr   <glb_sprite_erase_off
+        ; both buffers black: NO glb_camera_move so the level stays off, force a refresh so
+        ; ship/pod recapture the black bg, arm the HUD readout, advance to phase 4
         clr   clear.buf0Done                 ; arm the buffer-0 offscreen clear (phase 4)
         lda   #1
         sta   <glb_force_sprite_refresh
@@ -384,8 +370,8 @@ BlitPhase3
         rts
 
 BlitPhase4
-        ; @clearHidden blacked buffer 1 (the hidden page) before the switch. Buffer 0 - the
-        ; ex-single/visible page - still carries the faded bg + the re-stamped ship/pod + stale
+        ; @clearHidden blacked the hidden page before the switch. The other (visible) buffer
+        ; still carries the faded bg + the redrawn ship/pod + stale
         ; sprite-backup cells. Clear it the FIRST time it is offscreen (working) again, full in
         ; one frame (so it is never shown half-cleared), so the readout restarts clean too.
         lda   clear.buf0Done
@@ -577,11 +563,7 @@ BAYER8  equ     3
 PATTERN equ     BAYER8
 
 InitFadeOut
-        ifndef  DOUBLE_BUF
-        ldb     #FadeLen
-        else
         ldb     #FadeLen*2
-        endc
         stb     FadeCnt
         rts
 
@@ -592,9 +574,7 @@ FadeCnt set     *-1
 !       decb    
         stb     FadeCnt
         ldx     #FadeOutPattern
-        ifdef   DOUBLE_BUF
         lsrb
-        endc
         abx
         ldd     #$0FE0  ; A=mask
         andb    ,x      ; keep b7b6b5

@@ -66,11 +66,9 @@ UDP_CheckDeleteB0
         beq   UDP_SetNewPrioB0
         lda   rsv_prev_render_flags_0,u
         bmi   UDP_SetNewPrioB0
-        tst   gfxlock.singleBuffer          ; single buffer: buffer 1 ignored, free on buf 0
-        bne   >
         lda   rsv_prev_render_flags_1,u
         bmi   UDP_SetNewPrioB0
-!       jsr   UnloadObject_u
+        jsr   UnloadObject_u
         bra   UDP_CheckEndB0
         
 UDP_SetNewPrioB0
