@@ -97,7 +97,12 @@ Init
         ;0000:6504 c6 44 1f 00     MOV        byte ptr [SI + 0x1f],0x0    ; Damage
         ;0000:6508 c6 44 2f 1e     MOV        byte ptr [SI + 0x2f],0x1e   ; Max damage
 
-        ; Does not seem to do anything with AX ... so skipping ... for now
+        ; (le 2e random arcade & 0x3f est bien inutilisé -> sauté)
+        ; FIX #11 : seed de phase d'anim (arcade create_tabrok 0x60d0 : [+0x28] = random & 0x1F)
+        jsr   RandomNumber
+        andb  #$1f
+        clra
+        std   tabrok_0x28,u
 
         clr   tabrok_0xe,u
 
@@ -134,11 +139,11 @@ FUN_0000_650d_RunTabrokMode1
         ;0000:652c 03 46 28        ADD        AX,word ptr [BP + 0x28]
 
 LAB_0000_651d
-        ;ldb   #($80*scale.XP1PX)/256
-        ;lda   gfxlock.frameDrop.count
-        ;mul
-        ;_negd
-        ;jsr   moveXPos8.8        
+        ldb   #($80*scale.XP1PX)/256     ; FIX: dérive X de chute restaurée (arcade fall_left vx=-0x80)
+        lda   gfxlock.frameDrop.count
+        mul
+        _negd
+        jsr   moveXPos8.8        
 
         ldb   #($ff*scale.YP1PX)/256
         lda   gfxlock.frameDrop.count
@@ -464,7 +469,7 @@ FUN_0000_65e3_RunTabrokMode2_continue
 LAB_0000_662a
         lda   #5 ; FUN_0000_6643_RunTabrokMode4
         sta   tabrok_0x38,u
-        lda   #40
+        lda   #$40                      ; FIX hex (arcade 0x40=64, pas décimal 40)
         sta   tabrok_0x3a,u
         ldd   #$50
         std   tabrok_0x30,u
@@ -521,6 +526,7 @@ FUN_0000_6643_RunTabrokMode4
 
         ldx   #tabrok_0x2b70
         ldb   gfxlock.frame.count+1
+        addb  tabrok_0x28+1,u           ; FIX #11 : + seed de phase (arcade walk : (counter+seed) & 0x38)
         andb  #$38
         asrb
         asrb
@@ -570,7 +576,7 @@ LAB_0000_6687
         ;                      LAB_0000_66bc                                   XREF[1]:     0000:c73f(*)  
         ;0000:66bc c3              RET
 LAB_0000_6697
-        lda   #40
+        lda   #$40                      ; FIX hex (arcade 0x40=64, pas décimal 40)
         sta   tabrok_0x3a,u
         ldx   #tabrok_0x2b70
         ldd   ,x
@@ -604,22 +610,19 @@ LAB_0000_6697
 
 
 FUN_0000_66bd_RunTabrokMode3
-        lda   tabrok_0x3a,u
+        lda   tabrok_0x3a,u               ; FIX: tir 1× au franchissement de 0x10, sans double-décrément
+        cmpa  #$10
+        ble   LAB_0000_66c6
+        suba  gfxlock.frameDrop.count
         cmpa  #$10
         bgt   LAB_0000_66c6
-        adda  gfxlock.frameDrop.count
-        cmpa  #$10
-        blt   LAB_0000_66c6
-        lda   tabrok_0x3a,u
-        suba  gfxlock.frameDrop.count
-        sta   tabrok_0x3a,u
         jsr   FUN_0000_6b15_TabrokShoots4Missiles
 
 LAB_0000_66c6
 
         ldx   #Img_tabrok_4
         ldb   tabrok_0x2e,u
-        andb  $1
+        andb  #$1                       ; FIX: immédiat (bit facing), pas page-directe $01
         beq   LAB_0000_66d8
         ldx   #Img_tabrok_12
 
@@ -768,28 +771,22 @@ LAB_0000_675f
         ;0000:678f e8 e0 a2        CALL       FUN_0000_0a72_MoveXPos8.8                        undefined FUN_0000_0a72_MoveXPos
 
 FUN_0000_6774_RunTabrokMode6
-        lda   tabrok_0x30,u
+        lda   tabrok_0x30,u               ; FIX: tir 1× au franchissement de 0x10, sans double-décrément
+        cmpa  #$10
+        ble   LAB_0000_6798
+        suba  gfxlock.frameDrop.count
         cmpa  #$10
         bgt   LAB_0000_6798
-        adda  gfxlock.frameDrop.count
-        cmpa  #$10
-        blt   LAB_0000_6798
-        lda   tabrok_0x30,u
-        suba  gfxlock.frameDrop.count
-        sta   tabrok_0x30,u
         jsr   FUN_0000_6b15_TabrokShoots4Missiles
         jmp   LAB_0000_6798
 
 FUN_0000_6780_RunTabrokMode8
-        lda   tabrok_0x30,u
+        lda   tabrok_0x30,u               ; FIX: tir 1× au franchissement de 0x10, sans double-décrément
+        cmpa  #$10
+        ble   LAB_0000_6798
+        suba  gfxlock.frameDrop.count
         cmpa  #$10
         bgt   LAB_0000_6798
-        adda  gfxlock.frameDrop.count
-        cmpa  #$10
-        blt   LAB_0000_6798
-        lda   tabrok_0x30,u
-        suba  gfxlock.frameDrop.count
-        sta   tabrok_0x30,u
         jsr   FUN_0000_6b15_TabrokShoots4Missiles
         jmp   LAB_0000_6798        
 
@@ -949,19 +946,19 @@ LAB_0000_67ff
 
         lda   #8 ; FUN_0000_6774_RunTabrokMode6
         sta   routine,u
-        lda   #40
+        lda   #$40                      ; FIX hex (arcade 0x40=64, pas décimal 40)
         sta   tabrok_0x30,u
         jmp   CommonLife
 LAB_0000_6829
         lda   #9 ; FUN_0000_678c_RunTabrokMode7
         sta   routine,u
-        lda   #80
+        lda   #$80                      ; FIX hex (arcade 0x80=128, pas décimal 80)
         sta   tabrok_0x30,u
         jmp   CommonLife
 LAB_0000_683e
         lda   #10 ; FUN_0000_6780_RunTabrokMode8
         sta   routine,u
-        lda   #40
+        lda   #$40                      ; FIX hex (arcade 0x40=64, pas décimal 40)
         sta   tabrok_0x30,u
         jmp   CommonLife
 
@@ -1319,12 +1316,10 @@ LAB_0000_6976
 
 
 FUN_0000_697c_RunTabrokMode11
-        lda   gfxlock.frame.count+1
-        cmpa  #$7f
-        bgt   LAB_0000_6987
-        adda  gfxlock.frameDrop.count
-        cmpa  #$7f
-        blt   LAB_0000_6987
+        lda   gfxlock.frame.count+1       ; FIX #5 : tir quand (counter & 0x7F) franchit 0 (arcade : ==0, tous 0x80 frames)
+        anda  #$7f
+        cmpa  gfxlock.frameDrop.count
+        bhs   LAB_0000_6987
         jsr   FUN_0000_6b15_TabrokShoots4Missiles
 
 LAB_0000_6987
@@ -1497,7 +1492,9 @@ FUN_0000_6b88_ConfigureMissile
         blt   LAB_0000_6bc5
         lda   5,y
         sta   ext_variables+11,x
-        neg   ext_variables+10,x
+        ldd   x_vel,x                    ; FIX #2 : négocie la vélocité X 16-bit (arcade NEG [SI+0x30]),
+        _negd                            ;   PAS la seed homing ext+10 — sinon le missile part du mauvais côté
+        std   x_vel,x
 LAB_0000_6bc5
         leay  6,y
         rts
@@ -1725,11 +1722,11 @@ tabrok_0x2b58
         fcb   $02
 
 tabrok_0x2c94
-        fdb   $ff00 ; missile 1     $fe00
+        fdb   $ff40 ; missile 1     $fe00
         fdb   $0000 ;               $0000
         fcb   $0c   ;               $000c
         fcb   $04   ;               $0004
-        fdb   $ff00 ; missile 2     $fe00
+        fdb   $ff40 ; missile 2     $fe00
         fdb   $ff40 ;               $0100
         fcb   $0d   ;               $000d
         fcb   $03   ;               $0003
