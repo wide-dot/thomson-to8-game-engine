@@ -396,6 +396,22 @@ main.followDobkeratops
         ldd   main.dobkeratops.move.left
         subd  main.dobkeratops.move.step
         std   main.dobkeratops.move.left    ; 0 -> body has reached the butee
+        ; background collision boss-follow offset: adv(px) = DIST - px_left ; advTiles = adv/3
+        ; -> bgByteOff = advTiles/8 (24px bytes), bgBitShift = advTiles%8 (3px tiles)
+        lda   #timestamp.MOVEALIEN_DIST
+        suba  main.dobkeratops.move.left     ; A = adv px (move.left high byte = px left, 0..DIST)
+        clrb
+@bgT    suba  #3                             ; advTiles = adv / 3
+        bcs   @bgS
+        incb
+        bra   @bgT
+@bgS    tfr   b,a
+        anda  #7
+        sta   terrainCollision.bgBitShift    ; advTiles & 7
+        lsrb
+        lsrb
+        lsrb
+        stb   terrainCollision.bgByteOff     ; advTiles >> 3
 @apply
         ldd   main.dobkeratops.move.step
         beq   @done                         ; butee reached: the whole body is frozen

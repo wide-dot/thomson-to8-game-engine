@@ -224,6 +224,8 @@ UpdateHitBox
         clr   PalRefresh
         lda   #1
         sta   hitFlash.active
+        ldb   #1
+        jsr   gfxlock.screenBorder.update
 @noHit  lda   AABB_0+AABB.p,u
         sta   hitFlash.prevP
         cmpa  #dobkeratops_monster_hitdamage/2

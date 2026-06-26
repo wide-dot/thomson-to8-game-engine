@@ -17,6 +17,7 @@ AABB_0  equ ext_variables   ; AABB struct (9 bytes)
 rtnid.DeleteEye equ 3
 rtnid.MoveAlien equ 4
 rtnid.DeleteAlien equ 5
+rtnid.FreezeAlien equ 7        ; (6 = DeleteAlienEnd) clean double-buffer stop on boss death
 
 Object
         lda   routine,u
@@ -32,6 +33,8 @@ Routines
         fdb   MoveAlien
         fdb   DeleteAlien
         fdb   DeleteAlienEnd
+        fdb   FreezeAlien
+        fdb   FreezeAlienStop
 
 Init
         ; init sprite position
@@ -304,13 +307,24 @@ MoveAlien
         lda   #rtnid.DeleteAlien
         sta   routine,u
 !       jmp   DisplaySprite
-@frozen rts
+@frozen
+        ; the alien was moving, so the two video pages hold positions ~1px apart. Redraw at the
+        ; frozen position on BOTH pages before stopping, else it flickers until the boss-erase
+        ; covers it (clean double-buffer stop, same idea as DeleteAlien at the butee).
+        lda   #rtnid.FreezeAlien
+        sta   routine,u
+        jmp   DisplaySprite                  ; page 1 at the frozen position
 
 DeleteAlien
         inc   routine,u
         jmp   DisplaySprite ; print last frame at the same location for double buffering
 DeleteAlienEnd
         jmp   DeleteObject
+FreezeAlien
+        inc   routine,u                      ; -> FreezeAlienStop
+        jmp   DisplaySprite                  ; page 2 at the same position -> both pages reconciled
+FreezeAlienStop
+        rts                                  ; no more 1px flicker; frozen alien persists until erase
 
 EraserImages
         fdb   EraserImages0

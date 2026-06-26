@@ -19,13 +19,16 @@ tabrok_0xe              equ ext_variables+9 ; 1 bytes - Shooting counter
 tabrok_0x20             equ ext_variables+10 ; 1 byte (landing counter in run mode 2)
                                              ; Re-using for running / no running cycle (0x38)
 tabrok_0x2e             equ ext_variables+11 ; 1 byte - 0 if player 1 is on the left, otherwise 1
-tabrok_0x28             equ ext_variables+12 ; 2 bytes - gfxlock.frame.count at init time
+tabrok_0x28             equ ext_variables+12 ; 2 bytes - seed de phase d'anim (random & 0x1F, FIX #11) : MARCHE uniquement (frame.count & 0x38, bits 3-5). PAS la flamme (swap.count & 1, sans seed).
 tabrok_0x30             equ ext_variables+14 ; 2 bytes - some counter (most likely after running)
 tabrok_0x38             equ ext_variables+16 ; 1 byte - next routine (used at the end of run mode 3)
 tabrok_0x3a             equ ext_variables+17 ; 1 byte - missile shooting timing
 tabrok_0xc              equ ext_variables+18 ; 1 byte - shouting frequency based on difficulty and table at 1x2b40
+tabrok_flameToggle      equ ext_variables+19 ; 1 byte - flamme petite/grosse : togglé (com) à chaque tick -> alternance déterministe (bufferSwap.count non fiable : swap IRQ asynchrone hors-lock)
 
 Object
+        lda   globals.bossDefeated           ; boss en phase de destruction ?
+        lbne  DestroyTabrokNoScore            ; -> autodestruction (explosion) : pas de Tabrok residuel apres la victoire
         lda   routine,u
         asla
         ldx   #Routines
@@ -180,8 +183,8 @@ LAB_0000_651d
 
         ; chute Y -> boucle sous-echantillonnee (anti-tunneling) en LAB_0000_6570
 
-        ldd   gfxlock.frame.count
-        addd  tabrok_0x28,u
+        com   tabrok_flameToggle,u          ; flamme : toggle d'objet 1x/tick (= 1x frame rendue) -> alternance deterministe.
+        ldb   tabrok_flameToggle,u          ; bufferSwap.count etait non fiable : swap fait par l'IRQ a un instant variable hors-lock -> parite qui derive
 
 
         ;                     LAB_0000_652f                                   XREF[1]:     0000:6929(*)  
@@ -203,13 +206,13 @@ LAB_0000_652f
         tst   tabrok_0x2e,u
         beq   LAB_0000_6543
         ldx   #Img_tabrok_15
-        andb  #$04
+        andb  #$01
         beq   LAB_0000_654e
         ldx   #Img_tabrok_14
-        jmp   LAB_0000_654e
+        bra   LAB_0000_654e
 LAB_0000_6543
         ldx   #Img_tabrok_7
-        andb  #$04
+        andb  #$01
         beq   LAB_0000_654e
         ldx   #Img_tabrok_6
 
@@ -345,10 +348,11 @@ CommonLife
         ;0000:6a06 c3              RET
 
 
-FUN_0000_69e4_DestroyTabrok                       
+FUN_0000_69e4_DestroyTabrok
         ldd   globals.score
         addd  #tabrok_score
         std   globals.score
+DestroyTabrokNoScore                          ; autodestruction boss-mort : explosion sans credit de score
         jsr   LoadObject_x ; make then die early ... to be removed
         beq   FUN_0000_6a07_DeleteTabrok
         _ldd  ObjID_explosion,explosion.subtype.big
@@ -895,19 +899,19 @@ LAB_0000_6798
         ;0000:67ca bb 34 2c        MOV        BX,0x2c34
 
 
-        ldd   gfxlock.frame.count
-        addd  tabrok_0x28,u
+        com   tabrok_flameToggle,u          ; flamme : toggle d'objet 1x/tick (= 1x frame rendue) -> alternance deterministe.
+        ldb   tabrok_flameToggle,u          ; bufferSwap.count etait non fiable : swap fait par l'IRQ a un instant variable hors-lock -> parite qui derive
 
         tst   tabrok_0x2e,u
         beq   LAB_0000_67c2
         ldx   #Img_tabrok_15
-        andb  #$04
+        andb  #$01
         beq   LAB_0000_67cd
         ldx   #Img_tabrok_14
-        jmp   LAB_0000_67cd
+        bra   LAB_0000_67cd
 LAB_0000_67c2
         ldx   #Img_tabrok_7
-        andb  #$04
+        andb  #$01
         beq   LAB_0000_67cd
         ldx   #Img_tabrok_6
 LAB_0000_67cd
@@ -1070,19 +1074,19 @@ LAB_0000_6869
         subd  glb_camera_x_pos_old
         std   x_pos,u
         ; chute Y -> boucle sous-echantillonnee (anti-tunneling) en LAB_0000_68bc
-        ldd   gfxlock.frame.count
-        addd  tabrok_0x28,u
+        com   tabrok_flameToggle,u          ; flamme : toggle d'objet 1x/tick (= 1x frame rendue) -> alternance deterministe.
+        ldb   tabrok_flameToggle,u          ; bufferSwap.count etait non fiable : swap fait par l'IRQ a un instant variable hors-lock -> parite qui derive
 
         tst   tabrok_0x2e,u
         beq   LAB_0000_688f
         ldx   #Img_tabrok_15
-        andb  #$04
+        andb  #$01
         beq   LAB_0000_689a
         ldx   #Img_tabrok_14
-        jmp   LAB_0000_689a
+        bra   LAB_0000_689a
 LAB_0000_688f
         ldx   #Img_tabrok_7
-        andb  #$04
+        andb  #$01
         beq   LAB_0000_689a
         ldx   #Img_tabrok_6
 

@@ -116,8 +116,12 @@ Orchestrate
         ; each of the 3 lasers (high, mid, low) are independent
 
         lda   glb.slotsState
-        cmpa  #7 ; if all 3 lasers are active, do not initiate a new one
-        bne   >
+        ; n'initier une nouvelle volee que si TOUS les slots sont libres (la precedente est entierement finie).
+        ; en stream slot-par-slot, le slot d'OBJET d'un head mort est reutilise en LIFO par un nouveau segment
+        ; de meme id/routine -> le dernier maillon orpheline croit son parent vivant, ne meurt jamais, et son
+        ; slot reste pris. Apres 1-2 volees les 3 slots collent et le rebound s'arrete.
+        ; (equivalent arcade : rebound_laser_chain_ready_flag - on attend que la chaine soit prete)
+        beq   >
         jmp   DeleteObject
 !
 
