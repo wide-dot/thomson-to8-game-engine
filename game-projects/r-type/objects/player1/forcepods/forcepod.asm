@@ -721,12 +721,16 @@ ForcePodAttachedFire
         ldb   Fire_Press
         andb  #c1_button_A_mask
         beq   @rts
-        ldb   power_level,u
-        subb  #2
-        beq   @reboundlaser
-        decb
-        beq   @counterairlaser
-        rts
+        ; FIX arme : niveau = PUISSANCE (0 no pod, 1 pod sans laser, 2 faible, 3 fort) ;
+        ;            l'ARME est choisie par le TYPE (couleur du bonus), comme l'arcade
+        ;            (apply_bonus_pickup: player_one_laser_type = bonus_type ; dispatch [tier][type]).
+        lda   power_level,u            ; = forcepodlevel (palier de puissance)
+        cmpa  #2
+        blo   @rts                     ; niveau 0/1 -> pas de laser (le faible/fort = longueur, lue par l'objet laser depuis forcepodlevel)
+        lda   player1+forcepodtype     ; choix de l'arme par le TYPE, pas le niveau
+        cmpa  #2
+        beq   @counterairlaser         ; type 2 = counter-air
+        ; type 0 = rebound (bleu) ; type 1 = counter-ground (pas encore implemente, stage > 1) -> rebound en attendant
 @reboundlaser
         jsr   LoadObject_x
         beq   @rts

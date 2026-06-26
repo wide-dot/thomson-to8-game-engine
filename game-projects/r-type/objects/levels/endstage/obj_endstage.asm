@@ -15,6 +15,8 @@
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./engine/objects/palette/fade/fade.equ"
 
+SCORE_HOLD_FRAMES equ 50     ; pause ecran noir entre la fin du fade-out pixel
+
 Object
         tstb
         beq   Tick
@@ -31,6 +33,8 @@ InitSequence
         std   main.timestamp.moveAlienStart
         ldd   #timestamp.MOVEALIEN_DIST*256       ; distance the body owes to the butee (8.8)
         std   main.dobkeratops.move.left
+        clr   terrainCollision.bgByteOff          ; boss-follow bg collision offset starts at 0
+        clr   terrainCollision.bgBitShift
         ldd   #$ffff
         std   main.dobkeratops.move.frame
         ldd   #0
@@ -43,11 +47,13 @@ InitSequence
         clr   erase.rectArmed
         clr   erase.rectDelay
         clr   erase.bigRect
-        clr   clear.frameCnt                 ; hidden-buffer clear counter (phase 3 -> 4)
-        clr   clear.buf0Done
         clr   main.endstage.scoreArmed
         clr   main.endstage.scoreDone
+        lda   #SCORE_HOLD_FRAMES               ; arme la pause ecran noir post fade-out
+        sta   scoreHold.timer
         rts
+
+scoreHold.timer fcb 0  ; phase 3->4: ~0.5 s black-screen hold before the score readout
 
 * ---------------------------------------------------------------------------
 * end of stage sequencing (arcade: run_dobkeratops parent tick)
@@ -129,13 +135,10 @@ Tick
         lda   main.endstage.phase
         cmpa  #4
         blo   @none                         ; phase 3: still dissolving -> wait
-        ; phase 4: until buffer 0 has been re-cleared in double-buffer mode (BlitPhase4),
-        ; force a full sprite refresh from HERE. Tick runs in RunObjects, BEFORE
-        ; CheckSpritesRefresh consumes the flag and BEFORE the clearscreen Blit -> the idle
-        ; ship is marked dirty in time and DrawSprites repaints it onto the freshly cleared
-        ; page. Setting it inside BlitPhase4 would be one frame too late -> ship flickers.
-        lda   clear.buf0Done
-        bne   @scoreWait
+        ; phase 4 (double-buffer readout): force a full sprite refresh every frame so the
+        ; static ship/pod stay painted on BOTH pages (the dissolve blacked both; a static
+        ; sprite would otherwise live on only one). Tick runs in RunObjects, BEFORE
+        ; CheckSpritesRefresh consumes the flag, so they are marked dirty in time.
         lda   #1
         sta   <glb_force_sprite_refresh
 @scoreWait
@@ -316,51 +319,32 @@ Blit
         rts
 
 * ---------------------------------------------------------------------------
-* phase 3 -> 4: drive the dissolve, then switch to the score readout.
-* Both video buffers are blacked so the readout restarts clean: the hidden buffer
-* is cleared by @clearHidden BEFORE the switch (never shown stale); the other
-* buffer is cleared by BlitPhase4 the first time it is offscreen AFTER the switch.
+* phase 3 -> 4: drive the dissolve, then arm the score readout.
+* The pixel fade-out now runs in double buffering, so it blacks BOTH video pages on
+* its own - no explicit buffer clear is needed before the readout (it used to be
+* single-buffered, hence the old @clearHidden / BlitPhase4 page wipes, now dropped).
 * ---------------------------------------------------------------------------
 BlitPhase3
         lda   FadeCnt
-        beq   @clearHidden                  ; fade done -> black the HIDDEN buffer, then switch
+        beq   @scoreHold                    ; fade done (both pages, double-buffered) -> hold, then score
         lda   #1
         sta   <glb_force_sprite_refresh     ; redraw ship/pod over the point-erase each frame
         jmp   FadeOut
-@clearHidden
-        ; the fade blacked the visible buffer. Now black the HIDDEN buffer over 4 frames
-        ; before the switch, so its stale level never reaches the screen (clearing it AFTER
-        ; the switch would flash one frame of the old buffer). Map the hidden page, clear a
-        ; half, restore the working page.
-        lda   clear.frameCnt
-        cmpa  #4
-        bhs   @toReadout                     ; hidden buffer fully black -> switch to dbl buffer
+@scoreHold
+        ; fade done on both pages: hold ~0.5 s on the black screen before the score readout
+        ; (let the dissolve land before the digits spin up). Ship/pod stay redrawn so they hover
+        ; on the black during the pause; frame-drop compensated like the other endstage timers.
+        ldb   scoreHold.timer
+        beq   @toReadout                     ; hold elapsed (or disabled) -> arm the readout
+        subb  gfxlock.frameDrop.count
+        bls   @toReadout                     ; reached 0 this frame -> arm now
+        stb   scoreHold.timer
         lda   #1
-        sta   <glb_force_sprite_refresh      ; keep redrawing ship/pod over the cleared bg
-        ldb   gfxlock.backBuffer.status      ; map the HIDDEN page = (2 | status&1) ^ 1
-        andb  #1
-        eorb  #1
-        orb   #2
-        stb   map.CF74021.DATA
-        inc   clear.frameCnt
-        lda   clear.frameCnt
-        cmpa  #3
-        blo   @clearTop                      ; frames 1,2 -> top half ; frames 3,4 -> bottom half
-        lda   #1
-        bra   @doClear
-@clearTop
-        clra
-@doClear
-        jsr   ClearPlayHalf
-        ldb   gfxlock.backBuffer.status      ; restore the WORKING page (buffer 0, visible)
-        andb  #1
-        orb   #2
-        stb   map.CF74021.DATA
+        sta   <glb_force_sprite_refresh      ; keep ship/pod over the black during the hold
         rts
 @toReadout
-        ; both buffers black: NO glb_camera_move so the level stays off, force a refresh so
-        ; ship/pod recapture the black bg, arm the HUD readout, advance to phase 4
-        clr   clear.buf0Done                 ; arm the buffer-0 offscreen clear (phase 4)
+        ; both pages already black (double-buffered fade): NO glb_camera_move so the level
+        ; stays off, force a refresh so ship/pod recapture the black bg, arm the HUD readout
         lda   #1
         sta   <glb_force_sprite_refresh
         lda   #1
@@ -370,69 +354,10 @@ BlitPhase3
         rts
 
 BlitPhase4
-        ; @clearHidden blacked the hidden page before the switch. The other (visible) buffer
-        ; still carries the faded bg + the redrawn ship/pod + stale
-        ; sprite-backup cells. Clear it the FIRST time it is offscreen (working) again, full in
-        ; one frame (so it is never shown half-cleared), so the readout restarts clean too.
-        lda   clear.buf0Done
-        bne   @p4done
-        lda   gfxlock.backBuffer.id
-        bne   @p4done                          ; wait until buffer 0 is the working/offscreen buffer
-        inc   clear.buf0Done
-        ; (the full-sprite-refresh flag for this clear frame is set in the Tick, before
-        ;  CheckSpritesRefresh runs - setting it here would be one frame too late)
-        clra
-        jsr   ClearPlayHalf                    ; buffer 0, top half
-        lda   #1
-        jsr   ClearPlayHalf                    ; buffer 0, bottom half
-@p4done rts
-
-* ---------------------------------------------------------------------------
-* ClearPlayHalf - black-fill 96 scanlines of the playfield on the working buffer.
-* A = 0 : top half (scanlines 0..95) ; A != 0 : bottom half (96..191). Both banks.
-* The HUD band (>= HUD_TOP) is left intact. Same pshu technique as BigBlackRect.
-* Trashes a,b,d,x,y,u.
-* ---------------------------------------------------------------------------
-ClearPlayHalf
-        ldx   #0
-        ldy   #0                            ; X=Y=0 (black), preserved across every pshu
-        tsta
-        beq   @top
-        ldd   #$A000+192*40                 ; bottom half run end (scanline 192, exclusive)
-        bra   @set
-@top    ldd   #$A000+96*40                  ; top half run end (scanline 96, exclusive)
-@set    std   clr.ptr
-        lda   #96
-        sta   clr.lineCnt
-@line   ldd   #0
-        ldu   clr.ptr                       ; RAMB bank, run end of this scanline
-        pshu  d,x,y
-        pshu  d,x,y
-        pshu  d,x,y
-        pshu  d,x,y
-        pshu  d,x,y
-        pshu  d,x,y                         ; 36 bytes
-        pshu  d,x                           ; +4 = 40 bytes (full scanline width)
-        ldu   clr.ptr
-        leau  $2000,u                       ; RAMA bank
-        pshu  d,x,y
-        pshu  d,x,y
-        pshu  d,x,y
-        pshu  d,x,y
-        pshu  d,x,y
-        pshu  d,x,y
-        pshu  d,x
-        ldd   clr.ptr
-        subd  #40                           ; up one scanline
-        std   clr.ptr
-        dec   clr.lineCnt
-        bne   @line
+        ; nothing to do: the double-buffered fade already blacked both pages, so there is no
+        ; buffer clear here anymore (the readout is drawn by the HUD each frame, ship/pod kept
+        ; on both pages by the per-frame sprite refresh forced from the Tick).
         rts
-
-clear.frameCnt fcb 0   ; @clearHidden (phase 3) hidden-buffer clear frame counter (0..4)
-clear.buf0Done fcb 0   ; phase 4: set once buffer 0 has been cleared offscreen
-clr.ptr        fdb 0   ; ClearPlayHalf rolling run-end pointer
-clr.lineCnt    fcb 0   ; ClearPlayHalf scanline counter
 
 * ---------------------------------------------------------------------------
 * BigBlackRect - solid fill, top-left (28,23) to bottom-right (147,178) in
@@ -487,83 +412,14 @@ erase.bigRect    fcb 0  ; remaining boss-room rectangle frames (one per buffer)
 rect.ptr         fdb 0  ; BigBlackRect rolling RAMB run-end pointer
 rect.lineCnt     fcb 0  ; BigBlackRect scanline counter
 
-* ; FADEOUT by sam
-* ; --------------
-
-* GIFFIES equ 15                 ; temps d'effacement (en 1/10 sec, comme dans un gif)
-* FPS     equ 25                 ; nb frames/sec
-* NUM     equ ((32000/FPS)*10)/GIFFIES  ; nb pixels à effacer par frame
-* ;  Valeurs coprimes valides : 7, 11, 13, 31, 49, 77, 91, 127, 251, 8191
-* MAGIC   equ 8191            ; pas du PRNG additif, coprime de FADE_MOD
-
-* ; Le fondu ne dissout que le playfield (scanlines 0..HUD_TOP-1) ; la bande HUD du bas
-* ; (HUD_TOP..199) est preservee -> HUD visible pendant le readout, et moins de pixels a traiter.
-* HUD_TOP  equ 192       ; premiere scanline du HUD (score/vies/beam) - ajustable
-* FADE_MOD equ HUD_TOP*40*4 ; modulo du PRNG additif : offset = iRnd>>2 reste < HUD_TOP*40
-
-* iRnd     fdb 0           ; seed aleatoire
-* fadeDone fcb 0           ; 0 = tous les pixels effaces (ecran noir)
-*          ifdef  DOUBLE_BUF
-* iAgain   fdb 0           ; copie pour rejouer
-* iOdd     fcb 0           ; parité numéro de trame
-*          endc
-
-* InitFadeOut
-*         ldd   #0
-*         std   iRnd
-*         ifdef  DOUBLE_BUF        
-*         std   iAgain
-*         stb   iOdd
-*         endc
-*         lda   #1
-*         sta   fadeDone
-*         rts
-
-* Mask    macro
-*         _lsrd
-*         _lsrd           ; con,version  D/4
-*         bcc   >
-*         adda  #$20      ; adaptation RAMB
-* !       adda  #$A0      ; espace ram utilisateur
-*         tfr   d,y       ; y=adresse pixel à effacer
-
-*         lda   #\1
-*         anda  ,y        ; masquage
-*         sta   ,y        ; effacement pixel
-
-*         ldd   iRnd      ; recup seed complete
-*         addd  #MAGIC
-*         cmpd  #FADE_MOD ; modulo FADE_MOD (au lieu de 32768) : borne le fondu au-dessus du HUD
-*         blo   >
-*         subd  #FADE_MOD
-* !       std   iRnd      ; mise à jour seed
-*         endm
-
-* ; efface NUM pixels à chaque frame
-* FadeOut ldx   #NUM
-*         ldd   iRnd      ; charge seed
-*         ifdef  DOUBLE_BUF
-*         com   iOdd      ; frame paire ?
-*         beq   >
-*         ldd   iAgain    ; oui => rejeu
-*         std   iRnd      ; mise à jour
-* !       std   iAgain    ; sauvegarde pour rejeu
-*         endc
-* @loop   Mask  $0F
-*         Mask  $F0
-*         bne   >         ; ecran vide ?
-*         clr   fadeDone  ; oui => fin : destruction objet FadeOut
-* !       leax   -1,x     ; non => encore des pixels à effacer ?
-*         bne    @loop    ; oui. => bouclage
-*         rts             ; non => retour
-
 ACCOLAD equ     1
 DIAG    equ     2
 BAYER8  equ     3
-PATTERN equ     BAYER8
+PATTERN equ     ACCOLAD
 
 InitFadeOut
         ldb     #FadeLen*2
+        incb
         stb     FadeCnt
         rts
 
