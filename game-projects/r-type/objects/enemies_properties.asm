@@ -38,8 +38,8 @@ cancer_hitbox_y		equ 13
 cancer_hitdamage	equ 1
 
 tabrok_score		equ 20
-tabrok_hitbox_x		equ 8
-tabrok_hitbox_y		equ 16
+tabrok_hitbox_x		equ 6   ; FIX E : arcade demi-largeur 16 × 0.375 = 6
+tabrok_hitbox_y		equ 18  ; FIX E : arcade demi-hauteur 24 × 0.75 = 18
 tabrok_hitdamage	equ $1e
 
 dobkeratops_monster_score     equ 1

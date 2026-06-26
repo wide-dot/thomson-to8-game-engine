@@ -141,9 +141,14 @@ FUN_0000_xxxx_RunMissileRunMode0
 
 
 	jsr   ObjectMoveSync
+        ; FIX : ancrage-ecran (comp scroll) comme le joueur et l'arcade -> Δecran=vx
+        ldd   x_pos,u
+        addd  glb_camera_x_pos
+        subd  glb_camera_x_pos_old
+        std   x_pos,u
         ldy   missile_flame,u
         beq   >
-        ldx   #missileflame_1x2d14
+        ldx   #pm_flame_off              ; flamme : offset du missile JOUEUR (on reutilise le petit sprite commun)
         lda   missile_0x16,u
         asla
         asla
@@ -166,9 +171,14 @@ LAB_0000_6c4c
         lda   #3  ; FUN_0000_6c7d_RunMissileRunMode1
         sta   routine,u
 	jsr   ObjectMoveSync
+        ; FIX : ancrage-ecran (comp scroll) comme le joueur et l'arcade -> Δecran=vx
+        ldd   x_pos,u
+        addd  glb_camera_x_pos
+        subd  glb_camera_x_pos_old
+        std   x_pos,u
         ldy   missile_flame,u
         beq   >
-        ldx   #missileflame_1x2d14
+        ldx   #pm_flame_off              ; flamme : offset du missile JOUEUR (on reutilise le petit sprite commun)
         lda   missile_0x16,u
         asla
         asla
@@ -189,29 +199,35 @@ LAB_0000_6c4c
 
 FUN_0000_6c7d_RunMissileRunMode1
 
-        ldd  missile_0x22,u
-        bpl  LAB_0000_6c8a
-        ; check if bullet is outside the viewport
-        ; x axis
-        ldd   x_pos,u                                   ; set visibility range
-        cmpd  glb_camera_x_pos                          ; destroy if out of range
-        lble  Delete
-        subd  #160-8/2
-        cmpd  glb_camera_x_pos
-        lbge  Delete
-        jmp   LAB_0000_6cee
-
-
-LAB_0000_6c8a
-        ldx   missile_0x22,u
+        ; --- Homing gate fidele arcade : TEST [budget],AX ou AX = adresse-objet ---
+        ; En arcade RunChainedObjects appelle le tick avec AX = adresse de l'ObjectRecord ;
+        ; le gate ANDe le budget (parti a $0800 = bit 11 seul) avec cette adresse. Portage :
+        ; u EST l'adresse-objet -> on teste (budget AND u) a CHAQUE sous-frame du frame-drop
+        ; (le budget change pendant la rafale).
+        ;  - 1ere sous-frame (budget=$0800) : home SSI bit 11 de u = 1 ; sinon le budget n'est
+        ;    jamais decremente -> vol droit permanent (certains missiles ne traquent pas P1).
+        ;  - homers : budget decremente, (budget AND u) sur les bits bas module le decompte de
+        ;    lifetime -> cadence de re-visee irreguliere (comportement 2e ordre arcade).
         lda   gfxlock.frameDrop.count
-        nega
-        leax  a,x
+        bne   >
+        lda   #1
+!       pshs  a                       ; [S] = sous-frames a simuler
+
+missileGateLoop
+        ldd   missile_0x22,u          ; gate = budget AND u (adresse-objet = AX arcade)
+        pshs  u
+        anda  ,s
+        andb  1,s
+        leas  2,s
+        pshs  a
+        orb   ,s+                     ; Z = ((budget AND u) == 0)
+        lbeq  missileGateOff          ; gate nul -> coast (pas de homing cette sous-frame)
+
+        ldx   missile_0x22,u          ; gate actif : budget -= 1
+        leax  -1,x
         stx   missile_0x22,u
-        lda   missile_0x20,u
-        suba  gfxlock.frameDrop.count
-        sta   missile_0x20,u
-        bpl   LAB_0000_6cee
+        dec   missile_0x20,u          ; lifetime -= 1
+        lbne  missileGateOff          ; lifetime != 0 -> pas de re-visee (arcade JNZ)
 
         ldx   #player1
         jsr   setDirectionTo
@@ -246,19 +262,25 @@ LAB_0000_6cbf
         sta   missile_0x16,u
         ldb   globals.difficulty
         ldx   #missile_1x2c8c
-        lda   b,x
+        ldb   b,x                  ; FIX : offset/difficulte = octet (table fcb), pas word
         ldx   #missile_1x8f90
-        leax  a,x
+        abx                        ; FIX : add NON signe (leax a,x sign-etendait 0x80/0xc0 en negatif)
         ldb   missile_0x16,u
         aslb
         aslb
-        leax  b,x
+        abx
         ldd   ,x
         std   x_vel,u
         ldd   2,x
         std   y_vel,u
         lda   missile_0x24,u
+        adda  missile_0x20,u         ; lifetime(=0) + seed = seed (recharge la periode)
         sta   missile_0x20,u
+
+missileGateOff
+        dec   ,s                      ; sous-frame suivante du frame-drop
+        lbne  missileGateLoop
+        leas  1,s                     ; depile le compteur
 LAB_0000_6cee
 
         ldx   #MissileImagesIndex
@@ -307,10 +329,15 @@ LAB_0000_6cee
         stb   AABB_0+AABB.cy,u
 
 	jsr   ObjectMoveSync
+        ; FIX : ancrage-ecran (comp scroll) comme le joueur et l'arcade -> Δecran=vx
+        ldd   x_pos,u
+        addd  glb_camera_x_pos
+        subd  glb_camera_x_pos_old
+        std   x_pos,u
 
         ldy   missile_flame,u
         beq   >
-        ldx   #missileflame_1x2d14
+        ldx   #pm_flame_off              ; flamme : offset du missile JOUEUR (on reutilise le petit sprite commun)
         lda   missile_0x16,u
         asla
         asla
@@ -551,10 +578,7 @@ missile_1x8f90
 
 
 missile_1x2c8c
-        fdb $00
-        fdb $40
-        fdb $80
-        fdb $c0
+        fcb $00,$40,$80,$c0        ; FIX : OCTETS (lus en index octet par difficulte). Etait fdb -> diff 1/2/3 cassees
 
 missileflame_1x2d14
 	fdb $0000,$0009 ; $0000,$fff4

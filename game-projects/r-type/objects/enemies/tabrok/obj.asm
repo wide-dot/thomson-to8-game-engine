@@ -58,7 +58,32 @@ Init
         std   y_pos,u
         ldb   ,x
         addd  glb_camera_x_pos
+        subd  #4                       ; offset -4px : compense le centrage des images (vs arcade)
         std   x_pos,u
+
+        ; FIX : compense le retard de declenchement wave sous frame-drop.
+        ;   wave_frame_drop = gameCount-timestamp = nb de frames de retard du trigger.
+        ;   La camera a deja avance de scroll_vel*wave_frame_drop -> on recule Tabrok
+        ;   d'autant, pour un placement MONDE constant quel que soit le frame-drop.
+        ldb   wave_frame_drop,u
+        beq   @noWaveComp
+        ldx   #0
+@waveComp
+        pshs  b                        ; sauve le compteur (tfr x,d ecrase B)
+        tfr   x,d
+        addd  scroll_vel               ; accumule scroll_vel (8.8) wave_frame_drop fois
+        tfr   d,x
+        puls  b
+        decb
+        bne   @waveComp
+        tfr   x,d                      ; D = scroll_vel*wave_frame_drop (8.8)
+        tfr   a,b                      ; B = partie entiere (px)
+        clra                           ; D = depassement entier (16b)
+        pshs  d
+        ldd   x_pos,u
+        subd  ,s++                     ; recule x_pos du depassement
+        std   x_pos,u
+@noWaveComp
         ldb   subtype,u
         andb  #$01
         stb   subtype,u
@@ -145,10 +170,15 @@ LAB_0000_651d
         _negd
         jsr   moveXPos8.8        
 
-        ldb   #($ff*scale.YP1PX)/256
-        lda   gfxlock.frameDrop.count
-        mul
-        jsr   moveYPos8.8    
+        ; comp scroll : fall_left est fixe-ecran cote arcade (scroll NON applique).
+        ;   On applique donc le scroll a x_pos (frame-drop-aware via camera-camera_old)
+        ;   pour annuler la recession monde -> Δecran = vx, comme l'arcade. Idem Mode9.
+        ldd   x_pos,u
+        addd  glb_camera_x_pos
+        subd  glb_camera_x_pos_old
+        std   x_pos,u
+
+        ; chute Y -> boucle sous-echantillonnee (anti-tunneling) en LAB_0000_6570
 
         ldd   gfxlock.frame.count
         addd  tabrok_0x28,u
@@ -237,27 +267,42 @@ LAB_0000_654e
 
 
 LAB_0000_6570
+        ; anti-tunneling : chute Y sous-echantillonnee 1 frame (0.75px) + sondes,
+        ;   repete frameDrop fois (cap 8). Tuile collision = 6px = 8x0.75px :
+        ;   un seul gros saut Y pourrait la traverser sans la sonder.
+        ldb   gfxlock.frameDrop.count
+        lbeq  CommonLife
+LAB_0000_6570_step
+        pshs  b
+        ldd   #($100*scale.YP1PX)/256     ; 1 frame de chute (0.75px)
+        jsr   moveYPos8.8
         ldd   x_pos,u
         subd  #($4*scale.XP1PX)/256
         std   terrainCollision.sensor.x
         ldd   y_pos,u
-        addd  #($16*scale.YP1PX)/256
+        addd  #($18*scale.YP1PX)/256
         std   terrainCollision.sensor.y
         ldb   #1 ; foreground
-        jsr   terrainCollision.do        
-        tstb   
-        lbne  LAB_0000_65b6
+        jsr   terrainCollision.do
+        tstb
+        lbne  LAB_0000_65b6_pop
         ldd   x_pos,u
         subd  #($18*scale.XP1PX)/256
         std   terrainCollision.sensor.x
         ldd   y_pos,u
-        addd  #($16*scale.YP1PX)/256
+        addd  #($18*scale.YP1PX)/256
         std   terrainCollision.sensor.y
         ldb   #1 ; foreground
-        jsr   terrainCollision.do        
-        tstb   
-        lbne  LAB_0000_65b6
+        jsr   terrainCollision.do
+        tstb
+        lbne  LAB_0000_65b6_pop
+        puls  b
+        decb
+        bne   LAB_0000_6570_step
         jmp   CommonLife
+LAB_0000_65b6_pop
+        puls  b
+        jmp   LAB_0000_65b6
 
 LAB_0000_65b5
         jmp   CommonLife
@@ -496,7 +541,7 @@ LAB_0000_662a
 FUN_0000_6643_RunTabrokMode4
 
    
-        ldb   #($ff*scale.XP1PX)/256
+        ldb   #($100*scale.XP1PX)/256
         lda   gfxlock.frameDrop.count
         mul
         _negd
@@ -794,12 +839,11 @@ FUN_0000_678c_RunTabrokMode7
         ldb   #($100*scale.XP1PX)/256
         lda   gfxlock.frameDrop.count
         mul
-        jsr   moveXPos8.8    
-        ldd   x_pos,u
-        addd  glb_camera_x_pos
-        subd  glb_camera_x_pos_old
-        std   x_pos,u
-        jmp   LAB_0000_6798 
+        jsr   moveXPos8.8
+        ; FIX recul aérien : le scroll est appliqué UNE seule fois (via LAB_6798).
+        ;   Mode7 ne doit PAS recompenser le scroll, sinon Δécran = drift + scroll
+        ;   (2× scroll). Correct : world_x += drift + (caméra-caméra_old)×1 → Δécran = drift.
+        jmp   LAB_0000_6798
 
         ;                     **************************************************************
         ;                     *                          FUNCTION                          *
@@ -905,8 +949,8 @@ LAB_0000_67cd
 
         lda   tabrok_0x30,u
         suba  gfxlock.frameDrop.count
-        ble   LAB_0000_67ff
-        sta   tabrok_0x30,u
+        bls   LAB_0000_67ff      ; FIX : non signé ! durée drift=0x80=-128 signé →
+        sta   tabrok_0x30,u      ;   ble expirait dès la 1re frame. bls = expire si 0x30<=frameDrop
         jmp   CommonLife
 
         ;                     LAB_0000_67ff                                   XREF[1]:     0000:67fc(j)  
@@ -1018,14 +1062,14 @@ LAB_0000_6869
         lda   gfxlock.frameDrop.count
         mul
         jsr   moveXPos8.8    
+        ; comp scroll : fall_right avance vers la DROITE contre le scroll -> sans
+        ;   comp il se fait trainer a gauche. (fall_left, lui, va avec le scroll
+        ;   et reste sans comp). Asymetrie portage, pas arcade.
         ldd   x_pos,u
         addd  glb_camera_x_pos
         subd  glb_camera_x_pos_old
         std   x_pos,u
-        ldb   #($ff*scale.YP1PX)/256
-        lda   gfxlock.frameDrop.count
-        mul
-        jsr   moveYPos8.8    
+        ; chute Y -> boucle sous-echantillonnee (anti-tunneling) en LAB_0000_68bc
         ldd   gfxlock.frame.count
         addd  tabrok_0x28,u
 
@@ -1105,27 +1149,41 @@ LAB_0000_689a
         ;0000:6901 c3              RET
 
 LAB_0000_68bc
+        ; anti-tunneling : chute Y sous-echantillonnee (idem Mode1).
+        ;   fall_right sonde a DROITE (addd). Tuile = 6px = 8x0.75px/frame.
+        ldb   gfxlock.frameDrop.count
+        lbeq  CommonLife
+LAB_0000_68bc_step
+        pshs  b
+        ldd   #($100*scale.YP1PX)/256     ; 1 frame de chute (0.75px)
+        jsr   moveYPos8.8
         ldd   x_pos,u
-        subd  #($4*scale.XP1PX)/256
-        std   terrainCollision.sensor.x
-        ldd   y_pos,u
-        addd  #($16*scale.YP1PX)/256
-        std   terrainCollision.sensor.y
-        ldb   #1 ; foreground
-        jsr   terrainCollision.do        
-        tstb   
-        lbne  LAB_0000_6902
-        ldd   x_pos,u
-        subd  #($16*scale.XP1PX)/256
+        addd  #($4*scale.XP1PX)/256
         std   terrainCollision.sensor.x
         ldd   y_pos,u
         addd  #($18*scale.YP1PX)/256
         std   terrainCollision.sensor.y
         ldb   #1 ; foreground
-        jsr   terrainCollision.do        
-        tstb   
-        lbne  LAB_0000_6902
+        jsr   terrainCollision.do
+        tstb
+        lbne  LAB_0000_6902_pop
+        ldd   x_pos,u
+        addd  #($18*scale.XP1PX)/256
+        std   terrainCollision.sensor.x
+        ldd   y_pos,u
+        addd  #($18*scale.YP1PX)/256
+        std   terrainCollision.sensor.y
+        ldb   #1 ; foreground
+        jsr   terrainCollision.do
+        tstb
+        lbne  LAB_0000_6902_pop
+        puls  b
+        decb
+        bne   LAB_0000_68bc_step
         jmp   CommonLife
+LAB_0000_6902_pop
+        puls  b
+        jmp   LAB_0000_6902
 
         ;                     LAB_0000_6902                                   XREF[2]:     0000:68d6(j), 0000:68f5(j)  
         ;0000:6902 83 46 08 07     ADD        word ptr [BP + 0x8],0x7
@@ -1145,19 +1203,28 @@ LAB_0000_68bc
 
 LAB_0000_6902
 
-        ldb   #($07*scale.YP1PX)/256
-        lda   gfxlock.frameDrop.count
+                                        ; FIX D : snap Y identique à Mode1 (grille 6px Thomson = 8px arcade)
+        lda   y_pos+1,u
+        nega
+        adda  #6
+        ldb   #85
         mul
-        jsr   moveYPos8.8  
-        ldb   y_pos+1,u
-        andb  #$f8
+        lsra
+        ldb   #6
+        mul
+        negb
         stb   y_pos+1,u
+        ldd   y_pos,u
+        addd  #($7*scale.YP1PX)/256
+        anda  #$ff
+        andb  #$f8
+        std   y_pos,u
         ldb   #$f
         stb   tabrok_0x20,u
-        ldb   #($08*scale.XP1PX)/256
+        ldd   #($08*scale.XP1PX)         ; FIX : nudge atterrissage = +3px (arcade +8), UNE fois
         tst   tabrok_0x2e,u
         bne   LAB_0000_6923
-        ldb   #($08*scale.XN1PX)/256
+        ldd   #($08*scale.XN1PX)         ; -3px (arcade -8) ; ldd 8.8 signé, sans /256
  
         ;                     LAB_0000_6923                                   XREF[1]:     0000:691b(j)  
         ;0000:6923 01 46 04        ADD        word ptr [BP + 0x4],AX
@@ -1174,9 +1241,9 @@ LAB_0000_6902
         ;0000:6941 26 8b 18        MOV        BX,word ptr ES:[BX + SI]
 
 LAB_0000_6923
-        lda   gfxlock.frameDrop.count
-        mul
-        jsr   moveXPos8.8  
+        ; FIX : nudge appliqué UNE seule fois (pas de *frameDrop). Avant : 'mul' NON signé
+        ;   sur le nudge gauche négatif (0xFD) → gros décalage à DROITE sous frame-drop.
+        jsr   moveXPos8.8
         lda   #12   ; FUN_0000_692f_RunTabrokMode10
         sta   routine,u
         jmp   CommonLife
@@ -1735,7 +1802,7 @@ tabrok_0x2c94
         fcb   $0f   ;               $000f
         fcb   $01   ;               $0001
         fdb   $0048 ; missile 4     $00c0
-        fdb   $ff70 ;               $00c0
+        fdb   $feb0 ; FIX : arcade dy=$01c0 (+448), pas $00c0 — etait $ff70 (-144), doit etre -(448*0.75)=-336
         fcb   $01   ;               $0001
         fcb   $0f   ;               $000f
 
