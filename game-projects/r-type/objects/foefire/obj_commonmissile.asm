@@ -29,6 +29,11 @@ missile_flame           equ ext_variables+16 ; 2 bytes
 
 
 Object
+        lda   subtype,u                       ; missile Tabrok (subtype 0) uniquement
+        bne   @dispatch                        ; subtypes 1 (roquette) / 2-3 (joueur) : non concernes
+        lda   globals.bossDefeated             ; boss en phase de destruction ?
+        lbne  Destroy                          ; -> explosion (fwk) + suppression : pas de missile residuel
+@dispatch
         lda   routine,u
         asla
         ldx   #Routines

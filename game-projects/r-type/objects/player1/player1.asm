@@ -297,7 +297,8 @@ destroy
         beq   display
 
  IFDEF invincible
-        ; invincible test mode: no death, and no white border flash on hit
+        ldb   #1
+        jsr   gfxlock.screenBorder.update
  ELSE
         ldd   #0
         std   player1+beam_value

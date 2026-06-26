@@ -17,6 +17,7 @@
 terrainCollision.loadMap
         ldx   #terrainCollision.maps
         aslb
+        stb   terrainCollision.bgFlag  ; 0 = background, 2 = foreground (boss-follow offset)
         ldy   b,x                      ; set ptr to map in x
 
         ldx   #terrainCollision.yOffset
@@ -36,6 +37,25 @@ terrainCollision.loadMap
         ldx   #terrainCollision.xMask
         abx
         ldb   ,x                       ; read precomputed mask
+
+        ; background only: shift the lookup right by the boss advance so the boss solid
+        ; collision follows it while the scroll is held. foreground (bgFlag=2) is skipped;
+        ; byteOff/bitShift are 0 outside the boss advance -> no-op otherwise. a=col, b=mask
+        tst   terrainCollision.bgFlag
+        bne   @done                    ; foreground -> no offset
+        adda  terrainCollision.bgByteOff
+        sta   terrainCollision.bgColTmp
+        lda   terrainCollision.bgBitShift
+        beq   @loadCol                 ; no sub-byte (3px) shift
+@shift  lsrb                           ; move the mask one 3px tile to the right
+        bne   @noWrap
+        ldb   #$80                     ; wrapped past the byte -> next column, tile 0
+        inc   terrainCollision.bgColTmp
+@noWrap deca
+        bne   @shift
+@loadCol
+        lda   terrainCollision.bgColTmp
+@done
         rts
 
 terrainCollision.checkPosition
