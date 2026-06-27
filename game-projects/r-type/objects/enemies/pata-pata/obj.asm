@@ -105,9 +105,8 @@ Live
 ;
         jmp   DisplaySprite
 @destroy 
-        ldd   globals.score
-        addd  #patapata_score
-        std   globals.score
+        ldb   #patapata_scoreIdx
+        jsr   AwardScore
         jsr   LoadObject_x
         beq   @delete
         _ldd   ObjID_explosion,explosion.subtype.smallx2

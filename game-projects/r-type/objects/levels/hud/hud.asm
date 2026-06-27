@@ -134,24 +134,53 @@ beam_m_size  equ 2                     ; number of byte for a segment
         ldu   #$DE97
         jsr   DisplayLife
 
-        ; display globals.score
+        ; display globals.score : 5 significant digits (score in hundreds) + "00"
         ldu   #$DE7D
-        ldx   globals.score
-        beq   >
-        ldb   #5                       ; nb of char
-        jsr   DisplayDigit
-        ; display the last two 0
-	jsr   DRAW_Img_hud_0
-	leau  1,u
- 	jmp   DRAW_Img_hud_0
-
-!       ; special case when globals.score is 0
-        ldb   #6                       ; nb of black char
-!	jsr   DRAW_Img_hud_b
-	leau  1,u
-	decb
-	bne   <	
-	jmp   DRAW_Img_hud_0
+        lda   globals.score              ; score == 0 ? (all 3 bytes)
+        bne   @scoreShow
+        ldd   globals.score+1
+        bne   @scoreShow
+        ldb   #6                          ; score==0 : 6 black tiles + "0"
+@scoreZ jsr   DRAW_Img_hud_b
+        leau  1,u
+        decb
+        bne   @scoreZ
+        jmp   DRAW_Img_hud_0
+@scoreShow
+        lda   globals.score              ; scoreWork = globals.score
+        sta   hud.scoreWork
+        ldd   globals.score+1
+        std   hud.scoreWork+1
+        ldy   #hud.scoreDigits
+        jsr   ScoreToDigits
+        clr   counter_hdr_flag            ; significance flag (0 = still leading zeros)
+        clr   hud.scoreDigPos
+@scoreLoop
+        ldx   #hud.scoreDigits
+        ldb   hud.scoreDigPos
+        lda   b,x                         ; A = current digit
+        sta   hud.curDigit
+        bne   @scoreSig
+        tst   counter_hdr_flag
+        bne   @scoreDraw                  ; already significant -> draw the 0
+        jsr   DRAW_Img_hud_b              ; leading zero -> blank tile
+        bra   @scoreAdv
+@scoreSig
+        inc   counter_hdr_flag
+@scoreDraw
+        lda   hud.curDigit
+        asla
+        ldx   #Img_Num
+        jsr   [a,x]                       ; draw glyph for this digit
+@scoreAdv
+        leau  1,u
+        inc   hud.scoreDigPos
+        lda   hud.scoreDigPos
+        cmpa  #5
+        blo   @scoreLoop
+        jsr   DRAW_Img_hud_0              ; trailing "00"
+        leau  1,u
+        jmp   DRAW_Img_hud_0
 
 ; ----------------------------------------------------
 ; hud.checkExtraLife
@@ -171,22 +200,25 @@ beam_m_size  equ 2                     ; number of byte for a segment
 ; increments are always small enough in-game).
 ; ----------------------------------------------------
 hud.checkExtraLife
-        ldd   globals.score
+        lda   globals.score              ; score == 0 ? (3 bytes)
         bne   @doCheck
-        clr   globals.lifeUpIdx     ; new game: reset tracking
+        ldd   globals.score+1
+        bne   @doCheck
+        clr   globals.lifeUpIdx          ; new game: reset tracking
         rts
-;
 @doCheck
         ldb   globals.lifeUpIdx
         cmpb  #hud.nbExtraLifeThresholds
-        bhs   @rts                     ; all thresholds already granted
-        aslb                           ; B = index * 2 (fdb entry size)
+        bhs   @rts
+        aslb
         ldx   #hud.extraLifeThresholds
-        abx                            ; X = &threshold[index]  (D preserved)
-        ldd   globals.score
+        abx
+        lda   globals.score              ; MSB != 0 -> score >= 65536 > any threshold
+        bne   @grant
+        ldd   globals.score+1
         cmpd  ,x
-        blo   @rts                     ; globals.score < next threshold
-        inc   globals.lives
+        blo   @rts
+@grant  inc   globals.lives
         inc   globals.lifeUpIdx
 @rts    rts
 
@@ -783,39 +815,29 @@ hud.str.score   fcc 'STAGE SCORE '
 ; (5 significant MSB-first + the x100 trailing "00"), blank leading zeros.
 ; ---------------------------------------------------------------------------
 hud.readout.seed
-        ldd   globals.score
-        subd  globals.stageScoreBase
+        ldd   globals.score+1            ; stageScore = score - base (24-bit)
+        subd  globals.stageScoreBase+1
+        std   hud.scoreWork+1
+        lda   globals.score
+        sbca  globals.stageScoreBase
+        sta   hud.scoreWork
         bcc   >
-        ldd   #0                              ; clamp (base must never exceed score)
-!       ldx   #hud.readout.digits             ; X = output digit ptr
-        ldy   #hud.readout.powers             ; Y = power ptr (10000 down to 1)
-@digitExp
-        clr   hud.readout.seedDigit
-@subLoop
-        subd  ,y                               ; value -= power
-        blo   @subDone                         ; value < power -> this digit done
-        inc   hud.readout.seedDigit
-        bra   @subLoop
-@subDone
-        addd  ,y                               ; undo the last (borrowing) subtract
-        leay  2,y
-        pshs  d                                ; save value across the digit store
-        lda   hud.readout.seedDigit
-        sta   ,x+
-        puls  d
-        cmpy  #hud.readout.powers+10           ; all 5 powers processed?
-        blo   @digitExp
-        clr   ,x+                              ; digits[5] = 0 (x100 trailing zero)
-        clr   ,x                               ; digits[6] = 0
-        ldx   #hud.readout.digits              ; blank leading zeros (keep digits[6] real 0)
+        clr   hud.scoreWork              ; base > score -> clamp to 0
+        clr   hud.scoreWork+1
+        clr   hud.scoreWork+2
+!       ldy   #hud.readout.digits
+        jsr   ScoreToDigits              ; digits[0..4] = 5 significant digits
+        ldx   #hud.readout.digits+5
+        clr   ,x+                        ; digits[5] = 0 (x100 trailing zero)
+        clr   ,x                         ; digits[6] = 0
+        ldx   #hud.readout.digits        ; blank leading zeros (keep real digits[6])
         ldb   #6
-@blankLoop
-        lda   ,x
+@blank  lda   ,x
         bne   @blankDone
         lda   #READOUT_BLANK
         sta   ,x+
         decb
-        bne   @blankLoop
+        bne   @blank
 @blankDone
         rts
 
@@ -826,6 +848,40 @@ hud.readout.spun       fcb 0                  ; per-frame count of digits that s
 hud.readout.digits     fcb 0,0,0,0,0,0,0      ; 7 settled digit values (0-9 or READOUT_BLANK)
 hud.readout.thresholds fcb $10,$20,$30,$50,$70,$90,$A0
 hud.readout.powers     fdb 10000,1000,100,10,1
+
+; ScoreToDigits - expand 3-byte hud.scoreWork (hundreds, 0..99999) into 5 decimal
+;                 digits (0..9) MSB-first at the buffer pointed by Y (Y += 5).
+; INPUT : hud.scoreWork (3 bytes, MSB first), Y = output buffer
+; CLOBBERS: A,B,X,Y,D,CC
+ScoreToDigits
+        ldx   #hud.readout.powers
+@digit  clr   ,y
+@sub    ldd   hud.scoreWork+1
+        subd  ,x
+        std   hud.scoreWork+1
+        lda   hud.scoreWork
+        sbca  #0
+        sta   hud.scoreWork
+        bcs   @subDone               ; borrow out of MSB -> value went negative
+        inc   ,y
+        bra   @sub
+@subDone
+        ldd   hud.scoreWork+1        ; undo last subtract (+= power)
+        addd  ,x
+        std   hud.scoreWork+1
+        lda   hud.scoreWork
+        adca  #0
+        sta   hud.scoreWork
+        leax  2,x
+        leay  1,y
+        cmpx  #hud.readout.powers+10
+        blo   @digit
+        rts
+
+hud.scoreWork    fcb 0,0,0
+hud.scoreDigits  fcb 0,0,0,0,0
+hud.curDigit     fcb 0
+hud.scoreDigPos  fcb 0
 
 ; ===========================================================================
 ; STAGE-CLEARED FONT  (duplicated verbatim from objects/levels/00/text/text.asm)

@@ -16,6 +16,7 @@ AABB_0    equ ext_variables ; AABB struct (9 bytes)
 halfWidth equ ext_variables+9 ; half width of the beam
 impactX   equ ext_variables+11 ; impact x position
 imgIdx    equ ext_variables+13 ; image index
+beamTier  equ ext_variables+14 ; current power tier 0-4, derived from AABB.p each frame (arcade image_id band)
 
 ; temporary estimateddamage : 6,8,10,12,14 (TODO should get the real value from arcade)
 
@@ -34,11 +35,6 @@ Beam_Routines
 
 Init
         _soundFX.play soundFX.FireBlastSound,2
-	ldx   #Ani_Beams
-	ldb   subtype,u
-	aslb
-	ldd   b,x
-        std   anim,u
         ldb   #4
         stb   priority,u
         lda   render_flags,u
@@ -48,17 +44,19 @@ Init
         _Collision_AddAABB AABB_0,AABB_list_friend
         
         ; hitbox potential
-        lda   subtype,u                ; set damage potential for this hitbox
+        lda   subtype,u                ; damage potential / penetration budget
 	asla
-	adda  #6                       ; not the real values here just estimates
+	asla
+	adda  #4                       ; arcade: subtype*4+4 = {4,8,12,16,20} (= image_id)
         sta   AABB_0+AABB.p,u
 
         ; hitbox size
         _ldd  15,6                     ; set hitbox xy radius (x should be dynamic, but deactivatedfor framerate compensation)
         std   AABB_0+AABB.rx,u
 
-        ; compute x position
+        ; compute x position ; spawn tier = subtype (p = subtype*4+4 -> tier = subtype)
         lda   subtype,u
+	sta   beamTier,u
 	asla
 	adda  subtype,u                ; mult by 3
 	adda  #3                       ; set hitbox x radius (3 6 9 12 15)
@@ -90,7 +88,19 @@ Init
 Live
         ; delete beam if no more damage potential
         lda   AABB_0+AABB.p,u
-        beq   Delete
+        lbeq  Delete
+
+        ; current power tier (arcade image_id band): tier = (p-1)>>2 -> {1..4}=0 ... {17..20}=4
+        deca
+        lsra
+        lsra
+        sta   beamTier,u                ; reused for the sprite below
+        ; halfWidth = tier*3+3 (3 6 9 12 15) - shrinks with the beam (wall-rebound offset)
+        asla
+        adda  beamTier,u
+        adda  #3
+        clr   halfWidth,u
+        sta   halfWidth+1,u
 
         ; update beam position
         lda   #3
@@ -127,7 +137,10 @@ Live
         ; delete beam if out of screen range
         cmpd  #160-8/2                 ; delete beam if out of screen range
         bhs   Delete
-        ldx   anim,u
+        ldb   beamTier,u                ; sprite tier = current power band (arcade unified image_id)
+        aslb
+        ldx   #Ani_Beams
+        ldx   b,x
         ldb   imgIdx,u
         incb
         andb  #%00000001

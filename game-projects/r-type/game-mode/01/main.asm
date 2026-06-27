@@ -16,6 +16,8 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/objects/collision/terrainCollision.macro.asm"
         INCLUDE "./global/scale.asm"
         INCLUDE "./global/object.const.asm"
+        INCLUDE "./objects/player1/forcepods/forcepod.equ"  ; rtnid.* (force pod routine ids; static slot seeding)
+        INCLUDE "./objects/player1/bitdevice/bitdevice.equ"  ; bitdev.rtnid.* (bit device routine ids; static slot seeding)
         INCLUDE "./engine/objects/sound/ymm/ymm.macro.asm"
         INCLUDE "./objects/messages/messages.const.asm"
 
@@ -89,7 +91,9 @@ Level01_Start
 ; init globals.score and globals.lives at level 1
         ldd   #0
         std   globals.score
+        clr   globals.score+2           ; clear 3rd score byte (24-bit)
         std   globals.stageScoreBase    ; stage-score base = score at stage start (D=0; multistage-ready)
+        clr   globals.stageScoreBase+2  ; clear 3rd base byte (24-bit)
         ldb   #2
         stb   globals.lives
         lda   #1
@@ -137,7 +141,28 @@ Level01_Start
 * ---------------------------------------------------------------------------
         jsr   LoadObject_x
         lda   #ObjID_initlevel1
-        sta   id,x  
+        sta   id,x
+
+* ---------------------------------------------------------------------------
+* INIT STATIC PLAYER-WEAPON SLOTS
+* The force pod is a static OST (forcepodOST) run every frame after player1.
+* Seed it Dormant so it idles in place from frame 1: routine 0 = its Init/spawn,
+* which must NOT run until the player collects the force-pod bonus (pow_optionbox
+* then sets routine=rtnid.Init). See objects/player1/forcepods/forcepod.equ.
+* ---------------------------------------------------------------------------
+        ldu   #forcepodOST
+        lda   #rtnid.Dormant
+        sta   routine,u
+* The two bit-device slots (bitdevTopOST/bitdevBotOST) are static OSTs run every
+* frame after the force pod. Seed them Dormant too: routine 0 = the pickup's Init
+* (must never run on a static slot); each is activated by a bit-device pickup
+* (bitdevice.asm Collect -> bitdev.rtnid.ActiveInit). See bitdevice.equ.
+        ldu   #bitdevTopOST
+        lda   #bitdev.rtnid.Dormant
+        sta   routine,u
+        ldu   #bitdevBotOST
+        lda   #bitdev.rtnid.Dormant
+        sta   routine,u
 
 * ---------------------------------------------------------------------------
 * MAIN GAME LOOP
@@ -168,10 +193,17 @@ mainloop.routine.running
         _Collision_Do AABB_list_player,AABB_list_foefire
         _Collision_Do AABB_list_player,AABB_list_ennemy_unkillable        
         _Collision_Do AABB_list_player,AABB_list_ennemy
-        _Collision_Do AABB_list_forcepod,AABB_list_foefire
-        _Collision_Do AABB_list_forcepod,AABB_list_ennemy
+        _Collision_Do AABB_list_forcepod,AABB_list_foefire ; pod still blocks enemy bullets (generic)
+        ; Force pod + both bit devices vs enemies: NOT generic. Arcade-faithful
+        ; shared contact pass — one global 1/16-frame gate ([0x2eb6]&0x0F) for HP
+        ; enemies (p>=2), instant contact for one-shot enemies (p==1); weapons
+        ; never consumed. Static slots positioned their AABBs in the prev run phase.
+        jsr   WeaponContactTick
         _RunObject ObjID_fade,#palettefade
         _RunObject ObjID_Player1,#player1
+        _RunObject ObjID_forcepod,#forcepodOST ; static force pod: idle (Dormant) until collected
+        _RunObject ObjID_bitdevice,#bitdevTopOST ; static bit device (top): Dormant until collected
+        _RunObject ObjID_bitdevice,#bitdevBotOST ; static bit device (bottom): Dormant until collected
         jsr   RunObjects
         jsr   CheckSpritesRefresh
 
@@ -269,6 +301,20 @@ mainloop.routine.checkpoint
         _waitFrames #40
         ldx   #$0000
         jsr   ClearDataMem
+        ; ClearDataMem zeroed the static weapon slot too (routine 0 = Init). Re-seed
+        ; it Dormant so it idles after the checkpoint reset until the bonus is re-collected.
+        ldu   #forcepodOST
+        lda   #rtnid.Dormant
+        sta   routine,u
+        ; same for the two bit-device static slots (ClearDataMem zeroed them to
+        ; routine 0 = the pickup Init): re-seed Dormant so they idle, and the bit
+        ; count (player1+bitdevice, also cleared) is back to 0 -> lost on reset.
+        ldu   #bitdevTopOST
+        lda   #bitdev.rtnid.Dormant
+        sta   routine,u
+        ldu   #bitdevBotOST
+        lda   #bitdev.rtnid.Dormant
+        sta   routine,u
         _MountObject ObjID_messages
         dec   globals.lives
         bmi   >
@@ -485,6 +531,8 @@ checkpoint.positions
         INCLUDE "./global/moveYPos8.8.asm"
         INCLUDE "./global/projectile.asm"
         INCLUDE "./global/setDirectionTo.asm"
+        INCLUDE "./global/score.asm"
+        INCLUDE "./global/weaponcollide.asm"
 
 * ---------------------------------------------------------------------------
 * ENGINE routines

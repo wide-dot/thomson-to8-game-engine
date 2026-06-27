@@ -226,3 +226,58 @@ Each scoreable object is listed with the function and exact instruction address 
 - The award routine and table were read directly from the Ghidra DB (`update_current_stage_score` @ `0x40_E8BD`, `score_rewards_table` @ `0x1000_86E8`).
 - The 52 award sites were found by an exhaustive disassembly scan of the actor code region **`0x40_3000` – `0x40_FC55`** (code ends at `0x40_FC55`; `0x40_FC56`+ is data/padding), matching the canonical pattern `MOV CX,0xe8bd` + nearby `MOV DX,0x86xx` + `CALL enqueue_event`.
 - **Completeness caveat**: the scan is exhaustive for the immediate-pointer form. A secondary scan found **zero** stored-field (`MOV DX,[BP+xx]`), computed, direct-`CALL 0xE8BD`, or orphan variants — so within the code region the inventory is complete. Ghidra's auto-xrefs to the table are *incomplete* (only 5 of 52 immediates were auto-linked), which is why a code scan, not an xref query, was used.
+
+---
+
+## 7. Portage TO8 — liste des ennemis et score
+
+Équates `<enemy>_scoreIdx` déclarées dans `objects/enemies_properties.asm`, résolues à l'exécution via `scoreTable` (`global/score.asm`) par `AwardScore`. **Tous** les ennemis de l'arcade sont pré-déclarés (même ceux pas encore portés). Le score affiché = valeur ×100.
+
+| Ennemi | `_scoreIdx` | Score |
+|---|:---:|---:|
+| blaster | 0 | 100 |
+| wick | 0 | 100 |
+| bronco_segment | 0 | 100 |
+| patapata | 1 | 200 |
+| bug | 1 | 200 |
+| bink | 1 | 200 |
+| shell | 1 | 200 |
+| geld | 1 | 200 |
+| outslay | 1 | 200 |
+| mikun | 1 | 200 |
+| fast | 1 | 200 |
+| warship_small_turret | 1 | 200 |
+| cancer | 2 | 300 |
+| dobkeratops_eye | 2 | 300 |
+| pursuer | 2 | 300 |
+| newt | 2 | 300 |
+| slither_body | 2 | 300 |
+| bellmite_satellite | 2 | 300 |
+| warship_big_turret | 2 | 300 |
+| mid | 3 | 400 |
+| cytron | 3 | 400 |
+| bronco_chaser | 3 | 400 |
+| warship_turret_front | 3 | 400 |
+| gouger | 4 | 500 |
+| zoid | 4 | 500 |
+| scant | 4 | 500 |
+| p_staff | 4 | 500 |
+| warship_subpart | 5 | 600 |
+| brood | 6 | 700 |
+| warship_multi_turret | 6 | 700 |
+| tabrok | 7 | 800 |
+| slither_head | 7 | 800 |
+| cheetah | 7 | 800 |
+| warship_reactor | 7 | 800 |
+| warship_capsule | 7 | 800 |
+| dop | 8 | 1 000 |
+| boldo | 9 | 1 500 |
+| bellmite (boss st.5) | 10 | 2 000 |
+| dobkeratops_monster (boss st.1) | 11 | 5 000 |
+| compiler (boss) | 11 | 5 000 |
+| gomander (boss) | 12 | 8 000 |
+| bronco_subchild | 13 | 10 000 |
+| warship_core (boss) | 13 | 10 000 |
+| bydo_core (boss final) | 14 | 15 000 |
+
+> Rappel : multi-parties = score par partie (compiler 3×5000, warship sur ses sous-parties, outslay 200/segment). Le ramassage de bonus (400) reste géré par le pickup, pas par cette table.
