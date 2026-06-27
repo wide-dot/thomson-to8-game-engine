@@ -427,8 +427,7 @@ FadeOut ldb     #0
 FadeCnt set     *-1
         bne     >
         rts
-!       decb    
-   rts
+!       decb
         stb     FadeCnt
         ldx     #FadeOutPattern
         lsrb
