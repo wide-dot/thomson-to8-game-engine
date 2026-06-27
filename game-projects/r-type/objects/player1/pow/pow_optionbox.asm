@@ -10,6 +10,7 @@
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./objects/player1/player1.equ"
+        INCLUDE "./objects/player1/forcepods/forcepod.equ"  ; rtnid.* (activate the static force pod)
         INCLUDE "./objects/soundFX/soundFX.const.asm"
         INCLUDE "./engine/sound/soundFX.macro.asm"
 
@@ -72,14 +73,18 @@ Live
         lda   #2                        ; Counter-air laser
 !
         sta   player1+forcepodtype
-                                        ; Do we need to spawn a force pod ?
+                                        ; Do we need to activate the force pod ?
         lda   player1+forcepodlevel
         bne   >
-                                        ; Yes, let's spawn a new force pod
-        jsr   LoadObject_x
-        beq   >                         ; branch if no more available object slot
-        lda   #ObjID_forcepod           ; Charge anim
-        sta   id,x                                        
+                                        ; Yes : the force pod is the static forcepodOST slot.
+                                        ; Activate it by kicking its routine to Init (its spawn/
+                                        ; setup routine), which seeds position and AABB. The slot's
+                                        ; id is already ObjID_forcepod (ram_data); it was idling in
+                                        ; Dormant. Init runs next frame via _RunObject in the loop.
+                                        ; NB: write via the absolute slot address, not routine,u -
+                                        ; U is this optionbox's own OST (still needed at @delete).
+        lda   #rtnid.Init
+        sta   forcepodOST+routine
 !
         lda   player1+forcepodlevel
         cmpa  #3

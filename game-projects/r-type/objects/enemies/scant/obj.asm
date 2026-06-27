@@ -56,7 +56,7 @@ FUN_0000_84e3_CreateScant
         _Collision_AddAABB AABB_0,AABB_list_ennemy
         
         leax  AABB_0,u
-        lda   #$1e                     ; set damage potential for this hitbox
+        lda   #scant_hitdamage         ; set damage potential for this hitbox (arcade: 30)
         sta   AABB.p,x
         _ldd  12,25                    ; set hitbox xy radius
         std   AABB.rx,x
@@ -272,9 +272,8 @@ LAB_0000_8668
         jmp   DisplaySprite
 
 LAB_0000_86a0_DestroyScant                     
-        ldd   globals.score
-        addd  #tabrok_score
-        std   globals.score
+        ldb   #scant_scoreIdx
+        jsr   AwardScore
         jsr   LoadObject_x ; make then die early ... to be removed
         beq   FUN_0000_6a07_DeleteScant
         _ldd  ObjID_explosion,explosion.subtype.big

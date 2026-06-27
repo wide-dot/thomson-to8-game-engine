@@ -10,6 +10,7 @@
 	INCLUDE "./engine/collision/macros.asm"
 	INCLUDE "./engine/collision/struct_AABB.equ"
 	INCLUDE "./objects/explosion/explosion.const.asm"
+	INCLUDE "./objects/enemies_properties.asm"
 
  IFNDEF t2
 Img_pstaff_3 equ Img_pstaff_0
@@ -76,7 +77,7 @@ FUN_0000_78b4_CreatePStaff
 	_Collision_AddAABB AABB_0,AABB_list_ennemy
 	
 	leax  AABB_0,u
-	lda   #$06                      ; set damage potential for this hitbox
+	lda   #p_staff_hitdamage         ; set damage potential for this hitbox (arcade: 6)
 	sta   AABB.p,x
 	_ldd  6,13                      ; set hitbox xy radius
 	std   AABB.rx,x
@@ -436,7 +437,9 @@ LAB_0000_7c0d
 	puls  x
 	rts
 
-FUN_0000_7b7b_DestroyPstaff 
+FUN_0000_7b7b_DestroyPstaff
+	ldb   #p_staff_scoreIdx           ; score on player kill (arcade idx 4 = 500 pts)
+	jsr   AwardScore
 	jsr   LoadObject_x ; make then die early ... to be removed
 	beq   FUN_0000_7b68_DeletePstaff
 	_ldd   ObjID_explosion,explosion.subtype.smallx3

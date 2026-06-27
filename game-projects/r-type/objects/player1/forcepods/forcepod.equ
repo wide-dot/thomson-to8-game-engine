@@ -1,0 +1,25 @@
+; ---------------------------------------------------------------------------
+; force pod - shared constants
+; ---------------------------------------------------------------------------
+; The force pod is a STATIC object (forcepodOST slot in ram_data.asm), run every
+; frame via _RunObject right after player1. Its routine index is set from two
+; places that live OUTSIDE the pod's own bank (game-mode/01/main.asm):
+;   - Level01_Start / checkpoint reset : seed the slot to Dormant so it idles
+;     from frame 1 (routine 0 = Init must NOT run until the bonus is collected).
+;   - pow_optionbox pickup : activate the pod by setting routine = rtnid.Init.
+; So these routine ids must be visible both inside forcepod.asm and in main.asm.
+;
+; DEPENDENCY: rtnid.* must match the order of the Routines table in forcepod.asm.
+; Dormant is appended LAST so the existing indices (0..3) are not shifted.
+; ---------------------------------------------------------------------------
+
+ ifndef forcepod_equ
+forcepod_equ equ 1
+
+rtnid.Init        equ 0   ; spawn / setup (the old dynamic Init, now the activation entry)
+rtnid.RunFloating equ 1
+rtnid.RunEjected  equ 2
+rtnid.RunAttached equ 3
+rtnid.Dormant     equ 4   ; static idle: drawn/does nothing until activated (appended last)
+
+ endc

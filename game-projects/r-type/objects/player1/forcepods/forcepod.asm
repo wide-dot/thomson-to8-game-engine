@@ -39,6 +39,7 @@
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./objects/player1/player1.equ"
+        INCLUDE "./objects/player1/forcepods/forcepod.equ"
         INCLUDE "./objects/soundFX/soundFX.const.asm"
         INCLUDE "./engine/sound/soundFX.macro.asm"
         INCLUDE "./objects/foefire/obj_emitter-flash.equ"
@@ -59,11 +60,20 @@ Routines
         fdb   RunFloating
         fdb   RunEjected
         fdb   RunAttached
+        fdb   Dormant         ; appended last (index rtnid.Dormant) - static idle slot
 
-Init_rtn        equ 0
-RunFloating_rtn equ 1
-RunEjected_rtn  equ 2
-RunAttached_rtn equ 3
+; local routine-index aliases (kept for the in-bank code below); the shared
+; rtnid.* constants (forcepod.equ) are the source of truth, used here and by main.asm
+Init_rtn        equ rtnid.Init
+RunFloating_rtn equ rtnid.RunFloating
+RunEjected_rtn  equ rtnid.RunEjected
+RunAttached_rtn equ rtnid.RunAttached
+
+; Dormant : the static slot idles here (no draw, no logic) until the player
+; collects the force-pod bonus, at which point pow_optionbox sets routine=rtnid.Init.
+; The pod returns here (instead of being freed) when it is lost/unloaded.
+Dormant
+        rts
 
 ; internal variables
 last_mount_side   fcb   0
@@ -218,8 +228,10 @@ RunFloating
 !
         lda   #255                      ; set damage potential for this hitbox
         sta   AABB_0+AABB.p,u
-        jsr   checkForcePodUpdate        
+        jsr   checkForcePodUpdate
         jsr   UpdateCollisionBox
+        ; enemy contact is applied by the shared, frame-drop-gated WeaponContactTick
+        ; (collision phase, main.asm) — arcade: pod+bits share one 1/16-frame gate.
         jsr   AnimateForcePodSync
         jsr   DisplaySprite
         jmp   ForcePodDetachedFire
@@ -648,6 +660,8 @@ RunEjected
 !
         jsr   checkForcePodUpdate
         jsr   UpdateCollisionBox
+        ; enemy contact is applied by the shared, frame-drop-gated WeaponContactTick
+        ; (collision phase, main.asm) — arcade: pod+bits share one 1/16-frame gate.
         jsr   AnimateForcePodSyncEjected
         jsr   DisplaySprite
         jmp   ForcePodDetachedFire
@@ -673,6 +687,8 @@ RunAttached
 @end
         jsr   checkForcePodUpdate
         jsr   UpdateCollisionBox
+        ; enemy contact is applied by the shared, frame-drop-gated WeaponContactTick
+        ; (collision phase, main.asm) — arcade: pod+bits share one 1/16-frame gate.
 
         ; TODO clear green balls of level 4
 

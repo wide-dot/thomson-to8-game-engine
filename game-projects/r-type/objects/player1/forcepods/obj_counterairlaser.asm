@@ -65,7 +65,7 @@ InitFirstChild
         sta   routine,u
         ldb   #4
         stb   priority,u
-        lda   #255                     ; set damage potential for this hitbox
+        lda   #5                       ; arcade: counter-air laser power = 5 (penetrates/depletes)
         sta   AABB_0+AABB.p,u
         _ldd  3,14                     ; set hitbox xy radius
         std   AABB_0+AABB.rx,u
