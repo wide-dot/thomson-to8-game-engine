@@ -20,8 +20,17 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./objects/messages/messages.const.asm"
 
 timestamp.DELETE_ALIEN_BODY equ $1D80
-timestamp.ERASE_NERV_START equ timestamp.DELETE_ALIEN_BODY+$280
-timestamp.BOSS_ESCAPE      equ $2B7C ; boss activation ($1B7C) + $1000 (arcade: run_dobkeratops +0x3E timeout)
+timestamp.ERASE_NERV_START equ $1BDF+$B80 ; nerves auto-effacees (free-life). Arcade: T0 ($1BDF,
+                                     ;   spawn monstre) + intro $280 + free-life +0x3E $900 = T0+$B80.
+                                     ;   Filet de securite : en jeu normal halfDamage (monstre mi-vie)
+                                     ;   ou le tir du joueur tue les nerves bien avant.
+timestamp.NERV_VULNERABLE  equ $1BDF+$280 ; nerves (eyes) armables. Arcade: create_dobkeratops
+                                     ;   spawn monstre + nerves ENSEMBLE (T0), nerve +0x22=$280
+                                     ;   d'intro -> vulnerable a T0+$280. Le portage etale les
+                                     ;   spawns wave (orbites $1B7C, monstre $1BDF) : on ancre sur
+                                     ;   le spawn du MONSTRE ($1BDF, = T0 arcade) + $280.
+timestamp.BOSS_ESCAPE      equ $1BDF+$1000 ; boss escape / end-stage. Arcade: parent run_dobkeratops
+                                     ;   +0x3E engagement timeout $1000 depuis T0 (= spawn monstre $1BDF)
 timestamp.MOVEALIEN_DELAY  equ 140   ; frames between last nerve death and alien move out
 timestamp.MOVEALIEN_SPEED  equ $18   ; followDobkeratops leftward speed, 8.8 fixed (=24/256 px/frame)
 timestamp.MOVEALIEN_DIST   equ 60    ; px the boss travels left before it stops on the butee to explode
