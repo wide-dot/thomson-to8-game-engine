@@ -250,6 +250,16 @@ SkipPlayer1Controls
         subd  glb_camera_y_pos
         stb   player1+p1_AABB_0+AABB.cy
 
+        ; end-stage autopilot : ignore TOUS les hits (terrain + AABB), ni mort ni signal de
+        ; collision. Sans ce gate, terrainCollision.do (traversee de la map du boss) part vers
+        ; destroy -> bordure blanche en mode invincible, ET mort reelle en build release.
+        lda   player1+subtype
+        cmpa  #-2
+        bne   >
+        ldb   #0                          ; bordure noire (aucune collision en autopilot)
+        jsr   gfxlock.screenBorder.update
+        jmp   display
+!
         ; terrain collision
         ldd   player1+x_pos
         std   terrainCollision.sensor.x

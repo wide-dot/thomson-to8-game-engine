@@ -1,0 +1,36 @@
+; ---------------------------------------------------------------------------
+; bit device - shared constants
+; ---------------------------------------------------------------------------
+; The bit device has two faces:
+;   - the FLOATING PICKUP : a normal DYNAMIC object (spawned by pow.asm), with
+;     the original routines 0..3 below. It floats in, the player touches it, and
+;     on collection it ACTIVATES a free static slot (bitdevTopOST / bitdevBotOST)
+;     then deletes itself. (Old behaviour converted the pickup in place; now the
+;     pickup is transient.)
+;   - the ACTIVE WEAPON : a STATIC object (bitdevTopOST / bitdevBotOST slot in
+;     ram_data.asm), run every frame via _RunObject right after player1/forcepod.
+;     It orbits/tracks and positions its AABB_0; enemy contact is applied by the
+;     shared, frame-drop-gated WeaponContactTick (with the force pod) and it is
+;     NOT registered in AABB_list_friend.
+;
+; Like the force pod, the two static slots are seeded to Dormant from main.asm
+; (Level01_Start and the checkpoint reset) so routine 0 (= the pickup's Init,
+; which must never run on a static slot) does not fire until activation.
+;
+; DEPENDENCY: bitdev.rtnid.* must match the order of the Routines table in
+; objects/player1/bitdevice/obj.asm. New routines are appended LAST so the
+; existing pickup indices (0..3) are not shifted.
+; ---------------------------------------------------------------------------
+
+ ifndef bitdevice_equ
+bitdevice_equ equ 1
+
+bitdev.rtnid.InitOptionBox        equ 0   ; floating pickup: spawn / register bonus hitbox
+bitdev.rtnid.LiveOptionBox        equ 1   ; floating pickup: drift, test player contact
+bitdev.rtnid.AlreadyDeleted       equ 2   ; floating pickup: post-delete no-op
+bitdev.rtnid.Unused3              equ 3   ; (dead index: legacy in-place active removed; table parks it at Dormant)
+bitdev.rtnid.ActiveInit           equ 4   ; STATIC slot: seed orbit side then fall into ActiveTick
+bitdev.rtnid.ActiveTick           equ 5   ; STATIC slot: orbit + position AABB_0 + gated tick damage
+bitdev.rtnid.Dormant              equ 6   ; STATIC slot: idle (no draw/logic) until activated / when lost
+
+ endc

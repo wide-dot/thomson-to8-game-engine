@@ -627,9 +627,8 @@ Live
         stb   AABB_0+AABB.cy,u         ; b = y_pos low byte (from the ldd above)
         jmp   DisplaySprite
 @destroy 
-        ldd   globals.score
-        addd  #cancer_score
-        std   globals.score
+        ldb   #cancer_scoreIdx
+        jsr   AwardScore
         jsr   LoadObject_x ; make then die early ... to be removed
         beq   @delete
         _ldd   ObjID_explosion,explosion.subtype.smallx2

@@ -11,6 +11,7 @@
         INCLUDE "./engine/collision/macros.asm"
         INCLUDE "./engine/collision/struct_AABB.equ"
         INCLUDE "./objects/explosion/explosion.const.asm"
+        INCLUDE "./objects/enemies_properties.asm"
         INCLUDE "./global/projectile.macro.asm"
 
 AABB_0          equ  ext_variables     ; AABB struct (9 bytes)
@@ -239,6 +240,8 @@ LiveContinue
         sta   kill_my_nok,u
         jmp   DisplaySprite
 @destroy
+        ldb   #shell_scoreIdx                ; score per destroyed segment (arcade idx 1 = 200 pts)
+        jsr   AwardScore
         ldb   #invincible_full_potential
         stb   AABB.p,x
         lda   #4

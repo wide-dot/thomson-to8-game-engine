@@ -223,9 +223,8 @@ RunEyes
         jsr   main.dobkeratops.allEyesDead ; all nerves dead: alien recedes
 !
         ; globals.score update
-        ldd   globals.score
-        addd  #dobkeratops_eye_score
-        std   globals.score
+        ldb   #dobkeratops_eye_scoreIdx
+        jsr   AwardScore
         ; delete eyes object
         ldb   subtype,u
         cmpb  #1

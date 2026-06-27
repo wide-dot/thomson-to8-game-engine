@@ -90,9 +90,8 @@ Live
 ;
         jmp   DisplaySprite
 @destroy
-        ldd   globals.score
-        addd  #blaster_score
-        std   globals.score 
+        ldb   #blaster_scoreIdx
+        jsr   AwardScore
         jsr   LoadObject_x
         beq   @delete
         _ldd   ObjID_explosion,explosion.subtype.smallx2

@@ -282,9 +282,8 @@ WaitExplode
         sta   main.dobkeratops.explode       ; release jaw/tail/boss explosions + tile-erase
 
 Delete
-        ldd   globals.score
-        addd  #dobkeratops_monster_score
-        std   globals.score
+        ldb   #dobkeratops_monster_scoreIdx
+        jsr   AwardScore
         jsr   LoadObject_x
         beq   @delete
         _ldd   ObjID_explosion,explosion.subtype.smallx3
