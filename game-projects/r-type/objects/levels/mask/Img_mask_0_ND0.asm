@@ -679,6 +679,9 @@ DRAW_Img_mask_0_0
 	PSHU D,X
 	LEAU -36,U
 
+	PSHU D,X
+	LEAU -36,U
+
 	PSHU D,X,Y
 	PSHU D,X,Y
 	PSHU D,X,Y
@@ -752,14 +755,7 @@ DRAW_Img_mask_0_0
 	PSHU D,X,Y
 	PSHU D,X,Y
 	PSHU D,X,Y
-	PSHU D,X,Y
-	PSHU D,X,Y
-	PSHU D,X,Y
-	PSHU D,X,Y
-	PSHU D,X,Y
-	PSHU D,X,Y
-	STD -8,U
-	PSHU D,X,Y
+	PSHU D,X
 
 	LDU #$BF40
 
@@ -789,10 +785,9 @@ DRAW_Img_mask_0_0
 	PSHU D,X,Y
 	LEAU -8,U
 
-	LDA #$00
-	STA -7,U
 	LDD #$4200
 	STD -16,U
+	STB -7,U
 	LDA #$00
 	LDX #$0006
 	PSHU D,X,Y
@@ -833,9 +828,10 @@ DRAW_Img_mask_0_0
 	PSHU D,X,Y
 	LEAU -8,U
 
+	LDA #$00
+	STA -7,U
 	LDD #$4400
 	STD -16,U
-	STB -7,U
 	LDA #$00
 	LDY #$6060
 	PSHU D,X,Y
@@ -847,9 +843,10 @@ DRAW_Img_mask_0_0
 	PSHU D,X,Y
 	LEAU -8,U
 
+	LDA #$00
+	STA -7,U
 	LDD #$4200
 	STD -16,U
-	STB -7,U
 	LDA #$00
 	LDY #$6000
 	PSHU D,X,Y
@@ -1432,6 +1429,9 @@ DRAW_Img_mask_0_0
 	PSHU D,X
 	LEAU -36,U
 
+	PSHU D,X
+	LEAU -36,U
+
 	PSHU D,X,Y
 	PSHU D,X,Y
 	PSHU D,X,Y
@@ -1505,12 +1505,6 @@ DRAW_Img_mask_0_0
 	PSHU D,X,Y
 	PSHU D,X,Y
 	PSHU D,X,Y
-	PSHU D,X,Y
-	PSHU D,X,Y
-	PSHU D,X,Y
-	PSHU D,X,Y
-	PSHU D,X,Y
-	PSHU D,X,Y
-	STD -8,U
-	PSHU D,X,Y
+	PSHU D,X
 	RTS
+
