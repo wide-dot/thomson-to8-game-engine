@@ -14,10 +14,12 @@
 
 AABB_0  equ ext_variables   ; AABB struct (9 bytes)
 
+rtnid.RunEyes   equ 2          ; nerve en combat (hitbox arme, vulnerable)
 rtnid.DeleteEye equ 3
 rtnid.MoveAlien equ 4
 rtnid.DeleteAlien equ 5
 rtnid.FreezeAlien equ 7        ; (6 = DeleteAlienEnd) clean double-buffer stop on boss death
+rtnid.IntroEye  equ 9          ; nerve en phase intro: INVULNERABLE jusqu'a l'emergence du monstre
 
 Object
         lda   routine,u
@@ -35,6 +37,7 @@ Routines
         fdb   DeleteAlienEnd
         fdb   FreezeAlien
         fdb   FreezeAlienStop
+        fdb   IntroEye
 
 Init
         ; init sprite position
@@ -73,7 +76,9 @@ Init
 @end    inc   routine,u
         jmp   DisplaySprite
 @orbit
-        ; four orbits
+        ; four orbits (nerves) : phase INTRO invulnerable. Le hitbox n'est PAS arme ici
+        ; (sinon l'eye est destructible des son apparition). IntroEye l'arme a
+        ; gameCount == timestamp.NERV_VULNERABLE (spawn monstre + fenetre intro arcade $280).
         ldx   #EraserObjects
         aslb
         stu   b,x ; backup object pointer
@@ -81,28 +86,11 @@ Init
         bne   >
         ldb   #4               ; first orbit spawned: reset the nerve counter
         stb   eyesAlive        ; (arcade: parent +0x34 nerves-alive)
-!       inc   routine,u
-        ora   #render_overlay_mask
+!       ora   #render_overlay_mask
         sta   render_flags,u
-        _Collision_AddAABB AABB_0,AABB_list_ennemy
-        lda   #dobkeratops_eye_hitdamage ; set damage potential for this hitbox
-        sta   AABB_0+AABB.p,u
-        _ldd  dobkeratops_eye_hitbox_x,dobkeratops_eye_hitbox_y ; set hitbox xy radius
-        std   AABB_0+AABB.rx,u
-        ldx   #AABBOffsets
-        ldb   subtype,u
-        aslb
-        aslb
-        abx
-        ldd   x_pos,u
-        subd  glb_camera_x_pos
-        addd  ,x
-        stb   AABB_0+AABB.cx,u
-        ldd   y_pos,u
-        subd  glb_camera_y_pos
-        addd  2,x
-        stb   AABB_0+AABB.cy,u
-        bra   @end
+        lda   #rtnid.IntroEye
+        sta   routine,u
+        jmp   DisplaySprite
 
 SubImages
         fdb   0 ; no image at startup for eraser 0
@@ -174,6 +162,36 @@ Run.killEyes
         beq   >
         clr   AABB_0+AABB.p,x
 !       rts
+
+IntroEye
+        ; nerve invulnerable jusqu'a timestamp.NERV_VULNERABLE. L'arcade arme la nerve
+        ; $280 frames apres T0 (= spawn du boss, ou monstre et nerves sont simultanes dans
+        ; create_dobkeratops). Le portage etale les spawns wave -> on ancre sur un gameCount
+        ; absolu (spawn monstre + $280), pas sur le spawn de l'orbite (qui precede le monstre).
+        ldx   gfxlock.frame.gameCount
+        cmpx  #timestamp.NERV_VULNERABLE
+        blo   @wait                    ; pas encore l'heure -> invulnerable
+        _Collision_AddAABB AABB_0,AABB_list_ennemy
+        lda   #dobkeratops_eye_hitdamage ; set damage potential for this hitbox
+        sta   AABB_0+AABB.p,u
+        _ldd  dobkeratops_eye_hitbox_x,dobkeratops_eye_hitbox_y ; set hitbox xy radius
+        std   AABB_0+AABB.rx,u
+        ldx   #AABBOffsets
+        ldb   subtype,u
+        aslb
+        aslb
+        abx
+        ldd   x_pos,u
+        subd  glb_camera_x_pos
+        addd  ,x
+        stb   AABB_0+AABB.cx,u
+        ldd   y_pos,u
+        subd  glb_camera_y_pos
+        addd  2,x
+        stb   AABB_0+AABB.cy,u
+        lda   #rtnid.RunEyes   ; nerve armee -> combat
+        sta   routine,u
+@wait   jmp   DisplaySprite
 
 RunEyes
         lda   main.dobkeratops.halfDamage ; arcade: monster past half damage kills the nerves
