@@ -211,9 +211,13 @@ InitiateDiagonalLaser
         std   parent,u
         sta   isLastChild,u
         stu   glb.prevSegment ; dummy value ... will set something on the orchestrate object when writing child,y        
-        ldx   glb.buffer 
-        stx   bufferBase,u        
+        ldx   glb.buffer
+        stx   bufferBase,u
         jsr   initBuffer
+        leax  ,u                       ; 1er segment : X vaut bufferBase apres initBuffer. Si
+                                       ;   LoadObject_x echoue ici, le chemin d'echec fait
+                                       ;   "inc isLastChild,x" -> sans ca il corromprait
+                                       ;   bufferBase+$36 (code). On vise l'orchestrateur (inoffensif).
         jsr   DiagonalLoadObject
         stx   parent,u
         clr   glb.childId
@@ -285,7 +289,11 @@ InitiateHorizontalLaser
         stu   glb.prevSegment ; dummy value ... will set something on the orchestrate object when writing child,y
         ldx   #glb.horizontalBuffer
         stx   bufferBase,u
-        jsr   initBuffer   
+        jsr   initBuffer
+        leax  ,u                       ; 1er segment : X vaut bufferBase ($3200) apres initBuffer.
+                                       ;   Si LoadObject_x echoue ici (pool plein), le chemin d'echec
+                                       ;   "inc isLastChild,x" corromprait $3200+$36 = $3236 (DIV3u).
+                                       ;   On vise l'orchestrateur (isLastChild,u, inoffensif).
         jsr   HorizontalLoadObject
         stx   parent,u
         clr   glb.childId
