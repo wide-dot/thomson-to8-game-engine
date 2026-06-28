@@ -154,7 +154,7 @@ mainloop.routines
         fdb   mainloop.routine.checkpoint
 
 mainloop.routine.running
-        jsr   ReadJoypads
+        jsr   ReadJoypadsKbd
         jsr   Scroll
         jsr   ObjectWave
         _Collision_Do AABB_list_friend,AABB_list_ennemy
@@ -414,6 +414,7 @@ main.endstage.scoreDone       fcb 0
         ; joystick
         INCLUDE "./engine/joypad/InitJoypads.asm"
         INCLUDE "./engine/joypad/ReadJoypads.asm"
+        INCLUDE "./engine/joypad/ReadJoypadsKbd.asm" ; variante R-Type : n'importe quelle touche -> bouton B (rappel pod, manette 1 bouton)
         INCLUDE "./engine/joypad/joypad.buffer.asm"
 
         ; object management
