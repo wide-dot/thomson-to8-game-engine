@@ -108,8 +108,12 @@ Init
 
         ldb   #2
         stb   priority,u
-        lda   render_flags,u
-        ora   #render_playfieldcoord_mask
+        ; render_flags PROPRE (pas de ora) : l'OST force pod est un slot statique re-seede
+        ; Dormant a la mort, jamais clear. Le delete double-buffer de la mort laisse
+        ; render_todelete_mask ($20) pose ; un ora le preserverait -> CheckSpritesRefresh
+        ; skippe le sprite (hide|todelete) alors que DisplaySprite l'ajoute quand meme a la
+        ; liste -> la logique/tir tourne mais aucun sprite rendu a la re-acquisition.
+        lda   #render_playfieldcoord_mask
         sta   render_flags,u
 
         ldd   glb_camera_x_pos

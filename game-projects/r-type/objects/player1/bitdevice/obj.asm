@@ -117,8 +117,11 @@ AlreadyDeletedRtn equ bitdev.rtnid.AlreadyDeleted
 ActiveInit
         ldb   #2
         stb   priority,u
-        lda   render_flags,u
-        ora   #render_playfieldcoord_mask
+        ; render_flags PROPRE (pas de ora) : slots statiques re-seedes Dormant a la mort,
+        ; jamais clear -> render_todelete_mask ($20) du delete double-buffer reste pose et
+        ; un ora le preserverait (CheckSpritesRefresh skippe le sprite : logique OK mais pas
+        ; de rendu a la re-acquisition). Idem fix force pod Init.
+        lda   #render_playfieldcoord_mask
         sta   render_flags,u
 
         ; orbit side from the bit index: TOP (count was 0 -> now 1) above the

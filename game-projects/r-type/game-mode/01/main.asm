@@ -332,7 +332,13 @@ mainloop.routine.checkpoint
         std   Pal_current
         clr   PalRefresh
 	jsr   PalUpdateNow             ; message is now visible on screen
-        _waitFrames #50
+        tst   globals.lives
+        bmi   @waitGameOver            ; lives < 0 -> GAME OVER : affiche 3s
+        _waitFrames #50                ; READY : 1s (50 frames @ 50Hz) - inchange
+        bra   @msgBlackout
+@waitGameOver
+        _waitFrames #150               ; GAME OVER : 3s (150 frames @ 50Hz)
+@msgBlackout
         ldd   #Pal_black
         std   Pal_current
         clr   PalRefresh

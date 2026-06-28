@@ -2,7 +2,7 @@
 * Object Constants
 * ===========================================================================
 nb_dynamic_objects           equ 50 ; was 55 : -3 for the static weapon slots below + -2 spare headroom
-nb_graphical_objects         equ 55 * max 64 total
+nb_graphical_objects         equ 53 ; max 64 total
 ext_variables_size           equ 20 ; ext_variables_size is for dynamic objects
 
 * ===========================================================================
