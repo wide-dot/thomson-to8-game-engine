@@ -115,12 +115,22 @@ AlreadyDeletedRtn equ bitdev.rtnid.AlreadyDeleted
 ;   [u] = static slot OST (bitdevTopOST / bitdevBotOST)
 ; ---------------------------------------------------------------------------
 ActiveInit
+        ; clean OST : slot statique re-active -> on repart d'un slot FRAIS. efface tout
+        ; l'etat d'affichage reserve stale (mapping_frame, listes priorite par-buffer,
+        ; bgdata...) qui bloquait le rendu a la re-acquisition. On re-pose l'id (lu par
+        ; CheckSpritesRefresh) ; la routine est reposee plus bas par sta routine,u. (idem
+        ; fix force pod Init).
+        tfr   u,x
+        clra
+        ldb   #object_size
+@clrOST sta   ,x+
+        decb
+        bne   @clrOST
+        lda   #ObjID_bitdevice
+        sta   id,u
+
         ldb   #2
         stb   priority,u
-        ; render_flags PROPRE (pas de ora) : slots statiques re-seedes Dormant a la mort,
-        ; jamais clear -> render_todelete_mask ($20) du delete double-buffer reste pose et
-        ; un ora le preserverait (CheckSpritesRefresh skippe le sprite : logique OK mais pas
-        ; de rendu a la re-acquisition). Idem fix force pod Init.
         lda   #render_playfieldcoord_mask
         sta   render_flags,u
 

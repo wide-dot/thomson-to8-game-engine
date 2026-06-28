@@ -92,6 +92,20 @@ counterair_lock   fcb   0
 forcepodfire_lock fcb   0
 
 Init
+        ; clean OST : slot statique re-active apres une mort -> on repart d'un slot FRAIS.
+        ; efface tout l'etat d'affichage reserve stale (mapping_frame, listes de priorite
+        ; par-buffer, bgdata, rsv_render_flags...) qui empechait le rendu a la re-acquisition
+        ; (la logique/tir tournait mais aucun sprite). On re-pose l'id (CheckSpritesRefresh
+        ; le lit pour la page image) ; la routine est reposee par l'inc en fin d'Init.
+        tfr   u,x
+        clra
+        ldb   #object_size
+@clrOST sta   ,x+
+        decb
+        bne   @clrOST
+        lda   #ObjID_forcepod
+        sta   id,u
+
         ldd   #0
         sta   mount_side,u
         sta   player1+forcepod_mount_side
