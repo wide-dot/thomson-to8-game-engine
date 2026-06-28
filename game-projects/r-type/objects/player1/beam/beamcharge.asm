@@ -34,7 +34,12 @@ Live
 	beq   >
 	ldd   player1+x_pos
 	addd  #10
-	std   x_pos,u
+	tst   player1+forcepod_attached      ; pod attache a l'avant -> decale la charge vers
+	beq   @setpos                        ; le pod (arcade run_charging_beam: ancre pod_x-8
+	tst   player1+forcepod_mount_side    ; si attache+front ; 0=front, !=0=rear)
+	bne   @setpos
+	addd  #8
+@setpos	std   x_pos,u
 	ldd   player1+y_pos
 	std   y_pos,u
         jsr   AnimateSpriteSync
