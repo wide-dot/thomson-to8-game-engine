@@ -558,54 +558,59 @@ Player1_AnimationSet_Blink
 speed.null
         fdb $0000,$0000
 speed.preset
-        ; Configuration 1
+        ; --- Vitesses RE-ETALEES (entorse assumee au portage 1:1, pour la
+        ; jouabilite sous frame-drop). Palier 0 = vitesse arcade (inchange) ;
+        ; progression H lineaire (0.75 -> 1.5 px/frame) ; vitesse max finale =
+        ; ancien top / 2 (3.0 -> 1.5). Chaque palier = table arcade scalee
+        ; (x1.000, x0.833, x0.750, x0.583, x0.500). Rapport H/V conserve.
+        ; Configuration 1   (x1.000)  H=0.750
         fdb $0000,$febc         ; Up
         fdb $0000,$0144         ; Down
         fdb $ff40,$0000         ; Left
         fdb $ff7c,$ff10         ; Up+Left
         fdb $ff7c,$00f0         ; Down+Left
-        fdb $00C0,$0000         ; Right
+        fdb $00c0,$0000         ; Right
         fdb $0084,$ff10         ; Up+Right
         fdb $0084,$00f0         ; Down+Right
 
-        ; Configuration 2
+        ; Configuration 2   (x0.833)  H=0.938
+        fdb $0000,$fe5c         ; Up
+        fdb $0000,$01a4         ; Down
+        fdb $ff10,$0000         ; Left
+        fdb $ff5b,$fed4         ; Up+Left
+        fdb $ff5b,$012c         ; Down+Left
+        fdb $00f0,$0000         ; Right
+        fdb $00a5,$fed4         ; Up+Right
+        fdb $00a5,$012c         ; Down+Right
+
+        ; Configuration 3   (x0.750)  H=1.125
         fdb $0000,$fe08         ; Up
         fdb $0000,$01f8         ; Down
         fdb $fee0,$0000         ; Left
-        fdb $ff3a,$fe98         ; Up+Left
-        fdb $ff3a,$0168         ; Down+Left
+        fdb $ff36,$fe98         ; Up+Left
+        fdb $ff36,$0168         ; Down+Left
         fdb $0120,$0000         ; Right
-        fdb $00c6,$fe98         ; Up+Right
-        fdb $00c6,$0168         ; Down+Right
+        fdb $00ca,$fe98         ; Up+Right
+        fdb $00ca,$0168         ; Down+Right
 
-        ; Configuration 3
+        ; Configuration 4   (x0.583)  H=1.312
+        fdb $0000,$fdc2         ; Up
+        fdb $0000,$023e         ; Down
+        fdb $feb0,$0000         ; Left
+        fdb $ff12,$fe6a         ; Up+Left
+        fdb $ff12,$0196         ; Down+Left
+        fdb $0150,$0000         ; Right
+        fdb $00ee,$fe6a         ; Up+Right
+        fdb $00ee,$0196         ; Down+Right
+
+        ; Configuration 5   (x0.500)  H=1.500
         fdb $0000,$fd60         ; Up
         fdb $0000,$02a0         ; Down
         fdb $fe80,$0000         ; Left
         fdb $fef2,$fe20         ; Up+Left
         fdb $fef2,$01e0         ; Down+Left
         fdb $0180,$0000         ; Right
-        fdb $010E,$fe20         ; Up+Right
-        fdb $010E,$01e0         ; Down+Right
-
-        ; Configuration 4
-        fdb $0000,$fc28         ; Up
-        fdb $0000,$03d8         ; Down
-        fdb $fdc0,$0000         ; Left
-        fdb $fe68,$fd48         ; Up+Left
-        fdb $fe68,$02b8         ; Down+Left
-        fdb $0240,$0000         ; Right
-        fdb $0198,$fd48         ; Up+Right
-        fdb $0198,$02b8         ; Down+Right
-
-        ; Configuration 5
-        fdb $0000,$fac0         ; Up
-        fdb $0000,$0540         ; Down
-        fdb $fd00,$0000         ; Left
-        fdb $fde4,$fc40         ; Up+Left
-        fdb $fde4,$03c0         ; Down+Left
-        fdb $0300,$0000         ; Right
-        fdb $021c,$fc40         ; Up+Right
-        fdb $021c,$03c0         ; Down+Right
+        fdb $010e,$fe20         ; Up+Right
+        fdb $010e,$01e0         ; Down+Right
 
         INCLUDE "./engine/object-management/ObjectMove.asm"

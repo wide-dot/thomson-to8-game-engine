@@ -100,9 +100,9 @@ Live
 @speed
         ldd   player1+speedlevel
         addd  #32
-        cmpd  #32*4
-        beq   >
-        std   player1+speedlevel
+        cmpd  #32*5             ; arcade : 5 paliers (0..4). On plafonne a l'offset
+        beq   >                 ;   128 (Configuration 5 = niveau 4, le plus rapide) ;
+        std   player1+speedlevel ;  sans ca on restait bloque au niveau 3 (config 4).
 !
         jmp   @delete
 @missiles
