@@ -56,6 +56,11 @@ missileTgtBot               fdb   0      ; OST cible missile BOTTOM
 * ===========================================================================
 weaponGateAccum             fcb   0      ; +frameDrop.count/frame, fire tous les 16
 
+* Flag transitoire : !=0 pendant le replay catch-up d'un cancer au spawn (un seul
+* a la fois, synchrone). Lu par RunCancerDisplacement pour s'arreter apres le move
+* (pas de sprite/stuck/Live). Cf objects/enemies/cancer/obj.asm.
+cancerCatchup               fcb   0
+
 * ===========================================================================
 * Table d'effacement des shells (rotonde) — remplace les 14 objets shellmask.
 * Indexee par (subtype-1) du shell : 14 slots x [old_pos_0(2), old_pos_1(2)].
