@@ -409,6 +409,31 @@ Init2
         lda   #4        ; FUN_0000_7c0e_CreateAndRunRocketMode1
         sta   routine,u
 
+        ; CATCH-UP framedrop : la roquette est creee avec wave_frame_drop = nb de frames
+        ; de retard du tir (pose par PstaffShootsRocket). On rejoue ces frames d'ascension
+        ; (gravite frame-par-frame + ObjectMoveSync a pas de 1) pour que les 8 roquettes
+        ; s'etagent regulierement malgre le frame-drop. n <= cap (8) << duree de montee
+        ; (~40 frames) -> jamais d'apogee pendant le replay, on reste en mode ascension.
+        lda   wave_frame_drop,u
+        beq   @noCatchup
+        ldd   gfxlock.frameDrop.count_w   ; sauve (00:count)
+        pshs  d
+        ldd   #1
+        std   gfxlock.frameDrop.count_w   ; pas de 1 frame
+        lda   wave_frame_drop,u
+@catchupLoop
+        pshs  a
+        ldd   y_vel,u                     ; gravite 1 frame (memes unites que le tick normal)
+        addd  #$c
+        std   y_vel,u
+        jsr   ObjectMoveSync              ; pos += x_vel,y_vel (frameDrop force a 1)
+        puls  a
+        deca
+        bne   @catchupLoop
+        puls  d
+        std   gfxlock.frameDrop.count_w   ; restaure
+@noCatchup
+
         ldx   #Pstaff_0x343a
         ldd   y_vel,u
         cmpd  #$FE50            ; original value $240
@@ -527,7 +552,7 @@ FUN_0000_7c91_RunRocketMode2
         cmpd  #$120             ; original value $fe80
         bcc   LAB_0000_7ccb
         ldx   #Pstaff_0x346a+8
-        cmpd  #$12              ; original value $ff00
+        cmpd  #$c0              ; original value $ff00 (= -0x100 ; |0x100|*0.75 -> 0xc0)
         bcc   LAB_0000_7ccb
         ldx   #Pstaff_0x346a+12
 LAB_0000_7ccb
