@@ -16,7 +16,7 @@
 
 AABB_0          equ  ext_variables     ; AABB struct (9 bytes)
 angle           equ  ext_variables+9   ; 8.8
-child_ptr       equ  ext_variables+11  ; 16
+erase_slot      equ  ext_variables+11  ; ptr du slot dans shellEraseTable (pour se desinscrire a la mort)
 son_ptr         equ  ext_variables+13
 dad_ptr         equ  ext_variables+15
 is_destroyed    equ  ext_variables+17
@@ -54,19 +54,8 @@ CreateChilds
         sta   cur_angle
         ldy   #0
         sty   @dad
-@loop   jsr   LoadObject_u             ; create background object
-        beq   @nomore                  ; branch if no more available object slot
-        lda   #ObjID_shellmask         ; must set the id before calling next loadobject routine
-        sta   id,u
-        lda   #7
-        sta   priority,u
-        lda   render_flags,u
-        ora   #render_overlay_mask
-        sta   render_flags,u
-        jsr   LoadObject_x             ; create shell object
+@loop   jsr   LoadObject_x             ; create shell object (plus de mask : effacement groupe par ObjID_shellEraser)
         beq   @nomore
-        stx   parent,u
-        stu   child_ptr,x
         ldy   #0
 @dad    equ   *-2
         sty   dad_ptr,x                ; Child declares its parent
@@ -132,6 +121,7 @@ Init
 Live
         ldx   #Images
 LiveContinue
+        jsr   ShellSavePos              ; ecrit la position du shell dans shellEraseTable (effacement)
         lda   gfxlock.frameDrop.count
         ldb   #$64
         mul
@@ -289,12 +279,20 @@ Delete
         lda   #5
         sta   routine,u
         _Collision_RemoveAABB AABB_0,AABB_list_ennemy
-        ldx   child_ptr,u
-        jsr   DeleteObject_x    ; destroy child object
+        lda   subtype,u         ; efface le slot du shell (index = subtype-1) -> plus d'effacement fantome
+        deca
+        ldb   #4
+        mul
+        ldx   #shellEraseTable
+        leax  d,x
+        ldd   #0
+        std   ,x                ; old_pos_0 = 0
+        std   2,x               ; old_pos_1 = 0
         jmp   DeleteObject
 AlreadyDeleted
         rts
 Destroyed
+        jsr   ShellSavePos              ; idem en etat detruit (le shell brise est encore dessine)
         lda   gfxlock.frameDrop.count
         ldb   #$64
         mul
@@ -341,9 +339,36 @@ Destroyed
         asla                    ; Set the order back to initial value ... 
         asla
         sta   kill_my_nok,x     ; ... and assign it to next of kin
-        clr   kill_my_nok,u     ; Cancel order for self, this is taken care of now 
+        clr   kill_my_nok,u     ; Cancel order for self, this is taken care of now
         jmp   DisplaySprite
 
+; ---------------------------------------------------------------------------
+; ShellSavePos - ecrit la position ecran du shell (xy_pixel, = frame precedente
+; comme dans mask.asm) dans son slot shellEraseTable[subtype-1], en CROSS-buffer
+; (ecrit l'old_pos du buffer OPPOSE) pour que ObjID_shellEraser efface, sur le
+; buffer courant, la position dessinee il y a 2 frames. Preserve X (table en cours).
+;   in : U = OST shell ; clobbe : D
+; ---------------------------------------------------------------------------
+ShellSavePos
+        pshs  x
+        lda   subtype,u
+        deca
+        ldb   #4
+        mul                     ; D = (subtype-1)*4 = offset du slot
+        ldx   #shellEraseTable
+        leax  d,x               ; X = slot du shell
+        lda   rsv_render_flags,u
+        bita  #rsv_render_outofrange_mask ; shell clippe/hors-ecran a la derniere passe ?
+        bne   @off              ; oui -> sauve 0 : pas d'effacement (sinon le blit wrappe au bord)
+        ldd   xy_pixel,u
+        bra   @write
+@off    ldd   #0
+@write  tst   gfxlock.backBuffer.id
+        beq   @s0
+        std   ,x                ; buffer 1 -> old_pos_0 (l'effaceur lit old_pos_1)
+        puls  x,pc
+@s0     std   2,x               ; buffer 0 -> old_pos_1 (l'effaceur lit old_pos_0)
+        puls  x,pc
 
 Images
         fdb   Img_shell_7

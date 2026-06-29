@@ -18,11 +18,19 @@ _gfxlock.on MACRO
 !       lda   #1
         sta   gfxlock.status
         ldb   gfxlock.backBuffer.status ; always 0 or -1 (flip/flop)
-        andb  #%00000001                ; set bit 0 based on flip/flop
+        andb  #%00000001                ; B = parite buffer (bit 0)
+        pshs  b                          ; garde la parite
         orb   #%00000010                ; value should be 2 or 3
-        stb   map.CF74021.DATA          ; mount working video buffer in RAM
+        stb   map.CF74021.DATA          ; mount working video buffer in RAM ($A000)
+        ; PRC ($4000-$5FFF, demi-page des cellules de backup) : pose en ABSOLU sur la
+        ; parite buffer (comme DATA) au lieu d'un toggle relatif. Le toggle derivait si le
+        ; registre matériel etait stale (ex: entree titlescreen depuis un autre game-mode :
+        ; les registres video ne sont pas reinit par le load RAM) -> save/restore des
+        ; cellules sur des demi-pages differentes -> backup corrompu / crash. L'absolu est
+        ; robuste a tout etat initial du registre.
         ldb   map.MC6846.PRC
-        eorb  #%00000001                ; swap half-page in $4000 $5FFF
+        andb  #%11111110                ; preserve les autres bits du 6846, efface bit 0
+        orb   ,s+                        ; bit 0 = parite buffer
         stb   map.MC6846.PRC
  ENDM
 

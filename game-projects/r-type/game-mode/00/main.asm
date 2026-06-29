@@ -30,7 +30,7 @@ viewport_height equ 180
         sta   $E7DD
 
         jsr   InitGlobals
-		jsr   InitDrawSprites
+	jsr   InitDrawSprites
         jsr   InitStack
         jsr   LoadAct
         jsr   InitJoypads
@@ -841,8 +841,9 @@ UserIRQ
         ; sprite
         INCLUDE "./engine/graphics/sprite/sprite-background-erase-ext-pack.asm"  
 
+        ; game mode transition (end of stage)
+        INCLUDE "./engine/level-management/LoadGameMode.asm"
+
         ; should be at the end of includes (ifdef dependencies)
         INCLUDE "./engine/InitGlobals.asm"
-
-        INCLUDE "./engine/level-management/LoadGameMode.asm"
 

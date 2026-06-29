@@ -24,7 +24,12 @@ cancer_0x2e             equ ext_variables+14 ; 1 byte, horizontal and vertical d
                                              ; bit 2 = going left
                                              ; bit 3 = going right
 cancer_0x30             equ ext_variables+15 ; 2 bytes, reactivity degree (the smaller the more reactive)
-firsttime               equ ext_variables+17 ; 1 bytes (=0 has not run yet, =1 has run)
+cancer_lifetime         equ ext_variables+17 ; 2 bytes, accumulateur de frames vecues (remplace firsttime, inutilise)
+
+; Duree de vie max : passe ce delai (en frames vecues), le cancer s'autodetruit
+; SANS explosion ni score (despawn propre) -> libere les ressources sprite.
+; Defaut : 15 s a 50 Hz (VBL TO8). Changer la valeur en secondes ci-dessous.
+cancer_maxLifeFrames    equ 9*50
 
 Object
         lda   routine,u
@@ -87,6 +92,9 @@ Init
 
         ;ldd   #$90              ; manually override (not in original source code)
         std   cancer_0x30,u
+
+        ldd   #0                        ; demarre le compteur de duree de vie (frames vecues)
+        std   cancer_lifetime,u
 
         lda   #1
         sta   routine,u
@@ -616,7 +624,13 @@ LAB_0000_900c
 
 Live
         lda   AABB_0+AABB.p,u
-        beq   @destroy                  ; was killed  
+        beq   @destroy                  ; was killed
+        ; duree de vie max : passe ce delai, autodestruction SANS explosion (libere le sprite)
+        ldd   cancer_lifetime,u
+        addd  gfxlock.frameDrop.count_w
+        std   cancer_lifetime,u
+        cmpd  #cancer_maxLifeFrames
+        bhs   @delete
         ldd   x_pos,u
         subd  glb_camera_x_pos
         stb   AABB_0+AABB.cx,u
