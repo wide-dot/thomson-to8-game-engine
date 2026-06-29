@@ -69,8 +69,7 @@ Level01_Start
         clr   globals.nextGameMode
         jsr   InitGlobals
 	jsr   InitDrawSprites
-        lda   #0
-        sta   globals.difficulty
+        clr   globals.difficulty
 
         jsr   InitStack
         jsr   LoadAct
@@ -91,13 +90,13 @@ Level01_Start
 ; init globals.score and globals.lives at level 1
         ldd   #0
         std   globals.score
-        clr   globals.score+2           ; clear 3rd score byte (24-bit)
+        stb   globals.score+2           ; clear 3rd score byte (24-bit)
         std   globals.stageScoreBase    ; stage-score base = score at stage start (D=0; multistage-ready)
-        clr   globals.stageScoreBase+2  ; clear 3rd base byte (24-bit)
+        stb   globals.stageScoreBase+2  ; clear 3rd base byte (24-bit)
         ldb   #2
         stb   globals.lives
-        lda   #1
-        sta   globals.backgroundSolid
+        decb
+        stb   globals.backgroundSolid
 
 ; register map locations for scroll
         _MountObject ObjID_LevelInit

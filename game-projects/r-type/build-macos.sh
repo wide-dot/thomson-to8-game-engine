@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 # ============================================================================
-# build.sh — Build et lance le builder pour road-generator (macOS)
+# build-macos.sh — Build et lance le builder pour r-type (macOS)
 # ----------------------------------------------------------------------------
 # Usage :
-#   ./build.sh           → build le jar si nécessaire puis génère le .fd/.t2
-#   ./build.sh --clean   → force le rebuild du jar Java
-#   ./build.sh --run     → après build, lance dans dcmoto si dispo
+#   ./build-macos.sh           → build le jar si nécessaire puis génère le .fd/.t2
+#   ./build-macos.sh --clean   → force le rebuild du jar Java
 #
 # Prérequis : Java 11+, Maven 3.6+
 # ============================================================================
@@ -20,11 +19,9 @@ JAR_PATH="$GENERATOR_DIR/target/$JAR_NAME"
 CONFIG="./config-macos.properties"
 
 CLEAN=0
-RUN=0
 for arg in "$@"; do
     case "$arg" in
         --clean) CLEAN=1 ;;
-        --run)   RUN=1 ;;
         *)       echo "Unknown option: $arg" >&2; exit 1 ;;
     esac
 done
@@ -61,20 +58,4 @@ if [ -d dist ]; then
     ls -la dist/
 else
     echo "  (dossier dist/ non trouvé)"
-fi
-
-# ----- 4. Optionnel : lance l'émulateur -----
-# Convention : un symlink (ou une .app copiée) nommé "dcmoto.app" à la racine
-# du game-project. DCMOTO mémorise la dernière disquette chargée dans son
-# fichier de configuration, donc on lance l'app sans argument — pas besoin
-# de passer le .fd, DCMOTO le retrouve tout seul.
-if [ $RUN -eq 1 ]; then
-    APP_LINK="$SCRIPT_DIR/dcmoto.app"
-    if [ -L "$APP_LINK" ] || [ -d "$APP_LINK" ]; then
-        echo "==> Lancement de DCMOTO via $APP_LINK"
-        open "$APP_LINK"
-    else
-        echo "==> Aucun dcmoto.app trouvé. fd prêt."
-        echo "    Pour activer --run, place un symlink ou une .app à : $APP_LINK"
-    fi
 fi
