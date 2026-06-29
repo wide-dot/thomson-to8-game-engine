@@ -9,6 +9,7 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./engine/constants.asm"
         INCLUDE "./engine/macros.asm"
         INCLUDE "./engine/collision/macros.asm"
+        INCLUDE "./engine/object-management/Obj_Run.macro.asm" ; _Obj_Run* : appel d'objet factorise (routines dans Obj_Run.asm)
         INCLUDE "./engine/objects/palette/fade/fade.equ"
         INCLUDE "./global/macro.asm"
         INCLUDE "./global/variables.asm"
@@ -51,6 +52,10 @@ endstage.BLIT          equ 2         ; command: boss tile-erase black blits (cal
 endstage.STATUS_NONE   equ 0         ; status: nothing to do
 endstage.STATUS_JINGLE equ 1         ; status: main must start the stage clear jingle
 
+; ObjID_mainext mounted-object protocol (main-private code, logic in obj_mainext.asm)
+mainext.INIT      equ 0              ; command: run the level init sequence (etape 2)
+mainext.COLLISION equ 1              ; command: run the main-loop collision pass
+
 ; ObjID_hud command protocol (logic lives in objects/levels/hud/hud.asm)
 hud.NORMAL  equ 0                    ; command: draw the bottom HUD (beam, lives, score)
 hud.READOUT equ 1                    ; command: tick + draw the centered stage-score readout
@@ -69,6 +74,11 @@ Level01_Start
         clr   globals.nextGameMode
         jsr   InitGlobals
 	jsr   InitDrawSprites
+        ldx   #shellEraseTable          ; clear la table d'effacement rotonde au load niveau (positions fantomes)
+        ldd   #0
+!       std   ,x++
+        cmpx  #shellEraseTable_end
+        blo   <
         clr   globals.difficulty
 
         jsr   InitStack
@@ -76,7 +86,7 @@ Level01_Start
         jsr   InitJoypads
         jsr   InitRNG
         _terrainCollision.init ObjID_collision
-        _RunObjectRoutineB ObjID_endstage,#endstage.INIT ; reset boss sequencing state
+        _Obj_RunB ObjID_endstage,#endstage.INIT ; reset boss sequencing state
 
         ldd   #Pal_black
         std   Pal_current
@@ -99,11 +109,9 @@ Level01_Start
         stb   globals.backgroundSolid
 
 ; register map locations for scroll
-        _MountObject ObjID_LevelInit
-        jsr   ,x
+        _Obj_Run ObjID_LevelInit
 
-        _MountObject ObjID_LevelWave
-        jsr   ,x
+        _Obj_Run ObjID_LevelWave
 
         jsr   gfxlock.bufferSwap.do
         jsr   RunObjects
@@ -114,11 +122,10 @@ Level01_Start
         lda   #254                     ; >= last checkpoint, < the -1 sentinel: checkpoint.load picks the last one
         sta   scroll_tile_pos
  ENDC
-        _MountObject ObjID_checkpoint
-        jsr   ,x
+        _Obj_Run ObjID_checkpoint
         
 ; play music
-        _MountObject ObjID_ymm01
+        _Obj_Mount ObjID_ymm01
         _MusicInit_objymm #0,#MUSIC_LOOP,#0  ; initialize the YM2413 player 
         ;_MountObject ObjID_vgc01
         ;_MusicInit_objvgc #0,#MUSIC_LOOP,#0 ; initialize the SN76489 vgm player with a vgc data stream
@@ -187,22 +194,14 @@ mainloop.routine.running
         jsr   ReadJoypadsKbd
         jsr   Scroll
         jsr   ObjectWave
-        _Collision_Do AABB_list_friend,AABB_list_ennemy
-        _Collision_Do AABB_list_player,AABB_list_bonus
-        _Collision_Do AABB_list_player,AABB_list_foefire
-        _Collision_Do AABB_list_player,AABB_list_ennemy_unkillable        
-        _Collision_Do AABB_list_player,AABB_list_ennemy
-        _Collision_Do AABB_list_forcepod,AABB_list_foefire ; pod still blocks enemy bullets (generic)
-        ; Force pod + both bit devices vs enemies: NOT generic. Arcade-faithful
-        ; shared contact pass — one global 1/16-frame gate ([0x2eb6]&0x0F) for HP
-        ; enemies (p>=2), instant contact for one-shot enemies (p==1); weapons
-        ; never consumed. Static slots positioned their AABBs in the prev run phase.
-        jsr   WeaponContactTick
-        _RunObject ObjID_fade,#palettefade
-        _RunObject ObjID_Player1,#player1
-        _RunObject ObjID_forcepod,#forcepodOST ; static force pod: idle (Dormant) until collected
-        _RunObject ObjID_bitdevice,#bitdevTopOST ; static bit device (top): Dormant until collected
-        _RunObject ObjID_bitdevice,#bitdevBotOST ; static bit device (bottom): Dormant until collected
+        ; passe collision (detection AABB + contact arme) deportee dans obj_mainext
+        ; (code prive du main, hors page residente). Les data des listes restent ici.
+        _Obj_RunB ObjID_mainext,#mainext.COLLISION
+        _Obj_RunU ObjID_fade,#palettefade
+        _Obj_RunU ObjID_Player1,#player1
+        _Obj_RunU ObjID_forcepod,#forcepodOST ; static force pod: idle (Dormant) until collected
+        _Obj_RunU ObjID_bitdevice,#bitdevTopOST ; static bit device (top): Dormant until collected
+        _Obj_RunU ObjID_bitdevice,#bitdevBotOST ; static bit device (bottom): Dormant until collected
         jsr   RunObjects
         jsr   CheckSpritesRefresh
 
@@ -211,11 +210,10 @@ mainloop.routine.running
         ; boss erase (block sweep + big rectangle): right after EraseSprites and
         ; before DrawSprites, so it overwrites the restored background and the
         ; sprite background backups then capture the blacked-out result
-        _MountObject ObjID_endstage
-        ldb   #endstage.BLIT
-        jsr   ,x
+        _Obj_RunB ObjID_endstage,#endstage.BLIT
         jsr   UnsetDisplayPriority
         jsr   DrawTiles
+        _Obj_Run ObjID_shellEraser     ; efface la rotonde (objet hors-pool sur page cartouche)
         jsr   DrawSprites
         ; phase 0-2: normal Mask + HUD. phase 3 (dissolve): draw nothing, it owns the screen
         ; (HUD band preserved by the capped fade). phase 4: centered stage-score readout.
@@ -226,16 +224,11 @@ mainloop.routine.running
         beq   @overlayReadout
         bra   @overlayOff
 @overlayNormal
-        _MountObject ObjID_Mask
-        jsr   ,x
-        _MountObject ObjID_hud
-        ldb   #hud.NORMAL
-        jsr   ,x
+        _Obj_Run ObjID_Mask
+        _Obj_RunB ObjID_hud,#hud.NORMAL
         bra   @overlayOff
 @overlayReadout
-        _MountObject ObjID_hud
-        ldb   #hud.READOUT
-        jsr   ,x
+        _Obj_RunB ObjID_hud,#hud.READOUT
 @overlayOff
         jsr   gfxlock.off
         jsr   gfxlock.loop
@@ -244,7 +237,7 @@ mainloop.routine.running
         lda  globals.nextGameMode
         beq  >
         jsr   IrqOff
-        _MountObject ObjID_ymm01
+        _Obj_Mount ObjID_ymm01
         _MusicInit_objymm #1,#MUSIC_LOOP,#0
         ;_MountObject ObjID_vgc01
         ;_MusicInit_objvgc #1,#MUSIC_LOOP,#0
@@ -252,32 +245,29 @@ mainloop.routine.running
         clr   globals.nextGameMode
 !
         ; end of stage sequencing (logic in the mounted endstage object)
-        _RunObjectRoutineB ObjID_endstage,#endstage.TICK
+        _Obj_RunB ObjID_endstage,#endstage.TICK
         tstb
         beq   >
         ; stage clear jingle (arcade: SFX $1A + $1C) - the ymm object cannot
         ; be mounted from inside the endstage object, so main starts it
         jsr   IrqOff
-        _MountObject ObjID_ymm01
+        _Obj_Mount ObjID_ymm01
         _MusicInit_objymm #2,#MUSIC_NO_LOOP,#0
         jsr   IrqOn
 !
         jmp   LevelMainLoop
 
 mainloop.routine.dead
-        _RunObject ObjID_fade,#palettefade
-        _RunObject ObjID_Player1,#player1
+        _Obj_RunU ObjID_fade,#palettefade
+        _Obj_RunU ObjID_Player1,#player1
         jsr   RunFrozenObjects
         jsr   CheckSpritesRefresh
         jsr   gfxlock.on
         jsr   EraseSprites
         jsr   UnsetDisplayPriority
         jsr   DrawSprites
-        _MountObject ObjID_Mask
-        jsr   ,x
-        _MountObject ObjID_hud
-        ldb   #hud.NORMAL
-        jsr   ,x
+        _Obj_Run ObjID_Mask
+        _Obj_RunB ObjID_hud,#hud.NORMAL
         jsr   gfxlock.off
         jsr   gfxlock.loop
         _waitFrames #83
@@ -288,7 +278,7 @@ mainloop.routine.dead
 mainloop.routine.checkpoint
         jsr   Palette_FadeOut
 @loop   ; wait for fade out to finish
-        _RunObject ObjID_fade,#palettefade
+        _Obj_RunU ObjID_fade,#palettefade
         jsr   gfxlock.on
         jsr   gfxlock.off
         jsr   gfxlock.loop
@@ -300,6 +290,11 @@ mainloop.routine.checkpoint
         _waitFrames #40
         ldx   #$0000
         jsr   ClearDataMem
+        ldx   #shellEraseTable          ; clear la table d'effacement rotonde au reload checkpoint
+        ldd   #0
+!       std   ,x++
+        cmpx  #shellEraseTable_end
+        blo   <
         ; ClearDataMem zeroed the static weapon slot too (routine 0 = Init). Re-seed
         ; it Dormant so it idles after the checkpoint reset until the bonus is re-collected.
         ldu   #forcepodOST
@@ -314,7 +309,7 @@ mainloop.routine.checkpoint
         ldu   #bitdevBotOST
         lda   #bitdev.rtnid.Dormant
         sta   routine,u
-        _MountObject ObjID_messages
+        _Obj_Mount ObjID_messages
         dec   globals.lives
         bmi   >
         ldb   #messages.READY
@@ -353,9 +348,8 @@ mainloop.routine.checkpoint
         jsr   IrqOff
         jmp   Level01_Start           ; GAME OVER: restart level 1
 !
-        _RunObjectRoutineB ObjID_endstage,#endstage.INIT ; rearm boss sequencing for the replay
-        _MountObject ObjID_checkpoint ; READY: load checkpoint
-        jsr   ,x
+        _Obj_RunB ObjID_endstage,#endstage.INIT ; rearm boss sequencing for the replay
+        _Obj_Run ObjID_checkpoint ; READY: load checkpoint
         lda   #1
         sta   player1+subtype         ; player one blink mode / invincibility
         _ymm.restart
@@ -381,12 +375,11 @@ UserIRQ
         jsr   gfxlock.bufferSwap.check
 	jsr   PalUpdateNow
         jsr   joypad.buffer.addDirection
-        _MountObject ObjID_ymm01
+        _Obj_Mount ObjID_ymm01
         _ymm.processFrame
         ;_MountObject ObjID_vgc01
         ;_MusicFrame_objvgc
-        _MountObject ObjID_soundFX
-        jmp   ,x ; call soundFX driver
+        _Obj_Jmp ObjID_soundFX ; call soundFX driver
 
 * ---------------------------------------------------------------------------
 * Collision_ClearLists
@@ -554,7 +547,9 @@ checkpoint.positions
 
         ; joystick
         INCLUDE "./engine/joypad/InitJoypads.asm"
-        INCLUDE "./engine/joypad/ReadJoypads.asm"
+        ; stage 1 n'appelle que ReadJoypadsKbd : on n'inclut PAS la routine ReadJoypads
+        ; (morte ici), seulement les masques + variables partages dont Kbd a besoin.
+        INCLUDE "./engine/joypad/joypad.const.asm"
         INCLUDE "./engine/joypad/ReadJoypadsKbd.asm" ; variante R-Type : n'importe quelle touche -> bouton B (rappel pod, manette 1 bouton)
         INCLUDE "./engine/joypad/joypad.buffer.asm"
 
@@ -564,6 +559,7 @@ checkpoint.positions
         INCLUDE "./engine/object-management/ObjectWave-subtype.asm"
         INCLUDE "./engine/object-management/ObjectDp.asm"
         INCLUDE "./engine/object-management/RunPgSubRoutine.asm"
+        INCLUDE "./engine/object-management/Obj_Run.asm" ; helper d'appel d'objet factorise (cf. _Obj_Run*)
 
         ; animation & image
         INCLUDE "./engine/graphics/animation/AnimateSpriteSync.asm"
@@ -575,8 +571,10 @@ checkpoint.positions
         ; tilemap
         INCLUDE "./engine/graphics/tilemap/horizontal-scroll/scroll-map-buffered-even.asm"  
 
-        ; collision
-        INCLUDE "./engine/collision/collision.asm"
+        ; collision : seules les routines de (de)referencement de liste (Add/Remove,
+        ; appelees par les objets) restent residentes. La passe de detection
+        ; Collision_Do est incluse dans obj_mainext (hors resident).
+        INCLUDE "./engine/collision/collision-list.asm"
         INCLUDE "./engine/objects/collision/terrainCollision.main.asm"
 
         ; random numbers
@@ -587,8 +585,8 @@ checkpoint.positions
         INCLUDE "./engine/objects/sound/ymm/ymm.const.asm"
         INCLUDE "./engine/objects/sound/ymm/ymm.data.asm"
 
-        ; should be at the end of includes (ifdef dependencies)
-        INCLUDE "./engine/InitGlobals.asm"
-
         ; game mode transition (end of stage)
         INCLUDE "./engine/level-management/LoadGameMode.asm"
+
+        ; should be at the end of includes (ifdef dependencies)
+        INCLUDE "./engine/InitGlobals.asm"

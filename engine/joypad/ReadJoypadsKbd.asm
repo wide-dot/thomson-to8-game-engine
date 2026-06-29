@@ -1,9 +1,10 @@
 ********************************************************************************
 * ReadJoypadsKbd - lecture joypad (V1) + "n'importe quelle touche clavier -> bouton B"
 *
-* Variante de ReadJoypads : memes variables et masques (depend de ReadJoypads.asm
-* inclus AVANT ce fichier). N'IMPACTE PAS ReadJoypads (les autres jeux continuent
-* a l'utiliser). Utilisee par R-Type pour l'instant ; a capitaliser ensuite.
+* Variante de ReadJoypads : memes variables et masques, tires du fichier de
+* definitions partage joypad.const.asm (autonome, n'a plus besoin que ReadJoypads.asm
+* soit inclus avant). N'IMPACTE PAS ReadJoypads (les autres jeux continuent a
+* l'utiliser). Utilisee par R-Type pour l'instant ; a capitaliser ensuite.
 *
 * But : pour les manettes 1 bouton (bouton A seulement), permettre de declencher
 * la fonction du second bouton (rappel du force pod) avec n'importe quelle touche
@@ -12,6 +13,8 @@
 * Fire_Press (edge) et Fire_Held se comportent comme un vrai bouton B (front propre,
 * pas de toggle en rafale tant que la touche reste enfoncee).
 ********************************************************************************
+
+        INCLUDE "./engine/joypad/joypad.const.asm" ; masques + variables partages (garde IFNDEF)
 
 ReadJoypadsKbd
         ldd   $E7CC                  ; A = dpad ($E7CC), B = boutons ($E7CD) (0: press)

@@ -95,7 +95,7 @@ LiveCreator
         subd  #8+6                     ; 0x6204 CMP word ptr [BP + 0x4],0x150 ; left screen limit, will destroy bug creator if crossed (at x=336-320=16)
         bmi   @delete                  ; branch if out of screen's left
         jsr   LoadObject_x
-        beq   @rts
+        beq   @skip                    ; alloc KO (pool plein) -> saute ce bug sans decaler les suivants
         lda   id,u
         sta   id,x
         lda   #0
@@ -127,8 +127,8 @@ LiveCreator
 !       stb   preset,u
         lda   #render_playfieldcoord_mask
         sta   render_flags,x
-        dec   nb_bugs,u
-        beq   @delete
+@skip   dec   nb_bugs,u                 ; bug pondu OU saute (alloc KO) : on consomme le compte ;
+        beq   @delete                   ; la cadence timer (+$10) reste intacte -> pas de decalage
 @rts    rts
 @delete
         jmp   UnloadObject_u           ; not a sprite we need to use unloadObject

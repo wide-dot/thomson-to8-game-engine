@@ -15,10 +15,14 @@ Object
 			   ; THERE IS A DEPENDENCY THAT WILL BE REWRTTENT
 			   ; INTO A RTS WHEN THIS OBJECT IS DONE DOING ITS JOB
 
+        pshs  u                    ; preserve le pointeur OST : les routines de rendu (Live*/Scores*)
+                                   ; ecrasent U (s'en servent comme pointeur ecran) sans le restaurer,
+                                   ; or RunObjects fait "ldu run_object_next,u" apres le dispatch -> crash.
         lda   routine,u
         asla
         ldx   #Routines
-        jmp   [a,x]
+        jsr   [a,x]                ; CALL (pas jmp) pour reprendre la main apres la routine
+        puls  u,pc                 ; restaure U (OST) et rend la main a RunObjects
 
 Routines
         fdb   Init
