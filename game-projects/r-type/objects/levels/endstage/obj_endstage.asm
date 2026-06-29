@@ -44,6 +44,7 @@ InitSequence
         clr   main.dobkeratops.nervesErasing
         clr   main.dobkeratops.explode
         clr   globals.bossDefeated
+        clr   terrainCollision.disabled         ; debut niveau : terrain actif (re-arme apres fin de stage)
         clr   erase.rectArmed
         clr   erase.rectDelay
         clr   erase.bigRect

@@ -29,7 +29,7 @@ cancer_lifetime         equ ext_variables+17 ; 2 bytes, accumulateur de frames v
 ; Duree de vie max : passe ce delai (en frames vecues), le cancer s'autodetruit
 ; SANS explosion ni score (despawn propre) -> libere les ressources sprite.
 ; Defaut : 15 s a 50 Hz (VBL TO8). Changer la valeur en secondes ci-dessous.
-cancer_maxLifeFrames    equ 9*50
+cancer_maxLifeFrames    equ 12*50
 
 Object
         lda   routine,u
@@ -59,6 +59,34 @@ Init
         ldb   ,x
         addd  glb_camera_x_pos
         std   x_pos,u
+
+        ; FIX framedrop : le wave se declenche en retard de wave_frame_drop frames
+        ;   (gameCount a saute le timestamp sous frame-drop). La camera a deja
+        ;   avance de scroll_vel*wave_frame_drop -> on REJOUE cette sequence de
+        ;   deplacement scroll (boucle) pour replacer le cancer sur la colonne
+        ;   MONDE visee par le timestamp (decor degage), au lieu de la colonne
+        ;   overshootee ou le plafond est descendu (-> spawn dans le mur, coince).
+        ;   Cf tabrok, meme correctif. Le cancer est world-anchored (pas de
+        ;   += scroll par frame), donc un simple recul x_pos suffit.
+        ldb   wave_frame_drop,u
+        beq   @noWaveComp
+        ldx   #0
+@waveComp
+        pshs  b                        ; sauve le compteur (tfr x,d ecrase B)
+        tfr   x,d
+        addd  scroll_vel               ; accumule scroll_vel (8.8) wave_frame_drop fois
+        tfr   d,x
+        puls  b
+        decb
+        bne   @waveComp
+        tfr   x,d                      ; D = scroll_vel*wave_frame_drop (8.8)
+        tfr   a,b                      ; B = partie entiere (px)
+        clra                           ; D = depassement entier (16b)
+        pshs  d
+        ldd   x_pos,u
+        subd  ,s++                     ; recule x_pos du depassement
+        std   x_pos,u
+@noWaveComp
         ldb   subtype,u
         andb  #$01
         stb   subtype,u
@@ -99,6 +127,30 @@ Init
         lda   #1
         sta   routine,u
 
+        ; CATCH-UP framedrop : rejoue wave_frame_drop frames de crawl (pas de 1 frame
+        ; chacun) pour positionner le cancer comme s'il etait apparu a l'heure (il
+        ; entre par le bord haut puis rampe vers le joueur). Le recul x_pos ci-dessus
+        ; donne la colonne de spawn on-time (decor degage) ; ce replay donne la
+        ; progression du crawl (surtout la descente verticale hors du bord haut).
+        tst   wave_frame_drop,u
+        beq   @noCatchup
+        ldd   gfxlock.frameDrop.count_w   ; sauve (count_w = 00:count)
+        pshs  d
+        ldd   #1
+        std   gfxlock.frameDrop.count_w   ; pas de 1 frame pendant le replay
+        inc   cancerCatchup               ; -> RunCancerDisplacement sort par rts
+        ldb   wave_frame_drop,u
+@catchupLoop
+        pshs  b
+        jsr   RunCancerDisplacement
+        puls  b
+        decb
+        bne   @catchupLoop
+        clr   cancerCatchup
+        puls  d
+        std   gfxlock.frameDrop.count_w   ; restaure
+@noCatchup
+
 FUN_0000_8db0_RunCancerMode1
 
         jsr   tryFoeFire
@@ -110,6 +162,12 @@ FUN_0000_8db0_RunCancerMode1
        ; With frame-drop we advance by frameDrop and must detect the (mask+1) boundary
        ; crossing, else we would step over the exact 0 and miss picks. No firsttime flag
        ; needed: cancer_0x20 starts at 0x7f so the first frame crosses 0x80 and picks.
+       ; --- RunCancerDisplacement : direction-pick + probe+move 4 directions, SANS
+       ;     fire/sprite/collision. Appele en boucle par le catch-up du spawn (Init)
+       ;     pour rejouer N frames de crawl ; sort par rts a LAB_0000_8e6f si le flag
+       ;     cancerCatchup est pose. En tick normal (flag=0) on tombe dedans depuis
+       ;     tryFoeFire et on continue vers le sprite.
+RunCancerDisplacement
         ldd   gfxlock.frameDrop.count_w
         addd  cancer_0x20,u
         std   cancer_0x20,u
@@ -317,6 +375,10 @@ LAB_0000_8e4e                           ; Going right ?
        ;0000:8e8f e8 3a 91        CALL       FUN_0000_1fcc_Write1Sprite_A                     undefined FUN_0000_1fcc_Write1Sp
 
 LAB_0000_8e6f
+        tst   cancerCatchup            ; replay catch-up en cours (spawn) ?
+        beq   @afterMove
+        rts                            ; -> stop apres le move : pas de sprite/stuck/Live
+@afterMove
         ldy   #ImageIndex+8
         ldb   cancer_0x2e,u
         andb  #$08

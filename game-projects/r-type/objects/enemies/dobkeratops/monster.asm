@@ -246,6 +246,8 @@ MonsterKill
         ; jaw/tail hold).
         lda   #1
         sta   globals.bossDefeated
+        sta   terrainCollision.disabled      ; boss tue -> tilemap "efface" : libere le terrain
+                                              ; (force pod, vaisseau autopilot) cf arcade fin de stage
         ; alien already moving out (past moveAlienStart)? the optic nerves were
         ; destroyed/erased long ago (>=140 frames) -> explode THIS frame, no wait.
         ; (reliable, independent of the nervesErasing counter)

@@ -708,8 +708,8 @@ READOUT_FRAMES equ 224          ; spin/settle master countdown (arcade 0xE0)
 READOUT_HOLD   equ 150          ; final-score hold after settle, in frames (~3 s @ 50 Hz)
 READOUT_BLANK  equ 10           ; settled-digit sentinel for a blanked leading zero
 ; on-screen layout (RAMA, 40 cells/line, 1 cell = one 4px glyph). Centered; tune later.
-hud.line1U   equ $C000+56*40+5  ; "S T A G E   1   C L E A R E D" (29 cells), scanline 56, centered col 5
-hud.line2U   equ $C000+96*40+10 ; "STAGE SCORE " label (12 chars) - scanline 96, col 10
+hud.line1U   equ $C000+52*40+5  ; "S T A G E   1   C L E A R E D" (29 cells), scanline 52, centered col 5
+hud.line2U   equ $C000+92*40+10 ; "STAGE SCORE " label (12 chars) - scanline 92, col 10
 hud.readoutU equ hud.line2U+12  ; the 7 score digits, right after the "STAGE SCORE " label
 
 hud.scoreReadout
