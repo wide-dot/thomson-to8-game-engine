@@ -328,6 +328,7 @@ FUN_0000_7aac_bis
 	suba  gfxlock.frameDrop.count
 	bpl   LAB_0000_7acf
 	leax  2,x
+	nega                       ; A = n = frames de retard du tir (A etait <0) -> catch-up roquette
 	jsr   FUN_0000_7bc1_PstaffShootsRocket
 	dec   pstaff_0x22,u
 	lda   #$f
@@ -401,7 +402,7 @@ LAB_0000_7b5d
 ;                         *******************************************************
 
 FUN_0000_7bc1_PstaffShootsRocket
-	pshs  x
+	pshs  a,x                  ; A=n (retard, 0,s) + recipe ptr X (1,s)
 	jsr   LoadObject_x ; make then die early ... to be removed
     beq   LAB_0000_7c0d
 	lda   #ObjID_commonmissile
@@ -415,16 +416,32 @@ FUN_0000_7bc1_PstaffShootsRocket
 	std   y_pos,x
 	jsr   RandomNumber
 	exg   a,b
-	anda  #$1		; original value AND #$1ff
-	andb  #$7f     
-	addd  #$1e0		; original value $280
+	anda  #$1                  ; D = rand & 0x1ff -> plage CONTIGUE (fidele arcade)
+	pshs  d                    ; D *= 3 ...
+	aslb
+	rola
+	addd  ,s++
+	lsra                       ; ... >>2 => *3/4 = *0.75 (echelle Y) -> [0,0x17f] contigu
+	rorb
+	lsra
+	rorb
+	addd  #$1e0                ; + base (0x280 * 0.75)
 	_negd
 	std   y_vel,x
 	jsr   RandomNumber
 	exg   a,b
-	clra
-	andb  #$5f      ; original value $ff
-	addd  #$48		; original value $c0
+	clra                       ; D = rand & 0xff -> plage CONTIGUE (fidele arcade)
+	pshs  d                    ; D *= 3 ...
+	aslb
+	rola
+	addd  ,s++
+	lsra                       ; ... >>3 => *3/8 = *0.375 (echelle X) -> [0,0x5f] contigu
+	rorb
+	lsra
+	rorb
+	lsra
+	rorb
+	addd  #$48                 ; + base (0xc0 * 0.375)
 	std   x_vel,x
 	ldd   pstaff_0x16,u
 	cmpd  #pstaff_0x33de
@@ -433,8 +450,10 @@ FUN_0000_7bc1_PstaffShootsRocket
 	_negd
 	std   x_vel,x
 LAB_0000_7c05
+	lda   ,s                   ; n (retard de tir, sauve par pshs a,x)
+	sta   wave_frame_drop,x    ; transmet le retard a la roquette -> catch-up parabole au 1er tick
 LAB_0000_7c0d
-	puls  x
+	puls  a,x
 	rts
 
 FUN_0000_7b7b_DestroyPstaff
