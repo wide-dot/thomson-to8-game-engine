@@ -204,12 +204,25 @@ StarPlaneIdx
 ; 2 buffers nettoyes 2x), puis starDead coupe tout definitivement.
 ; ---------------------------------------------------------------------------
 StarfieldErase
-        lda   starDead
-        lbne  sfe_done                  ; intro finie : cout nul jusqu'a la fin
-        clr   starNoDraw
         ldd   glb_camera_x_pos
         cmpd  #star_cam_max
-        blo   sfe_alive
+        bhs   sfe_dying
+; camera en-deca du mur : VIVANT. Les clr reaniment aussi le starfield apres un
+; respawn post-extinction (mort apres le mur -> reload au checkpoint 432, encore
+; dans le ciel) : la camera revenue en arriere est le SEUL signal du respawn ici,
+; et main.asm ne doit pas etre touche (toute insertion dans le module resident a
+; corrompu le rendu, cause non identifiee). En regime normal ces clr sont des
+; no-op idempotents. Seule sequelle : au 1er ERASE post-reanimation, prevOff/
+; prevLap sont perimes -> l'effacement vise ~22 adresses arbitraires du ciel
+; frais ($FF, cf. checkpoint.asm) ou du decor ; le XOR conditionnel n'ecrit que
+; si le pixel vaut exactement une couleur d'etoile (rare, 1 seule fois, borne).
+        clr   starDead
+        clr   starNoDraw
+        clr   starOffCnt
+        bra   sfe_alive
+sfe_dying
+        lda   starDead
+        lbne  sfe_done                  ; extinction finie : cout nul jusqu'au respawn
         lda   #1
         sta   starNoDraw
         inc   starOffCnt
