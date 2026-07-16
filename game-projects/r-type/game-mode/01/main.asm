@@ -21,6 +21,7 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./objects/player1/bitdevice/bitdevice.equ"  ; bitdev.rtnid.* (bit device routine ids; static slot seeding)
         INCLUDE "./engine/objects/sound/ymm/ymm.macro.asm"
         INCLUDE "./objects/messages/messages.const.asm"
+        INCLUDE "./objects/levels/01/starfield/starfield.const.asm"
 
 timestamp.DELETE_ALIEN_BODY equ $1D80
 timestamp.ERASE_NERV_START equ $1BDF+$B80 ; nerves auto-effacees (free-life). Arcade: T0 ($1BDF,
@@ -112,6 +113,8 @@ Level01_Start
         _Obj_Run ObjID_LevelInit
 
         _Obj_Run ObjID_LevelWave
+
+        _Obj_RunB ObjID_starfield,#starfield.INIT
 
         jsr   gfxlock.bufferSwap.do
         jsr   RunObjects
@@ -213,8 +216,12 @@ mainloop.routine.running
         _Obj_RunB ObjID_endstage,#endstage.BLIT
         jsr   UnsetDisplayPriority
         jsr   DrawTiles
-        _Obj_Run ObjID_shellEraser     ; efface la rotonde (objet hors-pool sur page cartouche)
+        _Obj_RunB ObjID_starfield,#starfield.ERASE ; effacer AVANT DrawSprites (fond restaure)
+        _Obj_Run ObjID_shellEraser      ; efface la rotonde (objet hors-pool sur page cartouche)
         jsr   DrawSprites
+        _Obj_RunB ObjID_starfield,#starfield.DRAW ; tracer APRES la sauvegarde des fonds :
+                                        ; aucune cellule de fond ne contient d'etoile, un
+                                        ; sprite immobile ne peut pas reinjecter de residus
         ; phase 0-2: normal Mask + HUD. phase 3 (dissolve): draw nothing, it owns the screen
         ; (HUD band preserved by the capped fade). phase 4: centered stage-score readout.
         lda   main.endstage.phase
