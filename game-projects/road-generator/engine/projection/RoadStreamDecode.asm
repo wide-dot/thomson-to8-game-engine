@@ -98,7 +98,14 @@ RSD_seek
         andb  #$C0                          ; D = kf
         subd  #1                            ; cur = kf-1 (advance produira kf en 1er)
         std   RSD_cur_frame
-        * tombe dans forward : rejoue keyframe(kf) puis diffs jusqu'à target
+        * FIX kf=0 : cur = 0-1 = $FFFF ferait sortir la boucle forward (bhs non
+        * signe : $FFFF >= target) SANS rien appliquer -> Dense_Buffer jamais
+        * ecrit au boot / au wrap circuit. On applique donc TOUJOURS le record
+        * keyframe ici (advance_one pose cur = kf, correct pour tout kf), puis
+        * forward rejoue les diffs kf+1..target. (Fix valide au runtime dans
+        * lotus-adnz, commit 3b3adbf — meme fichier.)
+        bsr   RSD_advance_one
+        * tombe dans forward : rejoue les diffs jusqu'à target
 
 RSD_forward
         ldd   RSD_cur_frame
