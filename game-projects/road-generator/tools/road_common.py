@@ -100,6 +100,27 @@ def pixels_to_bm16(pixel_row):
     return bytes(rama), bytes(ramb)
 
 
+# ── Écriture PNG indexé (color_type=3) ───────────────────────────────────────
+
+def write_png_indexed(path: Path, width, height, pixels, palette_rgb,
+                      *, transparent0=True):
+    """Écrit un PNG indexé 8 bpp. pixels : list[list[int]] d'indices,
+       palette_rgb : list[(r, g, b)]. Si transparent0, l'index 0 est
+       déclaré transparent via tRNS."""
+    def chunk(tag, payload):
+        c = struct.pack('>I', len(payload)) + tag + payload
+        return c + struct.pack('>I', zlib.crc32(tag + payload) & 0xffffffff)
+
+    ihdr = struct.pack('>IIBBBBB', width, height, 8, 3, 0, 0, 0)
+    plte = b''.join(bytes(rgb) for rgb in palette_rgb)
+    raw = b''.join(b'\x00' + bytes(row) for row in pixels)
+    out = b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', ihdr) + chunk(b'PLTE', plte)
+    if transparent0:
+        out += chunk(b'tRNS', b'\x00')
+    out += chunk(b'IDAT', zlib.compress(raw, 9)) + chunk(b'IEND', b'')
+    path.write_bytes(out)
+
+
 # ── Écriture asm ──────────────────────────────────────────────────────────────
 
 def write_asm(path: Path, lines):

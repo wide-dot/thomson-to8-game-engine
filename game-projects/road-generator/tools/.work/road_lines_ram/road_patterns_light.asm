@@ -11,9 +11,9 @@ Road_pshu_dx
         rts
 
 * ─── 267 routines ld (light) ───
-* uses=4  D=$7333 X=$3333
+* uses=4  D=$1333 X=$3333
 Road_R00000
-        ldd   #$7333
+        ldd   #$1333
         ldx   #$3333
         pshu  d,x
         rts
@@ -23,27 +23,27 @@ Road_R00001
         ldx   #$3333
         pshu  d,x
         rts
-* uses=2  D=$3733 X=$3333
+* uses=2  D=$3133 X=$3333
 Road_R00002
-        ldd   #$3733
+        ldd   #$3133
         ldx   #$3333
         pshu  d,x
         rts
-* uses=2  D=$7733 X=$3333
+* uses=2  D=$1133 X=$3333
 Road_R00003
-        ldd   #$7733
+        ldd   #$1133
         ldx   #$3333
         pshu  d,x
         rts
-* uses=3  D=$3333 X=$3337
+* uses=3  D=$3333 X=$3331
 Road_R00004
         ldd   #$3333
-        ldx   #$3337
+        ldx   #$3331
         pshu  d,x
         rts
-* uses=6  D=$7533 X=$3333
+* uses=6  D=$1533 X=$3333
 Road_R00005
-        ldd   #$7533
+        ldd   #$1533
         ldx   #$3333
         pshu  d,x
         rts
@@ -53,9 +53,9 @@ Road_R00006
         ldx   #$3335
         pshu  d,x
         rts
-* uses=4  D=$5733 X=$3333
+* uses=4  D=$5133 X=$3333
 Road_R00007
-        ldd   #$5733
+        ldd   #$5133
         ldx   #$3333
         pshu  d,x
         rts
@@ -89,10 +89,10 @@ Road_R00012
         ldx   #$3331
         pshu  d,x
         rts
-* uses=3  D=$3333 X=$3375
+* uses=3  D=$3333 X=$3315
 Road_R00013
         ldd   #$3333
-        ldx   #$3375
+        ldx   #$3315
         pshu  d,x
         rts
 * uses=17  D=$3333 X=$3355
@@ -101,9 +101,9 @@ Road_R00014
         ldx   #$3355
         pshu  d,x
         rts
-* uses=4  D=$5713 X=$3333
+* uses=4  D=$5113 X=$3333
 Road_R00015
-        ldd   #$5713
+        ldd   #$5113
         ldx   #$3333
         pshu  d,x
         rts
@@ -113,33 +113,33 @@ Road_R00016
         ldx   #$3333
         pshu  d,x
         rts
-* uses=7  D=$7513 X=$3333
+* uses=7  D=$1513 X=$3333
 Road_R00017
-        ldd   #$7513
+        ldd   #$1513
         ldx   #$3333
         pshu  d,x
         rts
-* uses=3  D=$5751 X=$3333
+* uses=3  D=$5151 X=$3333
 Road_R00018
-        ldd   #$5751
+        ldd   #$5151
         ldx   #$3333
         pshu  d,x
         rts
-* uses=1  D=$7573 X=$3333
+* uses=1  D=$1513 X=$3333
 Road_R00019
-        ldd   #$7573
+        ldd   #$1513
         ldx   #$3333
         pshu  d,x
         rts
-* uses=1  D=$5757 X=$3333
+* uses=1  D=$5151 X=$3333
 Road_R00020
-        ldd   #$5757
+        ldd   #$5151
         ldx   #$3333
         pshu  d,x
         rts
-* uses=1  D=$7551 X=$3333
+* uses=1  D=$1551 X=$3333
 Road_R00021
-        ldd   #$7551
+        ldd   #$1551
         ldx   #$3333
         pshu  d,x
         rts
@@ -149,9 +149,9 @@ Road_R00022
         ldx   #$3155
         pshu  d,x
         rts
-* uses=3  D=$5755 X=$3333
+* uses=3  D=$5155 X=$3333
 Road_R00023
-        ldd   #$5755
+        ldd   #$5155
         ldx   #$3333
         pshu  d,x
         rts
@@ -161,9 +161,9 @@ Road_R00024
         ldx   #$3333
         pshu  d,x
         rts
-* uses=4  D=$7555 X=$3333
+* uses=4  D=$1555 X=$3333
 Road_R00025
-        ldd   #$7555
+        ldd   #$1555
         ldx   #$3333
         pshu  d,x
         rts
@@ -179,28 +179,28 @@ Road_R00027
         ldx   #$3333
         pshu  d,x
         rts
-* uses=1  D=$7557 X=$3333
+* uses=1  D=$1551 X=$3333
 Road_R00028
-        ldd   #$7557
+        ldd   #$1551
         ldx   #$3333
         pshu  d,x
         rts
-* uses=3  D=$3333 X=$1755
+* uses=3  D=$3333 X=$1155
 Road_R00029
         ldd   #$3333
-        ldx   #$1755
+        ldx   #$1155
         pshu  d,x
         rts
-* uses=1  D=$5571 X=$3333
+* uses=1  D=$5511 X=$3333
 Road_R00030
-        ldd   #$5571
+        ldd   #$5511
         ldx   #$3333
         pshu  d,x
         rts
-* uses=1  D=$3333 X=$3357
+* uses=1  D=$3333 X=$3351
 Road_R00031
         ldd   #$3333
-        ldx   #$3357
+        ldx   #$3351
         pshu  d,x
         rts
 * uses=4  D=$3333 X=$1555
@@ -209,9 +209,9 @@ Road_R00032
         ldx   #$1555
         pshu  d,x
         rts
-* uses=1  D=$5775 X=$3333
+* uses=1  D=$5115 X=$3333
 Road_R00033
-        ldd   #$5775
+        ldd   #$5115
         ldx   #$3333
         pshu  d,x
         rts
@@ -221,16 +221,16 @@ Road_R00034
         ldx   #$3333
         pshu  d,x
         rts
-* uses=1  D=$3333 X=$3175
+* uses=1  D=$3333 X=$3115
 Road_R00035
         ldd   #$3333
-        ldx   #$3175
+        ldx   #$3115
         pshu  d,x
         rts
-* uses=6  D=$3333 X=$3157
+* uses=6  D=$3333 X=$3151
 Road_R00036
         ldd   #$3333
-        ldx   #$3157
+        ldx   #$3151
         pshu  d,x
         rts
 * uses=10  D=$3333 X=$5555
@@ -239,9 +239,9 @@ Road_R00037
         ldx   #$5555
         pshu  d,x
         rts
-* uses=1  D=$5775 X=$1333
+* uses=1  D=$5115 X=$1333
 Road_R00038
-        ldd   #$5775
+        ldd   #$5115
         ldx   #$1333
         pshu  d,x
         rts
@@ -251,21 +251,21 @@ Road_R00039
         ldx   #$3333
         pshu  d,x
         rts
-* uses=2  D=$3333 X=$1575
+* uses=2  D=$3333 X=$1515
 Road_R00040
         ldd   #$3333
-        ldx   #$1575
+        ldx   #$1515
         pshu  d,x
         rts
-* uses=1  D=$5755 X=$1333
+* uses=1  D=$5155 X=$1333
 Road_R00041
-        ldd   #$5755
+        ldd   #$5155
         ldx   #$1333
         pshu  d,x
         rts
-* uses=2  D=$7555 X=$1333
+* uses=2  D=$1555 X=$1333
 Road_R00042
-        ldd   #$7555
+        ldd   #$1555
         ldx   #$1333
         pshu  d,x
         rts
@@ -275,33 +275,33 @@ Road_R00043
         ldx   #$1155
         pshu  d,x
         rts
-* uses=1  D=$5755 X=$1133
+* uses=1  D=$5155 X=$1133
 Road_R00044
-        ldd   #$5755
+        ldd   #$5155
         ldx   #$1133
         pshu  d,x
         rts
-* uses=1  D=$5557 X=$3333
+* uses=1  D=$5551 X=$3333
 Road_R00045
-        ldd   #$5557
+        ldd   #$5551
         ldx   #$3333
         pshu  d,x
         rts
-* uses=1  D=$5755 X=$7133
+* uses=1  D=$5155 X=$1133
 Road_R00046
-        ldd   #$5755
-        ldx   #$7133
+        ldd   #$5155
+        ldx   #$1133
         pshu  d,x
         rts
-* uses=2  D=$3333 X=$7555
+* uses=2  D=$3333 X=$1555
 Road_R00047
         ldd   #$3333
-        ldx   #$7555
+        ldx   #$1555
         pshu  d,x
         rts
-* uses=1  D=$7575 X=$1133
+* uses=1  D=$1515 X=$1133
 Road_R00048
-        ldd   #$7575
+        ldd   #$1515
         ldx   #$1133
         pshu  d,x
         rts
@@ -311,16 +311,16 @@ Road_R00049
         ldx   #$5555
         pshu  d,x
         rts
-* uses=1  D=$5757 X=$5133
+* uses=1  D=$5151 X=$5133
 Road_R00050
-        ldd   #$5757
+        ldd   #$5151
         ldx   #$5133
         pshu  d,x
         rts
-* uses=7  D=$3333 X=$1157
+* uses=7  D=$3333 X=$1151
 Road_R00051
         ldd   #$3333
-        ldx   #$1157
+        ldx   #$1151
         pshu  d,x
         rts
 * uses=5  D=$5555 X=$1333
@@ -329,45 +329,45 @@ Road_R00052
         ldx   #$1333
         pshu  d,x
         rts
-* uses=1  D=$7575 X=$5133
+* uses=1  D=$1515 X=$5133
 Road_R00053
-        ldd   #$7575
+        ldd   #$1515
         ldx   #$5133
         pshu  d,x
         rts
-* uses=2  D=$3333 X=$5575
+* uses=2  D=$3333 X=$5515
 Road_R00054
         ldd   #$3333
-        ldx   #$5575
+        ldx   #$5515
         pshu  d,x
         rts
-* uses=1  D=$5757 X=$5533
+* uses=1  D=$5151 X=$5533
 Road_R00055
-        ldd   #$5757
+        ldd   #$5151
         ldx   #$5533
         pshu  d,x
         rts
-* uses=1  D=$3333 X=$1557
+* uses=1  D=$3333 X=$1551
 Road_R00056
         ldd   #$3333
-        ldx   #$1557
+        ldx   #$1551
         pshu  d,x
         rts
-* uses=1  D=$7555 X=$7133
+* uses=1  D=$1555 X=$1133
 Road_R00057
-        ldd   #$7555
-        ldx   #$7133
+        ldd   #$1555
+        ldx   #$1133
         pshu  d,x
         rts
-* uses=1  D=$5755 X=$5733
+* uses=1  D=$5155 X=$5133
 Road_R00058
-        ldd   #$5755
-        ldx   #$5733
+        ldd   #$5155
+        ldx   #$5133
         pshu  d,x
         rts
-* uses=1  D=$7555 X=$5133
+* uses=1  D=$1555 X=$5133
 Road_R00059
-        ldd   #$7555
+        ldd   #$1555
         ldx   #$5133
         pshu  d,x
         rts
@@ -377,9 +377,9 @@ Road_R00060
         ldx   #$5555
         pshu  d,x
         rts
-* uses=2  D=$5755 X=$5533
+* uses=2  D=$5155 X=$5533
 Road_R00061
-        ldd   #$5755
+        ldd   #$5155
         ldx   #$5533
         pshu  d,x
         rts
@@ -389,9 +389,9 @@ Road_R00062
         ldx   #$1133
         pshu  d,x
         rts
-* uses=1  D=$7555 X=$5533
+* uses=1  D=$1555 X=$5533
 Road_R00063
-        ldd   #$7555
+        ldd   #$1555
         ldx   #$5533
         pshu  d,x
         rts
@@ -407,93 +407,93 @@ Road_R00065
         ldx   #$5133
         pshu  d,x
         rts
-* uses=1  D=$7557 X=$5733
+* uses=1  D=$1551 X=$5133
 Road_R00066
-        ldd   #$7557
-        ldx   #$5733
+        ldd   #$1551
+        ldx   #$5133
         pshu  d,x
         rts
-* uses=1  D=$3317 X=$5755
+* uses=1  D=$3311 X=$5155
 Road_R00067
-        ldd   #$3317
-        ldx   #$5755
+        ldd   #$3311
+        ldx   #$5155
         pshu  d,x
         rts
-* uses=2  D=$5755 X=$5513
+* uses=2  D=$5155 X=$5513
 Road_R00068
-        ldd   #$5755
+        ldd   #$5155
         ldx   #$5513
         pshu  d,x
         rts
-* uses=1  D=$3333 X=$7575
+* uses=1  D=$3333 X=$1515
 Road_R00069
         ldd   #$3333
-        ldx   #$7575
+        ldx   #$1515
         pshu  d,x
         rts
-* uses=1  D=$5575 X=$7133
+* uses=1  D=$5515 X=$1133
 Road_R00070
-        ldd   #$5575
-        ldx   #$7133
+        ldd   #$5515
+        ldx   #$1133
         pshu  d,x
         rts
-* uses=1  D=$7557 X=$5533
+* uses=1  D=$1551 X=$5533
 Road_R00071
-        ldd   #$7557
+        ldd   #$1551
         ldx   #$5533
         pshu  d,x
         rts
-* uses=1  D=$3355 X=$5755
+* uses=1  D=$3355 X=$5155
 Road_R00072
         ldd   #$3355
-        ldx   #$5755
+        ldx   #$5155
         pshu  d,x
         rts
-* uses=1  D=$5575 X=$5533
+* uses=1  D=$5515 X=$5533
 Road_R00073
-        ldd   #$5575
+        ldd   #$5515
         ldx   #$5533
         pshu  d,x
         rts
-* uses=2  D=$7555 X=$5513
+* uses=2  D=$1555 X=$5513
 Road_R00074
-        ldd   #$7555
+        ldd   #$1555
         ldx   #$5513
         pshu  d,x
         rts
-* uses=2  D=$5555 X=$7133
+* uses=2  D=$5555 X=$1133
 Road_R00075
         ldd   #$5555
-        ldx   #$7133
+        ldx   #$1133
         pshu  d,x
         rts
-* uses=2  D=$3375 X=$5555
+* uses=2  D=$3315 X=$5555
 Road_R00076
-        ldd   #$3375
+        ldd   #$3315
         ldx   #$5555
         pshu  d,x
         rts
-* uses=2  D=$5755 X=$5511
+* uses=2  D=$5155 X=$5511
 Road_R00077
-        ldd   #$5755
+        ldd   #$5155
         ldx   #$5511
         pshu  d,x
         rts
-* uses=2  D=$5555 X=$5733
+* uses=2  D=$5555 X=$5133
 Road_R00078
         ldd   #$5555
-        ldx   #$5733
+        ldx   #$5133
         pshu  d,x
         rts
-* uses=4  D=$3317 X=$5555
+* uses=4  D=$3311 X=$5555
 Road_R00079
-        ldd   #$3317
+        ldd   #$3311
         ldx   #$5555
         pshu  d,x
         rts
-* uses=2  D=$7555 X=$5511
+* uses=2  D=$1555 X=$5511
 Road_R00080
-        ldd   #$7555
+        ldd   #$1555
         ldx   #$5511
         pshu  d,x
         rts
@@ -509,9 +509,9 @@ Road_R00082
         ldx   #$5555
         pshu  d,x
         rts
-* uses=1  D=$5755 X=$5551
+* uses=1  D=$5155 X=$5551
 Road_R00083
-        ldd   #$5755
+        ldd   #$5155
         ldx   #$5551
         pshu  d,x
         rts
@@ -527,81 +527,81 @@ Road_R00085
         ldx   #$5555
         pshu  d,x
         rts
-* uses=1  D=$5575 X=$5733
+* uses=1  D=$5515 X=$5133
 Road_R00086
-        ldd   #$5575
-        ldx   #$5733
+        ldd   #$5515
+        ldx   #$5133
         pshu  d,x
         rts
-* uses=1  D=$3155 X=$7555
+* uses=1  D=$3155 X=$1555
 Road_R00087
         ldd   #$3155
-        ldx   #$7555
+        ldx   #$1555
         pshu  d,x
         rts
-* uses=1  D=$5755 X=$5571
+* uses=1  D=$5155 X=$5511
 Road_R00088
-        ldd   #$5755
-        ldx   #$5571
-        pshu  d,x
-        rts
-* uses=1  D=$5557 X=$5513
-Road_R00089
-        ldd   #$5557
-        ldx   #$5513
-        pshu  d,x
-        rts
-* uses=1  D=$3375 X=$5755
-Road_R00090
-        ldd   #$3375
-        ldx   #$5755
-        pshu  d,x
-        rts
-* uses=2  D=$7555 X=$5551
-Road_R00091
-        ldd   #$7555
-        ldx   #$5551
-        pshu  d,x
-        rts
-* uses=2  D=$5575 X=$5513
-Road_R00092
-        ldd   #$5575
-        ldx   #$5513
-        pshu  d,x
-        rts
-* uses=22  D=$1155 X=$7555
-Road_R00093
-        ldd   #$1155
-        ldx   #$7555
-        pshu  d,x
-        rts
-* uses=185  D=$5755 X=$5555
-Road_R00094
-        ldd   #$5755
-        ldx   #$5555
-        pshu  d,x
-        rts
-* uses=21  D=$5557 X=$5511
-Road_R00095
-        ldd   #$5557
+        ldd   #$5155
         ldx   #$5511
         pshu  d,x
         rts
-* uses=2  D=$3155 X=$5755
+* uses=1  D=$5551 X=$5513
+Road_R00089
+        ldd   #$5551
+        ldx   #$5513
+        pshu  d,x
+        rts
+* uses=1  D=$3315 X=$5155
+Road_R00090
+        ldd   #$3315
+        ldx   #$5155
+        pshu  d,x
+        rts
+* uses=2  D=$1555 X=$5551
+Road_R00091
+        ldd   #$1555
+        ldx   #$5551
+        pshu  d,x
+        rts
+* uses=2  D=$5515 X=$5513
+Road_R00092
+        ldd   #$5515
+        ldx   #$5513
+        pshu  d,x
+        rts
+* uses=22  D=$1155 X=$1555
+Road_R00093
+        ldd   #$1155
+        ldx   #$1555
+        pshu  d,x
+        rts
+* uses=185  D=$5155 X=$5555
+Road_R00094
+        ldd   #$5155
+        ldx   #$5555
+        pshu  d,x
+        rts
+* uses=21  D=$5551 X=$5511
+Road_R00095
+        ldd   #$5551
+        ldx   #$5511
+        pshu  d,x
+        rts
+* uses=2  D=$3155 X=$5155
 Road_R00096
         ldd   #$3155
-        ldx   #$5755
+        ldx   #$5155
         pshu  d,x
         rts
-* uses=1  D=$7555 X=$5571
+* uses=1  D=$1555 X=$5511
 Road_R00097
-        ldd   #$7555
-        ldx   #$5571
+        ldd   #$1555
+        ldx   #$5511
         pshu  d,x
         rts
-* uses=2  D=$3175 X=$5555
+* uses=2  D=$3115 X=$5555
 Road_R00098
-        ldd   #$3175
+        ldd   #$3115
         ldx   #$5555
         pshu  d,x
         rts
@@ -617,15 +617,15 @@ Road_R00100
         ldx   #$5555
         pshu  d,x
         rts
-* uses=7  D=$5755 X=$5557
+* uses=7  D=$5155 X=$5551
 Road_R00101
-        ldd   #$5755
-        ldx   #$5557
+        ldd   #$5155
+        ldx   #$5551
         pshu  d,x
         rts
-* uses=361  D=$7555 X=$5555
+* uses=361  D=$1555 X=$5555
 Road_R00102
-        ldd   #$7555
+        ldd   #$1555
         ldx   #$5555
         pshu  d,x
         rts
@@ -641,21 +641,21 @@ Road_R00104
         ldx   #$5551
         pshu  d,x
         rts
-* uses=12  D=$7555 X=$5557
+* uses=12  D=$1555 X=$5551
 Road_R00105
-        ldd   #$7555
-        ldx   #$5557
+        ldd   #$1555
+        ldx   #$5551
         pshu  d,x
         rts
-* uses=5  D=$1155 X=$5755
+* uses=5  D=$1155 X=$5155
 Road_R00106
         ldd   #$1155
-        ldx   #$5755
+        ldx   #$5155
         pshu  d,x
         rts
-* uses=2  D=$1755 X=$5555
+* uses=2  D=$1155 X=$5555
 Road_R00107
-        ldd   #$1755
+        ldd   #$1155
         ldx   #$5555
         pshu  d,x
         rts
@@ -665,21 +665,21 @@ Road_R00108
         ldx   #$3333
         pshu  d,x
         rts
-* uses=5  D=$5755 X=$7555
+* uses=5  D=$5155 X=$1555
 Road_R00109
-        ldd   #$5755
-        ldx   #$7555
+        ldd   #$5155
+        ldx   #$1555
         pshu  d,x
         rts
-* uses=1  D=$5555 X=$5571
+* uses=1  D=$5555 X=$5511
 Road_R00110
         ldd   #$5555
-        ldx   #$5571
+        ldx   #$5511
         pshu  d,x
         rts
-* uses=2  D=$5557 X=$5551
+* uses=2  D=$5551 X=$5551
 Road_R00111
-        ldd   #$5557
+        ldd   #$5551
         ldx   #$5551
         pshu  d,x
         rts
@@ -689,28 +689,28 @@ Road_R00112
         ldx   #$5555
         pshu  d,x
         rts
-* uses=3  D=$1555 X=$7555
+* uses=3  D=$1555 X=$1555
 Road_R00113
         ldd   #$1555
-        ldx   #$7555
+        ldx   #$1555
         pshu  d,x
         rts
-* uses=109  D=$5555 X=$5575
+* uses=109  D=$5555 X=$5515
 Road_R00114
         ldd   #$5555
-        ldx   #$5575
+        ldx   #$5515
         pshu  d,x
         rts
-* uses=295  D=$5555 X=$5557
+* uses=295  D=$5555 X=$5551
 Road_R00115
         ldd   #$5555
-        ldx   #$5557
+        ldx   #$5551
         pshu  d,x
         rts
-* uses=6  D=$7555 X=$7555
+* uses=6  D=$1555 X=$1555
 Road_R00116
-        ldd   #$7555
-        ldx   #$7555
+        ldd   #$1555
+        ldx   #$1555
         pshu  d,x
         rts
 * uses=169  D=$3333 X=$3311
@@ -719,51 +719,51 @@ Road_R00117
         ldx   #$3311
         pshu  d,x
         rts
-* uses=4  D=$5755 X=$5755
+* uses=4  D=$5155 X=$5155
 Road_R00118
-        ldd   #$5755
-        ldx   #$5755
+        ldd   #$5155
+        ldx   #$5155
         pshu  d,x
         rts
-* uses=1  D=$1755 X=$7555
+* uses=1  D=$1155 X=$1555
 Road_R00119
-        ldd   #$1755
-        ldx   #$7555
+        ldd   #$1155
+        ldx   #$1555
         pshu  d,x
         rts
-* uses=2  D=$7133 X=$3333
+* uses=2  D=$1133 X=$3333
 Road_R00120
-        ldd   #$7133
+        ldd   #$1133
         ldx   #$3333
         pshu  d,x
         rts
-* uses=2  D=$1555 X=$5755
+* uses=2  D=$1555 X=$5155
 Road_R00121
         ldd   #$1555
-        ldx   #$5755
+        ldx   #$5155
         pshu  d,x
         rts
-* uses=71  D=$5555 X=$7555
+* uses=71  D=$5555 X=$1555
 Road_R00122
         ldd   #$5555
-        ldx   #$7555
+        ldx   #$1555
         pshu  d,x
         rts
-* uses=4  D=$7555 X=$5755
+* uses=4  D=$1555 X=$5155
 Road_R00123
-        ldd   #$7555
-        ldx   #$5755
+        ldd   #$1555
+        ldx   #$5155
         pshu  d,x
         rts
-* uses=78  D=$5557 X=$5555
+* uses=78  D=$5551 X=$5555
 Road_R00124
-        ldd   #$5557
+        ldd   #$5551
         ldx   #$5555
         pshu  d,x
         rts
-* uses=7  D=$5711 X=$3333
+* uses=7  D=$5111 X=$3333
 Road_R00125
-        ldd   #$5711
+        ldd   #$5111
         ldx   #$3333
         pshu  d,x
         rts
@@ -773,22 +773,22 @@ Road_R00126
         ldx   #$3333
         pshu  d,x
         rts
-* uses=8  D=$3333 X=$1175
+* uses=8  D=$3333 X=$1115
 Road_R00127
         ldd   #$3333
-        ldx   #$1175
+        ldx   #$1115
         pshu  d,x
         rts
-* uses=100  D=$5575 X=$5555
+* uses=100  D=$5515 X=$5555
 Road_R00128
-        ldd   #$5575
+        ldd   #$5515
         ldx   #$5555
         pshu  d,x
         rts
-* uses=90  D=$5555 X=$5755
+* uses=90  D=$5555 X=$5155
 Road_R00129
         ldd   #$5555
-        ldx   #$5755
+        ldx   #$5155
         pshu  d,x
         rts
 * uses=3  D=$3333 X=$3115
@@ -803,15 +803,15 @@ Road_R00131
         ldx   #$1333
         pshu  d,x
         rts
-* uses=1  D=$5575 X=$1333
+* uses=1  D=$5515 X=$1333
 Road_R00132
-        ldd   #$5575
+        ldd   #$5515
         ldx   #$1333
         pshu  d,x
         rts
-* uses=8  D=$5575 X=$1133
+* uses=8  D=$5515 X=$1133
 Road_R00133
-        ldd   #$5575
+        ldd   #$5515
         ldx   #$1133
         pshu  d,x
         rts
@@ -821,34 +821,34 @@ Road_R00134
         ldx   #$1555
         pshu  d,x
         rts
-* uses=10  D=$5557 X=$1133
+* uses=10  D=$5551 X=$1133
 Road_R00135
-        ldd   #$5557
+        ldd   #$5551
         ldx   #$1133
         pshu  d,x
         rts
-* uses=4  D=$5755 X=$5575
+* uses=4  D=$5155 X=$5515
 Road_R00136
-        ldd   #$5755
-        ldx   #$5575
+        ldd   #$5155
+        ldx   #$5515
         pshu  d,x
         rts
-* uses=10  D=$3311 X=$5755
+* uses=10  D=$3311 X=$5155
 Road_R00137
         ldd   #$3311
-        ldx   #$5755
+        ldx   #$5155
         pshu  d,x
         rts
-* uses=7  D=$7555 X=$5575
+* uses=7  D=$1555 X=$5515
 Road_R00138
-        ldd   #$7555
-        ldx   #$5575
+        ldd   #$1555
+        ldx   #$5515
         pshu  d,x
         rts
-* uses=11  D=$3311 X=$7555
+* uses=11  D=$3311 X=$1555
 Road_R00139
         ldd   #$3311
-        ldx   #$7555
+        ldx   #$1555
         pshu  d,x
         rts
 * uses=7  D=$5555 X=$5113
@@ -857,22 +857,22 @@ Road_R00140
         ldx   #$5113
         pshu  d,x
         rts
-* uses=1  D=$5577 X=$1133
+* uses=1  D=$5511 X=$1133
 Road_R00141
-        ldd   #$5577
+        ldd   #$5511
         ldx   #$1133
         pshu  d,x
         rts
-* uses=35  D=$5555 X=$7511
+* uses=35  D=$5555 X=$1511
 Road_R00142
         ldd   #$5555
-        ldx   #$7511
+        ldx   #$1511
         pshu  d,x
         rts
-* uses=2  D=$3311 X=$7755
+* uses=2  D=$3311 X=$1155
 Road_R00143
         ldd   #$3311
-        ldx   #$7755
+        ldx   #$1155
         pshu  d,x
         rts
 * uses=8  D=$5555 X=$5111
@@ -905,10 +905,10 @@ Road_R00148
         ldx   #$5555
         pshu  d,x
         rts
-* uses=13  D=$5555 X=$5711
+* uses=13  D=$5555 X=$5111
 Road_R00149
         ldd   #$5555
-        ldx   #$5711
+        ldx   #$5111
         pshu  d,x
         rts
 * uses=10  D=$1115 X=$5555
@@ -917,46 +917,46 @@ Road_R00150
         ldx   #$5555
         pshu  d,x
         rts
-* uses=15  D=$5555 X=$7711
+* uses=15  D=$5555 X=$1111
 Road_R00151
         ldd   #$5555
-        ldx   #$7711
+        ldx   #$1111
         pshu  d,x
         rts
-* uses=35  D=$1157 X=$5555
+* uses=35  D=$1151 X=$5555
 Road_R00152
-        ldd   #$1157
+        ldd   #$1151
         ldx   #$5555
         pshu  d,x
         rts
-* uses=593  D=$7755 X=$5555
+* uses=593  D=$1155 X=$5555
 Road_R00153
-        ldd   #$7755
+        ldd   #$1155
         ldx   #$5555
         pshu  d,x
         rts
-* uses=295  D=$5555 X=$5577
+* uses=295  D=$5555 X=$5511
 Road_R00154
         ldd   #$5555
-        ldx   #$5577
+        ldx   #$5511
         pshu  d,x
         rts
-* uses=13  D=$1175 X=$5555
+* uses=13  D=$1115 X=$5555
 Road_R00155
-        ldd   #$1175
+        ldd   #$1115
         ldx   #$5555
         pshu  d,x
         rts
-* uses=14  D=$1177 X=$5555
+* uses=14  D=$1111 X=$5555
 Road_R00156
-        ldd   #$1177
+        ldd   #$1111
         ldx   #$5555
         pshu  d,x
         rts
-* uses=1  D=$7555 X=$5577
+* uses=1  D=$1555 X=$5511
 Road_R00157
-        ldd   #$7555
-        ldx   #$5577
+        ldd   #$1555
+        ldx   #$5511
         pshu  d,x
         rts
 * uses=51  D=$1113 X=$3333
@@ -989,9 +989,9 @@ Road_R00162
         ldx   #$1111
         pshu  d,x
         rts
-* uses=6  D=$7511 X=$3333
+* uses=6  D=$1511 X=$3333
 Road_R00163
-        ldd   #$7511
+        ldd   #$1511
         ldx   #$3333
         pshu  d,x
         rts
@@ -1001,28 +1001,28 @@ Road_R00164
         ldx   #$1115
         pshu  d,x
         rts
-* uses=5  D=$7511 X=$1333
+* uses=5  D=$1511 X=$1333
 Road_R00165
-        ldd   #$7511
+        ldd   #$1511
         ldx   #$1333
         pshu  d,x
         rts
-* uses=4  D=$7711 X=$1333
+* uses=4  D=$1111 X=$1333
 Road_R00166
-        ldd   #$7711
+        ldd   #$1111
         ldx   #$1333
         pshu  d,x
         rts
-* uses=9  D=$5711 X=$1133
+* uses=9  D=$5111 X=$1133
 Road_R00167
-        ldd   #$5711
+        ldd   #$5111
         ldx   #$1133
         pshu  d,x
         rts
-* uses=7  D=$3331 X=$1157
+* uses=7  D=$3331 X=$1151
 Road_R00168
         ldd   #$3331
-        ldx   #$1157
+        ldx   #$1151
         pshu  d,x
         rts
 * uses=8  D=$5551 X=$1133
@@ -1031,106 +1031,106 @@ Road_R00169
         ldx   #$1133
         pshu  d,x
         rts
-* uses=1  D=$3331 X=$1177
+* uses=1  D=$3331 X=$1111
 Road_R00170
         ldd   #$3331
-        ldx   #$1177
+        ldx   #$1111
         pshu  d,x
         rts
-* uses=7  D=$3311 X=$1175
+* uses=7  D=$3311 X=$1115
 Road_R00171
         ldd   #$3311
-        ldx   #$1175
+        ldx   #$1115
         pshu  d,x
         rts
-* uses=2  D=$7711 X=$1133
+* uses=2  D=$1111 X=$1133
 Road_R00172
-        ldd   #$7711
+        ldd   #$1111
         ldx   #$1133
         pshu  d,x
         rts
-* uses=4  D=$3311 X=$1575
+* uses=4  D=$3311 X=$1515
 Road_R00173
         ldd   #$3311
-        ldx   #$1575
+        ldx   #$1515
         pshu  d,x
         rts
-* uses=5  D=$5575 X=$1113
+* uses=5  D=$5515 X=$1113
 Road_R00174
-        ldd   #$5575
+        ldd   #$5515
         ldx   #$1113
         pshu  d,x
         rts
-* uses=2  D=$5751 X=$1133
+* uses=2  D=$5151 X=$1133
 Road_R00175
-        ldd   #$5751
+        ldd   #$5151
         ldx   #$1133
         pshu  d,x
         rts
-* uses=5  D=$3311 X=$1177
+* uses=5  D=$3311 X=$1111
 Road_R00176
         ldd   #$3311
-        ldx   #$1177
+        ldx   #$1111
         pshu  d,x
         rts
-* uses=12  D=$5577 X=$1111
+* uses=12  D=$5511 X=$1111
 Road_R00177
-        ldd   #$5577
+        ldd   #$5511
         ldx   #$1111
         pshu  d,x
         rts
-* uses=23  D=$5575 X=$1111
+* uses=23  D=$5515 X=$1111
 Road_R00178
-        ldd   #$5575
+        ldd   #$5515
         ldx   #$1111
         pshu  d,x
         rts
-* uses=6  D=$5557 X=$1111
+* uses=6  D=$5551 X=$1111
 Road_R00179
-        ldd   #$5557
+        ldd   #$5551
         ldx   #$1111
         pshu  d,x
         rts
-* uses=206  D=$5577 X=$5555
+* uses=206  D=$5511 X=$5555
 Road_R00180
-        ldd   #$5577
+        ldd   #$5511
         ldx   #$5555
         pshu  d,x
         rts
-* uses=5  D=$3311 X=$1157
+* uses=5  D=$3311 X=$1151
 Road_R00181
         ldd   #$3311
-        ldx   #$1157
+        ldx   #$1151
         pshu  d,x
         rts
-* uses=1  D=$3111 X=$5755
+* uses=1  D=$3111 X=$5155
 Road_R00182
         ldd   #$3111
-        ldx   #$5755
+        ldx   #$5155
         pshu  d,x
         rts
-* uses=25  D=$1111 X=$5755
+* uses=25  D=$1111 X=$5155
 Road_R00183
         ldd   #$1111
-        ldx   #$5755
+        ldx   #$5155
         pshu  d,x
         rts
-* uses=5  D=$5557 X=$5111
+* uses=5  D=$5551 X=$5111
 Road_R00184
-        ldd   #$5557
+        ldd   #$5551
         ldx   #$5111
         pshu  d,x
         rts
-* uses=12  D=$1111 X=$7755
+* uses=12  D=$1111 X=$1155
 Road_R00185
         ldd   #$1111
-        ldx   #$7755
+        ldx   #$1155
         pshu  d,x
         rts
-* uses=4  D=$1111 X=$7555
+* uses=4  D=$1111 X=$1555
 Road_R00186
         ldd   #$1111
-        ldx   #$7555
+        ldx   #$1555
         pshu  d,x
         rts
 * uses=1  D=$3111 X=$1555
@@ -1139,10 +1139,10 @@ Road_R00187
         ldx   #$1555
         pshu  d,x
         rts
-* uses=7  D=$1115 X=$7555
+* uses=7  D=$1115 X=$1555
 Road_R00188
         ldd   #$1115
-        ldx   #$7555
+        ldx   #$1555
         pshu  d,x
         rts
 * uses=6  D=$1111 X=$5555
@@ -1151,27 +1151,27 @@ Road_R00189
         ldx   #$5555
         pshu  d,x
         rts
-* uses=194  D=$5555 X=$7755
+* uses=194  D=$5555 X=$1155
 Road_R00190
         ldd   #$5555
-        ldx   #$7755
+        ldx   #$1155
         pshu  d,x
         rts
-* uses=8  D=$5555 X=$5751
+* uses=8  D=$5555 X=$5151
 Road_R00191
         ldd   #$5555
-        ldx   #$5751
+        ldx   #$5151
         pshu  d,x
         rts
-* uses=8  D=$1575 X=$5555
+* uses=8  D=$1515 X=$5555
 Road_R00192
-        ldd   #$1575
+        ldd   #$1515
         ldx   #$5555
         pshu  d,x
         rts
-* uses=17  D=$1577 X=$5555
+* uses=17  D=$1511 X=$5555
 Road_R00193
-        ldd   #$1577
+        ldd   #$1511
         ldx   #$5555
         pshu  d,x
         rts
@@ -1211,9 +1211,9 @@ Road_R00199
         ldx   #$1115
         pshu  d,x
         rts
-* uses=8  D=$7511 X=$1133
+* uses=8  D=$1511 X=$1133
 Road_R00200
-        ldd   #$7511
+        ldd   #$1511
         ldx   #$1133
         pshu  d,x
         rts
@@ -1229,52 +1229,52 @@ Road_R00202
         ldx   #$1115
         pshu  d,x
         rts
-* uses=5  D=$7711 X=$1113
+* uses=5  D=$1111 X=$1113
 Road_R00203
-        ldd   #$7711
+        ldd   #$1111
         ldx   #$1113
         pshu  d,x
         rts
-* uses=1  D=$7751 X=$1113
+* uses=1  D=$1151 X=$1113
 Road_R00204
-        ldd   #$7751
+        ldd   #$1151
         ldx   #$1113
         pshu  d,x
         rts
-* uses=17  D=$7751 X=$1111
+* uses=17  D=$1151 X=$1111
 Road_R00205
-        ldd   #$7751
+        ldd   #$1151
         ldx   #$1111
         pshu  d,x
         rts
-* uses=4  D=$5751 X=$1111
+* uses=4  D=$5151 X=$1111
 Road_R00206
-        ldd   #$5751
+        ldd   #$5151
         ldx   #$1111
         pshu  d,x
         rts
-* uses=6  D=$3111 X=$1157
+* uses=6  D=$3111 X=$1151
 Road_R00207
         ldd   #$3111
-        ldx   #$1157
+        ldx   #$1151
         pshu  d,x
         rts
-* uses=18  D=$5755 X=$1111
+* uses=18  D=$5155 X=$1111
 Road_R00208
-        ldd   #$5755
+        ldd   #$5155
         ldx   #$1111
         pshu  d,x
         rts
-* uses=2  D=$7511 X=$1113
+* uses=2  D=$1511 X=$1113
 Road_R00209
-        ldd   #$7511
+        ldd   #$1511
         ldx   #$1113
         pshu  d,x
         rts
-* uses=2  D=$3111 X=$1177
+* uses=2  D=$3111 X=$1111
 Road_R00210
         ldd   #$3111
-        ldx   #$1177
+        ldx   #$1111
         pshu  d,x
         rts
 * uses=6  D=$5555 X=$1111
@@ -1283,58 +1283,58 @@ Road_R00211
         ldx   #$1111
         pshu  d,x
         rts
-* uses=5  D=$1111 X=$1177
+* uses=5  D=$1111 X=$1111
 Road_R00212
         ldd   #$1111
-        ldx   #$1177
-        pshu  d,x
-        rts
-* uses=3  D=$7711 X=$1111
-Road_R00213
-        ldd   #$7711
         ldx   #$1111
         pshu  d,x
         rts
-* uses=19  D=$1111 X=$1577
+* uses=3  D=$1111 X=$1111
+Road_R00213
+        ldd   #$1111
+        ldx   #$1111
+        pshu  d,x
+        rts
+* uses=19  D=$1111 X=$1511
 Road_R00214
         ldd   #$1111
-        ldx   #$1577
+        ldx   #$1511
         pshu  d,x
         rts
-* uses=1  D=$1111 X=$1575
+* uses=1  D=$1111 X=$1515
 Road_R00215
         ldd   #$1111
-        ldx   #$1575
+        ldx   #$1515
         pshu  d,x
         rts
-* uses=18  D=$1111 X=$5575
+* uses=18  D=$1111 X=$5515
 Road_R00216
         ldd   #$1111
-        ldx   #$5575
+        ldx   #$5515
         pshu  d,x
         rts
-* uses=22  D=$5577 X=$5111
+* uses=22  D=$5511 X=$5111
 Road_R00217
-        ldd   #$5577
+        ldd   #$5511
         ldx   #$5111
         pshu  d,x
         rts
-* uses=20  D=$1115 X=$7755
+* uses=20  D=$1115 X=$1155
 Road_R00218
         ldd   #$1115
-        ldx   #$7755
+        ldx   #$1155
         pshu  d,x
         rts
-* uses=17  D=$5555 X=$7751
+* uses=17  D=$5555 X=$1151
 Road_R00219
         ldd   #$5555
-        ldx   #$7751
+        ldx   #$1151
         pshu  d,x
         rts
-* uses=45  D=$1155 X=$7755
+* uses=45  D=$1155 X=$1155
 Road_R00220
         ldd   #$1155
-        ldx   #$7755
+        ldx   #$1155
         pshu  d,x
         rts
 * uses=70  D=$1111 X=$1133
@@ -1379,9 +1379,9 @@ Road_R00227
         ldx   #$1155
         pshu  d,x
         rts
-* uses=13  D=$7511 X=$1111
+* uses=13  D=$1511 X=$1111
 Road_R00228
-        ldd   #$7511
+        ldd   #$1511
         ldx   #$1111
         pshu  d,x
         rts
@@ -1391,88 +1391,88 @@ Road_R00229
         ldx   #$1155
         pshu  d,x
         rts
-* uses=12  D=$1111 X=$1157
+* uses=12  D=$1111 X=$1151
 Road_R00230
         ldd   #$1111
-        ldx   #$1157
+        ldx   #$1151
         pshu  d,x
         rts
-* uses=45  D=$7755 X=$1111
+* uses=45  D=$1155 X=$1111
 Road_R00231
-        ldd   #$7755
+        ldd   #$1155
         ldx   #$1111
         pshu  d,x
         rts
-* uses=43  D=$1111 X=$5577
+* uses=43  D=$1111 X=$5511
 Road_R00232
         ldd   #$1111
-        ldx   #$5577
-        pshu  d,x
-        rts
-* uses=3  D=$5775 X=$1111
-Road_R00233
-        ldd   #$5775
-        ldx   #$1111
-        pshu  d,x
-        rts
-* uses=5  D=$1111 X=$5775
-Road_R00234
-        ldd   #$1111
-        ldx   #$5775
-        pshu  d,x
-        rts
-* uses=44  D=$5577 X=$5511
-Road_R00235
-        ldd   #$5577
         ldx   #$5511
         pshu  d,x
         rts
-* uses=39  D=$5775 X=$5555
+* uses=3  D=$5115 X=$1111
+Road_R00233
+        ldd   #$5115
+        ldx   #$1111
+        pshu  d,x
+        rts
+* uses=5  D=$1111 X=$5115
+Road_R00234
+        ldd   #$1111
+        ldx   #$5115
+        pshu  d,x
+        rts
+* uses=44  D=$5511 X=$5511
+Road_R00235
+        ldd   #$5511
+        ldx   #$5511
+        pshu  d,x
+        rts
+* uses=39  D=$5115 X=$5555
 Road_R00236
-        ldd   #$5775
+        ldd   #$5115
         ldx   #$5555
         pshu  d,x
         rts
-* uses=3  D=$1115 X=$5755
+* uses=3  D=$1115 X=$5155
 Road_R00237
         ldd   #$1115
-        ldx   #$5755
+        ldx   #$5155
         pshu  d,x
         rts
-* uses=2  D=$5575 X=$5111
+* uses=2  D=$5515 X=$5111
 Road_R00238
-        ldd   #$5575
+        ldd   #$5515
         ldx   #$5111
         pshu  d,x
         rts
-* uses=31  D=$5555 X=$5775
+* uses=31  D=$5555 X=$5115
 Road_R00239
         ldd   #$5555
-        ldx   #$5775
+        ldx   #$5115
         pshu  d,x
         rts
-* uses=4  D=$5557 X=$7511
+* uses=4  D=$5551 X=$1511
 Road_R00240
-        ldd   #$5557
-        ldx   #$7511
+        ldd   #$5551
+        ldx   #$1511
         pshu  d,x
         rts
-* uses=3  D=$5555 X=$7551
+* uses=3  D=$5555 X=$1551
 Road_R00241
         ldd   #$5555
-        ldx   #$7551
+        ldx   #$1551
         pshu  d,x
         rts
-* uses=22  D=$5557 X=$7555
+* uses=22  D=$5551 X=$1555
 Road_R00242
-        ldd   #$5557
-        ldx   #$7555
+        ldd   #$5551
+        ldx   #$1555
         pshu  d,x
         rts
-* uses=3  D=$1157 X=$7555
+* uses=3  D=$1151 X=$1555
 Road_R00243
-        ldd   #$1157
-        ldx   #$7555
+        ldd   #$1151
+        ldx   #$1555
         pshu  d,x
         rts
 * uses=16  D=$1111 X=$1113
@@ -1481,9 +1481,9 @@ Road_R00244
         ldx   #$1113
         pshu  d,x
         rts
-* uses=4  D=$1557 X=$5555
+* uses=4  D=$1551 X=$5555
 Road_R00245
-        ldd   #$1557
+        ldd   #$1551
         ldx   #$5555
         pshu  d,x
         rts
@@ -1511,87 +1511,87 @@ Road_R00249
         ldx   #$1115
         pshu  d,x
         rts
-* uses=13  D=$7551 X=$1111
+* uses=13  D=$1551 X=$1111
 Road_R00250
-        ldd   #$7551
+        ldd   #$1551
         ldx   #$1111
         pshu  d,x
         rts
-* uses=11  D=$1111 X=$1557
+* uses=11  D=$1111 X=$1551
 Road_R00251
         ldd   #$1111
-        ldx   #$1557
+        ldx   #$1551
         pshu  d,x
         rts
-* uses=8  D=$5775 X=$5111
+* uses=8  D=$5115 X=$5111
 Road_R00252
-        ldd   #$5775
+        ldd   #$5115
         ldx   #$5111
         pshu  d,x
         rts
-* uses=8  D=$1115 X=$5775
+* uses=8  D=$1115 X=$5115
 Road_R00253
         ldd   #$1115
-        ldx   #$5775
+        ldx   #$5115
         pshu  d,x
         rts
-* uses=9  D=$5557 X=$7551
+* uses=9  D=$5551 X=$1551
 Road_R00254
-        ldd   #$5557
-        ldx   #$7551
+        ldd   #$5551
+        ldx   #$1551
         pshu  d,x
         rts
-* uses=7  D=$1557 X=$7555
+* uses=7  D=$1551 X=$1555
 Road_R00255
-        ldd   #$1557
-        ldx   #$7555
+        ldd   #$1551
+        ldx   #$1555
         pshu  d,x
         rts
-* uses=2  D=$1557 X=$7755
+* uses=2  D=$1551 X=$1155
 Road_R00256
-        ldd   #$1557
-        ldx   #$7755
+        ldd   #$1551
+        ldx   #$1155
         pshu  d,x
         rts
-* uses=1  D=$5557 X=$7755
+* uses=1  D=$5551 X=$1155
 Road_R00257
-        ldd   #$5557
-        ldx   #$7755
+        ldd   #$5551
+        ldx   #$1155
         pshu  d,x
         rts
-* uses=3  D=$5555 X=$7775
+* uses=3  D=$5555 X=$1115
 Road_R00258
         ldd   #$5555
-        ldx   #$7775
+        ldx   #$1115
         pshu  d,x
         rts
-* uses=2  D=$5577 X=$7555
+* uses=2  D=$5511 X=$1555
 Road_R00259
-        ldd   #$5577
-        ldx   #$7555
+        ldd   #$5511
+        ldx   #$1555
         pshu  d,x
         rts
-* uses=1  D=$1555 X=$7755
+* uses=1  D=$1555 X=$1155
 Road_R00260
         ldd   #$1555
-        ldx   #$7755
+        ldx   #$1155
         pshu  d,x
         rts
-* uses=4  D=$5555 X=$5777
+* uses=4  D=$5555 X=$5111
 Road_R00261
         ldd   #$5555
-        ldx   #$5777
+        ldx   #$5111
         pshu  d,x
         rts
-* uses=8  D=$7775 X=$5555
+* uses=8  D=$1115 X=$5555
 Road_R00262
-        ldd   #$7775
+        ldd   #$1115
         ldx   #$5555
         pshu  d,x
         rts
-* uses=5  D=$5777 X=$5555
+* uses=5  D=$5111 X=$5555
 Road_R00263
-        ldd   #$5777
+        ldd   #$5111
         ldx   #$5555
         pshu  d,x
         rts
@@ -1601,9 +1601,9 @@ Road_R00264
         ldx   #$1111
         pshu  d,x
         rts
-* uses=2  D=$7555 X=$1111
+* uses=2  D=$1555 X=$1111
 Road_R00265
-        ldd   #$7555
+        ldd   #$1555
         ldx   #$1111
         pshu  d,x
         rts
