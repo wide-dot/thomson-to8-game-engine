@@ -3,10 +3,18 @@
 Buffers route TO8 v4 — modèle fdb + extraction prélude/épilogue d'herbe.
 
 Architecture :
-- 1 image source : normal_dark.png (PNG indexes 1..16, 0=transparent)
+- 1 image source : normal_dark.png (PNG indexes 1..16, 0=transparent), copiée
+  telle quelle en .work/master.png = l'unique entrée effective du traitement.
+- 1 mapping couleur : index_map.json (à côté du source, ou --index-map).
+  Chaque index PNG source (= un rôle : rumble/grass/asphalt/lines) est projeté
+  vers un nibble TO8 par bank : {"lines": {"source": 7, "dark": 6, "light": 7}}.
+  Tout le pipeline (chunking, herbe, dédup) travaille en espace CANONIQUE
+  (nibble = index PNG − 1) ; les tables dark/light ne sont appliquées qu'à
+  l'émission des immédiats ldd/ldx. index_map_identity.json reproduit la
+  sortie historique (dark = identité, light = +1) byte-identique.
 - 3 binaires générés :
   • road_patterns_dark.asm  (ORG $4000) : Road_pshu_dx + Road_R* + Road_draw_KX_JY (dark)
-  • road_patterns_light.asm (ORG $4000) : structure identique (+1 mod 16)
+  • road_patterns_light.asm (ORG $4000) : structure identique, nibbles remappés
   • road_buffers.asm        (ORG $0000) : buffers fdb (header K,M,J + cœur) + Road_lines
 
 Modèle d'exécution (côté appelant, hors générateur) :
@@ -50,13 +58,15 @@ Usage (depuis project root) :
 Outputs :
     game-mode/road/generated/      (= bin patterns + asm/inc inclus dans résident)
     objects/road-buffers/generated/ (= road_buffers.bin INCLUDEBIN'é par wrapper)
-    tools/.work/road_lines_ram/    (= intermédiaires lwasm .asm/.map/.lst, caché)
+    tools/.work/road_lines_ram/    (= master.png + previews + intermédiaires lwasm)
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import re
+import shutil
 import sys
 from collections import Counter
 from pathlib import Path
@@ -67,6 +77,7 @@ from road_common import (
     pixels_to_bm16,
     read_png_indexed,
     write_asm,
+    write_png_indexed,
 )
 
 # ── Constantes ────────────────────────────────────────────────────────────────
@@ -103,10 +114,124 @@ LINES_TABLE_ORG = 0x0000   # blob relocatable, addresses Line_NNNN absolues
 PSHU_LABEL = 'Road_pshu_dx'
 
 
-# ── dark → light ─────────────────────────────────────────────────────────────
+# ── Mapping index couleur (index_map.json) ───────────────────────────────────
+# Espace CANONIQUE = nibble (index PNG − 1), tel que produit par pixels_to_bm16.
+# Le mapping projette chaque nibble canonique vers le nibble TO8 de chaque bank.
 
-def transform_to_light(row):
-    return [0 if p == 0 else (p % 16) + 1 for p in row]
+INDEX_MAP_DEFAULT = 'index_map.json'
+PALETTES = ('dark', 'light')
+
+
+def load_index_map(path: Path):
+    """Charge index_map.json → {'dark': [16], 'light': [16]} (None = non mappé)
+       + rôles pour les logs. Clés '_*' ignorées (commentaires)."""
+    data = json.loads(path.read_text())
+    nib_maps = {pal: [None] * 16 for pal in PALETTES}
+    roles = {}                                   # canonical nibble → role name
+    for role, spec in data.items():
+        if role.startswith('_'):
+            continue
+        src = spec['source']
+        if not (1 <= src <= 16):
+            raise ValueError(f"{path.name}: '{role}' source={src} hors 1..16")
+        canon = src - 1
+        if canon in roles:
+            raise ValueError(f"{path.name}: source {src} déclaré deux fois "
+                             f"('{roles[canon]}' et '{role}')")
+        roles[canon] = role
+        for pal in PALETTES:
+            v = spec[pal]
+            if not (0 <= v <= 15):
+                raise ValueError(f"{path.name}: '{role}' {pal}={v} hors 0..15")
+            nib_maps[pal][canon] = v
+    if not roles:
+        raise ValueError(f"{path.name}: aucun rôle défini")
+    return nib_maps, roles
+
+
+def check_map_coverage(pixels, roles, map_path: Path):
+    """Vérifie que chaque index PNG non-transparent de l'image a un rôle mappé."""
+    used = set()
+    for row in pixels:
+        used.update(row)
+    used.discard(0)
+    missing = sorted(p for p in used if (p - 1) not in roles)
+    if missing:
+        raise ValueError(
+            f"index PNG {missing} présents dans l'image mais absents de "
+            f"{map_path.name} — compléter le mapping")
+    unused = sorted(roles[c] for c in roles if (c + 1) not in used)
+    if unused:
+        print(f"  ⚠ rôles mappés mais absents de l'image : {', '.join(unused)}")
+    return sorted(p - 1 for p in used)
+
+
+def map_nibbles(word, nmap):
+    """Applique nmap (list[16]) aux 4 nibbles d'un mot 16 bits."""
+    out = 0
+    for shift in (12, 8, 4, 0):
+        n = (word >> shift) & 0xF
+        m = nmap[n]
+        if m is None:
+            raise ValueError(f"nibble canonique {n} non mappé (mot ${word:04X})")
+        out |= m << shift
+    return out
+
+
+def map_ops(ops, nmap):
+    """Applique map_nibbles aux immédiats d'un chunk_load_ops."""
+    return tuple((mn, map_nibbles(val, nmap)) for mn, val in ops)
+
+
+# ── Master + previews (.work) ────────────────────────────────────────────────
+
+def _load_preview_palette():
+    """Palette TO8 pour les previews : tools/_palette.json (entrée i = couleur
+       du nibble TO8 i−1, entrée 0 = transparent). Fallback : niveaux de gris."""
+    pal_json = Path(__file__).resolve().parent / '_palette.json'
+    colors = [(0, 0, 0)] * 17
+    if pal_json.exists():
+        hexes = json.loads(pal_json.read_text())
+        for i, h in enumerate(hexes[:17]):
+            colors[i] = tuple(int(h[j:j + 2], 16) for j in (1, 3, 5))
+    else:
+        for i in range(1, 17):
+            colors[i] = ((i - 1) * 17,) * 3
+    return colors
+
+
+def prepare_master_and_previews(src_dir: Path, work_dir: Path,
+                                nib_maps, roles, map_path: Path):
+    """Copie le source en .work/master.png (= l'unique entrée effective, en
+       espace source), vérifie la couverture du mapping, puis émet
+       preview_dark/light.png = master avec les nibbles remappés + vraie
+       palette, pour contrôle visuel du mapping. Les previews sont des
+       ARTEFACTS régénérés à chaque run, jamais des entrées."""
+    src = src_dir / f"{SRC_VARIANT}.png"
+    if not src.exists():
+        raise FileNotFoundError(f"PNG absent : {src}")
+    master = work_dir / 'master.png'
+    shutil.copyfile(src, master)
+    print(f"  master : {src} → {master.relative_to(Path.cwd())}")
+
+    width, height, pixels = read_png_indexed(master)
+    used_canon = check_map_coverage(pixels, roles, map_path)
+    for canon in used_canon:
+        maps = ' '.join(f"{pal}={nib_maps[pal][canon]}" for pal in PALETTES)
+        print(f"    {roles[canon]:<8} (source {canon + 1}) → {maps}")
+    to8_used = sorted({nib_maps[pal][c] for pal in PALETTES for c in used_canon})
+    free_low = sorted(set(range(8)) - set(to8_used))
+    print(f"  index TO8 consommés : {to8_used}  (libres dans 0..7 : {free_low})")
+
+    palette = _load_preview_palette()
+    for pal in PALETTES:
+        nmap = nib_maps[pal]
+        out = [[0 if p == 0 else nmap[(p - 1) & 0x0F] + 1 for p in row]
+               for row in pixels]
+        path = work_dir / f'preview_{pal}.png'
+        write_png_indexed(path, width, height, out, palette)
+        print(f"  preview {pal:<5} : {path.relative_to(Path.cwd())}")
+    return master
 
 
 # ── Chunking ─────────────────────────────────────────────────────────────────
@@ -184,28 +309,27 @@ def measure_grass_pixels(content_d, grass_pix, chunk_px=CHUNK_SCREEN_PX_RAM):
 # ── Pool ─────────────────────────────────────────────────────────────────────
 
 class RoadPool:
-    def __init__(self):
-        self.usage: Counter = Counter()              # ops_d → count
-        self.label_map: dict[tuple, str] = {}        # ops_d → Road_RNNNNN
-        self.light_map: dict[tuple, tuple] = {}      # ops_d → ops_l
+    def __init__(self, nib_maps):
+        self.nib_maps = nib_maps                     # {'dark': [16], 'light': [16]}
+        self.usage: Counter = Counter()              # ops canonique → count
+        self.label_map: dict[tuple, str] = {}        # ops canonique → Road_RNNNNN
         self._id = 0
-        self.grass_value: tuple | None = None        # 4-tuple bytes
-        self.grass_ops_d: tuple | None = None        # load_ops dark de l'herbe
-        self.grass_ops_l: tuple | None = None        # load_ops light de l'herbe
+        self.grass_value: tuple | None = None        # 4-tuple bytes canoniques
+        self.grass_ops: dict[str, tuple] = {}        # palette → load_ops herbe mappés
         self.kmj_records: list[tuple] = []           # (K, M, J) par buffer logique
 
-    def set_grass(self, grass_bytes_d, grass_bytes_l):
-        self.grass_value = grass_bytes_d
-        self.grass_ops_d = chunk_load_ops(grass_bytes_d)
-        self.grass_ops_l = chunk_load_ops(grass_bytes_l)
+    def set_grass(self, grass_bytes):
+        self.grass_value = grass_bytes
+        ops_c = chunk_load_ops(grass_bytes)
+        for pal in PALETTES:
+            self.grass_ops[pal] = map_ops(ops_c, self.nib_maps[pal])
 
-    def register(self, ops_d, ops_l):
-        if ops_d not in self.label_map:
-            self.label_map[ops_d] = f"Road_R{self._id:05d}"
-            self.light_map[ops_d] = ops_l
+    def register(self, ops_c):
+        if ops_c not in self.label_map:
+            self.label_map[ops_c] = f"Road_R{self._id:05d}"
             self._id += 1
-        self.usage[ops_d] += 1
-        return self.label_map[ops_d]
+        self.usage[ops_c] += 1
+        return self.label_map[ops_c]
 
     def record_kmj(self, K, M, J):
         self.kmj_records.append((K, M, J))
@@ -239,18 +363,17 @@ class RoadPool:
         lines.append("        rts")
         lines.append("")
         lines.append(f"* ─── {len(self.label_map)} routines ld ({palette}) ───")
-        for ops_d, label in sorted(self.label_map.items(), key=lambda kv: kv[1]):
-            ops = ops_d if palette == 'dark' else self.light_map[ops_d]
-            (_, d), (_, x) = ops
-            lines.append(f"* uses={self.usage[ops_d]}  D=${d:04X} X=${x:04X}")
+        nmap = self.nib_maps[palette]
+        for ops_c, label in sorted(self.label_map.items(), key=lambda kv: kv[1]):
+            (_, d), (_, x) = map_ops(ops_c, nmap)
+            lines.append(f"* uses={self.usage[ops_c]}  D=${d:04X} X=${x:04X}")
             lines.append(label)
             lines.append(f"        ldd   #${d:04X}")
             lines.append(f"        ldx   #${x:04X}")
             lines.append("        pshu  d,x")
             lines.append("        rts")
         # variants
-        grass = self.grass_ops_d if palette == 'dark' else self.grass_ops_l
-        (_, g_d), (_, g_x) = grass
+        (_, g_d), (_, g_x) = self.grass_ops[palette]
         lines.append("")
         lines.append(f"* ─── {len(variant_set)} variants Road_draw_KX_JY ({palette}) ───")
         lines.append(f"*   herbe : D=${g_d:04X} X=${g_x:04X}")
@@ -348,7 +471,7 @@ class BufferStore:
 
 # ── Construction du cœur fdb ─────────────────────────────────────────────────
 
-def build_core_labels(core_chunks_d, core_chunks_l, J, pool: RoadPool) -> tuple:
+def build_core_labels(core_chunks, J, pool: RoadPool) -> tuple:
     """Construit la séquence fdb du cœur. Chaque chunk = pattern PLEIN (ldd/ldx/pshu).
 
        L'héritage PSHU_LABEL (= un chunk identique au précédent réutilisait son D/X
@@ -357,20 +480,22 @@ def build_core_labels(core_chunks_d, core_chunks_l, J, pool: RoadPool) -> tuple:
        parasites sur une banque (cf. artefact ligne 164). L'optim ne couvrait que
        ~1.1 % des chunks (75/6944) → gain négligeable, risque élevé. Les patterns
        pleins existent déjà dans le pool → coût mémoire ~nul. (J : non utilisé,
-       conservé pour la signature.)"""
+       conservé pour la signature.)
+
+       Dédup en espace CANONIQUE : deux chunks fusionnent ssi leurs pixels source
+       sont identiques — jamais parce qu'un mapping les rend identiques dans UNE
+       seule bank (les deux banks émettent la même liste de routines)."""
     labels = []
-    for i, chunk_d in enumerate(core_chunks_d):
-        ops_d = chunk_load_ops(chunk_d)
-        ops_l = chunk_load_ops(core_chunks_l[i])
-        labels.append(pool.register(ops_d, ops_l))
+    for chunk in core_chunks:
+        labels.append(pool.register(chunk_load_ops(chunk)))
     return tuple(labels)
 
 
 # ── Pass 1 : collecte des chunks par buffer logique ──────────────────────────
 
-def collect_all_chunks(src_dir: Path):
-    """Renvoie list[ (line_idx, dict {(shift,plane): (chunks_d, chunks_l)} ) ]
-       et la hauteur de l'image.
+def collect_all_chunks(png: Path):
+    """Renvoie list[ (line_idx, dict {(shift,plane): chunks canoniques} ) ]
+       et la hauteur de l'image. `png` = le master (copie .work du source).
 
        Pipeline de padding en deux étapes :
        1. Pad LEFT : ajoute `start` px de grass à gauche du content naturel,
@@ -379,7 +504,6 @@ def collect_all_chunks(src_dir: Path):
        2. Pad RIGHT : ajoute juste ce qu'il faut pour que la longueur totale
           soit un multiple de CHUNK_SCREEN_PX_RAM (= 16 px).
        Couleur de pad = leftmost pixel de la ligne la plus large (= grass)."""
-    png = src_dir / f"{SRC_VARIANT}.png"
     if not png.exists():
         raise FileNotFoundError(f"PNG absent : {png}")
     _, height, pixels = read_png_indexed(png)
@@ -422,7 +546,6 @@ def collect_all_chunks(src_dir: Path):
                 n_padded_left += 1
             if pad_right > 0:
                 n_padded_right += 1
-            content_l = transform_to_light(content_d)
             entry = {}
 
             # ── Découpage cœur (K,M,J) INVARIANT au shift s0/s1 ──────────────
@@ -443,12 +566,11 @@ def collect_all_chunks(src_dir: Path):
             J_shift = {}
             for shift in (0, 1):
                 if shift == 0:
-                    sd, sl = list(content_d), list(content_l)
+                    sd = list(content_d)
                 else:
                     # s1 = rotation droite 1 px en content = affichage 1 px à droite
                     sd = content_d[-1:] + content_d[:-1]
-                    sl = content_l[-1:] + content_l[:-1]
-                shift_content[shift] = (sd, sl)
+                shift_content[shift] = sd
                 # K/J unifiés basés sur pixels de sd (= mêmes pour RAMA et RAMB).
                 K_uni, J_uni = measure_grass_pixels(sd, grass_pix)
 
@@ -466,18 +588,11 @@ def collect_all_chunks(src_dir: Path):
             J_common = min(J_shift[0], J_shift[1])
 
             for shift in (0, 1):
-                sd, sl = shift_content[shift]
+                sd = shift_content[shift]
                 entry[(shift, 'kj_uni')] = (K_common, J_common)
-                rama_d, ramb_d = pixels_to_bm16(sd)
-                rama_l, ramb_l = pixels_to_bm16(sl)
-                for plane_tag, cd, cl in (
-                    ('RAMA', rama_d, rama_l),
-                    ('RAMB', ramb_d, ramb_l),
-                ):
-                    entry[(shift, plane_tag)] = (
-                        plane_to_chunks(cd),
-                        plane_to_chunks(cl),
-                    )
+                rama, ramb = pixels_to_bm16(sd)
+                entry[(shift, 'RAMA')] = plane_to_chunks(rama)
+                entry[(shift, 'RAMB')] = plane_to_chunks(ramb)
             out.append(entry)
         except Exception as e:
             print(f"  ERR ligne {y}: {e}", file=sys.stderr)
@@ -489,39 +604,33 @@ def collect_all_chunks(src_dir: Path):
 
 
 def detect_grass(all_entries):
-    """Trouve la valeur de chunk la plus fréquente en position 0.
-       Retourne (grass_bytes_d, grass_bytes_l) — paire dark/light."""
-    counter_d = Counter()
-    counter_l = Counter()
+    """Trouve la valeur de chunk (canonique) la plus fréquente en position 0."""
+    counter = Counter()
     for entry in all_entries:
         if entry is None:
             continue
-        for key, value in entry.items():
+        for key, chunks in entry.items():
             if key[1] == 'kj_uni':
                 continue
-            chunks_d, chunks_l = value
-            if chunks_d:
-                counter_d[chunks_d[0]] += 1
-                counter_l[chunks_l[0]] += 1
-    if not counter_d:
-        return None, None
-    return counter_d.most_common(1)[0][0], counter_l.most_common(1)[0][0]
+            if chunks:
+                counter[chunks[0]] += 1
+    if not counter:
+        return None
+    return counter.most_common(1)[0][0]
 
 
 # ── Pass 2 : génération des buffers logiques ─────────────────────────────────
 
-def process_entry(chunks_d, chunks_l, K_uni, J_uni,
+def process_entry(chunks, K_uni, J_uni,
                   pool: RoadPool, store: BufferStore) -> str:
     """Pour un buffer (un plan/shift d'une ligne) : utilise K/J unifiés
     (= calculés depuis les pixels, identiques RAMA/RAMB) pour garantir le
     sync visuel. Le cœur reste plane-spécifique."""
     K, J = K_uni, J_uni
-    M = len(chunks_d) - K - J
+    M = len(chunks) - K - J
     if M < 0:
         M = 0
-    core_d = chunks_d[K:K + M]
-    core_l = chunks_l[K:K + M]
-    labels = build_core_labels(core_d, core_l, J, pool)
+    labels = build_core_labels(chunks[K:K + M], J, pool)
     pool.record_kmj(K, M, J)
     return store.register(M, labels)
 
@@ -534,14 +643,12 @@ def build_all(all_entries, pool: RoadPool, store: BufferStore):
             line_table.append(None)
             continue
         out = {}
-        for key, value in entry.items():
+        for key, chunks in entry.items():
             if key[1] == 'kj_uni':
                 continue
             shift, plane = key
             K_uni, J_uni = entry[(shift, 'kj_uni')]
-            chunks_d, chunks_l = value
-            out[key] = process_entry(chunks_d, chunks_l, K_uni, J_uni,
-                                     pool, store)
+            out[key] = process_entry(chunks, K_uni, J_uni, pool, store)
         line_table.append(out)
     return line_table
 
@@ -728,8 +835,10 @@ def print_stats(pool, store, line_table, variant_set):
     print(f"  routines pattern uniques : {n_routines}")
     print(f"  buffers fdb uniques      : {n_buffers}")
     print(f"  variants draw uniques    : {len(variant_set)}")
-    print(f"  herbe : D=${pool.grass_ops_d[0][1]:04X} X=${pool.grass_ops_d[1][1]:04X}  "
-          f"(light D=${pool.grass_ops_l[0][1]:04X} X=${pool.grass_ops_l[1][1]:04X})")
+    print(f"  herbe : D=${pool.grass_ops['dark'][0][1]:04X} "
+          f"X=${pool.grass_ops['dark'][1][1]:04X}  "
+          f"(light D=${pool.grass_ops['light'][0][1]:04X} "
+          f"X=${pool.grass_ops['light'][1][1]:04X})")
     print(f"  total chunks (cœurs)     : {total_chunks}")
     print(f"    dont rechargeants      : {R_chunks}")
     print(f"    dont {PSHU_LABEL:<14}   : {pshu_chunks}")
@@ -770,6 +879,9 @@ def main(argv):
     p.add_argument('-o', '--output', type=Path)
     p.add_argument('--batch', action='store_true')
     p.add_argument('--no-asm', action='store_true')
+    p.add_argument('--index-map', type=Path, default=None,
+                   help=f"mapping index→nibbles TO8 (défaut : "
+                        f"<src_dir>/{INDEX_MAP_DEFAULT})")
     args = p.parse_args(argv[1:])
 
     if not args.batch or args.input is None:
@@ -784,20 +896,27 @@ def main(argv):
     for d in (work_dir, game_gen, obj_gen):
         d.mkdir(parents=True, exist_ok=True)
 
-    print(f"── Pass 1 : lecture {SRC_VARIANT}.png + chunking ──")
-    all_entries, height = collect_all_chunks(src_dir)
+    map_path = args.index_map or (src_dir / INDEX_MAP_DEFAULT)
+    print(f"── Mapping couleur : {map_path} ──")
+    nib_maps, roles = load_index_map(map_path)
+
+    print("── Master + previews ──")
+    master = prepare_master_and_previews(src_dir, work_dir,
+                                         nib_maps, roles, map_path)
+
+    print("── Pass 1 : lecture master.png + chunking ──")
+    all_entries, height = collect_all_chunks(master)
 
     print("── Détection de l'herbe ──")
-    grass_d, grass_l = detect_grass(all_entries)
-    if grass_d is None:
+    grass = detect_grass(all_entries)
+    if grass is None:
         print("  ERR : aucune ligne valide", file=sys.stderr)
         return 1
-    print(f"  herbe dark  = bytes {tuple(f'${b:02X}' for b in grass_d)}")
-    print(f"  herbe light = bytes {tuple(f'${b:02X}' for b in grass_l)}")
+    print(f"  herbe (canonique) = bytes {tuple(f'${b:02X}' for b in grass)}")
 
     print("── Pass 2 : extraction prélude/épilogue + build cœurs ──")
-    pool = RoadPool()
-    pool.set_grass(grass_d, grass_l)
+    pool = RoadPool(nib_maps)
+    pool.set_grass(grass)
     store = BufferStore()
     line_table = build_all(all_entries, pool, store)
 
@@ -890,7 +1009,6 @@ def main(argv):
 
     # 4. Publication des .bin aux destinations finales game-level
     print("\n── Publication binaires (game-mode/generated/ + objects/generated/) ──")
-    import shutil
     pd_dst = game_gen / 'road_patterns_dark.bin'
     pl_dst = game_gen / 'road_patterns_light.bin'
     pb_dst = obj_gen / 'road_buffers.bin'

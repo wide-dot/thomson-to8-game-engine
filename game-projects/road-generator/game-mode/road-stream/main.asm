@@ -89,7 +89,7 @@ MainLoop
         jsr   DrawSprites
         _gfxlock.off
         _gfxlock.loop
-        bra   MainLoop
+        jmp   MainLoop                  ; jmp : _gfxlock.loop étendu (frame-drop cap) met MainLoop hors portée d'un bra
 
 * ==============================================================================
 * UserIRQ (50 Hz, sync VBL)
