@@ -1,0 +1,1169 @@
+; GENERE par tools/gen_tailmgr_blits.py - NE PAS EDITER.
+; Corps des vrais blits bg-erase de la tail, page master.
+; Tables indexees [img*4 + parite*2] (img: 0,2,4,6 ; par: 0/1).
+TMDrawTab
+        fdb   TMDraw_0_NB0,TMDraw_0_NB1
+        fdb   TMDraw_1_NB0,TMDraw_1_NB1
+        fdb   TMDraw_2_NB0,TMDraw_2_NB1
+        fdb   TMDraw_end_NB0,TMDraw_end_NB1
+TMEraseTab
+        fdb   TMErase_0_NB0,TMErase_0_NB1
+        fdb   TMErase_1_NB0,TMErase_1_NB1
+        fdb   TMErase_2_NB0,TMErase_2_NB1
+        fdb   TMErase_end_NB0,TMErase_end_NB1
+
+TMDraw_0_NB0
+	STS glb_register_s
+
+	LEAS ,Y
+	LEAU -40,U
+
+	LDD -120,U
+	PSHS D
+	ANDA #$F0
+	ANDB #$0F
+	ADDD #$0970
+	STD -120,U
+	LDD -80,U
+	PSHS D
+	ANDA #$F0
+	ANDB #$0F
+	ADDD #$0e90
+	STD -80,U
+	LDX -40,U
+	LDY ,U
+	PSHS Y,X
+	LDD 40,U
+	LDX 80,U
+	LDY 120,U
+	PSHS U,Y,X,D
+	LDD #$9b97
+	STD -40,U
+	STD ,U
+	LDA #$9e
+	STD 40,U
+	STD 80,U
+	LDA #$79
+	STD 120,U
+	LEAU 180,U
+
+	LDD -20,U
+	PSHS D
+	ANDA #$F0
+	ANDB #$0F
+	ADDD #$0990
+	STD -20,U
+	LDD 20,U
+	PSHS U,D
+	ANDA #$F0
+	ANDB #$0F
+	ADDD #$0770
+	STD 20,U
+
+	LDU <glb_screen_location_1
+	LEAU -80,U
+
+	LDA 80,U
+	LDB 120,U
+	PSHS B,A
+	LDA -120,U
+	LDB 40,U
+	PSHS B,A
+	LDA ,U
+	LDB -40,U
+	PSHS B,A
+	LDA #$99
+	STA -120,U
+	LDA -80,U
+	PSHS U,A
+	LDA #$be
+	STA -40,U
+	STA ,U
+	LDA #$e9
+	STA -80,U
+	LDA #$ee
+	STA 40,U
+	STA 80,U
+	STA 120,U
+	LEAU 220,U
+
+	LDA -60,U
+	LDB -20,U
+	PSHS B,A
+	LDA #$e9
+	STA -60,U
+	LDA 20,U
+	LDB 60,U
+	PSHS U,B,A
+	LDA #$99
+	STA -20,U
+	STA 20,U
+	LDA #$77
+	STA 60,U
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+TMErase_0_NB0
+	STS glb_register_s
+
+	LEAS ,U
+	PULS A,B,U
+	STA 20,U
+	STB 60,U
+
+	PULS A,B
+	STA -60,U
+	STB -20,U
+
+	PULS A,U
+	STA -80,U
+
+	PULS A,B
+	STA ,U
+	STB -40,U
+
+	PULS A,B
+	STA -120,U
+	STB 40,U
+
+	PULS A,B
+	STA 80,U
+	STB 120,U
+
+	PULS D,U
+	STD 20,U
+
+	PULS D
+	STD -20,U
+
+	PULS D,X,Y,U
+	STD 40,U
+	STX 80,U
+	STY 120,U
+
+	PULS D,X,Y
+	STD -40,U
+	STX ,U
+	STY -80,U
+
+	PULS D
+	STD -120,U
+
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+TMDraw_0_NB1
+	STS glb_register_s
+
+	LEAS ,Y
+	LEAU -79,U
+
+	LDA -120,U
+	PSHS A
+	ANDA #$0F
+	ORA #$90
+	STA -120,U
+	LDD -1,U
+	PSHS D
+	ANDA #$F0
+	ORA #$09
+	LDB #$e9
+	STD -1,U
+	LDD 39,U
+	PSHS D
+	ANDA #$F0
+	ORA #$09
+	LDB #$e9
+	STD 39,U
+	LDD 79,U
+	PSHS D
+	ANDA #$F0
+	ORA #$09
+	LDB #$e9
+	STD 79,U
+	LDD 119,U
+	PSHS D
+	ANDA #$F0
+	ORA #$09
+	LDB #$e9
+	STD 119,U
+	LDA -40,U
+	STB -40,U
+	LDB -80,U
+	PSHS U,B,A
+	LDA #$97
+	STA -80,U
+	LEAU 220,U
+
+	LDD -61,U
+	PSHS D
+	ANDA #$F0
+	ORA #$07
+	LDB #$99
+	STD -61,U
+	LDA -20,U
+	STB -20,U
+	LDB 20,U
+	PSHS B,A
+	LDA #$97
+	STA 20,U
+	LDA 60,U
+	PSHS U,A
+	ANDA #$0F
+	ORA #$70
+	STA 60,U
+
+	LDU <glb_screen_location_1
+	LEAU -80,U
+
+	LDA -120,U
+	PSHS A
+	ANDA #$F0
+	ORA #$09
+	STA -120,U
+	LDD ,U
+	PSHS D
+	LDA #$bb
+	ANDB #$0F
+	ORB #$70
+	STD ,U
+	LDD 40,U
+	PSHS D
+	LDA #$be
+	ANDB #$0F
+	ORB #$70
+	STD 40,U
+	LDD 80,U
+	PSHS D
+	LDA #$ee
+	ANDB #$0F
+	ORB #$70
+	STD 80,U
+	LDD 120,U
+	PSHS D
+	LDA #$ee
+	ANDB #$0F
+	ORB #$70
+	STD 120,U
+	LDA -80,U
+	LDB -40,U
+	PSHS U,B,A
+	LDA #$9e
+	STA -80,U
+	LDA #$eb
+	STA -40,U
+	LEAU 220,U
+
+	LDD -60,U
+	PSHS D
+	LDA #$9e
+	ANDB #$0F
+	ORB #$70
+	STD -60,U
+	LDA -20,U
+	PSHS A
+	LDA #$99
+	STA -20,U
+	LDA 20,U
+	LDB 60,U
+	PSHS U,B,A
+	ANDB #$F0
+	ORB #$07
+	STB 60,U
+	LDA #$79
+	STA 20,U
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+TMErase_0_NB1
+	STS glb_register_s
+
+	LEAS ,U
+	PULS A,B,U
+	STA 20,U
+	STB 60,U
+
+	PULS A,X
+	STA -20,U
+	STX -60,U
+
+	PULS A,B,U
+	STA -80,U
+	STB -40,U
+
+	PULS D,X,Y
+	STD 120,U
+	STX 80,U
+	STY 40,U
+
+	PULS D
+	STD ,U
+
+	PULS A
+	STA -120,U
+
+	PULS A,U
+	STA 60,U
+
+	PULS A,B,X
+	STA -20,U
+	STB 20,U
+	STX -61,U
+
+	PULS A,B,U
+	STA -40,U
+	STB -80,U
+
+	PULS D,X,Y
+	STD 119,U
+	STX 79,U
+	STY 39,U
+
+	PULS D
+	STD -1,U
+
+	PULS A
+	STA -120,U
+
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+TMDraw_1_NB0
+	STS glb_register_s
+
+	LEAS ,Y
+	LDD -80,U
+	PSHS D
+	LDA #$9e
+	ANDB #$0F
+	ORB #$70
+	STD -80,U
+	LDD -40,U
+	PSHS D
+	LDA #$9b
+	ANDB #$0F
+	ORB #$70
+	STD -40,U
+	LDD ,U
+	PSHS D
+	LDA #$9b
+	ANDB #$0F
+	ORB #$70
+	STD ,U
+	LDD 40,U
+	PSHS D
+	LDA #$9e
+	ANDB #$0F
+	ORB #$70
+	STD 40,U
+	LDD 80,U
+	PSHS D
+	LDA #$7e
+	ANDB #$0F
+	ORB #$70
+	STD 80,U
+	LDA -120,U
+	PSHS A
+	ANDA #$F0
+	ORA #$09
+	STA -120,U
+	LDA 120,U
+	PSHS U,A
+	ANDA #$F0
+	ORA #$09
+	STA 120,U
+	LEAU 160,U
+
+	LDA ,U
+	PSHS U,A
+	ANDA #$F0
+	ORA #$07
+	STA ,U
+
+	LDU <glb_screen_location_1
+	LEAU -40,U
+
+	LDA ,U
+	LDB 120,U
+	PSHS B,A
+	LDA 40,U
+	LDB -80,U
+	PSHS B,A
+	LDA -40,U
+	LDB -120,U
+	PSHS B,A
+	ANDB #$0F
+	ORB #$90
+	STB -120,U
+	LDA #$e9
+	STA -80,U
+	STA 120,U
+	LDA 80,U
+	PSHS U,A
+	LDA #$ee
+	STA 40,U
+	STA 80,U
+	LDA #$be
+	STA -40,U
+	STA ,U
+	LEAU 200,U
+
+	LDA -40,U
+	PSHS A
+	LDA #$99
+	STA -40,U
+	LDA ,U
+	LDB 40,U
+	PSHS U,B,A
+	ANDB #$0F
+	ORB #$70
+	STB 40,U
+	LDA #$97
+	STA ,U
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+TMErase_1_NB0
+	STS glb_register_s
+
+	LEAS ,U
+	PULS A,B,U
+	STA ,U
+	STB 40,U
+
+	PULS A
+	STA -40,U
+
+	PULS A,U
+	STA 80,U
+
+	PULS A,B
+	STA -40,U
+	STB -120,U
+
+	PULS A,B
+	STA 40,U
+	STB -80,U
+
+	PULS A,B
+	STA ,U
+	STB 120,U
+
+	PULS A,U
+	STA ,U
+
+	PULS A,U
+	STA 120,U
+
+	PULS A,X,Y
+	STA -120,U
+	STX 80,U
+	STY 40,U
+
+	PULS D,X,Y
+	STD ,U
+	STX -40,U
+	STY -80,U
+
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+TMDraw_1_NB1
+	STS glb_register_s
+
+	LEAS ,Y
+	LEAU 1,U
+
+	LDD -81,U
+	PSHS D
+	ANDA #$F0
+	ORA #$09
+	LDB #$e7
+	STD -81,U
+	LDD -41,U
+	PSHS D
+	ANDA #$F0
+	ORA #$09
+	LDB #$e7
+	STD -41,U
+	LDD -1,U
+	PSHS D
+	ANDA #$F0
+	ORA #$09
+	LDB #$e7
+	STD -1,U
+	LDD 39,U
+	PSHS D
+	ANDA #$F0
+	ORA #$09
+	LDB #$e7
+	STD 39,U
+	LDD 79,U
+	PSHS D
+	ANDA #$F0
+	ORA #$07
+	LDB #$97
+	STD 79,U
+	LDA -120,U
+	PSHS A
+	ANDA #$0F
+	ORA #$90
+	STA -120,U
+	LDA 120,U
+	PSHS U,A
+	ANDA #$0F
+	ORA #$90
+	STA 120,U
+	LEAU 160,U
+
+	LDA ,U
+	PSHS U,A
+	ANDA #$0F
+	ORA #$70
+	STA ,U
+
+	LDU <glb_screen_location_1
+	LEAU -40,U
+
+	LDA 80,U
+	LDB 40,U
+	PSHS B,A
+	LDA ,U
+	PSHS A
+	LDA #$bb
+	STA ,U
+	LDA #$be
+	STA 40,U
+	LDA -80,U
+	LDB -40,U
+	PSHS B,A
+	LDA 120,U
+	LDB -120,U
+	PSHS U,B,A
+	ANDB #$F0
+	ORB #$09
+	STB -120,U
+	LDA #$eb
+	STA -40,U
+	LDA #$ee
+	STA 80,U
+	STA 120,U
+	LDA #$9e
+	STA -80,U
+	LEAU 200,U
+
+	LDA -40,U
+	PSHS A
+	LDA #$99
+	STA -40,U
+	LDA ,U
+	LDB 40,U
+	PSHS U,B,A
+	ANDB #$F0
+	ORB #$07
+	STB 40,U
+	LDA #$79
+	STA ,U
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+TMErase_1_NB1
+	STS glb_register_s
+
+	LEAS ,U
+	PULS A,B,U
+	STA ,U
+	STB 40,U
+
+	PULS A
+	STA -40,U
+
+	PULS A,B,U
+	STA 120,U
+	STB -120,U
+
+	PULS A,B
+	STA -80,U
+	STB -40,U
+
+	PULS A,B
+	STA ,U
+	STB 80,U
+
+	PULS A
+	STA 40,U
+
+	PULS A,U
+	STA ,U
+
+	PULS A,U
+	STA 120,U
+
+	PULS A,X,Y
+	STA -120,U
+	STX 79,U
+	STY 39,U
+
+	PULS D,X,Y
+	STD -1,U
+	STX -41,U
+	STY -81,U
+
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+TMDraw_2_NB0
+	STS glb_register_s
+
+	LEAS ,Y
+	LDD -80,U
+	PSHS D
+	ANDA #$F0
+	ANDB #$0F
+	ADDD #$0970
+	STD -80,U
+	LDD -40,U
+	PSHS D
+	ANDA #$F0
+	ANDB #$0F
+	ADDD #$0970
+	STD -40,U
+	LDD ,U
+	PSHS D
+	ANDA #$F0
+	ANDB #$0F
+	ADDD #$0970
+	STD ,U
+	LDD 40,U
+	PSHS D
+	ANDA #$F0
+	ANDB #$0F
+	ADDD #$0970
+	STD 40,U
+	LDD 80,U
+	PSHS U,D
+	ANDA #$F0
+	ANDB #$0F
+	ADDD #$0770
+	STD 80,U
+
+	LDU <glb_screen_location_1
+	LDA 40,U
+	LDB 80,U
+	PSHS B,A
+	LDA ,U
+	LDB -120,U
+	PSHS B,A
+	LDA -80,U
+	LDB -40,U
+	PSHS B,A
+	LDA 120,U
+	PSHS U,A
+	LDA #$e9
+	STA 80,U
+	LDA #$ee
+	STA ,U
+	STA 40,U
+	LDA #$99
+	STA -120,U
+	STA 120,U
+	LDA #$be
+	STA -80,U
+	STA -40,U
+	LEAU 160,U
+
+	LDA ,U
+	PSHS U,A
+	LDA #$77
+	STA ,U
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+TMErase_2_NB0
+	STS glb_register_s
+
+	LEAS ,U
+	PULS A,U
+	STA ,U
+
+	PULS A,U
+	STA 120,U
+
+	PULS A,B
+	STA -80,U
+	STB -40,U
+
+	PULS A,B
+	STA ,U
+	STB -120,U
+
+	PULS A,B
+	STA 40,U
+	STB 80,U
+
+	PULS D,U
+	STD 80,U
+
+	PULS D,X,Y
+	STD 40,U
+	STX ,U
+	STY -40,U
+
+	PULS D
+	STD -80,U
+
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+TMDraw_2_NB1
+	STS glb_register_s
+
+	LEAS ,Y
+	LEAU 1,U
+
+	LDA -80,U
+	LDB -120,U
+	PSHS B,A
+	ANDB #$0F
+	ORB #$90
+	STB -120,U
+	LDA 120,U
+	PSHS A
+	ANDA #$0F
+	ORA #$90
+	STA 120,U
+	LDA -40,U
+	LDB ,U
+	PSHS B,A
+	LDA 40,U
+	LDB 80,U
+	PSHS U,B,A
+	LDA #$e7
+	STA -80,U
+	STA -40,U
+	STA ,U
+	STA 40,U
+	LDA #$97
+	STA 80,U
+	LEAU 160,U
+
+	LDA ,U
+	PSHS U,A
+	ANDA #$0F
+	ORA #$70
+	STA ,U
+
+	LDU <glb_screen_location_1
+	LDA -80,U
+	LDB -120,U
+	PSHS B,A
+	ANDB #$F0
+	ORB #$09
+	STB -120,U
+	LDA 120,U
+	PSHS A
+	ANDA #$F0
+	ORA #$09
+	STA 120,U
+	LDA -40,U
+	LDB ,U
+	PSHS B,A
+	LDA #$9b
+	STA -80,U
+	STA -40,U
+	LDA 40,U
+	LDB 80,U
+	PSHS U,B,A
+	LDA #$9e
+	STA ,U
+	STA 40,U
+	LDA #$7e
+	STA 80,U
+	LEAU 160,U
+
+	LDA ,U
+	PSHS U,A
+	ANDA #$F0
+	ORA #$07
+	STA ,U
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+TMErase_2_NB1
+	STS glb_register_s
+
+	LEAS ,U
+	PULS A,U
+	STA ,U
+
+	PULS A,B,U
+	STA 40,U
+	STB 80,U
+
+	PULS A,B
+	STA -40,U
+	STB ,U
+
+	PULS A,B
+	STA 120,U
+	STB -80,U
+
+	PULS A
+	STA -120,U
+
+	PULS A,U
+	STA ,U
+
+	PULS A,B,U
+	STA 40,U
+	STB 80,U
+
+	PULS A,B
+	STA -40,U
+	STB ,U
+
+	PULS A,B
+	STA 120,U
+	STB -80,U
+
+	PULS A
+	STA -120,U
+
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+TMDraw_end_NB0
+	STS glb_register_s
+
+	LEAS ,Y
+	LEAU -40,U
+
+	LDD -120,U
+	PSHS D
+	ANDA #$F0
+	ANDB #$0F
+	ADDD #$0970
+	STD -120,U
+	LDD -80,U
+	PSHS D
+	ANDA #$F0
+	ANDB #$0F
+	ADDD #$0e90
+	STD -80,U
+	LDX -40,U
+	LDY ,U
+	PSHS Y,X
+	LDD 40,U
+	LDX 80,U
+	LDY 120,U
+	PSHS U,Y,X,D
+	LDD #$9b97
+	STD -40,U
+	LDA #$9e
+	STD ,U
+	STD 40,U
+	STD 80,U
+	LDA #$79
+	STD 120,U
+	LEAU 180,U
+
+	LDD -20,U
+	PSHS D
+	ANDA #$F0
+	ANDB #$0F
+	ADDD #$0990
+	STD -20,U
+	LDD 20,U
+	PSHS U,D
+	ANDA #$F0
+	ANDB #$0F
+	ADDD #$0770
+	STD 20,U
+
+	LDU <glb_screen_location_1
+	LEAU -80,U
+
+	LDA 120,U
+	LDB -80,U
+	PSHS B,A
+	LDA -120,U
+	LDB 80,U
+	PSHS B,A
+	LDA 40,U
+	PSHS A
+	LDA #$cd
+	STA 80,U
+	STA 120,U
+	LDA ,U
+	LDB -40,U
+	PSHS U,B,A
+	LDA #$e9
+	STA -80,U
+	LDA #$1c
+	STA 40,U
+	LDA #$be
+	STA -40,U
+	LDA #$99
+	STA -120,U
+	LDA #$ee
+	STA ,U
+	LEAU 220,U
+
+	LDA -60,U
+	LDB -20,U
+	PSHS B,A
+	LDA #$e9
+	STA -60,U
+	LDA 20,U
+	LDB 60,U
+	PSHS U,B,A
+	LDA #$99
+	STA -20,U
+	STA 20,U
+	LDA #$77
+	STA 60,U
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+TMErase_end_NB0
+	STS glb_register_s
+
+	LEAS ,U
+	PULS A,B,U
+	STA 20,U
+	STB 60,U
+
+	PULS A,B
+	STA -60,U
+	STB -20,U
+
+	PULS A,B,U
+	STA ,U
+	STB -40,U
+
+	PULS A,B
+	STA 40,U
+	STB -120,U
+
+	PULS A,B
+	STA 80,U
+	STB 120,U
+
+	PULS A
+	STA -80,U
+
+	PULS D,U
+	STD 20,U
+
+	PULS D
+	STD -20,U
+
+	PULS D,X,Y,U
+	STD 40,U
+	STX 80,U
+	STY 120,U
+
+	PULS D,X,Y
+	STD -40,U
+	STX ,U
+	STY -80,U
+
+	PULS D
+	STD -120,U
+
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+TMDraw_end_NB1
+	STS glb_register_s
+
+	LEAS ,Y
+	LEAU -79,U
+
+	LDA -120,U
+	PSHS A
+	ANDA #$0F
+	ORA #$90
+	STA -120,U
+	LDD -1,U
+	PSHS D
+	ANDA #$F0
+	ORA #$09
+	LDB #$e9
+	STD -1,U
+	LDD 39,U
+	PSHS D
+	ANDA #$F0
+	ORA #$09
+	LDB #$c9
+	STD 39,U
+	LDD 79,U
+	PSHS D
+	ANDA #$F0
+	ORA #$09
+	LDB #$d9
+	STD 79,U
+	LDD 119,U
+	PSHS D
+	ANDA #$F0
+	ORA #$09
+	LDB #$d9
+	STD 119,U
+	LDA -80,U
+	LDB -40,U
+	PSHS U,B,A
+	LDA #$97
+	STA -80,U
+	LDA #$e9
+	STA -40,U
+	LEAU 220,U
+
+	LDD -61,U
+	PSHS D
+	ANDA #$F0
+	ORA #$07
+	LDB #$99
+	STD -61,U
+	LDA -20,U
+	STB -20,U
+	LDB 20,U
+	PSHS B,A
+	LDA #$97
+	STA 20,U
+	LDA 60,U
+	PSHS U,A
+	ANDA #$0F
+	ORA #$70
+	STA 60,U
+
+	LDU <glb_screen_location_1
+	LEAU -80,U
+
+	LDA -120,U
+	PSHS A
+	ANDA #$F0
+	ORA #$09
+	STA -120,U
+	LDD ,U
+	PSHS D
+	LDA #$be
+	ANDB #$0F
+	ORB #$70
+	STD ,U
+	LDD 40,U
+	PSHS D
+	LDA #$e1
+	ANDB #$0F
+	ORB #$70
+	STD 40,U
+	LDD 80,U
+	PSHS D
+	LDA #$ec
+	ANDB #$0F
+	ORB #$70
+	STD 80,U
+	LDD 120,U
+	PSHS D
+	LDA #$ec
+	ANDB #$0F
+	ORB #$70
+	STD 120,U
+	LDA -80,U
+	LDB -40,U
+	PSHS U,B,A
+	LDA #$9e
+	STA -80,U
+	LDA #$eb
+	STA -40,U
+	LEAU 220,U
+
+	LDD -60,U
+	PSHS D
+	LDA #$9e
+	ANDB #$0F
+	ORB #$70
+	STD -60,U
+	LDA -20,U
+	PSHS A
+	LDA #$99
+	STA -20,U
+	LDA 20,U
+	LDB 60,U
+	PSHS U,B,A
+	ANDB #$F0
+	ORB #$07
+	STB 60,U
+	LDA #$79
+	STA 20,U
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+
+TMErase_end_NB1
+	STS glb_register_s
+
+	LEAS ,U
+	PULS A,B,U
+	STA 20,U
+	STB 60,U
+
+	PULS A,X
+	STA -20,U
+	STX -60,U
+
+	PULS A,B,U
+	STA -80,U
+	STB -40,U
+
+	PULS D,X,Y
+	STD 120,U
+	STX 80,U
+	STY 40,U
+
+	PULS D
+	STD ,U
+
+	PULS A
+	STA -120,U
+
+	PULS A,U
+	STA 60,U
+
+	PULS A,B,X
+	STA -20,U
+	STB 20,U
+	STX -61,U
+
+	PULS A,B,U
+	STA -80,U
+	STB -40,U
+
+	PULS D,X,Y
+	STD 119,U
+	STX 79,U
+	STY 39,U
+
+	PULS D
+	STD -1,U
+
+	PULS A
+	STA -120,U
+
+	LEAU ,S
+	LDS glb_register_s
+	RTS
+

@@ -16,6 +16,7 @@
 ;$01,$8C,ObjID_32,$00,$0E
 ;$01,$8C,ObjID_32,$00,$0F
 
+	;fcb   $00,$10,ObjID_tailmgr,$00,$00 ; (ancien test precoce - master spawne au boss $1B40)
  	fcb   $01,$F8,ObjID_patapata,$00,$04
  	fcb   $02,$06,ObjID_patapata,$00,$03
  	fcb   $02,$1A,ObjID_patapata,$00,$05
@@ -155,7 +156,7 @@
 	fcb   $19,$68,ObjID_fadetotunnel,$00,$01
 	fcb   $19,$68,ObjID_fadetotunnel,$00,$02
 	fcb   $1B,$40,ObjID_bossmusic,$00,$00
-	fcb   $1B,$40,ObjID_dobkeratops_tail,$00,$00 ; (original dobkeratops)
+	fcb   $1B,$40,ObjID_tailmgr,$00,$00 ; master fan-out remplace les 19 objets tail (hors-pool)
 
 	fcb   $1B,$7C,ObjID_dobkeratops,$00,$07 ; eraser 0
 	fcb   $1B,$7C,ObjID_dobkeratops,$01,$07 ; eraser 1

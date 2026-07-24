@@ -195,6 +195,9 @@ ESP_CheckEraseB0
         anda  #rsv_render_erasesprite_mask
         lbeq   ESP_NextObjectB0
         ldb   rsv_prev_render_flags_0,u
+        bpl   ESP_UnsetOnScreenFlagB0   ; pas a l'ecran sur CE buffer : bgdata/adresse
+                                            ; perimees, ne surtout pas restaurer (garde
+                                            ; contre un flag erase force/rescape)
         andb  #rsv_prev_render_overlay_mask
         bne   ESP_UnsetOnScreenFlagB0
         
@@ -260,6 +263,9 @@ ESP_CheckEraseB1
         anda  #rsv_render_erasesprite_mask
         lbeq   ESP_NextObjectB1
         ldb   rsv_prev_render_flags_1,u
+        bpl   ESP_UnsetOnScreenFlagB1   ; pas a l'ecran sur CE buffer : bgdata/adresse
+                                            ; perimees, ne surtout pas restaurer (garde
+                                            ; contre un flag erase force/rescape)
         andb  #rsv_prev_render_overlay_mask
         bne   ESP_UnsetOnScreenFlagB1        
         

@@ -1,6 +1,6 @@
  IFNDEF GLOBAL_VARIABLES
 
-GLOBAL_VARIABLES         equ $9E80 ; first free byte after resident code ($9EBC)
+GLOBAL_VARIABLES         equ $9E84 ; first free byte after resident code ($9EBC)
 globals.nextGameMode     equ GLOBAL_VARIABLES+0 ; 1 byte
 globals.score            equ GLOBAL_VARIABLES+1 ; 3 bytes (24-bit, unit=100pts, MSB first; cap 99999=$01869F)
 globals.lives            equ GLOBAL_VARIABLES+4 ; 1 byte
