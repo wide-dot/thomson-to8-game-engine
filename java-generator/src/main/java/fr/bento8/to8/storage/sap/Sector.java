@@ -22,7 +22,17 @@ public class Sector{
 		this.sector = (byte) (sector+1);
 		
 		this.data = new byte[SapType.sectorSize[type]];
-		int p = (drive * SapType.driveSize[type]) + (track * (Sap.NB_SECT * SapType.sectorSize[type])) + (sector * SapType.sectorSize[type]);
+		// Offset du lecteur dans les donnees BRUTES.
+		//
+		// Bug corrige : on utilisait SapType.driveSize, qui est la taille du
+		// FICHIER SAP produit (en-tete de 66 octets + 6 octets de metadonnees
+		// par secteur), soit 335426 pour le type 1. Or 'data' contient des
+		// donnees brutes, ou un lecteur occupe nbTracks*NB_SECT*sectorSize =
+		// 327680. Pour drive=1 la lecture demarrait donc 7746 octets trop loin
+		// et sortait du tableau (ArrayIndexOutOfBoundsException a l'ecriture du
+		// .sap), ce qui plafonnait de fait la capacite a UN SEUL lecteur.
+		int rawDriveSize = SapType.nbTracks[type] * Sap.NB_SECT * SapType.sectorSize[type];
+		int p = (drive * rawDriveSize) + (track * (Sap.NB_SECT * SapType.sectorSize[type])) + (sector * SapType.sectorSize[type]);
 		for (int i = 0; i < SapType.sectorSize[type]; i++) {
 			this.data[i] = (byte) (data[p+i]^Sap.SAP_MAGIC_NUM);
 		}
