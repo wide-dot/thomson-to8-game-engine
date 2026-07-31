@@ -1,8 +1,9 @@
-# R-Type Arcade — Combat reference: enemy HP & player weapon power
+# R-Type Arcade — Combat reference: enemy HP, player weapon power, projectile absorption
 
 > Source of truth: the arcade `maincpu.bin` Ghidra database (x86 16-bit, code seg 0x40),
 > queried via the asm-ark bridge. Companion to `arcade-scoring-reference.md`.
-> Purpose: model enemy durability and player firepower for the Thomson TO8 port.
+> Purpose: model enemy durability, player firepower and enemy-bullet absorption for the
+> Thomson TO8 port.
 
 ---
 
@@ -159,7 +160,74 @@ Wave-cannon column = ⌈HP / 20⌉ full-charge beams: against a **single** big e
 
 ---
 
-## 6. Mapping to the port
+## 6. Enemy projectiles — what absorbs them
+
+The mirror image of §2: not "what damages the enemy" but **"what stops an enemy bullet"**.
+There is no global rule — the arcade picks the absorbing surface **per projectile type**, and
+three different mechanisms are used. Getting this wrong makes a stage measurably easier or
+harder, so it is worth stating explicitly.
+
+**The chained pod/bits predicate.** `collision_to_force_pod` (0x40F493) tests the Force-Pod
+AABB descriptor at `0x4000_0076`, and on a **miss** falls through into
+`collision_to_top_and_bottom_bit_devices` (0x40F49B), which tests the two bit descriptors at
+`0x4000_0136` (top) and `0x4000_0156` (bottom). Both converge on the shared `RET` at 0x40F4A9.
+So **one** `CALL 0x40F493` is an any-of-three test (pod OR top bit OR bottom bit). Neither
+routine consumes a slot — they never reach `consume_target_and_hit` (0x40F4B9); they are pure
+predicates, and the caller decides what the hit means.
+
+### Stage 1 — the four projectile types
+
+| Projectile | tick | Collision mechanism | Absorbed by |
+|---|---|---|---|
+| **Generic foe fire** — blaster (turret), pata-pata, bink, bug, cancer, cytron, fast, pursuer, Compiler turret, Dobkeratops tail-end | `run_foe_fire` 0x40E601 | inline `MOV SI,0x76` + `CALL collision_test` (0x40F578) @0x40E64E | **force pod only** |
+| **Shell ring-segment shot** | `run_foe_fire_shell` 0x406E27 | `CALL collision_to_force_pod` @0x406E61 → chained | **pod + both bits** |
+| **Tabrok cannon shot** | `run_tabrok_cannon` 0x4066C8 | `CALL do_collision_with_player_and_weapons_v1` (0x40F694) @0x4066E1 | **pod + bits + wave cannon + missiles + pod lasers** |
+| **Scant beam** | `run_scant_beam` 0x40842C | `CALL collision_to_player_one` (0x40F485) @0x408450 — nothing else | **nothing** |
+
+Three things worth noting.
+
+**The generic bullet deliberately bypasses the chained helper.** It does not `CALL 0x40F493`;
+it loads the pod descriptor by hand and calls the raw AABB kernel. That is the whole reason the
+bits do *not* absorb it. Provenance is unambiguous: `create_foe_fire` (0x40F657) installs
+`DX = 0xE601`, and it is reached only through `try_foe_fire` (0x40F63A), whose callers are
+exactly the ten enemies listed above.
+
+**The Tabrok cannon shot is an object, not a bullet.** By calling the *enemy-side* dispatcher
+v1 it exposes itself to the whole player arsenal — `collision_to_beam`, `try_lock_or_damage`
+(missiles), `collision_to_3x_unknown`, `collision_to_laser` — and explodes on any hit
+(`JC cannon_shot_explode` @0x4066E4). It is a destructible projectile.
+
+**The Scant beam is designed to be unstoppable.** It tests the player and nothing else — it
+pierces the Force pod *and* the bits. That is its point: the Scant must be dodged, not tanked.
+(Same shape for the enemy `run_horizontal_laser` at 0x40E6AB, which is not in the stage-1 port.)
+
+### Port status
+
+The port collapses all of this into one list and one pass:
+`objects/foefire/obj.asm`, `obj_scantfire.asm` and `obj_tabrokcanon.asm` all register in
+`AABB_list_foefire`, and `obj_mainext.asm` runs `_Collision_Do AABB_list_forcepod,AABB_list_foefire`.
+Uniform "the pod stops everything, the bits stop nothing":
+
+| Projectile | Arcade | Port | |
+|---|---|---|---|
+| Generic foe fire | pod | pod | ✅ faithful |
+| Shell shot | pod + bits | pod | ⚠️ bits missing |
+| Tabrok cannon shot | pod + bits + beam + missiles + lasers | pod | ⚠️ bits + destructibility missing |
+| Scant beam | *nothing* | **pod** | ⚠️ wrongly blocked |
+
+Note the two divergences point in **opposite** directions, so a single blanket change cannot
+fix them. The port's shell fire also goes through the generic object (`tryFoeFireShell` in
+`global/projectile.asm` spawns the same `ObjID_foefire`), so shell shots are not currently
+distinguishable from generic ones at collision time.
+
+Restoring per-projectile profiles means either three separate foefire lists (player-only /
++pod / +pod+bits) or — cheaper and closer to the arcade's own "one decision per type" — a
+single custom pass over `AABB_list_foefire` that tests pod/bits according to a per-object flag,
+in the spirit of `WeaponContactTick`.
+
+---
+
+## 7. Mapping to the port
 
 The port **already encodes HP** as `<enemy>_hitdamage` in `objects/enemies_properties.asm`
 (= the enemy's `AABB.p` — the player's shots decrement it, death at 0). Cross-checked:
@@ -179,9 +247,12 @@ and laser powers (2/5) would require the port's player shots to carry a damage v
 
 ---
 
-## 7. Coverage & caveats
+## 8. Coverage & caveats
 
 - **Stage 1: complete** (all port-wave enemies + all five Dobkeratops sub-parts verified).
 - **Whole game:** ~36 actors + 7 bosses resolved across the 133 collision call sites.
 - **Not confirmed:** Worm/Insuloo (not surfaced as a distinct run-routine), Win (indestructible windmill, no damage model). 5 collision sites sit on un-named code but were bound to their owning enemy by context.
+- **§6 (projectile absorption):** the four stage-1 types are each verified at the instruction
+  level; the Compiler rolling laser (0x40AEFB, stage 3+) also calls `collision_to_force_pod`
+  and so belongs to the pod+bits family. Other stages' projectiles are not surveyed.
 - HP values are the create-time immediates; "special semantics" rows above die by script/anchor/accumulator rather than by reaching `+0x2F`.
