@@ -188,22 +188,25 @@ SetPalNext
 InitVideo
         orcc  #$50                     * desactive les interruptions
         lds   #glb_system_stack        * positionnement pile systeme
-        lda   #$7B                     * passage en mode 160x200x16c
-        sta   $E7DC
+        _ldd  $7B,$10                  * passage en mode 160x200x16c
+        ldx   #$E7E7
+        sta   $E7DC-$E7E7,x
+        stb   $605F                    * force reinit gfx au reboot
   
 ********************************************************************************
 * Initialisation de la commutation de page pour l espace Donnees (Mode registre)
 ********************************************************************************
-        ldb   $6081                    * $6081 est l'image "lisible" de $E7E7
-        orb   #$10                     * positionne le bit d4 a 1
+        orb   $6081                    * $6081 est l'image "lisible" de $E7E7
+*       orb   #$10                     * positionne le bit d4 a 1
         stb   $6081                    * maintient une image coherente de $E7E7
-        stb   $E7E7                    * bit d4 a 1 pour pages donnees en mode registre
+        stb   $E7E7-$E7E7,x            * bit d4 a 1 pour pages donnees en mode registre
+
  
 * Positionnement de la page 3 a l'ecran et de la page 2 en zone A000-DFFF
 ***********************************************************
         ldd   #$C002                   ; page 3, couleur de cadre 0 et page 2
-        sta   $E7DD                    ; affiche la page a l'ecran
-        stb   $E7E5                    ; visible dans l'espace donnees
+        sta   $E7DD-$E7E7,x            ; affiche la page a l'ecran
+        stb   $E7E5-$E7E7,x            ; visible dans l'espace donnees
         
         lda   #$AA
         sta   $0555

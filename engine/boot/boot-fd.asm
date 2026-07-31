@@ -124,7 +124,8 @@ InitVideo
         orcc  #$50                     * desactive les interruptions
         lds   #glb_system_stack        * positionnement pile systeme
         lda   #$7B                     * passage en mode 160x200x16c
-        sta   $E7DC
+        ldx   #$E7E7
+        sta   $E7DC-$E7E7,x
   
 ********************************************************************************
 * Initialisation de la commutation de page pour l espace Donnees (Mode registre)
@@ -132,19 +133,21 @@ InitVideo
         ldb   $6081                    * $6081 est l'image "lisible" de $E7E7
         orb   #$10                     * positionne le bit d4 a 1
         stb   $6081                    * maintient une image coherente de $E7E7
-        stb   $E7E7                    * bit d4 a 1 pour pages donnees en mode registre
+        stb   $E7E7-$E7E7,x            * bit d4 a 1 pour pages donnees en mode registre
         ldb   #$64                     * bit7=0, bit6=1 : ecriture autorisee, bit5=1 : espace cartouche recouvert par de la RAM, bit4-0 : numero de page 
-        stb   $E7E6                    * changement page 4 dans l'espace cartouche        
+        stb   $E7E6-$E7E7,x            * changement page 4 dans l'espace cartouche        
  
 ********************************************************************************
 * Lecture des donnees depuis la disquette et decompression par exomizer
 ********************************************************************************
 DKLecture
         setdp $60
-        lda   #$60
+        _ldd  $60,0
         tfr   a,dp                     * positionne la direct page a 60
         
-        ldd   #$0000
+        sta   <$605F                   * Force reinit mode 0 azu reboot
+
+        clra
         std   <$604F                   * DK.BUF $0000 Destination des donnees lues
         sta   <$6049                   * DK.DRV $00 Lecteur
         std   <$604A                   * DK.TRK $00 Piste
@@ -169,21 +172,21 @@ DKContinue
         inc   <$604F                   * increment de 256 octets de la zone a ecrire DK.BUF
         ldd   <$604F                   * chargement de la zone a ecrire DK.BUF
 dk_dernier_bloc                        
-        cmpd  #Build_BootLastBlock     * test debut du dernier bloc de 256 octets a ecrire
+        subd  #Build_BootLastBlock     * test debut du dernier bloc de 256 octets a ecrire
         bls   DKCO                     * si DK.BUF inferieur ou egal a la limite alors DKCO
 
 BOO_WaitVBL
-        tst   $E7E7                    ; le faisceau n'est pas dans l'ecran
+        lda   $E7E7-$E7E7,x            ; le faisceau n'est pas dans l'ecran
         bpl   BOO_WaitVBL              ; tant que le bit est a 0 on boucle
 BOO_WaitVBL1
-        tst   $E7E7                    ; le faisceau est dans l'ecran
+        lda   $E7E7-$E7E7,x            ; le faisceau est dans l'ecran
         bmi   BOO_WaitVBL1             ; tant que le bit est a 1 on boucle
 
 * Positionnement de la page 3 a l'ecran et de la page 2 en zone A000-DFFF
 ***********************************************************
         ldd   #$C002                   ; page 3, couleur de cadre 0 et page 2
-        sta   $E7DD                    ; affiche la page a l'ecran
-        stb   $E7E5                    ; visible dans l'espace donnees
+        sta   $E7DD-$E7E7,x            ; affiche la page a l'ecran
+        stb   $E7E5-$E7E7,x            ; visible dans l'espace donnees
         
         _ldd  gmboot,$FF               ; level to boot and flag for first level load 
         jmp   $0000
