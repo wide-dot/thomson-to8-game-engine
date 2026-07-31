@@ -442,11 +442,23 @@ BAYER8  equ     3
 PATTERN equ     ACCOLAD
 
 InitFadeOut
-        ; FadeLen*2 steps exactly: FadeOut does decb THEN lsrb, so the counter walks
-        ; 2*FadeLen-1 .. 0 -> pattern indexes FadeLen-1 .. 0, each twice. An extra +1
-        ; here made the very first step read FadeOutPattern[FadeLen] - one byte PAST
-        ; the table (garbage plane/line -> a stray masked write on screen).
+        ; FadeLen*2 + 1 pas. Le +1 est REQUIS : constate en jeu, sans lui le fondu se
+        ; termine en laissant un semis de pixels non effaces.
+        ;
+        ; Sur le papier 2*FadeLen devrait suffire, et je n'ai pas elucide pourquoi :
+        ; FadeOut fait decb PUIS lsrb, donc le compteur parcourt 2*FadeLen-1..0 et
+        ; indexe chaque cellule deux fois ; la table est un pavage EXACT des 80
+        ; cellules (8 colonnes x 10 lignes, verifie : aucune manquante, aucun doublon,
+        ; 80 x 400 px = 32000 px = une page pleine) ; et le buffer alterne a chaque
+        ; appel (un seul bufferSwap par tour de boucle principale), donc chaque
+        ; cellule devrait etre traitee une fois par page. L'observation dit le
+        ; contraire, on garde donc le comportement valide en jeu.
+        ;
+        ; Le pas supplementaire indexe FadeOutPattern[FadeLen], soit un octet APRES
+        ; les 80 cellules : d'ou la sentinelle placee juste apres le "FadeLen set",
+        ; sans quoi ce pas lit un octet indefini (plan/ligne aleatoires).
         ldb     #FadeLen*2
+        incb
         stb     FadeCnt
         rts
 
@@ -759,6 +771,16 @@ bloc2   macro
         bloc2   0,1
         endc
 
-FadeLen set (*-FadeOutPattern) 
+FadeLen set (*-FadeOutPattern)   ; 80 : la table des cellules s'arrete ICI
+
+; Sentinelle du pas supplementaire. InitFadeOut arme FadeLen*2+1 pas, donc le TOUT
+; PREMIER pas indexe FadeOutPattern[FadeLen] — un octet au-dela des 80 cellules.
+; Avant, il lisait ce qui suivait l'objet dans l'image : plan et ligne aleatoires,
+; donc une ecriture masquee parasite quelque part a l'ecran. On lui donne une valeur
+; definie : un doublon de la premiere cellule effacee (index 79 = coord 0,0), donc
+; strictement idempotent et sans effet sur l'ordre du fondu.
+; NE PAS deplacer avant le "FadeLen set" : la table doit rester a 80 pour que
+; FadeLen*2 et 40*(FadeLen/8) restent justes.
+        coord   0,0
 
         endc
