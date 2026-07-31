@@ -116,8 +116,10 @@ InitFirstChild
         lda   #7
         sta   glb_d0_b
         sta   caFrame,u
+        ldd   x_pos,u                  ; cx en coords CAMERA (etait le poids faible de la
+        subd  glb_camera_x_pos         ;   position playfield de player1 -> boite fantome
+        stb   AABB_0+AABB.cx,u         ;   jusqu'au 1er Live)
         ldd   player1+x_pos
-        stb   AABB_0+AABB.cx,u
         std   xPosOld,u
         _Collision_AddAABB AABB_0,AABB_list_friend
  IFDEF t2        
@@ -151,10 +153,11 @@ GenChild
         ldd   x_pos,u
         addd  glb_d2                   ; sprites are prepared on the opposite side of the direction
         std   x_pos,x
-        stb   AABB_0+AABB.cx,u
-        ldb   player1+y_pos+1
-        stb   y_pos+1,u
-        stb   AABB_0+AABB.cy,u
+        subd  glb_camera_x_pos         ; les 4 lignes suivantes ecrivaient sur ,u (le PARENT)
+        stb   AABB_0+AABB.cx,x         ;   au lieu de ,x : l'enfant partait sans y_pos ni
+        ldd   y_pos,u                  ;   cx/cy, et la cx du parent etait ecrasee par une
+        std   y_pos,x                  ;   coordonnee playfield.
+        stb   AABB_0+AABB.cy,x
         ldd   x_vel,u
         std   x_vel,x
         lda   slave,u

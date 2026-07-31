@@ -63,7 +63,9 @@ Live
 
         ; check wall collision
         ldb   gfxlock.frameDrop.count
-        stb   glb.frameDrop
+        bne   >                        ; count == 0 (1re boucle apres checkpoint.load) : le
+        incb                           ; "dec / bne" ferait 256 tours, soit 512 terrainCollision.do
+!       stb   glb.frameDrop
 FrameDropLoop
 
         ; update position

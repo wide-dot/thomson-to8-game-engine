@@ -124,6 +124,9 @@ Live
         subd  #3 ; half width of the beam
         addd  impactX,u
         std   x_pos,u
+        subd  glb_camera_x_pos         ; recaler la hitbox sur le point d'impact : cette
+        stb   AABB_0+AABB.cx,u         ;   branche ne l'ecrivait pas (cx = 0 si le beam nait
+                                       ;   dans le mur -> boite active au bord gauche)
         ldd   #Img_beam_impact_0
         std   image_set,u
         inc   routine,u
