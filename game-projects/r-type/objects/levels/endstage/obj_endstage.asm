@@ -145,13 +145,28 @@ Tick
         std   scroll_vel
         bra   @none
 @glide
-        ldd   glb_camera_x_pos
-        cmpd  #map_width-viewport_width
-        blo   @none                         ; not at the map exit yet -> keep gliding
-        ; reached the exit: dissolve to black while the game keeps running
+        ; Armer le fondu SEULEMENT quand le scroll est reellement a l'arret, c'est a
+        ; dire quand les DEUX buffers ont ete rendus a la butee. Le critere naif
+        ; "glb_camera_x_pos >= map_width-viewport_width" est atteint une a deux trames
+        ; trop tot : Scroll n'enregistre qu'un buffer par trame (buffer_x_pos /
+        ; buffer_x_pos+2) et ne s'arrete qu'une fois les deux au cap. Tant qu'il tourne,
+        ; glb_camera_move reste pose et DrawTiles - appele APRES Blit dans la boucle
+        ; principale - repeint la tuilerie par-dessus la cellule que FadeOut vient
+        ; d'effacer. Le fondu ne repassant jamais sur une cellule deja traitee, celle-ci
+        ; restait visible jusqu'a la fin. Mesure en emulation : page 3 privee de la
+        ; cellule coord 0,0, page 2 intacte, et le residu epousait le decor NON VIDE,
+        ; les tuiles vides etant sautees par DrawTiles.
+        ; On reprend donc la condition exacte de la sortie anticipee de Scroll.
+        ldx   scroll_max
+        cmpx  buffer_x_pos
+        bne   >
+        cmpx  buffer_x_pos+2
+        bne   >                             ; un buffer n'a pas encore rattrape
+        ; scroll fige sur les deux pages : glb_camera_move sera nul des la trame
+        ; suivante, DrawTiles ne repeindra plus rien. On peut dissoudre.
         inc   main.endstage.phase
         jsr   InitFadeOut
-        bra   @none
+!       bra   @none
 @phase34
         ; phase 3: the dissolve runs in Blit; phase 4: the HUD score readout runs (driven by
         ; main, drawn by the HUD). Wait for the Blit/HUD state machine, then leave the level.
