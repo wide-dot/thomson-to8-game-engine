@@ -26,7 +26,9 @@ Init
 
 Run
         lda   gfxlock.frameDrop.count
-        sta   anim_frame_duration,u
+        bne   >                     ; count == 0 (1re boucle apres checkpoint.load) : le
+        inca                        ; "dec / bne" ci-dessous ferait 256 tours
+!       sta   anim_frame_duration,u
         ldy   anim,u
 @loop
         jsr   LoadObject_x

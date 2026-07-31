@@ -37,6 +37,13 @@ InitSequence
         clr   terrainCollision.bgBitShift
         ldd   #$ffff
         std   main.dobkeratops.move.frame
+        ldd   #0                                  ; MUST be cleared: the body stops calling
+        std   main.dobkeratops.move.step          ;   followDobkeratops once on the butee, so the
+                                                  ;   last non-zero step stays latched. The tailmgr
+                                                  ;   reads move.step directly -> without this the
+                                                  ;   19 tails drift left from their spawn on the
+                                                  ;   next try (checkpoint reload / GAME OVER
+                                                  ;   restart, which do not reload this RAM).
         ldd   #0
         std   main.endstage.counter
         clr   main.endstage.phase
@@ -78,16 +85,31 @@ Tick
         ldx   gfxlock.frame.gameCount           ; boss escapes (arcade: +0x3E timeout expires)
         cmpx  #timestamp.BOSS_ESCAPE
         blo   @none
+        ; engagement timeout with the boss still alive (only reachable when the player
+        ; survived the butee, e.g. blink invincibility). Route it through the NORMAL
+        ; teardown instead of just arming the countdown: monster.WaitEndStage sees
+        ; bossDefeated and runs MonsterKill (explosions, explode flag, room erase,
+        ; delete). Without it the body would stay painted during the scroll-out.
+        lda   #1
+        sta   globals.bossDefeated
 @arm
         ldd   #endstage.DURATION
         std   main.endstage.counter
+        lda   #endstage.SHIP_INVINCIBLE     ; arm the invulnerability on the arming frame too
+        sta   player1+ext_variables+AABB.p
 @none
         ldb   #endstage.STATUS_NONE
         rts
 @run
-        lda   #127                          ; ship cannot die during the end sequence
-        sta   player1+ext_variables+AABB.p  ; (arcade: HitPlayerOne gated by stage_unload_request)
-        ldd   main.endstage.counter         ; reload: the #127 above clobbered A (high byte of D)
+        ; ship cannot die during the end sequence (arcade: HitPlayerOne gated by
+        ; stage_unload_request). It MUST be a negative potential (invincible box):
+        ; 127 is the ship's normal "weak" value, which Collision_Do clears on the
+        ; first contact - and this Tick runs AFTER the collision pass and after
+        ; player1 in the main loop, so restoring 127 could never save the frame.
+        ; Invincible boxes are never modified by Collision_Do nor by TM_Collide.
+        lda   #endstage.SHIP_INVINCIBLE
+        sta   player1+ext_variables+AABB.p
+        ldd   main.endstage.counter         ; reload: the lda above clobbered A (high byte of D)
         subd  gfxlock.frameDrop.count_w
         bgt   >
         ldd   #1                            ; floor the countdown, sequence stays latched
@@ -279,7 +301,8 @@ ResetYM
 * Called every frame from the main loop INSIDE the gfx lock, right after
 * EraseSprites and before DrawSprites: the rect lands under the sprites and is
 * captured into their background backups, so backup/restore never resurrects
-* erased pixels. The rect is drawn on two consecutive frames (one per buffer).
+* erased pixels. The rect is drawn on erase.bigRect consecutive frames (4 = two
+* full passes over the two video buffers).
 * ---------------------------------------------------------------------------
 
 Blit
@@ -419,8 +442,11 @@ BAYER8  equ     3
 PATTERN equ     ACCOLAD
 
 InitFadeOut
+        ; FadeLen*2 steps exactly: FadeOut does decb THEN lsrb, so the counter walks
+        ; 2*FadeLen-1 .. 0 -> pattern indexes FadeLen-1 .. 0, each twice. An extra +1
+        ; here made the very first step read FadeOutPattern[FadeLen] - one byte PAST
+        ; the table (garbage plane/line -> a stray masked write on screen).
         ldb     #FadeLen*2
-        incb
         stb     FadeCnt
         rts
 

@@ -45,6 +45,10 @@ endstage.RALLY_X  equ 80             ; arcade X $200: CoordinatesConv round((512
 endstage.RALLY_Y  equ 130            ; arcade Y $E0: CoordinatesConv round((224-128-16)*-180/240)+190 = 130 (arcade Y axis is up, flipped)
 endstage.DEADBAND equ 3              ; per axis dead band in px (arcade: 4 px)
 endstage.bossStopX equ 1396          ; camera x that frames the boss room (was the old map_width-viewport_width)
+endstage.SHIP_INVINCIBLE equ -128    ; player AABB.p during the end sequence. MUST be negative:
+                                     ;   an invincible box is never modified by Collision_Do nor
+                                     ;   TM_Collide. 127 (the ship's normal "weak" value) would be
+                                     ;   cleared on the first contact -> death during the sequence.
 
 ; ObjID_endstage mounted-object protocol (logic lives in obj_endstage.asm)
 endstage.TICK          equ 0         ; command: run the end of stage tick
@@ -223,7 +227,8 @@ mainloop.routine.running
                                         ; aucune cellule de fond ne contient d'etoile, un
                                         ; sprite immobile ne peut pas reinjecter de residus
         ; phase 0-2: normal Mask + HUD. phase 3 (dissolve): draw nothing, it owns the screen
-        ; (HUD band preserved by the capped fade). phase 4: centered stage-score readout.
+        ; (the fade sweeps the full 200 scanlines, HUD band included - by design, the readout
+        ; screen shows only "STAGE 1 CLEARED"). phase 4: centered stage-score readout.
         lda   main.endstage.phase
         cmpa  #3
         blo   @overlayNormal
@@ -442,9 +447,27 @@ Palette_FadeOut
 * owed, so the body lands exactly on the butee whatever the frame drop - no
 * per-sprite snap, the shared move.left == 0 is the pixel-exact arrival flag.
 main.followDobkeratops
+        bsr   main.dobkeratops.computeStep
+        ldd   main.dobkeratops.move.step
+        beq   @done                          ; butee reached: the whole body is frozen
+        _negd
+        addd  x_pos+1,u                      ; x_pos must be followed by x_sub in memory
+        std   x_pos+1,u                      ; update low byte of x_pos and x_sub byte
+        lda   x_pos,u
+        adca  #-1
+        sta   x_pos,u                        ; update high byte of x_pos
+@done   rts
+
+* Compute-only entry point: works out this frame's shared step (and the boss-follow
+* background collision offset) WITHOUT touching any OST. The tailmgr master is spawned
+* before the boss body ($1B40 vs $1BDF) so it runs FIRST in the object list; it calls
+* this so the 19 tails glide with the CURRENT frame's step instead of the previous one
+* (they used to lag a frame and rely on move.step staying latched to catch up).
+* The gameCount guard keeps the computation to once per frame, whoever calls first.
+main.dobkeratops.computeStep
         ldd   gfxlock.frame.gameCount
         cmpd  main.dobkeratops.move.frame   ; step already computed this frame?
-        beq   @apply
+        beq   @done
         std   main.dobkeratops.move.frame
         lda   gfxlock.frameDrop.count
         ldb   #timestamp.MOVEALIEN_SPEED    ; raw step = frameDrop * speed (8.8, =px/256)
@@ -472,15 +495,6 @@ main.followDobkeratops
         lsrb
         lsrb
         stb   terrainCollision.bgByteOff     ; advTiles >> 3
-@apply
-        ldd   main.dobkeratops.move.step
-        beq   @done                         ; butee reached: the whole body is frozen
-        _negd
-        addd  x_pos+1,u                      ; x_pos must be followed by x_sub in memory
-        std   x_pos+1,u                      ; update low byte of x_pos and x_sub byte
-        lda   x_pos,u
-        adca  #-1
-        sta   x_pos,u                        ; update high byte of x_pos
 @done   rts
 
 * ---------------------------------------------------------------------------
