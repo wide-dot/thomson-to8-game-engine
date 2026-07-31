@@ -65,8 +65,12 @@ LiveOptionBox
         ble   @delete
         lda   player1+bitdevice
         cmpa  #2
-        bhs   >                        ; ignore contact if player1 already has the 2 bit devices
-        lda   AABB_0+AABB.p,u
+        blo   @canCollect              ; ignore contact if player1 already has the 2 bit devices
+        lda   #127                     ; ... mais REARMER la boite : la passe de collision la
+        sta   AABB_0+AABB.p,u          ;   met a 0 au premier contact, et le pickup restait
+        bra   >                        ;   affiche et definitivement incollectable (p=0 =
+@canCollect                            ;   boite desactivee, jamais reevaluee) meme si un bit
+        lda   AABB_0+AABB.p,u          ;   etait perdu ensuite.
         beq   Collect                  ; was touched -> activate a static slot
 !
         ldd   x_pos,u

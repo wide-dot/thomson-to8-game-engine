@@ -1,6 +1,13 @@
 
 ; ---------------------------------------------------------------------------
-; Object - Weapon
+; Object - Weapon - OBSOLETE / PLUS COMPILE
+;
+; Declare dans aucun game-mode/*/main.*.properties : ni ce fichier ni ses images
+; ne sont assembles, et aucun ObjID_forcepod_straightdown n'existe. Remplace par
+; obj_simplefire.asm, qui couvre les 5 directions de tir du pod detache via son
+; subtype (haut / haut-droite / droite / bas-droite / bas).
+; ATTENTION si reactivation : le "forcepodaddr equ ext_variables+9" ci-dessous
+; est perime, forcepod.asm utilise desormais ext_variables+9 pour mount_side.
 ;
 ; input REG : [u] pointer to Object Status Table (OST)
 ; ---------
