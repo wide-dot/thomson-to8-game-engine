@@ -115,6 +115,34 @@ Orchestrate
         ; a rebound laser can only be releases if the previous one was destroyed
         ; each of the 3 lasers (high, mid, low) are independent
 
+        ; --- RESYNC : glb.slotsState est reconstruit depuis la liste d'objets, il n'est
+        ; PLUS un latch. Il n'etait libere que par Destroy (segment isLastChild) ; tout
+        ; segment disparu autrement laissait son bit colle et le rebound ne repartait
+        ; JAMAIS. Cas nominal : mort du joueur pendant une volee -> le reload checkpoint
+        ; passe par ManagedObjects_ClearAll, qui efface les OST sans executer Destroy, et
+        ; glb.slotsState vit dans la page objet (hors de la plage $A000-$E000 de
+        ; ClearDataMem) donc survit. Le balayage est self-healing pour toutes les autres
+        ; pertes possibles (pool sature, maillon orphelin) et ne coute qu'un parcours de
+        ; liste par appui sur le bouton de tir.
+        ; Occupent un slot : routines 1..4 (StartLaser/Horizontal/Diagonal/Explosion).
+        ; Ignores : 0 = orchestrateur (nous-meme, ou un precedent en attente de free) et
+        ; 5 = DoubleBufferingFlush (Destroy a deja rendu le slot ET inverse slotMask).
+        clr   glb.slotsState
+        ldx   object_list_first
+        beq   @synced
+@sloop  lda   id,x
+        cmpa  #ObjID_forcepod_reboundlaser
+        bne   @snext
+        lda   routine,x
+        beq   @snext                  ; 0 = Rtn_Orchestrate
+        cmpa  #Rtn_DoubleBufferingFlush
+        bhs   @snext
+        ldb   glb.slotsState
+        orb   slotMask,x
+        stb   glb.slotsState
+@snext  ldx   run_object_next,x
+        bne   @sloop
+@synced
         lda   glb.slotsState
         ; n'initier une nouvelle volee que si TOUS les slots sont libres (la precedente est entierement finie).
         ; en stream slot-par-slot, le slot d'OBJET d'un head mort est reutilise en LIFO par un nouveau segment
@@ -438,7 +466,9 @@ RunHorizontalLaser
         stx   glb.buffer
 
         ldb   gfxlock.frameDrop.count
-        stb   glb.frameDrop
+        bne   >                        ; count == 0 (1re boucle apres checkpoint.load) :
+        incb                           ; le "dec / bne" ferait 256 tours
+!       stb   glb.frameDrop
 RunHorizontalLaser.frameDropLoop
 
         ; update position
@@ -630,7 +660,9 @@ RunDiagonalLaser
         stx   glb.buffer
 
         ldb   gfxlock.frameDrop.count
-        stb   glb.frameDrop
+        bne   >                        ; count == 0 (1re boucle apres checkpoint.load) :
+        incb                           ; le "dec / bne" ferait 256 tours
+!       stb   glb.frameDrop
 RunDiagonalLaser.frameDropLoop
 
         ; update position

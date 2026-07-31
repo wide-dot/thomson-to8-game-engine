@@ -24,15 +24,31 @@ SOUND_CARD_PROTOTYPE equ 1
         INCLUDE "./objects/levels/01/starfield/starfield.const.asm"
 
 timestamp.DELETE_ALIEN_BODY equ $1D80
-timestamp.ERASE_NERV_START equ $1BDF+$B80 ; nerves auto-effacees (free-life). Arcade: T0 ($1BDF,
-                                     ;   spawn monstre) + intro $280 + free-life +0x3E $900 = T0+$B80.
-                                     ;   Filet de securite : en jeu normal halfDamage (monstre mi-vie)
-                                     ;   ou le tir du joueur tue les nerves bien avant.
-timestamp.NERV_VULNERABLE  equ $1BDF+$280 ; nerves (eyes) armables. Arcade: create_dobkeratops
-                                     ;   spawn monstre + nerves ENSEMBLE (T0), nerve +0x22=$280
-                                     ;   d'intro -> vulnerable a T0+$280. Le portage etale les
-                                     ;   spawns wave (orbites $1B7C, monstre $1BDF) : on ancre sur
-                                     ;   le spawn du MONSTRE ($1BDF, = T0 arcade) + $280.
+timestamp.NERV_VULNERABLE  equ $1BDF+456 ; nerves (eyes) armables, T0 = spawn du MONSTRE ($1BDF,
+                                     ;   = T0 arcade : create_dobkeratops cree monstre et nerves
+                                     ;   ENSEMBLE ; le portage etale les spawns wave, orbites a $1B7C).
+                                     ;
+                                     ;   L'arcade arme la nerve a T0+$280 (=640, compteur +0x22 de
+                                     ;   run_dobkeratops_optical_nerves_intro @0x409F63). Reprendre
+                                     ;   cet offset ABSOLU est faux ici : le portage a raccourci
+                                     ;   l'intro du monstre (0x200=512 -> 360, "manual adjustment by
+                                     ;   video") ET l'emergence (0x3F=63 -> 31). Chronologies :
+                                     ;
+                                     ;               explosions   combat   1res scies   nerve armee
+                                     ;     arcade        416       575        591          640
+                                     ;     portage       264       391        407          456
+                                     ;
+                                     ;   Ce qui compte est la RELATION, pas l'offset : l'arcade arme
+                                     ;   la nerve 65 trames apres l'entree en combat et 49 apres la
+                                     ;   premiere volee de scies (cf. le plate "chain routine when
+                                     ;   scroll is over and monster has fired first saws"). Les deux
+                                     ;   ancrages convergent ici sur 456. Garder $280 laissait 249
+                                     ;   trames (~5 s) de monstre sorti et tirant avant que les nerves
+                                     ;   ne soient touchables, contre ~1 s en arcade.
+timestamp.ERASE_NERV_START equ $1BDF+456+$900 ; nerves auto-effacees (free-life). Arcade: le compteur
+                                     ;   +0x3E ($900) part de l'armement de la nerve, donc il suit
+                                     ;   NERV_VULNERABLE. Filet de securite : en jeu normal halfDamage
+                                     ;   (monstre mi-vie) ou le tir du joueur tue les nerves bien avant.
 timestamp.BOSS_ESCAPE      equ $1BDF+$1000 ; boss escape / end-stage. Arcade: parent run_dobkeratops
                                      ;   +0x3E engagement timeout $1000 depuis T0 (= spawn monstre $1BDF)
 timestamp.MOVEALIEN_DELAY  equ 140   ; frames between last nerve death and alien move out

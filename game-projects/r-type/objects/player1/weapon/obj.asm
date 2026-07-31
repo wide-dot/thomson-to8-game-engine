@@ -94,6 +94,10 @@ Live
         subd  #3 ; half width of the weapon
         addd  impactX,u
         std   x_pos,u
+        subd  glb_camera_x_pos         ; recaler la hitbox sur le point d'impact : cette
+        stb   AABB_0+AABB.cx,u         ;   branche ne l'ecrivait pas, et sur la trame de
+                                       ;   naissance (tir ne DANS le mur) elle restait a 0,
+                                       ;   soit une boite active au bord gauche de la camera
         ldd   #Img_weapon_impact0
         std   image_set,u
         inc   routine,u

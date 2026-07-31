@@ -34,7 +34,12 @@ Init
 !       lsla
         ldx   #optionboxes
         ldd   a,x
-        std   image_set,u
+        bne   >                         ; type non implemente (entree a 0 dans la table :
+        jmp   DeleteObject              ;   subtypes 2, 5 et 6). Sans cette garde le bonus
+                                        ;   etait INVISIBLE (image_set=0 -> DisplaySprite
+                                        ;   sort tout de suite) mais bien ramassable, et
+                                        ;   @captured le traitait en counter-air par defaut.
+!       std   image_set,u
         ldb   #7
         stb   priority,u
         lda   render_flags,u
@@ -70,7 +75,8 @@ Live
         beq   @missiles
         cmpa  #1                        ; Counter-ground laser ?
         beq   >
-        lda   #2                        ; Counter-air laser
+        lda   #2                        ; reste : subtype 4 = counter-air (les subtypes sans
+                                        ;   image sont filtres a l'Init, cf. optionboxes)
 !
         sta   player1+forcepodtype
                                         ; Do we need to activate the force pod ?
@@ -114,13 +120,16 @@ AlreadyDeleted
         rts
 
 
+; 0 = type non implemente : l'objet se supprime a l'Init (cf. garde ci-dessus).
+; Les types instancies au stage 1 (quartet haut du 5e octet de la wave, cf. pow.asm)
+; sont 0, 3, 4, 7 ; le type 5 est intercepte par pow.asm et devient un bit device.
 optionboxes
-        
-        fdb Img_pow_optionbox_0    ; Bounce laser
-        fdb Img_pow_optionbox_1    ; Counter ground laser
-        fdb 0
-        fdb Img_pow_optionbox_3    ; Speed up
-        fdb Img_pow_optionbox_4    ; Counter air laser
-        fdb 0
-        fdb 0
-        fdb Img_pow_optionbox_7    ; Missiles
+
+        fdb Img_pow_optionbox_0    ; 0 Bounce laser
+        fdb Img_pow_optionbox_1    ; 1 Counter ground laser
+        fdb 0                      ; 2 (non implemente)
+        fdb Img_pow_optionbox_3    ; 3 Speed up
+        fdb Img_pow_optionbox_4    ; 4 Counter air laser
+        fdb 0                      ; 5 (bit device : intercepte par pow.asm)
+        fdb 0                      ; 6 (non implemente)
+        fdb Img_pow_optionbox_7    ; 7 Missiles
