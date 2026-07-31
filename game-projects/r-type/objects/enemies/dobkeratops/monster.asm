@@ -66,11 +66,10 @@ Init
         clr   hitFlash.active            ; boss hit flash state
         clr   hitFlash.prevP
 
-        _Collision_AddAABB AABB_0,AABB_list_ennemy
-        lda   #dobkeratops_monster_hitdamage
-        sta   AABB_0+AABB.p,u
-        _ldd  dobkeratops_monster_hitbox_x,dobkeratops_monster_hitbox_y
-        std   AABB_0+AABB.rx,u
+        ; NO hitbox yet: it is armed by ArmHitBox when the monster is fully out
+        ; (MonsterOut -> MonsterMouth), which is also where UpdateHitBox starts
+        ; refreshing cx/cy. Registering it here left a ghost box at camera (0,0)
+        ; with p=30 for ~490 frames (cx/cy are zeroed with the OST).
 
         inc   routine,u
 
@@ -129,10 +128,30 @@ MonsterOut
         ldb   anim_frame+1,u
         subb  gfxlock.frameDrop.count
         bhi   >
-        inc   routine,u
+        inc   routine,u                 ; -> MonsterMouth: the monster is out, arm the hitbox
+        bsr   ArmHitBox                 ;   (clobbers d, so do it before reloading b)
         ldb   #$c0
 !       stb   anim_frame+1,u
         jmp   DisplaySprite
+
+* Register the boss hitbox. Called once, on the MonsterOut -> MonsterMouth
+* transition: from there on UpdateHitBox runs every frame and keeps cx/cy in
+* sync with the sprite. Seeds hitFlash.prevP so the first UpdateHitBox cannot
+* read a phantom "damage dropped" hit.
+ArmHitBox
+        _Collision_AddAABB AABB_0,AABB_list_ennemy
+        lda   #dobkeratops_monster_hitdamage
+        sta   AABB_0+AABB.p,u
+        sta   hitFlash.prevP
+        _ldd  dobkeratops_monster_hitbox_x,dobkeratops_monster_hitbox_y
+        std   AABB_0+AABB.rx,u
+        ldd   x_pos,u                   ; position it NOW, before any collision pass
+        subd  glb_camera_x_pos
+        stb   AABB_0+AABB.cx,u
+        ldd   y_pos,u
+        subd  glb_camera_y_pos
+        stb   AABB_0+AABB.cy,u
+        rts
 
 monster.getout.images
         fdb   Img_dobkeratops_monster_4
@@ -156,6 +175,13 @@ MonsterMouth
  ENDC
 !
 WaitEndStage
+        ; the endstage engagement timeout (BOSS_ESCAPE) can raise bossDefeated while the
+        ; boss is still alive; go through the normal teardown so the explosions, the
+        ; explode flag and the boss-room erase all fire (else the body would stay painted
+        ; during the victory scroll-out). Unreachable on a normal kill: MonsterKill always
+        ; leaves the routine at WaitExplode/AlreadyDeleted, never back here.
+        lda   globals.bossDefeated
+        lbne  MonsterKill
         lda   gfxlock.frameDrop.count
         ldb   anim_frame+1,u
 @loop   decb

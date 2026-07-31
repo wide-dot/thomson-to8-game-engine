@@ -23,6 +23,13 @@ TM_BOXH  equ 8                       ; de changement (refresh) + in-range ; le d
                                      ; custom couvrent le vrai cluster (plus large que l'ecran)
 TM_CENT  equ 2                       ; image_center_offset des tails
 TM_ST    equ 18                      ; octets d'etat par tail
+TM_WAVE  equ $1B40                   ; gameCount du spawn (cf. object-wave-data.asm)
+TM_XBASE equ TM_WAVE*3/16            ; = 1308 : camera_x a cet instant (scroll_vel $0030 = 3/16
+                                     ; px/trame). Ancrage ABSOLU du cluster, comme le reste du
+                                     ; corps du boss (monster 1516, obj 1507, jaw 1497). Lire
+                                     ; glb_camera_x_pos au spawn rendait le placement dependant
+                                     ; du retard de trame du declenchement de la wave
+                                     ; (wave_frame_drop n'est pas compense ici).
 
 ; --- layout record d'etat (Y-relatif), 18 o ---
 TS_XHI   equ 0                       ; x_pos int (hi)
@@ -50,6 +57,12 @@ Object
         jmp   Run
 
 Init
+        clr   TMkilled               ; etat de page : NON recharge au reload checkpoint
+        ldx   #TMRec                 ; purge les records bgdata/erase d'une partie precedente
+        ldd   #0
+!       std   ,x++
+        cmpx  #TMRec_end
+        blo   <
         _GetCartPageA
         ldb   id,u
         ldx   #Img_Page_Index
@@ -74,7 +87,7 @@ Init
 @iloop
         clra
         ldb   ,x                     ; x_off
-        addd  glb_camera_x_pos       ; -> x_pos playfield (int)
+        addd  #TM_XBASE              ; -> x_pos playfield (int), ancre absolue
         std   TS_XHI,y
         clr   TS_XSUB,y
         clra
@@ -112,6 +125,8 @@ Init
         jmp   DisplaySprite
 
 Run
+        lda   TMkilled               ; suppression deja demandee : ne rien retoucher (surtout
+        bne   @gone                  ; pas render_flags, qui porte render_todelete_mask)
         clr   render_flags,u         ; bg-erase, coords ecran, visible
         lda   TMcolPhase             ; alternance arcade : trame paire = elements
         eora  #1                     ; pairs (10), trame impaire = impairs (9) ->
@@ -121,7 +136,16 @@ Run
                                      ; VISIBLES. Cette box couvre les tails -> l'overlap
                                      ; co-refresh (CSR_SubEraseSpriteSearchInit) rafraichit
                                      ; le master quand un sprite mobile passe dessus.
-        jmp   DisplaySprite
+        lda   TMdead                 ; toutes les tails supprimees -> on rend le slot master
+        cmpa  #TM_N
+        bne   >
+        inc   TMkilled
+        jmp   DeleteObject           ; PAS un "ora #render_todelete_mask" a la main : seul
+                                     ; DeleteObject inscrit l'OST dans Lst_Priority_Unset,
+                                     ; sans quoi UnsetDisplayPriority n'appelle jamais
+                                     ; UnloadObject -> le slot fuyait definitivement.
+!       jmp   DisplaySprite
+@gone   rts
 
 ; ===========================================================================
 ; TailUpdateAll - porte 1:1 le fonctionnement de tail.asm pour les 19 tails :
@@ -136,9 +160,20 @@ TailUpdateAll
         bne   >
         ldd   #1                     ; au moins 1 pas d'anim
 !       std   TMnf
-        ; NB : le master NE calcule PAS le glissement (pas de jsr followDobkeratops :
-        ; effet global qui perturbe la garde de trame partagee du boss -> flicker).
-        ; Le corps du boss (monster/jaw/obj) calcule move.step ; on ne fait que le LIRE.
+        ; --- glissement partage : le master est spawne AVANT le corps du boss ($1B40 vs
+        ; $1BDF) donc il passe en TETE de la liste d'objets. C'est donc a LUI de declencher
+        ; le calcul du pas de la trame, sinon il applique celui de la trame precedente.
+        ; computeStep ne touche AUCUNE OST (contrairement a followDobkeratops, qui applique
+        ; le pas a x_pos,u de l'appelant) et est garde par gameCount : le corps du boss le
+        ; retrouvera deja calcule. Meme conditionnement que le corps, sinon move.left se
+        ; mettrait a decroitre avant l'heure.
+        lda   globals.bossDefeated
+        bne   @nostep
+        ldx   gfxlock.frame.gameCount
+        cmpx  main.timestamp.moveAlienStart
+        blo   @nostep
+        jsr   main.dobkeratops.computeStep
+@nostep
         lda   #255                   ; bbox des tails visibles (min x/y init 255, max init 0)
         sta   TMbxmin
         sta   TMbymin
@@ -320,16 +355,7 @@ TailUpdateAll
         lda   TMi
         cmpa  #TM_N
         lbne  @loop
-        ; --- cleanup : toutes les tails supprimees -> suppression du master
-        ; (l'engine efface et libere le slot via render_todelete, comme le
-        ; DeleteObject des tails d'origine) ---
-        lda   TMdead
-        cmpa  #TM_N
-        bne   >
-        lda   render_flags,u
-        ora   #render_todelete_mask
-        sta   render_flags,u
-!
+        ; (cleanup : le compte TMdead est exploite par Run, qui appelle DeleteObject)
         ; --- box du master = bbox des tails visibles (U = OST master) ---
         ; clampee in-range par construction (visibles => x dans [50,203]).
         ; x_pixel=minx-2 (center), BOXW=maxx-minx+6 ; y_pixel=miny, BOXH=maxy-miny+12.
@@ -558,6 +584,7 @@ TM_RecPtr
 
 ; --- data / buffers sur la page ------------------------------------------
 TMi        fcb 0
+TMkilled   fcb 0                     ; 1 = DeleteObject demande (master rendu au pool)
 TMidx      fcb 0
 TMbufsel   fcb 0
 TMbxmin    fcb 0
@@ -578,6 +605,7 @@ TMalive    fill 0,TM_N              ; 19 x drapeau visible (1) / supprimee (0)
 TMPos      fill 0,3*TM_N            ; 19 x [x_pixel, y_pixel, img] (calcule par Run)
 TMState    fill 0,TM_ST*TM_N        ; 19 x etat complet (18 o)
 TMRec      fill 0,2*TM_N*4          ; records [bgdata(2),erase_rtn(2)] x 19 x 2 buffers
+TMRec_end
 
         INCLUDE "./objects/enemies/dobkeratops/tail_animation.asm"
         INCLUDE "./objects/enemies/dobkeratops/tailmgr_blits.asm"

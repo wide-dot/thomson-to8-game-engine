@@ -67,6 +67,9 @@ InitCommon
 
 RunMaster
         lda   gfxlock.frameDrop.count
+        bne   >                     ; count == 0 (1re boucle apres checkpoint.load) : le
+        inca                        ; "deca / bne" ferait 256 tours - au moins 1 pas
+!
 @loop   dec   anim_frame+1,u
         ldb   anim_frame+1,u        
         andb  #3
@@ -106,9 +109,10 @@ CreateSlave
         sta   anim_frame,x
         stu   parent,x
         ldb   child_frame,u
-        addb  #2
-        ldb   child_frame,u
-        stb   frame,x
+        stb   frame,x                  ; phase de rotation de ce maillon
+        addb  #2                       ; et decalage du suivant : l'ancien "addb #2" etait
+        andb  #6                       ; immediatement ecrase par un second ldb, donc
+        stb   child_frame,u            ; child_frame ne bougeait jamais (chaine uniforme)
         lda   ,s                       ; get remaining frame drops to process
         deca
         sta   missed_frames,x
@@ -183,6 +187,9 @@ RunCommon
 RunSlave
         lda   gfxlock.frameDrop.count
         adda  missed_frames,u
+        bne   >                     ; jamais 0 : cf. RunMaster
+        inca
+!
 @loop   jsr   SawMoveXLeft
         jsr   SawMoveY
         dec   anim_frame,u

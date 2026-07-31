@@ -225,16 +225,21 @@ RunEyes
         ; globals.score update
         ldb   #dobkeratops_eye_scoreIdx
         jsr   AwardScore
-        ; delete eyes object
+        ; delete eyes object. EyesObjects[] slots stay 0 when the wave could not
+        ; instanciate the eye (pool full) -> ALWAYS test before writing through the
+        ; pointer, or we poke routine (offset 34) at address $0022. Same guard as
+        ; Run.killEyes does on EraserObjects.
         ldb   subtype,u
         cmpb  #1
         bne   >
         ldx   EyesObjects
+        beq   >
         lda   #rtnid.DeleteEye
         sta   routine,x
 !       cmpb  #3
         bne   >
         ldx   EyesObjects+2
+        beq   >
         lda   #rtnid.DeleteEye
         sta   routine,x
         ; create explosion
@@ -297,17 +302,19 @@ DeleteEye
         bhs   @endCascade
         dec   main.dobkeratops.nervesErasing ; orbit nerve erase animation finished
 @endCascade
-        cmpb  #5
-        bne   >
-        ldx   EyesObjects+4
+        cmpb  #5                             ; cascade eye 30 -> 31 -> 32. Null-guarded:
+        bne   >                              ;   an eye the wave failed to spawn leaves its
+        ldx   EyesObjects+4                  ;   EyesObjects[] slot at 0.
+        beq   >
         lda   #rtnid.DeleteEye
         sta   routine,x
 !       cmpb  #6
         bne   >
         ldx   EyesObjects+6
+        beq   >
         lda   #rtnid.DeleteEye
         sta   routine,x
-!       
+!
         jmp   DeleteObject
 
 MoveAlien

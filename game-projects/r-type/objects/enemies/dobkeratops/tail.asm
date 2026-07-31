@@ -1,5 +1,10 @@
 ; ---------------------------------------------------------------------------
-; Object
+; Object - OBSOLETE / PLUS COMPILE
+;
+; Remplace par tailmgr.asm (1 objet master hors-pool qui pilote les 19 tails).
+; La declaration object.dobkeratops_tail a ete retiree des main.*.properties du
+; game-mode 01 : ce fichier et ses images ne sont plus assembles. Conserve comme
+; reference du comportement d'origine (portage 1:1 dans tailmgr).
 ;
 ; input REG : [u] pointer to Object Status Table (OST)
 ; ---------
