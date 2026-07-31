@@ -20,6 +20,7 @@ rtnid.MoveAlien equ 4
 rtnid.DeleteAlien equ 5
 rtnid.FreezeAlien equ 7        ; (6 = DeleteAlienEnd) clean double-buffer stop on boss death
 rtnid.IntroEye  equ 9          ; nerve en phase intro: INVULNERABLE jusqu'a l'emergence du monstre
+rtnid.EyeDeleted equ 10        ; eraser/eye supprime : rts, cf. DeleteEye @end
 
 Object
         lda   routine,u
@@ -38,6 +39,7 @@ Routines
         fdb   FreezeAlien
         fdb   FreezeAlienStop
         fdb   IntroEye
+        fdb   EyeDeleted
 
 Init
         ; init sprite position
@@ -297,6 +299,17 @@ DeleteEye
         inc   anim_frame,u
         jmp   DisplaySprite
 @end
+        ; IMPERATIF : marquer l'objet supprime AVANT le jmp DeleteObject. DeleteObject ne
+        ; libere pas l'OST tout de suite quand le sprite est encore affiche : il pose
+        ; render_todelete et attend UnsetDisplayPriority, soit 1 a 2 trames pendant
+        ; lesquelles RunObjects rappelle l'objet. Sans ce marquage on retombait sur @end
+        ; (anim_frame fige sur le terminateur -1) et on redecrementait nervesErasing a
+        ; chaque trame : mesure a -8 en jeu (8 objets d'effacement x 1 decrement en trop).
+        ; Consequence : MonsterKill prenait la branche @wait alors qu'aucun nerf n'efface,
+        ; et l'explosion du boss attendait les 24 trames du garde-fou nerveLock.WAIT.
+        ; Meme idiome que DeleteAlien/jaw.Explode/monster.Delete/weapon.Delete.
+        lda   #rtnid.EyeDeleted
+        sta   routine,u
         ldb   subtype,u
         cmpb  #4
         bhs   @endCascade
@@ -349,6 +362,9 @@ FreezeAlien
         jmp   DisplaySprite                  ; page 2 at the same position -> both pages reconciled
 FreezeAlienStop
         rts                                  ; no more 1px flicker; frozen alien persists until erase
+
+EyeDeleted
+        rts     ; l'objet peut etre rappele 1-2 trames apres DeleteObject (double buffering)
 
 EraserImages
         fdb   EraserImages0
