@@ -88,8 +88,9 @@ impact_x_f_row2   fcb   0
 upper_solid_tiles fcb   0
 lower_solid_tiles fcb   0
 closed_path       fcb   0
-counterair_lock   fcb   0
-forcepodfire_lock fcb   0
+counterair_lock   fcb   0 ; cadence du counter-air (20 trames). Le rebond n'en a pas besoin :
+                          ; sa cadence vient de glb.slotsState (obj_reboundlaser), qui bloque
+                          ; toute nouvelle volee ~114-118 trames, six fois plus contraignant.
 
 Init
         ; clean OST : slot statique re-active apres une mort -> on repart d'un slot FRAIS.
@@ -115,7 +116,6 @@ Init
         sta   power_level,u            ; no level, force animation to be set
         std   target_x_pos
         sta   counterair_lock
-        sta   forcepodfire_lock
 
         lda   #-1
         sta   rotation                 ; default to up rotation
