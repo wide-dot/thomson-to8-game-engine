@@ -18,10 +18,12 @@ slave         equ ext_variables+10 ; 1 byte - pos related to player one
 xPosOld       equ ext_variables+11 ; 2 bytes - old player one x_pos
 impactX       equ ext_variables+13 ; 2 bytes - impact x position
 parent        equ ext_variables+15 ; 2 bytes - parent object pointer
+armed         equ ext_variables+17 ; 1 byte  - 1 = hitbox armee (segment deja apparu a l'ecran)
 
-stepMove      equ 6                ; number of pixels in horizontal axis 
+stepMove      equ 6                ; number of pixels in horizontal axis
 leftOffset    equ 11               ; init position when left
 rightOffset   equ 8                ; init position when left
+CA_POWER      equ 5                ; arcade: counter-air laser power (penetrates/depletes)
 
 Object
         lda   routine,u
@@ -65,7 +67,7 @@ InitFirstChild
         sta   routine,u
         ldb   #4
         stb   priority,u
-        lda   #5                       ; arcade: counter-air laser power = 5 (penetrates/depletes)
+        lda   #CA_POWER                ; la tete nait a caFrame 7 = deja visible : armee
         sta   AABB_0+AABB.p,u
         _ldd  3,14                     ; set hitbox xy radius
         std   AABB_0+AABB.rx,u
@@ -146,8 +148,10 @@ GenChild
         sta   priority,x
         lda   glb_d0_b
         sta   caFrame,x   
-        lda   AABB_0+AABB.p,u
-        sta   AABB_0+AABB.p,x
+        clr   AABB_0+AABB.p,x          ; les 3 enfants naissent a caFrame 8/9/10, index sans
+                                       ;   image : boite INERTE (p=0 -> ignoree par
+                                       ;   Collision_Do) jusqu'a leur apparition, cf. Live.
+                                       ;   armed,x vaut deja 0 (slot frais).
         ldd   AABB_0+AABB.rx,u         ; set hitbox xy radius
         std   AABB_0+AABB.rx,x         ; by copying 2 bytes
         ldd   x_pos,u
@@ -284,9 +288,22 @@ Live
         asla
         ldx   a,x
         stx   image_set,u
-        bne   >
+        beq   @caHidden                ; index 8/9/10 = fdb 0 : segment pas encore apparu
+        ; premiere trame VISIBLE -> on arme la hitbox. Avant ce correctif les 3 enfants
+        ; etaient inscrits dans AABB_list_friend avec p=CA_POWER des GenChild : ils
+        ; infligeaient des degats PENETRANTS et INVISIBLES pendant 1 a 3 trames, pile sur
+        ; le force pod (x_pos -6/-12/-18), en contournant le gate 1 degat / 16 trames de
+        ; WeaponContactTick. On n'arme qu'une fois : sans le drapeau, un segment dont le
+        ; potentiel est epuise se rechargerait a chaque trame.
+        lda   armed,u
+        bne   @caShown
+        inc   armed,u
+        lda   #CA_POWER
+        sta   AABB_0+AABB.p,u
+@caShown
+        jmp   DisplaySprite
+@caHidden
         rts
-!       jmp   DisplaySprite
 @delete
         _Collision_RemoveAABB AABB_0,AABB_list_friend
         lda   #3
