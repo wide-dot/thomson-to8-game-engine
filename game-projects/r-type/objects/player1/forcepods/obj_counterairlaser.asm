@@ -340,18 +340,9 @@ counterAirImagesa
         fdb   0
  ENDC
 
-counterAirHitboxes
-        fcb   3,14
-        fcb   3,14
-        fcb   3,14
-        fcb   3,14
-        fcb   3,19
-        fcb   3,22
-        fcb   3,22
-        fcb   3,19
-        fcb   0,0
-        fcb   0,0
-        fcb   0,0
+; (la table counterAirHitboxes, hitbox par frame indexee comme counterAirImages, a ete
+; retiree : jamais cablee, et ses entrees 19/22 auraient elargi l'emprise verticale de
+; +36 a +57 % sur 4 frames sur 8. La hitbox reste constante a 3,14 posee a l'init.)
 
 counterAirLaser.frameDrop
         fcb   0
