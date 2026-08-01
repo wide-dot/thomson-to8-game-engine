@@ -98,7 +98,7 @@ public class ZX0Encoder extends Encoder{
 			//if (logger.isDebugEnabled())
 				//logger.debug(debug80Col(spriteSheet.getSubImagePixels(imageNum, 1)));
 
-			if (!isPlane0Empty)
+			if (!isPlane1Empty)
 				spriteCode2	= encode(spriteSheet.getSubImagePixels(imageNum, 1), spriteSheet.getCenter(), "1");
 			
 		}
