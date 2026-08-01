@@ -184,7 +184,7 @@ UnloadObject_x
         ldy   run_object_next,x
         sty   object_list_next         ; then update the next object in RunObjects routine
         beq   @noNext
-        ldy   run_object_next,x 
+!       ldy   run_object_next,x 
         beq   @noNext
         ldu   run_object_prev,x
         stu   run_object_prev,y
