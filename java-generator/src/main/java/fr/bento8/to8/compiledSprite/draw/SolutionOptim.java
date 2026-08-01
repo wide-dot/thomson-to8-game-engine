@@ -20,6 +20,11 @@ public class SolutionOptim{
 
 	private int[] fact = new int[]{0, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880};
 	private int maxTries;
+
+	/** see the note on SEED in the backupDrawErase encoder */
+	private static final long SEED = 0x6809L;
+
+	private final Random rand = new Random(SEED);
 	private int combMax;
 
 	private Solution solution;
@@ -256,7 +261,7 @@ public class SolutionOptim{
 		int score = 0, bestScore = Integer.MAX_VALUE;
 		int a=0, b=0;
 		int essais = maxTries;
-		Random rand = new Random();
+		// rand is a seeded field now, its stream continues across nodes
 		while (essais-- > 0) {
 			if (pattern.size() > 0) {
 				a = rand.nextInt(pattern.size());

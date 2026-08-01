@@ -22,6 +22,15 @@ public class SolutionOptim{
 
 	private int[] fact = new int[]{0, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880};
 	private int maxTries;
+
+	/**
+	 * Seed of the group reordering search. Past a node size the search is
+	 * random, and an unseeded generator makes the same PNG compile to a
+	 * different size on every build : measured 542 then 544 bytes on one
+	 * sprite. Object placement works against sizes, so they have to hold
+	 * still from one build to the next.
+	 */
+	private static final long SEED = 0x6809L;
 	private int combMax;
 
 	private Solution solution;
@@ -272,7 +281,7 @@ public class SolutionOptim{
 	}
 
 	boolean generateSolution(List<List<Integer[]>> pattern) {
-		Random rand = getCached("rand", Random::new);
+		Random rand = getCached("rand", () -> new Random(SEED));
 		int size = pattern.size();
 		if (size > 0) {
 			int a = rand.nextInt(size);
