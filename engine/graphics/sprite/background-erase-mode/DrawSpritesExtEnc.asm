@@ -96,17 +96,17 @@ DRS_rtsB1
 DRS_ProcessEachPriorityLevelB0    
         lda   rsv_render_flags,x
         anda  #rsv_render_displaysprite_mask
-        lbeq  DRS_NextObjectB0
-        
-        lda   rsv_prev_render_flags_0,x
-        lbmi  DRS_NextObjectB0
+        bne   >
+        jmp   DRS_NextObjectB0
+!       lda   rsv_prev_render_flags_0,x
+        bmi   DRS_NextObjectB0
         lda   render_flags,x
         anda  #render_overlay_mask
         bne   DRS_DrawWithoutBackupB0
         lda   rsv_erase_nb_cell,x        
         jsr   BgBufferAlloc                 ; allocate free space to store sprite background data
-        cmpy  #$0000                        ; y contains cell_end of allocated space 
-        lbeq   DRS_NextObjectB0             ; branch if no more free space
+        leay   ,y                           ; y contains cell_end of allocated space 
+        beq    DRS_NextObjectB0             ; branch if no more free space
 DRS_DrawWithoutBackupB0        
         ldd   xy_pixel,x                    ; load x position (48-207) and y position (28-227) in one operation
         suba  rsv_image_center_offset,x
@@ -190,7 +190,7 @@ DRS_XYToAddressRAM1First
 DRS_dyn1        
         addd  #$C000                        ; (dynamic)
         std   <glb_screen_location_2
-        subd  #$2000
+        suba  #$20
         std   <glb_screen_location_1     
         rts
 DRS_XYToAddressRAM2First
@@ -207,17 +207,17 @@ DRS_dyn2
 DRS_ProcessEachPriorityLevelB1
         lda   rsv_render_flags,x
         anda  #rsv_render_displaysprite_mask
-        lbeq  DRS_NextObjectB1
-        
-        lda   rsv_prev_render_flags_1,x
-        lbmi  DRS_NextObjectB1
+        bne   >
+        jmp   DRS_NextObjectB1
+!       lda   rsv_prev_render_flags_1,x
+        bmi   DRS_NextObjectB1
         lda   render_flags,x
         anda  #render_overlay_mask
         bne   DRS_DrawWithoutBackupB1
         lda   rsv_erase_nb_cell,x        
         jsr   BgBufferAlloc                 ; allocate free space to store sprite background data
-        cmpy  #$0000                        ; y contains cell_end of allocated space
-        lbeq   DRS_NextObjectB1             ; branch if no more free space
+        leay  ,y                           ; y contains cell_end of allocated space
+        beq   DRS_NextObjectB1             ; branch if no more free space
 DRS_DrawWithoutBackupB1        
         ldd   xy_pixel,x                    ; load x position (48-207) and y position (28-227) in one operation
         suba  rsv_image_center_offset,x
