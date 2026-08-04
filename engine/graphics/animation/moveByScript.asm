@@ -66,7 +66,7 @@ moveByScript.runByFrameDrop
 moveByScript.runByB
         tstb
         bne   >
-        ldb   #1                                              ; prevent running 256 loops if 0 is passed in b
+        incb                                                  ; prevent running 256 loops if 0 is passed in b
 !       stb   moveByScript.anim.loops
         _GetCartPageA
         sta   @page
