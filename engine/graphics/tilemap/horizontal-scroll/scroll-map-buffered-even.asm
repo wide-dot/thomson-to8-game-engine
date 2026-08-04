@@ -67,6 +67,7 @@ InitScroll
         mul
         std   scroll_ml_step1
         std   scroll_ml_step2
+        std   scroll_ml_step3
 
         lda   scroll_tile_width                  ; set video memory steps between each tiles in columns
         asra
@@ -179,10 +180,10 @@ DrawTiles
         bne   @a
         rts
 @a
-
+        
         ; disable page backup (page swap macros)
         ; mandatory if using T2 and direct access to E7E6
-        lda   #0
+        clra
         sta   glb_Page
 
         _GetCartPageA
@@ -224,68 +225,78 @@ DrawTiles
 ; **************************************
 ; * Tile rendering Loop
 ; **************************************
-        ldy   <glb_screen_location_1   ; y is ptr to draw location in video memory
-        lda   scroll_vp_y_pos          ; apply vertical vieport offset
-        ldb   #40
-        mul
-        leay  d,y
-        sty   start_pos
-
+        leas  -2,s                      ; reserve room for u
         ldu   scroll_map_pos
         ldd   tile_buffer
         leau  d,u
 
         lda   tile_buffer_page
         sta   $E7E6
+        sta   tile_buffer_page_loc
+
+        lda   scroll_vp_y_pos          ; apply vertical vieport offset
+        ldb   #40
+        mul
+        addd  <glb_screen_location_1
 
 scroll_cloop                           ; column loop
+        std   start_pos
+        subd  #0
+scroll_ml_step3 set *-2
+        std   <glb_screen_location_1   ; sets location_1 for draw routine
         lda   scroll_vp_v_tiles
         sta   scroll_lcnt
-
 scroll_lloop                           ; line loop
-        pulu  b,x                      ; get b:draw routine page, x:draw routine addr
+        pulu  b,y                      ; get b:draw routine page, x:draw routine addr
 @c      stb   $E7E6                    ; mount page to run tile rendering routine
         beq   empty_tile               ; if zero this is an empty tile
-        sty   <glb_screen_location_1   ; sets location_1 for draw routine
-        pshs  u
-        leau  $1234,y                  ; load location_2 for draw routine
-delta   set   *-2
-        jsr   ,x                       ; call tile draw routine (glb_screen_location_1 will be used in this routine)
-        puls  u
-        lda   tile_buffer_page
-        sta   $E7E6
-        ldy   <glb_screen_location_1
-        leay  $1234,y                  ; move ahead in video memoryone tile down
+
+        ldd   <glb_screen_location_1
+        addd  #$1234                   ; move ahead in video memoryone tile down
 scroll_ml_step1 equ *-2
+        std   <glb_screen_location_1   ; sets location_1 for draw routine
+        addd  #0
+delta   set   *-2
+
+        stu   ,s
+        tfr   d,u
+        jsr   ,y                       ; call tile draw routine (glb_screen_location_1 will be used in this routine)
+        ldu   ,s
+        lda   #0
+tile_buffer_page_loc set *-1                
+        sta   $E7E6
         dec   scroll_lcnt              ; decrement line cnt
         bne   scroll_lloop             ; loop if tile remains
 
 scroll_end_line
         dec   scroll_ccnt              ; decrement column cnt
         beq   @rts
-        ldy   #0                       ; restore column start pos
+        ldd   #0                       ; restore column start pos
 start_pos equ *-2
-        leay  40,y
+        addb  #40                       ; add plsu rapide que addd
 scroll_mc_step equ *-1
-        sty   start_pos
-        bra   scroll_cloop             ; loop until the end
+        bcc   scroll_cloop             ; loop until the end
+        inca
+        bra   scroll_cloop
 @rts    lda   #0
 DrawTiles.restoredPage equ *-1
         _SetCartPageA
-        rts
+        puls  d,pc                     ; fixers leas above
 
 empty_tile
+        ldx   <glb_screen_location_1   ; y is ptr to draw location in video memory
         lda   tile_buffer_page
         sta   $E7E6
         lda   scroll_lcnt
+        bra   >
 empty_tile_loop
-        leay  $1234,y                  ; move ahead in video memoryone tile down
+        leau  3,u                      ; move to next tile
+!       leax  $1234,x                  ; move ahead in video memoryone tile down
 scroll_ml_step2 equ *-2
         deca
         beq   scroll_end_line          ; if no more tiles in line, branch
         ldb   ,u                       ; process next tile
-        beq   >                        ; branch if tile is empty
+        beq   empty_tile_loop          ; branch if tile is empty
         sta   scroll_lcnt              ; else render tile
+        stx   <glb_screen_location_1
         bra   scroll_lloop
-!       leau  3,u                      ; move to next tile
-        bra   empty_tile_loop
