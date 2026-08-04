@@ -193,7 +193,7 @@ ESP_UnsetCheckRefreshB0
         
 ESP_CheckEraseB0
         anda  #rsv_render_erasesprite_mask
-        lbeq   ESP_NextObjectB0
+        beq   ESP_NextObjectB0
         ldb   rsv_prev_render_flags_0,u
         bpl   ESP_UnsetOnScreenFlagB0   ; pas a l'ecran sur CE buffer : bgdata/adresse
                                             ; perimees, ne surtout pas restaurer (garde
@@ -293,7 +293,7 @@ ESP_FreeEraseBufferB1
         stu   BBF_AddNewEntry+1
         ldu   #Lst_FreeCellFirstEntry_1        
         stu   BBF_SetNewEntryPrevLink+1          
-        ldu   Lst_FreeCellFirstEntry_1
+        ldu   ,u
         jsr   BgBufferFree                  ; free background data in memory
         
 ESP_UnsetOnScreenFlagB1
@@ -306,7 +306,7 @@ ESP_UnsetOnScreenFlagB1
         
 ESP_NextObjectB1
         ldu   rsv_priority_prev_obj_1,u
-        lbne   ESP_ProcessEachPriorityLevelB1   
+        bne   ESP_ProcessEachPriorityLevelB1   
         rts
         
 * ---------------------------------------------------------------------------
