@@ -68,13 +68,13 @@ gfxlock.screenBorder.color equ *-1
 
 gfxlock.bufferSwap.wait
         clr   gfxlock.bufferSwap.status
-@loop   tst   gfxlock.backProcess.status
+@loop   lda   gfxlock.backProcess.status
         beq   >
         jsr   $1234                     ; do some back processing
 gfxlock.backProcess.routine equ *-2
 !       lda   gfxlock.status
         bne   >
-        tst   gfxlock.bufferSwap.status
+        lda   gfxlock.bufferSwap.status
         beq   @loop                     ; loop until irq make a swap
 !       rts
 
