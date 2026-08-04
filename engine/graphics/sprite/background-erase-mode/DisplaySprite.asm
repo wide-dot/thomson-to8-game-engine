@@ -28,7 +28,7 @@ DisplaySprite3                              ; u : ptr object RAM, a : priority
 DisplaySprite_x                             ; x : ptr object RAM
 DisplaySprite2
         pshs  d,x,u
-        tfr   x,u
+        leau  ,x
         bra   DSP_Start
         
 DisplaySprite                               ; u : ptr object RAM
@@ -67,14 +67,16 @@ DSP_InitPriority
 DSP_CheckLastEntry
         leay  buf_Tbl_Priority_Last_Entry,y
         asla                                ; change priority number to priority index (value x2)        
-        tst   a,y                           ; test left byte only is ok, no object will be stored at $00__ address
+        ldb   a,y                           ; test left byte only is ok, no object will be stored at $00__ address
         bne   DSP_addToExistingNode         ; not the first object at this priority level, branch
         
-DSP_addFirstNode        
+*DSP_addFirstNode        
         stu   a,y                           ; save object as last entry in linked list
-        leay  buf_Tbl_Priority_First_Entry-buf_Tbl_Priority_Last_Entry,y
+*        leay  buf_Tbl_Priority_First_Entry-buf_Tbl_Priority_Last_Entry,y
+        adda  #buf_Tbl_Priority_First_Entry-buf_Tbl_Priority_Last_Entry
         stu   a,y                           ; save object as first entry in linked list
-        ldd   #0
+*        ldd   #0
+        clra
         std   buf_priority_prev_obj,x       ; clear object prev and next link, it's the only object at this priority level
         std   buf_priority_next_obj,x
         
