@@ -181,7 +181,7 @@ ESP_ProcessEachPriorityLevelB0
         
 ESP_CheckPriorityB0
         cmpa  #0                            ; dynamic current priority
-        lbne   ESP_NextObjectB0             ; do not process this entry (case of priority change)
+        bne   ESP_NextObjectB0             ; do not process this entry (case of priority change)
         
 ESP_UnsetCheckRefreshB0
         lda   rsv_render_flags,u
@@ -249,7 +249,7 @@ ESP_ProcessEachPriorityLevelB1
         
 ESP_CheckPriorityB1
         cmpa  #0                            ; dynamic current priority
-        lbne   ESP_NextObjectB1             ; do not process this entry (case of priority change)
+        bne   ESP_NextObjectB1             ; do not process this entry (case of priority change)
         
 ESP_UnsetCheckRefreshB1
         lda   rsv_render_flags,u
@@ -261,8 +261,9 @@ ESP_UnsetCheckRefreshB1
         
 ESP_CheckEraseB1
         anda  #rsv_render_erasesprite_mask
-        lbeq   ESP_NextObjectB1
-        ldb   rsv_prev_render_flags_1,u
+        bne   >
+        jmp   ESP_NextObjectB1
+!       ldb   rsv_prev_render_flags_1,u
         bpl   ESP_UnsetOnScreenFlagB1   ; pas a l'ecran sur CE buffer : bgdata/adresse
                                             ; perimees, ne surtout pas restaurer (garde
                                             ; contre un flag erase force/rescape)
