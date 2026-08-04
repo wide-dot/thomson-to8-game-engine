@@ -45,14 +45,12 @@ RunObjects
         beq   @skip                    ; that will be usable later, we need to skip in this case (no object index)
         ldx   #Obj_Index_Page
         abx
-        lda   ,x              
+        lda   ,x
         _SetCartPageA         
-        aslb                  
-        ldx   #Obj_Index_Address
         abx
         ldd   run_object_next,u        ; in case of self-deletion by current object
         std   object_list_next         ; we need to save the next object in run list
-        jsr   [,x]        
+        jsr   [<Obj_Index_Address-Obj_Index_Page,x]        
         ldu   run_object_next,u        ; do not remove: child object created by last object
         bne   <                        ; have been added to the list
         ldu   #0
