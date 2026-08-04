@@ -14,21 +14,19 @@ BgBufferAlloc
         
 BBA0        
         ldx   #Lst_FreeCellFirstEntry_0     ; save previous cell.next_entry into x for future update
-        ldy   Lst_FreeCellFirstEntry_0      ; load first cell for screen buffer 0
         bra   BBA_Next
         
 BBA1        
         ldx   #Lst_FreeCellFirstEntry_1     ; save previous cell.next_entry into x for future update
-        ldy   Lst_FreeCellFirstEntry_1      ; load first cell for screen buffer 1
         
 BBA_Next
+        ldy   ,x                            ; load first cell for screen buffer 
         beq   BBA_rts                       ; loop thru all entries, branch if no more free space
         cmpa  nb_cells,y                    ; compare current nb of free cells with requested
         beq   BBA_FitCell                   ; branch if current free cells is the same size than requested
         bls   BBA_DivideCell                ; branch if current free cells are greater than requested
         leax  next_entry,y                  ; save previous cell.next_entry into x for future update        
-        ldy   next_entry,y                  ; move to next entry
-        bra   BBA_Next
+        bra   BBA_Next                      ; move to next entry
           
 BBA_FitCell
         ldd   next_entry,y
