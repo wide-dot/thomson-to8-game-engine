@@ -279,6 +279,12 @@ CSR_ComputeMappingFrame
         bra   CSR_UpdateMetadata
 CSR_NoDefinedFrame
         eora  #%00000010                    ; check if there is an alternate shifted image available
+        ; BUGFIX (2026-08-20, found on the v2 port) : the fallback direction
+        ; was tested on Z, which never comes with draw variants (bit0 set by
+        ; render_overlay_mask) — the shifted -> unshifted fallback took inc
+        ; instead of dec, 2px left. Test the shift bit itself. (The 8-bit
+        ; adjust is sound here : suba applies the offset modulo 256.)
+        bita  #%00000010
         beq   @e
         inc   rsv_image_center_offset,u     ; ajust offset for alternate
         bra   @f

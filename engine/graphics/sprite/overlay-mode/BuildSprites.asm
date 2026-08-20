@@ -142,10 +142,12 @@ BuildSprites
         bra   >
 @nodefinedframe
         eorb  #%00000010                    ; check if there is an alternate shifted image available
-        beq   @d
-        inc   _image_center_parity+1        ; ajust offset for alternate
-        bra   @e
-@d      dec   _image_center_parity+1
+        ; BUGFIX (2026-08-20, found on the v2 port) : the fallback direction
+        ; was tested on Z, which never comes with draw variants (bit0 always
+        ; set) — a draw sprite lacking its shifted routine landed 2px left at
+        ; odd positions ; and the low-byte inc/dec of a signed word wrapped
+        ; ($FF -> $00 read back as -256). Shared fix : BSP_parityFallback.
+        jsr   BSP_parityFallback
 @e      lda   b,x
         beq   @nextobject1                  ; no defined frame, nothing will be displayed
         leax  a,x                           ; read image subset index
@@ -367,10 +369,12 @@ BuildSprites
 @rts    rts
 @nodefinedframe
         eorb  #%00000010                    ; check if there is an alternate shifted image available
-        beq   @d
-        inc   _image_center_parity+1        ; ajust offset for alternate
-        bra   @e
-@d      dec   _image_center_parity+1
+        ; BUGFIX (2026-08-20, found on the v2 port) : the fallback direction
+        ; was tested on Z, which never comes with draw variants (bit0 always
+        ; set) — a draw sprite lacking its shifted routine landed 2px left at
+        ; odd positions ; and the low-byte inc/dec of a signed word wrapped
+        ; ($FF -> $00 read back as -256). Shared fix : BSP_parityFallback.
+        jsr   BSP_parityFallback
 @e      lda   b,x
         beq   @rts                          ; no defined frame, nothing will be displayed
         leax  a,x                           ; read image subset index
@@ -460,4 +464,20 @@ BuildSprites
         pshs  u,y                 
         ldu   glb_screen_location_2
         jsr   [_draw_routine]               ; draw compilated sprite on screen
-        puls  u,y,pc   
+        puls  u,y,pc
+
+; BUGFIX (2026-08-20) : missing-frame parity adjust, shared by both paths.
+; B = the variant index AFTER eorb #%10 : shift bit set = falling back to
+; the SHIFTED routine (one more pixel back), clear = to the UNSHIFTED one
+; (one pixel forward). Word-wide : inc/dec of the low byte alone wrapped.
+BSP_parityFallback
+        pshs  b
+        bitb  #%00000010
+        beq   @d
+        ldd   _image_center_parity
+        addd  #1                            ; ajust offset for alternate
+        bra   @e
+@d      ldd   _image_center_parity
+        subd  #1
+@e      std   _image_center_parity
+        puls  b,pc
