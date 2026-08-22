@@ -196,9 +196,15 @@ vscroll.tiles.update
 
         lda   vscroll.obj.map.page
         _SetCartPageA                  ; mount page that contain map data
-        ldy   vscroll.obj.map.address  ; handle up to 512 lines in map
         ldx   #vscroll.tiles.updateList+2
 @loopUpdateList
+        ldy   vscroll.obj.map.address  ; handle up to 512 lines in map
+                                       ; DOIT etre recharge a chaque element :
+                                       ; l'offset de ligne est ajoute a Y, et Y est
+                                       ; laisse sur la derniere tuile traitee. Hors
+                                       ; de la boucle, le 2e element et les suivants
+                                       ; cumulent les offsets, sortent de la tilemap
+                                       ; et ecrasent la memoire qui suit.
         ;
         ; load tile group data
         ; --------------------
