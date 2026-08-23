@@ -164,6 +164,16 @@ CSR_CheckDelHide
         lda   render_flags,u
         anda  #render_hide_mask|render_todelete_mask
         bne   CSR_DoNotDisplaySprite      
+        ; BUGFIX (2026-08-23) : image_set==0 means "no image" (see constants.asm).
+        ; DisplaySprite returns early in that case and therefore never unregisters
+        ; an object that was registered while it still had an image, so a stale
+        ; entry stays in the DPS. Treat it like a hidden sprite: erase what was
+        ; drawn before, draw nothing new. Without this guard the null pointer is
+        ; dereferenced against whatever sits at offset $0000 of the object image
+        ; page: harmless zeros on a RAM page (.fd/.sd), but the cartridge header
+        ; on a T2/ROM build, which sends the engine into an erased flash bank.
+        ldx   image_set,u
+        beq   CSR_DoNotDisplaySprite
 
 CSR_CheckRefresh  
         lda   rsv_render_flags,u      
