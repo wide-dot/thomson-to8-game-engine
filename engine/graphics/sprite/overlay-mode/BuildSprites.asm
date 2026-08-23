@@ -80,6 +80,15 @@ BuildSprites
         bne   @nextobject1 
         bita  #render_subobjects_mask       ; is this a child multisprite sprite object?
         lbne  @multisprite
+        ; BUGFIX (2026-08-23) : image_set==0 means "no image" (see constants.asm).
+        ; DisplaySprite returns early in that case and therefore never unregisters
+        ; an object that was registered while it still had an image, so a stale
+        ; entry stays in the DPS. Without this guard the null pointer is
+        ; dereferenced against whatever sits at offset $0000 of the object image
+        ; page: harmless zeros on a RAM page (.fd/.sd), but the cartridge header
+        ; on a T2/ROM build, which sends the engine into an erased flash bank.
+        ldx   image_set,u
+        beq   @nextobject1
         sta   _render_flags     
 ;
 ; ****************************************************
@@ -330,6 +339,7 @@ BuildSprites
 @id     equ   *-1
         _SetCartPageA        
         ldx   4,y ; get child imageset
+        beq   @nextchild                    ; BUGFIX (2026-08-23) : no image for this child
         stx   _image_set
         ldb   image_center_offset,x
         sex
@@ -342,6 +352,7 @@ BuildSprites
         ldd   ,y
         std   _x_pos
         jsr   @processMulti
+@nextchild
         dec   _nbchild
         beq   @nextobject2
         leay  next_subspr,y
