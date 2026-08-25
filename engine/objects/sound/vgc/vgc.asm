@@ -29,5 +29,11 @@
         INCLUDE "./engine/sound/vgc/lib/vgcplayer.h.asm"
         INCLUDE "./engine/sound/vgc/lib/vgcplayer.asm"
 
+ IFNDEF vgc_stream_buffers
+; Buffers live in the object page by default. A game mode whose page is too
+; tight can declare them in the resident code instead (ALIGN 256 + 8*256): the
+; symbol then comes in through main.glb, this block is skipped, and 2304 bytes
+; are given back to the page.
 vgc_stream_buffers equ (*&$FF00)+$100 ; cannot align in objects due to placement optimization
         fill 0,256*9                  ; added one 256 chunk to do manual alignment
+ ENDC
