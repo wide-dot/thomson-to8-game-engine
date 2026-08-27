@@ -7,15 +7,28 @@
 ; resident quand seul le main l'appelle).
 ; ------------------------------------------------------------------------------
 
+; La boite ajoutee repart de liens PROPRES. Sans cela elle gardait ce qui
+; trainait a ses offsets prev/next dans le slot OST au moment de l'ajout : la
+; branche liste-vide ci-dessous n'ecrivait ni l'un ni l'autre, et la branche
+; liste-non-vide ne posait que prev. Constate en aout 2026 sur un jeu : une
+; liste a un seul element dont le next valait $0200, donc Collision_Do partait
+; dans le vide des le premier noeud et les tirs ne touchaient plus rien de cette
+; liste. C'est aussi ce que demandait _Collision_CleanLinksAABB avant un
+; changement de liste, qui devient inutile.
 Collision_AddAABB
         ldu   2,y
         beq   >
         stx   AABB.next,u
         stx   2,y
-        stu   AABB.prev,x
+        stu   AABB.prev,x              ; u = ancienne queue, a lire avant de le
+        ldu   #0                       ; remettre a zero
+        stu   AABB.next,x
         rts
 !       stx   2,y
         stx   ,y
+        ldu   #0
+        stu   AABB.prev,x
+        stu   AABB.next,x
         rts
 
 ; ------------------------------------------------------------------------------
