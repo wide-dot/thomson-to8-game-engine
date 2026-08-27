@@ -42,6 +42,7 @@ _Collision_RemoveAABB MACRO
         ldx   #\2
         stx   Collision_Remove_1
         stx   Collision_Remove_3
+        stx   Collision_Remove_4       ; test d'appartenance, cf collision-list.asm
         leax  2,x
         stx   Collision_Remove_2
         leax  \1,u
