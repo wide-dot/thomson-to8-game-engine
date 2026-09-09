@@ -364,7 +364,7 @@ Blit
 * single-buffered, hence the old @clearHidden / BlitPhase4 page wipes, now dropped).
 * ---------------------------------------------------------------------------
 BlitPhase3
-        lda   FadeCnt
+        ldd   FadeCnt
         beq   @scoreHold                    ; fade done (both pages, double-buffered) -> hold, then score
         lda   #1
         sta   <glb_force_sprite_refresh     ; redraw ship/pod over the point-erase each frame

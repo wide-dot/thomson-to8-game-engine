@@ -21,7 +21,7 @@
 *   FadeOut     : traite une cellule sur la page montee. A appeler une fois par
 *                 trame, DANS le verrou graphique. Retourne immediatement quand
 *                 le fondu est termine.
-*   FadeCnt     : compteur restant (octet). 0 = fondu termine.
+*   FadeCnt     : compteur restant (2 octets). 0 = fondu termine.
 *   FadeLen     : nombre de cellules du motif (80). Constante d'assemblage.
 *
 * Le motif est choisi par PATTERN (ACCOLAD, DIAG ou BAYER8).
@@ -31,7 +31,9 @@
 ACCOLAD equ     1
 DIAG    equ     2
 BAYER8  equ     3
-PATTERN equ     ACCOLAD
+BAYER16a equ    4
+BAYER16b equ    5
+PATTERN equ     BAYER8
 
 InitFadeOut
         ; FadeLen*2 pas, ni plus ni moins. MESURE (game-mode fadetest, banc isole) :
@@ -45,19 +47,20 @@ InitFadeOut
         ; Rappel du compte : FadeOut fait "decb PUIS lsrb", le compteur parcourt
         ; 2*FadeLen-1..0 et indexe chaque cellule DEUX fois de suite ; le buffer
         ; alternant a chaque appel, chaque cellule est traitee une fois par page.
-        ldb     #FadeLen*2
-        stb     FadeCnt
+        ldd     #(FadeLen)*2
+        std     FadeCnt
         rts
 
-FadeOut ldb     #0
-FadeCnt set     *-1
+FadeOut ldd     #0
+FadeCnt set     *-2
         bne     >
         rts
-!       decb
-        stb     FadeCnt
-        ldx     #FadeOutPattern
-        lsrb
-        abx
+!       subd    #1
+        std     FadeCnt
+        lsra
+        rorb
+        addd    #FadeOutPattern
+        tfr     d,x
         ldd     #$0FE0  ; A=mask
         andb    ,x      ; keep b7b6b5
         bitb    #32     ; b5=1 ?
@@ -184,7 +187,7 @@ FadeOutPattern
         coord   0,6     ; 73
         coord   7,3     ; 72
         coord   6,0     ; 71
-        
+ ;       
         coord   5,7     ; 70
         coord   4,4     ; 69
         coord   3,1     ; 68
@@ -195,7 +198,7 @@ FadeOutPattern
         coord   6,6    ; 63
         coord   5,3     ; 62
         coord   4,0     ; 61
-        
+ ;      
         coord   3,7     ; 60
         coord   2,4     ; 59
         coord   1,1     ; 58
@@ -206,7 +209,7 @@ FadeOutPattern
         coord   3,6     ; 53
         coord   2,3     ; 52
         coord   1,0     ; 51
-        
+ ;       
         coord   0,7     ; 50
         coord   7,4     ; 49
         coord   6,1     ; 48
@@ -217,7 +220,7 @@ FadeOutPattern
         coord   1,6     ; 43
         coord   0,3     ; 42
         coord   7,0     ; 41
-
+;
         coord   6,7     ; 40
         coord   5,4     ; 39
         coord   4,1     ; 38
@@ -228,7 +231,7 @@ FadeOutPattern
         coord   7,6     ; 33
         coord   6,3     ; 32
         coord   5,0     ; 31
-
+;
         coord   4,7     ; 30
         coord   3,4     ; 29
         coord   2,1     ; 28
@@ -239,7 +242,7 @@ FadeOutPattern
         coord   5,6     ; 23
         coord   4,3     ; 22
         coord   3,0     ; 21
-
+;
         coord   2,7     ; 20
         coord   1,4     ; 19
         coord   0,1     ; 18 <== irrégularité
@@ -250,7 +253,7 @@ FadeOutPattern
         coord   4,6     ; 13
         coord   3,3     ; 12
         coord   2,0     ; 11
-
+;
         coord   1,7     ; 10
         coord   0,4     ; 9
         coord   7,1     ; 8
@@ -272,7 +275,7 @@ FadeOutPattern
         coord   2,5
         coord   1,6
         coord   0,7
-
+;
         coord   7,1
         coord   6,2
         coord   5,3
@@ -281,7 +284,7 @@ FadeOutPattern
         coord   2,6
         coord   1,7
         coord   0,0
-
+;
         coord   7,2
         coord   6,3
         coord   5,4
@@ -290,7 +293,7 @@ FadeOutPattern
         coord   2,7
         coord   1,0
         coord   0,1
-
+;
         coord   7,3
         coord   6,4
         coord   5,5
@@ -299,7 +302,7 @@ FadeOutPattern
         coord   2,0
         coord   1,1
         coord   0,2
-
+;
         coord   7,4
         coord   6,5
         coord   5,6
@@ -308,7 +311,7 @@ FadeOutPattern
         coord   2,1
         coord   1,2
         coord   0,3
-
+;
         coord   7,5
         coord   6,6
         coord   5,7
@@ -317,7 +320,7 @@ FadeOutPattern
         coord   2,2
         coord   1,3
         coord   0,4
-
+;
         coord   7,6
         coord   6,7
         coord   5,0
@@ -326,7 +329,7 @@ FadeOutPattern
         coord   2,3
         coord   1,4
         coord   0,5
-
+;
         coord   7,7
         coord   6,0
         coord   5,1
@@ -335,7 +338,7 @@ FadeOutPattern
         coord   2,4
         coord   1,5
         coord   0,6
-
+;
         endc
 
         ifeq    PATTERN-BAYER8
@@ -351,12 +354,58 @@ bloc2   macro
         bloc1   2+\1,0+\2
         bloc1   0+\1,2+\2
         endm
-
         bloc2   0,0
         bloc2   1,1
         bloc2   1,0
         bloc2   0,1
         endc
+
+        ifeq    PATTERN-BAYER16a
+bloc_1  macro
+        coord   0+\1,0+\2
+        coord   4+\1,8+\2
+        coord   4+\1,0+\2
+        coord   0+\1,8+\2
+        endm
+bloc_2  macro
+        bloc_1  0+\1,0+\2
+        bloc_1  2+\1,4+\2
+        bloc_1  2+\1,0+\2
+        bloc_1  0+\1,4+\2
+        endm   
+        bloc_2  0,0
+        bloc_2  0,1
+        bloc_2  1,2
+        bloc_2  1,3
+        bloc_2  1,0
+        bloc_2  1,1
+        bloc_2  0,2
+        bloc_2  0,3
+        endc
+
+        ifeq    PATTERN-BAYER16b
+bloc_1b macro
+        coord   0+\1,0+\2
+        coord   0+\1,1+\2
+        coord   4+\1,8+\2
+        coord   4+\1,9+\2
+        coord   4+\1,0+\2
+        coord   4+\1,1+\2
+        coord   0+\1,8+\2
+        coord   0+\1,9+\2
+        endm
+bloc_2b macro
+        bloc_1b 0+\1,0+\2
+        bloc_1b 2+\1,4+\2
+        bloc_1b 2+\1,0+\2
+        bloc_1b 0+\1,4+\2
+        endm   
+        bloc_2b 0,0
+        bloc_2b 1,2
+        bloc_2b 1,0
+        bloc_2b 0,2
+        endc
+
 
 FadeLen set (*-FadeOutPattern)   ; 80 : la table des cellules s'arrete ICI
 

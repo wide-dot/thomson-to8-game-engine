@@ -85,15 +85,16 @@ RunOnePass
         ldd   test.remain              ;   donnerait remain=0 et un faux "tout efface"
         std   test.filled
 
-        ldb   #FadeLen*2               ; armer le compteur du fondu
+        ldd   #FadeLen*2                ; armer le compteur du fondu
         addb  test.extraStep
-        stb   FadeCnt
+        adca  #0
+        std   FadeCnt
         ldd   #0
         std   test.steps
 
 @loop
         jsr   gfxlockOn
-        lda   FadeCnt
+        ldd   FadeCnt
         beq   @tail                    ; fondu termine : on ne compte pas ce tour
         jsr   FadeOut
         ldd   test.steps
@@ -102,7 +103,7 @@ RunOnePass
 @tail
         jsr   gfxlockOff
         jsr   gfxlockLoop
-        lda   FadeCnt
+        ldd   FadeCnt
         bne   @loop
 
         bsr   CountBothPages
