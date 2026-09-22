@@ -232,8 +232,13 @@ vscroll.tiles.update
         bcs   >                        ; from 12bit to 16bit
         ; read even tile
         ; --------------
-        addb  ,x                       ; b is now mult. by 1.5x
-        incb
+        addb  <vscroll.tiles.tilegroup.x ; offset octet de la colonne COURANTE dans
+                                       ; la ligne : (col>>1)+col, soit 3*(col/2).
+                                       ; C'etait addb ,x + incb, donc la colonne de
+                                       ; DEPART du groupe : juste pour la premiere
+                                       ; colonne d'un groupe impair seulement, faux
+                                       ; des la 3e colonne et pour tout depart pair,
+                                       ; ou l'ecriture tombait sur la tuile voisine.
         leay  b,y
         ldd   ,y                       ; get the first packed word
         andb  #$0F
@@ -245,7 +250,7 @@ vscroll.tiles.update
         bra   @endif
 !       ; read odd tile
         ; -------------
-        addb  ,x                       ; b is now mult. by 1.5x
+        addb  <vscroll.tiles.tilegroup.x ; idem branche paire : colonne courante
         leay  b,y
         ldd   ,y
         anda  #$F0
