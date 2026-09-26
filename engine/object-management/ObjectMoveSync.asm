@@ -6,10 +6,57 @@
 ; apply XY velocity in sync with framerate
 ; ----------------------------------------
 
+
+; definir no_ObjectMoveSync_mul pour desactiver la version "mul"
 ObjectMoveSync
+        ifndef no_ObjectMoveSync_mul
+        ldd  gfxlock.frameDrop.count_w
+        beq  @zero
+        tsta
+        bne  @safe
+        pshs b
+        ldb  x_vel,u
+        sex
+        ldb  ,s
+        mul
+        addb x_pos,u
+        stb  x_pos,u
+        ldb  ,s
+        lda  x_vel,u
+        mul
+        addd x_pos,u
+        std  x_pos,u
+        ldb  ,s
+        lda  x_vel+1,u
+        mul
+        addd x_pos+1,u
+        std  x_pos+1,u
+        bcc  >
+        inc  x_pos,u
+!       ldb  y_vel,u
+        sex
+        ldb  ,s
+        mul
+        addb y_pos,u
+        stb  y_pos,u
+        ldb  ,s
+        lda  y_vel,u
+        mul
+        addd y_pos,u
+        std  y_pos,u
+        ldb  ,s
+        lda  y_vel+1,u
+        mul
+        addd y_pos+1,u
+        std  y_pos+1,u
+        bcc  >
+        inc  y_pos,u
+!       puls b,pc
+@safe
+        endc
         ldx   gfxlock.frameDrop.count_w ; take number of elapsed frame since last render and multiply by velocity
         bne   @loop1
-        ldx   #1
+@zero   ldx   #1
 @loop1   
         ldb   x_vel,u
         sex                            ; velocity is positive or negative, take care of that
@@ -34,4 +81,5 @@ ObjectMoveSync
         sta   y_pos,u                  ; update high byte of y_pos        
         leax  -1,x
         bne   @loop1 
+        endc
         rts
