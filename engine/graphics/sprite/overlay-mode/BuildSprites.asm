@@ -102,9 +102,9 @@ BuildSprites
 ;
 ;       load image index for this object       
         ldx   #Img_Page_Index
-        anda  #0           
         ldb   id,u                          ; get object id
-        lda   d,x                           ; retrieve page that store imagesets for this object id
+        abx
+        lda   ,x                            ; retrieve page that store imagesets for this object id
         _SetCartPageA        
         ldx   image_set,u                   ; get current imageset associated with this object
 ;
@@ -148,7 +148,6 @@ BuildSprites
 @c      lda   b,x
         beq   @nodefinedframe
         leax  a,x                           ; read image subset index
-        stx   _mapping_frame
         bra   >
 @nodefinedframe
         eorb  #%00000010                    ; check if there is an alternate shifted image available
@@ -161,12 +160,10 @@ BuildSprites
 @e      lda   b,x
         beq   @nextobject1                  ; no defined frame, nothing will be displayed
         leax  a,x                           ; read image subset index
-        stx   _mapping_frame
 !
         lda   page_draw_routine,x           ; save compiled sprite routine
         sta   _page_draw_routine
-        ldd   draw_routine,x
-        std   _draw_routine
+        ldy   draw_routine,x                ; carried by Y up to the call
 ;
         ; check out of range position 
         ; ---------------------------       
@@ -246,16 +243,13 @@ BuildSprites
         ldb   y_pixel,u                     ; check if sprite is fully in screen vertical range
         ldx   _image_subset
         addb  image_subset_y1_offset,x
-        cmpb  #screen_bottom
+        subb  #screen_top                   ; shifted referential, one unsigned compare
+        cmpb  #screen_bottom-screen_top
         bhi   @nextobject
-        cmpb  #screen_top
-        blo   @nextobject        
         stb   _y1_pixel+1
         addb  _y_size+1
-        cmpb  #screen_bottom
+        cmpb  #screen_bottom-screen_top
         bhi   @nextobject
-        cmpb  #screen_top
-        blo   @nextobject        
         cmpb  _y1_pixel+1                    ; check wrapping
         blo   @nextobject
 ;               
@@ -264,18 +258,14 @@ BuildSprites
         bne   @setposition
 ;
         ldb   x_pixel,u
-        ldx   _image_subset
-        addb  image_subset_x1_offset,x
-        cmpb  #screen_right
+        addb  image_subset_x1_offset,x      ; X still _image_subset
+        subb  #screen_left                  ; shifted referential, one unsigned compare
+        cmpb  #screen_right-screen_left
         bhi   @nextobject
-        cmpb  #screen_left
-        blo   @nextobject
         stb   _x1_pixel+1
         addb  _x_size+1
-        cmpb  #screen_right
+        cmpb  #screen_right-screen_left
         bhi   @nextobject
-        cmpb  #screen_left
-        blo   @nextobject
         cmpb  _x1_pixel+1                   ; check wrapping
         blo   @nextobject 
 @setposition
@@ -321,7 +311,7 @@ BuildSprites
         _SetCartPageA        
         stu   @u                 
         ldu   glb_screen_location_2
-        jsr   [_draw_routine]               ; draw compilated sprite on screen
+        jsr   ,y                            ; draw compilated sprite on screen
         ldu   #0                 
 @u      equ   *-2
 ;
@@ -390,7 +380,6 @@ BuildSprites
 @c      lda   b,x
         beq   @nodefinedframe
         leax  a,x                           ; read image subset index
-        stx   _mapping_frame
         bra   >
 @rts    rts
 @nodefinedframe
@@ -404,7 +393,6 @@ BuildSprites
 @e      lda   b,x
         beq   @rts                          ; no defined frame, nothing will be displayed
         leax  a,x                           ; read image subset index
-        stx   _mapping_frame
 !
         lda   page_draw_routine,x           ; save compiled sprite routine
         sta   _page_draw_routine
