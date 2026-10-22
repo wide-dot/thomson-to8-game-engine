@@ -66,7 +66,7 @@ _gfxlock.loop MACRO
 _gfxlock.backProcess.on MACRO
         ; param 1 : routine address
         ldd   #\1
-        std   gfxlock.backProcess
+        std   gfxlock.backProcess.routine ; the wait loop's jsr operand (gfxlock.asm)
         lda   #1
         sta   gfxlock.backProcess.status
  ENDM
